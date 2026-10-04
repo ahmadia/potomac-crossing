@@ -457,6 +457,21 @@
     if (n === 'hub') return go('who', { back: true });
     go('title', { back: true });
   }
+  /* The big Back button at the left of every frame's bottom row, beside Next, the same size. On the
+     first frame there is nothing to go back to: it keeps its place, invisible, so Next never moves. */
+  function backBottom() {
+    var can = E.canBack(cat);
+    return '<button class="btn big back' + (can ? '' : ' nohist') + '" id="backBottom" type="button"' +
+      (can ? '' : ' tabindex="-1" aria-hidden="true"') + '>' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Back</button>';
+  }
+  function wireBackBottom() {
+    var b = $('backBottom');
+    if (b) b.addEventListener('click', function () {
+      if (now() - renderedAt < 280) return;   // a double tap never goes back two pages
+      onBack();
+    });
+  }
   function openCat(c) {
     cat = c; save.current = c.id; lookCache = null;
     if (!c.chapter || !c.frame) E.startChapter(c, story, now());
@@ -880,9 +895,10 @@
   function renderInteraction(f, kind, id, ctx) {
     var box = $('interact'), panel = ctx.panel;
     var nextBtn = function (label, onClick, cls) {
-      box.innerHTML = '<div class="next-row"><button class="btn go big ' + (cls || '') + '" id="nextBtn" type="button">' + esc(label) +
+      box.innerHTML = '<div class="next-row">' + backBottom() + '<button class="btn go big ' + (cls || '') + '" id="nextBtn" type="button">' + esc(label) +
         ' <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>';
       $('nextBtn').addEventListener('click', onClick);
+      wireBackBottom();
     };
     if (kind === 'next') {
       var adv = function () {
@@ -910,7 +926,8 @@
       var picked = cat.choices[id] ? cat.choices[id].index : -1;
       box.innerHTML = prompt + '<div class="choices" role="group">' + opts.map(function (o, i) {
         return '<button class="choice" type="button" data-i="' + i + '" data-n="' + (i + 1) + '"' + (i === picked ? ' aria-current="true"' : '') + '>' + rich(fill(o.label)) + '</button>';
-      }).join('') + '</div>';
+      }).join('') + '</div><div class="next-row">' + backBottom() + '</div>';
+      wireBackBottom();
       Array.prototype.forEach.call(box.querySelectorAll('.choice'), function (b) {
         b.addEventListener('click', function () {
           if (now() - renderedAt < 280) return;
@@ -932,7 +949,8 @@
     if (kind === 'counts') {
       var done = cat.lessons[f.counts.set];
       if (done) {
-        box.innerHTML = '<div class="row end"><button class="btn quiet" id="againBtn" type="button">Count them again</button><button class="btn go big" id="nextBtn" type="button">Next</button></div>';
+        box.innerHTML = '<div class="row end">' + backBottom() + '<button class="btn quiet" id="againBtn" type="button">Count them again</button><button class="btn go big" id="nextBtn" type="button">Next</button></div>';
+        wireBackBottom();
         $('nextBtn').addEventListener('click', function () { if (E.finishCounts(cat, story, done, now())) { persist(); go('frame'); } });
         $('againBtn').addEventListener('click', function () { startChapterLesson(f, id, false); });
       } else {
@@ -957,20 +975,21 @@
         '<div class="chips" role="group" aria-label="Pet names">' + sugg.map(function (s) { return '<button class="chip" type="button" aria-pressed="false" data-v="' + esc(s) + '">' + esc(s) + '</button>'; }).join('') + '</div>' +
         '<input class="field" id="inp" type="text" maxlength="' + E.PET_MAX + '" placeholder="Or type your own…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Your pet name">' +
         '<div class="preview" id="preview" aria-live="polite"></div>' +
-        '<div class="row end"><button class="btn go big" id="okBtn" type="button" disabled>That’s me!</button></div>';
+        '<div class="row end">' + backBottom() + '<button class="btn go big" id="okBtn" type="button" disabled>That’s me!</button></div>';
     } else if (kind === 'clanname') {
       html = '<p class="prompt">Type the first part of your Clan name.</p>' +
         '<input class="field" id="inp" type="text" maxlength="20" placeholder="Like Moon, or Fern…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="The first part of your Clan name">' +
         '<div class="preview" id="preview" aria-live="polite"></div>' +
         '<div class="row"><button class="btn quiet" id="ideasBtn" type="button" aria-expanded="false">Ideas?</button></div>' +
         '<div class="chips" id="ideas" hidden>' + sugg.map(function (s) { return '<button class="chip" type="button" aria-pressed="false" data-v="' + esc(s) + '">' + esc(s) + '</button>'; }).join('') + '</div>' +
-        '<div class="row end"><button class="btn go big" id="okBtn" type="button" disabled>That’s my name!</button></div>';
+        '<div class="row end">' + backBottom() + '<button class="btn go big" id="okBtn" type="button" disabled>That’s my name!</button></div>';
     } else {
       html = '<textarea class="field" id="inp" maxlength="' + E.DREAM_MAX + '" placeholder="' + esc(inp.placeholder ? fill(inp.placeholder) : 'Otters… a giant fish… flying over the river…') + '" aria-label="Your dream" enterkeyhint="done"></textarea>' +
         '<p class="hint">You can skip this. It goes in your book.</p>' +
-        '<div class="row end"><button class="btn quiet" id="skipBtn" type="button">Skip</button><button class="btn go big" id="okBtn" type="button" disabled>Put it in my book</button></div>';
+        '<div class="row end">' + backBottom() + '<button class="btn quiet" id="skipBtn" type="button">Skip</button><button class="btn go big" id="okBtn" type="button" disabled>Put it in my book</button></div>';
     }
     box.innerHTML = '<div class="look">' + html + '</div>';
+    wireBackBottom();
     var field = $('inp'), ok = $('okBtn'), preview = $('preview');
     var prev = kind === 'petname' ? cat.petname : kind === 'clanname' ? cat.name : kind === 'dream' ? cat.dream : '';
     if (prev) field.value = prev;
@@ -1029,7 +1048,7 @@
     function draw() {
       box.innerHTML = '<div class="look">' + groups.map(function (g) {
         return '<div role="group" aria-label="' + esc(g.title) + '"><h3>' + esc(g.title) + '</h3><div class="sw-row">' + swatches(g) + '</div></div>';
-      }).join('') + '<div class="next-row"><button class="btn go big" id="okBtn" type="button">That’s me!</button></div></div>';
+      }).join('') + '<div class="next-row">' + backBottom() + '<button class="btn go big" id="okBtn" type="button">That’s me!</button></div></div>';
       Array.prototype.forEach.call(box.querySelectorAll('.sw'), function (b) {
         b.addEventListener('click', function () {
           var k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
@@ -1044,6 +1063,7 @@
         });
       });
       $('okBtn').addEventListener('click', function () { if (E.confirmLook(cat, story, null, now())) { persist(); go('frame'); } });
+      wireBackBottom();
     }
     draw();
     keyHandler = function (e) { if (!isTyping(e) && e.key === 'ArrowLeft') onBack(); };

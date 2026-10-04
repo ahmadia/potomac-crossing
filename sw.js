@@ -1,6 +1,6 @@
 /* Potomac Crossing: offline cache (scope: this folder).
    Bump CACHE whenever any file below changes, so installed iPads pull the new version. */
-var CACHE = 'potomac-crossing-v4';
+var CACHE = 'potomac-crossing-v5';
 var ASSETS = [
   './',
   './index.html',
@@ -19,7 +19,8 @@ var ASSETS = [
   './fonts/comicneue-400.woff2',
   './fonts/comicneue-700.woff2',
   './fonts/comicneue-400-italic.woff2',
-  './fonts/comicneue-700-italic.woff2'
+  './fonts/comicneue-700-italic.woff2',
+  './fonts/andika-700.woff2'
 ];
 
 self.addEventListener('install', function (e) {

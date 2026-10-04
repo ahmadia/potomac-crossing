@@ -189,7 +189,12 @@ Letter or A4.
 ## Around the chapter
 
 - **Who's playing?** Up to four cats per device, so a visiting friend never overwrites a save.
-- **Back** rereads earlier frames; the game saves on every frame and resumes where she left off.
+- **Back**: a big labelled "◀ Back" button at the left of every frame's bottom row, the same size
+  as Next (invisible on the first frame, so Next never moves; a narrow row wraps with Back staying
+  bottom-left). It steps back one frame at a time; a choice or a typed name can be changed, and the
+  new one replaces the old everywhere, the book included. It is left off the keypad screen of a
+  lesson, where a stray tap would leave a question (the bar's ‹ still works there). The game saves
+  on every frame and resumes where she left off.
 - **Read to me** (off by default; she reads herself): speech synthesis reads captions and
   balloons. **Bigger text** toggle.
 - **The Training Hollow**, once chapter 1 is done: practise the 1s again, any time. A full round
@@ -206,5 +211,8 @@ Letter or A4.
 
 Captions and balloons: `"Comic Neue", "Chalkboard SE", "Comic Sans MS", ui-rounded, sans-serif`
 (Chalkboard SE is built into iPadOS). Sound effects and titles: `"Bangers", "Marker Felt", Impact,
-sans-serif`. Both are self-hosted in `fonts/` (SIL Open Font License, texts alongside) and
+sans-serif`. The times-table numbers (the question, the answer box, the keypad, the counting-along
+numbers) use **Andika** bold, `"Andika", ui-rounded, system-ui, sans-serif`: its 1 has a flag and
+a foot and its 0 is plain, so 1 and 7 can't be mixed up (Bangers' 1 and 7 nearly match). All three
+are self-hosted in `fonts/` (SIL Open Font License, texts alongside) and
 precached, so the game makes no third-party requests and the lettering works offline.

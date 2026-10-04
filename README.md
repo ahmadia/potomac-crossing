@@ -68,6 +68,10 @@ in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 26. No romance, just friendships.
 27. The repo is public, like Potion Lab; Lissa's name and age in the docs are fine to publish
     (2026-10-04).
+28. A big labelled Back button beside Next on every frame, so an accidental tap forward is one tap
+    to undo, and a choice or a typed name can be changed (2026-10-04).
+29. The times-table numbers use an easy-to-read font (Andika), so 1 and 7 never look alike
+    (2026-10-04).
 
 ## Proposed, waiting on Aron
 

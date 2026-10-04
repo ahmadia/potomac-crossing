@@ -24,6 +24,7 @@
   --text:#fff6e4; --text-dim:#cdbfe0;
   --comic:"Comic Neue","Chalkboard SE","Comic Sans MS",ui-rounded,sans-serif;
   --shout:"Bangers","Marker Felt",Impact,sans-serif;
+  --digits:"Andika",ui-rounded,system-ui,sans-serif;   /* times-table numbers: a 1 with a foot, a plain 7 and 0 */
   --fs:clamp(17px, 1.1vw + 12px, 22px);
   --scale:1;
   --bar:56px;
@@ -156,6 +157,14 @@ a{color:var(--gold)}
 .btn svg{width:1.1em;height:1.1em}
 .next-row{display:flex;justify-content:flex-end;gap:12px;align-items:center;position:sticky;bottom:calc(10px + var(--sb));z-index:5;pointer-events:none}
 .next-row .btn{pointer-events:auto}
+/* Back sits at the left of every frame's bottom row, as big as Next; invisible (but holding its place)
+   on the first frame */
+.btn.back{margin-right:auto}
+.btn.back.nohist{visibility:hidden}
+/* a row too narrow for everything (the landscape text column) wraps upward: Back stays bottom-left,
+   the main button moves up to the right */
+.next-row:has(> .btn.back),.row.end:has(> .btn.back){flex-wrap:wrap-reverse}
+.next-row .btn,.row.end .btn{white-space:nowrap}
 /* the look chooser: "That's me!" rides along the bottom on an opaque strip the column's width, so a
    tap beside it never lands on a swatch underneath */
 .frame[data-kind="look"] .next-row{position:sticky;bottom:0;pointer-events:auto;padding:16px 0 calc(10px + var(--sb));margin-top:-6px;
@@ -205,8 +214,9 @@ html.big .sw{font-size:max(15px, calc(var(--fs) * var(--scale) * .72))}
 
 /* ---------- the Counts ---------- */
 .counts{display:flex;flex-direction:column;gap:12px;align-items:stretch;container-type:inline-size}
-/* sized by the lesson column (cqi), not the window: "10 × 10 = 100" fits the narrowest column */
-.q{font-family:var(--shout);font-size:52px;font-size:clamp(40px, 16cqi, 96px);max-width:100%;letter-spacing:.03em;line-height:1;text-align:center;color:var(--cream);
+/* sized by the lesson column (cqi), not the window: "10 × 10 = 100" fits the narrowest column with
+   room to spare, in Andika's rounder (wider) numbers */
+.q{font-family:var(--digits);font-weight:700;font-size:52px;font-size:clamp(40px, 14cqi, 96px);max-width:100%;letter-spacing:.01em;line-height:1;text-align:center;color:var(--cream);
   text-shadow:4px 4px 0 var(--ink);display:flex;justify-content:center;align-items:center;gap:.22em;font-variant-numeric:tabular-nums;margin:2px 0}
 .q .slot{min-width:1.3em;padding:.06em .25em .02em;border-radius:12px;border:4px solid var(--ink);background:var(--cream);color:var(--ink);text-shadow:none;box-shadow:var(--lift)}
 .q .slot.empty{color:#b9a9c9}
@@ -215,7 +225,7 @@ html.big .sw{font-size:max(15px, calc(var(--fs) * var(--scale) * .72))}
 .q .x{color:var(--gold)}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:420px;width:100%;margin:0 auto}
 .key{min-height:64px;border-radius:16px;background:var(--cream);color:var(--ink);border:3px solid var(--ink);box-shadow:var(--lift);
-  font-family:var(--shout);font-size:34px;letter-spacing:.02em;display:grid;place-items:center;user-select:none;-webkit-user-select:none}
+  font-family:var(--digits);font-weight:700;font-size:32px;display:grid;place-items:center;user-select:none;-webkit-user-select:none}
 .key:active{transform:translate(3px,3px);box-shadow:var(--lift-press)}
 .key.ok{background:var(--gold)}
 .key.del svg{width:34px;height:34px}
@@ -227,7 +237,7 @@ html.big .sw{font-size:max(15px, calc(var(--fs) * var(--scale) * .72))}
 .frame[data-kind="lesson"]{justify-content:flex-start}
 .lesson-panel{background:#e8cf98}
 .lesson-panel .art > svg{background:#e8cf98}
-.counter{font-family:var(--shout);font-size:1.4em;letter-spacing:.05em}
+.counter{font-family:var(--digits);font-weight:700;font-size:1.25em;letter-spacing:.03em}
 
 /* ---------- title ---------- */
 .title-screen{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:calc(100dvh - var(--bar) - var(--st) - 52px)}
@@ -338,6 +348,7 @@ html.big .sw{font-size:max(15px, calc(var(--fs) * var(--scale) * .72))}
   .frame .panel-side{grid-area:panel;align-self:start;position:sticky;top:calc(var(--bar) + var(--st) + 12px);min-height:calc(100dvh - var(--bar) - var(--st) - 40px)}
   .panel{width:min(100%, calc((100dvh - var(--bar) - var(--st) - 40px) * 1.6))}
   .next-row{position:static}
+  .next-row .btn.big,.row.end .btn.big{padding-left:1em;padding-right:1em}
   /* the lesson column holds the question and the keypad; the look chooser's swatches run 5-6 a row */
   .frame[data-kind="lesson"]{grid-template-columns:minmax(380px, .62fr) minmax(0, 1fr)}
   .frame[data-kind="look"],.frame[data-kind="choice"]{grid-template-columns:minmax(460px, .8fr) minmax(0, 1fr)}

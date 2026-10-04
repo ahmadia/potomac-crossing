@@ -144,7 +144,7 @@ Her warrior name waits for a later module, and what she does this moon will be p
 - *Counts:* why the Counts matter. The 1s (tails), 8–10 answers. Her first claw mark on the
   Training Tree.
 
-**2. After the Storm**
+**2. After the Storm** ([full draft](chapters/02-after-the-storm.md))
 - *Story:* Tallyheart has her count the prey pile, stacked in pairs. Her count comes up short:
   she's the first to notice prey is missing. ("Your Counts just caught something the whole Clan
   missed.") Then her first walk around the territory: the Old Bridge, the Barking Field, and the

@@ -1,22 +1,25 @@
 /* Potomac Crossing: the engine.
  *
  * Pure logic, no DOM. Loads in Node (module.exports = PC) and in the browser (window.PC.engine).
- * The UI owns drawing; the engine owns state: the cats on this device, tokens, the flow through
- * a chapter's frames, input cleaning, the Counts lesson runner, the book recap, the Training
- * Hollow, and saving to localStorage under one key, 'potomac-crossing.v1'.
+ * The UI owns drawing; the engine owns state: the cats on this device, tokens, the chapters and
+ * the flow through each one's frames (her place in each chapter kept apart), input cleaning, lines that show only `when` they match, the
+ * Counts lesson runner, the skip-count, gifts, the book, the Training Hollow (one claw mark per
+ * Count), and saving to localStorage under one key, 'potomac-crossing.v1' (save version 2 since
+ * chapter 2; E.migrate brings a version-1 save forward without losing anything).
  *
  * Functions that change a cat change the object they are given (and return it or a result).
  * Nothing here reads the clock on its own: callers pass `now` (ms since epoch) where it matters,
- * so the tests are deterministic.
+ * so the tests are deterministic. Where a function needs the chapters, it takes them as its last
+ * argument (one story, a list, or a map like PC.story); without it, it uses PC.story.
  */
 (function (root) {
   'use strict';
   var PC = root.PC || (root.PC = {});
   var E = {};
 
-  E.VERSION = '0.1.0 (chapter 1, 2026-10-03)';
-  E.STORAGE_KEY = 'potomac-crossing.v1';
-  E.SAVE_VERSION = 1;
+  E.VERSION = '0.2.0 (chapter 2, 2026-10-04)';
+  E.STORAGE_KEY = 'potomac-crossing.v1';   // the key stays: renaming it would strand every save
+  E.SAVE_VERSION = 2;
   E.MAX_CATS = 4;
   E.FAST_MS = 4000;          // an answer under this earns a "didn't even have to count" line
   E.REQUEUE_GAP = 2;         // a missed fact comes back two questions later
@@ -26,12 +29,13 @@
   E.CLAN_MAX = 14;
   E.PET_MAX = 24;
   E.DREAM_MAX = 200;
-  E.GLOW_ROUNDS = 3;         // Training Hollow rounds without help before the claw mark glows
+  E.GLOW_ROUNDS = 3;         // Training Hollow rounds of one Count without help before its claw mark glows
+  E.MAX_MARKS = 6;           // claw marks on the tree: one per Count (1, 2, 5, 10, 3, 4)
 
   /* ------------------------------------------------------------ helpers */
   function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
   function isObj(o) { return o !== null && typeof o === 'object' && !Array.isArray(o); }
-  function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  function own(o, k) { return o != null && Object.prototype.hasOwnProperty.call(o, k); }
   function median(a) {
     if (!a.length) return null;
     var s = a.slice().sort(function (x, y) { return x - y; }), h = s.length >> 1;
@@ -53,6 +57,7 @@
     return list[((i % list.length) + list.length) % list.length];
   }
   function asList(x) { return x == null ? [] : (Array.isArray(x) ? x : [x]); }
+  function num(v, d) { return typeof v === 'number' && isFinite(v) ? v : d; }
   E.util = { clone: clone, median: median, rng: mulberry32 };
 
   /* ------------------------------------------------------------ looks
@@ -72,7 +77,7 @@
       { id: 'cream', label: 'Cream', swatch: ['#f2dbb1', '#d8b47f'], stripes: true },
       { id: 'grey', label: 'Grey', swatch: ['#9ea5ad', '#7d848c'] },
       // a soft hyphen: a narrow swatch breaks the word as Tortoise-shell
-      { id: 'tortie', label: 'Tortoise\u00ADshell', swatch: ['#3f3330', '#da853b', '#ecb877'], patches: true },
+      { id: 'tortie', label: 'Tortoise­shell', swatch: ['#3f3330', '#da853b', '#ecb877'], patches: true },
       { id: 'calico', label: 'Calico', swatch: ['#fbf8f2', '#e3893a', '#3d3844'], patches: true }
     ],
     marking: [
@@ -126,7 +131,7 @@
     if (!name) name = pet || 'Pillow';
     if (!pet) pet = 'Pillow Cat';
     var t = {
-      name: name, petname: pet, dream: cat.dream || '',
+      name: name, petname: pet, dream: E.dreamOf(cat, cat.chapter),
       they: p.they, them: p.them, their: p.their, shecat: p.shecat,
       They: cap1(p.they), Them: cap1(p.them), Their: cap1(p.their), Shecat: cap1(p.shecat),
       THEY: p.they.toUpperCase(), THEM: p.them.toUpperCase(), THEIR: p.their.toUpperCase(),
@@ -144,6 +149,12 @@
       return own(t, k) ? t[k] : m;
     });
   };
+  /* Only a question's own tokens ({a} {b} {answer}); the cat's are filled later, by the UI. */
+  function fillFact(text, q) {
+    return String(text == null ? '' : text).replace(/\{(a|b|answer)\}/g, function (m, k) {
+      return String(k === 'answer' ? q.a * q.b : q[k]);
+    });
+  }
 
   /* ------------------------------------------------------------ input cleaning */
   var LETTER = /[A-Za-zÀ-ɏͰ-ϿЀ-ӿ]/;
@@ -232,15 +243,122 @@
     return 'New cat';
   };
 
-  /* ------------------------------------------------------------ saves and cats */
+  /* ------------------------------------------------------------ chapters
+   * Each chapter is one story file (app/story/chNN.js) defining PC.story.chNN. They are read in
+   * the order of their `number`; chapter n+1 opens once chapter n is finished. */
+  function storyList(x) {
+    if (x && x.frames) return [x];
+    if (Array.isArray(x)) return x.filter(function (s) { return s && s.frames; });
+    var src = x || PC.story || {};
+    return Object.keys(src).map(function (k) { return src[k]; }).filter(function (s) { return s && s.frames; });
+  }
+  E.chapters = function (stories) {
+    return storyList(stories).map(function (s, i) { return { s: s, i: i }; }).sort(function (x, y) {
+      return num(x.s.number, 0) - num(y.s.number, 0) || x.i - y.i;
+    }).map(function (x) { return x.s; });
+  };
+  E.chapter = function (id, stories) {
+    var list = storyList(stories);
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  };
+  E.firstChapter = function (stories) { return E.chapters(stories)[0] || null; };
+  /* The chapter after this one, if it is built. */
+  E.nextChapter = function (story, stories) {
+    var list = E.chapters(stories);
+    for (var i = 0; i < list.length; i++) if (list[i].id === story.id) return list[i + 1] || null;
+    return null;
+  };
+  E.chapterHeading = function (story) { return 'Chapter ' + (story.number || 1) + ': ' + (story.title || ''); };
+  E.isFinished = function (cat, id) { return !!(cat && isObj(cat.finished) && cat.finished[id]); };
+  E.hasFinished = function (cat) {
+    return !!(cat && isObj(cat.finished) && Object.keys(cat.finished).some(function (k) { return cat.finished[k]; }));
+  };
+  /* A chapter is open when it is the first, when the one before it is finished, or when it was
+   * finished itself (read again). */
+  E.isOpen = function (cat, story, stories) {
+    var list = E.chapters(stories);
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id !== story.id) continue;
+      return i === 0 || E.isFinished(cat, list[i - 1].id) || E.isFinished(cat, story.id);
+    }
+    return false;
+  };
+  /* The chapter a cat reads next: the first, in order, that she has not finished, while it is
+   * open. Null when every built chapter is finished. */
+  E.upNext = function (cat, stories) {
+    var list = E.chapters(stories);
+    for (var i = 0; i < list.length; i++) {
+      if (E.isFinished(cat, list[i].id)) continue;
+      return E.isOpen(cat, list[i], list) ? list[i] : null;
+    }
+    return null;
+  };
+  /* The "coming soon" after a chapter: its teaser, filled, with `built` true when the next
+   * chapter exists after all (then the hub offers that chapter instead). */
+  E.teaser = function (story, cat, stories) {
+    if (!story) return null;
+    var next = E.nextChapter(story, stories);
+    var t = isObj(story.teaser) ? story.teaser : null;
+    if (!t && !next) return null;
+    return {
+      title: E.fill(t && t.title ? t.title : E.chapterHeading(next), cat),
+      lines: asList(t && t.lines).map(function (l) { return E.fill(l, cat); }),
+      built: !!next, next: next ? next.id : null
+    };
+  };
+  /* Where a cat is in the chapters: the hub's buttons, the cards on "Who's playing?", the title. */
+  E.progress = function (cat, stories) {
+    var list = E.chapters(stories);
+    var finished = list.filter(function (s) { return E.isFinished(cat, s.id); });
+    var reading = cat && E.chapter(cat.chapter, list);
+    var atEnd = !!(reading && E.kindOf(E.currentFrame(cat, reading)) === 'end');
+    var next = E.upNext(cat, list);
+    var latest = finished.length ? finished[finished.length - 1] : null;
+    var teaser = latest ? E.teaser(latest, cat, list) : null;
+    // her place in the next chapter: the one she is reading, or one parked while she reads another
+    var np = next ? E.place(cat, next.id) : null;
+    return {
+      chapters: list, finished: finished, latest: latest, reading: reading, atEnd: atEnd,
+      page: reading ? (cat.history || []).length + 1 : 0,
+      next: next,
+      // she is partway through the next chapter: its button resumes, it doesn't start over
+      nextInProgress: !!(np && (np.history.length || np.frame !== next.start || np.lesson)),
+      nextPage: np ? np.history.length + 1 : 0,
+      soon: !next && teaser && !teaser.built ? teaser : null
+    };
+  };
+  /* "Chapter 2 · page 7", "Chapter 2 finished", or "Just starting". */
+  E.status = function (cat, stories) {
+    if (!cat) return '';
+    var p = E.progress(cat, stories);
+    if (!p.reading) return p.latest ? 'Chapter ' + (p.latest.number || 1) + ' finished' : 'Just starting';
+    var n = p.reading.number || 1;
+    if (p.atEnd && E.isFinished(cat, p.reading.id)) return 'Chapter ' + n + ' finished';
+    if (!(cat.history && cat.history.length) && !p.finished.length) return 'Just starting';
+    return 'Chapter ' + n + ' · page ' + p.page;
+  };
+
+  /* ------------------------------------------------------------ saves and cats
+   * Save version 2 (the stored object carries `version: 2`). Per cat: `chapter`, `frame` and
+   * `history` are the chapter being read, its frame and that chapter's back-history, and `lesson`
+   * a lesson in progress (that chapter's, or a Training Hollow round), and `hollowWaiting` a Hollow
+   * round in progress that gave way to a chapter lesson (E.hollowRound); `places` keeps every other
+   * chapter she is partway through, by chapter id: { frame, history, lesson } (see "places" below);
+   * `finished` maps a chapter id to when its end frame was first reached; `dreams` maps a chapter
+   * id to her dream as typed; `flags` and `choices` are one object for all chapters (a choice is
+   * keyed "chapter:frame"); `lessons` holds finished lessons by set id; `hollow` counts every round
+   * and keeps each Count's rounds and glow in `byTable`; `nest` holds treasure and gift ids. */
   E.newSave = function () {
-    return { v: E.SAVE_VERSION, cats: [], current: null, settings: { readAloud: false, bigText: false } };
+    return { version: E.SAVE_VERSION, cats: [], current: null, settings: { readAloud: false, bigText: false } };
   };
   var idSeq = 0;
   function newId(now) {
     idSeq = (idSeq + 1) % 1000;
     return 'c' + Math.floor(now || 0).toString(36) + idSeq.toString(36) + Math.floor(Math.random() * 1296).toString(36);
   }
+  function blankHollow() { return { rounds: 0, byTable: {} }; }
+  function blankTable() { return { rounds: 0, cleanRounds: 0, glow: false }; }
   E.blankCat = function (opts) {
     opts = opts || {};
     var now = opts.now || 0;
@@ -248,14 +366,18 @@
       id: opts.id || newId(now),
       created: now, updated: now,
       look: opts.look ? clone(opts.look) : E.defaultLook(opts.index || 0),
-      petname: '', name: '', dream: '',
+      petname: '', name: '',
       flags: {}, choices: {},
-      chapter: null, frame: null, history: [], done: false, doneAt: null,
+      chapter: null, frame: null, history: [],
+      places: {},            // chapter id -> { frame, history, lesson }: her place in a chapter she isn't reading now
+      finished: {},          // chapter id -> when its end frame was first reached
+      dreams: {},            // chapter id -> her dream, as typed ('' = skipped)
       counts: [],            // every Counts answer: {set, a, b, answer, correct, ms, helped, retry, at}
       lessons: {},           // finished lessons by set id: summary
       lesson: null,          // a lesson in progress: { mode, frame, state }
-      nest: [],              // treasure ids, in the order found
-      hollow: { rounds: 0, cleanRounds: 0, glow: false }
+      hollowWaiting: null,   // a Training Hollow round in progress that gave way to a chapter lesson: { mode: 'hollow', state }
+      nest: [],              // treasure and gift ids, in the order found
+      hollow: blankHollow()  // { rounds, byTable: { '1': { rounds, cleanRounds, glow } } }
     };
   };
   /* Add a cat to the device. Returns the cat, or null when four cats already live here. */
@@ -292,7 +414,54 @@
     return null;
   };
 
+  /* A version-1 cat (chapter 1 only) in the version-2 shape. Nothing is lost: `done`/`doneAt`
+   * become finished.ch01, `dream` becomes dreams.ch01 ('' when a finished chapter 1 skipped it),
+   * the one Hollow record becomes the 1s', and
+   * a choice keyed by its frame id ("f031") is keyed "ch01:f031". */
+  function isV1Cat(c) {
+    if (isObj(c.finished) || isObj(c.dreams)) return false;
+    return !(isObj(c.hollow) && isObj(c.hollow.byTable));
+  }
+  function fromV1(c) {
+    var out = {};
+    Object.keys(c).forEach(function (k) {
+      if (k !== 'done' && k !== 'doneAt' && k !== 'dream' && k !== 'hollow' && k !== 'choices') out[k] = c[k];
+    });
+    out.finished = {};
+    if (c.done === true) out.finished.ch01 = (typeof c.doneAt === 'number' && c.doneAt) || 1;
+    out.dreams = {};
+    // a finished chapter 1 went past the dream frame: an empty dream there was skipped
+    if (typeof c.dream === 'string' && (c.dream || out.finished.ch01)) out.dreams.ch01 = c.dream;
+    var h = isObj(c.hollow) ? c.hollow : {};
+    out.hollow = {
+      rounds: num(h.rounds, 0),
+      byTable: { '1': { rounds: num(h.rounds, 0), cleanRounds: num(h.cleanRounds, 0), glow: !!h.glow } }
+    };
+    out.choices = {};
+    if (isObj(c.choices)) Object.keys(c.choices).forEach(function (k) { out.choices[k.indexOf(':') >= 0 ? k : 'ch01:' + k] = c.choices[k]; });
+    return out;
+  }
+  /* A saved lesson the runner can take up: { mode?, frame?, chapter?, state } whose state has a
+   * queue of facts (finite a and b), a whole-number pos inside it, a log list and a requeues
+   * object. Anything else (a hand-edited or half-written save) is dropped, so E.lessonAt,
+   * E.counts.done and the keypad never meet it; the Count is simply started again. */
+  function okNum(v) { return typeof v === 'number' && isFinite(v); }
+  function okLesson(L) {
+    if (!isObj(L) || !isObj(L.state)) return false;
+    if (L.mode != null && L.mode !== 'chapter' && L.mode !== 'hollow') return false;
+    if (L.frame != null && typeof L.frame !== 'string' && typeof L.frame !== 'number') return false;
+    if (L.chapter != null && typeof L.chapter !== 'string') return false;
+    var st = L.state;
+    if (!Array.isArray(st.queue) || !st.queue.every(function (q) { return isObj(q) && okNum(q.a) && okNum(q.b); })) return false;
+    if (!okNum(st.pos) || st.pos !== Math.floor(st.pos) || st.pos < 0 || st.pos > st.queue.length) return false;
+    if (!Array.isArray(st.log) || !st.log.every(isObj) || !isObj(st.requeues)) return false;
+    if (st.lines != null && !isObj(st.lines)) return false;
+    if ((st.pool != null && !Array.isArray(st.pool)) || (st.asked != null && !Array.isArray(st.asked))) return false;
+    return true;
+  }
+  E.okLesson = okLesson;
   function normCat(c, i) {
+    if (isV1Cat(c)) c = fromV1(c);
     var b = E.blankCat({ id: typeof c.id === 'string' && c.id ? c.id : undefined, index: i });
     var out = b;
     Object.keys(b).forEach(function (k) {
@@ -300,19 +469,39 @@
       var v = c[k];
       if (Array.isArray(b[k])) { if (Array.isArray(v)) out[k] = v; }
       else if (isObj(b[k])) { if (isObj(v)) out[k] = v; }
-      else if (k === 'lesson') { out[k] = isObj(v) ? v : null; }
-      else if (k === 'chapter' || k === 'frame' || k === 'doneAt') { out[k] = (typeof v === 'string' || typeof v === 'number') ? v : null; }
+      else if (k === 'lesson') { out[k] = okLesson(v) ? v : null; }
+      else if (k === 'hollowWaiting') { out[k] = okLesson(v) && v.mode === 'hollow' ? v : null; }
+      else if (k === 'chapter' || k === 'frame') { out[k] = (typeof v === 'string' || typeof v === 'number') ? v : null; }
       else if (typeof v === typeof b[k]) out[k] = v;
     });
     var look = E.defaultLook(i);
     E.LOOK_KEYS.forEach(function (k) { if (out.look && typeof out.look[k] === 'string') look[k] = out.look[k]; });
     out.look = look;
-    if (!isObj(out.hollow)) out.hollow = { rounds: 0, cleanRounds: 0, glow: false };
-    ['rounds', 'cleanRounds'].forEach(function (k) { if (typeof out.hollow[k] !== 'number') out.hollow[k] = 0; });
-    out.hollow.glow = !!out.hollow.glow;
+    var h = isObj(out.hollow) ? out.hollow : {};
+    out.hollow = { rounds: num(h.rounds, 0), byTable: {} };
+    if (isObj(h.byTable)) Object.keys(h.byTable).forEach(function (t) {
+      var r = h.byTable[t];
+      if (!isObj(r)) return;
+      out.hollow.byTable[t] = { rounds: num(r.rounds, 0), cleanRounds: num(r.cleanRounds, 0), glow: !!r.glow };
+    });
+    Object.keys(out.finished).forEach(function (k) { if (!out.finished[k]) delete out.finished[k]; });
+    Object.keys(out.dreams).forEach(function (k) { if (typeof out.dreams[k] !== 'string') delete out.dreams[k]; });
+    // places (none in a version-1 save, or a version-2 save from before them): { frame, history,
+    // lesson } each; a place with no frame is a chapter lesson waiting for its frame (E.lessonAt)
+    var pl = out.places;
+    out.places = {};
+    Object.keys(pl).forEach(function (id) {
+      var p = pl[id];
+      if (!isObj(p)) return;
+      var frame = typeof p.frame === 'string' || typeof p.frame === 'number' ? p.frame : null;
+      var lesson = okLesson(p.lesson) ? p.lesson : null;
+      if (frame == null && !lesson) return;
+      out.places[id] = { frame: frame, history: frame != null && Array.isArray(p.history) ? p.history : [], lesson: lesson };
+    });
     return out;
   }
-  /* Bring any stored value up to the current save shape. Never throws. */
+  /* Bring any stored value up to the current save shape: version 1 (chapter 1's) or 2. Lossless
+   * for a version-1 save, idempotent, and never throws. */
   E.migrate = function (data) {
     var s = E.newSave();
     if (!isObj(data)) return s;
@@ -366,8 +555,140 @@
     return store;
   };
 
+  /* ------------------------------------------------------------ gifts and treasures */
+  E.TREASURES = [
+    { id: 'moss', name: 'A pillow of soft green moss' },
+    { id: 'feather', name: 'A blue jay feather' },
+    { id: 'shell', name: 'A tiny river shell' },
+    { id: 'pebble', name: 'A shiny speckled pebble' },   // speckled: Riffle’s lucky stone is the striped one
+    { id: 'acorn', name: 'An acorn in its little hat' },
+    { id: 'snail', name: 'A swirly snail shell (nobody home)' },
+    { id: 'eggshell', name: 'A sky-blue robin’s eggshell' },
+    { id: 'glass', name: 'A piece of river glass, smooth as soap' },
+    { id: 'clover', name: 'A four-leaf clover' },
+    { id: 'dandelion', name: 'A dandelion puff (don’t sneeze!)' },
+    { id: 'leaf', name: 'A bright red leaf from leaf-drop' },
+    { id: 'pinecone', name: 'A tiny pinecone' },
+    { id: 'marble', name: 'A Tallwalker marble with a swirl inside' },
+    { id: 'button', name: 'A lost Tallwalker button, very shiny' }
+  ];
+  /* Gifts come from the story (a frame's `gift`), once each; My nest shows them first. */
+  E.GIFTS = [
+    { id: 'riffle-stone', name: 'Riffle’s lucky stone: dark and smooth, with a white stripe all the way around', from: 'Riffle' }
+  ];
+  E.gift = function (id) {
+    for (var i = 0; i < E.GIFTS.length; i++) if (E.GIFTS[i].id === id) return E.GIFTS[i];
+    return null;
+  };
+  E.treasure = function (id) {
+    for (var i = 0; i < E.TREASURES.length; i++) if (E.TREASURES[i].id === id) return E.TREASURES[i];
+    return E.gift(id);
+  };
+  /* Put a gift in her nest, once. Returns true when it is new. */
+  E.giveGift = function (cat, id) {
+    if (!id || !cat) return false;
+    if (!Array.isArray(cat.nest)) cat.nest = [];
+    if (cat.nest.indexOf(id) >= 0) return false;
+    cat.nest.push(id);
+    return true;
+  };
+  /* The nest, grouped: [{ treasure, count, gift }] in the order first found. */
+  E.nestItems = function (cat) {
+    var seen = {}, out = [];
+    (cat.nest || []).forEach(function (id) {
+      if (seen[id]) { seen[id].count++; return; }
+      var g = E.gift(id);
+      var t = E.treasure(id) || { id: id, name: id };
+      seen[id] = { treasure: t, count: 1, gift: !!g };
+      out.push(seen[id]);
+    });
+    return out;
+  };
+  /* For My nest: the gifts from friends first, then the treasures. */
+  E.nestGroups = function (cat) {
+    var all = E.nestItems(cat);
+    return { gifts: all.filter(function (x) { return x.gift; }), treasures: all.filter(function (x) { return !x.gift; }) };
+  };
+
+  /* ------------------------------------------------------------ lines that show `when` they match
+   * A book recap line, a caption, a balloon or a choice option shows when every key in its `when`
+   * matches: a flag first, then the look (sex, fur ...), then the cat's own fields. A value may be
+   * a list (any of). Two lesson keys: `lessonClean: 'ch02-tails'` (that lesson finished with no
+   * help) and `firstTry: '10x2'` (her most recent first ask of that fact, in either order, was
+   * right without help). `not: { … }` matches when what it holds does not. No `when` = always. */
+  function anyOf(want, fn) { return asList(want).some(function (w) { return fn(w); }); }
+  E.lessonClean = function (cat, setId) {
+    var L = cat && cat.lessons && cat.lessons[setId];
+    return !!(L && L.noHelp && L.finished !== false);
+  };
+  E.firstTry = function (cat, key) {
+    var m = /^(\d+)\s*[x×*]\s*(\d+)$/.exec(String(key == null ? '' : key).trim());
+    if (!m) return false;
+    var k = pairKey(+m[1], +m[2]), log = (cat && cat.counts) || [];
+    for (var i = log.length - 1; i >= 0; i--) {
+      var e = log[i];
+      if (!e || e.retry || e.filler || pairKey(e.a, e.b) !== k) continue;
+      return !!e.correct && !e.helped;
+    }
+    return false;
+  };
+  E.matches = function (when, cat) {
+    if (!when) return true;
+    if (!isObj(when)) return true;
+    cat = cat || {};
+    return Object.keys(when).every(function (k) {
+      var want = when[k], have;
+      if (k === 'not') return isObj(want) ? !E.matches(want, cat) : true;
+      if (k === 'lessonClean') return anyOf(want, function (s) { return E.lessonClean(cat, s); });
+      if (k === 'firstTry') return anyOf(want, function (f) { return E.firstTry(cat, f); });
+      if (cat.flags && own(cat.flags, k)) have = cat.flags[k];
+      else if (cat.look && own(cat.look, k)) have = cat.look[k];
+      else if (own(cat, k) && k !== 'flags' && k !== 'look') have = cat[k];
+      if (Array.isArray(want)) return want.indexOf(have) !== -1;
+      if (want === true) return have === true;
+      if (want === false) return have === false || have == null || have === '';
+      return have === want;
+    });
+  };
+  /* A frame's captions as she sees them (raw text, tokens unfilled): a caption is a string or
+   * { when, text }. */
+  E.captions = function (frame, cat) {
+    return asList(frame && frame.caption).map(function (c) {
+      if (typeof c === 'string') return c;
+      if (isObj(c) && typeof c.text === 'string' && E.matches(c.when, cat)) return c.text;
+      return null;
+    }).filter(function (c) { return c; });
+  };
+  /* A frame's balloons as she sees them: [{ who, text, kind, … }]. `nth` is the speaker's place
+   * among all of that speaker's balloons (hidden ones included), so a balloon keeps its cast
+   * member however many before it are hidden. */
+  E.balloons = function (frame, cat) {
+    var nth = {}, out = [];
+    asList(frame && frame.say).forEach(function (s) {
+      if (typeof s === 'string') s = { text: s };
+      if (!isObj(s)) return;
+      var who = s.who || '';
+      var k = nth[who] = nth[who] == null ? 0 : nth[who] + 1;
+      if (!E.matches(s.when, cat)) return;
+      var b = {};
+      Object.keys(s).forEach(function (x) { if (x !== 'when') b[x] = s[x]; });
+      b.who = who; b.nth = k;
+      out.push(b);
+    });
+    return out;
+  };
+  /* A choice's options as she sees them: [{ option, index }] (index into choice.options). An
+   * option with a `when` that doesn't match is hidden; a choice keeps at least one option. */
+  E.options = function (frame, cat) {
+    var opts = (frame && frame.choice && frame.choice.options) || [];
+    var out = [];
+    opts.forEach(function (o, i) { if (o && E.matches(o.when, cat)) out.push({ option: o, index: i }); });
+    if (!out.length && opts.length) out.push({ option: opts[0], index: 0 });
+    return out;
+  };
+
   /* ------------------------------------------------------------ flow */
-  E.KINDS = ['next', 'choice', 'input', 'look', 'counts', 'end'];
+  E.KINDS = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'end'];
   E.kindOf = function (frame) {
     if (!frame) return null;
     if (frame.end) return 'end';
@@ -375,16 +696,168 @@
     if (frame.input) return 'input';
     if (frame.look) return 'look';
     if (frame.counts) return 'counts';
+    if (frame.skip) return 'skip';
     if (frame.next) return 'next';
     return 'end';
   };
+  /* Arriving on a frame: an end frame finishes its chapter (the first time); a gift frame puts its
+   * gift in her nest (once; Back never takes it away). */
+  function arrive(cat, story, id, now) {
+    var f = story.frames[id];
+    if (!f) return;
+    if (f.end && !E.isFinished(cat, story.id)) {
+      if (!isObj(cat.finished)) cat.finished = {};
+      cat.finished[story.id] = now || 1;
+    }
+    if (f.gift) E.giveGift(cat, f.gift);
+  }
+  /* ------------------------------------------------------------ places: one reading position per chapter
+   * The chapter she is reading keeps its place on the cat itself (`chapter`, `frame`, `history`,
+   * and its lesson in progress in `lesson`). Every other chapter she is partway through waits in
+   * `places`, by chapter id: { frame, history, lesson }. Going from one chapter to another parks
+   * the one she leaves (E.startChapter, E.openChapter), so reading a finished chapter again never
+   * moves her place in another; E.openChapter picks a parked place up where she left it. A
+   * finished chapter is never parked: it is read again from its start. The one lesson slot
+   * (`lesson`) is shared with the Training Hollow: a chapter lesson that gives way to a Hollow round
+   * waits in its chapter's place with no frame, and E.lessonAt brings it back at its frame. */
+  // L, when it is a chapter lesson of chapter `id` (a lesson with no `chapter` belongs to `owner`)
+  function lessonOf(L, owner, id) {
+    return isObj(L) && L.mode !== 'hollow' && isObj(L.state) && (L.chapter || owner) === id ? L : null;
+  }
+  function placesOf(cat) { return isObj(cat.places) ? cat.places : (cat.places = {}); }
+  function busy(L) { return isObj(L) && isObj(L.state) && !E.counts.done(L.state); }
+  // Two chapter lessons of one chapter in progress and one place to keep them (a Count she counts
+  // again while a later lesson waits): a first go is never pushed out by counting a finished Count
+  // again; otherwise the newer stays.
+  function keepOne(cat, newer, older) {
+    if (!busy(older)) return newer || older || null;
+    if (!busy(newer)) return older;
+    var again = function (L) { return !!(L.state.set && isObj(cat.lessons) && cat.lessons[L.state.set]); };
+    return again(newer) && !again(older) ? older : newer;
+  }
+  /* Park the chapter she is reading (its frame, back-history and lesson in progress); a finished
+   * one is let go. Afterwards she is reading nothing, until the caller opens a chapter. */
+  function park(cat) {
+    var id = cat.chapter;
+    if (!id) return;
+    var P = placesOf(cat), waiting = P[id] && P[id].lesson;
+    var L = lessonOf(cat.lesson, id, id);
+    if (L && !busy(L)) { E.settleLesson(cat); L = null; }   // all answered, never recorded: record it
+    if (L) cat.lesson = null;
+    delete P[id];
+    if (cat.frame != null && !E.isFinished(cat, id)) P[id] = { frame: cat.frame, history: cat.history || [], lesson: keepOne(cat, L, waiting) };
+    cat.chapter = null; cat.frame = null; cat.history = [];
+  }
+  /* Where she is in a chapter: { frame, history, lesson } (the chapter she is reading, or a parked
+   * one), else null. */
+  E.place = function (cat, id) {
+    if (!cat || !id) return null;
+    var P = isObj(cat.places) ? cat.places[id] : null;
+    if (cat.chapter === id && cat.frame != null) {
+      return { frame: cat.frame, history: cat.history || [], lesson: lessonOf(cat.lesson, id, id) || (P && P.lesson) || null };
+    }
+    return P && P.frame != null ? { frame: P.frame, history: P.history || [], lesson: P.lesson || null } : null;
+  };
+  /* Read a chapter from its first page (a new chapter, or a finished one again). The chapter she
+   * was reading is parked first; this chapter's own old place, if any, is let go. */
   E.startChapter = function (cat, story, now) {
+    if (cat.chapter && cat.chapter !== story.id) park(cat);
+    if (isObj(cat.places)) delete cat.places[story.id];
     cat.chapter = story.id;
     cat.frame = story.start;
     cat.history = [];
-    cat.lesson = null;
+    if (!(isObj(cat.lesson) && cat.lesson.mode === 'hollow')) cat.lesson = null;   // a Hollow round in progress stays
+    arrive(cat, story, story.start, now);
     if (now) cat.updated = now;
     return cat;
+  };
+  /* Go to a chapter where she left it: the chapter she is reading carries on; a parked place is
+   * picked up (frame, back-history, lesson); else the chapter starts from its first page. */
+  E.openChapter = function (cat, story, now) {
+    if (cat.chapter === story.id && cat.frame != null) return cat;
+    var P = isObj(cat.places) ? cat.places[story.id] : null;
+    if (!P || P.frame == null) return E.startChapter(cat, story, now);
+    park(cat);
+    delete cat.places[story.id];
+    cat.chapter = story.id;
+    cat.frame = P.frame;
+    cat.history = Array.isArray(P.history) ? P.history : [];
+    if (P.lesson) {
+      if (isObj(cat.lesson) && !busy(cat.lesson)) E.settleLesson(cat);
+      // a Hollow round in progress keeps the slot; the chapter's lesson waits for its frame
+      if (busy(cat.lesson)) cat.places[story.id] = { frame: null, history: [], lesson: P.lesson };
+      else cat.lesson = P.lesson;
+    }
+    if (now) cat.updated = now;
+    return cat;
+  };
+  /* The chapter lesson in progress at this frame of the chapter she is reading, or null. One that
+   * waits in the chapter's place takes the slot now (as starting a lesson there would). */
+  E.lessonAt = function (cat, story, frameId) {
+    if (!cat || !story) return null;
+    var L = lessonOf(cat.lesson, cat.chapter, story.id);
+    if (L && L.frame === frameId && busy(L)) return L;
+    var P = cat.chapter === story.id && isObj(cat.places) ? cat.places[story.id] : null;
+    var W = P && lessonOf(P.lesson, story.id, story.id);
+    if (W && W.frame === frameId && busy(W)) {
+      delete cat.places[story.id];
+      setAsideHollow(cat);
+      cat.lesson = W;
+      return W;
+    }
+    return null;
+  };
+  /* A Training Hollow round in progress gives way to a chapter lesson as a chapter lesson gives way
+   * to a round: when E.lessonAt or E.beginLesson takes the slot from it, it waits in
+   * `hollowWaiting` (a round all answered but never recorded counts now instead), and E.hollowRound
+   * hands it back when she opens the Hollow again. */
+  function setAsideHollow(cat) {
+    var L = cat.lesson;
+    if (!(isObj(L) && L.mode === 'hollow' && isObj(L.state))) return;
+    if (!busy(L)) { E.settleLesson(cat); return; }
+    cat.hollowWaiting = L;
+    cat.lesson = null;
+  }
+  /* The Training Hollow round in progress, in the slot, or null. One that gave way to a chapter
+   * lesson comes back into the slot now, and that chapter lesson waits in its chapter's place
+   * (E.holdLesson), as it does when a round starts. A round in the slot is returned as it is (the
+   * caller settles one whose last answer is in). */
+  E.hollowRound = function (cat) {
+    if (!cat) return null;
+    var L = cat.lesson;
+    if (isObj(L) && L.mode === 'hollow' && isObj(L.state)) return L;
+    var W = cat.hollowWaiting;
+    if (!(isObj(W) && W.mode === 'hollow' && busy(W))) { cat.hollowWaiting = null; return null; }
+    E.holdLesson(cat);
+    if (busy(cat.lesson)) return null;   // the slot can't be freed: the round keeps waiting
+    cat.lesson = W;
+    cat.hollowWaiting = null;
+    return W;
+  };
+  /* Before a Training Hollow round takes the lesson slot: a chapter lesson in progress there waits
+   * in its chapter's place (E.lessonAt brings it back at its frame). */
+  E.holdLesson = function (cat) {
+    var L = cat && isObj(cat.lesson) && cat.lesson.mode !== 'hollow' && isObj(cat.lesson.state) ? cat.lesson : null;
+    if (!L) return false;
+    if (!busy(L)) { E.settleLesson(cat); return false; }   // all answered, never recorded: record it
+    var id = L.chapter || cat.chapter, P = placesOf(cat);
+    // a lesson already waiting there (one she left to count an earlier Count again) is kept too
+    if (id && id === cat.chapter) P[id] = { frame: null, history: [], lesson: keepOne(cat, L, P[id] && P[id].frame == null ? P[id].lesson : null) };
+    else if (id && P[id] && P[id].frame != null) P[id].lesson = keepOne(cat, L, P[id].lesson);
+    else return false;
+    cat.lesson = null;
+    return true;
+  };
+  /* A chapter lesson starts at a frame ("Let’s count!", or "Count them again" on a Count she has
+   * finished) and takes the slot. A lesson still going at another frame of this chapter (she went
+   * Back past it to count an earlier Count again) waits in the chapter's place, as it does for a
+   * Hollow round, and E.lessonAt hands it back at its own frame. Returns the new lesson. */
+  E.beginLesson = function (cat, story, frameId, state) {
+    var L = lessonOf(cat.lesson, cat.chapter, story.id);
+    if (L && L.frame !== frameId && cat.chapter === story.id) E.holdLesson(cat);
+    setAsideHollow(cat);   // a Hollow round in progress waits too (E.hollowRound)
+    cat.lesson = { mode: 'chapter', frame: frameId, chapter: story.id, state: state };
+    return cat.lesson;
   };
   /* The frame a cat is on. A save that points at a frame the story no longer has (the story was
    * edited) falls back to the last frame in its history that still exists, then the start. */
@@ -401,33 +874,49 @@
     if (cat.history.length > E.HISTORY_CAP) cat.history.splice(0, cat.history.length - E.HISTORY_CAP);
     cat.frame = to;
     cat.chapter = story.id;
-    if (story.frames[to].end && !cat.done) { cat.done = true; cat.doneAt = now || null; }
+    arrive(cat, story, to, now);
     if (now) cat.updated = now;
     return true;
   };
   E.next = function (cat, story, now) {
     var f = E.currentFrame(cat, story);
-    var to = f && (f.next || (f.look && f.look.next));
+    var to = f && (f.next || (f.look && f.look.next) || (f.skip && f.skip.next));
     return E.go(cat, story, to, now);
+  };
+  /* A choice is remembered under "chapter:frame", so chapters never overwrite each other's. */
+  E.choiceKey = function (story, frameId) { return story.id + ':' + frameId; };
+  E.chosen = function (cat, story, frameId) {
+    var c = cat && cat.choices && cat.choices[E.choiceKey(story, frameId)];
+    return c || null;
   };
   E.choose = function (cat, story, index, now) {
     var id = E.frameId(cat, story), f = story.frames[id];
     if (!f || !f.choice || !f.choice.options || !f.choice.options[index]) return false;
+    // a hidden option can't be chosen
+    if (!E.options(f, cat).some(function (o) { return o.index === index; })) return false;
     var opt = f.choice.options[index];
     if (isObj(opt.sets)) Object.keys(opt.sets).forEach(function (k) { cat.flags[k] = opt.sets[k]; });
-    cat.choices[id] = { index: index, label: opt.label };
+    cat.choices[E.choiceKey(story, id)] = { index: index, label: opt.label };
     return E.go(cat, story, opt.next, now);
   };
-  /* Store what she typed (cleaned) and move on. For a dream, an empty value means skipped. */
+  /* Store what she typed (cleaned) and move on. For a dream, an empty value means skipped; each
+   * chapter keeps its own dream. */
   E.submitInput = function (cat, story, value, now) {
     var id = E.frameId(cat, story), f = story.frames[id];
     if (!f || !f.input) return false;
     var kind = f.input.kind;
     if (kind === 'petname') cat.petname = E.cleanPetName(value, f.input.suggestions && f.input.suggestions[0]);
     else if (kind === 'clanname') cat.name = E.cleanClanName(value, f.input.suggestions && f.input.suggestions[0]);
-    else if (kind === 'dream') cat.dream = E.cleanDream(value);
+    else if (kind === 'dream') { if (!isObj(cat.dreams)) cat.dreams = {}; cat.dreams[story.id] = E.cleanDream(value); }
     else if (kind) { cat.flags[kind] = E.cleanDream(value); }
     return E.go(cat, story, f.input.next, now);
+  };
+  /* Her dream for a chapter, as typed ('' when skipped or not reached). */
+  E.dreamOf = function (cat, chapterId) {
+    if (!cat) return '';
+    if (typeof cat.dream === 'string' && cat.dream) return cat.dream;   // a version-1 cat, or a test's
+    var d = isObj(cat.dreams) && chapterId ? cat.dreams[chapterId] : '';
+    return typeof d === 'string' ? d : '';
   };
   E.confirmLook = function (cat, story, look, now) {
     var f = E.currentFrame(cat, story);
@@ -436,11 +925,15 @@
     cat.flags.looked = true;
     return E.go(cat, story, f.look.next, now);
   };
+  /* Next on a Counts frame (its lesson just finished, or finished before). Only this frame's own
+   * lesson leaves the slot: Next on an earlier Count she finished long ago (she went Back past a
+   * later lesson in progress) never touches that later lesson, nor a Training Hollow round. */
   E.finishCounts = function (cat, story, summary, now) {
-    var f = E.currentFrame(cat, story);
+    var id = E.frameId(cat, story), f = story.frames[id];
     if (!f || !f.counts) return false;
     if (summary) cat.lessons[f.counts.set] = summary;
-    cat.lesson = null;
+    var L = cat.lesson;
+    if (!(isObj(L) && (L.mode === 'hollow' || (busy(L) && L.frame !== id)))) cat.lesson = null;
     return E.go(cat, story, f.counts.next, now);
   };
   E.canBack = function (cat) { return !!(cat && cat.history && cat.history.length); };
@@ -460,19 +953,73 @@
     if (k === 'input') return [frame.input.next];
     if (k === 'look') return [frame.look.next];
     if (k === 'counts') return [frame.counts.next];
+    if (k === 'skip') return [frame.skip.next];
     return [];
+  };
+
+  /* ------------------------------------------------------------ the skip-count
+   * `skip: { table, groups, who?, next, done? }`: each tap counts the next group, lighting its
+   * things and adding its running total (2, 4, 6…). Nothing can be got wrong and nothing is logged.
+   * skipView(skip, taps) is what the panel shows after that many taps. */
+  E.skipView = function (skip, taps) {
+    skip = skip || {};
+    var table = Math.max(1, num(skip.table, 2) | 0), groups = Math.max(1, num(skip.groups, 5) | 0);
+    var n = Math.max(0, Math.min(groups, num(taps, 0) | 0));
+    var totals = [];
+    for (var i = 1; i <= n; i++) totals.push(i * table);
+    var done = n >= groups;
+    return {
+      table: table, groups: groups, per: table, taps: n, highlight: n * table,
+      total: n * table, totals: totals, done: done,
+      // the teacher's balloon keeps the count: "2… 4… 6…", and the last number on its own at the end
+      count: !n ? '' : totals.join('… ') + (done ? '!' : '…')
+    };
+  };
+
+  /* ------------------------------------------------------------ scene options from the cat
+   * On the `hollow` set, `marks: 'auto'` is one mark per Count she has finished a chapter lesson
+   * for, and `glow: 'auto'` lights each mark whose Count glows in the Training Hollow. On the `den`,
+   * `stone: 'auto'` is Riffle's stone where she put it (`flags.ch2Stone`). The story's own scene is
+   * never changed: a resolved scene is a copy. */
+  E.resolveScene = function (scene, cat, stories) {
+    if (!scene || !isObj(scene.opts)) return scene;
+    var o = scene.opts;
+    if (o.marks !== 'auto' && o.glow !== 'auto' && o.stone !== 'auto') return scene;
+    var s = clone(scene);
+    if (o.marks === 'auto' || o.glow === 'auto') {
+      var counts = E.learnedCounts(cat, stories).slice(0, E.MAX_MARKS);
+      var byT = (cat && cat.hollow && cat.hollow.byTable) || {};
+      if (s.opts.marks === 'auto') s.opts.marks = counts.length;
+      if (s.opts.glow === 'auto') s.opts.glow = counts.map(function (c) { return !!(byT[c.table] && byT[c.table].glow); });
+    }
+    // the den's `stone: 'auto'`: Riffle's stone where she put it in her nest (chapter 2's f108 sets
+    // `ch2Stone`, 'nose' or 'chin'); not chosen yet, between her paws
+    if (o.stone === 'auto') {
+      var put = cat && isObj(cat.flags) ? cat.flags.ch2Stone : null;
+      s.opts.stone = put === 'nose' || put === 'chin' ? put : true;
+    }
+    return s;
   };
 
   /* ------------------------------------------------------------ the Counts runner
    * A lesson is plain data, so it can be saved mid-lesson and resumed:
-   *   state = { set, table, queue: [{a,b,retry,filler?,hard?}], pos, requeues: {"3x1": n}, log: [],
-   *             lines, missed }
+   *   state = { set, table, queue: [{a,b,retry,filler?,hard?, …}], pos, requeues: {"3x1": n}, log: [],
+   *             lines, missed, pool? }
    * question(state) -> the fact to ask now, or null when the lesson is over.
    * answer(state, def, value, ms, now) -> what happened (and the state moves on).
    * A miss shows help, reveals the answer, and puts the fact back exactly two questions later, at
    * most twice per fact. Near the end of a lesson there may be fewer than two questions left, so
-   * filler questions (facts she already got right in this lesson) are added first: the retry never
-   * comes straight back. Nothing ever blocks: every answer moves the lesson forward. */
+   * filler questions are added first: from the set named by `fillFrom` (her right answers there,
+   * then its facts; carried in state.pool), else facts she already got right in this lesson, else
+   * other facts from it already asked. A fact still ahead in the queue is never a filler (it would
+   * be asked twice running), and while there is another to take, a filler is never a pair this
+   * lesson has asked already, nor one its sibling sets (the pile and the check: the sets of the
+   * chapter that borrow from the same set) asked in this reading (state.asked). A borrowed filler
+   * carries `from`, its lending set: it is asked in that set's picture and words, with that set's
+   * praise (E.questionDef). With too few fillers the retry comes back as late as it can. Nothing
+   * ever blocks: every answer moves the lesson forward.
+   * A fact is [a, b] or { a, b, table?, groups?, per?, picture?, who?, lit?, light?, prompt?,
+   * retryPrompt?, right?, rightAgain?, rightPicture?, check?, hard? }. */
   function factKey(a, b) { return a + 'x' + b; }
   function pairKey(a, b) { return Math.min(a, b) + 'x' + Math.max(a, b); }   // 9×1 and 1×9 are one fact
   function groupsFor(a, b, table) {
@@ -481,20 +1028,30 @@
     if (table && a === table) return { groups: b, per: a };
     return { groups: a, per: b };
   }
+  /* A fact's own keys. `who` puts characters in the picture's places (the rim cats); `lit` is how
+   * many things glow as it is asked (2 × 6: the first five cats' ten ears); `light: 'groups'`
+   * lights the picture a group at a time as it is asked, with no number (the pile's stacks, or the
+   * check's two rows); `check: true` goes on its log entry (E.hardFacts skips a right one). */
+  var FACT_KEYS = ['table', 'groups', 'per', 'picture', 'who', 'lit', 'light', 'check', 'prompt', 'retryPrompt', 'right', 'rightAgain', 'rightPicture'];
+  // a retry is pictured the same and asked plainly, unless the fact keeps a prompt for it (retryPrompt)
+  var RETRY_KEYS = ['table', 'groups', 'per', 'picture', 'who', 'lit', 'light', 'check', 'rightPicture'];
+  function normFact(f) {
+    if (Array.isArray(f)) return { a: +f[0], b: +f[1], retry: false };
+    var item = { a: +f.a, b: +f.b, retry: false };
+    if (f.hard) item.hard = true;
+    FACT_KEYS.forEach(function (k) { if (f[k] != null) item[k] = clone(f[k]); });
+    return item;
+  }
+  function copyKeys(from, to, keys) { keys.forEach(function (k) { if (from[k] != null) to[k] = clone(from[k]); }); return to; }
   var C = {};
   C.start = function (def, opts) {
     opts = opts || {};
     var facts = opts.facts || def.facts || [];
-    return {
+    var st = {
       set: opts.set || def.id || null,
       table: def.table || null,
       mode: opts.mode || 'chapter',
-      // a fact is [a, b] or { a, b, hard } (the Hollow marks facts that were hard last time)
-      queue: facts.map(function (f) {
-        var item = Array.isArray(f) ? { a: +f[0], b: +f[1], retry: false } : { a: +f.a, b: +f.b, retry: false };
-        if (!Array.isArray(f) && f.hard) item.hard = true;
-        return item;
-      }),
+      queue: facts.map(normFact),
       pos: 0,
       requeues: {},
       log: [],
@@ -502,75 +1059,145 @@
       missed: false,
       startedAt: opts.now || 0
     };
+    if (Array.isArray(opts.pool) && opts.pool.length) st.pool = opts.pool.map(function (p) { return copyKeys(p, { a: +p.a, b: +p.b }, ['table', 'from']); });
+    // the pairs this lesson's sibling sets have asked in this reading (a filler skips them while it can)
+    if (Array.isArray(opts.asked) && opts.asked.length) st.asked = opts.asked.slice();
+    return st;
   };
   C.done = function (st) { return !st || st.pos >= st.queue.length; };
+  /* The count of a miss goes up by the Count's table (2, 4, 6… for the 2s) when the picture's
+   * groups divide that way, else by one. */
+  function stepFor(table, per) { return table > 1 && per % table === 0 ? table : 1; }
   C.question = function (st) {
     if (C.done(st)) return null;
     var q = st.queue[st.pos];
-    var g = groupsFor(q.a, q.b, st.table);
+    var table = q.table || st.table || null;
+    var g = groupsFor(q.a, q.b, table);
+    if (typeof q.groups === 'number') g.groups = q.groups;
+    if (typeof q.per === 'number') g.per = q.per;
+    var first = !q.retry && !q.filler;
     return {
       a: q.a, b: q.b, answer: q.a * q.b, retry: !!q.retry, filler: !!q.filler, hard: !!q.hard,
+      from: q.from || null,
       number: st.pos + 1, total: st.queue.length,
-      groups: g.groups, per: g.per
+      groups: g.groups, per: g.per, table: table,
+      picture: q.picture || null,
+      who: Array.isArray(q.who) ? q.who : null,
+      lit: Math.max(0, num(q.lit, 0) | 0),
+      light: q.light === 'groups' || q.light === 'rows' ? q.light : null,
+      // a retry is asked plainly ("Here's that one again." and the generic question) unless the
+      // fact keeps a prompt for it (2 × 6's hop on from ten, the check's "Two rows of eight.")
+      prompt: first ? (q.prompt != null ? q.prompt : null) : (q.retry && q.retryPrompt != null ? q.retryPrompt : null),
+      right: first && q.right != null ? q.right : null,
+      rightPicture: q.rightPicture || null,
+      step: stepFor(table || 1, g.per)
     };
   };
   C.ask = function (def, q) {
     return E.fill(def.ask || '{a} × {b}', null, { a: q.a, b: q.b });
   };
-  /* Up to n facts to ask between a miss and its retry when the lesson is nearly over: facts she has
-   * already answered right in this lesson, most recent first; failing that, any other fact from
-   * the lesson's own list. Never the missed fact itself. */
+  /* Up to n facts to ask between a miss and its retry when the lesson is nearly over (see above).
+   * Never the missed pair or one still ahead; first, nothing already asked (in this lesson, or by a
+   * sibling set in this reading: state.asked); then, if that leaves too few, anything else. */
   function fillers(st, q, n) {
-    var miss = pairKey(q.a, q.b), out = [], taken = {};
+    var miss = pairKey(q.a, q.b), out = [], taken = {}, asked = {};
     taken[miss] = true;
-    function add(a, b) {
-      var k = pairKey(a, b);
-      if (out.length >= n || taken[k]) return;
-      taken[k] = true;
-      out.push({ a: a, b: b, retry: false, filler: true });
-    }
-    for (var i = st.log.length - 1; i >= 0 && out.length < n; i--) {
+    for (var k = st.pos + 1; k < st.queue.length; k++) taken[pairKey(st.queue[k].a, st.queue[k].b)] = true;
+    st.log.forEach(function (e) { asked[pairKey(e.a, e.b)] = true; });
+    (st.asked || []).forEach(function (key) { asked[key] = true; });
+    var cands = [];
+    (st.pool || []).forEach(function (p) { cands.push({ a: p.a, b: p.b, table: p.table, from: p.from }); });
+    for (var i = st.log.length - 1; i >= 0; i--) {
       var e = st.log[i];
-      if (e.correct) add(e.a, e.b);
+      if (e.correct) cands.push({ a: e.a, b: e.b, table: e.table });
     }
-    for (var j = 0; j < st.queue.length && out.length < n; j++) {
+    for (var j = 0; j <= st.pos && j < st.queue.length; j++) {
       var it = st.queue[j];
-      if (!it.retry && !it.filler) add(it.a, it.b);
+      if (!it.retry && !it.filler) cands.push({ a: it.a, b: it.b, table: it.table });
     }
+    [true, false].forEach(function (fresh) {
+      cands.forEach(function (c) {
+        var key = pairKey(c.a, c.b);
+        if (out.length >= n || taken[key] || (fresh && asked[key])) return;
+        taken[key] = true;
+        var f = { a: c.a, b: c.b, retry: false, filler: true };
+        if (c.table && c.table !== st.table) f.table = c.table;
+        if (c.from) f.from = c.from;
+        out.push(f);
+      });
+    });
     return out;
+  }
+  /* The retry of a missed fact: pictured the same; its retryPrompt (true: the fact's own prompt)
+   * and its rightAgain lines (true: its `right` lines; by default, a fact whose picture regroups
+   * after a right answer keeps its `right` lines, which say why the picture moved). */
+  function retryOf(q) {
+    var r = copyKeys(q, { a: q.a, b: q.b, retry: true }, RETRY_KEYS);
+    var rp = q.retryPrompt === true ? q.prompt : q.retryPrompt;
+    if (rp != null && rp !== false) r.retryPrompt = clone(rp);
+    var ra = q.rightAgain === true ? q.right : q.rightAgain;
+    if (ra == null && q.rightPicture && q.right != null) ra = q.right;
+    if (ra != null && ra !== false) r.rightAgain = clone(ra);
+    if (q.from) r.from = q.from;
+    return r;
+  }
+  /* Lines tied to one question, as balloons: a string is the teacher's. */
+  function balloonList(x) {
+    return asList(x).map(function (b) { return typeof b === 'string' ? { text: b } : b; }).filter(function (b) { return b && b.text; });
   }
   C.answer = function (st, def, value, ms, now) {
     if (C.done(st)) return null;
     def = def || {};
     var q = st.queue[st.pos];
+    var qq = C.question(st);
     var right = q.a * q.b;
     var n = typeof value === 'number' ? value : parseInt(String(value == null ? '' : value).replace(/\D/g, ''), 10);
     var given = isNaN(n) ? null : n;
     var correct = given === right;
     ms = Math.max(0, Math.round(+ms || 0));
-    var g = groupsFor(q.a, q.b, st.table);
     var entry = {
       set: st.set, a: q.a, b: q.b, answer: given, correct: correct, ms: ms,
       helped: !correct, retry: !!q.retry, at: now || 0
     };
     if (q.filler) entry.filler = true;
+    if (q.from) entry.from = q.from;   // a borrowed question: the set it came from
+    // a check (the pile's 8 × 2 and 2 × 8): its clock runs while she reads, and "sixteen" is on
+    // screen by then, so a right one never makes the fact hard or easy (E.hardFacts)
+    if (q.check) entry.check = true;
+    if (q.table && q.table !== st.table) entry.table = q.table;   // a fact from another Count (mixed lessons)
     // "after a miss" lines are true only once a miss has happened in this lesson
     var missedBefore = !!st.missed || st.log.some(function (e) { return !e.correct; });
     st.log.push(entry);
     var res = { correct: correct, right: right, fast: correct && ms < E.FAST_MS, entry: entry, requeued: false, line: '', lineKind: '' };
     var L = st.lines || (st.lines = { praise: 0, fast: 0, again: 0, fastLast: false });
     if (correct) {
+      if (q.rightPicture) res.rightPicture = clone(q.rightPicture);
       // after a miss in this lesson (and only then) the fastAfterMiss lines lead, taking turns with the fast ones
       var afterMiss = missedBefore && def.fastAfterMiss && def.fastAfterMiss.length ? asList(def.fastAfterMiss) : null;
       var fastLines = afterMiss ? afterMiss.concat(asList(def.fast)) : (def.fast && def.fast.length ? asList(def.fast) : null);
-      if (q.retry) {
+      if (q.retry && q.rightAgain != null) {
+        // this question's own lines for a right retry (the old tom's "Hmph."; 5 × 2's same ten)
+        res.balloons = clone(balloonList(q.rightAgain));
+        res.lineKind = 'right'; L.fastLast = false;
+      } else if (q.retry) {
         res.line = pick(def.again || ['There it is. You remembered that one.', 'Yes! That one came back, and you knew it.'], L.again++);
         res.lineKind = 'again'; L.fastLast = false;
       } else if (q.hard) {
-        // the Hollow remembers what was hard last time
+        // the Hollow (and an adaptive warm-up) remembers what was hard last time: "Not today!" only
+        // when it was quick today; right but slow again, it is getting easier
         var ri = L.remembered || 0; L.remembered = ri + 1;
-        res.line = E.fill(pick(def.remembered || 'Last time {a} × {b} made you stop and think. Not today!', ri), null, { a: q.a, b: q.b });
-        res.lineKind = 'remembered'; L.fastLast = false;
+        if (res.fast) {
+          res.line = pick(def.remembered || 'Last time {a} × {b} made you stop and think. Not today!', ri);
+          res.lineKind = 'remembered';
+        } else {
+          res.line = pick(def.rememberedSlow || '{a} × {b} again, and you got it. It’s getting easier.', ri);
+          res.lineKind = 'rememberedSlow';
+        }
+        L.fastLast = false;
+      } else if (qq.right) {
+        // this question's own lines, in place of praise (the story goes on in them)
+        res.balloons = clone(balloonList(qq.right));
+        res.lineKind = 'right'; L.fastLast = false;
       } else if (res.fast && fastLines && !L.fastLast) {
         var fi = afterMiss ? (L.fastAfter || 0) : L.fast;
         if (afterMiss) L.fastAfter = fi + 1; else L.fast++;
@@ -578,11 +1205,20 @@
       } else {
         res.line = pick(def.praise || ['Yes!'], L.praise++); res.lineKind = 'praise'; L.fastLast = false;
       }
+      res.line = fillFact(res.line, q);
     } else {
       L.fastLast = false;
       st.missed = true;
       res.lineKind = 'miss';
-      res.help = { a: q.a, b: q.b, answer: right, groups: g.groups, per: g.per };
+      res.help = { a: q.a, b: q.b, answer: right, groups: qq.groups, per: qq.per };
+      // `near`: one hop of the count off (|answer − right| ≤ step: 1 on the 1s, 2 on the 2s, the hop
+      // the sand counts in), or exactly one group off (a row of eight on the check: one row counted,
+      // or three), when the help opens on "Close." (the set's helpIntro). Not anything within a
+      // row: 10 or 24 for the check's 16 is not close.
+      var off = given != null ? Math.abs(given - right) : null;
+      res.near = off != null && (off <= Math.max(1, qq.step) || off === qq.per);
+      if (qq.table && qq.table !== 1) res.help.table = qq.table;
+      if (qq.step !== 1) res.help.step = qq.step;
       var key = factKey(q.a, q.b);
       var used = st.requeues[key] || 0;
       if (used < E.MAX_REQUEUE) {
@@ -591,12 +1227,13 @@
         var left = st.queue.length - (st.pos + 1);
         if (left < E.REQUEUE_GAP) st.queue.push.apply(st.queue, fillers(st, q, E.REQUEUE_GAP - left));
         var at = Math.min(st.pos + 1 + E.REQUEUE_GAP, st.queue.length);
-        st.queue.splice(at, 0, { a: q.a, b: q.b, retry: true });
+        st.queue.splice(at, 0, retryOf(q));
         res.requeued = true;
       }
       // "we'll come back to that one" only when it really comes back
       res.line = res.requeued ? pick(def.miss || 'There. We\'ll come back to that one.', 0)
         : pick(def.missLast || 'There. Now you’ve seen it counted.', 0);
+      res.line = fillFact(res.line, q);
     }
     st.pos++;
     res.done = C.done(st);
@@ -620,6 +1257,94 @@
     };
   };
   E.counts = C;
+
+  /* A chapter's Counts set by id: this story's first, then any chapter's. */
+  E.countsSet = function (setId, story, stories) {
+    if (story && story.counts && story.counts[setId]) return story.counts[setId];
+    var list = storyList(stories);
+    for (var i = 0; i < list.length; i++) if (list[i].counts && list[i].counts[setId]) return list[i].counts[setId];
+    return null;
+  };
+  /* The facts a chapter lesson asks, after `warmHard` adapts them: if E.hardFacts(cat, table) has a
+   * fact, it takes position `at` (marked hard, so a right answer earns the `remembered` line), and
+   * another fact that is the same pair becomes `alt`. */
+  E.lessonFacts = function (cat, def) {
+    var facts = (def.facts || []).slice();
+    var w = def.warmHard;
+    if (!isObj(w) || !facts.length) return facts;
+    var hard = E.hardFacts(cat, w.table || def.table || 1)[0];
+    if (!hard) return facts;
+    var at = Math.max(0, Math.min(facts.length - 1, num(w.at, 0) | 0));
+    var hk = pairKey(hard[0], hard[1]);
+    facts = facts.map(function (f, i) {
+      if (i === at) return { a: hard[0], b: hard[1], hard: true };
+      var a = Array.isArray(f) ? f[0] : f.a, b = Array.isArray(f) ? f[1] : f.b;
+      if (pairKey(+a, +b) === hk && w.alt) return clone(w.alt);
+      return f;
+    });
+    return facts;
+  };
+  /* The fillers a set lends another (its `fillFrom`): her right answers there, most recent first,
+   * then its facts. Each carries `from: setId`, so it is asked as that set's question. */
+  E.fillPool = function (cat, setId, stories) {
+    var out = [], seen = {};
+    function add(a, b, table) {
+      var k = pairKey(a, b);
+      if (seen[k] || !(a > 0) || !(b > 0)) return;
+      seen[k] = true;
+      var p = { a: a, b: b };
+      if (table) p.table = table;
+      p.from = setId;
+      out.push(p);
+    }
+    var log = (cat && cat.counts) || [];
+    for (var i = log.length - 1; i >= 0; i--) { var e = log[i]; if (e && e.set === setId && e.correct && !e.filler) add(+e.a, +e.b, e.table); }
+    var def = E.countsSet(setId, null, stories);
+    (def && def.facts || []).forEach(function (f) {
+      if (Array.isArray(f)) add(+f[0], +f[1]);
+      else if (isObj(f)) add(+f.a, +f.b, f.table);
+    });
+    return out;
+  };
+  /* The pairs a borrowing set and its siblings (the sets of its chapter that borrow from the same
+   * set: the pile and the check) have asked in this reading, fillers included: the cat's latest run
+   * of their answers, back to the last answer from another lesson of the chapter (the ears lesson
+   * before the pile). Answers from elsewhere (a Hollow round, chapter 1 read again) don't end the
+   * run. A borrowed question skips these while there is another to take. */
+  E.siblingAsked = function (cat, story, setId) {
+    var counts = (story && story.counts) || {}, def = counts[setId];
+    if (!def || !def.fillFrom) return [];
+    var sets = {};
+    Object.keys(counts).forEach(function (id) { if (counts[id] && counts[id].fillFrom === def.fillFrom) sets[id] = true; });
+    sets[setId] = true;
+    var out = [], seen = {}, log = (cat && cat.counts) || [];
+    for (var i = log.length - 1; i >= 0; i--) {
+      var e = log[i];
+      if (!e) continue;
+      if (sets[e.set]) { var k = pairKey(e.a, e.b); if (!seen[k]) { seen[k] = true; out.push(k); } continue; }
+      if (counts[e.set]) break;
+    }
+    return out;
+  };
+  /* Start a chapter lesson: the set's definition (with its id) and a fresh lesson state. */
+  E.chapterLesson = function (cat, story, setId, now, stories) {
+    var raw = E.countsSet(setId, story, stories) || {};
+    var def = Object.assign({ id: setId }, raw);
+    var opts = { facts: E.lessonFacts(cat, def), set: setId, mode: 'chapter', now: now };
+    if (def.fillFrom) {
+      opts.pool = E.fillPool(cat, def.fillFrom, stories || story);
+      opts.asked = E.siblingAsked(cat, story, setId);
+    }
+    return { def: def, state: C.start(def, opts) };
+  };
+  /* The set a question is asked as: a borrowed filler (or its retry) is its lending set's question,
+   * in that set's picture and words, with its praise and fast lines; anything else, the lesson's
+   * own. The UI asks with it and passes it to E.counts.answer. */
+  E.questionDef = function (def, q, story, stories) {
+    if (!q || !q.from || (def && def.id === q.from)) return def;
+    var lend = E.countsSet(q.from, story, stories);
+    return lend ? Object.assign({ id: q.from }, lend) : def;
+  };
   /* A finished lesson goes on the cat the moment its last answer is in, not after the praise
    * pause, so a page closed in that gap loses nothing. Chapter: the summary under its set id.
    * Hollow: the round counts (E.hollowFinish, exactly once). Returns { mode, summary, hollow }. */
@@ -668,25 +1393,32 @@
       return ax - ay || x.a - y.a;
     });
   };
-
-  /* ------------------------------------------------------------ the book */
-  /* A recap line shows when every key in `when` matches: flags first, then the look (sex, fur
-   * ...), then the cat's own fields. A value may be a list (any of). No `when` = always. */
-  E.matches = function (when, cat) {
-    if (!when) return true;
-    if (!isObj(when)) return true;
-    return Object.keys(when).every(function (k) {
-      var want = when[k], have;
-      if (cat.flags && own(cat.flags, k)) have = cat.flags[k];
-      else if (cat.look && own(cat.look, k)) have = cat.look[k];
-      else if (own(cat, k) && k !== 'flags' && k !== 'look') have = cat[k];
-      if (Array.isArray(want)) return want.indexOf(have) !== -1;
-      if (want === true) return have === true;
-      if (want === false) return have === false || have == null || have === '';
-      return have === want;
+  /* Which Count an answer belongs to: its own `table` (a mixed lesson), else its set's (a
+   * chapter's set, or the Hollow's "hollow-2s"), else the smaller factor of the fact. */
+  E.tableOf = function (entry, stories) {
+    if (!entry) return 1;
+    if (typeof entry.table === 'number') return entry.table;
+    var m = /^hollow-(\d+)s$/.exec(entry.set || '');
+    if (m) return +m[1];
+    var def = entry.set && E.countsSet(entry.set, null, stories);
+    if (def && def.table) return def.table;
+    return Math.min(entry.a, entry.b) || 1;
+  };
+  /* The grown-ups' Counts, one per-fact table for each Count: [{ table, name, rows }]. */
+  E.factTables = function (cat, stories) {
+    var by = {};
+    ((cat && cat.counts) || []).forEach(function (e) {
+      var t = E.tableOf(e, stories);
+      (by[t] || (by[t] = [])).push(e);
+    });
+    return Object.keys(by).map(Number).sort(function (a, b) { return a - b; }).map(function (t) {
+      var c = E.countFor(t, stories);
+      return { table: t, name: c ? E.countName(c.def, t) : 'The ' + t + 's', rows: E.factTable(by[t]) };
     });
   };
-  /* The dream as the book prints it (cat.dream itself is kept as typed): a capital first letter,
+
+  /* ------------------------------------------------------------ the book */
+  /* The dream as the book prints it (the cat keeps what she typed): a capital first letter,
    * "i" and "i'm" as "I" and "I'm", and a full stop unless it already ends a sentence. */
   E.tidyDream = function (raw) {
     var s = E.cleanDream(raw);
@@ -696,42 +1428,88 @@
     if (!/[.!?…"”’'»]$/.test(s)) s += '.';
     return s;
   };
+  /* One chapter's page: its heading, its recap (lines whose `when` matches), its dream line. */
   E.buildBook = function (story, cat) {
     var book = (story && story.book) || {};
     var recap = (book.recap || []).filter(function (r) {
       return r && typeof r.text === 'string' && E.matches(r.when, cat);
     }).map(function (r) { return E.fill(r.text, cat); });
-    var dream = cat.dream ? E.fill(book.dream || '{name}paw’s dream: “{dream}”', cat, { dream: E.tidyDream(cat.dream) })
+    var typed = E.dreamOf(cat, story && story.id);
+    var dream = typed ? E.fill(book.dream || '{name}paw’s dream: “{dream}”', cat, { dream: E.tidyDream(typed) })
       : (book.noDream ? E.fill(book.noDream, cat) : '');
     return {
       title: E.fill(book.title || '{name}paw’s First Moon', cat),
       chapter: E.fill(book.chapter || ('Chapter ' + (story.number || 1) + ': ' + (story.title || '')), cat),
       recap: recap,
       dream: dream,
-      dreamText: cat.dream || ''
+      dreamText: typed
+    };
+  };
+  /* Her whole book: the title once, then a page per finished chapter, in order, then the latest
+   * finished chapter's teaser. */
+  E.buildFullBook = function (cat, stories) {
+    var list = E.chapters(stories);
+    var first = list[0];
+    var pages = list.filter(function (s) { return E.isFinished(cat, s.id); }).map(function (s) {
+      var b = E.buildBook(s, cat);
+      return { id: s.id, number: s.number || 1, heading: b.chapter, recap: b.recap, dream: b.dream, dreamText: b.dreamText };
+    });
+    var latest = pages.length ? E.chapter(pages[pages.length - 1].id, list) : null;
+    return {
+      title: E.fill((first && first.book && first.book.title) || '{name}paw’s First Moon', cat),
+      pages: pages,
+      teaser: latest ? E.teaser(latest, cat, list) : null
     };
   };
 
-  /* ------------------------------------------------------------ the Training Hollow */
-  E.TREASURES = [
-    { id: 'moss', name: 'A pillow of soft green moss' },
-    { id: 'feather', name: 'A blue jay feather' },
-    { id: 'shell', name: 'A tiny river shell' },
-    { id: 'pebble', name: 'A shiny striped pebble' },
-    { id: 'acorn', name: 'An acorn in its little hat' },
-    { id: 'snail', name: 'A swirly snail shell (nobody home)' },
-    { id: 'eggshell', name: 'A sky-blue robin’s eggshell' },
-    { id: 'glass', name: 'A piece of river glass, smooth as soap' },
-    { id: 'clover', name: 'A four-leaf clover' },
-    { id: 'dandelion', name: 'A dandelion puff (don’t sneeze!)' },
-    { id: 'leaf', name: 'A bright red leaf from leaf-drop' },
-    { id: 'pinecone', name: 'A tiny pinecone' },
-    { id: 'marble', name: 'A Tallwalker marble with a swirl inside' },
-    { id: 'button', name: 'A lost Tallwalker button, very shiny' }
-  ];
-  E.treasure = function (id) {
-    for (var i = 0; i < E.TREASURES.length; i++) if (E.TREASURES[i].id === id) return E.TREASURES[i];
+  /* ------------------------------------------------------------ the Training Hollow
+   * One claw mark per Count: once a chapter lesson of a Count is finished, the Hollow offers it,
+   * a round of its ten facts at a time. Each Count keeps its own rounds and glow; every full round
+   * (of any Count) earns the next treasure. */
+  var COUNT_THINGS = { 1: ['tail', 'tails'], 2: ['ear', 'ears'], 3: ['cat', 'cats'], 4: ['paw', 'paws'], 5: ['claw', 'claws'], 10: ['claw', 'claws'] };
+  function setTable(def) {
+    if (!def) return null;
+    if (def.table) return def.table;
+    var f = (def.facts || [])[0];
+    return f && !Array.isArray(f) && f.table ? f.table : null;
+  }
+  /* Every Count the chapters teach, in the order they are taught: [{ table, setId, def, chapter }].
+   * A Count's own set is the first chapter's to use its table (the one with the most facts there). */
+  E.countSets = function (stories) {
+    var out = [], byT = {};
+    E.chapters(stories).forEach(function (s) {
+      Object.keys(s.counts || {}).forEach(function (id) {
+        var def = s.counts[id], t = setTable(def);
+        if (!t) return;
+        var n = (def.facts || []).length;
+        if (!byT[t]) { byT[t] = { table: t, setId: id, def: def, chapter: s.id, n: n }; out.push(byT[t]); }
+        else if (byT[t].chapter === s.id && n > byT[t].n) { byT[t].setId = id; byT[t].def = def; byT[t].n = n; }
+      });
+    });
+    return out.map(function (c) { return { table: c.table, setId: c.setId, def: c.def, chapter: c.chapter }; });
+  };
+  E.countFor = function (table, stories) {
+    var all = E.countSets(stories);
+    for (var i = 0; i < all.length; i++) if (all[i].table === table) return all[i];
     return null;
+  };
+  /* "Tails · the 1s", "Ears · the 2s". */
+  E.countName = function (def, table) {
+    table = table || setTable(def) || 1;
+    var things = (def && def.things) || (COUNT_THINGS[table] || ['thing', 'things'])[1];
+    return cap1(things) + ' · the ' + table + 's';
+  };
+  /* The Counts she has learned (finished a chapter lesson of), in the order they are taught. */
+  E.learnedCounts = function (cat, stories) {
+    var done = {};
+    var list = E.chapters(stories);
+    list.forEach(function (s) {
+      Object.keys(s.counts || {}).forEach(function (id) {
+        var L = cat && cat.lessons && cat.lessons[id];
+        if (L && L.finished !== false) { var t = setTable(s.counts[id]); if (t) done[t] = true; }
+      });
+    });
+    return E.countSets(list).filter(function (c) { return done[c.table]; });
   };
   /* One round: the ten facts of a table (n × table, both orders mixed), shuffled the same way
    * every time for the same round number. */
@@ -745,21 +1523,22 @@
     }
     return facts;
   };
-  /* The lesson definition for a Hollow round: the chapter's own Count (lines and pictures),
-   * with the round's facts and the Hollow's ending. */
-  E.hollowDef = function (story, table) {
+  /* The lesson definition for a Hollow round: the Count's own set (lines and pictures), with the
+   * round's facts and the Hollow's ending. */
+  E.hollowDef = function (stories, table) {
     table = table || 1;
-    var base = null;
-    var sets = (story && story.counts) || {};
-    Object.keys(sets).forEach(function (k) { if (!base && sets[k] && sets[k].table === table) base = sets[k]; });
-    var def = clone(base || { table: table, thing: 'tail', things: 'tails', teacher: 'tallyheart', ask: '{a} × {b}', praise: ['Yes!'], fast: [], miss: 'There. We\'ll come back to that one.' });
+    var c = E.countFor(table, stories);
+    var things = COUNT_THINGS[table] || ['thing', 'things'];
+    var def = clone(c ? c.def : { thing: things[0], things: things[1], teacher: 'tallyheart', ask: '{a} × {b}', praise: ['Yes!'], fast: [], miss: 'There. We\'ll come back to that one.' });
     def.id = 'hollow-' + table + 's';
+    def.table = table;
     def.done = 'A full round! That deserves a treasure for your nest.';
-    delete def.firstPrompt;   // the chapter's first question is about the three cats in f061
+    delete def.firstPrompt;   // the chapter's first question is about the cats in the picture before it
+    delete def.warmHard; delete def.fillFrom; delete def.facts;
     return def;
   };
   /* The facts of a table that were hard last time: the most recent first ask of each (not a retry,
-   * not a filler) in the cat's Counts log was wrong, or right but not fast. 9×1 and 1×9 are one
+   * not a filler, not a right check) in the cat's Counts log was wrong, or right but not fast. 9×1 and 1×9 are one
    * fact. Returns [[a, b]] as last asked, the misses first, then the slowest. */
   E.hardFacts = function (cat, table) {
     table = table || 1;
@@ -767,7 +1546,9 @@
     for (var n = 1; n <= 10; n++) mine[pairKey(n, table)] = true;
     var last = {};
     (cat && cat.counts || []).forEach(function (e, i) {
-      if (!e || e.retry || e.filler) return;
+      // a right check says nothing about the fact (she read the long prompt; the answer was on
+      // screen already), so the pair's ask before it decides; a missed check still counts
+      if (!e || e.retry || e.filler || (e.check && e.correct)) return;
       var k = pairKey(e.a, e.b);
       if (mine[k]) last[k] = { e: e, i: i };
     });
@@ -778,9 +1559,20 @@
     }).map(function (x) { return [x.e.a, x.e.b]; });
   };
   E.HARD_PER_ROUND = 3;
-  E.hollowStart = function (cat, story, now, table) {
-    var round = (cat.hollow.rounds || 0) + 1;
-    var def = E.hollowDef(story, table);
+  function tableRecord(cat, table) {
+    if (!isObj(cat.hollow)) cat.hollow = blankHollow();
+    if (!isObj(cat.hollow.byTable)) cat.hollow.byTable = {};
+    var key = String(table || 1);
+    return cat.hollow.byTable[key] || (cat.hollow.byTable[key] = blankTable());
+  }
+  E.hollowTable = function (cat, table) {
+    var r = cat && cat.hollow && cat.hollow.byTable && cat.hollow.byTable[String(table || 1)];
+    return r ? { rounds: num(r.rounds, 0), cleanRounds: num(r.cleanRounds, 0), glow: !!r.glow } : blankTable();
+  };
+  E.hollowStart = function (cat, stories, now, table) {
+    table = table || 1;
+    var round = E.hollowTable(cat, table).rounds + 1;   // each Count's rounds are shuffled on their own
+    var def = E.hollowDef(stories, table);
     var facts = E.hollowFacts(round, table);
     // up to three facts that were hard last time come early (positions 1-3, in this round's own
     // order of a and b); the first question stays an easy one
@@ -793,30 +1585,21 @@
     st.round = round;
     return { def: def, state: st };
   };
-  /* A finished round earns the next treasure. Returns what changed. */
+  /* A finished round earns the next treasure, and counts toward its own Count's glow. */
   E.hollowFinish = function (cat, state) {
     var sum = C.summary(state);
     if (!sum.finished) return { awarded: null, summary: sum, glowNow: false };
-    var h = cat.hollow;
-    h.rounds = (h.rounds || 0) + 1;
-    if (sum.noHelp) h.cleanRounds = (h.cleanRounds || 0) + 1;
+    var table = state.table || 1;
+    var rec = tableRecord(cat, table), h = cat.hollow;
+    h.rounds = num(h.rounds, 0) + 1;
+    rec.rounds = num(rec.rounds, 0) + 1;
+    if (sum.noHelp) rec.cleanRounds = num(rec.cleanRounds, 0) + 1;
     var t = E.TREASURES[(h.rounds - 1) % E.TREASURES.length];
     cat.nest.push(t.id);
-    var wasGlow = !!h.glow;
-    h.glow = h.cleanRounds >= E.GLOW_ROUNDS;
+    var wasGlow = !!rec.glow;
+    rec.glow = rec.cleanRounds >= E.GLOW_ROUNDS;
     cat.lesson = null;
-    return { awarded: t, summary: sum, glowNow: h.glow && !wasGlow, rounds: h.rounds };
-  };
-  /* The nest, grouped: [{ treasure, count }] in the order first found. */
-  E.nestItems = function (cat) {
-    var seen = {}, out = [];
-    (cat.nest || []).forEach(function (id) {
-      if (seen[id]) { seen[id].count++; return; }
-      var t = E.treasure(id) || { id: id, name: id };
-      seen[id] = { treasure: t, count: 1 };
-      out.push(seen[id]);
-    });
-    return out;
+    return { awarded: t, summary: sum, glowNow: rec.glow && !wasGlow, rounds: h.rounds, table: table };
   };
 
   /* ------------------------------------------------------------ story checks */
@@ -826,12 +1609,43 @@
     var errs = [];
     if (!story || !story.frames) return ['no frames'];
     if (!story.frames[story.start]) errs.push('start frame missing: ' + story.start);
+    function checkWhen(where, w) {
+      if (w == null) return;
+      if (!isObj(w)) { errs.push(where + ': when must be an object'); return; }
+      if (isObj(w.not)) checkWhen(where + ' (not)', w.not);
+      asList(w.lessonClean).forEach(function (s) { if (!E.countsSet(s, story)) errs.push(where + ': lessonClean names no counts set here: ' + s); });
+      asList(w.firstTry).forEach(function (k) { if (!/^\d+\s*[x×]\s*\d+$/.test(String(k))) errs.push(where + ': firstTry wants "AxB": ' + k); });
+    }
     Object.keys(story.frames).forEach(function (id) {
       var f = story.frames[id];
-      var kinds = ['next', 'choice', 'input', 'look', 'counts', 'end'].filter(function (k) { return f[k]; });
-      if (kinds.length !== 1) errs.push(id + ': needs exactly one of next/choice/input/look/counts/end, has ' + (kinds.join(',') || 'none'));
+      var kinds = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'end'].filter(function (k) { return f[k]; });
+      if (kinds.length !== 1) errs.push(id + ': needs exactly one of next/choice/input/look/counts/skip/end, has ' + (kinds.join(',') || 'none'));
       E.exits(f).forEach(function (to) { if (!story.frames[to]) errs.push(id + ' -> missing ' + to); });
       if (f.counts && !(story.counts && story.counts[f.counts.set])) errs.push(id + ': unknown counts set ' + f.counts.set);
+      if (f.skip && !(num(f.skip.table, 0) >= 1 && num(f.skip.groups, 0) >= 1)) errs.push(id + ': skip needs a table and groups');
+      if (f.gift && !E.gift(f.gift)) errs.push(id + ': unknown gift ' + f.gift);
+      asList(f.caption).forEach(function (c, i) {
+        if (isObj(c)) { if (typeof c.text !== 'string') errs.push(id + ': caption ' + i + ' has no text'); checkWhen(id + ' caption ' + i, c.when); }
+        else if (typeof c !== 'string') errs.push(id + ': caption ' + i + ' must be a string or { when, text }');
+      });
+      asList(f.say).forEach(function (b, i) { if (isObj(b)) checkWhen(id + ' say ' + i, b.when); });
+      if (f.choice) (f.choice.options || []).forEach(function (o, i) { if (o) checkWhen(id + ' option ' + i, o.when); });
+    });
+    Object.keys(story.counts || {}).forEach(function (sid) {
+      var d = story.counts[sid];
+      if (d.fillFrom && !E.countsSet(d.fillFrom, story)) errs.push('counts ' + sid + ': fillFrom names no set in this chapter: ' + d.fillFrom);
+      if (d.fillIntro != null && typeof d.fillIntro !== 'string') errs.push('counts ' + sid + ': fillIntro must be a line');
+      if (d.fillIntro != null && !d.fillFrom) errs.push('counts ' + sid + ': fillIntro without fillFrom');
+      (d.facts || []).forEach(function (f, i) {
+        var a = Array.isArray(f) ? f[0] : f && f.a, b = Array.isArray(f) ? f[1] : f && f.b;
+        if (!(a >= 0 && b >= 0)) errs.push('counts ' + sid + ': fact ' + i + ' needs a and b');
+        if (!isObj(f)) return;
+        if (f.light != null && f.light !== 'groups' && f.light !== 'rows') errs.push('counts ' + sid + ': fact ' + i + ': light is "groups" or "rows"');
+        if (f.lit != null && !(num(f.lit, -1) >= 0)) errs.push('counts ' + sid + ': fact ' + i + ': lit is a number of things');
+        if (f.who != null && !Array.isArray(f.who)) errs.push('counts ' + sid + ': fact ' + i + ': who is a list, left to right');
+        if (f.retryPrompt === true && f.prompt == null) errs.push('counts ' + sid + ': fact ' + i + ': retryPrompt: true keeps a prompt it does not have');
+        if (f.rightAgain === true && f.right == null) errs.push('counts ' + sid + ': fact ' + i + ': rightAgain: true keeps right lines it does not have');
+      });
     });
     return errs;
   };

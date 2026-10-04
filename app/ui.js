@@ -124,7 +124,75 @@
     return { d: d, mouth: mouth, edge: { x: ex, y: ey }, dir: { x: ux, y: uy } };
   }
   function f1(n) { return (Math.round(n * 10) / 10).toString(); }
-  UI.layout = { findSpot: findSpot, tailGeom: tailGeom, rectCircle: rectCircle, overlap: overlap, segHitsRect: segHitsRect };
+  /* Heads from PC.art.render: an array in cast order (null = out of shot), each {x, y} in percent
+   * of the panel, with r (the face's radius, percent of the panel width) for the cats, Riffle, the
+   * otters and the dogs, measured by the art (app/art/scenes.js, faceR). A face is kept between
+   * 1.8 and 16 (a close-up still leaves the balloons room). The sparrow, the moth and the Tall One
+   * (seen only from cat height) have small fixed sizes; anything else without r gets a default.
+   * An object keyed by who is accepted too. Returns [{ who, h: {x, y, r} | null }] in cast order.
+   * Pure: tested in Node. */
+  var FACE_R = { sparrow: 2.5, moth: 2.5, tallone: 2 };
+  function castHeads(heads, cast) {
+    var out = [];
+    if (Array.isArray(heads)) {
+      (cast || []).forEach(function (c, i) {
+        var h = heads[i];
+        if (!h || typeof h.x !== 'number') { out.push({ who: c && c.who, h: null }); return; }
+        var who = c && c.who, r = typeof h.r === 'number' && isFinite(h.r) && h.r > 0 ? clamp(h.r, 1.8, 16)
+          : Object.prototype.hasOwnProperty.call(FACE_R, who) ? FACE_R[who] : 6.5;
+        out.push({ who: who, h: { x: h.x, y: h.y, r: r } });
+      });
+    } else if (heads && typeof heads === 'object') {
+      Object.keys(heads).forEach(function (k) {
+        var h = heads[k];
+        if (h && typeof h.x === 'number') out.push({ who: k.replace(/[-]?\d+$/, ''), h: { x: h.x, y: h.y, r: typeof h.r === 'number' ? h.r : 6.5 } });
+      });
+    }
+    return out;
+  }
+  /* Which of the cast members with this `who` a balloon comes from: its `nth` (E.balloons: its place
+   * among that speaker's balloons), or the first of them when the cast has fewer. So one cat speaking
+   * twice is one speaker (both balloons slot 0: the second chains to the first, with a neck), and two
+   * dogs in a row are two (slots 0 and 1, each with a tail to its own head). A speaker not in the
+   * cast at all is slot 0. `list` is castHeads' list. Pure: tested in Node. */
+  function speakerSlot(list, who, nth) {
+    var count = 0;
+    for (var i = 0; i < (list || []).length; i++) if (list[i].who === who) count++;
+    nth = nth > 0 ? Math.floor(nth) : 0;
+    return nth < count ? nth : 0;
+  }
+  /* For each balloon (in order): its speaker's slot, and `same`: it continues the balloon before
+   * (the same `who`, and the same one of them). A balloon knows which of its speaker's cast members
+   * it is from E.balloons' `nth` (hidden balloons still count), else by counting. A balloon that
+   * continues the one before is chained to it (a neck, placed with it) and gets no tail or name tag
+   * of its own. Pure: tested in Node. */
+  function speakerRuns(list, bs) {
+    var nth = {}, out = [];
+    (bs || []).forEach(function (b, bi) {
+      var n = nth[b.who] = (nth[b.who] == null ? 0 : nth[b.who] + 1);
+      if (typeof b.nth === 'number') n = b.nth;
+      n = speakerSlot(list, b.who, n);
+      out.push({ slot: n, same: bi > 0 && bs[bi - 1].who === b.who && !!b.who && out[bi - 1].slot === n });
+    });
+    return out;
+  }
+  UI.layout = { findSpot: findSpot, tailGeom: tailGeom, rectCircle: rectCircle, overlap: overlap, segHitsRect: segHitsRect, castHeads: castHeads,
+    speakerSlot: speakerSlot, speakerRuns: speakerRuns };
+
+  /* Keys that turn pages (Enter, Space, → and ←) get the guard taps have: held down, Enter's
+   * auto-repeat would go title → hub → chapter 2 in one press, so a repeated Enter or Space is never
+   * a press; and in the first moments of a screen (GUARD_MS, the double-tap guard in bindChrome) a
+   * page key is the end of the press that drew it. Typing (digits, letters, Backspace) is never held
+   * back. `since` is when the screen was drawn, `t` now (ms). Pure: tested in Node. */
+  var PAGE_KEYS = { Enter: 1, ' ': 1, ArrowRight: 1, ArrowLeft: 1 };
+  function keyFresh(e, since, t) {
+    var k = e && e.key;
+    if ((k === 'Enter' || k === ' ') && e.repeat) return false;
+    if (PAGE_KEYS[k] && t - since < UI_GUARD_MS) return false;
+    return true;
+  }
+  var UI_GUARD_MS = 350;
+  UI.keys = { fresh: keyFresh, GUARD_MS: UI_GUARD_MS, PAGE_KEYS: PAGE_KEYS };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
   var doc = root.document;
@@ -270,87 +338,60 @@
   var NAMES = {
     tallyheart: 'Tallyheart', glintstar: 'Glintstar', waffles: 'Princess Waffles', tallone: 'The Tall One',
     grizzled: 'Grizzled old tom', snorer: 'Snoring apprentice', mutterer: 'Muttering apprentice', snorter: 'Snorting apprentice',
-    clancat: 'A Clan cat', sparrow: 'Sparrow', moth: 'Moth'
+    clancat: 'A Clan cat', sparrow: 'Sparrow', moth: 'Moth',
+    riffle: 'Riffle', otter: 'An otter', dog: 'A dog'
   };
-  var PITCH = { waffles: 1.45, tallyheart: 0.92, glintstar: 0.85, grizzled: 0.6, player: 1.2, snorer: 1.1, mutterer: 1.3, snorter: 1.15, clancat: 1.0, tallone: 1.0 };
+  // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
+  var VARIANT_NAMES = {
+    otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
+    dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' }
+  };
+  var PITCH = { waffles: 1.45, tallyheart: 0.92, glintstar: 0.85, grizzled: 0.6, player: 1.2, snorer: 1.1, mutterer: 1.3, snorter: 1.15, clancat: 1.0, tallone: 1.0,
+    riffle: 1.5, otter: 1.05, dog: 0.9 };
+  var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 } };
+  function pitchOf(who, variant) {
+    var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
+    return v || PITCH[who] || 1;
+  }
   function speakerName(s) {
     if (s.name) return fill(s.name);
     if (s.who === 'player') return cat && cat.name ? cat.name + 'paw' : 'You';
+    if (VARIANT_NAMES[s.who]) return VARIANT_NAMES[s.who][s.variant || 1] || NAMES[s.who];
     var ch = PC.art && (PC.art.characters || PC.art.cast);
     if (ch && ch[s.who] && ch[s.who].name) return ch[s.who].name;
     return NAMES[s.who] || cap1(String(s.who || ''));
   }
+  /* A frame's balloons as she sees them (E.balloons: `when` applied). The nth balloon from a who
+   * belongs to the nth of them in the cast (hidden balloons still count), for its coat and voice. */
   function balloonsOf(frame) {
-    var cast = (frame.scene && frame.scene.cast) || [], nth = {};
-    return asList(frame.say).map(function (s) {
-      if (typeof s === 'string') s = { text: s };
-      // the speaker's cast entry (the nth balloon from a who is the nth of them in the cast), for its coat
-      var mine = cast.filter(function (c) { return c && c.who === s.who; }), k = nth[s.who] = (nth[s.who] == null ? 0 : nth[s.who] + 1);
-      var member = mine[k] || mine[0];
-      return { who: s.who || '', text: fill(s.text || ''), kind: s.kind || 'say', name: s.name, variant: member && member.variant, raw: s };
+    var cast = (frame.scene && frame.scene.cast) || [];
+    return E.balloons(frame, cat).map(function (s) {
+      var mine = cast.filter(function (c) { return c && c.who === s.who; });
+      var member = mine[s.nth] || mine[0];
+      return { who: s.who || '', text: fill(s.text || ''), kind: s.kind || 'say', name: s.name, nth: s.nth, variant: member && member.variant, raw: s };
     }).filter(function (b) { return b.text; });
   }
-  function captionsOf(frame) { return asList(frame.caption).map(fill).filter(Boolean); }
+  function captionsOf(frame) { return E.captions(frame, cat).map(fill).filter(Boolean); }
 
-  /* Heads from PC.art.render: an array in cast order (null = out of shot), each {x, y} in percent
-   * of the panel, optionally with r (face radius, percent of panel width). An object keyed by who
-   * is accepted too. Without r, the face size is estimated from the character's scale in the svg
-   * (cats are drawn in a 200 × 200 box, placed with "translate(x y) scale(s) translate(-100 -200)"),
-   * else a default. Returns [{ who, h: {x, y, r} | null }] in cast order. */
-  function parseCats(svg) {
-    var out = { box: null, cats: [] };
-    if (typeof svg !== 'string') return out;
-    var vb = /viewBox="\s*(-?[\d.]+)[ ,]+(-?[\d.]+)[ ,]+([\d.]+)[ ,]+([\d.]+)\s*"/.exec(svg);
-    if (vb) out.box = { x: +vb[1], y: +vb[2], w: +vb[3], h: +vb[4] };
-    var re = /translate\((-?[\d.]+)[ ,]+(-?[\d.]+)\)\s*scale\((-?[\d.]+)(?:[ ,]+(-?[\d.]+))?\)\s*translate\(-100[ ,]+-200\)/g, m;
-    while ((m = re.exec(svg))) out.cats.push({ x: +m[1], y: +m[2], s: Math.abs(+(m[4] || m[3])) });
-    return out;
-  }
-  function castHeads(heads, cast, svg) {
-    var out = [];
-    if (Array.isArray(heads)) {
-      var est = null;
-      (cast || []).forEach(function (c, i) {
-        var h = heads[i];
-        if (!h || typeof h.x !== 'number') { out.push({ who: c && c.who, h: null }); return; }
-        var r = typeof h.r === 'number' ? h.r : null;
-        if (r == null) {
-          if (c.who === 'sparrow' || c.who === 'moth') r = 2.5;
-          else if (c.who === 'tallone') r = 2;
-          else {
-            est = est || parseCats(svg);
-            if (est.box && est.cats.length) {
-              var hx = est.box.x + h.x / 100 * est.box.w, hy = est.box.y + h.y / 100 * est.box.h, best = null, bd = Infinity;
-              est.cats.forEach(function (k) {
-                var d = Math.abs(hx - k.x) + Math.abs(hy - (k.y - 110 * k.s));
-                if (d < bd) { bd = d; best = k; }
-              });
-              if (best && bd < 240 * best.s) r = clamp(40 * best.s / est.box.w * 100, 1.8, 16);
-            }
-          }
-        }
-        out.push({ who: c && c.who, h: { x: h.x, y: h.y, r: r == null ? 6.5 : r } });
-      });
-    } else if (heads && typeof heads === 'object') {
-      Object.keys(heads).forEach(function (k) {
-        var h = heads[k];
-        if (h && typeof h.x === 'number') out.push({ who: k.replace(/[-]?\d+$/, ''), h: { x: h.x, y: h.y, r: typeof h.r === 'number' ? h.r : 6.5 } });
-      });
-    }
-    return out;
-  }
+  // the head of the speaker in that slot (speakerSlot: fewer cast members than balloons from this
+  // speaker means the first one)
   function headFor(list, who, nth) {
-    var k = 0;
-    for (var i = 0; i < list.length; i++) if (list[i].who === who) { if (k === (nth || 0)) return list[i].h; k++; }
-    // fewer cast members than balloons from this speaker: use the first one
-    for (i = 0; i < list.length; i++) if (list[i].who === who) return list[i].h;
+    var k = 0, slot = speakerSlot(list, who, nth);
+    for (var i = 0; i < list.length; i++) if (list[i].who === who) { if (k === slot) return list[i].h; k++; }
     return null;
   }
 
   /* ================================================================ boot */
+  /* The chapters (PC.story) and the one being read. `story` always follows the current cat. */
+  function stories() { return PC.story || {}; }
+  function syncStory() {
+    var s = cat && E.chapter(cat.chapter, stories());
+    story = s || E.firstChapter(stories());
+    return story;
+  }
   function boot() {
     E = PC.engine;
-    story = PC.story && PC.story.ch01;
+    story = E && E.firstChapter(stories());
     if (PC.art && typeof PC.art.css === 'string' && !$('pc-art-css')) {
       var st = doc.createElement('style'); st.id = 'pc-art-css'; st.textContent = PC.art.css; doc.head.appendChild(st);
     }
@@ -358,6 +399,7 @@
     save = store ? store.load() : null;
     if (!E || !story) { $('screen').innerHTML = '<div class="err"><p class="h2">The story didn’t load.</p><p>Check the connection and reload the page.</p><p><button class="btn go" onclick="location.reload()">Reload</button></p></div>'; return; }
     cat = E.currentCat(save);
+    syncStory();
     applySettings();
     bindChrome();
     // Safari's toolbar collapsing, the on-screen keyboard and rotation all fire resize; only a panel
@@ -370,18 +412,36 @@
     }, 120));
     if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { if (relayoutFn) relayoutFn(); });
     if (doc.fonts && doc.fonts.addEventListener) doc.fonts.addEventListener('loadingdone', function () { if (relayoutFn) relayoutFn(); });
-    doc.addEventListener('keydown', function (e) { if (keyHandler) keyHandler(e); });
+    doc.addEventListener('keydown', function (e) {
+      if (!keyHandler) return;
+      // a held-down Enter, or a page key on a screen just drawn, is not a new press (UI.keys)
+      if (!keyFresh(e, renderedAt, now())) { if (PAGE_KEYS[e.key] && !isTyping(e)) e.preventDefault(); return; }
+      keyHandler(e);
+    });
     if ('speechSynthesis' in root) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = function () { voice = null; }; } catch (e) {} }
     PC.debug = {
-      goto: function (id) {
-        if (!story.frames[id]) return 'no frame ' + id;
-        if (!cat) { cat = E.addCat(save, { now: now() }) || save.cats[0]; save.current = cat.id; E.startChapter(cat, story, now()); }
-        E.go(cat, story, id, now()); persist(); go('frame'); return id;
+      /* Open a frame of any chapter (the cat's own when no chapter is named), with a test cat if
+       * there is none. tools/shots.mjs uses it. */
+      goto: function (id, chapterId) {
+        var target = chapterId ? E.chapter(chapterId, stories()) : (cat && E.chapter(cat.chapter, stories())) || E.firstChapter(stories());
+        if (!target) return 'no chapter ' + chapterId;
+        if (!target.frames[id]) return 'no frame ' + id + ' in ' + target.id;
+        if (!cat) { cat = E.addCat(save, { now: now() }) || save.cats[0]; save.current = cat.id; }
+        if (cat.chapter !== target.id || cat.frame == null) E.openChapter(cat, target, now());
+        story = target;
+        if (E.frameId(cat, story) !== id) E.go(cat, story, id, now());
+        persist(); go('frame'); return id;
       },
       state: function () { return E.util.clone(save); },
       cat: function () { return cat; },
-      reset: function () { if (store) store.clear(); save = E.newSave(); cat = null; go('title'); return 'reset'; },
-      check: function () { return E.checkStory(story); },
+      save: function () { persist(); return true; },
+      story: function () { return story; },
+      reset: function () { if (store) store.clear(); save = E.newSave(); cat = null; syncStory(); go('title'); return 'reset'; },
+      check: function () {
+        var out = {};
+        E.chapters(stories()).forEach(function (s) { out[s.id] = E.checkStory(s); });
+        return out;
+      },
       layout: function () { return lastLayout; },
       go: go
     };
@@ -401,10 +461,11 @@
     // "Put it in my book" over f085's "See your book"). For a moment after a screen is drawn, taps on
     // it are swallowed before any handler sees them. The top bar and the grown-ups sheet are outside.
     $('screen').addEventListener('click', function (e) {
-      if (now() - renderedAt < 350) { e.stopPropagation(); e.preventDefault(); }
+      if (now() - renderedAt < UI_GUARD_MS) { e.stopPropagation(); e.preventDefault(); }
     }, true);
     $('backBtn').addEventListener('click', onBack);
     $('catsBtn').addEventListener('click', function () { go('who'); });
+    $('campBtn').addEventListener('click', function () { if (cat) { persist(); go('hub'); } });
     $('textBtn').addEventListener('click', function () {
       save.settings.bigText = !save.settings.bigText; applySettings(); persist();
       if (relayoutFn) relayoutFn();
@@ -430,19 +491,23 @@
     if (!reduceMotion) { void scr.offsetWidth; scr.classList.add(opts.back ? 'enter-back' : 'enter'); }
     renderedAt = now();
     updateBar();
-    if (!opts.keepScroll) root.scrollTo(0, 0);
+    if (!opts.keepScroll && !opts.scrollTo) root.scrollTo(0, 0);
     if (save.settings.readAloud) speakItems(currentSpeech);
   }
   function updateBar() {
     var n = view.name, back = $('backBtn'), title = $('barTitle');
-    var showBack = n !== 'title' && !(n === 'frame' && !E.canBack(cat));
+    // on a chapter's first page, the bar's Back still leads somewhere: camp, or who's playing
+    var showBack = n !== 'title' && !(n === 'frame' && !E.canBack(cat) && !E.hasFinished(cat));
     back.classList.toggle('invisible', !showBack);
     back.disabled = !showBack;
     $('catsBtn').hidden = n === 'title' || n === 'who';   // no room taken, so the bar title fits on a phone
+    // Camp, partway through a chapter (once there is a camp: a chapter finished). Her place stays:
+    // the hub's big button picks it up, a lesson in progress too
+    $('campBtn').hidden = !(n === 'frame' && cat && E.hasFinished(cat));
     var t = '';
     if (n === 'title') t = '';
     else if (n === 'who') t = 'Potomac Crossing';
-    else if (cat) t = esc(E.displayName(cat)) + (n === 'frame' ? '<small>Chapter ' + (story.number || 1) + ' · ' + esc(story.title) + '</small>' : '');
+    else if (cat) t = esc(E.displayName(cat)) + (n === 'frame' && story ? '<small>Chapter ' + (story.number || 1) + ' · ' + esc(story.title) + '</small>' : '');
     title.innerHTML = t;
   }
   function onBack() {
@@ -450,7 +515,8 @@
     if (n === 'who') return go('title', { back: true });
     if (n === 'frame') {
       if (E.back(cat, story)) { persist(); return go('frame', { back: true }); }
-      return go('who', { back: true });
+      // a chapter's first page: back to camp once a chapter is finished
+      return go(E.hasFinished(cat) ? 'hub' : 'who', { back: true });
     }
     if (n === 'book') return view.opts.from === 'end' ? go('frame', { back: true }) : go('hub', { back: true });
     if (n === 'hollow' || n === 'nest') return go(view.opts.from === 'book' ? 'book' : 'hub', { back: true });
@@ -472,11 +538,28 @@
       onBack();
     });
   }
+  /* On a finished chapter's end frame, a cat belongs in camp (the hub). */
+  function atCampEnd(c) {
+    var s = c && E.chapter(c.chapter, stories());
+    return !!(s && E.isFinished(c, s.id) && E.kindOf(E.currentFrame(c, s)) === 'end');
+  }
   function openCat(c) {
     cat = c; save.current = c.id; lookCache = null;
-    if (!c.chapter || !c.frame) E.startChapter(c, story, now());
+    var s = E.chapter(c.chapter, stories());
+    if (!s || c.frame == null) { s = E.upNext(c, stories()) || E.firstChapter(stories()); E.openChapter(c, s, now()); }
+    story = s;
     persist();
-    if (c.done && E.kindOf(E.currentFrame(c, story)) === 'end') return go('hub');
+    if (atCampEnd(c)) return go('hub');
+    go('frame');
+  }
+  /* A chapter from the hub: `resume` picks up her place in it (E.openChapter: each chapter keeps
+   * its own, so reading chapter 1 again never moves her place in chapter 2); else it starts from
+   * its first page (a finished chapter read again). */
+  function readChapter(s, resume) {
+    if (resume) E.openChapter(cat, s, now());
+    else E.startChapter(cat, s, now());
+    story = s;
+    persist();
     go('frame');
   }
 
@@ -484,29 +567,31 @@
   function renderTitle() {
     // the cat on the wall is the last cat played, or a silhouette for a brand-new device
     var look = cat && cat.look;
+    var shown = (cat && E.chapter(cat.chapter, stories())) || E.firstChapter(stories());
+    var heading = 'Chapter ' + (shown.number || 1) + ' · ' + shown.title;
     var r = artRender({ set: 'title', cam: 'wide', cast: look ? [{ who: 'player', pose: 'sit', mood: 'dreamy', at: 'wall', facing: 'left' }] : [], fx: ['dusk'] }, look || E.defaultLook(0));
     $('screen').innerHTML =
       '<section class="title-screen">' +
       '<figure class="panel" aria-label="A cat sits on a wall by the river at dusk. Glass towers glow behind.">' +
       '<div class="art" aria-hidden="true">' + r.svg + '</div>' +
-      '<h1 class="logo">Potomac Crossing<small>Chapter 1 · Through the Glass</small></h1>' +
+      '<h1 class="logo">Potomac Crossing<small>' + esc(heading) + '</small></h1>' +
       '</figure>' +
       '<p class="tagline">A pillow cat. A hidden Clan. A storm on the river.</p>' +
       '<div class="title-cta">' +
-      (cat ? '<button class="btn go big" id="resumeBtn" type="button">' + (cat.done && E.kindOf(E.currentFrame(cat, story)) === 'end' ? 'Back to camp, ' : 'Keep reading, ') + esc(E.displayName(cat)) + '</button>' +
+      (cat ? '<button class="btn go big" id="resumeBtn" type="button">' + (atCampEnd(cat) ? 'Back to camp, ' : 'Keep reading, ') + esc(E.displayName(cat)) + '</button>' +
         '<button class="btn quiet" id="playBtn" type="button">Who’s playing?</button>'
         : '<button class="btn go big" id="playBtn" type="button">Play</button>') +
       '</div></section>';
     $('playBtn').addEventListener('click', function () { go('who'); });
     if ($('resumeBtn')) $('resumeBtn').addEventListener('click', function () { openCat(cat); });
-    currentSpeech = [{ text: 'Potomac Crossing. Chapter 1: Through the Glass.' }];
+    currentSpeech = [{ text: 'Potomac Crossing. Chapter ' + (shown.number || 1) + ': ' + shown.title + '.' }];
     keyHandler = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (cat) openCat(cat); else go('who'); } };
   }
 
   /* ================================================================ who's playing */
   function renderWho() {
     var cards = save.cats.map(function (c, i) {
-      var status = c.done ? 'Chapter 1 finished' : (c.history && c.history.length ? 'Chapter 1 · page ' + (c.history.length + 1) : 'Just starting');
+      var status = E.status(c, stories());
       return '<button class="catcard" type="button" data-cat="' + esc(c.id) + '">' +
         '<span class="face" aria-hidden="true">' + catPortrait(c.look, 'happy') + '</span>' +
         '<b' + (E.displayName(c).length > 12 ? ' class="long"' : '') + '>' + esc(E.displayName(c)) + '</b><span>' + esc(status) + '</span></button>';
@@ -527,7 +612,7 @@
     if (nb) nb.addEventListener('click', function () {
       var c = E.addCat(save, { now: now() });
       if (!c) return;
-      E.startChapter(c, story, now());
+      E.startChapter(c, E.firstChapter(stories()), now());
       openCat(c);
     });
     currentSpeech = [{ text: 'Who’s playing?' }];
@@ -546,9 +631,15 @@
     var art = panel.querySelector('.art');
     if (frame.image) art.innerHTML = '<img src="' + esc(frame.image) + '" alt="">';
     else art.innerHTML = r.svg;
-    var hs = castHeads(r.heads, (frame.scene && frame.scene.cast) || [], r.svg);
+    var hs = castHeads(r.heads, (frame.scene && frame.scene.cast) || []);
     hs.keep = r.keep || [];   // areas the art asks the lettering to keep off (percent of the panel)
     return hs;
+  }
+  /* The frame as drawn: scene options the cat fills in (the claw marks: marks/glow 'auto'). */
+  function shownFrame(f) {
+    if (!f || !f.scene) return f;
+    var sc = E.resolveScene(f.scene, cat, stories());
+    return sc === f.scene ? f : Object.assign({}, f, { scene: sc });
   }
   function playFx(panel, frame) {
     var fx = (frame.scene && frame.scene.fx) || [];
@@ -566,25 +657,32 @@
     if (cat.lesson && cat.lesson.mode !== 'hollow' && cat.lesson.state && E.counts.done(cat.lesson.state)) {
       if (E.settleLesson(cat)) persist();
     }
+    syncStory();
     var id = E.frameId(cat, story);
     cat.frame = id;
     var f = story.frames[id];
     var kind = E.kindOf(f);
+    if (kind === 'skip') return renderSkip(f, id);
     var scr = $('screen');
     scr.innerHTML = frameShell(kind, id);
     var panel = $('panel');
-    var heads = drawArt(panel, f, cat.look);
+    var heads = drawArt(panel, shownFrame(f), cat.look);
     var caps = captionsOf(f), balloons = balloonsOf(f);
     panel.setAttribute('aria-label', caps.length ? plain(caps.join(' ')) : (balloons.length ? 'A comic panel' : 'A comic panel'));
 
-    // counts: resume a lesson in progress straight away
-    if (kind === 'counts' && cat.lesson && cat.lesson.frame === id && cat.lesson.state && !E.counts.done(cat.lesson.state)) {
+    // counts: resume a lesson in progress straight away (this chapter's, at this frame; one that
+    // waited in the chapter's place while a Hollow round had the slot comes back here too)
+    if (kind === 'counts' && E.lessonAt(cat, story, id)) {
+      persist();
       return startChapterLesson(f, id, true);
     }
 
     // on a frame that asks something, the captions are the question: they stay in the text column,
     // right above the answers, so the prompt is always read before the options
     var ctx = { panel: panel, frame: f, heads: heads, caps: caps, balloons: balloons, keepCaptions: kind === 'choice' || kind === 'input' || kind === 'look' || kind === 'end' };
+    // the page a skip-count turns to shows the number the count reached, big, over the picture
+    var into = skipInto(id);
+    if (into) { var sv = E.skipView(into, 0); ctx.bigNum = String(sv.groups * sv.table); }
     // When everything fits in the panel, the panel gets the whole page (landscape especially):
     // try that first, and fall back to the two-column spread when text has to sit beside it.
     var frameEl = scr.querySelector('.frame');
@@ -688,13 +786,14 @@
 
     // 2. balloons
     var bs = ctx.balloons || [];
-    var nth = {};
+    var runs = speakerRuns(heads, bs);
     var spots = [];
     var allFit = bs.length > 0;
     var padX = fs * 0.95, padY = fs * 0.62;
     for (var bi = 0; bi < bs.length && allFit; bi++) {
       var b = bs[bi];
-      var n = nth[b.who] = (nth[b.who] == null ? 0 : nth[b.who] + 1);
+      // which of its speaker's cast members a balloon is, and whether it continues the one before
+      var n = runs[bi].slot, same = runs[bi].same;
       var head = headFor(heads, b.who, n);
       var hd = head ? { x: head.x * W / 100, y: head.y * H / 100, r: head.r * W / 100 } : null;
       if (hd && (hd.x < 0 || hd.x > W || hd.y < 0 || hd.y > H)) hd = null;
@@ -702,7 +801,7 @@
       t.className = 'btext ' + b.kind;
       var prevB = bi > 0 ? bs[bi - 1] : null;
       // a voice from outside the panel gets a name tag, unless it continues the balloon before
-      t.innerHTML = (!hd && !(prevB && prevB.who === b.who) ? '<span class="tagin">' + esc(speakerName(b)) + '</span>' : '') + rich(b.text);
+      t.innerHTML = (!hd && !(prevB && same) ? '<span class="tagin">' + esc(speakerName(b)) + '</span>' : '') + rich(b.text);
       var len = b.text.length;
       var maxW = Math.min(W * 0.5, Math.max(fs * 6, Math.sqrt(len) * fs * 2.3));
       t.style.maxWidth = Math.round(maxW) + 'px';
@@ -712,7 +811,7 @@
       var ex = b.kind === 'shout' ? 12 : (b.kind === 'think' ? 10 : 0);
       var bw = tw + padX * 2 + ex * 2, bh = th + padY * 2 + ex * 2;
       var prevSpot = spots.length ? spots[spots.length - 1] : null;
-      var link = prevSpot && prevSpot.b.who === b.who && b.who ? prevSpot : null;
+      var link = prevSpot && same && prevSpot.b === bs[bi - 1] ? prevSpot : null;
       // reading order: each balloon goes below the one before it, or to its right; only when that is
       // impossible (a crowded panel) is it allowed elsewhere, and then only for a different speaker
       var capFirst = bi === 0 && layout.captions === 'panel' && placed.length ? capBox : null;
@@ -761,19 +860,21 @@
         s.el.style.width = s.tw + 'px';
         s.el.style.visibility = '';
         drawBalloon(svgParts, s, W, H);
-        reading.push({ text: s.b.text, who: s.b.who });
+        reading.push({ text: s.b.text, who: s.b.who, variant: s.b.variant });
       });
     } else if (bs.length) {
       spots.forEach(function (s) { s.el.remove(); });
       placed = placed.slice(0, placed.length - spots.length);
       layout.balloons = 'stack';
       stack.innerHTML = bs.map(function (b) { return stackBalloon(b); }).join('');
-      bs.forEach(function (b) { reading.push({ text: b.text, who: b.who }); });
+      bs.forEach(function (b) { reading.push({ text: b.text, who: b.who, variant: b.variant }); });
     }
 
     // 3. sound effect: big, tilted, somewhere it doesn't cover a face
     var sfx = ctx.frame.sfx ? fill(ctx.frame.sfx) : '';
     if (sfx) layout.sfx = drawSfx(svgParts, sfx, W, H, faceList, placed, ctx.frame);
+    // 4. the number a skip-count reached (the page it turns to): big, in the times-table font
+    if (ctx.bigNum) layout.bigNum = drawBigNum(svgParts, ctx.bigNum, W, H, faceList, layout.sfx ? placed.concat([layout.sfx]) : placed);
 
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' +
       '<defs><linearGradient id="sfxg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff07a"/><stop offset=".55" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff8f2e"/></linearGradient></defs>' +
@@ -891,6 +992,27 @@
     return best;
   }
 
+  /* The skip-count's number on the page it turns to: where the skip frame shows it (top middle)
+   * when that is free, else the freest corner; never over a face, a caption or a balloon. */
+  function drawBigNum(parts, text, W, H, faces, placed) {
+    var size = clamp(H * 0.2, 40, 104), estW = text.length * size * 0.56 + size * 0.2, estH = size * 1.02;
+    var spots = [[(W - estW) / 2, H * 0.03], [W - estW - W * 0.04, H * 0.04], [W * 0.04, H * 0.04],
+      [W - estW - W * 0.04, (H - estH) * 0.45], [W * 0.04, (H - estH) * 0.45], [(W - estW) / 2, H - estH - H * 0.06]];
+    var best = null, bestScore = Infinity;
+    spots.forEach(function (p, k) {
+      var r = { x: p[0], y: p[1], w: estW, h: estH }, score = k * 2;
+      faces.forEach(function (c) { if (rectCircle(r, c)) score += 1000; });
+      placed.forEach(function (b) { var a = overlapArea(r, b); if (a > 0) score += 1500 + a / 50; });
+      if (score < bestScore) { bestScore = score; best = r; }
+    });
+    var cx = best.x + estW / 2, cy = best.y + size * 0.86, sw = Math.max(5, size * 0.1);
+    var t = '<text x="' + f1(cx) + '" y="' + f1(cy) + '" text-anchor="middle" font-size="' + f1(size) + '" font-weight="700" style="font-family:Andika, ui-rounded, system-ui, sans-serif"';
+    parts.front.push('<g class="bignum' + (reduceMotion ? '' : ' pop') + '">' +
+      t + ' fill="#1b1622" stroke="#1b1622" stroke-width="' + f1(sw) + '" stroke-linejoin="round" transform="translate(' + f1(size * 0.05) + ' ' + f1(size * 0.05) + ')">' + esc(text) + '</text>' +
+      t + ' fill="#ffd23f" stroke="#1b1622" stroke-width="' + f1(sw * 0.7) + '" stroke-linejoin="round" paint-order="stroke">' + esc(text) + '</text></g>');
+    return best;
+  }
+
   /* ---------------------------------------------------------------- interactions */
   function renderInteraction(f, kind, id, ctx) {
     var box = $('interact'), panel = ctx.panel;
@@ -900,9 +1022,22 @@
       $('nextBtn').addEventListener('click', onClick);
       wireBackBottom();
     };
+    renderInteractionKind(f, kind, id, ctx, box, panel, nextBtn);
+    // a gift frame: a small note that it's in her nest now (she finds it under "From friends")
+    if (f.gift && cat.nest.indexOf(f.gift) >= 0) {
+      var g = E.gift(f.gift) || { id: f.gift, name: f.gift };
+      box.insertAdjacentHTML('afterbegin', '<p class="giftnote" role="status">' + treasureSvg(g.id) + '<span><b>' + esc(giftShort(g)) + '</b> is in your nest.</span></p>');
+      if (ctx.reading) ctx.reading.push({ text: giftShort(g) + ' is in your nest.' });
+    }
+  }
+  /* "Riffle’s lucky stone" from "Riffle’s lucky stone: dark and smooth, …" */
+  function giftShort(g) { return String(g.name || g.id).split(':')[0]; }
+  function renderInteractionKind(f, kind, id, ctx, box, panel, nextBtn) {
     if (kind === 'next') {
+      // straight after a skip-count's last hop she is still tapping: give the page a moment
+      var hold = view.opts && view.opts.fromSkip ? 1100 : 280;
       var adv = function () {
-        if (now() - renderedAt < 280) return;
+        if (now() - renderedAt < hold) return;
         if (E.next(cat, story, now())) { persist(); go('frame'); }
       };
       nextBtn('Next', adv);
@@ -916,16 +1051,17 @@
       return;
     }
     if (kind === 'end') {
-      nextBtn('See your book', function () { go('book', { from: 'end' }); });
+      nextBtn('See your book', function () { go('book', { from: 'end', scrollTo: story.id }); });
       keyHandler = function (e) { if (!isTyping(e) && e.key === 'ArrowLeft') onBack(); };
       return;
     }
     if (kind === 'choice') {
-      var opts = f.choice.options || [];
+      // options with a `when` that doesn't match are hidden (a choice keeps at least one)
+      var opts = E.options(f, cat);
       var prompt = f.choice.prompt ? '<p class="prompt">' + rich(fill(f.choice.prompt)) + '</p>' : '';
-      var picked = cat.choices[id] ? cat.choices[id].index : -1;
-      box.innerHTML = prompt + '<div class="choices" role="group">' + opts.map(function (o, i) {
-        return '<button class="choice" type="button" data-i="' + i + '" data-n="' + (i + 1) + '"' + (i === picked ? ' aria-current="true"' : '') + '>' + rich(fill(o.label)) + '</button>';
+      var was = E.chosen(cat, story, id), picked = was ? was.index : -1;
+      box.innerHTML = prompt + '<div class="choices" role="group">' + opts.map(function (o, n) {
+        return '<button class="choice" type="button" data-i="' + o.index + '" data-n="' + (n + 1) + '"' + (o.index === picked ? ' aria-current="true"' : '') + '>' + rich(fill(o.option.label)) + '</button>';
       }).join('') + '</div><div class="next-row">' + backBottom() + '</div>';
       wireBackBottom();
       Array.prototype.forEach.call(box.querySelectorAll('.choice'), function (b) {
@@ -937,11 +1073,11 @@
       keyHandler = function (e) {
         if (isTyping(e)) return;
         var n = parseInt(e.key, 10);
-        if (n >= 1 && n <= opts.length) { var b = box.querySelector('[data-i="' + (n - 1) + '"]'); if (b) b.click(); }
+        if (n >= 1 && n <= opts.length) { var b = box.querySelector('[data-n="' + n + '"]'); if (b) b.click(); }
         else if (e.key === 'ArrowLeft') onBack();
       };
       if (prompt) ctx.reading.push({ text: fill(f.choice.prompt) });
-      opts.forEach(function (o) { ctx.reading.push({ text: fill(o.label) }); });
+      opts.forEach(function (o) { ctx.reading.push({ text: fill(o.option.label) }); });
       return;
     }
     if (kind === 'input') return renderInput(f, id, box);
@@ -958,6 +1094,121 @@
       }
       keyHandler = function (e) { if (!isTyping(e) && e.key === 'ArrowLeft') onBack(); };
     }
+  }
+
+  /* ---------------------------------------------------------------- the skip-count
+   * `skip: { table, groups, who?, next, done? }`: the panel is the counting picture, the next group
+   * (the next cat) glowing softly. A tap on that cat (a generous area: its whole column of the
+   * panel) lights its things, adds its running total under it and grows the big number; the
+   * teacher's balloon keeps the count. A tap anywhere else makes the glowing cat wiggle, with no
+   * line and no penalty, and nothing is logged. The last tap turns the page to `next`, which shows
+   * the number she reached (renderFrame); a skip with a `done` line shows it instead, then Next.
+   * Space, Enter or → counts the next cat too, and a hidden "Count the next cat" button does for
+   * VoiceOver. */
+  function renderSkip(f, id) {
+    var sk = f.skip, taps = 0, turning = false;
+    var scr = $('screen');
+    scr.innerHTML = frameShell('skip', id);
+    var panel = $('panel'), art = panel.querySelector('.art'), ov = panel.querySelector('.ov');
+    panel.classList.add('lesson-panel', 'tappable');
+    var caps = captionsOf(f), intro = balloonsOf(f);
+    var teacher = sk.teacher || (intro[0] && intro[0].who) || 'tallyheart';
+    var thing = sk.thing || (sk.table === 2 ? 'ear' : 'thing'), things = sk.things || (sk.table === 2 ? 'ears' : 'things');
+    var v0 = E.skipView(sk, 0);
+    panel.setAttribute('aria-label', 'Counting picture: ' + numWord(v0.groups) + ' groups of ' + numWord(v0.table) + '. Touch the glowing one.');
+    $('colTop').innerHTML = caps.map(function (c) { return '<p class="caption">' + rich(c) + '</p>'; }).join('');
+    function draw(fresh) {
+      var v = E.skipView(sk, taps);
+      art.innerHTML = artCall('countsPicture', { table: v.table, groups: v.groups, per: v.per, highlight: v.highlight, totals: true, next: !v.done, who: sk.who, thing: thing, things: things, look: cat && cat.look }) ||
+        countsFallback(v.groups, v.per, v.highlight);
+      hopGroup();
+      ov.innerHTML = v.total ? '<div class="skipnum' + (fresh && !reduceMotion ? ' pop' : '') + '" aria-hidden="true">' + v.total + '</div>' : '';
+      var lines = intro.slice();
+      if (v.taps) lines.push({ who: teacher, html: '<span class="counter">' + esc(v.count) + '</span>' });
+      if (v.done && sk.done) lines.push({ who: teacher, text: fill(sk.done) });
+      $('stack').innerHTML = lines.map(function (b) { return stackBalloon(b); }).join('');
+      // the bottom row: Back (and Next, only after a done line); counting is done on the cats
+      var showNext = v.done && !!sk.done;
+      $('interact').innerHTML = '<div class="next-row">' + backBottom() +
+        (showNext ? '<button class="btn go big" id="nextBtn" type="button">Next <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
+          : (v.done ? '' : '<button class="sr" id="countBtn" type="button">Count the next ' + esc(sk.table === 2 ? 'cat' : 'one') + '</button>')) + '</div>';
+      wireBackBottom();
+      if ($('nextBtn')) $('nextBtn').addEventListener('click', advance);
+      if ($('countBtn')) $('countBtn').addEventListener('click', function () { tap(); var b = $('countBtn'); if (b) b.focus({ preventScroll: true }); });
+      return v;
+    }
+    /* The glowing cat and its glow, in one group that can wiggle (the art draws the glow just
+     * before the cat it is behind). */
+    function hopGroup() {
+      var nx = art.querySelector('.pc-next');
+      if (!nx || !nx.parentNode) return null;
+      var par = nx.parentNode;
+      if (par.getAttribute && par.getAttribute('class') === 'pc-hop') return par;
+      var g = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'pc-hop');
+      var cell = nx.nextElementSibling;
+      par.insertBefore(g, nx);
+      g.appendChild(nx);
+      if (cell && /^g$/i.test(cell.tagName)) g.appendChild(cell);
+      return g;
+    }
+    function onTarget(e) {
+      if (!e || e.detail === 0) return true;   // a click from the keyboard or VoiceOver: no place to aim
+      var nx = art.querySelector('.pc-next');
+      if (!nx || !nx.getBoundingClientRect) return true;   // a picture with nothing to aim at: any tap counts
+      var r = nx.getBoundingClientRect(), pr = panel.getBoundingClientRect();
+      if (!r.width) return true;
+      var mx = r.width * 0.22;
+      return e.clientX >= r.left - mx && e.clientX <= r.right + mx && e.clientY >= pr.top && e.clientY <= pr.bottom;
+    }
+    function wiggle() {
+      var g = hopGroup();
+      if (!g) return;
+      g.classList.remove('wiggle'); void g.getBoundingClientRect(); g.classList.add('wiggle');
+    }
+    var lastTap = 0;
+    function tap() {
+      if (turning || now() - lastTap < 220) return;   // a double tap counts one cat, not two
+      var before = E.skipView(sk, taps);
+      if (before.done) return;
+      taps++;
+      lastTap = now();
+      var v = draw(true);
+      speakItems([{ text: String(v.total), who: teacher }].concat(v.done && sk.done ? [{ text: fill(sk.done), who: teacher }] : []));
+      if (v.done && sk.done) { var nb = $('nextBtn'); if (nb) nb.focus({ preventScroll: true }); }
+      else if (v.done) {
+        // the last hop turns the page: the next frame shows the number she just reached
+        turning = true;
+        later(function () { if (E.next(cat, story, now())) { persist(); go('frame', { fromSkip: true }); } }, save.settings.readAloud ? 1100 : 750);
+      }
+    }
+    function advance() {
+      // the tap that finished the count never also turns the page
+      if (now() - renderedAt < 280 || now() - lastTap < 450) return;
+      if (E.next(cat, story, now())) { persist(); go('frame'); }
+    }
+    panel.addEventListener('click', function (e) {
+      if (turning || E.skipView(sk, taps).done) return;
+      if (onTarget(e)) tap(); else wiggle();
+    });
+    relayoutFn = function () { draw(false); };
+    draw(false);
+    keyHandler = function (e) {
+      if (isTyping(e)) return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        if (e.target && e.target.id === 'countBtn') return;   // the button counts on its own click
+        e.preventDefault();
+        if (E.skipView(sk, taps).done) { if (sk.done) advance(); } else tap();
+      } else if (e.key === 'ArrowLeft') { e.preventDefault(); onBack(); }
+    };
+    currentSpeech = caps.map(function (c) { return { text: c }; }).concat(intro.map(function (b) { return { text: b.text, who: b.who, variant: b.variant }; }));
+    persist();
+  }
+  /* The frame a skip-count turns to: it shows the number the count reached (the 10 over "TEN!"). */
+  function skipInto(id) {
+    var frames = (story && story.frames) || {};
+    for (var k in frames) if (Object.prototype.hasOwnProperty.call(frames, k) && frames[k] && frames[k].skip && frames[k].skip.next === id) return frames[k].skip;
+    return null;
   }
   function isTyping(e) {
     var t = e.target; if (!t) return false;
@@ -991,7 +1242,8 @@
     box.innerHTML = '<div class="look">' + html + '</div>';
     wireBackBottom();
     var field = $('inp'), ok = $('okBtn'), preview = $('preview');
-    var prev = kind === 'petname' ? cat.petname : kind === 'clanname' ? cat.name : kind === 'dream' ? cat.dream : '';
+    // what she typed before, for Back (each chapter keeps its own dream)
+    var prev = kind === 'petname' ? cat.petname : kind === 'clanname' ? cat.name : kind === 'dream' ? E.dreamOf(cat, story.id) : '';
     if (prev) field.value = prev;
     var sync = function () {
       var v = field.value;
@@ -1020,7 +1272,7 @@
     var skip = $('skipBtn');
     if (skip) skip.addEventListener('click', function () { submit(''); });
     field.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && !e.shiftKey && !ok.disabled) { e.preventDefault(); submit(field.value); }
+      if (e.key === 'Enter' && !e.shiftKey && !ok.disabled) { e.preventDefault(); if (!e.repeat) submit(field.value); }
     });
     sync();
     keyHandler = function (e) { if (!isTyping(e) && e.key === 'ArrowLeft') onBack(); };
@@ -1053,7 +1305,7 @@
         b.addEventListener('click', function () {
           var k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
           var p = {}; p[k] = v; E.setLook(cat, p); persist();
-          ctx.heads = drawArt(ctx.panel, f, cat.look);
+          ctx.heads = drawArt(ctx.panel, shownFrame(f), cat.look);
           layoutText(ctx);
           var y = root.scrollY;
           draw();
@@ -1105,31 +1357,38 @@
 
   /* ================================================================ the Counts lesson */
   function startChapterLesson(f, id, resume) {
-    var setId = f.counts.set, def = Object.assign({ id: setId }, story.counts[setId]);
-    var st;
-    if (resume && cat.lesson && cat.lesson.state) st = cat.lesson.state;
-    else {
-      st = E.counts.start(def, { set: setId, mode: 'chapter', now: now() });
-      cat.lesson = { mode: 'chapter', frame: id, state: st };
+    var setId = f.counts.set, def, st;
+    if (resume && cat.lesson && cat.lesson.state) {
+      def = Object.assign({ id: setId }, E.countsSet(setId, story, stories()));
+      st = cat.lesson.state;
+    } else {
+      // the set's facts as she gets them (an adaptive warm-up), and the fillers it borrows (fillFrom)
+      var r = E.chapterLesson(cat, story, setId, now(), stories());
+      def = r.def; st = r.state;
+      // a lesson still going further on (she came Back to count this one again) waits for its frame
+      E.beginLesson(cat, story, id, st);
       persist();
     }
     var intro = resume ? [] : balloonsOf(f);
+    var finish = function (sum) { if (E.finishCounts(cat, story, sum, now())) { persist(); go('frame'); } };
     runLesson({
       def: def, state: st, intro: intro, mode: 'chapter',
       onDone: function (sum) {
+        // a lesson inside the story (the prey pile) may have no closing line: the next frame answers
+        if (def.done === '' || def.done === null) { renderedAt = now(); return finish(sum); }
         // the scene again, with the teacher's last line in a balloon over it (the lesson was
         // recorded on the cat at its last answer, so a page closed now loses nothing)
         renderedAt = now();
         var scr = $('screen');
         scr.innerHTML = frameShell('counts', id);
         var panel = $('panel');
-        var heads = drawArt(panel, f, cat.look);
+        var heads = drawArt(panel, shownFrame(f), cat.look);
         var line = fill(def.done || 'Good work.');
         var ctx = { panel: panel, frame: { scene: f.scene, sfx: '' }, heads: heads, caps: [], balloons: [{ who: def.teacher || 'tallyheart', text: line, kind: 'say' }] };
         relayoutFn = function () { layoutText(ctx); };
         layoutText(ctx);
         $('interact').innerHTML = '<div class="next-row"><button class="btn go big" id="nextBtn" type="button">Next</button></div>';
-        $('nextBtn').addEventListener('click', function () { if (E.finishCounts(cat, story, sum, now())) { persist(); go('frame'); } });
+        $('nextBtn').addEventListener('click', function () { finish(sum); });
         keyHandler = function (e) { if (!isTyping(e) && (e.key === 'Enter' || e.key === 'ArrowRight')) $('nextBtn').click(); };
         persist();
         speakItems([{ text: line, who: def.teacher || 'tallyheart' }]);
@@ -1137,11 +1396,17 @@
     });
   }
 
-  /* One lesson, used by the chapter and the Training Hollow alike. */
+  /* One lesson, used by the chapter and the Training Hollow alike. A borrowed question (a filler
+   * from the set's fillFrom) is asked as its lending set's: D is the set the question is asked as. */
   function runLesson(o) {
-    var def = o.def, st = o.state;
+    var def = o.def, st = o.state, D = def;
     var teacher = def.teacher || 'tallyheart';
     var things = def.things || 'tails', thing = def.thing || 'tail';
+    function asSet(d) {
+      D = d || def;
+      teacher = D.teacher || def.teacher || 'tallyheart';
+      things = D.things || 'tails'; thing = D.thing || 'tail';
+    }
     var scr = $('screen');
     scr.innerHTML = frameShell('lesson', o.frameId || '');
     renderedAt = now();   // a new screen: the double-tap guard in bindChrome applies
@@ -1166,9 +1431,12 @@
       '</div><div class="gotit" id="lessonNext" hidden><button class="btn go big" id="gotIt" type="button">Got it!</button></div></div></div>';
     var qline = $('qline'), pad = $('keypad'), okKey = pad.querySelector('[data-k="ok"]');
 
+    // a line of kind 'caption' is narration (8 × 2's "You touch your nose to each little stack…"):
+    // a caption box, as the chapter's captions are lettered in the column; the rest are balloons
     function say(lines, extraClass) {
       stack.innerHTML = lines.map(function (l) {
-        return stackBalloon({ who: l.who || teacher, text: l.text, html: l.html, kind: l.kind, name: l.name }, extraClass);
+        if (l.kind === 'caption') return '<p class="caption">' + rich(l.text) + '</p>';
+        return stackBalloon({ who: l.who || teacher, text: l.text, html: l.html, kind: l.kind, name: l.name, variant: l.variant }, extraClass);
       }).join('');
     }
     function showQ(slotText, cls) {
@@ -1180,33 +1448,96 @@
       qline.setAttribute('aria-label', askTxt.replace('×', 'times') + ' equals ' + (slotText || 'what?'));
       okKey.disabled = !typed || locked;
     }
-    function picture(highlight) {
-      var svg = artCall('countsPicture', { table: q.per, groups: q.groups, highlight: highlight || 0, thing: thing, things: things });
-      art.innerHTML = svg || countsFallback(q.groups, q.per, highlight || 0);
+    /* The picture for this question: the set's picture (cats or prey, stacks or rows, a thought
+     * cloud), the fact's own on top of it. `over` redraws it another way (rightPicture). */
+    function look(over) {
+      // a regrouped picture (rightPicture: five pairs of ears as two rows of five) is in rows unless it says otherwise
+      var p = Object.assign({}, D.picture || {}, q.picture || {}, over ? Object.assign({ layout: 'rows' }, over.picture || {}) : {});
+      var g = over && typeof over.groups === 'number' ? over.groups : q.groups;
+      var per = over && typeof over.per === 'number' ? over.per : q.per;
+      // who sits in the picture's places: the fact's own (the rim's first three), else the set's
+      var who = q.who || (Array.isArray(D.who) ? D.who : null);
+      return { kind: p.kind, layout: p.layout, thought: p.thought, groups: g, per: per, who: who };
     }
-    function prompt() {
-      var tok = { a: q.a, b: q.b, groups: q.groups, per: q.per, thing: thing, things: things };
-      if (q.retry) return 'Here’s that one again. ' + cap1(numWord(q.groups)) + ' ' + (q.groups === 1 ? 'cat' : 'cats') + '. How many ' + things + '?';
+    function picture(highlight, over) {
+      var L = look(over);
+      var svg = artCall('countsPicture', { table: q.table || L.per, groups: L.groups, per: L.per, highlight: highlight || 0, kind: L.kind, layout: L.layout, thought: L.thought, who: L.who || undefined, thing: thing, things: things, look: cat && cat.look });
+      art.innerHTML = svg || countsFallback(L.groups, L.per, highlight || 0);
+    }
+    /* "Three cats. How many tails?": a group is a cat unless the set says otherwise (the pile's
+     * pairs); a picture in rows is counted in rows, and says how long they are ("Two rows of eight."). */
+    function generic() {
+      var L = look();
+      if (L.layout === 'rows') return cap1(numWord(q.groups)) + ' ' + (q.groups === 1 ? 'row' : 'rows') + ' of ' + numWord(q.per) + '. How many ' + things + '?';
+      var unit = D.unit || 'cat', units = D.units || (D.unit ? D.unit + 's' : 'cats');
+      return cap1(numWord(q.groups)) + ' ' + (q.groups === 1 ? unit : units) + '. How many ' + things + '?';
+    }
+    function fillQ(t) { return E.fill(t, cat, { a: q.a, b: q.b, answer: q.answer, groups: q.groups, per: q.per, thing: thing, things: things }); }
+    function balloonLines(x) {
+      return asList(x).map(function (b) { return typeof b === 'string' ? { text: b } : b; }).filter(function (b) { return b && b.text; })
+        .map(function (b) { return b.kind === 'caption' ? { text: fillQ(b.text), kind: 'caption' } : { who: b.who || teacher, text: fillQ(b.text), kind: b.kind }; });
+    }
+    /* What is said before she answers: the question's own prompt (a line, or balloons from anyone),
+     * else the generic question. A retry: "Here's that one again." and the generic question, or the
+     * prompt the fact keeps for it. A borrowed question: the line that says where it is from ("One
+     * from this morning."), then its own lesson's question. */
+    function promptLines() {
+      var again = 'Here’s that one again.';
+      if (q.retry) {
+        if (typeof q.prompt === 'string') return [{ who: teacher, text: again + ' ' + fillQ(q.prompt) }];
+        if (q.prompt != null) return [{ who: teacher, text: again }].concat(balloonLines(q.prompt));
+        return [{ who: teacher, text: again + ' ' + generic() }];
+      }
+      if (q.filler && q.from && def.fillIntro) return [{ who: teacher, text: fill(def.fillIntro) + ' ' + generic() }];
+      if (q.prompt != null) {
+        if (typeof q.prompt === 'string') return [{ who: teacher, text: fillQ(q.prompt) }];
+        return balloonLines(q.prompt);
+      }
       // the chapter's first question is about the cats in the picture before it (story-7)
-      if (def.firstPrompt && q.number === 1) return E.fill(def.firstPrompt, cat, tok);
-      if (def.prompt) return E.fill(def.prompt, cat, tok);
-      return cap1(numWord(q.groups)) + ' ' + (q.groups === 1 ? 'cat' : 'cats') + '. How many ' + things + '?';
+      if (D.firstPrompt && q.number === 1) return [{ who: teacher, text: fillQ(D.firstPrompt) }];
+      if (D.prompt) return [{ who: teacher, text: fillQ(D.prompt) }];
+      return [{ who: teacher, text: generic() }];
+    }
+    /* The clock is for the fact, not the reading: it starts again when the question has been read
+     * aloud (Read to me) and when the picture has finished lighting up, unless she is already typing. */
+    function restartClock(forQ) {
+      if (q === forQ && !locked && !typed) t0 = performance.now();
+    }
+    /* `light`: the picture lights a group at a time as it is asked (the pile's stacks as she noses
+     * them, the check's top row then its bottom row), with no number; she can answer at any time. */
+    function lightUp(forQ) {
+      var L = look(), k = 0, base = q.lit || 0;
+      var stepMs = q.light === 'rows' ? 1000 : 560;
+      var tickL = function () {
+        if (q !== forQ || locked) return;
+        k++;
+        picture(Math.max(base, k * L.per));
+        if (k < L.groups) later(tickL, stepMs);
+        else restartClock(forQ);
+      };
+      later(tickL, 700);
     }
     function ask(byTap) {
       if (byTap) padLockedUntil = now() + 400;
       q = E.counts.question(st);
       if (!q) return finish();
+      asSet(E.questionDef(def, q, story, stories()));
       typed = ''; locked = false;
       pad.classList.remove('locked', 'away'); $('lessonNext').hidden = true;
-      picture(0);
+      $('gotIt').textContent = 'Got it!';
+      // `lit`: what glows as it is asked (2 × 6: the first five cats' ears, ten, to hop on from)
+      picture(q.lit || 0);
       var lines = [];
       if (first && o.intro && o.intro.length) lines = o.intro.slice();
-      lines.push({ who: teacher, text: prompt() });
+      lines = lines.concat(promptLines());
       first = false;
       say(lines);
       showQ('', '');
       t0 = performance.now();
-      speakItems(lines.map(function (l) { return { text: l.text, who: l.who }; }).concat([{ text: E.counts.ask(def, q) }]));
+      var asked = q;
+      if (q.light) lightUp(asked);
+      speakItems(lines.map(function (l) { return { text: l.text, who: l.who, variant: l.variant }; }).concat([{ text: E.counts.ask(def, q) }]),
+        function () { restartClock(asked); });
     }
     function press(k) {
       if (locked || now() < padLockedUntil) return;
@@ -1219,20 +1550,35 @@
       if (!typed || locked) return;
       locked = true; pad.classList.add('locked');
       var ms = performance.now() - t0;
-      var res = E.counts.answer(st, def, typed, ms, now());
+      // a borrowed question earns its own lesson's praise and fast lines
+      var res = E.counts.answer(st, D, typed, ms, now());
       E.logAnswer(cat, res.entry);
       // the last answer finishes the lesson: record it now, not after the praise pause
       if (res.done) o.recorded = E.recordLesson(cat, st);
-      else if (o.mode === 'chapter') cat.lesson = { mode: 'chapter', frame: cat.frame, state: st };
+      else if (o.mode === 'chapter') cat.lesson = { mode: 'chapter', frame: cat.frame, chapter: story.id, state: st };
       else cat.lesson = { mode: o.mode, state: st };
       persist();
       if (res.correct) {
         showQ(typed, 'right');
-        picture(q.groups * q.per);
+        // five pairs of ears sliding into two rows of five: the picture regroups, all lit
+        if (res.rightPicture) { var R = look(res.rightPicture); picture(R.groups * R.per, res.rightPicture); }
+        else picture(q.groups * q.per);
+        if (res.balloons && res.balloons.length) {
+          // the question's own lines go on with the story: she reads them, then taps on
+          var lines = balloonLines(res.balloons);
+          say(lines);
+          speakItems(lines.map(function (l) { return { text: l.text, who: l.who }; }));
+          pad.classList.add('away');
+          $('gotIt').textContent = 'Next';
+          $('lessonNext').hidden = false;
+          later(function () { $('gotIt').focus({ preventScroll: true }); }, 50);
+          return;
+        }
         var line = fill(res.line);
-        say([{ who: teacher, text: line }]);
-        speakItems([{ text: line, who: teacher }]);
-        var wait = save.settings.readAloud ? 2600 : (res.fast ? 1300 : 1500);
+        // a set may have nothing to say after a right answer (the next frame answers): no empty balloon
+        say(line ? [{ who: teacher, text: line }] : []);
+        if (line) speakItems([{ text: line, who: teacher }]);
+        var wait = !line ? 800 : save.settings.readAloud ? 2600 : (res.fast ? 1300 : 1500);
         var skip = function () { panel.removeEventListener('click', skip); clearTimers(); ask(true); };
         panel.addEventListener('click', skip);
         later(function () { panel.removeEventListener('click', skip); ask(); }, wait);
@@ -1243,43 +1589,52 @@
     }
     function help(res) {
       var hp = res.help, total = hp.groups * hp.per, counted = 0, startedAt = now(), ticking = false;
+      // the 2s are counted out by twos, like ears: each step lights a pair of scratches
+      var step = hp.step || 1;
       pad.classList.add('away');
-      // "Close." only when she was close: 0 for 1 × 10 is not
-      var near = res.entry.answer != null && Math.abs(res.entry.answer - res.right) <= 1;
-      var helpIntro = def.helpIntro || 'Let’s scratch it out together.';
-      var intro = fill(near ? helpIntro : (def.helpIntroFar || helpIntro.replace(/^Close\.\s*/, '')));
+      // "Close." only when she was close (the engine's res.near: one hop of the count off, so one on
+      // the 1s and one pair on the 2s, or exactly one group off, the check's row of eight): 0 for
+      // 1 × 10 is not, nor 10 for the check's 16. The intro
+      // is the set the question was asked as (a borrowed one's own).
+      var near = !!res.near;
+      var helpIntro = D.helpIntro || 'Let’s scratch it out together.';
+      var intro = fill(near ? helpIntro : (D.helpIntroFar || helpIntro.replace(/^Close\.\s*/, '')));
       say([{ who: teacher, text: intro }]);
       speakItems([{ text: intro, who: teacher }]);
+      // the scratches match the picture: a picture in rows is scratched in rows (lit a column at a
+      // time, top and bottom together), and the pile's are scratched in the earth beside it
+      var pic = look(), rowsLayout = pic.layout === 'rows';
       var sand = function () {
-        art.innerHTML = artCall('sand', { groups: hp.groups, per: hp.per, counted: counted }) || sandFallback(hp.groups, hp.per, counted);
+        art.innerHTML = artCall('sand', { groups: hp.groups, per: hp.per, counted: counted, layout: rowsLayout ? 'rows' : undefined, ground: pic.kind === 'prey' ? 'earth' : undefined }) || sandFallback(hp.groups, hp.per, counted);
       };
       var nums = [];
       sand();
       var finishHelp = function () {
         panel.removeEventListener('click', tapCount);
         counted = total; sand();
-        nums = []; for (var i = 1; i <= total; i++) nums.push(i);
+        nums = []; for (var i = step; i <= total; i += step) nums.push(i);
+        if (nums[nums.length - 1] !== total) nums.push(total);
         var line = fill(res.line);
-        say([{ who: teacher, html: '<span class="counter">' + nums.join(' · ') + '</span>' }, { who: teacher, text: line }]);
+        say([{ who: teacher, html: '<span class="counter">' + nums.join(' · ') + '</span>' }].concat(line ? [{ who: teacher, text: line }] : []));
         typed = String(hp.answer);
         showQ(typed, 'right');
         speakItems([{ text: hp.a + ' times ' + hp.b + ' is ' + hp.answer + '. ' + line, who: teacher }]);
         $('lessonNext').hidden = false;
         $('gotIt').focus({ preventScroll: true });
       };
-      // The count is the teaching moment, so it always runs scratch by scratch (with Reduce Motion
-      // too: the scratches light without animating). Tapping the picture counts along, one scratch
+      // The count is the teaching moment, so it always runs step by step (with Reduce Motion
+      // too: the scratches light without animating). Tapping the picture counts along, one step
       // per tap; it never jumps to the answer.
       var tick = function () {
         if (counted >= total) return;
-        counted++;
+        counted = Math.min(total, counted + step);
         nums.push(counted);
         sand();
         var lastSb = stack.lastElementChild && stack.lastElementChild.querySelector('.sb');
         if (lastSb) lastSb.innerHTML = '<span class="who">' + esc(speakerName({ who: teacher })) + '</span><span class="counter">' + nums.join(' · ') + '</span>';
         if (save.settings.readAloud) speakItems([{ text: String(counted), who: teacher }]);
         if (counted >= total) later(finishHelp, 700);
-        else later(tick, reduceMotion ? 700 : 620);
+        else later(tick, (reduceMotion ? 700 : 620) * (step > 1 ? 1.25 : 1));
       };
       var tapCount = function () {
         if (!ticking || counted >= total || now() - startedAt < 350) return;
@@ -1331,95 +1686,154 @@
     return s + '</svg>';
   }
 
-  /* ================================================================ hub (a finished chapter) */
+  /* ================================================================ hub (after any finished chapter) */
   function renderHub() {
     if (!cat) return go('who');
+    syncStory();
+    var p = E.progress(cat, stories());
+    var latest = p.latest;
+    var learned = E.learnedCounts(cat, stories());
+    var big = '';
+    var bigSays = '';
+    if (p.next) {
+      // the next chapter is the big button; partway through it (even while reading another chapter
+      // again), the button picks up her place in it
+      var nn = p.next.number || 1;
+      bigSays = p.nextInProgress ? 'Keep reading Chapter ' + nn + ': ' + p.next.title + '.' : E.chapterHeading(p.next) + '.';
+      big = '<button class="btn go big hub-next" type="button" id="nextChapter"><i aria-hidden="true">' + ICON.moon + '</i><span>' +
+        (p.nextInProgress ? '<b>Keep reading Chapter ' + nn + '</b><small>' + esc(p.next.title) + ' · page ' + p.nextPage + '</small>'
+          : '<b>' + esc(E.chapterHeading(p.next)) + '</b><small>' + (latest ? 'A new chapter' : 'Start reading') + '</small>') + '</span></button>';
+    }
+    var again = p.finished.map(function (s) { return hubBtn('again', 'Read chapter ' + (s.number || 1) + ' again', ICON.again, s.id); }).join('');
+    var soon = p.soon ? '<button class="btn quiet" type="button" disabled><i aria-hidden="true">' + ICON.moon + '</i>' + esc(p.soon.title) + ' is coming soon</button>' : '';
     $('screen').innerHTML =
       '<section class="page center">' +
       '<div class="hero"><span class="face" aria-hidden="true">' + catPortrait(cat.look, 'proud') + '</span>' +
-      '<div><h1 class="h1" style="text-align:left">' + esc(E.displayName(cat)) + '</h1><p class="note" style="text-align:left">Apprentice of CrystalClan · Chapter 1 finished</p></div></div>' +
-      '<div class="hub">' +
-      hubBtn('book', 'Read my book', ICON.book) +
-      hubBtn('hollow', 'The Training Hollow', ICON.tree) +
+      '<div><h1 class="h1" style="text-align:left">' + esc(E.displayName(cat)) + '</h1><p class="note" style="text-align:left">Apprentice of CrystalClan' +
+      (latest ? ' · Chapter ' + (latest.number || 1) + ' finished' : '') + '</p></div></div>' +
+      '<div class="hub">' + big +
+      (latest ? hubBtn('book', 'Read my book', ICON.book) : '') +
+      (learned.length ? hubBtn('hollow', 'The Training Hollow', ICON.tree) : '') +
       hubBtn('nest', 'My nest', ICON.nest) +
-      hubBtn('again', 'Read chapter 1 again', ICON.again) +
-      '<button class="btn quiet" type="button" disabled><i aria-hidden="true">' + ICON.moon + '</i>Chapter 2: After the Storm is coming soon</button>' +
+      again + soon +
       '</div></section>';
     Array.prototype.forEach.call(doc.querySelectorAll('[data-go]'), function (b) {
       b.addEventListener('click', function () {
         var w = b.getAttribute('data-go');
-        if (w === 'again') { E.startChapter(cat, story, now()); persist(); return go('frame'); }
+        if (w === 'again') return readChapter(E.chapter(b.getAttribute('data-ch'), stories()), false);
         go(w, { from: 'hub' });
       });
     });
-    currentSpeech = [{ text: E.displayName(cat) + ', apprentice of CrystalClan.' }];
+    if ($('nextChapter')) $('nextChapter').addEventListener('click', function () { readChapter(p.next, true); });
+    currentSpeech = [{ text: E.displayName(cat) + ', apprentice of CrystalClan.' }].concat(p.next ? [{ text: bigSays }] : p.soon ? [{ text: p.soon.title + ' is coming soon.' }] : []);
+    keyHandler = function (e) { if (!isTyping(e) && e.key === 'Enter' && $('nextChapter') && doc.activeElement === doc.body) { e.preventDefault(); $('nextChapter').click(); } };
   }
-  function hubBtn(w, label, icon) { return '<button class="btn" type="button" data-go="' + w + '"><i aria-hidden="true">' + icon + '</i>' + esc(label) + '</button>'; }
+  function hubBtn(w, label, icon, ch) { return '<button class="btn" type="button" data-go="' + w + '"' + (ch ? ' data-ch="' + esc(ch) + '"' : '') + '><i aria-hidden="true">' + icon + '</i>' + esc(label) + '</button>'; }
 
-  /* ================================================================ the book page */
+  /* ================================================================ the book */
+  /* One book: the title and portrait once, then a page per finished chapter, then the latest
+   * chapter's teaser. Printing puts each chapter on its own page. */
   function renderBook(opts) {
     if (!cat) return go('who');
-    var b = E.buildBook(story, cat);
+    var b = E.buildFullBook(cat, stories());
+    var t = b.teaser;
     $('screen').innerHTML =
       '<article class="book" aria-label="' + esc(b.title) + '">' +
       // a long Clan name ("Thunderwhiskerpaw’s") gets a smaller title, so the word never breaks
-      '<h1' + (E.displayName(cat).length > 12 ? ' class="long"' : '') + '>' + esc(b.title) + '</h1><div class="chap">' + esc(b.chapter) + '</div>' +
+      '<h1' + (E.displayName(cat).length > 12 ? ' class="long"' : '') + '>' + esc(b.title) + '</h1>' +
       '<div class="portrait" aria-hidden="true">' + catPortrait(cat.look, 'happy') + '</div>' +
-      b.recap.map(function (p) { return '<p>' + rich(p) + '</p>'; }).join('') +
-      (b.dream ? '<p class="dream">' + rich(b.dream) + '</p>' : '') +
+      (b.pages.length ? b.pages.map(function (pg) {
+        return '<section class="bookpage" id="book-' + esc(pg.id) + '"><h2 class="chap">' + esc(pg.heading) + '</h2>' +
+          pg.recap.map(function (p) { return '<p>' + rich(p) + '</p>'; }).join('') +
+          (pg.dream ? '<p class="dream">' + rich(pg.dream) + '</p>' : '') + '</section>';
+      }).join('') : '<p class="chap">Finish a chapter, and it goes in your book.</p>') +
       '<div class="sig">' + esc(E.displayName(cat)) + ' of CrystalClan</div>' +
       '</article>' +
-      '<div class="links no-print"><button class="btn" id="printBtn" type="button">Print my page</button></div>' +
-      '<section class="coming" aria-label="Coming next">' +
-      '<span class="soon">Coming soon</span>' +
-      '<h2 class="h2">Chapter 2: After the Storm</h2>' +
-      '<p>Tomorrow, Tallyheart has a new Count for you: <b>ears</b>. Somebody should count the prey pile, too. It looks a little bit smaller than yesterday…</p>' +
-      '<p>And what made that enormous splash down by the river?</p>' +
-      '</section>' +
-      '<div class="links">' + hubBtn('hollow', 'The Training Hollow', ICON.tree) + hubBtn('nest', 'My nest', ICON.nest) + hubBtn('hub', 'Camp', ICON.moon) + '</div>';
+      '<div class="links no-print"><button class="btn" id="printBtn" type="button">Print my book</button></div>' +
+      (t ? '<section class="coming" aria-label="Coming next">' +
+        '<span class="soon">' + (t.built ? 'Next' : 'Coming soon') + '</span>' +
+        '<h2 class="h2">' + esc(t.title) + '</h2>' +
+        t.lines.map(function (l) { return '<p>' + rich(l) + '</p>'; }).join('') +
+        '</section>' : '') +
+      '<div class="links">' + (E.learnedCounts(cat, stories()).length ? hubBtn('hollow', 'The Training Hollow', ICON.tree) : '') + hubBtn('nest', 'My nest', ICON.nest) + hubBtn('hub', 'Camp', ICON.moon) + '</div>';
     $('printBtn').addEventListener('click', function () { try { root.print(); } catch (e) {} });
     Array.prototype.forEach.call(doc.querySelectorAll('[data-go]'), function (bt) {
       bt.addEventListener('click', function () { var w = bt.getAttribute('data-go'); go(w, { from: 'book' }); });
     });
-    currentSpeech = [{ text: b.title }].concat(b.recap.map(function (p) { return { text: p }; })).concat(b.dream ? [{ text: b.dream }] : []);
+    // from a chapter's end: open the book at that chapter's page (when it isn't the first)
+    if (opts && opts.scrollTo && b.pages.length > 1) {
+      var pageEl = $('book-' + opts.scrollTo);
+      if (pageEl) later(function () { try { pageEl.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) {} }, 60);
+    } else root.scrollTo(0, 0);
+    currentSpeech = [{ text: b.title }];
+    b.pages.forEach(function (pg) {
+      currentSpeech.push({ text: pg.heading + '.' });
+      pg.recap.forEach(function (p) { currentSpeech.push({ text: p }); });
+      if (pg.dream) currentSpeech.push({ text: pg.dream });
+    });
   }
 
-  /* ================================================================ the Training Hollow */
+  /* ================================================================ the Training Hollow, one claw mark per Count */
+  function hollowScene(cam, cast, fx) {
+    return { set: 'hollow', cam: cam, opts: { marks: 'auto', glow: 'auto' }, cast: cast, fx: fx };
+  }
   function renderHollow(opts) {
     if (!cat) return go('who');
-    if (cat.lesson && cat.lesson.mode === 'hollow' && cat.lesson.state) {
-      if (!E.counts.done(cat.lesson.state)) return hollowLesson(E.hollowDef(story, 1), cat.lesson.state, true);
+    // the round in progress: in the slot, or back from waiting while a chapter lesson had it
+    // (that chapter lesson now waits in its chapter's place)
+    var waited = !!cat.hollowWaiting, HL = E.hollowRound(cat);
+    if (waited) persist();
+    if (HL) {
+      var tbl = HL.state.table || 1;
+      if (!E.counts.done(HL.state)) return hollowLesson(E.hollowDef(stories(), tbl), HL.state, true);
       // a round whose last answer is in but which was never recorded: it counts, once
       var rec = E.settleLesson(cat);
       persist();
-      if (rec && rec.hollow) return hollowReward(E.hollowDef(story, 1), rec.hollow);
+      if (rec && rec.hollow) return hollowReward(E.hollowDef(stories(), tbl), rec.hollow);
     }
+    var learned = E.learnedCounts(cat, stories());
+    var defs = learned.map(function (c) { return { table: c.table, def: E.hollowDef(stories(), c.table), glow: E.hollowTable(cat, c.table).glow }; });
     var scr = $('screen');
     scr.innerHTML = frameShell('hollow', 'hollow');
     var panel = $('panel');
+    var one = defs.length === 1 ? defs[0] : null;
     var f = {
-      scene: { set: 'hollow', cam: 'wide', opts: { marks: 1, glow: !!cat.hollow.glow }, cast: [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'sunpatch', facing: 'left' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'sand-left', facing: 'right' }], fx: ['sunset'] },
+      scene: hollowScene('wide', [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'sunpatch', facing: 'left' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'sand-left', facing: 'right' }], ['sunset']),
       caption: ['The Training Hollow. The old tree leans over the sand like it’s listening.'],
-      say: [{ who: 'tallyheart', text: opts && opts.reward ? 'Another round? I’ve got all evening.' : 'Back for more tails? A full round earns a treasure for your nest.' }]
+      say: [{ who: 'tallyheart', text: opts && opts.reward ? 'Another round? I’ve got all evening.'
+        : one ? 'Back for more ' + (one.def.things || 'tails') + '? A full round earns a treasure for your nest.'
+          : defs.length ? 'Which Count today? A full round earns a treasure for your nest.' : 'Finish a Count in your story first. Then come back and practise it.' }]
     };
-    if (cat.hollow.glow) f.say.push({ who: 'tallyheart', text: 'Look at your claw mark. It glows now. You know your tails.' });
-    var heads = drawArt(panel, f, cat.look);
+    var glowing = defs.filter(function (d) { return d.glow; });
+    if (one && one.glow) f.say.push({ who: 'tallyheart', text: 'Look at your claw mark. It glows now. You know your ' + (one.def.things || 'tails') + '.' });
+    else if (glowing.length) f.say.push({ who: 'tallyheart', text: 'Look at your claw marks. Your ' + glowing.map(function (d) { return d.def.things; }).join(' and ') + ' ' + (glowing.length === 1 ? 'mark glows' : 'marks glow') + ' now.' });
+    var heads = drawArt(panel, shownFrame(f), cat.look);
     var ctx = { panel: panel, frame: f, heads: heads, caps: captionsOf(f), balloons: balloonsOf(f) };
     relayoutFn = function () { layoutText(ctx); };
     layoutText(ctx);
-    $('interact').innerHTML = '<div class="row end"><button class="btn" type="button" id="nestBtn">My nest</button><button class="btn go big" type="button" id="startBtn">Start a round</button></div>';
-    $('nestBtn').addEventListener('click', function () { go('nest', { from: 'hollow' }); });
-    $('startBtn').addEventListener('click', function () {
-      var r = E.hollowStart(cat, story, now(), 1);
+    var start = function (table) {
+      var r = E.hollowStart(cat, stories(), now(), table);
+      E.holdLesson(cat);   // a chapter lesson in progress waits in its chapter's place, never lost to the round
       cat.lesson = { mode: 'hollow', state: r.state }; persist();
       hollowLesson(r.def, r.state, false);
+    };
+    if (one) {
+      $('interact').innerHTML = '<div class="row end"><button class="btn" type="button" id="nestBtn">My nest</button><button class="btn go big" type="button" id="startBtn" data-t="' + one.table + '">Start a round</button></div>';
+    } else {
+      $('interact').innerHTML = '<div class="counts-pick" role="group" aria-label="Which Count?">' + defs.map(function (d) {
+        return '<button class="btn go big" type="button" data-t="' + d.table + '">' + (d.glow ? '<i class="glowdot" role="img" aria-label="glowing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l2.7 7.8 7.8 2.7-7.8 2.7L12 22.5l-2.7-7.8L1.5 12l7.8-2.7z"/></svg></i>' : '') + esc(E.countName(d.def, d.table)) + '</button>';
+      }).join('') + '</div><div class="row end"><button class="btn" type="button" id="nestBtn">My nest</button></div>';
+    }
+    $('nestBtn').addEventListener('click', function () { go('nest', { from: 'hollow' }); });
+    Array.prototype.forEach.call($('interact').querySelectorAll('[data-t]'), function (b) {
+      b.addEventListener('click', function () { start(+b.getAttribute('data-t')); });
     });
-    currentSpeech = ctx.reading || [];
+    currentSpeech = (ctx.reading || []).concat(one ? [] : defs.map(function (d) { return { text: E.countName(d.def, d.table).replace(' · ', ', ') }; }));
   }
   function hollowLesson(def, st, resume) {
     runLesson({
       def: def, state: st, mode: 'hollow',
-      intro: resume ? [] : [{ who: 'tallyheart', text: 'A round of tails. Ready? Here we go.' }],
+      intro: resume ? [] : [{ who: 'tallyheart', text: 'A round of ' + (def.things || 'tails') + '. Ready? Here we go.' }],
       onDone: function (sum, rec) {
         // the round was counted (E.hollowFinish, once) when its last answer went in
         hollowReward(def, rec && rec.hollow ? rec.hollow : { awarded: null, glowNow: false });
@@ -1432,21 +1846,24 @@
     var scr = $('screen');
     scr.innerHTML = frameShell('reward', 'reward');
     var panel = $('panel');
+    var glows = E.hollowTable(cat, def.table || 1).glow;
+    var many = E.learnedCounts(cat, stories()).length > 1;
     // an insert on the claw marks (as in the chapter's f063): the tree camera sits above the tree
     // anchor, so a cat there shows only her ear tips; her line comes in from off-panel instead
-    var f = { scene: { set: 'hollow', cam: 'tree', opts: { marks: 1, glow: !!cat.hollow.glow }, cast: [], fx: cat.hollow.glow ? ['glow', 'sparkle'] : ['sparkle'] } };
-    var heads = drawArt(panel, f, cat.look);
+    var f = { scene: hollowScene('tree', [], glows ? ['glow', 'sparkle'] : ['sparkle']) };
+    var heads = drawArt(panel, shownFrame(f), cat.look);
     var line = fill(def.done);
     var ctx = { panel: panel, frame: f, heads: heads, caps: [], balloons: [{ who: 'tallyheart', text: line, kind: 'say' }] };
     relayoutFn = function () { layoutText(ctx); };
     layoutText(ctx);
+    var glowNote = many ? 'Look! Your ' + (def.things || 'tails') + ' claw mark on the tree is glowing.' : 'Look! Your claw mark on the tree is glowing.';
     $('interact').innerHTML =
       (t ? '<div class="reward' + (reduceMotion ? '' : ' pop') + '" role="status">' + treasureSvg(t.id) + '<b>' + esc(t.name) + '</b><span>for your nest</span></div>' : '') +
-      (res.glowNow ? '<p class="glow-note">Look! Your claw mark on the tree is glowing.</p>' : '') +
+      (res.glowNow ? '<p class="glow-note">' + esc(glowNote) + '</p>' : '') +
       '<div class="row end"><button class="btn" type="button" id="nestBtn">My nest</button><button class="btn go big" type="button" id="againBtn">Another round</button></div>';
     $('nestBtn').addEventListener('click', function () { go('nest', { from: 'hub' }); });
     $('againBtn').addEventListener('click', function () { go('hollow', { from: 'hub', reward: true }); });
-    currentSpeech = [{ text: line, who: 'tallyheart' }].concat(t ? [{ text: t.name + ', for your nest.' }] : []).concat(res.glowNow ? [{ text: 'Look! Your claw mark on the tree is glowing.' }] : []);
+    currentSpeech = [{ text: line, who: 'tallyheart' }].concat(t ? [{ text: t.name + ', for your nest.' }] : []).concat(res.glowNow ? [{ text: glowNote }] : []);
     speakItems(currentSpeech);
   }
 
@@ -1455,22 +1872,30 @@
     if (!cat) return go('who');
     // a Hollow round finished but never recorded still puts its treasure in the nest
     if (cat.lesson && cat.lesson.mode === 'hollow' && E.settleLesson(cat)) persist();
-    var items = E.nestItems(cat);
+    var g = E.nestGroups(cat);
+    var card = function (it) {
+      return '<div class="treasure' + (it.gift ? ' gift' : '') + '">' + (it.count > 1 ? '<span class="n">×' + it.count + '</span>' : '') + treasureSvg(it.treasure.id) +
+        esc(it.treasure.name) + (it.gift && it.treasure.from ? '<small>from ' + esc(it.treasure.from) + '</small>' : '') + '</div>';
+    };
     var scr = $('screen');
     scr.innerHTML = '<section class="page">' +
       '<div class="solo-panel"><figure class="panel" id="panel"><div class="art" aria-hidden="true"></div><div class="ov"></div></figure></div>' +
       '<h1 class="h1">' + esc(E.displayName(cat)) + '’s nest</h1>' +
-      (items.length ? '<div class="nest-grid">' + items.map(function (it) {
-        return '<div class="treasure">' + (it.count > 1 ? '<span class="n">×' + it.count + '</span>' : '') + treasureSvg(it.treasure.id) + esc(it.treasure.name) + '</div>';
-      }).join('') + '</div>' : '<p class="note">Your nest is just moss and rose leaves for now. Finish a round in the Training Hollow to find a treasure.</p>') +
-      '<div class="links"><button class="btn go" type="button" data-go="hollow">The Training Hollow</button><button class="btn" type="button" data-go="hub">Camp</button></div>' +
+      // gifts from friends come first
+      (g.gifts.length ? '<h2 class="h2 nest-h">From friends</h2><div class="nest-grid">' + g.gifts.map(card).join('') + '</div>' : '') +
+      (g.treasures.length ? (g.gifts.length ? '<h2 class="h2 nest-h">Treasures</h2>' : '') + '<div class="nest-grid">' + g.treasures.map(card).join('') + '</div>' : '') +
+      (!g.gifts.length && !g.treasures.length ? '<p class="note">Your nest is just moss and rose leaves for now. Finish a round in the Training Hollow to find a treasure.</p>' : '') +
+      '<div class="links">' + (E.learnedCounts(cat, stories()).length ? '<button class="btn go" type="button" data-go="hollow">The Training Hollow</button>' : '') + '<button class="btn" type="button" data-go="hub">Camp</button></div>' +
       '</section>';
     var panel = $('panel');
     var f = { scene: { set: 'den', cam: 'nest', cast: [{ who: 'player', pose: 'curl', mood: 'happy', at: 'nest' }], fx: ['night'] } };
     drawArt(panel, f, cat.look);
     panel.setAttribute('aria-label', 'Your nest in the apprentices’ den');
     Array.prototype.forEach.call(doc.querySelectorAll('[data-go]'), function (b) { b.addEventListener('click', function () { go(b.getAttribute('data-go'), { from: 'nest' }); }); });
-    currentSpeech = [{ text: E.displayName(cat) + '’s nest.' }].concat(items.map(function (it) { return { text: it.treasure.name }; }));
+    currentSpeech = [{ text: E.displayName(cat) + '’s nest.' }]
+      .concat(g.gifts.length ? [{ text: 'From friends:' }] : [])
+      .concat(g.gifts.map(function (it) { return { text: it.treasure.name + ', from ' + it.treasure.from + '.' }; }))
+      .concat(g.treasures.map(function (it) { return { text: it.treasure.name }; }));
   }
 
   /* ================================================================ read to me */
@@ -1487,11 +1912,14 @@
     } catch (e) { voice = null; }
     return voice;
   }
-  function speakItems(items) {
+  /* Read to me: say these, in order. `onDone` runs when the last one has been said (a lesson's
+   * clock starts again then: the time it took to read the question aloud is not hers). */
+  function speakItems(items, onDone) {
     if (!save || !save.settings.readAloud || !('speechSynthesis' in root)) return;
     if (!items || !items.length) return;   // nothing new to say: let what is speaking finish
     try {
       speechSynthesis.cancel();
+      var last = null;
       (items || []).forEach(function (it) {
         var txt = plain(String(it.text || '').replace(/<[^>]+>/g, ' ')).trim();
         if (!txt) return;
@@ -1499,9 +1927,11 @@
         var v = pickVoice(); if (v) u.voice = v;
         u.lang = (v && v.lang) || 'en-US';
         u.rate = 0.95;
-        u.pitch = PITCH[it.who] || 1;
+        u.pitch = pitchOf(it.who, it.variant);
         speechSynthesis.speak(u);
+        last = u;
       });
+      if (last && onDone) last.onend = function () { onDone(); };
     } catch (e) {}
   }
   function stopSpeech() { try { if ('speechSynthesis' in root) speechSynthesis.cancel(); } catch (e) {} }
@@ -1528,44 +1958,77 @@
     spokeUp: { 'true': 'spoke up about the thirteenth sparrow', 'false': 'stayed quiet about the sparrow' },
     joinReason: { learn: 'asked to join to learn everything', count: 'asked to join because “I can learn to count anything”', brave: 'asked to join because “I’m braver than I look”' },
     specialty: { noticing: 'good at noticing', sneaking: 'good at sneaking', climbing: 'good at climbing', swimming: 'likes water (swimming)', friends: 'good at making friends' },
-    worry: { small: 'worries about being too small', water: 'worries about deep water', talk: 'talks when nervous', shiny: 'distracted by shiny things' }
+    worry: { small: 'worries about being too small', water: 'worries about deep water', talk: 'talks when nervous', shiny: 'distracted by shiny things' },
+    // chapter 2
+    ch2SaidAloud: { 'true': 'said the missing prey out loud, to the whole Clan', 'false': 'whispered the missing prey to Tallyheart, who told the whole camp' },
+    ch2Path: { bridge: 'peeked under the Old Bridge, against the rule (chapter 3 remembers)', river: 'stayed by the river with Riffle and heard the tower roar (chapter 4 remembers)' }
   };
   function fmtMs(ms) { return ms == null ? '–' : (ms / 1000).toFixed(1) + ' s'; }
+  /* Each chapter's progress, for grown-ups. */
+  function chapterProgress(c, s) {
+    if (E.isFinished(c, s.id)) {
+      var at = c.finished[s.id];
+      var when = typeof at === 'number' && at > 1e11 ? ' ' + new Date(at).toLocaleDateString() : '';
+      var re = c.chapter === s.id && E.kindOf(E.currentFrame(c, s)) !== 'end' ? '; reading it again, page ' + ((c.history || []).length + 1) : '';
+      return 'finished' + when + re;
+    }
+    var pl = E.place(c, s.id);
+    if (pl) {
+      var reading = c.chapter === s.id;
+      return 'on frame ' + (reading ? E.frameId(c, s) : pl.frame) + ', page ' + (pl.history.length + 1) +
+        (pl.lesson ? ', partway through a lesson' : '') + (reading ? '' : ' (kept while another chapter is read)');
+    }
+    return E.isOpen(c, s, stories()) ? 'not started' : 'opens when the chapter before it is finished';
+  }
   function openGrownups() {
     stopSpeech();
     var sheet = $('sheet');
     var cats = save.cats;
+    var chs = E.chapters(stories());
     var html = '<div class="sheet-in"><button class="gbtn close" type="button" id="gClose">Close</button>' +
-      '<h2>Grown-ups corner</h2><p class="muted">Potomac Crossing ' + esc(E.VERSION) + ' · saves on this device only, under one key (' + esc(E.STORAGE_KEY) + ')' +
+      '<h2>Grown-ups corner</h2><p class="muted">Potomac Crossing ' + esc(E.VERSION) + ' · chapters: ' + chs.map(function (s) { return esc(s.number + ' ' + s.title); }).join(', ') +
+      ' · saves on this device only, under one key (' + esc(E.STORAGE_KEY) + ', save version ' + E.SAVE_VERSION + ')' +
       (store && !store.ok ? ' · <b>this browser is not letting it save</b>' : '') + '</p>' +
       '<p class="muted">Counts times are for you, not her: the game never shows a clock. “Right first time” counts the first ask of a fact in each lesson; “helped” is how often the sand count came out.</p>';
     if (!cats.length) html += '<p>No cats on this device yet.</p>';
     cats.forEach(function (c) {
-      var table = E.factTable(c.counts);
-      var L = lookOptions();
       var lookTxt = [lookDef('sex', c.look.sex).label, lookDef('fur', c.look.fur).label, lookDef('marking', c.look.marking).label, lookDef('eyes', c.look.eyes).label + ' eyes'].join(' · ');
       var flags = Object.keys(c.flags || {}).filter(function (k) { return k !== 'looked'; }).map(function (k) {
         var w = FLAG_WORDS[k] && FLAG_WORDS[k][String(c.flags[k])];
         return '<li>' + esc(w || (k + ': ' + c.flags[k])) + '</li>';
       }).join('');
-      var choices = Object.keys(c.choices || {}).map(function (fid) {
-        return '<li><span class="muted">' + esc(fid) + '</span> ' + esc(E.fill(c.choices[fid].label, c)) + '</li>';
+      // choices are keyed "chapter:frame"; listed by chapter, in the order made
+      var choices = Object.keys(c.choices || {}).map(function (key) {
+        var parts = key.split(':'), s = parts.length > 1 ? E.chapter(parts[0], stories()) : null;
+        var where = s ? 'Ch ' + (s.number || 1) + ' · ' + parts[1] : key;
+        return '<li><span class="muted">' + esc(where) + '</span> ' + esc(E.fill(c.choices[key].label, c)) + '</li>';
       }).join('');
-      var nest = E.nestItems(c).map(function (it) { return it.treasure.name + (it.count > 1 ? ' ×' + it.count : ''); }).join(', ');
+      var g = E.nestGroups(c);
+      var nestTxt = g.gifts.concat(g.treasures).map(function (it) { return it.treasure.name + (it.gift ? ' (from ' + it.treasure.from + ')' : '') + (it.count > 1 ? ' ×' + it.count : ''); }).join(', ');
+      var dreams = chs.filter(function (s) { return c.dreams && typeof c.dreams[s.id] === 'string'; }).map(function (s) {
+        return 'Ch ' + (s.number || 1) + ': ' + (c.dreams[s.id] || '(skipped)');
+      }).join(' · ');
+      var learned = E.learnedCounts(c, stories());
+      var hollowTxt = c.hollow.rounds + ' round' + (c.hollow.rounds === 1 ? '' : 's') + (learned.length ? ': ' + learned.map(function (k) {
+        var r = E.hollowTable(c, k.table);
+        return 'the ' + k.table + 's ' + r.rounds + ' (' + r.cleanRounds + ' without help' + (r.glow ? ', claw mark glowing' : '') + ')';
+      }).join('; ') : '');
       html += '<h3>' + esc(E.displayName(c)) + '</h3>' +
         '<dl><dt>Clan name</dt><dd>' + esc(c.name ? c.name + 'paw' : '(not yet)') + '</dd>' +
         '<dt>Pet name</dt><dd>' + esc(c.petname || '(not yet)') + '</dd>' +
         '<dt>Look</dt><dd>' + esc(lookTxt) + '</dd>' +
-        '<dt>Dream</dt><dd>' + esc(c.dream || '–') + '</dd>' +
-        '<dt>Chapter 1</dt><dd>' + (c.done ? 'finished' : 'on frame ' + esc(c.frame || '–') + ', page ' + ((c.history || []).length + 1)) + '</dd>' +
-        '<dt>Training Hollow</dt><dd>' + c.hollow.rounds + ' round' + (c.hollow.rounds === 1 ? '' : 's') + ', ' + c.hollow.cleanRounds + ' without help' + (c.hollow.glow ? ', claw mark glowing' : '') + '</dd>' +
-        '<dt>Nest</dt><dd>' + esc(nest || '–') + '</dd></dl>' +
+        chs.map(function (s) { return '<dt>Chapter ' + (s.number || 1) + '</dt><dd>' + esc(chapterProgress(c, s)) + '</dd>'; }).join('') +
+        '<dt>Dreams</dt><dd>' + esc(dreams || '–') + '</dd>' +
+        '<dt>Training Hollow</dt><dd>' + esc(hollowTxt) + '</dd>' +
+        '<dt>Nest</dt><dd>' + esc(nestTxt || '–') + '</dd></dl>' +
         (flags ? '<h4>What the choices say</h4><ul>' + flags + '</ul>' : '') +
         (choices ? '<h4>Choices, in order</h4><ul>' + choices + '</ul>' : '') +
         '<h4>The Counts</h4>' +
-        (table.length ? '<div class="scroll"><table><thead><tr><th>Fact</th><th>Attempts</th><th>Right first time</th><th>Helped</th><th>Typical time</th></tr></thead><tbody>' +
-          table.map(function (r) { return '<tr><td>' + r.a + ' × ' + r.b + '</td><td>' + r.attempts + '</td><td>' + r.rightFirst + ' of ' + r.firstAsks + '</td><td>' + r.helped + '</td><td>' + fmtMs(r.medianMs) + '</td></tr>'; }).join('') +
-          '</tbody></table></div>' : '<p class="muted">No answers yet.</p>') +
+        (c.counts.length ? E.factTables(c, stories()).map(function (t) {
+          return '<h5>' + esc(t.name) + '</h5><div class="scroll"><table><thead><tr><th>Fact</th><th>Attempts</th><th>Right first time</th><th>Helped</th><th>Typical time</th></tr></thead><tbody>' +
+            t.rows.map(function (r) { return '<tr><td>' + r.a + ' × ' + r.b + '</td><td>' + r.attempts + '</td><td>' + r.rightFirst + ' of ' + r.firstAsks + '</td><td>' + r.helped + '</td><td>' + fmtMs(r.medianMs) + '</td></tr>'; }).join('') +
+            '</tbody></table></div>';
+        }).join('') : '<p class="muted">No answers yet.</p>') +
         '<p><button class="gbtn warn" type="button" data-reset="' + esc(c.id) + '">Start this cat over</button>' +
         '<button class="gbtn warn" type="button" data-remove="' + esc(c.id) + '">Remove this cat from this device</button></p>';
     });
@@ -1583,7 +2046,7 @@
         var c = E.getCat(save, b.getAttribute('data-reset'));
         if (!c || !root.confirm('Start ' + E.displayName(c) + ' over from the very beginning? Names, choices, Counts and treasures all go.')) return;
         var fresh = E.resetCat(save, c.id, now());
-        if (cat && cat.id === c.id) cat = fresh;
+        if (cat && cat.id === c.id) { cat = fresh; syncStory(); }
         persist(); close(); go('who');
       });
     });
@@ -1592,7 +2055,7 @@
         var c = E.getCat(save, b.getAttribute('data-remove'));
         if (!c || !root.confirm('Remove ' + E.displayName(c) + ' from this device? This can’t be undone.')) return;
         E.removeCat(save, c.id);
-        if (cat && cat.id === c.id) cat = null;
+        if (cat && cat.id === c.id) { cat = null; syncStory(); }
         persist(); close(); go('who');
       });
     });
@@ -1613,7 +2076,8 @@
       case 'moss': return o + '<path d="M10 74c0-16 12-24 22-20 4-12 22-14 28-4 10-6 26 0 28 14 4 2 4 10 0 10z" fill="#5fae5a"/><path d="M24 62c4-2 8 0 8 4M50 54c4-2 8 0 9 4M70 62c3-2 7 0 7 3" fill="none" stroke="#a6e08f"/>' + c;
       case 'feather': return o + '<path d="M22 86 C30 60 46 30 78 14 C80 40 64 66 30 80z" fill="#4f86d8"/><path d="M40 62l12 6M48 48l12 6M58 34l11 5" stroke="#fffaf0" stroke-width="4"/><path d="M40 62l12 6M48 48l12 6" stroke="#1b1622" stroke-width="2"/><path d="M16 92 L66 28" fill="none"/>' + c;
       case 'shell': return o + '<path d="M50 84 L18 44 C22 22 78 22 82 44 Z" fill="#ffc9a8"/><path d="M50 84 L32 34M50 84 L50 28M50 84 L68 34M50 84 L24 44M50 84 L76 44" fill="none" stroke-width="2"/><path d="M42 84h16l-2 6h-12z" fill="#ffc9a8"/>' + c;
-      case 'pebble': return o + '<ellipse cx="50" cy="56" rx="34" ry="24" fill="#8f97a8"/><path d="M20 58c16-8 44-8 60 0" fill="none" stroke="#f2f2f2" stroke-width="5"/><ellipse cx="38" cy="44" rx="8" ry="4" fill="#fff" stroke="none" opacity=".8"/>' + c;
+      // speckled, not striped: the white stripe is Riffle's lucky stone's alone
+      case 'pebble': return o + '<ellipse cx="50" cy="56" rx="34" ry="24" fill="#8f97a8"/><g fill="#f2f2f2" stroke="none"><circle cx="34" cy="60" r="3"/><circle cx="49" cy="66" r="2.4"/><circle cx="62" cy="55" r="3.2"/><circle cx="70" cy="66" r="2.2"/><circle cx="44" cy="52" r="2"/><circle cx="57" cy="70" r="1.8"/><circle cx="27" cy="52" r="1.8"/></g><ellipse cx="38" cy="44" rx="8" ry="4" fill="#fff" stroke="none" opacity=".8"/>' + c;
       case 'acorn': return o + '<path d="M30 46 C30 76 50 88 50 88 C50 88 70 76 70 46z" fill="#c9843a"/><path d="M24 46 C24 30 76 30 76 46z" fill="#7a5230"/><path d="M50 32 v-12" stroke-width="5"/><path d="M34 40l6-6M44 42l6-8M56 42l6-8M66 42l4-5" stroke-width="2"/>' + c;
       case 'snail': return o + '<path d="M50 50 m-30 0 a30 30 0 1 1 60 0 a30 30 0 1 1 -60 0z" fill="#e8b46a"/><path d="M50 50 m0 -18 a18 18 0 1 1 -18 18 a12 12 0 1 1 12 -12 a6 6 0 1 1 6 6" fill="none" stroke-width="3"/>' + c;
       case 'eggshell': return o + '<path d="M18 58 C18 86 82 86 82 58 L74 50 L66 60 L58 48 L50 60 L42 48 L34 60 L26 50z" fill="#9fd8e8"/><circle cx="36" cy="72" r="2.5" fill="#5a8a9a" stroke="none"/><circle cx="60" cy="70" r="2" fill="#5a8a9a" stroke="none"/>' + c;
@@ -1625,6 +2089,10 @@
       case 'pinecone': return o + '<path d="M50 88 C28 72 26 40 50 16 C74 40 72 72 50 88z" fill="#9a6a3a"/><path d="M36 40h28M32 54h36M36 68h28M42 80h16" fill="none" stroke-width="2.5"/><path d="M44 34l6 6 6-6M40 48l10 6 10-6M40 62l10 6 10-6" fill="none" stroke-width="2"/>' + c;
       case 'marble': return o + '<circle cx="50" cy="52" r="30" fill="#4f9ae8"/><path d="M28 56 C40 40 52 70 72 46" fill="none" stroke="#ffd23f" stroke-width="6"/><circle cx="40" cy="40" r="6" fill="#fff" stroke="none" opacity=".85"/>' + c;
       case 'button': return o + '<circle cx="50" cy="52" r="30" fill="#ffd23f"/><circle cx="50" cy="52" r="22" fill="none" stroke-width="2"/><circle cx="43" cy="45" r="4" fill="#1b1622"/><circle cx="57" cy="45" r="4" fill="#1b1622"/><circle cx="43" cy="59" r="4" fill="#1b1622"/><circle cx="57" cy="59" r="4" fill="#1b1622"/>' + c;
+      // Riffle's lucky stone: smooth, nearly black, a white stripe all the way around, never broken
+      case 'riffle-stone': return o + '<ellipse cx="50" cy="58" rx="36" ry="26" fill="#2f2b33"/>' +
+        '<path d="M16 52 C30 66 70 66 84 50" fill="none" stroke="#f6f1e6" stroke-width="7" stroke-linecap="butt"/>' +
+        '<ellipse cx="38" cy="46" rx="9" ry="4.5" fill="#fff" stroke="none" opacity=".35"/>' + c;
       default: return o + '<circle cx="50" cy="50" r="28" fill="#ffd23f"/>' + c;
     }
   }

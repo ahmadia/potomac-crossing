@@ -1,0 +1,1910 @@
+{
+ "device": {
+  "v": 1,
+  "cats": [
+   {
+    "id": "cat-finished",
+    "created": 1000,
+    "updated": 99000,
+    "look": {
+     "sex": "she",
+     "fur": "calico",
+     "marking": "white-paws",
+     "eyes": "odd"
+    },
+    "petname": "Princess Sparkle Muffin",
+    "name": "Moon",
+    "dream": "i dreamed about otters sliding down a hill",
+    "flags": {
+     "looked": true,
+     "specialty": "noticing",
+     "stepOut": "chase",
+     "spokeUp": true,
+     "joinReason": "brave",
+     "worry": "water"
+    },
+    "choices": {
+     "f014": {
+      "index": 0,
+      "label": "Watched the birds through the glass."
+     },
+     "f018": {
+      "index": 0,
+      "label": "Chase the moth!"
+     },
+     "f028": {
+      "index": 0,
+      "label": "“Thirteen! There’s one on the lamp!”"
+     },
+     "f045": {
+      "index": 2,
+      "label": "“I’m braver than I look.”"
+     },
+     "f066": {
+      "index": 1,
+      "label": "“The river. It looks so deep.”"
+     }
+    },
+    "chapter": "ch01",
+    "frame": "f085",
+    "history": [
+     "f001",
+     "f002",
+     "f003",
+     "f004",
+     "f005",
+     "f006",
+     "f007",
+     "f008",
+     "f009",
+     "f010",
+     "f011",
+     "f012",
+     "f013",
+     "f014",
+     "f015a",
+     "f016",
+     "f017",
+     "f018",
+     "f019a",
+     "f020",
+     "f021",
+     "f022",
+     "f023",
+     "f024",
+     "f025",
+     "f026",
+     "f027",
+     "f028",
+     "f029a",
+     "f030",
+     "f031",
+     "f032",
+     "f033",
+     "f034",
+     "f035",
+     "f036",
+     "f037",
+     "f038",
+     "f039",
+     "f040",
+     "f041",
+     "f042",
+     "f043",
+     "f044",
+     "f045",
+     "f046c",
+     "f046d",
+     "f047",
+     "f048",
+     "f049",
+     "f050",
+     "f051",
+     "f052",
+     "f053",
+     "f054",
+     "f055",
+     "f056",
+     "f057",
+     "f058",
+     "f059",
+     "f060",
+     "f061",
+     "f062",
+     "f063",
+     "f064",
+     "f065",
+     "f066",
+     "f067b",
+     "f068",
+     "f069",
+     "f070",
+     "f071",
+     "f072",
+     "f073",
+     "f074",
+     "f075",
+     "f076",
+     "f077",
+     "f078",
+     "f079",
+     "f080",
+     "f081",
+     "f082",
+     "f083",
+     "f084"
+    ],
+    "done": true,
+    "doneAt": 99000,
+    "counts": [
+     {
+      "set": "ch01-tails",
+      "a": 3,
+      "b": 1,
+      "answer": 4,
+      "correct": false,
+      "ms": 3000,
+      "helped": true,
+      "retry": false,
+      "at": 65000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 5,
+      "answer": 5,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 66000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 6,
+      "b": 1,
+      "answer": 6,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 67000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 3,
+      "b": 1,
+      "answer": 3,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": true,
+      "at": 68000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 1,
+      "answer": 1,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 69000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 9,
+      "b": 1,
+      "answer": 9,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 70000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 10,
+      "answer": 10,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 71000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 4,
+      "b": 1,
+      "answer": 4,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 72000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 7,
+      "answer": 8,
+      "correct": false,
+      "ms": 3000,
+      "helped": true,
+      "retry": false,
+      "at": 73000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 8,
+      "b": 1,
+      "answer": 8,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 74000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 4,
+      "b": 1,
+      "answer": 4,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 75000,
+      "filler": true
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 7,
+      "answer": 7,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": true,
+      "at": 76000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 9,
+      "answer": 9,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 102000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 3,
+      "answer": 3,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 103000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 7,
+      "answer": 7,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 104000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 5,
+      "b": 1,
+      "answer": 6,
+      "correct": false,
+      "ms": 3000,
+      "helped": true,
+      "retry": false,
+      "at": 105000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 2,
+      "b": 1,
+      "answer": 2,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 106000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 8,
+      "b": 1,
+      "answer": 8,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 107000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 5,
+      "b": 1,
+      "answer": 5,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": true,
+      "at": 108000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 1,
+      "answer": 1,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 109000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 10,
+      "answer": 10,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 110000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 6,
+      "b": 1,
+      "answer": 6,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 111000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 4,
+      "answer": 4,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 112000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 10,
+      "answer": 10,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 114000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 5,
+      "b": 1,
+      "answer": 5,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 115000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 9,
+      "b": 1,
+      "answer": 9,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 116000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 3,
+      "b": 1,
+      "answer": 3,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 117000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 4,
+      "answer": 4,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 118000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 7,
+      "answer": 7,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 119000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 8,
+      "b": 1,
+      "answer": 8,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 120000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 2,
+      "b": 1,
+      "answer": 2,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 121000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 6,
+      "answer": 6,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 122000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 1,
+      "answer": 1,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 123000
+     }
+    ],
+    "lessons": {
+     "ch01-tails": {
+      "set": "ch01-tails",
+      "mode": "chapter",
+      "answers": 12,
+      "correct": 10,
+      "fast": 10,
+      "facts": 9,
+      "firstTry": 7,
+      "helped": 2,
+      "noHelp": false,
+      "finished": true
+     }
+    },
+    "lesson": null,
+    "nest": [
+     "moss",
+     "feather"
+    ],
+    "hollow": {
+     "rounds": 2,
+     "cleanRounds": 1,
+     "glow": false
+    }
+   },
+   {
+    "id": "cat-partway",
+    "created": 2000000,
+    "updated": 2040000,
+    "look": {
+     "sex": "she",
+     "fur": "calico",
+     "marking": "white-paws",
+     "eyes": "odd"
+    },
+    "petname": "Princess Sparkle Muffin",
+    "name": "",
+    "dream": "",
+    "flags": {
+     "looked": true,
+     "specialty": "swimming",
+     "stepOut": "slow",
+     "spokeUp": false
+    },
+    "choices": {
+     "f014": {
+      "index": 3,
+      "label": "Played in the dripping kitchen tap, the only cat in the towers who likes water."
+     },
+     "f018": {
+      "index": 1,
+      "label": "Step out slowly, one paw at a time."
+     },
+     "f028": {
+      "index": 1,
+      "label": "Stay very, very quiet."
+     }
+    },
+    "chapter": "ch01",
+    "frame": "f040",
+    "history": [
+     "f001",
+     "f002",
+     "f003",
+     "f004",
+     "f005",
+     "f006",
+     "f007",
+     "f008",
+     "f009",
+     "f010",
+     "f011",
+     "f012",
+     "f013",
+     "f014",
+     "f015d",
+     "f016",
+     "f017",
+     "f018",
+     "f019b",
+     "f020",
+     "f021",
+     "f022",
+     "f023",
+     "f024",
+     "f025",
+     "f026",
+     "f027",
+     "f028",
+     "f029b",
+     "f029c",
+     "f030",
+     "f031",
+     "f032",
+     "f033",
+     "f034",
+     "f035",
+     "f036",
+     "f037",
+     "f038",
+     "f039"
+    ],
+    "done": false,
+    "doneAt": null,
+    "counts": [],
+    "lessons": {},
+    "lesson": null,
+    "nest": [],
+    "hollow": {
+     "rounds": 0,
+     "cleanRounds": 0,
+     "glow": false
+    }
+   },
+   {
+    "id": "cat-lesson",
+    "created": 3000000,
+    "updated": 3061000,
+    "look": {
+     "sex": "she",
+     "fur": "calico",
+     "marking": "white-paws",
+     "eyes": "odd"
+    },
+    "petname": "Princess Sparkle Muffin",
+    "name": "Moon",
+    "dream": "",
+    "flags": {
+     "looked": true,
+     "specialty": "friends",
+     "stepOut": "chase",
+     "spokeUp": true,
+     "joinReason": "learn"
+    },
+    "choices": {
+     "f014": {
+      "index": 4,
+      "label": "Chatted with Princess Waffles for hours and hours."
+     },
+     "f018": {
+      "index": 0,
+      "label": "Chase the moth!"
+     },
+     "f028": {
+      "index": 0,
+      "label": "“Thirteen! There’s one on the lamp!”"
+     },
+     "f045": {
+      "index": 0,
+      "label": "“I want to learn everything. Hunting, borders, all of it.”"
+     }
+    },
+    "chapter": "ch01",
+    "frame": "f062",
+    "history": [
+     "f001",
+     "f002",
+     "f003",
+     "f004",
+     "f005",
+     "f006",
+     "f007",
+     "f008",
+     "f009",
+     "f010",
+     "f011",
+     "f012",
+     "f013",
+     "f014",
+     "f015e",
+     "f016",
+     "f017",
+     "f018",
+     "f019a",
+     "f020",
+     "f021",
+     "f022",
+     "f023",
+     "f024",
+     "f025",
+     "f026",
+     "f027",
+     "f028",
+     "f029a",
+     "f030",
+     "f031",
+     "f032",
+     "f033",
+     "f034",
+     "f035",
+     "f036",
+     "f037",
+     "f038",
+     "f039",
+     "f040",
+     "f041",
+     "f042",
+     "f043",
+     "f044",
+     "f045",
+     "f046a",
+     "f047",
+     "f048",
+     "f049",
+     "f050",
+     "f051",
+     "f052",
+     "f053",
+     "f054",
+     "f055",
+     "f056",
+     "f057",
+     "f058",
+     "f059",
+     "f060",
+     "f061"
+    ],
+    "done": false,
+    "doneAt": null,
+    "counts": [
+     {
+      "set": "ch01-tails",
+      "a": 3,
+      "b": 1,
+      "answer": 4,
+      "correct": false,
+      "ms": 3000,
+      "helped": true,
+      "retry": false,
+      "at": 3063000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 5,
+      "answer": 5,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 3064000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 6,
+      "b": 1,
+      "answer": 6,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 3065000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 3,
+      "b": 1,
+      "answer": 3,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": true,
+      "at": 3066000
+     }
+    ],
+    "lessons": {},
+    "lesson": {
+     "mode": "chapter",
+     "frame": "f062",
+     "state": {
+      "set": "ch01-tails",
+      "table": 1,
+      "mode": "chapter",
+      "queue": [
+       {
+        "a": 3,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 1,
+        "b": 5,
+        "retry": false
+       },
+       {
+        "a": 6,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 3,
+        "b": 1,
+        "retry": true
+       },
+       {
+        "a": 1,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 9,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 1,
+        "b": 10,
+        "retry": false
+       },
+       {
+        "a": 4,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 1,
+        "b": 7,
+        "retry": false
+       },
+       {
+        "a": 8,
+        "b": 1,
+        "retry": false
+       }
+      ],
+      "pos": 4,
+      "requeues": {
+       "3x1": 1
+      },
+      "log": [
+       {
+        "set": "ch01-tails",
+        "a": 3,
+        "b": 1,
+        "answer": 4,
+        "correct": false,
+        "ms": 3000,
+        "helped": true,
+        "retry": false,
+        "at": 3063000
+       },
+       {
+        "set": "ch01-tails",
+        "a": 1,
+        "b": 5,
+        "answer": 5,
+        "correct": true,
+        "ms": 3000,
+        "helped": false,
+        "retry": false,
+        "at": 3064000
+       },
+       {
+        "set": "ch01-tails",
+        "a": 6,
+        "b": 1,
+        "answer": 6,
+        "correct": true,
+        "ms": 3000,
+        "helped": false,
+        "retry": false,
+        "at": 3065000
+       },
+       {
+        "set": "ch01-tails",
+        "a": 3,
+        "b": 1,
+        "answer": 3,
+        "correct": true,
+        "ms": 3000,
+        "helped": false,
+        "retry": true,
+        "at": 3066000
+       }
+      ],
+      "lines": {
+       "praise": 1,
+       "fast": 0,
+       "again": 1,
+       "fastLast": false,
+       "fastAfter": 1
+      },
+      "missed": true,
+      "startedAt": 3062000
+     }
+    },
+    "nest": [],
+    "hollow": {
+     "rounds": 0,
+     "cleanRounds": 0,
+     "glow": false
+    }
+   },
+   {
+    "id": "cat-hollow",
+    "created": 4000000,
+    "updated": 4095000,
+    "look": {
+     "sex": "tom",
+     "fur": "ginger",
+     "marking": "nose-splash",
+     "eyes": "amber"
+    },
+    "petname": "Sir Pounce-a-lot",
+    "name": "Storm",
+    "dream": "i dreamed about otters sliding down a hill",
+    "flags": {
+     "looked": true,
+     "specialty": "climbing",
+     "stepOut": "slow",
+     "spokeUp": false,
+     "joinReason": "count",
+     "worry": "shiny"
+    },
+    "choices": {
+     "f014": {
+      "index": 2,
+      "label": "Climbed the curtains. The Tall One was NOT pleased."
+     },
+     "f018": {
+      "index": 1,
+      "label": "Step out slowly, one paw at a time."
+     },
+     "f028": {
+      "index": 1,
+      "label": "Stay very, very quiet."
+     },
+     "f045": {
+      "index": 1,
+      "label": "“I counted the sparrows. I can learn to count anything.”"
+     },
+     "f066": {
+      "index": 3,
+      "label": "“Shiny things. I can’t stop looking at them.”"
+     }
+    },
+    "chapter": "ch01",
+    "frame": "f085",
+    "history": [
+     "f001",
+     "f002",
+     "f003",
+     "f004",
+     "f005",
+     "f006",
+     "f007",
+     "f008",
+     "f009",
+     "f010",
+     "f011",
+     "f012",
+     "f013",
+     "f014",
+     "f015c",
+     "f016",
+     "f017",
+     "f018",
+     "f019b",
+     "f020",
+     "f021",
+     "f022",
+     "f023",
+     "f024",
+     "f025",
+     "f026",
+     "f027",
+     "f028",
+     "f029b",
+     "f029c",
+     "f030",
+     "f031",
+     "f032",
+     "f033",
+     "f034",
+     "f035",
+     "f036",
+     "f037",
+     "f038",
+     "f039",
+     "f040",
+     "f041",
+     "f042",
+     "f043",
+     "f044",
+     "f045",
+     "f046b",
+     "f047",
+     "f048",
+     "f049",
+     "f050",
+     "f051",
+     "f052",
+     "f053",
+     "f054",
+     "f055",
+     "f056",
+     "f057",
+     "f058",
+     "f059",
+     "f060",
+     "f061",
+     "f062",
+     "f063",
+     "f064",
+     "f065",
+     "f066",
+     "f067d",
+     "f068",
+     "f069",
+     "f070",
+     "f071",
+     "f072",
+     "f073",
+     "f074",
+     "f075",
+     "f076",
+     "f077",
+     "f078",
+     "f079",
+     "f080",
+     "f081",
+     "f082",
+     "f083",
+     "f084"
+    ],
+    "done": true,
+    "doneAt": 4095000,
+    "counts": [
+     {
+      "set": "ch01-tails",
+      "a": 3,
+      "b": 1,
+      "answer": 3,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4064000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 5,
+      "answer": 5,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4065000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 6,
+      "b": 1,
+      "answer": 6,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4066000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 1,
+      "answer": 1,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4067000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 9,
+      "b": 1,
+      "answer": 9,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4068000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 10,
+      "answer": 10,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4069000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 4,
+      "b": 1,
+      "answer": 4,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4070000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 7,
+      "answer": 7,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4071000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 8,
+      "b": 1,
+      "answer": 8,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4072000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 3,
+      "answer": 3,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4098000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 9,
+      "answer": 9,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4099000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 5,
+      "b": 1,
+      "answer": 5,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4100000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 2,
+      "b": 1,
+      "answer": 2,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4101000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 8,
+      "b": 1,
+      "answer": 8,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4102000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 1,
+      "answer": 1,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4103000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 10,
+      "answer": 10,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4104000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 7,
+      "answer": 7,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4105000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 6,
+      "b": 1,
+      "answer": 6,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4106000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 4,
+      "answer": 4,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4107000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 5,
+      "b": 1,
+      "answer": 5,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4109000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 10,
+      "answer": 10,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4110000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 9,
+      "b": 1,
+      "answer": 9,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4111000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 3,
+      "b": 1,
+      "answer": 3,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4112000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 4,
+      "answer": 4,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4113000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 7,
+      "answer": 7,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4114000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 8,
+      "b": 1,
+      "answer": 8,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4115000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 2,
+      "b": 1,
+      "answer": 2,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4116000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 6,
+      "answer": 6,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4117000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 1,
+      "answer": 1,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4118000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 3,
+      "answer": 3,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4120000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 5,
+      "b": 1,
+      "answer": 5,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4121000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 2,
+      "b": 1,
+      "answer": 2,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4122000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 6,
+      "answer": 6,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4123000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 4,
+      "b": 1,
+      "answer": 4,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4124000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 9,
+      "b": 1,
+      "answer": 9,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4125000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 7,
+      "b": 1,
+      "answer": 7,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4126000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 10,
+      "answer": 10,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4127000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 8,
+      "b": 1,
+      "answer": 8,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4128000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 1,
+      "answer": 1,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4129000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 5,
+      "b": 1,
+      "answer": 5,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4131000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 9,
+      "b": 1,
+      "answer": 9,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4132000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 2,
+      "b": 1,
+      "answer": 2,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4133000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 1,
+      "b": 10,
+      "answer": 10,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4134000
+     },
+     {
+      "set": "hollow-1s",
+      "a": 6,
+      "b": 1,
+      "answer": 6,
+      "correct": true,
+      "ms": 1500,
+      "helped": false,
+      "retry": false,
+      "at": 4135000
+     }
+    ],
+    "lessons": {
+     "ch01-tails": {
+      "set": "ch01-tails",
+      "mode": "chapter",
+      "answers": 9,
+      "correct": 9,
+      "fast": 9,
+      "facts": 9,
+      "firstTry": 9,
+      "helped": 0,
+      "noHelp": true,
+      "finished": true
+     }
+    },
+    "lesson": {
+     "mode": "hollow",
+     "state": {
+      "set": "hollow-1s",
+      "table": 1,
+      "mode": "hollow",
+      "queue": [
+       {
+        "a": 5,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 9,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 2,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 1,
+        "b": 10,
+        "retry": false
+       },
+       {
+        "a": 6,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 3,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 8,
+        "b": 1,
+        "retry": false
+       },
+       {
+        "a": 1,
+        "b": 7,
+        "retry": false
+       },
+       {
+        "a": 1,
+        "b": 4,
+        "retry": false
+       },
+       {
+        "a": 1,
+        "b": 1,
+        "retry": false
+       }
+      ],
+      "pos": 5,
+      "requeues": {},
+      "log": [
+       {
+        "set": "hollow-1s",
+        "a": 5,
+        "b": 1,
+        "answer": 5,
+        "correct": true,
+        "ms": 1500,
+        "helped": false,
+        "retry": false,
+        "at": 4131000
+       },
+       {
+        "set": "hollow-1s",
+        "a": 9,
+        "b": 1,
+        "answer": 9,
+        "correct": true,
+        "ms": 1500,
+        "helped": false,
+        "retry": false,
+        "at": 4132000
+       },
+       {
+        "set": "hollow-1s",
+        "a": 2,
+        "b": 1,
+        "answer": 2,
+        "correct": true,
+        "ms": 1500,
+        "helped": false,
+        "retry": false,
+        "at": 4133000
+       },
+       {
+        "set": "hollow-1s",
+        "a": 1,
+        "b": 10,
+        "answer": 10,
+        "correct": true,
+        "ms": 1500,
+        "helped": false,
+        "retry": false,
+        "at": 4134000
+       },
+       {
+        "set": "hollow-1s",
+        "a": 6,
+        "b": 1,
+        "answer": 6,
+        "correct": true,
+        "ms": 1500,
+        "helped": false,
+        "retry": false,
+        "at": 4135000
+       }
+      ],
+      "lines": {
+       "praise": 2,
+       "fast": 3,
+       "again": 0,
+       "fastLast": true
+      },
+      "missed": false,
+      "startedAt": 4130000,
+      "round": 4
+     }
+    },
+    "nest": [
+     "moss",
+     "feather",
+     "shell"
+    ],
+    "hollow": {
+     "rounds": 3,
+     "cleanRounds": 3,
+     "glow": true
+    }
+   }
+  ],
+  "current": "cat-lesson",
+  "settings": {
+   "readAloud": true,
+   "bigText": false
+  }
+ },
+ "reread": {
+  "v": 1,
+  "cats": [
+   {
+    "id": "cat-reread",
+    "created": 5000000,
+    "updated": 6009000,
+    "look": {
+     "sex": "she",
+     "fur": "calico",
+     "marking": "white-paws",
+     "eyes": "odd"
+    },
+    "petname": "Princess Sparkle Muffin",
+    "name": "Moon",
+    "dream": "",
+    "flags": {
+     "looked": true,
+     "specialty": "sneaking",
+     "stepOut": "chase",
+     "spokeUp": false,
+     "joinReason": "brave",
+     "worry": "small"
+    },
+    "choices": {
+     "f014": {
+      "index": 1,
+      "label": "Hid in the laundry basket and ambushed socks."
+     },
+     "f018": {
+      "index": 0,
+      "label": "Chase the moth!"
+     },
+     "f028": {
+      "index": 1,
+      "label": "Stay very, very quiet."
+     },
+     "f045": {
+      "index": 2,
+      "label": "“I’m braver than I look.”"
+     },
+     "f066": {
+      "index": 0,
+      "label": "“What if I’m too small?”"
+     }
+    },
+    "chapter": "ch01",
+    "frame": "f010",
+    "history": [
+     "f001",
+     "f002",
+     "f003",
+     "f004",
+     "f005",
+     "f006",
+     "f007",
+     "f008",
+     "f009"
+    ],
+    "done": true,
+    "doneAt": 5097000,
+    "counts": [
+     {
+      "set": "ch01-tails",
+      "a": 3,
+      "b": 1,
+      "answer": 3,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 5065000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 5,
+      "answer": 5,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 5066000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 6,
+      "b": 1,
+      "answer": 6,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 5067000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 1,
+      "answer": 1,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 5068000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 9,
+      "b": 1,
+      "answer": 9,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 5069000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 10,
+      "answer": 11,
+      "correct": false,
+      "ms": 3000,
+      "helped": true,
+      "retry": false,
+      "at": 5070000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 4,
+      "b": 1,
+      "answer": 4,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 5071000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 7,
+      "answer": 7,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 5072000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 1,
+      "b": 10,
+      "answer": 10,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": true,
+      "at": 5073000
+     },
+     {
+      "set": "ch01-tails",
+      "a": 8,
+      "b": 1,
+      "answer": 8,
+      "correct": true,
+      "ms": 3000,
+      "helped": false,
+      "retry": false,
+      "at": 5074000
+     }
+    ],
+    "lessons": {
+     "ch01-tails": {
+      "set": "ch01-tails",
+      "mode": "chapter",
+      "answers": 10,
+      "correct": 9,
+      "fast": 9,
+      "facts": 9,
+      "firstTry": 8,
+      "helped": 1,
+      "noHelp": false,
+      "finished": true
+     }
+    },
+    "lesson": null,
+    "nest": [],
+    "hollow": {
+     "rounds": 0,
+     "cleanRounds": 0,
+     "glow": false
+    }
+   },
+   {
+    "id": "cat-fresh",
+    "created": 7000000,
+    "updated": 7000000,
+    "look": {
+     "sex": "she",
+     "fur": "ginger",
+     "marking": "none",
+     "eyes": "green"
+    },
+    "petname": "",
+    "name": "",
+    "dream": "",
+    "flags": {},
+    "choices": {},
+    "chapter": null,
+    "frame": null,
+    "history": [],
+    "done": false,
+    "doneAt": null,
+    "counts": [],
+    "lessons": {},
+    "lesson": null,
+    "nest": [],
+    "hollow": {
+     "rounds": 0,
+     "cleanRounds": 0,
+     "glow": false
+    }
+   }
+  ],
+  "current": "cat-reread",
+  "settings": {
+   "readAloud": false,
+   "bigText": true
+  }
+ }
+}

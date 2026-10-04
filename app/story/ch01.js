@@ -643,7 +643,7 @@
     f049: {
       scene: S('camp', 'fountain', {},
         [c('glintstar', 'sit', 'neutral', 'fountain-top', 'left')], ['dusk']),
-      board: 'CLOSE-UP. Glintstar’s face, thoughtful, eyes closed for a long beat; above the towers behind her, a pale moon is just rising in the violet sky. Her balloon is small and very clear.',
+      board: 'CLOSE-UP. Glintstar’s face, thoughtful, eyes closed for a long beat; above the towers behind her, the first stars are coming out in the violet sky (no moon: it is a moonless night). Her balloon is small and very clear.',
       caption: ['Glintstar is quiet for a long moment. Then she nods.'],
       say: [{ who: 'glintstar', text: 'One moon.' }],
       next: 'f050'
@@ -1138,6 +1138,16 @@
         { when: { worry: 'shiny' }, text: 'When {they} worried about shiny things, Tallyheart said {they} would be the first to notice something sparkling that shouldn’t.' },
 
         { text: 'When a great storm crashed down on the river, Tallyheart lay across the doorway, and {name}paw slept warm in {their} very own nest.' }
+      ]
+    },
+
+    // the end of her book: "Next" while chapter 2 is built, "Coming soon" (and the hub's button)
+    // if it isn't. Nothing about the pile looking smaller: that is what her count is meant to catch.
+    teaser: {
+      title: 'Chapter 2: After the Storm',
+      lines: [
+        'Tomorrow, Tallyheart has a new Count for you: **ears**. Somebody should count the prey pile, too.',
+        'And what made that enormous splash down by the river?'
       ]
     }
   };

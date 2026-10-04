@@ -10,10 +10,10 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-04):** chapter 1 is built as a static web app (`index.html`, `app/`; the stack is
-in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
-[`docs/storyboard/ch01.md`](docs/storyboard/ch01.md), and deployed on GitHub Pages from `main`.
-It is developed on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
+**Status (2026-10-04):** chapters 1 and 2 are built as a static web app (`index.html`, `app/`; the
+stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
+[`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
+on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
 
 ## Docs
 
@@ -24,8 +24,10 @@ It is developed on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
   the real stone at the end.
 - [`docs/chapters/01-through-the-glass.md`](docs/chapters/01-through-the-glass.md): chapter 1,
   drafted as the actual game text.
-- [`docs/storyboard/ch01.md`](docs/storyboard/ch01.md): the verbal storyboard of every frame, for
-  an illustrator (generated from `app/story/ch01.js`).
+- [`docs/chapters/02-after-the-storm.md`](docs/chapters/02-after-the-storm.md): chapter 2, the
+  game text, with its notes and the open questions it raised.
+- [`docs/storyboard/`](docs/storyboard/): the verbal storyboard of every frame, for an illustrator
+  (generated from `app/story/`).
 - [`docs/build.md`](docs/build.md): how it is built, tested and deployed.
 
 ## Decisions (Aron, 2026-10-03)
@@ -73,6 +75,16 @@ It is developed on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
     to undo, and a choice or a typed name can be changed (2026-10-04).
 29. The times-table numbers use an easy-to-read font (Andika), so 1 and 7 never look alike
     (2026-10-04).
+30. Chapter 2 is built and shipped without a separate review of its text; Aron reviews it live
+    (2026-10-04).
+31. In chapter 2, the forbidden look under the Old Bridge finds a glimpse only: drag marks, a
+    sniffle, two big eyes that blink and vanish. Drizzle stays chapter 3's reveal; Tallyheart
+    catches her coming out, more worried than cross (2026-10-04).
+32. Chapter 2's Counts: about 16 answers. Two warm-up questions on the 1s, skip-counting ears with
+    a tap per cat, about ten on the 2s in both orders, then the prey pile counted in pairs
+    (2026-10-04).
+33. The prey pile is simple cartoon prey: soft round shapes with tails, eyes shut, no blood
+    (2026-10-04).
 
 ## Proposed, waiting on Aron
 
@@ -93,3 +105,34 @@ Chapter 1 is built on these exactly as written; confirm them or say what to chan
   is climbing), and her Tallwalker know-how helps the case: she knows window glass when she sees
   it, and airplanes from the glowing box.
 - The Clan welcomes a new name by purring it.
+
+Raised by chapter 2 (`docs/chapters/02-after-the-storm.md`, "For Aron to confirm"); chapter 2 is
+built on the first choice in each:
+
+- **No fish in the prey pile.** CrystalClan doesn't fish (only ReedClan gets its paws wet), so
+  the pile is mice and voles. Ruling 33's option offered "a few fish"; to keep them, the otters
+  trade them, and the pile scene needs a few words saying so.
+- **Riffle's gift is a wishing stone**: a dark pebble with an unbroken white band all the way
+  round. Real ones turn up free on beaches and riverbanks, so it could be a second real stone she
+  holds long before the labradorite.
+- **The tallest tower has a little red light on its roof**, and Thunder's roar ends in a hiccup:
+  that is how chapter 4 finds his roof.
+- **Glintstar gives her the morning count from now on.** Chapters 3 and 4 could open on the second
+  and third counts (eight gone, then twelve), which anchors chapter 7's "four a night for three
+  nights"; or later chapters skip the count.
+- **Two clues not yet in module-1's clue table**: freshly dug earth behind the pile (noticing only:
+  the tunnel) and the tidy stacks (a careful thief, not the weather). Add them, or cut them.
+- **Module-1's back cover** puts the scale and the word "dragon" on the first morning; the chapters
+  put them in chapter 4. Proposed: "By morning, prey is missing from the Clan's pile. Soon a
+  glittering scale lies beside it…"
+- **"One moon"**: her first night is moonless (the case), so the full-moon Gathering is about half a
+  moon away. Proposed: keep it, since in Clan talk "a moon" runs to the next full moon.
+- **Names and words that may echo the books** (all from before chapter 2): "Princess" Waffles
+  (Warriors' Princess, Firestar's pet-cat sister; Duchess or Lady Waffles?); Thunder, chapter 4's
+  dragonet (Warriors' Thunder; Rumble or Boom?); the Training Hollow (ThunderClan's training
+  hollow; the Claw Tree Hollow?); chapter 1's Clan-name ideas, which make Warriors apprentice names
+  (Hollypaw, Fernpaw, Stormpaw, Minnowpaw, Sedgepaw, Frostpaw) and "Moon" (Wings of Fire's
+  Moonwatcher); "Ironsnakes" (Warriors' Thundersnake; Clankers?); "leaf-drop" (Warriors'
+  leaf-fall).
+- **Dog names**: one draft named two Barking Field dogs for what their Tall Ones shout ("Good Boy",
+  "Drop It"). Chapter 2 leaves them unnamed; chapter 8 could use the names.

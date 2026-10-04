@@ -1,6 +1,6 @@
-# Build: how chapter 1 is made
+# Build: how the chapters are made
 
-*v0.2 · 2026-10-04 · Aron said "do your thing": build, storyboard and deploy chapter 1. v0.2: the review fixes.*
+*v0.3 · 2026-10-04 · Aron said "do your thing": build, storyboard and deploy chapter 1. v0.2: the review fixes. v0.3: chapter 2 ("build and ship", Aron, 2026-10-04): more chapters, new sets, otters and dogs, the save carried forward. The chapter 2 additions are in the last section, "Chapter 2 (v0.3)"; where it and an earlier section differ, it wins. That section was brought in line with what is built after the final review (same day).*
 
 ## Choices (Claude's, following Potion Lab's conventions)
 
@@ -26,11 +26,15 @@ index.html               app shell: markup, CSS, script tags
 app/engine.js            pure logic, no DOM (Node-testable): state, tokens, flow, Counts, saves
 app/ui.js                DOM: panels, balloons, choices, inputs, keypad, book, nest, grown-ups
 app/art/cats.js          PC.art.cat + character presets + counts pictures + sand tallies
-app/art/scenes.js        PC.art.render (sets, cameras, cast placement, effects) + vocab
-app/story/ch01.js        chapter 1: frames, Counts set, book recap
+app/art/scenes.js        PC.art.render (sets, cameras, cast placement, effects) + vocab + art.kit, art.defineSet
+app/art/sets/*.js        one set per file (chapter 2 on): pile, bridge, field, crossing, riverbank
+app/story/chNN.js        one chapter each: frames, Counts sets, book recap, teaser
 sw.js, manifest.webmanifest, icons/icon-{180,192,512}.png, .nojekyll
 tests/*.test.js          node --test (engine logic; story ↔ art vocabulary; graph checks)
-tools/storyboard.mjs     writes docs/storyboard/ch01.md from app/story/ch01.js
+tools/storyboard.mjs     writes docs/storyboard/chNN.md from app/story/chNN.js (no arguments: every chapter)
+tools/frames.mjs         renders a chapter's frames (the art only) to PNG through Quick Look, macOS
+tools/shots.mjs          screenshots of the real game screens in Safari (safaridriver), macOS
+tests/_load.js           loads the app/ scripts into Node in index.html's order
 dev/gallery.html         every set, camera, pose and mood on one page, for checking the art
 ```
 
@@ -44,7 +48,8 @@ Every `app/` file is a plain script that attaches to one global, `PC`, and also 
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 ```
 
-Load order: `art/cats.js`, `art/scenes.js`, `story/ch01.js`, `engine.js`, `ui.js`. Modern Safari
+Load order: `art/cats.js`, `art/scenes.js`, `art/sets/*.js`, `story/ch01.js`, `story/ch02.js`, `engine.js`, `ui.js`
+(index.html is the source of truth; `tests/_load.js` reads it). Modern Safari
 JavaScript is fine (iPadOS 16+); no modules, no frameworks.
 
 ## The frame (contract between story, art and UI)
@@ -154,7 +159,7 @@ Optional keys, each with a sensible default when it is missing:
 
 | Key | What it is |
 |---|---|
-| `helpIntro` | Tallyheart's first line after a miss when the answer was within 1 of right ("Close. Let's scratch it out together…"). |
+| `helpIntro` | Tallyheart's first line after a miss when the answer was close (the engine's `near`): one hop of the count off, `\|answer − right\| ≤ step` (1 on the 1s, 2 on the 2s: the hop the sand counts in), or exactly one group off (`= per`: the check's 8 or 24 for its two rows of eight; 10 or 12 there is not close): "Close. Let's scratch it out together…". |
 | `helpIntroFar` | The same for an answer further off. Without it, `helpIntro` minus a leading "Close." |
 | `missLast` | The miss line when the fact will not come back (its retries are used up). Default: "There. Now you've seen it counted." `miss` is used only when it really comes back. |
 | `fast` | Lines for a fast answer (under `FAST_MS`, 4 s), never two in a row. |
@@ -216,3 +221,256 @@ numbers) use **Andika** bold, `"Andika", ui-rounded, system-ui, sans-serif`: its
 a foot and its 0 is plain, so 1 and 7 can't be mixed up (Bangers' 1 and 7 nearly match). All three
 are self-hosted in `fonts/` (SIL Open Font License, texts alongside) and
 precached, so the game makes no third-party requests and the lettering works offline.
+
+## Chapter 2 (v0.3)
+
+Chapter 2, *After the Storm*, is drafted in [`chapters/02-after-the-storm.md`](chapters/02-after-the-storm.md)
+and built in `app/story/ch02.js` on the contract below. Everything above still holds unless this
+section says otherwise.
+
+### Chapters
+
+Each chapter is one story file, `app/story/chNN.js`, defining `PC.story.chNN` with `id`, `number`,
+`title`, `start`, `frames`, `counts`, `book` and `teaser`: the "coming soon" for the next chapter,
+shown at the end of this chapter's book page and in the hub while the next chapter isn't built
+(`{ title: 'Chapter 3: Under the Old Bridge', lines: ['…', '…'] }`). Every chapter has one, the
+last one too, with at least one line (`tests/engine.test.js` checks; a placeholder chapter whose
+frames are all `board: 'STUB.'` is skipped). Chapter 1's is chapter 2's: "Tomorrow, Tallyheart has
+a new Count for you: **ears**. Somebody should count the prey pile, too." and "And what made that
+enormous splash down by the river?" (nothing about the pile looking smaller: her count is meant
+to catch that). Chapters are ordered by
+`number` (`E.chapters()` returns them in order). Chapter n+1 opens once chapter n is finished.
+`PC.debug.goto(frameId, chapterId?)` opens any chapter's frame (tools/shots.mjs uses it).
+
+### The save, version 2
+
+The localStorage key stays `potomac-crossing.v1` (renaming it would strand every save); the stored
+object gains `version: 2`. Per cat:
+
+| Field | v2 meaning |
+|---|---|
+| `chapter`, `frame`, `history` | the chapter being read, its frame, and that chapter's back-history |
+| `lesson` | a lesson in progress: a chapter's `{ mode: 'chapter', frame, chapter, state }` (it resumes only at that frame of that chapter), or a Training Hollow round's `{ mode: 'hollow', state }` |
+| `hollowWaiting` | a Training Hollow round in progress that gave way to a chapter lesson, `{ mode: 'hollow', state }`, or null (below) |
+| `places` | every other chapter she is partway through, by id: `{ ch02: { frame, history, lesson } }`, kept while she reads another chapter (below) |
+| `finished` | `{ ch01: at, ch02: at }`: when each chapter's end frame was first reached |
+| `dreams` | `{ ch01: '…', ch02: '…' }`: each chapter's dream, as typed |
+| `flags`, `choices` | one object for all chapters (chapter 2's flags sit beside chapter 1's); a choice is remembered under `'ch02:f031'`, so chapters that reuse frame ids never collide |
+| `lessons` | finished lessons by set id (`ch01-tails`, `ch02-tails`, `ch02-ears`, `ch02-pile`, `ch02-check`) |
+| `hollow` | `{ rounds, byTable: { '1': { rounds, cleanRounds, glow }, '2': { … } } }`; `rounds` counts every round and picks the next treasure |
+| `nest` | treasure and gift ids, in the order found |
+
+**One place per chapter.** Going to another chapter parks the one she leaves in `places`
+(`E.startChapter`, `E.openChapter`), so reading chapter 1 again never moves her place in chapter 2.
+The hub's big button opens the furthest unfinished chapter with `E.openChapter`: where she left it
+("Keep reading Chapter 2", with its page), or at its start. A finished chapter is never parked:
+"Read chapter 1 again" starts it from its first page. Back stays inside the chapter being read.
+The one `lesson` slot is shared with the Training Hollow: a chapter lesson that gives way to a
+Hollow round (`E.holdLesson`) waits in its chapter's place with `frame: null`, and
+`E.lessonAt(cat, story, frame)` hands it back at its counts frame. The other way round, a Hollow
+round in progress that a chapter lesson takes the slot from (`E.lessonAt`, or `E.beginLesson`: Camp,
+the Hollow, a few answers, Camp, "Keep reading") waits in `hollowWaiting`, and `E.hollowRound(cat)`
+hands it back when she opens the Hollow again, the chapter lesson waiting in turn; a round whose last
+answer is in is counted then instead. `E.place(cat, id)` is her place in any chapter, being read or
+parked.
+
+**Counts frames close together** (chapter 2's warm-up, ears and pile are a page or two apart). Back
+past a lesson in progress leaves it in the slot. Next on a Count she finished before
+(`E.finishCounts`) empties the slot only of that frame's own lesson, never a lesson going on further
+in the chapter, nor a Hollow round. A lesson started on a Counts frame ("Let’s count!", or "Count
+them again" on a finished Count) goes through `E.beginLesson(cat, story, frame, state)`: a chapter
+lesson still going at another frame waits in the chapter's place, as for a Hollow round, and
+`E.lessonAt` hands it back at its own frame, at the same question. A place holds one waiting
+lesson: when two are going in one chapter, a first go at a Count is kept over a Count counted again
+(that Count is finished already; its frame offers "Count them again" and "Next" as before), else
+the newer. So a first go is never lost: `tests/engine.test.js` checks it on random walks through
+the buttons, with reloads, the Hollow and chapter 1 read again; a Hollow round is never dropped either.
+
+A saved lesson, in the slot or in a place, is kept only when the runner can take it up
+(`E.okLesson`: a queue of facts with numeric `a` and `b`, a whole-number `pos` inside it, a `log`
+list, a `requeues` object); anything else is dropped by `E.migrate` (the place stays), so a hand-edited
+or half-written save never reaches `E.lessonAt`. `E.migrate` turns a version-1 cat into this, losslessly and idempotently: `done: true` →
+`finished.ch01 = doneAt || 1`; `dream` → `dreams.ch01`; `hollow { rounds, cleanRounds, glow }` →
+`hollow.rounds = rounds` and `hollow.byTable['1'] = { rounds, cleanRounds, glow }`; a choice
+`f031` → `ch01:f031`; `places` starts empty (as it does for a version-2 save from before places). A cat that
+finished chapter 1 opens on the hub, where chapter 2 waits; a cat partway through chapter 1
+(mid-frame or mid-lesson) resumes exactly where it was. `tests/engine.test.js` runs real
+version-1 saves (finished, partway, mid-lesson, mid-Hollow-round) through migrate, load and save,
+and checks nothing is lost. `E.VERSION = '0.2.0 (chapter 2, 2026-10-04)'`.
+
+### New in the frame contract
+
+- **`skip: { table, groups, who?, teacher?, thing?, things?, next, done? }`**, an interaction like `next`: skip-counting. The
+  panel shows `PC.art.countsPicture({ table, groups, highlight, totals: true, next: true, who })`,
+  the next group glowing softly. A tap on the glowing group (a generous target: its whole column of
+  the picture, a little wider than it) lights its things, adds its running total under it, and grows
+  a big number over the picture (2, 4, 6…), while the teacher's balloon keeps the count ("2… 4…
+  6…"); Read to me says each number. A tap anywhere else makes the glowing group wiggle, with no line
+  and no penalty; Space, Enter and → count the next group too, and a hidden "Count the next cat"
+  button does it for VoiceOver. Nothing can be got wrong, and nothing is logged as an answer. After
+  the last group, a frame with a `done` line (the teacher's) shows it and Next; without one (chapter
+  2's), the page turns to `next` on its own, and that frame shows the number reached, big, over its
+  picture. Back works as on any frame. `who` (optional) lists who sits in each place, left to right:
+  `[{ who: 'clancat', variant: 1 }, …, { who: 'grizzled' }]`. `teacher` keeps the count (default:
+  whoever speaks first on the frame, else Tallyheart); `thing`/`things` name what is counted
+  (default `ear`/`ears` for the 2s, else `thing`/`things`). In the storyboard the scene is the one
+  the picture stands for (the five rim cats); in play the counting picture replaces it.
+- **`gift: 'riffle-stone'`**: reaching this frame puts that gift in her nest, once (Back does not
+  take it away). Gifts are `E.GIFTS` beside `E.TREASURES`, `{ id, name, from }`; My nest shows
+  them first, under "From friends". Riffle's stone: "Riffle’s lucky stone: dark and smooth, with a
+  white stripe all the way around", from Riffle. No Hollow treasure is striped (the pebble is "A shiny
+  speckled pebble", id `pebble` as before), so the stone stays one of a kind.
+- **`when` on lines and options**: a caption may be a string or `{ when, text }`; a balloon may
+  carry `when`; a choice option may carry `when` (hidden when it doesn't match; a choice keeps at
+  least one option). `when` matches as in the book recap (`E.matches`: flags, then look, then the
+  cat's fields), plus two lesson keys: `lessonClean: 'ch02-tails'` (that lesson finished with no
+  help) and `firstTry: '10x2'` (her most recent first ask of that fact, in either order, was right
+  without help); and `not`, which matches when what it holds doesn't (`{ when: { not: { lessonClean:
+  'ch02-tails' } } }`; it nests and sits beside other keys). The storyboard prints each condition
+  beside its line.
+- **Scene options from the cat**: on the `hollow` set, `marks: 'auto'` (one mark per Count she has
+  finished a chapter lesson for, at most six) and `glow: 'auto'` (a list: each mark glows as its
+  Count's Hollow glow), and on the `den`, `stone: 'auto'` (Riffle's stone where she put it: the flag
+  `ch2Stone`, `'nose'` or `'chin'`; not chosen yet, between her paws), are filled in by
+  `E.resolveScene(scene, cat)`, which the UI calls before drawing; the story's own scene is never
+  changed, and values other than `'auto'` stay as written.
+- **Cast extras** (a cast member may carry them; the storyboard prints them): `flatEars: true` (a
+  cat's ears laid flat whatever the mood: the old tom on the rim, f020); `holds: 'stone'` (Riffle's
+  stone, drawn by `cats.js` with the cat: at the front paws when sitting or lying, in the mouth on its
+  feet; `holdAt: 'paws' | 'mouth' | 'chin' | 'nose'` to say; the `sparkle` effect then twinkles on the
+  stone itself); `purr: true` (with the `purr` effect, only the cast members marked purr: rings, sound
+  arcs and "purrr" are theirs, and an arc never crosses a neighbour beside them; nobody marked is
+  chapter 1's whole-camp purr); `lift: true` (on the tower's `balcony` camera, a cat lifted onto a
+  pouf so her face clears the rail, as Waffles flopped on her back; `balcony-close` lifts anyone whose
+  chin would sink behind it). `scenes.js`'s `charOpts` passes `flatEars`, `holds` and `holdAt` to the
+  drawing; `purr` and `lift` are the scene's.
+- **A spot of its own**: `at` may be `{ x, y }` in the 1600 × 1000 world instead of an anchor's name;
+  its height comes from the anchors' depth there. Use it for a one-off; a place used twice gets a
+  named anchor (f097a's spot, our cat just out of the shadow beside Tallyheart, became the bridge's
+  `sun-edge` once f100a and f101a needed it too).
+- **For story writers, also**: a balloon's `kind` is `say` (default), `shout`, `whisper` or `think`,
+  and `name` labels a speaker the story hasn't named yet (chapter 1's "The ginger cat"). The nth
+  balloon from a `who` belongs to the nth of them in the cast (hidden ones still count), so two
+  otters in one frame each speak from their own head. A sound effect in lower case ("sniff…
+  sniff…") is lettered small and pale; lightning with a loud one shakes and flashes the panel. A
+  choice may carry `prompt` (a line above the options); a dream input may carry `placeholder`.
+- **Keys** turn pages as taps do: Enter, Space, → and ← are ignored for a moment after a screen is
+  drawn (the double-tap guard), and a held-down Enter or Space never repeats (`PC.ui.keys`), so one
+  press on the title never runs on through the hub into chapter 2.
+
+### Counts sets, new keys
+
+All optional; chapter 1's set needs none of them.
+
+| Key | What it is |
+|---|---|
+| `unit`, `units` | what a group is in the generic question: `'cat'`/`'cats'` by default; the pile uses `'pair'`/`'pairs'` |
+| `picture` | `{ kind: 'cats' \| 'prey', layout: 'stacks' \| 'rows', thought }` for every fact: `kind: 'prey'` draws prey, `layout: 'rows'` draws `groups` rows of `per`, `thought: true` frames it as a thought cloud (the old tom's boast) |
+| facts as objects | `{ a, b, table?, groups?, per?, picture?, who?, lit?, light?, check?, prompt?, retryPrompt?, right?, rightAgain?, rightPicture? }`: `table` when the fact belongs to another Count (mixed lessons); `groups`/`per` override how it is pictured (2 × 8 as two rows of eight); `who` puts these characters in the picture's places (3 × 2: the first three rim cats); `lit: n` lights the first n things as it is asked (2 × 6: the first five cats' ten ears); `light: 'groups' \| 'rows'` lights the picture a group or a row at a time as it is asked, with no number (the pile's stacks as she noses them, the check's two rows); `check: true` goes on its log entry, and `E.hardFacts` skips a right one (its clock ran over a long prompt, or the answer was on screen); `prompt` replaces the generic question on its first ask (a string, said by the teacher, or a list of lines: balloons `[{ who, text, kind? }]`, and `{ kind: 'caption', text }` for narration, lettered as a caption box above the keypad, as 8 × 2's "You touch your nose to each little stack."); `retryPrompt` keeps a prompt on the retry (`true`: the same one, after "Here’s that one again."), which otherwise is asked plainly; `right` is a list of balloons shown after a right first answer, instead of praise; `rightAgain` the same for a right retry (`true`: its `right` lines; a fact with `rightPicture` keeps its `right` lines by default), instead of the `again` line; `rightPicture` redraws the picture after a right answer (`{ groups, per, picture }`: five pairs of ears sliding into two rows of five), in rows unless its `picture.layout` says otherwise |
+| `fillFrom` | a set id, in this chapter or another: when this set has too few questions left for a retry to come back two questions later, the fillers are her right answers from that set (most recent first), else its facts. The warm-up fills from chapter 1's `ch01-tails`, the pile sets from `ch02-ears`, so a missed question gets the sand and still comes back two questions later. A borrowed question is asked as its lending set's (`E.questionDef`: its picture, words, praise and fast lines) and logged with `from`. While another is left, a filler is never the missed pair, a pair still ahead, a pair this lesson asked, nor one its sibling sets (the chapter's sets that borrow from the same set: the pile and the check) asked in this reading (`E.siblingAsked`) |
+| `fillIntro` | said before a borrowed question, then that set's generic question: "One from last night." (the warm-up), "One from this morning." (the pile and the check) |
+| `rememberedSlow` | the line for a right but slow answer to a hard fact (the Hollow's, or the warm-up's `warmHard` pick): "{a} × {b} again, and you got it. It’s getting easier." by default; `remembered` is said only to a quick one (under `FAST_MS`) |
+| `warmHard` | `{ table, at, alt }`: the warm-up adapts. If `E.hardFacts(cat, table)` has a fact, it takes position `at` (0-based), marked hard (so a right answer earns the `remembered` line); if that fact is the same pair as another fact in the set, that one becomes `alt` |
+| `done: ''` | no closing screen: after the last answer the frame goes straight on (its `next` frame answers). Otherwise `done` is the teacher's last line, over the scene |
+| `praise: []` | nothing said after a right answer (no empty balloon); the next question follows |
+| `prompt` | the question for every first ask that has none of its own (after `firstPrompt`); `again` lines answer a right retry (default "There it is. You remembered that one.") |
+
+Prompts and `right` lines may use `{a}`, `{b}`, `{answer}`, `{groups}`, `{per}`, `{thing}`, `{things}`;
+praise, `fast`, `miss` and `again` lines `{a}`, `{b}`, `{answer}`; all of them the cat's tokens. A chapter lesson remembers its chapter and frame (`lesson`, in
+the save), so frame ids that repeat across chapters never resume the wrong one.
+
+### Art vocabulary, chapter 2
+
+Coordinates, cameras and anchors work as above (a 1600 × 1000 world; a camera is a 16:10 box; an
+anchor's `h` is a sitting cat's height there). New sets live in `app/art/sets/<id>.js` and register
+with `PC.art.defineSet`, drawing with the painters in `PC.art.kit`. The time of day comes from `fx`
+as before, plus `morning` (the morning after the storm, washed clean) and `day`. One new effect,
+`bonk`: a pebble bouncing off the first cast member's head, stars circling the bump (f063).
+
+| Set | Cameras | Anchors (`at`) | Options |
+|---|---|---|---|
+| `pile`: the prey pile in camp, a shady corner under an arch of brambles; the fountain's edge at the right; morning by default | `wide` (the pile left of centre, Clan cats crowding round, the fountain edge at right), `close` (the pile fills the panel), `low` (medium two-shot beside the pile) | `pile-left`, `pile-right`, `beside` (lying beside the pile, the old tom), `crowd-1`, `crowd-2`, `crowd-3`, `fountain-edge` (elevated, Glintstar rising) | `pairs: 0–10` (stacks of two; default 8), `lit: 0–10` (the first n stacks glow), `dug: true` (soft, lumpy, dug-up earth behind the pile), `vole: true` (one plump vole on the ground by the cat at the pile's left, nudged off the top of a front stack, which keeps only its bottom piece: the pile still adds up) |
+| `bridge`: the Old Bridge (the rail bridge), its near (Virginia) end, by day: stone legs, an iron truss on top, brown swirly water, squashed reeds | `bank` (wide from the riverbank, the dark space under the near end at left), `mouth` (close on the dark from outside in the sun, a rock at the shadow's edge), `under` (inside the dark, her view: mud with deep drag marks running into the dark, dry ground further back, drips), `back` (the very back of the dark) | `bank-left`, `bank-right`, `reeds` (bank); `rock` (elevated: Riffle's rock), `edge` (the shadow's edge), `sun` (in the sunshine outside), `sun-edge` (in the sun just out of the shadow, beside `sun`) (mouth); `mud`, `inside` (under); `near` (back: a cat from behind, looking in) | `train: true` (an Ironsnake crossing on top), `eyes: 'none' \| 'open' \| 'blink'` (two big round shining eyes at the back; default none), `drag: true` (default), `drips: true` (default) |
+| `field`: the Barking Field from the path outside its tall wire fence, by day: a muddy square of grass, and far inside it, in every camera, a hollow log nobody remarks on (chapter 8) | `wide`, `fence` (close on the wire, a nose squashed through, cats on the path), `dogs` (the dogs bouncing at the fence, seen from the path) | `path-left`, `path-right` (outside), `dog-1`, `dog-2`, `dog-3` (inside, at the fence), `field` (far in the field) | — |
+| `crossing`: the Crossing at Gravelly Point: a rocky point where the river opens wide and shining, the otters' log raft tied with vines, airplanes low overhead | `wide`, `low` (looking up from the rocks: an airplane's belly and its row of round windows, enormous and very low), `rocks` (medium on the rocks), `raft` (close on the raft) | `rock-left`, `rock-right`, `rock-high` (elevated), `shore`, `pebbles` (by a heap of pebbles), `raft-1`, `raft-2`, `raft-3`, `water` (swimming) | `plane: 'none' \| 'high' \| 'low'` (default high), `pebbles: true` |
+| `riverbank`: the river path below a muddy bank, by day: the glass towers shining, and upside down in the water; the tallest tower has a little red light on its roof | `path` (wide along the water), `water` (close at the water's edge), `roof` (looking up the tallest tower to its roof, the red light, sky), `slide` (the muddy bank down to the water) | `path-left`, `path-right`, `water`, `bank-top` (a head popping up over the top of the bank), `slope` | `plane: 'none' \| 'low'` (low over the river, its shadow on the water), `roar: true` (jagged sound lines from the tower roof), `light: true` (the red light blinks; default) |
+
+Changes to chapter 1's sets: `den` gains `moon: true | false` (default **false**: her first night
+is moonless, the case's "no moon that night"; chapter 2's nights are moonless too) and
+`drips: true` (sun spots and dripping leaves, for the morning). `camp` gains `puddles: true` and
+`rainFountain: true` (the dry fountain full of rain). `garden` gains `towel: true` (a folded towel
+beside the dish on the step). `den` also gains `stone: true | 'nose' | 'chin' | 'auto'` (Riffle's
+stone in her nest: between her paws, by her nose, under her chin, or `'auto'`, where she put it;
+small in the wide cameras, never seen from outside). `hollow`: `marks: 0–6` (one claw mark per
+Count, left to right), `glow: true | [bool, …]` (per mark), `depth: 0 | 1 | 2 | [n, …]` (fresh,
+deeper, deepest; left out, every mark but the newest is deeper, the oldest most: "your first mark is
+a little deeper"), five anchors on the rim, `rim-1` … `rim-5`, two more at the sun patch,
+`sunpatch-2` (its far left) and `sunpatch-3` (its right edge, by the sand), and `tree-far` (past the
+old tree's trunk, nearer than the rim: a teacher clearly apart from the five she counts). The tree
+close-up leaves the canopy (far above it) out. `title` gains a second anchor on the wall, `wall-2`,
+left of `wall`. `river` has one anchor, `bank`.
+
+**Cast, new**: `riffle` (an otter pup: sleek brown, cream throat and chin, small round ears, long
+whiskers, a thick rudder tail, webbed paws; bouncy), `otter` (`variant: 1` the old ferry otter,
+grey muzzle and long white whiskers that trail in the water, a bit deaf; `2`, `3` other ferry
+otters), `dog` (`variant: 1` huge and shaggy, `2` spotty, `3` tiny and mostly bark). Otter poses:
+`stand` (upright on hind legs), `sit`, `scramble`, `swim` (head and back above the water), `float`
+(on the back, tummy up), `juggle` (standing, pebbles in the air), `slide` (belly slide), `hug`
+(hugging his own tail), `sun` (lying on his back, sunning). Dog poses: `stand`, `jump` (paws up on
+the fence), `sit`, `bounce`, `howl`. Otters and dogs take every mood in the vocabulary (the nearest
+expression where a mood has no exact one). Speakers: Riffle, The old ferry otter, An otter, The
+shaggy dog, The spotty dog, The tiny dog.
+
+**Faces**: `PC.art.render`'s heads carry `r`, the face's radius in percent of the panel width, for
+every cat (a fifth of its 200 box, chapter 1's measure), Riffle, the otters and the dogs (the same
+share of their head boxes), so balloon tails and the lettering fit an otter's or a dog's face; the
+UI keeps it between 1.8 and 16 and no longer estimates it from the markup. The sparrow, the moth
+and the Tall One have small fixed sizes in the UI.
+
+**No Clan cat wears her coat**: she must find herself at a glance, and a Clan cat in her fur beside
+her reads as her twin (the rim's brown tabby beside a cat in the first default look, f020–f025). A
+Clan cat whose coat is her fur (a brown tabby when her look names none) is drawn in a spare coat
+that no other Clan cat in the same picture wears (`PC.art.clanVariant(variant, look, taken)`): in
+the scenes, which know her look, and in the Counts pictures' `who`, which the UI gives her look, so
+a rim cat keeps one coat from the panel to the counting picture. The named characters keep theirs.
+
+**Counts art**: `PC.art.countsPicture({ table, groups, per, highlight, kind, layout, totals, next,
+who, thought, look })`: `per` defaults to `table`; `kind: 'prey'` draws `groups` stacks (or rows, with
+`layout: 'rows'`) of `per` prey: mice and voles as soft round shapes with their tails tucked in,
+every eye shut, no blood (no fish); `highlight` lights things in order; `totals: true`
+puts each lit group's running total under it (2, 4, 6…, Andika bold); `next: true` glows softly on
+the next group to count; `who` places those characters, left to right, in place of the Clan
+cats; `thought: true` frames the picture as a thought cloud under an evening sky. `PC.art.prey({
+kind: 'mouse' | 'vole', lit, seed, facing?, part? })` returns `{ svg, w, h }`, one piece of prey in
+its own box, feet at the bottom centre: the pile set and the prey pictures draw the same prey with
+it, mice and voles only (CrystalClan doesn't fish; `fish` stays drawable, unused, in case Aron keeps
+a few, traded from the otters, which the text would then have to say). `PC.art.sand({ groups, per,
+counted, layout?, ground? })`: `layout: 'rows'` scratches `groups` rows of `per`, lit a column at a
+time (the check's two rows of eight); `ground: 'earth'` scratches them in the earth beside the pile.
+
+### The rest
+
+- **Hub**, after any finished chapter: Read my book · The Training Hollow · My nest · Read a chapter
+  again (the finished chapters, each from its first page) · the next chapter as the big button
+  ("Chapter 2: After the Storm"; "Keep reading Chapter 2 · After the Storm · page 7" once she has a
+  place there, even while she reads chapter 1 again), or the teaser's title "… is coming soon" when
+  it isn't built.
+- **Book**: one book, *{name}paw’s First Moon*: the title and portrait once, then a page per finished
+  chapter (heading "Chapter N: Title", that chapter's recap, its dream line), then the latest
+  chapter's teaser. Printing puts each chapter on its own page.
+- **Title screen** names the chapter the last cat is on; **Who's playing** cards say
+  "Chapter 2 · page 7" or "Chapter 2 finished" (the chapter being read, where her card opens).
+- **Grown-ups corner**: each chapter's progress, all chapters' choices (with words for chapter 2's
+  flags), per-fact Counts for every table, the Hollow per table.
+- **The Training Hollow, per Count**: once a chapter's lesson is done, its Count can be practised.
+  The Hollow offers each learned Count ("Tails · the 1s", "Ears · the 2s"), each a round of its ten
+  facts as now, with its own "hard last time" picks and its own claw mark on the tree. Every full
+  round earns the next treasure. Its scene shows `marks: 'auto'`, `glow: 'auto'`.
+- **Flags chapter 2 sets**: `ch2SaidAloud: true | false`, `ch2Path: 'bridge' | 'river'`, and
+  `ch2Stone: 'nose' | 'chin'` (where the stone went in her nest, f108; only the den's `stone: 'auto'`
+  reads it, not the book).
+- **Tools**: `node tools/storyboard.mjs --check-words` fails when the art's vocabulary has a set,
+  camera, anchor, option value, pose, mood, effect or cast member the storyboard has no words for
+  (a test runs it); a scene says the frame's own time of day. `tools/frames.mjs` renders through
+  Quick Look, which drops a shadowed group too big for its filter buffer (its header). `tools/shots.mjs`
+  reads the screen lock and, locked, takes each target in a fresh short session (its header).

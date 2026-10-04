@@ -42,7 +42,7 @@
 </head>
 <body>
 <header>
-  <h1>Potomac Crossing · sets, cameras and the chapter's frames</h1>
+  <h1>Potomac Crossing · sets, cameras and the chapters' frames</h1>
   <div class="controls">
     <label>Fur <select id="fur"></select></label>
     <label>Marking <select id="marking"></select></label>
@@ -62,7 +62,13 @@
 
 <script src="../app/art/cats.js"></script>
 <script src="../app/art/scenes.js"></script>
+<script src="../app/art/sets/pile.js"></script>
+<script src="../app/art/sets/bridge.js"></script>
+<script src="../app/art/sets/field.js"></script>
+<script src="../app/art/sets/crossing.js"></script>
+<script src="../app/art/sets/riverbank.js"></script>
 <script src="../app/story/ch01.js"></script>
+<script src="../app/story/ch02.js"></script>
 <script>
 (function () {
   'use strict';
@@ -148,7 +154,25 @@
     ['den', 'doorway', { opts: { weather: 'clear' }, cast: [c('tallyheart', 'entrance-left', 'sit', 'kind'), c('player', 'entrance-right', 'sit', 'worried', { facing: 'left' })], fx: ['night', 'stars'] }, 'the worry talk, as the story frames it'],
     ['garden', 'wide', { opts: { sparrows: 3 }, cast: [c('player', { x: 980, y: 760, scale: 1 }, 'sit', 'happy')], fx: ['night', 'stars'] }, 'custom spot and fx night'],
     ['camp', 'reveal', { cast: [], fx: ['dusk', 'sparkle'] }, 'camp at dusk'],
-    ['title', 'wide', { cast: [c('player', 'wall', 'sit', 'dreamy', { facing: 'left' })], fx: ['dusk'] }, 'title with the player on the wall']
+    ['title', 'wide', { cast: [c('player', 'wall', 'sit', 'dreamy', { facing: 'left' })], fx: ['dusk'] }, 'title with the player on the wall'],
+    // chapter 2: chapter 1's sets in the morning after the storm, and by day
+    ['den', 'inside', { opts: { drips: true }, cast: [c('snorer', 'sleeper-1', 'curl', 'sleepy'), c('mutterer', 'sleeper-2', 'curl', 'sleepy', { facing: 'left' }), c('player', 'nest', 'sit', 'wonder')], fx: ['morning'] }, 'chapter 2: morning, drips (sun spots, dripping leaves)'],
+    ['den', 'nest', { opts: { drips: true }, cast: [c('player', 'nest', 'lie', 'wonder')], fx: ['morning'] }, 'chapter 2: a raindrop on her nose'],
+    ['den', 'doorway', { opts: { drips: true }, cast: [c('tallyheart', 'doorway', 'peer', 'happy', { facing: 'left' })], fx: ['morning'] }, 'chapter 2: a big ginger head at the doorway'],
+    ['den', 'outside', { opts: { drips: true }, cast: [], fx: ['morning'] }, 'chapter 2: the rosebush glittering after the rain'],
+    ['den', 'outside', { opts: { weather: 'clear' }, cast: [], fx: ['night', 'stars', 'skyriver'] }, 'no moon (moon: false, the default): the Sky River over the rosebush'],
+    ['camp', 'reveal', { opts: { puddles: true, rainFountain: true }, cast: [c('glintstar', 'fountain-top', 'sit', 'neutral', { facing: 'left' })], fx: ['morning'] }, 'chapter 2: seven puddles, the fountain full of rain'],
+    ['camp', 'fountain', { opts: { rainFountain: true }, cast: [c('glintstar', 'fountain-top', 'stand', 'solemn', { facing: 'left' })], fx: ['morning'] }, 'chapter 2: the rain fountain from below'],
+    ['camp', 'entrance', { opts: { puddles: true }, cast: [c('player', 'entrance', 'sit', 'happy', { size: 0.85 })], fx: ['morning'] }, 'chapter 2: puddles from above'],
+    ['garden', 'step', { opts: { dish: true, towel: true }, cast: [c('player', 'lawn', 'sit', 'happy', { facing: 'left' })], fx: ['morning'] }, 'chapter 2: the dish full of rain and a folded towel'],
+    ['tower', 'balcony', { cast: [c('waffles', 'railing', 'peer', 'shout', { facing: 'left' })], fx: ['morning'] }, 'chapter 2: Waffles in the morning (fairy lights off)'],
+    ['hollow', 'wide', { opts: { marks: 2, glow: [true, false] }, cast: [c('tallyheart', 'sunpatch', 'sit', 'kind'), c('player', 'sunpatch-2', 'sit', 'wonder'),
+      c('clancat', 'rim-1', 'sit', 'stern', { variant: 1 }), c('clancat', 'rim-2', 'sit', 'stern', { variant: 3 }), c('clancat', 'rim-3', 'sit', 'stern', { variant: 5 }),
+      c('clancat', 'rim-4', 'sit', 'stern', { variant: 6 }), c('grizzled', 'rim-5', 'sit', 'stern')], fx: ['morning'] }, 'chapter 2: five cats on the rim (rim-1 … rim-5), marks 2, the first glowing'],
+    ['hollow', 'tree', { opts: { marks: 2, glow: [true, false] }, cast: [c('tallyheart', 'tree', 'stretch', 'proud')], fx: ['morning'] }, 'chapter 2: the second claw mark beside the first'],
+    ['hollow', 'tree', { opts: { marks: 6, glow: [true, false, true, false, false, true] }, cast: [], fx: ['morning'] }, 'six marks (marks: 6), glow per mark'],
+    ['title', 'wide', { cast: [c('player', 'wall', 'sit', 'wonder', { facing: 'left' }), c('tallyheart', 'wall-2', 'sit', 'proud', { facing: 'left' })], fx: ['day'] }, 'chapter 2: the wall above the river by day (wall, wall-2)'],
+    ['title', 'wide', { cast: [c('player', 'wall', 'walk', 'happy', { facing: 'left' }), c('tallyheart', 'wall-2', 'walk', 'kind', { facing: 'left' })], fx: ['sunset'] }, 'chapter 2: walking home along the wall at sunset']
   ];
 
   // ---- panels, rendered when they scroll into view
@@ -231,21 +255,35 @@
     figure(gx, scene, e[0] + ' / ' + e[1], e[3] + ' · fx: ' + (scene.fx.join(', ') || 'none'));
   });
 
-  // ---- section 2: every frame of chapter 1, as the story asks for it
-  var ch = PC.story && PC.story.ch01;
-  if (ch && ch.frames) {
-    var h2 = document.createElement('h2'); h2.id = 'chapter'; h2.textContent = 'Chapter 1: ' + (ch.title || '') + ' (' + Object.keys(ch.frames).length + ' frames)';
+  // ---- section 2: every frame of every chapter, as the story asks for it
+  // (the UI fills `marks: 'auto'` and `glow: 'auto'` from the cat; here they show as two marks, the first glowing)
+  function preview(s) {
+    if (!s || !s.opts || (s.opts.marks !== 'auto' && s.opts.glow !== 'auto')) return s;
+    var o = {}, k;
+    for (k in s.opts) o[k] = s.opts[k];
+    if (o.marks === 'auto') o.marks = 2;
+    if (o.glow === 'auto') o.glow = [true, false];
+    var t = {};
+    for (k in s) t[k] = s[k];
+    t.opts = o;
+    return t;
+  }
+  var chapters = Object.keys((PC.story) || {}).filter(function (id) { return PC.story[id] && PC.story[id].frames; })
+    .sort(function (a, b) { return (PC.story[a].number || 0) - (PC.story[b].number || 0); });
+  chapters.forEach(function (cid) {
+    var ch = PC.story[cid];
+    var h2 = document.createElement('h2'); h2.id = 'chapter-' + cid;
+    h2.textContent = 'Chapter ' + (ch.number || cid) + ': ' + (ch.title || '') + ' (' + Object.keys(ch.frames).length + ' frames)';
     $('chapter').appendChild(h2);
-    nav += '<a href="#chapter">chapter 1</a>';
+    nav += '<a href="#chapter-' + cid + '">chapter ' + (ch.number || cid) + '</a>';
     var g2 = document.createElement('div'); g2.className = 'grid'; $('chapter').appendChild(g2);
     Object.keys(ch.frames).forEach(function (id) {
       var f = ch.frames[id], s = f.scene || {};
-      figure(g2, s, id + ' · ' + s.set + ' / ' + s.cam, 'fx: ' + ((s.fx || []).join(', ') || 'none') + (s.opts && Object.keys(s.opts).length ? ' · ' + JSON.stringify(s.opts) : ''),
+      figure(g2, preview(s), cid + ' ' + id + ' · ' + s.set + ' / ' + s.cam, 'fx: ' + ((s.fx || []).join(', ') || 'none') + (s.opts && Object.keys(s.opts).length ? ' · ' + JSON.stringify(s.opts) : ''),
         (f.board || '').slice(0, 260));
     });
-  } else {
-    $('chapter').innerHTML = '<p class="meta">app/story/ch01.js is not loaded, so the chapter section is empty.</p>';
-  }
+  });
+  if (!chapters.length) $('chapter').innerHTML = '<p class="meta">No app/story/chNN.js is loaded, so the chapter section is empty.</p>';
   $('nav').innerHTML = nav;
   $('status').textContent = (realChar ? 'cats.js loaded' : 'no cats.js: placeholder cats') + ' · ' + panels.length + ' panels';
 })();

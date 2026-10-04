@@ -36,6 +36,8 @@
 </header>
 <main id="out"></main>
 <script src="../app/art/cats.js"></script>
+<!-- PC.art.prey (the pile set's prey) needs no kit: the counts pictures draw with it -->
+<script src="../app/art/sets/pile.js"></script>
 <script>
 (function () {
   var A = PC.art, V = A.vocab;
@@ -81,6 +83,7 @@
         var o = { pose: it[2], mood: it[1], facing: q.get('facing') || 'right' };
         var r;
         if (/^\d$/.test(id)) r = ch(+id, o);
+        else if (/^(otter|dog)\d$/.test(id)) r = A.character(id.slice(0, -1), Object.assign(o, { variant: +id.slice(-1), pose: q.get('pose') || 'sit' }));
         else if (id.indexOf(':') > 0) { var f = id.split(':'); r = A.cat(Object.assign(o, { look: { fur: f[0], marking: f[1] || 'none', eyes: f[2] || 'green', sex: f[3] || 'she' } })); }
         else r = A.character(id, Object.assign(o, id === 'tallone' ? { pose: q.get('pose') || 'stand' } : id === 'sparrow' ? { pose: q.get('pose') || 'perch' } : {}));
         h += cell(r, id + ' · ' + o.pose + ' · ' + o.mood, S);
@@ -194,6 +197,60 @@
       h += '<h3>one scale, together</h3><div class="stage">' + stage + '</div>';
       return h;
     }],
+    otters: ['Otters: Riffle and the ferry otters, every pose', function (S) {
+      var h = '', PM = { stand: 'happy', sit: 'neutral', scramble: 'happy', swim: 'happy', float: 'happy', juggle: 'laugh', slide: 'laugh', hug: 'happy', sun: 'sleepy' };
+      [['riffle', 1, 'Riffle'], ['otter', 1, 'old ferry otter'], ['otter', 2, 'otter 2'], ['otter', 3, 'otter 3']].forEach(function (b) {
+        h += '<div class="row"><div class="rowlabel">' + b[2] + '</div>';
+        V.otherPoses.otter.forEach(function (p) { h += cell(A.character(b[0], { variant: b[1], pose: p, mood: PM[p] }), p + ' · ' + PM[p], S); });
+        h += '</div>';
+      });
+      h += '<h3>gestures: Riffle waves (happy); the old otter cups his ear (shout, “WHAT?”); pebbles drop (float, wonder)</h3><div class="row">';
+      h += cell(A.character('riffle', { pose: 'stand', mood: 'happy' }), 'riffle stand happy', S);
+      h += cell(A.character('riffle', { pose: 'swim', mood: 'happy' }), 'riffle swim happy', S);
+      h += cell(A.character('otter', { variant: 1, pose: 'stand', mood: 'shout' }), 'old otter stand shout', S);
+      h += cell(A.character('otter', { variant: 1, pose: 'swim', mood: 'neutral' }), 'old otter swim', S);
+      h += cell(A.character('riffle', { pose: 'float', mood: 'wonder' }), 'riffle float wonder', S);
+      h += cell(A.character('riffle', { pose: 'float', mood: 'sleepy' }), 'riffle float sleepy', S);
+      return h + '</div>';
+    }],
+    dogs: ['Dogs: shaggy, spotty, tiny, every pose', function (S) {
+      var h = '', PM = { stand: 'happy', jump: 'happy', sit: 'wonder', bounce: 'shout', howl: 'happy' };
+      [[1, 'shaggy'], [2, 'spotty'], [3, 'tiny']].forEach(function (b) {
+        h += '<div class="row"><div class="rowlabel">' + b[1] + '</div>';
+        V.otherPoses.dog.forEach(function (p) { h += cell(A.character('dog', { variant: b[0], pose: p, mood: PM[p] }), p + ' · ' + PM[p], S); });
+        h += cell(A.character('dog', { variant: b[0], pose: 'stand', mood: 'neutral', facing: 'left' }), 'stand ←', S);
+        h += '</div>';
+      });
+      return h;
+    }],
+    beastmoods: ['Otters and dogs: every mood', function (S) {
+      var h = '';
+      [['riffle', 1, 'sit', 'Riffle'], ['otter', 1, 'sit', 'old otter'], ['dog', 1, 'sit', 'shaggy'], ['dog', 2, 'stand', 'spotty'], ['dog', 3, 'sit', 'tiny']].forEach(function (b) {
+        h += '<div class="row"><div class="rowlabel">' + b[3] + '</div>';
+        V.moods.forEach(function (m) { h += cell(A.character(b[0], { variant: b[1], pose: b[2], mood: m }), m, S); });
+        h += '</div>';
+      });
+      return h;
+    }],
+    together: ['One scale: cats, otters, dogs', function (S) {
+      // every drawing in cat units, as a scene places them (a sitting cat's 200 box is the reference)
+      var k = 0.5, x = 10, stage = '';
+      function put(r) {
+        var b = r.bounds || { x0: 0, x1: r.w };
+        stage += '<g transform="translate(' + (x - b.x0 * k) + ',' + (380 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>';
+        x += (b.x1 - b.x0) * k + 8;
+      }
+      put(A.character('player', { pose: 'sit', mood: 'wonder', look: { fur: 'black', marking: 'white-paws', eyes: 'green' } }));
+      put(A.character('tallyheart', { pose: 'sit', mood: 'kind' }));
+      put(A.character('riffle', { pose: 'sit', mood: 'happy' }));
+      put(A.character('riffle', { pose: 'stand', mood: 'neutral' }));
+      put(A.character('otter', { variant: 1, pose: 'sit', mood: 'neutral', facing: 'left' }));
+      put(A.character('otter', { variant: 2, pose: 'stand', mood: 'happy', facing: 'left' }));
+      put(A.character('dog', { variant: 3, pose: 'stand', mood: 'shout' }));
+      put(A.character('dog', { variant: 2, pose: 'stand', mood: 'happy' }));
+      put(A.character('dog', { variant: 1, pose: 'stand', mood: 'happy' }));
+      return '<div class="stage"><svg viewBox="0 0 ' + Math.ceil(x) + ' 400" width="100%" style="max-width:' + Math.ceil(x * 1.4) + 'px">' + stage + '</svg></div>';
+    }],
     counts: ['Counts pictures', function (S) {
       var h = '';
       [[1, 0], [3, 2], [5, 5], [8, 3], [10, 7]].forEach(function (g) {
@@ -202,6 +259,21 @@
       [[2, 3, 3], [3, 4, 5], [4, 3, 6], [5, 3, 7], [10, 2, 13], [6, 2, 4]].forEach(function (g) {
         h += '<h3>table ' + g[0] + ' · groups ' + g[1] + ' · highlight ' + g[2] + '</h3><div class="wide">' + A.countsPicture({ table: g[0], groups: g[1], highlight: g[2] }) + '</div>';
       });
+      return h;
+    }],
+    counts2: ['Counts pictures, chapter 2', function (S) {
+      var rim = [{ who: 'clancat', variant: 1 }, { who: 'clancat', variant: 3 }, { who: 'snorter' }, { who: 'clancat', variant: 5 }, { who: 'grizzled' }];
+      var list = [
+        ['skip: the five rim cats, 2, 4… (highlight 4, totals, next)', { table: 2, groups: 5, highlight: 4, totals: true, next: true, who: rim }],
+        ['skip done: TEN, flat ears still count', { table: 2, groups: 5, highlight: 10, totals: true, next: true, who: rim }],
+        ['5 × 2, right: the ears in two rows of five', { table: 2, groups: 2, per: 5, layout: 'rows', highlight: 10, totals: true }],
+        ['the old tom’s boast: ten pairs, a thought', { table: 2, groups: 10, per: 2, kind: 'prey', thought: true }],
+        ['8 × 2: eight pairs, counted pair by pair (highlight 6)', { table: 2, groups: 8, per: 2, kind: 'prey', highlight: 6, totals: true, next: true }],
+        ['2 × 8: two rows of eight, the top row first (highlight 8)', { table: 2, groups: 2, per: 8, kind: 'prey', layout: 'rows', highlight: 8, totals: true, next: true }],
+        ['three dogs, six ears', { table: 2, groups: 3, highlight: 6, who: [{ who: 'dog', variant: 1 }, { who: 'dog', variant: 2 }, { who: 'dog', variant: 3 }] }]
+      ];
+      var h = '';
+      list.forEach(function (it) { h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:720px">' + A.countsPicture(it[1]) + '</div>'; });
       return h;
     }],
     sand: ['Sand tallies', function (S) {

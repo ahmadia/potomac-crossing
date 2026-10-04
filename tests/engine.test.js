@@ -1,4 +1,4 @@
-/* Engine tests: node --test tests/ */
+/* Engine tests: node --test (from the repo root), or node --test tests/engine.test.js */
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -172,7 +172,7 @@ test('flow: next, look, input, choice with sets, counts, end; back rereads', () 
   assert.ok(E.choose(cat, story, 1));
   assert.equal(cat.flags.stepOut, 'slow');
   assert.equal(cat.frame, 'e2');
-  assert.deepEqual(cat.choices.d, { index: 1, label: 'Step out slowly.' });
+  assert.deepEqual(cat.choices['ch01:d'], { index: 1, label: 'Step out slowly.' });   // keyed chapter:frame (save v2)
   // back to the choice, choose the other way: the flag is overwritten
   assert.ok(E.back(cat, story));
   assert.equal(cat.frame, 'd');
@@ -186,9 +186,10 @@ test('flow: next, look, input, choice with sets, counts, end; back rereads', () 
   assert.ok(E.finishCounts(cat, story, { set: 'ch01-tails', answers: 5 }));
   assert.equal(cat.lessons['ch01-tails'].answers, 5);
   assert.ok(E.submitInput(cat, story, ''));
-  assert.equal(cat.dream, '');
+  assert.equal(cat.dreams.ch01, '');   // skipped (save v2: each chapter keeps its own dream)
   assert.equal(cat.frame, 'z');
-  assert.equal(cat.done, true);
+  assert.ok(E.isFinished(cat, 'ch01'));
+  assert.ok(cat.finished.ch01 > 0);
   assert.equal(E.kindOf(E.currentFrame(cat, story)), 'end');
   // history walks all the way back
   let steps = 0;
@@ -417,13 +418,14 @@ test('hollow: full rounds award treasures in order; glow after three rounds with
   }
   let r = round(true);
   assert.equal(r.awarded.id, E.TREASURES[0].id);
-  assert.equal(cat.hollow.cleanRounds, 0);
+  assert.equal(cat.hollow.byTable['1'].cleanRounds, 0);   // save v2: each Count keeps its own record
   r = round(false); assert.equal(r.glowNow, false);
   r = round(false); assert.equal(r.glowNow, false);
-  assert.equal(cat.hollow.glow, false);
+  assert.equal(cat.hollow.byTable['1'].glow, false);
   r = round(false);
   assert.equal(r.glowNow, true);
-  assert.equal(cat.hollow.glow, true);
+  assert.equal(cat.hollow.byTable['1'].glow, true);
+  assert.equal(cat.hollow.rounds, 4);
   assert.deepEqual(cat.nest, E.TREASURES.slice(0, 4).map(t => t.id));
   r = round(false);
   assert.equal(r.glowNow, false); // already glowing
@@ -451,7 +453,7 @@ test('storage: round-trip under the one key', () => {
   const ls = memStorage();
   const store = E.createStore(ls);
   const save = store.load();
-  assert.equal(save.v, 1);
+  assert.equal(save.version, 2);   // the key stays potomac-crossing.v1; the object says version 2
   const cat = E.addCat(save, { now: 5 });
   cat.name = 'Minnow';
   assert.equal(store.save(save), true);
@@ -490,7 +492,8 @@ test('storage: a getter that throws, null storage, and corrupt data', () => {
   assert.equal(loaded.cats[0].look.fur, 'calico');
   assert.equal(loaded.cats[0].look.sex, 'she');
   assert.deepEqual(loaded.cats[0].flags, {});
-  assert.deepEqual(loaded.cats[0].hollow, { rounds: 0, cleanRounds: 0, glow: false });
+  // a version-1 cat: its one Hollow record becomes the 1s'
+  assert.deepEqual(loaded.cats[0].hollow, { rounds: 0, byTable: { '1': { rounds: 0, cleanRounds: 0, glow: false } } });
   assert.equal(loaded.current, 'x');
 });
 
@@ -700,11 +703,17 @@ test('hollow: facts that were hard last time come early, flagged, and are rememb
   const saved = JSON.parse(JSON.stringify(state));
   assert.equal(saved.queue[pos9].hard, true);
   assert.equal(E.counts.question(saved).hard, false);
-  // answering it right: she remembers
+  // answering it right and quick: she remembers, "Not today!"
   while (saved.pos < pos9) { const q = E.counts.question(saved); E.counts.answer(saved, def, q.answer, 2000, 1); }
-  const r = E.counts.answer(saved, def, 9, 6000, 1);
+  const slowCopy = JSON.parse(JSON.stringify(saved));
+  const r = E.counts.answer(saved, def, 9, 2500, 1);
   assert.equal(r.lineKind, 'remembered');
   assert.equal(r.line, 'Last time ' + own[0] + ' × ' + own[1] + ' made you stop and think. Not today!');
+  // right but slow again: it made her stop and think today too, so not "Not today!"
+  const rs = E.counts.answer(slowCopy, def, 9, 6000, 1);
+  assert.equal(rs.lineKind, 'rememberedSlow');
+  assert.equal(rs.line, own[0] + ' × ' + own[1] + ' again, and you got it. It’s getting easier.');
+  assert.equal(E.counts.answer(E.counts.start(def, { facts: [{ a: 2, b: 1, hard: true }] }), Object.assign({}, def, { rememberedSlow: 'Slow {a} × {b}.' }), 2, 9000, 1).line, 'Slow 2 × 1.', 'a set may say it its own way');
   // the same fact in a later round, now right and fast, is no longer hard
   E.logAnswer(cat, { set: 'hollow-1s', a: 1, b: 9, answer: 9, correct: true, ms: 1200, helped: false, retry: false, at: 9 });
   assert.deepEqual(E.hardFacts(cat, 1), [[6, 1]]);
@@ -715,4 +724,1677 @@ test('hollow: facts that were hard last time come early, flagged, and are rememb
 
 test('treasure names read cleanly', () => {
   assert.equal(E.treasure('leaf').name, 'A bright red leaf from leaf-drop');
+});
+
+/* ================================================================ chapter 2 (docs/build.md v0.3)
+ * Fixture chapters (tests/fixtures/chapters.js), not the real chapter 2; real version-1 saves
+ * (tests/fixtures/v1-saves.json, made by the shipped engine: node tests/fixtures/make-v1-saves.js);
+ * and the shipped engine itself (tests/fixtures/engine-v1.js), to replay chapter 1 beside the new. */
+const fixtures = require('./fixtures/chapters.js');
+const V1SAVES = require('./fixtures/v1-saves.json');
+const V1 = require('./fixtures/v1.js');
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const realCh01 = () => { require('../app/story/ch01.js'); return PC.story.ch01; };
+/* A cat as plain data, with a Hollow record of all zeros dropped: a migrated version-1 cat carries
+ * the 1s' record even before its first round (the contract's mapping), a new cat starts with none. */
+const plainCat = (c) => {
+  const o = clone(c);
+  Object.keys(o.hollow.byTable).forEach(t => { const r = o.hollow.byTable[t]; if (!r.rounds && !r.cleanRounds && !r.glow) delete o.hollow.byTable[t]; });
+  return o;
+};
+
+/* Play a fixture chapter to its end (or to `stop`) with the new engine. */
+function playNew(cat, story, over, stop) {
+  return V1.play(E, story, cat, V1.script(over), stop);
+}
+function finishedCat(stories, over) {
+  const { ch01 } = stories;
+  const cat = E.blankCat({ now: 1, id: 'fx' });
+  E.startChapter(cat, ch01, 1);
+  playNew(cat, ch01, Object.assign({ miss: [] }, over));
+  return cat;
+}
+
+test('version 0.2.0 and the save, version 2', () => {
+  assert.equal(E.VERSION, '0.2.0 (chapter 2, 2026-10-04)');
+  assert.equal(E.STORAGE_KEY, 'potomac-crossing.v1');
+  assert.deepEqual(E.newSave(), { version: 2, cats: [], current: null, settings: { readAloud: false, bigText: false } });
+  const c = E.blankCat({ now: 5, id: 'x' });
+  assert.deepEqual(Object.keys(c).sort(), ['chapter', 'choices', 'counts', 'created', 'dreams', 'finished', 'flags', 'frame', 'history',
+    'hollow', 'hollowWaiting', 'id', 'lesson', 'lessons', 'look', 'name', 'nest', 'petname', 'places', 'updated'].sort());
+  assert.deepEqual(c.hollow, { rounds: 0, byTable: {} });
+  assert.equal(c.hollowWaiting, null, 'no Hollow round waiting');
+  assert.deepEqual([c.finished, c.dreams, c.places], [{}, {}, {}]);
+});
+
+/* ------------------------------------------------ real version-1 saves */
+const V1_KEYS = ['id', 'created', 'updated', 'look', 'petname', 'name', 'dream', 'flags', 'choices', 'chapter', 'frame', 'history',
+  'done', 'doneAt', 'counts', 'lessons', 'lesson', 'nest', 'hollow'];
+
+test('migrate: real version-1 saves (finished, partway, mid-lesson, mid-Hollow, re-reading, new) lose nothing', () => {
+  const kinds = new Set();
+  for (const [name, save] of Object.entries(V1SAVES)) {
+    const m = E.migrate(clone(save));
+    assert.equal(m.version, 2);
+    assert.equal(m.current, save.current, name + ': the current cat');
+    assert.deepEqual(m.settings, save.settings, name + ': settings');
+    assert.equal(m.cats.length, save.cats.length);
+    save.cats.forEach((c1, i) => {
+      const c2 = m.cats[i], who = name + '/' + c1.id;
+      kinds.add(c1.id);
+      // every field the version-1 engine wrote is accounted for
+      Object.keys(c1).forEach(k => assert.ok(V1_KEYS.includes(k), who + ': unexpected v1 field ' + k));
+      ['id', 'created', 'updated', 'look', 'petname', 'name', 'flags', 'chapter', 'frame', 'history', 'counts', 'lessons', 'lesson', 'nest']
+        .forEach(k => assert.deepEqual(c2[k], c1[k], who + ': ' + k));
+      if (c1.done) assert.equal(c2.finished.ch01, c1.doneAt, who + ': done -> finished.ch01');
+      else assert.deepEqual(c2.finished, {}, who + ': not finished');
+      if (c1.dream) assert.equal(c2.dreams.ch01, c1.dream, who + ': dream -> dreams.ch01');
+      else if (c1.done) assert.equal(c2.dreams.ch01, '', who + ': a finished chapter with no dream skipped it');
+      else assert.equal(c2.dreams.ch01, undefined, who + ': no dream yet');
+      assert.equal(c2.hollow.rounds, c1.hollow.rounds, who + ': every round still counts');
+      assert.deepEqual(c2.hollow.byTable['1'], c1.hollow, who + ': the Hollow record is the 1s’');
+      assert.equal(Object.keys(c2.choices).length, Object.keys(c1.choices).length);
+      Object.keys(c1.choices).forEach(k => assert.deepEqual(c2.choices['ch01:' + k], c1.choices[k], who + ': choice ' + k));
+      ['done', 'doneAt', 'dream'].forEach(k => assert.ok(!(k in c2), who + ': no v1 field ' + k + ' left'));
+    });
+  }
+  assert.deepEqual([...kinds].sort(), ['cat-finished', 'cat-fresh', 'cat-hollow', 'cat-lesson', 'cat-partway', 'cat-reread']);
+});
+
+test('migrate: idempotent, and the store loads, saves and reloads a version-1 save unchanged', () => {
+  for (const save of Object.values(V1SAVES)) {
+    const m1 = E.migrate(clone(save));
+    assert.deepEqual(E.migrate(clone(m1)), m1, 'migrating twice changes nothing');
+    assert.deepEqual(E.migrate(E.migrate(clone(m1))), m1);
+    const ls = memStorage();
+    ls.setItem('potomac-crossing.v1', JSON.stringify(save));
+    const store = E.createStore(ls);
+    const loaded = store.load();
+    assert.deepEqual(loaded, m1);
+    assert.equal(store.save(loaded), true);
+    assert.deepEqual([...ls._m.keys()], ['potomac-crossing.v1'], 'still one key');
+    assert.equal(JSON.parse(ls.getItem('potomac-crossing.v1')).version, 2);
+    assert.deepEqual(E.createStore(ls).load(), m1, 'a version-2 save reloads as it was');
+  }
+});
+
+test('a finished version-1 cat opens on the hub, where chapter 2 waits; its claw mark keeps its glow', () => {
+  const ch01 = realCh01(), { ch02 } = fixtures();
+  const stories = [ch02, ch01];   // any order: chapters go by number
+  const m = E.migrate(clone(V1SAVES.device));
+  const fin = E.getCat(m, 'cat-finished'), hol = E.getCat(m, 'cat-hollow');
+  const p = E.progress(fin, stories);
+  assert.equal(p.reading.id, 'ch01');
+  assert.equal(p.atEnd, true, 'on the end frame: the hub');
+  assert.deepEqual(p.finished.map(s => s.id), ['ch01']);
+  assert.equal(p.next.id, 'ch02', 'chapter 2 is the big button');
+  assert.equal(p.nextInProgress, false);
+  assert.equal(E.isOpen(fin, ch02, stories), true);
+  assert.equal(E.status(fin, stories), 'Chapter 1 finished');
+  assert.deepEqual(E.learnedCounts(fin, stories).map(c => c.table), [1]);
+  assert.deepEqual(E.resolveScene({ set: 'hollow', opts: { marks: 'auto', glow: 'auto' } }, fin, stories).opts, { marks: 1, glow: [false] });
+  assert.deepEqual(E.resolveScene({ set: 'hollow', opts: { marks: 'auto', glow: 'auto' } }, hol, stories).opts, { marks: 1, glow: [true] });
+  // without chapter 2 built, the hub says it is coming soon, in chapter 1's own teaser
+  const alone = E.progress(fin, [ch01]);
+  assert.equal(alone.next, null);
+  assert.equal(alone.soon.title, 'Chapter 2: After the Storm');
+  assert.equal(alone.soon.built, false);
+});
+
+test('a version-1 cat partway through chapter 1 resumes exactly where it was, and plays on the same', () => {
+  const ch01 = realCh01(), old = V1.v1();
+  const c1 = clone(V1SAVES.device.cats.find(c => c.id === 'cat-partway'));
+  const c2 = E.migrate({ cats: [clone(c1)] }).cats[0];
+  assert.equal(E.frameId(c2, ch01), 'f040');
+  assert.equal(E.status(c2, [ch01]), 'Chapter 1 · page 41');
+  assert.equal(E.progress(c2, [ch01]).atEnd, false, 'opens on its frame, not the hub');
+  // Back walks the same pages in both engines
+  const b1 = clone(c1), b2 = clone(c2), w1 = [], w2 = [];
+  while (old.E.back(b1, old.story)) w1.push(b1.frame);
+  while (E.back(b2, ch01)) w2.push(b2.frame);
+  assert.deepEqual(w2, w1);
+  // and forward to the end: the same chapter 1
+  const s = { choices: { f045: 1, f066: 2 }, miss: ['6x1'], t: 9000000 };
+  const seq1 = V1.play(old.E, old.story, c1, V1.script(s));
+  const seq2 = V1.play(E, ch01, c2, V1.script(s));
+  assert.deepEqual(seq2, seq1);
+  assert.deepEqual(clone(c2), clone(E.migrate({ cats: [clone(c1)] }).cats[0]));
+});
+
+test('a version-1 cat mid-lesson resumes at the same question and finishes the lesson the same', () => {
+  const ch01 = realCh01(), old = V1.v1();
+  const c1 = clone(V1SAVES.device.cats.find(c => c.id === 'cat-lesson'));
+  const c2 = E.migrate({ cats: [clone(c1)] }).cats[0];
+  assert.equal(E.frameId(c2, ch01), 'f062');
+  assert.deepEqual(c2.lesson, c1.lesson);
+  const q1 = old.E.counts.question(c1.lesson.state), q2 = E.counts.question(c2.lesson.state);
+  ['a', 'b', 'answer', 'retry', 'filler', 'hard', 'number', 'total', 'groups', 'per'].forEach(k => assert.deepEqual(q2[k], q1[k], k));
+  assert.equal(q2.step, 1);
+  const s = { t: 9000000, miss: ['1x10'] };
+  assert.deepEqual(V1.play(E, ch01, c2, V1.script(s)), V1.play(old.E, old.story, c1, V1.script(s)));
+  assert.deepEqual(clone(c2), clone(E.migrate({ cats: [clone(c1)] }).cats[0]));
+  assert.equal(c2.lessons['ch01-tails'].finished, true);
+  assert.equal(c2.lessons['ch01-tails'].noHelp, false, 'the miss before the save still counts');
+});
+
+test('a version-1 cat mid-Hollow-round finishes the round with the same treasure, and the 1s keep their glow', () => {
+  const ch01 = realCh01(), old = V1.v1();
+  const c1 = clone(V1SAVES.device.cats.find(c => c.id === 'cat-hollow'));
+  const c2 = E.migrate({ cats: [clone(c1)] }).cats[0];
+  assert.equal(c2.lesson.mode, 'hollow');
+  assert.deepEqual(c2.lesson, c1.lesson);
+  const st1 = c1.lesson.state, st2 = c2.lesson.state;
+  const r1 = V1.runLesson(old.E, c1, old.E.hollowDef(old.story, 1), st1, V1.script({ t: 9000000 }));
+  const r2 = V1.runLesson(E, c2, E.hollowDef([ch01], st2.table), st2, V1.script({ t: 9000000 }));
+  assert.equal(r2.hollow.awarded.id, r1.hollow.awarded.id);
+  assert.equal(r2.hollow.awarded.id, 'pebble', 'the fourth treasure');
+  assert.deepEqual(clone(c2.nest), clone(c1.nest));
+  assert.deepEqual(clone(c2.hollow.byTable['1']), clone(c1.hollow));
+  assert.equal(c2.hollow.byTable['1'].glow, true);
+  assert.equal(c2.lesson, null);
+  // the next round is the same round in both engines (same facts, same hard ones early)
+  const n1 = old.E.hollowStart(c1, old.story, 1, 1).state.queue, n2 = E.hollowStart(c2, [ch01], 1, 1).state.queue;
+  assert.deepEqual(clone(n2), clone(n1));
+});
+
+test('a version-1 cat re-reading chapter 1 keeps it finished and its skipped dream; a new cat is just starting', () => {
+  const ch01 = realCh01();
+  const m = E.migrate(clone(V1SAVES.reread));
+  const c = E.getCat(m, 'cat-reread'), fresh = E.getCat(m, 'cat-fresh');
+  assert.ok(E.isFinished(c, 'ch01'));
+  assert.equal(E.frameId(c, ch01), 'f010');
+  assert.equal(E.status(c, [ch01]), 'Chapter 1 · page 10');
+  assert.equal(E.buildBook(ch01, c).dream, E.fill(ch01.book.noDream, c), 'the skipped dream stays skipped');
+  assert.deepEqual(E.buildFullBook(c, [ch01]).pages.map(p => p.id), ['ch01']);
+  assert.equal(E.status(fresh, [ch01]), 'Just starting');
+  assert.equal(fresh.chapter, null);
+});
+
+/* ------------------------------------------------ chapter 1 plays exactly as before */
+test('chapter 1 plays exactly as before, start to end, the lesson and the book (new engine beside the shipped one)', () => {
+  const ch01 = realCh01(), old = V1.v1();
+  const runs = [
+    { choices: { f014: 0, f018: 0, f028: 0, f045: 0, f066: 0 }, miss: ['3x1', '8x1'] },
+    { look: { sex: 'tom', fur: 'black', marking: 'back-stripe', eyes: 'blue' }, petname: 'SNICKERDOODLE', clanname: 'Thunderstormwhiskers',
+      dream: '', choices: { f014: 4, f018: 1, f028: 1, f045: 2, f066: 3 }, miss: ['1x7', '8x1', '1x10'], ms: 2500 },
+    { choices: { f014: 3, f018: 0, f028: 1, f045: 1, f066: 1 }, miss: [], ms: 1200 }
+  ];
+  runs.forEach((over, n) => {
+    const s1 = old.E.newSave(), s2 = E.newSave();
+    const c1 = old.E.addCat(s1, { now: 1 }), c2 = E.addCat(s2, { now: 1 });
+    c1.id = c2.id = 'same';
+    old.E.startChapter(c1, old.story, 1000); E.startChapter(c2, ch01, 1000);
+    const seq1 = V1.play(old.E, old.story, c1, V1.script(Object.assign({ t: 1000 }, over)));
+    const seq2 = V1.play(E, ch01, c2, V1.script(Object.assign({ t: 1000 }, over)));
+    assert.deepEqual(seq2, seq1, 'run ' + n + ': the same frames, in order');
+    assert.equal(seq2[seq2.length - 1], 'f085');
+    assert.deepEqual(plainCat(c2), plainCat(E.migrate({ cats: [clone(c1)] }).cats[0]), 'run ' + n + ': the same cat, in the version-2 shape');
+    assert.deepEqual(clone(c2.counts), clone(c1.counts), 'run ' + n + ': the same lesson, answer by answer');
+    const oldBook = clone(old.E.buildBook(old.story, c1));
+    assert.deepEqual(clone(E.buildBook(ch01, c2)), oldBook, 'run ' + n + ': the same book page');
+    const full = E.buildFullBook(c2, [ch01]);
+    assert.equal(full.title, oldBook.title);
+    assert.deepEqual(clone(full.pages.map(p => [p.heading, p.recap, p.dream])), [[oldBook.chapter, oldBook.recap, oldBook.dream]]);
+    assert.equal(E.status(c2, [ch01]), 'Chapter 1 finished');
+    // then the Training Hollow, the same round with the same treasure
+    const h1 = V1.hollowRound(old.E, c1, old.story, V1.script({ t: 5e6, miss: ['1x2'] }));
+    const h2 = V1.hollowRound(E, c2, ch01, V1.script({ t: 5e6, miss: ['1x2'] }));
+    assert.deepEqual(clone(h2.state.queue), clone(h1.state.queue));
+    assert.equal(h2.rec.hollow.awarded.id, h1.rec.hollow.awarded.id);
+    assert.deepEqual(plainCat(c2), plainCat(E.migrate({ cats: [clone(c1)] }).cats[0]));
+  });
+});
+
+/* ------------------------------------------------ chapters */
+test('chapters: read in order of number; chapter 2 opens once chapter 1 is finished', () => {
+  const { ch01, ch02 } = fixtures();
+  const list = E.chapters({ b: ch02, a: ch01 });
+  assert.deepEqual(list.map(s => s.id), ['ch01', 'ch02']);
+  assert.equal(E.chapter('ch02', list), ch02);
+  assert.equal(E.nextChapter(ch01, list), ch02);
+  assert.equal(E.nextChapter(ch02, list), null);
+  assert.equal(E.chapterHeading(ch02), 'Chapter 2: After the Storm');
+  const cat = E.blankCat({ now: 1 });
+  cat.name = 'Moon';
+  assert.equal(E.isOpen(cat, ch01, list), true);
+  assert.equal(E.isOpen(cat, ch02, list), false);
+  assert.equal(E.upNext(cat, list), ch01);
+  assert.equal(E.status(cat, list), 'Just starting');
+  E.startChapter(cat, ch01, 1);
+  playNew(cat, ch01, { miss: [] });
+  assert.ok(E.isFinished(cat, 'ch01'));
+  assert.equal(E.isOpen(cat, ch02, list), true);
+  let p = E.progress(cat, list);
+  assert.equal(p.next, ch02);
+  assert.equal(p.soon, null, 'chapter 2 is built: no "coming soon"');
+  assert.deepEqual(E.teaser(ch01, cat, list), { title: 'Chapter 2: After the Storm', lines: ['Tomorrow, Moonpaw: ears.'], built: true, next: 'ch02' });
+  assert.equal(E.status(cat, list), 'Chapter 1 finished');
+  E.startChapter(cat, ch02, 2);
+  assert.equal(cat.chapter, 'ch02');
+  assert.deepEqual(cat.history, [], 'each chapter has its own back-history');
+  assert.equal(E.status(cat, list), 'Chapter 2 · page 1');
+  assert.equal(E.progress(cat, list).nextInProgress, false);
+  E.next(cat, ch02, 3);
+  assert.equal(E.status(cat, list), 'Chapter 2 · page 2');
+  assert.equal(E.progress(cat, list).nextInProgress, true, 'the hub button resumes chapter 2');
+  playNew(cat, ch02, { dream: 'a fish that could fly' });
+  p = E.progress(cat, list);
+  assert.equal(p.next, null);
+  assert.deepEqual(p.soon, { title: 'Chapter 3: Under the Old Bridge', lines: ['Something sniffles in the dark.'], built: false, next: null });
+  assert.equal(E.status(cat, list), 'Chapter 2 finished');
+  assert.deepEqual(Object.keys(cat.finished), ['ch01', 'ch02']);
+  assert.ok(cat.finished.ch02 > cat.finished.ch01);
+  // reading chapter 1 again keeps both finished
+  E.startChapter(cat, ch01, 9e9);
+  assert.equal(E.status(cat, list), 'Chapter 1 · page 1');
+  assert.ok(E.isFinished(cat, 'ch02'));
+  assert.equal(E.progress(cat, list).next, null);
+});
+
+test('flow: each chapter keeps its own dream, choices never collide across chapters, {dream} is this chapter’s', () => {
+  const { ch01, ch02 } = fixtures();
+  // a chapter-2 choice on a frame id chapter 1 also uses
+  ch02.frames.f004 = { choice: { options: [{ label: 'Yes', sets: { ch2Path: 'river' }, next: 'a11' }] } };
+  ch02.frames.a10.choice.options[1].next = 'f004';
+  const cat = finishedCat({ ch01 }, { dream: 'otters' });
+  assert.deepEqual(cat.dreams, { ch01: 'otters' });
+  assert.equal(E.fill('{dream}', cat), 'otters');
+  E.startChapter(cat, ch02, 5);
+  assert.equal(E.fill('[{dream}]', cat), '[]', 'chapter 2 has no dream yet');
+  playNew(cat, ch02, { dream: '  a  giant fish ', choices: { a10: 1 } });
+  assert.deepEqual(cat.dreams, { ch01: 'otters', ch02: 'a giant fish' });
+  assert.equal(E.fill('{dream}', cat), 'a giant fish');
+  assert.deepEqual(cat.choices['ch01:f004'], { index: 0, label: 'Noticing' });
+  assert.deepEqual(cat.choices['ch02:f004'], { index: 0, label: 'Yes' });
+  assert.deepEqual(E.chosen(cat, ch02, 'a10'), { index: 1, label: 'Go down to the river.' });
+  assert.equal(cat.flags.specialty, 'noticing', 'chapter 1’s flags sit beside chapter 2’s');
+  assert.equal(cat.flags.ch2Path, 'river');
+});
+
+/* ------------------------------------------------ the skip-count */
+test('skip: an interaction like next; any tap counts the next group; nothing is logged', () => {
+  const { ch02 } = fixtures();
+  assert.deepEqual(E.checkStory(ch02), []);
+  const f = ch02.frames.a03;
+  assert.equal(E.kindOf(f), 'skip');
+  assert.ok(E.KINDS.includes('skip'));
+  assert.deepEqual(E.exits(f), ['a04']);
+  assert.deepEqual(E.skipView(f.skip, 0), { table: 2, groups: 5, per: 2, taps: 0, highlight: 0, total: 0, totals: [], done: false, count: '' });
+  assert.equal(E.skipView(f.skip, 1).count, '2…');
+  const three = E.skipView(f.skip, 3);
+  assert.deepEqual([three.highlight, three.total, three.totals, three.count, three.done], [6, 6, [2, 4, 6], '2… 4… 6…', false]);
+  const all = E.skipView(f.skip, 5);
+  assert.deepEqual([all.highlight, all.totals, all.count, all.done], [10, [2, 4, 6, 8, 10], '2… 4… 6… 8… 10!', true]);
+  assert.equal(E.skipView(f.skip, 99).taps, 5, 'extra taps change nothing');
+  assert.equal(E.skipView({ table: 5, groups: 2 }, 2).count, '5… 10!');
+  const cat = E.blankCat({});
+  E.startChapter(cat, ch02, 1);
+  E.go(cat, ch02, 'a03', 2);
+  assert.ok(E.next(cat, ch02, 3));
+  assert.equal(cat.frame, 'a04');
+  assert.deepEqual(cat.counts, []);
+  assert.ok(E.back(cat, ch02));
+  assert.equal(cat.frame, 'a03', 'Back works as on any frame');
+  const bad = clone(ch02); bad.frames.a03.skip = { next: 'a04' };
+  assert.ok(E.checkStory(bad).some(e => /skip needs a table and groups/.test(e)));
+});
+
+/* ------------------------------------------------ gifts */
+test('gift: reaching the frame puts it in her nest, once; Back never takes it away; My nest shows gifts first', () => {
+  const { ch02 } = fixtures();
+  assert.deepEqual(E.gift('riffle-stone'), { id: 'riffle-stone', name: 'Riffle’s lucky stone: dark and smooth, with a white stripe all the way around', from: 'Riffle' });
+  assert.ok(E.GIFTS.some(g => g.id === 'riffle-stone'));
+  const cat = E.blankCat({});
+  cat.nest = ['moss'];
+  E.startChapter(cat, ch02, 1);
+  E.go(cat, ch02, 'a08', 2);
+  assert.deepEqual(cat.nest, ['moss']);
+  E.choose(cat, ch02, 0, 3);
+  assert.equal(cat.frame, 'a09');
+  assert.deepEqual(cat.nest, ['moss', 'riffle-stone']);
+  E.back(cat, ch02);
+  assert.deepEqual(cat.nest, ['moss', 'riffle-stone'], 'Back does not take it away');
+  E.choose(cat, ch02, 1, 4);
+  E.startChapter(cat, ch02, 5);
+  playNew(cat, ch02, {});
+  assert.deepEqual(cat.nest.filter(x => x === 'riffle-stone'), ['riffle-stone'], 'once, however often she reads it');
+  cat.nest.push('feather');
+  const g = E.nestGroups(cat);
+  assert.deepEqual(g.gifts.map(x => [x.treasure.id, x.treasure.from, x.gift]), [['riffle-stone', 'Riffle', true]]);
+  assert.deepEqual(g.treasures.map(x => x.treasure.id), ['moss', 'feather']);
+  assert.equal(E.treasure('riffle-stone').name, E.GIFTS[0].name);
+  assert.equal(E.giveGift(cat, 'riffle-stone'), false);
+  const bad = clone(ch02); bad.frames.a09.gift = 'mystery';
+  assert.ok(E.checkStory(bad).some(e => /unknown gift mystery/.test(e)));
+});
+
+/* ------------------------------------------------ `when` on lines and options */
+test('when: captions and balloons show only when they match; a hidden balloon never shifts who says the rest', () => {
+  const { ch02 } = fixtures();
+  const f = ch02.frames.a01, cat = E.blankCat({});
+  assert.deepEqual(E.captions(f, cat), ['Morning.']);
+  cat.flags.specialty = 'noticing';
+  assert.deepEqual(E.captions(f, cat), ['Morning.', 'The earth behind the pile is dug up.']);
+  cat.flags.worry = 'water';
+  assert.equal(E.captions(f, cat).length, 3);
+  assert.deepEqual(E.balloons(f, E.blankCat({})).map(b => [b.text, b.nth]), [['WHAT? SPEAK UP!', 0], ['Hello, cat!', 2]]);
+  assert.deepEqual(E.balloons(f, cat).map(b => [b.text, b.nth]), [['WHAT? SPEAK UP!', 0], ['Psst, it’s deep.', 1], ['Hello, cat!', 2]]);
+  assert.ok(E.balloons(f, cat).every(b => !('when' in b) && b.who === 'otter'));
+  // plain strings still work, as in chapter 1
+  assert.deepEqual(E.captions({ caption: 'One.' }, cat), ['One.']);
+  assert.deepEqual(E.captions({ caption: ['A', { text: 'B' }, { when: { worry: 'small' }, text: 'C' }] }, cat), ['A', 'B']);
+});
+
+test('when: a choice hides options that don’t match (and refuses them); it keeps at least one', () => {
+  const { ch02 } = fixtures();
+  const f = ch02.frames.a08, cat = E.blankCat({});
+  assert.deepEqual(E.options(f, cat).map(o => o.index), [0, 1]);
+  E.startChapter(cat, ch02, 1);
+  E.go(cat, ch02, 'a08', 2);
+  assert.equal(E.choose(cat, ch02, 2, 3), false, 'a hidden option can’t be chosen');
+  assert.equal(cat.frame, 'a08');
+  cat.flags.specialty = 'swimming';
+  assert.deepEqual(E.options(f, cat).map(o => o.index), [0, 1, 2]);
+  assert.equal(E.choose(cat, ch02, 2, 4), true);
+  assert.equal(cat.flags.ch2SaidAloud, true);
+  const none = { choice: { options: [{ label: 'A', when: { worry: 'small' }, next: 'x' }, { label: 'B', when: { worry: 'talk' }, next: 'y' }] } };
+  assert.deepEqual(E.options(none, cat).map(o => o.index), [0], 'never an empty choice');
+});
+
+test('when: lessonClean (that lesson finished with no help), firstTry (her latest first ask, either order), not', () => {
+  const { ch02 } = fixtures();
+  const tree = ch02.frames.a05, pile = ch02.frames.a07;
+  const cat = E.blankCat({});
+  const say = (f) => E.balloons(f, cat).map(b => b.text);
+  assert.deepEqual(say(tree), ['Your first mark is still there.'], 'no lesson yet: not clean');
+  cat.lessons['ch02-tails'] = { set: 'ch02-tails', helped: 1, noHelp: false, finished: true };
+  assert.deepEqual(say(tree), ['Your first mark is still there.']);
+  cat.lessons['ch02-tails'] = { set: 'ch02-tails', helped: 0, noHelp: true, finished: true };
+  assert.deepEqual(say(tree), ['Your first mark is a little deeper.']);
+  assert.equal(E.matches({ lessonClean: ['nope', 'ch02-tails'] }, cat), true, 'a list: any of');
+  // firstTry
+  assert.deepEqual(say(pile), ['Hmph.'], 'never asked');
+  E.logAnswer(cat, { set: 'ch02-pile', a: 10, b: 2, answer: 20, correct: true, ms: 3000, helped: false, retry: false, at: 1 });
+  assert.deepEqual(say(pile), ['Lucky guess.']);
+  assert.equal(E.firstTry(cat, '2x10'), true, 'either order');
+  assert.equal(E.firstTry(cat, '2 × 10'), true);
+  // a later first ask, wrong, then its retry right: the latest first ask decides
+  E.logAnswer(cat, { set: 'hollow-2s', a: 2, b: 10, answer: 12, correct: false, ms: 3000, helped: true, retry: false, at: 2 });
+  E.logAnswer(cat, { set: 'hollow-2s', a: 2, b: 10, answer: 20, correct: true, ms: 3000, helped: false, retry: true, at: 3 });
+  E.logAnswer(cat, { set: 'hollow-2s', a: 2, b: 10, answer: 20, correct: true, ms: 3000, helped: false, retry: false, filler: true, at: 4 });
+  assert.deepEqual(say(pile), ['Hmph.']);
+  assert.equal(E.firstTry(cat, 'ten'), false);
+  // not, nested and combined with flags
+  cat.flags.ch2Path = 'bridge';
+  assert.equal(E.matches({ ch2Path: 'bridge', not: { lessonClean: 'ch02-tails' } }, cat), false);
+  assert.equal(E.matches({ ch2Path: 'bridge', not: { ch2Path: 'river' } }, cat), true);
+  assert.equal(E.matches({ not: { not: { ch2Path: 'bridge' } } }, cat), true);
+  // the story check catches a bad condition
+  const bad = clone(ch02);
+  bad.frames.a05.say[0].when = { lessonClean: 'ch02-nope' };
+  bad.frames.a07.say[0].when = { firstTry: 'ten twos' };
+  bad.frames.a01.caption.push({ when: { worry: 'small' } });
+  const errs = E.checkStory(bad);
+  assert.ok(errs.some(e => /lessonClean names no counts set here: ch02-nope/.test(e)), errs.join('\n'));
+  assert.ok(errs.some(e => /firstTry wants "AxB": ten twos/.test(e)));
+  assert.ok(errs.some(e => /a01: caption 3 has no text/.test(e)));
+});
+
+/* ------------------------------------------------ claw marks from the cat */
+test('scene options from the cat: marks and glow "auto" on the hollow, one mark per Count learned, left to right', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  const scene = { set: 'hollow', cam: 'tree', opts: { marks: 'auto', glow: 'auto' }, cast: [] };
+  const cat = E.blankCat({});
+  assert.deepEqual(E.resolveScene(scene, cat, list).opts, { marks: 0, glow: [] });
+  cat.lessons['ch01-tails'] = { finished: true, noHelp: true };
+  assert.deepEqual(E.resolveScene(scene, cat, list).opts, { marks: 1, glow: [false] });
+  cat.lessons['ch02-tails'] = { finished: true };   // a warm-up on the 1s is no new Count
+  assert.deepEqual(E.resolveScene(scene, cat, list).opts, { marks: 1, glow: [false] });
+  cat.hollow.byTable['1'] = { rounds: 3, cleanRounds: 3, glow: true };
+  cat.lessons['ch02-ears'] = { finished: true };
+  assert.deepEqual(E.resolveScene(scene, cat, list).opts, { marks: 2, glow: [true, false] });
+  cat.hollow.byTable['2'] = { rounds: 4, cleanRounds: 3, glow: true };
+  assert.deepEqual(E.resolveScene(scene, cat, list).opts, { marks: 2, glow: [true, true] });
+  assert.equal(scene.opts.marks, 'auto', 'the story’s scene is never changed');
+  const fixed = { set: 'hollow', opts: { marks: 1, glow: true } };
+  assert.equal(E.resolveScene(fixed, cat, list), fixed, 'explicit options stay as written');
+  assert.deepEqual(E.resolveScene({ set: 'hollow', opts: { marks: 'auto' } }, cat, list).opts, { marks: 2 });
+  assert.equal(E.resolveScene({ set: 'den' }, cat, list).set, 'den');
+});
+
+test('scene options from the cat: the den’s stone "auto" is where she put Riffle’s stone (ch2Stone), else between her paws', () => {
+  const den = { set: 'den', cam: 'nest', opts: { weather: 'clear', moon: false, stone: 'auto' }, cast: [] };
+  const cat = E.blankCat({});
+  assert.deepEqual(E.resolveScene(den, cat).opts, { weather: 'clear', moon: false, stone: true }, 'not chosen yet: between her paws');
+  cat.flags.ch2Stone = 'nose';
+  assert.equal(E.resolveScene(den, cat).opts.stone, 'nose');
+  cat.flags.ch2Stone = 'chin';
+  assert.equal(E.resolveScene(den, cat).opts.stone, 'chin');
+  cat.flags.ch2Stone = 'pocket';
+  assert.equal(E.resolveScene(den, cat).opts.stone, true, 'anything else: between her paws');
+  assert.equal(den.opts.stone, 'auto', 'the story’s scene is never changed');
+  assert.equal(E.resolveScene(den, null).opts.stone, true, 'no cat');
+  const put = { set: 'den', opts: { stone: 'chin' } };
+  assert.equal(E.resolveScene(put, cat), put, 'a stone the story places stays where it is');
+  // chapter 2's nights: the stone is in her nest from f108 on, where she put it
+  const ch02 = require('../app/story/ch02.js').story.ch02;
+  const nights = Object.keys(ch02.frames).filter(id => ch02.frames[id].scene.set === 'den' && ch02.frames[id].scene.fx.includes('night'));
+  assert.ok(nights.length >= 7);
+  const f108 = nights[0], opts = ch02.frames[f108].choice.options;
+  assert.equal(ch02.frames[f108].scene.opts.stone, true, f108 + ': she looks at it between her paws');
+  assert.deepEqual(opts.map(o => o.sets.ch2Stone), ['nose', 'chin']);
+  nights.slice(1).forEach(id => assert.equal(ch02.frames[id].scene.opts.stone, 'auto', id));
+  const her = E.blankCat({});
+  E.startChapter(her, ch02);
+  her.frame = f108;
+  assert.ok(E.choose(her, ch02, 1));
+  nights.slice(1).forEach(id => assert.equal(E.resolveScene(ch02.frames[id].scene, her).opts.stone, 'chin', id));
+});
+
+/* ------------------------------------------------ Counts sets, new keys */
+test('counts: facts as objects (prompt on the first ask, right lines in place of praise, rightPicture, groups/per), unit and picture pass through', () => {
+  const { ch02 } = fixtures();
+  const cat = E.blankCat({});
+  const { def, state: st } = E.chapterLesson(cat, ch02, 'ch02-ears', 1, [ch02]);
+  assert.equal(def.id, 'ch02-ears');
+  assert.equal(def.unit, 'cat');
+  const asked = [];
+  let q;
+  // 3 × 2: three cats, two ears each, counted by twos
+  q = E.counts.question(st);
+  assert.deepEqual([q.a, q.b, q.groups, q.per, q.table, q.step, q.prompt, q.right], [3, 2, 3, 2, 2, 2, null, null]);
+  E.counts.answer(st, def, 6, 3000, 1);
+  q = E.counts.question(st);
+  assert.deepEqual([q.groups, q.per], [5, 2], '2 × 5: five cats, two ears each');
+  E.counts.answer(st, def, 10, 3000, 2);
+  q = E.counts.question(st);
+  assert.equal(q.prompt, 'Six cats. Past ten now: the first five make ten. Keep hopping!');
+  // a miss on 2 × 6: help counts by twos; the retry is asked plainly
+  let r = E.counts.answer(st, def, 11, 3000, 3);
+  assert.deepEqual(r.help, { a: 2, b: 6, answer: 12, groups: 6, per: 2, table: 2, step: 2 });
+  assert.equal(r.entry.table, undefined, 'a fact of the set’s own Count needs no table on its log entry');
+  // 5 × 2, right the first time: its own lines and the regrouped picture, not praise
+  q = E.counts.question(st);
+  assert.deepEqual([q.a, q.b], [5, 2]);
+  r = E.counts.answer(st, def, 10, 3000, 4);
+  assert.equal(r.lineKind, 'right');
+  assert.equal(r.line, '');
+  assert.deepEqual(r.balloons, [{ who: 'tallyheart', text: 'Five pairs of ears. Same ten!' }]);
+  assert.deepEqual(r.rightPicture, { groups: 2, per: 5 });
+  // the rest, collecting what is asked
+  while (!E.counts.done(st)) { q = E.counts.question(st); asked.push(q); E.counts.answer(st, def, q.answer, 3000, 9); }
+  const retry = asked.find(x => x.retry);
+  assert.deepEqual([retry.a, retry.b, retry.prompt, retry.right], [2, 6, null, null]);
+  // a missed fact whose picture regroups: a right retry regroups it again, with its own lines (they
+  // say why the picture moved), not the "again" line
+  const st2 = E.counts.start(def, { set: 'ch02-ears', facts: [{ a: 5, b: 2, right: [{ who: 'tallyheart', text: 'Same ten!' }], rightPicture: { groups: 2, per: 5 } }, [3, 2], [4, 2]] });
+  E.counts.answer(st2, def, 9, 3000, 1);
+  E.counts.answer(st2, def, 6, 3000, 2); E.counts.answer(st2, def, 8, 3000, 3);
+  const rr = E.counts.answer(st2, def, 10, 3000, 4);
+  assert.equal(rr.lineKind, 'right');
+  assert.deepEqual(rr.balloons, [{ who: 'tallyheart', text: 'Same ten!' }]);
+  assert.deepEqual(rr.rightPicture, { groups: 2, per: 5 });
+  // other right lines are for the first ask only; a right retry earns "again" unless the fact has
+  // rightAgain lines of its own (10 × 2's "Hmph.")
+  const st3 = E.counts.start(def, { set: 'p', facts: [{ a: 10, b: 2, right: [{ who: 'grizzled', text: 'Lucky guess.' }] }, [3, 2], [4, 2]] });
+  E.counts.answer(st3, def, 19, 3000, 1); E.counts.answer(st3, def, 6, 3000, 2); E.counts.answer(st3, def, 8, 3000, 3);
+  assert.equal(E.counts.answer(st3, def, 20, 3000, 4).lineKind, 'again');
+  const st4 = E.counts.start(def, { set: 'p', facts: [{ a: 10, b: 2, right: [{ who: 'grizzled', text: 'Lucky guess.' }], rightAgain: [{ who: 'grizzled', text: 'Hmph.' }, 'One morning of ears, and {they}’s hopping already.'] }, [3, 2], [4, 2]] });
+  E.counts.answer(st4, def, 19, 3000, 1); E.counts.answer(st4, def, 6, 3000, 2); E.counts.answer(st4, def, 8, 3000, 3);
+  const r4 = E.counts.answer(st4, def, 20, 3000, 4);
+  assert.equal(r4.lineKind, 'right');
+  assert.deepEqual(r4.balloons, [{ who: 'grizzled', text: 'Hmph.' }, { text: 'One morning of ears, and {they}’s hopping already.' }], 'a string is the teacher’s line');
+  // groups/per override and the fact's own picture (two rows of eight)
+  const pile = E.counts.start(ch02.counts['ch02-pile'], { set: 'ch02-pile' });
+  pile.pos = 2;
+  q = E.counts.question(pile);
+  assert.deepEqual([q.groups, q.per, q.picture, q.step], [2, 8, { kind: 'prey', layout: 'rows' }, 2]);
+  pile.pos = 0;
+  q = E.counts.question(pile);
+  assert.deepEqual(q.picture, { kind: 'prey', thought: true });
+  assert.deepEqual(q.prompt, [{ who: 'grizzled', text: 'Ten pairs. I bet a pillow cat can’t count that.' }], 'a prompt may be balloons');
+  // the 1s keep counting by ones, and their log entries keep chapter 1's shape
+  const t1 = E.counts.start(fixtures().ch01.counts['ch01-tails'], { set: 'ch01-tails' });
+  assert.equal(E.counts.question(t1).step, 1);
+  assert.deepEqual(Object.keys(E.counts.answer(t1, {}, 2, 1, 1).entry), ['set', 'a', 'b', 'answer', 'correct', 'ms', 'helped', 'retry', 'at']);
+});
+
+test('counts: a fact from another Count (mixed lessons) is pictured and logged as its own', () => {
+  const def = { table: 2, facts: [[3, 2], { a: 4, b: 1, table: 1 }, [2, 2]] };
+  const st = E.counts.start(def, { set: 'mix' });
+  E.counts.answer(st, def, 6, 1, 1);
+  const q = E.counts.question(st);
+  assert.deepEqual([q.table, q.groups, q.per, q.step], [1, 4, 1, 1]);
+  const r = E.counts.answer(st, def, 3, 1, 2);
+  assert.equal(r.entry.table, 1);
+  assert.equal(r.help.step, undefined);
+  assert.equal(E.tableOf(r.entry), 1);
+});
+
+test('counts: warmHard puts a fact that was hard last time in the warm-up, and swaps out its twin', () => {
+  const { ch02 } = fixtures();
+  const def = Object.assign({ id: 'ch02-tails' }, ch02.counts['ch02-tails']);
+  const plain = (facts) => facts.map(f => Array.isArray(f) ? f.join('x') : f.a + 'x' + f.b + (f.hard ? '!' : ''));
+  const cat = E.blankCat({});
+  assert.deepEqual(plain(E.lessonFacts(cat, def)), ['1x4', '7x1'], 'nothing hard: as written');
+  const hardOne = (a, b, extra) => Object.assign({ set: 'ch01-tails', a, b, answer: a * b, correct: true, ms: 9000, helped: false, retry: false, at: 1 }, extra);
+  const withHard = (a, b, extra) => { const c = E.blankCat({}); E.logAnswer(c, hardOne(a, b, extra)); return c; };
+  assert.deepEqual(plain(E.lessonFacts(withHard(6, 1), def)), ['1x4', '6x1!'], 'slow last time: second place');
+  assert.deepEqual(plain(E.lessonFacts(withHard(4, 1), def)), ['1x3', '4x1!'], '4 × 1 hard: 1 × 3 opens instead');
+  assert.deepEqual(plain(E.lessonFacts(withHard(1, 4, { correct: false, helped: true, answer: 5 }), def)), ['1x3', '1x4!']);
+  assert.deepEqual(plain(E.lessonFacts(withHard(7, 1), def)), ['1x4', '7x1!']);
+  // the warm-up through the runner: a right answer to the hard one earns the remembered line
+  const c = withHard(6, 1);
+  const { def: d, state } = E.chapterLesson(c, ch02, 'ch02-tails', 1, [ch02]);
+  E.counts.answer(state, d, 4, 2000, 2);
+  const r = E.counts.answer(state, d, 6, 2000, 3);
+  assert.equal(r.lineKind, 'remembered');
+  assert.equal(r.line, 'Last time, that one made you stop and think. Not today!');
+  // a warm-up miss comes back after the other question, never asking that one twice running
+  const st2 = E.chapterLesson(E.blankCat({}), ch02, 'ch02-tails', 1, [ch02]).state;
+  const order = [];
+  E.counts.answer(st2, d, 5, 3000, 1);
+  while (!E.counts.done(st2)) { const q = E.counts.question(st2); order.push(q.a + 'x' + q.b + (q.retry ? '*' : '') + (q.filler ? 'f' : '')); E.counts.answer(st2, d, q.answer, 3000, 2); }
+  assert.deepEqual(order, ['7x1', '1x4*']);
+});
+
+test('counts: fillFrom lends the 2s to the pile: her right answers there, most recent first, then its facts', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  const cat = E.blankCat({});
+  // she did the ears lesson: everything right, in the set's order
+  const ears = E.chapterLesson(cat, ch02, 'ch02-ears', 1, list);
+  while (!E.counts.done(ears.state)) { const q = E.counts.question(ears.state); E.logAnswer(cat, E.counts.answer(ears.state, ears.def, q.answer, 2000, 1).entry); }
+  // 5 × 2 and 2 × 5 are one fact: it lends itself once, as last answered
+  assert.deepEqual(E.fillPool(cat, 'ch02-ears', list).map(p => p.a + 'x' + p.b), ['9x2', '2x8', '5x2', '2x6', '3x2']);
+  const { def, state: st } = E.chapterLesson(cat, ch02, 'ch02-pile', 2, list);
+  assert.ok(st.pool && st.pool.length === 5);
+  // 10 × 2 and 8 × 2 right, the warrior's check (2 × 8) missed: two fillers from the ears, then 2 × 8 again
+  E.counts.answer(st, def, 20, 3000, 2); E.counts.answer(st, def, 16, 3000, 3);
+  const r = E.counts.answer(st, def, 18, 3000, 4);
+  assert.equal(r.requeued, true);
+  assert.deepEqual(r.help, { a: 2, b: 8, answer: 16, groups: 2, per: 8, table: 2, step: 2 });
+  const rest = [];
+  while (!E.counts.done(st)) { const q = E.counts.question(st); rest.push(q); E.counts.answer(st, def, q.answer, 3000, 5); }
+  assert.deepEqual(rest.map(q => q.a + 'x' + q.b + (q.filler ? 'f' : '') + (q.retry ? '*' : '')), ['9x2f', '5x2f', '2x8*'],
+    'never the missed pair (2 × 8 is 8 × 2 too), and the fillers come from the 2s');
+  assert.deepEqual([rest[2].groups, rest[2].per, rest[2].picture], [2, 8, { kind: 'prey', layout: 'rows' }], 'the retry is pictured the same');
+  assert.equal(rest[0].prompt, null);
+  // with no ears answers logged, the 2s' facts lend themselves in order
+  const fresh = E.chapterLesson(E.blankCat({}), ch02, 'ch02-pile', 2, list);
+  assert.deepEqual(fresh.state.pool.slice(0, 2).map(p => p.a + 'x' + p.b), ['3x2', '2x5']);
+  // a summary of the pile: the fillers are not first asks
+  const sum = E.counts.summary(st);
+  assert.equal(sum.noHelp, false);
+  assert.equal(E.factTable(st.log).find(x => x.a === 9 && x.b === 2).firstAsks, 0);
+});
+
+/* Chapter 2's Counts as the final text has them (v0.5): the ears lesson, then the pile (the old
+ * tom's 10 × 2, her 8 × 2) and the warrior's check (2 × 8), both borrowing from the ears. */
+function pileStory() {
+  return {
+    id: 'ch02', number: 2, title: 'After the Storm', start: 'a',
+    frames: { a: { counts: { set: 'ch02-ears', next: 'b' } }, b: { counts: { set: 'ch02-pile', next: 'c' } }, c: { counts: { set: 'ch02-check', next: 'z' } }, z: { end: true } },
+    counts: {
+      'ch02-ears': {
+        table: 2, thing: 'ear', things: 'ears', teacher: 'tallyheart',
+        facts: [[3, 2], [2, 5], [4, 2], [2, 1], { a: 5, b: 2, right: [{ who: 'tallyheart', text: 'Same ten!' }], rightPicture: { groups: 2, per: 5 } },
+          { a: 2, b: 6, lit: 10, prompt: 'Six cats. The first five cats have ten ears. Now hop on from ten!', retryPrompt: true }, [7, 2], [2, 2], [2, 8], [9, 2], [2, 10]],
+        praise: ['You hopped it!'], fast: ['Quick as a pounce!']
+      },
+      'ch02-pile': {
+        table: 2, thing: 'piece', things: 'pieces', unit: 'pair', units: 'pairs', picture: { kind: 'prey', layout: 'stacks' }, fillFrom: 'ch02-ears',
+        fillIntro: 'One from this morning.',
+        facts: [{ a: 10, b: 2, picture: { kind: 'prey', layout: 'stacks', thought: true }, prompt: [{ who: 'grizzled', text: 'Ten pairs. How many pieces?' }] },
+          { a: 8, b: 2, light: 'groups', check: true, prompt: 'You touch your nose to each little stack.' }],
+        praise: [], done: ''
+      },
+      'ch02-check': {
+        table: 2, thing: 'piece', things: 'pieces', unit: 'pair', units: 'pairs', picture: { kind: 'prey', layout: 'stacks' }, fillFrom: 'ch02-ears',
+        fillIntro: 'One from this morning.',
+        facts: [{ a: 2, b: 8, groups: 2, per: 8, picture: { kind: 'prey', layout: 'rows' }, light: 'rows', check: true, prompt: 'Two rows of eight. How many pieces?', retryPrompt: true }],
+        praise: [], done: ''
+      }
+    }
+  };
+}
+/* Play one chapter lesson: `answers` maps "AxB" (as asked) to a list of answers, used in turn
+ * (else right); `ms` likewise. Returns what was asked, as "10x2✗", "F:9x2", "R:8x2". */
+function playSet(cat, story, setId, answers, ms) {
+  const { def, state: st } = E.chapterLesson(cat, story, setId, 1, [story]);
+  const seen = {}, out = [];
+  while (!E.counts.done(st)) {
+    const q = E.counts.question(st), k = q.a + 'x' + q.b;
+    const i = seen[k] = (seen[k] || 0) + 1;
+    const a = answers && answers[k] && answers[k][i - 1] != null ? answers[k][i - 1] : q.answer;
+    const t = ms && ms[k] != null ? ms[k] : 2000;
+    const r = E.counts.answer(st, E.questionDef(def, q, story, [story]), a, t, 1);
+    E.logAnswer(cat, r.entry);
+    out.push((q.filler ? 'F:' : q.retry ? 'R:' : '') + k + (r.correct ? '' : '✗'));
+  }
+  return out;
+}
+
+test('counts: a borrowed question never takes a pair the pile has asked today while there is another (the text’s sequences)', () => {
+  const story = pileStory();
+  const fresh = () => { const c = E.blankCat({}); playSet(c, story, 'ch02-ears'); return c; };
+  // after a clean ears lesson: her right answers there, most recent first
+  assert.deepEqual(E.fillPool(fresh(), 'ch02-ears', [story]).map(p => p.a + 'x' + p.b).slice(0, 4), ['2x10', '9x2', '2x8', '2x2']);
+  // a missed 8 × 2 runs 8 × 2, 9 × 2, 2 × 2, 8 × 2 (never 2 × 10, the old tom's pair, just asked)
+  assert.deepEqual(playSet(fresh(), story, 'ch02-pile', { '8x2': [15] }), ['10x2', '8x2✗', 'F:9x2', 'F:2x2', 'R:8x2']);
+  // a missed 10 × 2: 10 × 2, 8 × 2, one ears question, then 10 × 2 again
+  assert.deepEqual(playSet(fresh(), story, 'ch02-pile', { '10x2': [19] }), ['10x2✗', '8x2', 'F:9x2', 'R:10x2']);
+  // missed every time: never 9 × 2 twice, never 2 × 8 (the check's own fact)
+  assert.deepEqual(playSet(fresh(), story, 'ch02-pile', { '10x2': [19, 18, 17] }), ['10x2✗', '8x2', 'F:9x2', 'R:10x2✗', 'F:2x2', 'F:7x2', 'R:10x2✗']);
+  // the check after a clean pile: it skips what the pile asked (2 × 10, and 2 × 8 itself)
+  let cat = fresh();
+  playSet(cat, story, 'ch02-pile');
+  assert.deepEqual(playSet(cat, story, 'ch02-check', { '2x8': [14] }), ['2x8✗', 'F:9x2', 'F:2x2', 'R:2x8']);
+  // ... and after a pile that borrowed 9 × 2 and 2 × 2 itself (either pile set, fillers included)
+  cat = fresh();
+  playSet(cat, story, 'ch02-pile', { '8x2': [15] });
+  assert.deepEqual(E.siblingAsked(cat, story, 'ch02-check').sort(), ['2x10', '2x2', '2x8', '2x9']);
+  assert.deepEqual(playSet(cat, story, 'ch02-check', { '2x8': [14] }), ['2x8✗', 'F:7x2', 'F:2x6', 'R:2x8']);
+  // a Training Hollow round in between doesn't end the pile's run; the ears lesson before it does
+  E.logAnswer(cat, { set: 'hollow-2s', a: 3, b: 2, answer: 6, correct: true, ms: 1000, helped: false, retry: false, at: 9 });
+  assert.ok(E.siblingAsked(cat, story, 'ch02-check').includes('2x9'));
+  assert.ok(!E.siblingAsked(cat, story, 'ch02-check').includes('2x3'), 'the ears lesson is not the pile');
+  // when everything has been asked, a filler still comes: the retry is never left without its gap
+  const all = { set: 'x', table: 2, facts: [[2, 3], [2, 4]], fillFrom: 'y' };
+  const st = E.counts.start(all, { set: 'x', pool: [{ a: 2, b: 3 }, { a: 2, b: 4 }, { a: 2, b: 5 }], asked: ['2x5'] });
+  E.counts.answer(st, all, 6, 1, 1); E.counts.answer(st, all, 7, 1, 2);
+  assert.deepEqual(st.queue.slice(2).map(q => q.a + 'x' + q.b + (q.filler ? 'f' : '') + (q.retry ? '*' : '')), ['2x3f', '2x5f', '2x4*']);
+});
+
+test('counts: a borrowed question is the lending set’s, in its picture, words and praise; the check and 8 × 2 never make a fact hard by being right', () => {
+  const story = pileStory();
+  const cat = E.blankCat({});
+  playSet(cat, story, 'ch02-ears');
+  const { def, state: st } = E.chapterLesson(cat, story, 'ch02-pile', 1, [story]);
+  E.logAnswer(cat, E.counts.answer(st, def, 20, 2000, 1).entry);
+  const miss = E.counts.answer(st, def, 15, 9000, 2);
+  assert.equal(miss.entry.check, true, '8 × 2 is logged as a check');
+  E.logAnswer(cat, miss.entry);
+  const q = E.counts.question(st);
+  assert.deepEqual([q.a, q.b, q.filler, q.from, q.prompt], [9, 2, true, 'ch02-ears', null]);
+  const qd = E.questionDef(def, q, story, [story]);
+  assert.equal(qd.id, 'ch02-ears');
+  assert.equal(qd.things, 'ears');
+  assert.equal(E.questionDef(def, E.counts.question(E.counts.start(def, { set: 'ch02-pile' })), story, [story]), def, 'the pile’s own question is the pile’s');
+  const r = E.counts.answer(st, qd, 18, 1500, 3);
+  assert.deepEqual([r.lineKind, r.line, r.entry.from, r.entry.filler], ['fast', 'Quick as a pounce!', 'ch02-ears', true], 'the ears lesson’s fast line');
+  E.logAnswer(cat, r.entry);
+  while (!E.counts.done(st)) { const qq = E.counts.question(st); E.logAnswer(cat, E.counts.answer(st, E.questionDef(def, qq, story, [story]), qq.answer, 2000, 4).entry); }
+  // a missed 8 × 2 still counts after a quick, right check (the answer was on screen by then)
+  const check = playSet(cat, story, 'ch02-check');
+  assert.deepEqual(check, ['2x8']);
+  assert.equal(cat.counts[cat.counts.length - 1].check, true);
+  assert.deepEqual(E.hardFacts(cat, 2), [[8, 2]]);
+  // a perfect chapter read slowly (long prompts at 8 × 2 and the check): nothing is hard
+  const slow = E.blankCat({});
+  playSet(slow, story, 'ch02-ears');
+  playSet(slow, story, 'ch02-pile', null, { '8x2': 9000 });
+  playSet(slow, story, 'ch02-check', null, { '2x8': 7000 });
+  assert.deepEqual(E.hardFacts(slow, 2), []);
+  // ... but a slow 10 × 2 (not a check) is hard, as the text wants; and a missed check counts
+  const slow2 = E.blankCat({});
+  playSet(slow2, story, 'ch02-ears');
+  playSet(slow2, story, 'ch02-pile', null, { '10x2': 9000 });
+  playSet(slow2, story, 'ch02-check', { '2x8': [17] });
+  assert.deepEqual(E.hardFacts(slow2, 2), [[2, 8], [10, 2]]);
+});
+
+test('counts: a fact’s picture keys (who, lit, light) reach the question, and its retry; retryPrompt keeps a prompt on the retry', () => {
+  const story = pileStory();
+  const RIM = [{ who: 'clancat', variant: 1 }, { who: 'clancat', variant: 2 }, { who: 'clancat', variant: 3 }];
+  const def = { id: 'e', table: 2, facts: [{ a: 3, b: 2, who: RIM }, story.counts['ch02-ears'].facts[5], [4, 2], [2, 2]] };
+  const st = E.counts.start(def, { set: 'e' });
+  let q = E.counts.question(st);
+  assert.deepEqual([q.who, q.lit, q.light], [RIM, 0, null]);
+  E.counts.answer(st, def, 6, 1, 1);
+  q = E.counts.question(st);
+  assert.deepEqual([q.lit, q.prompt], [10, 'Six cats. The first five cats have ten ears. Now hop on from ten!']);
+  E.counts.answer(st, def, 11, 1, 2);
+  E.counts.answer(st, def, 8, 1, 3); E.counts.answer(st, def, 4, 1, 4);
+  q = E.counts.question(st);
+  assert.deepEqual([q.a, q.b, q.retry, q.lit, q.prompt], [2, 6, true, 10, 'Six cats. The first five cats have ten ears. Now hop on from ten!'], 'the hop-on prompt and its ten lit ears come back with it');
+  // the check: lit row by row as it is asked, and its prompt kept on the retry
+  const cdef = story.counts['ch02-check'];
+  const cst = E.counts.start(cdef, { set: 'ch02-check' });
+  assert.equal(E.counts.question(cst).light, 'rows');
+  E.counts.answer(cst, cdef, 14, 1, 1);
+  while (!E.counts.done(cst)) { q = E.counts.question(cst); if (q.retry) break; E.counts.answer(cst, cdef, q.answer, 1, 2); }
+  assert.deepEqual([q.retry, q.light, q.prompt], [true, 'rows', 'Two rows of eight. How many pieces?']);
+  // the story check knows the new keys
+  assert.deepEqual(E.checkStory(story), []);
+  const bad = clone(story);
+  Object.assign(bad.counts['ch02-check'].facts[0], { light: 'stacks', lit: 'ten', who: { who: 'grizzled' } });
+  bad.counts['ch02-ears'].facts[0] = { a: 3, b: 2, retryPrompt: true, rightAgain: true };
+  bad.counts['ch02-ears'].fillIntro = 'One from yesterday.';
+  const errs = E.checkStory(bad).join('\n');
+  for (const want of [/light is "groups" or "rows"/, /lit is a number/, /who is a list/, /retryPrompt: true keeps a prompt/, /rightAgain: true keeps right lines/, /fillIntro without fillFrom/]) assert.match(errs, want);
+  // a fact without retryPrompt is asked plainly again (10 × 2's balloons are for the first ask)
+  const p = E.counts.start(story.counts['ch02-pile'], { set: 'ch02-pile', facts: [story.counts['ch02-pile'].facts[0], [3, 2], [4, 2]] });
+  E.counts.answer(p, {}, 19, 1, 1); E.counts.answer(p, {}, 6, 1, 2); E.counts.answer(p, {}, 8, 1, 3);
+  assert.equal(E.counts.question(p).prompt, null);
+});
+
+test('the real chapter 2: a miss at the pile or the check borrows this morning’s ears, never a pair the pile asked, and the warm-up borrows last night’s tails', (t) => {
+  let ch01, ch02;
+  try { require('../app/story/ch01.js'); require('../app/story/ch02.js'); ch01 = PC.story.ch01; ch02 = PC.story.ch02; } catch (e) { ch02 = null; }
+  if (!ch02 || !ch02.counts['ch02-check']) { t.skip('app/story/ch02.js not written yet'); return; }
+  const fresh = () => { const c = E.blankCat({}); playSet(c, ch02, 'ch02-ears'); return c; };
+  assert.deepEqual(playSet(fresh(), ch02, 'ch02-pile', { '8x2': [15] }), ['10x2', '8x2✗', 'F:9x2', 'F:2x2', 'R:8x2']);
+  assert.deepEqual(playSet(fresh(), ch02, 'ch02-pile', { '10x2': [19] }), ['10x2✗', '8x2', 'F:9x2', 'R:10x2']);
+  let cat = fresh();
+  playSet(cat, ch02, 'ch02-pile');
+  assert.deepEqual(playSet(cat, ch02, 'ch02-check', { '2x8': [14] }), ['2x8✗', 'F:9x2', 'F:2x2', 'R:2x8']);
+  // each borrowed question is the ears lesson's, and a right check leaves 2 × 8 to the lesson's answer
+  assert.ok(cat.counts.filter(e => e.filler).every(e => e.from === 'ch02-ears'));
+  assert.deepEqual(E.hardFacts(cat, 2), [[2, 8]], 'the missed check counts');
+  cat = fresh(); playSet(cat, ch02, 'ch02-pile', null, { '8x2': 9000 }); playSet(cat, ch02, 'ch02-check', null, { '2x8': 8000 });
+  assert.deepEqual(E.hardFacts(cat, 2), [], 'reading the pile’s long lines never makes 8 × 2 or 2 × 8 hard');
+  // the warm-up: a miss on its first fact borrows one of chapter 1's tails, then comes back
+  if (ch01 && ch02.counts['ch02-tails'].fillFrom) {
+    const c = E.blankCat({}); playSet(c, ch01, 'ch01-tails');
+    const run = playSet(c, ch02, 'ch02-tails', { '1x4': [5] });
+    assert.deepEqual([run[0], run[1], run[3]], ['1x4✗', '7x1', 'R:1x4']);
+    assert.match(run[2], /^F:/);
+    assert.equal(c.counts[c.counts.length - 2].from, 'ch01-tails');
+  }
+});
+
+test('counts: praise lines may name the question ({a} {b} {answer}); the cat’s tokens are left for the page', () => {
+  const def = { table: 2, facts: [[3, 2]], praise: ['{a} times {b} is {answer}, {name}paw!'] };
+  const st = E.counts.start(def, { set: 's' });
+  const r = E.counts.answer(st, def, 6, 9000, 1);
+  assert.equal(r.line, '3 times 2 is 6, {name}paw!');
+});
+
+/* ------------------------------------------------ the Training Hollow, per Count */
+test('hollow: one Count per chapter lesson, in teaching order, each with its own name', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch02, ch01];
+  const sets = E.countSets(list);
+  assert.deepEqual(sets.map(c => [c.table, c.setId, c.chapter]), [[1, 'ch01-tails', 'ch01'], [2, 'ch02-ears', 'ch02']],
+    'the 2s are taught by the ears (more facts than the pile), the 1s by chapter 1');
+  assert.equal(E.countName(sets[0].def), 'Tails · the 1s');
+  assert.equal(E.countName(sets[1].def), 'Ears · the 2s');
+  assert.equal(E.countName(null, 5), 'Claws · the 5s');
+  const cat = E.blankCat({});
+  assert.deepEqual(E.learnedCounts(cat, list), []);
+  cat.lessons['ch01-tails'] = { finished: true };
+  assert.deepEqual(E.learnedCounts(cat, list).map(c => c.table), [1]);
+  cat.lessons['ch02-pile'] = { finished: true };   // any finished chapter lesson of a Count learns it
+  assert.deepEqual(E.learnedCounts(cat, list).map(c => c.table), [1, 2]);
+  const def = E.hollowDef(list, 2);
+  assert.deepEqual([def.id, def.table, def.things, def.teacher], ['hollow-2s', 2, 'ears', 'tallyheart']);
+  assert.equal(def.done, 'A full round! That deserves a treasure for your nest.');
+  ['facts', 'warmHard', 'fillFrom', 'firstPrompt'].forEach(k => assert.ok(!(k in def), k));
+  assert.equal(E.hollowDef([], 4).things, 'paws', 'a Count no chapter teaches yet still reads sensibly');
+});
+
+test('hollow: rounds per Count; every full round earns the next treasure; each Count glows on its own', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  const cat = E.blankCat({});
+  function round(table, missFirst) {
+    const { def, state } = E.hollowStart(cat, list, 1, table);
+    cat.lesson = { mode: 'hollow', state };
+    let first = true;
+    while (!E.counts.done(state)) {
+      const q = E.counts.question(state);
+      E.logAnswer(cat, E.counts.answer(state, def, missFirst && first ? 0 : q.answer, 2000, 1).entry);
+      first = false;
+    }
+    return E.recordLesson(cat, state).hollow;
+  }
+  const s2 = E.hollowStart(cat, list, 1, 2).state;
+  assert.equal(s2.table, 2);
+  assert.equal(s2.set, 'hollow-2s');
+  assert.deepEqual(s2.queue.map(q => [q.a, q.b]), E.hollowFacts(1, 2), 'the first round of the 2s');
+  assert.ok(s2.queue.every(q => q.a === 2 || q.b === 2));
+  let r = round(1, false);
+  assert.equal(r.awarded.id, E.TREASURES[0].id);
+  assert.equal(r.table, 1);
+  r = round(2, true);
+  assert.equal(r.awarded.id, E.TREASURES[1].id, 'the next treasure, whichever Count');
+  assert.equal(E.hollowStart(cat, list, 1, 2).state.round, 2, 'the 2s’ own second round');
+  assert.equal(E.hollowStart(cat, list, 1, 1).state.round, 2);
+  round(2, false); round(2, false);
+  assert.deepEqual(cat.hollow.byTable['2'], { rounds: 3, cleanRounds: 2, glow: false });
+  r = round(2, false);
+  assert.equal(r.glowNow, true);
+  assert.deepEqual(cat.hollow.byTable['2'], { rounds: 4, cleanRounds: 3, glow: true });
+  assert.deepEqual(cat.hollow.byTable['1'], { rounds: 1, cleanRounds: 1, glow: false }, 'the 1s are their own');
+  assert.equal(cat.hollow.rounds, 5);
+  assert.deepEqual(cat.nest, E.TREASURES.slice(0, 5).map(t => t.id));
+  assert.deepEqual(E.hollowTable(cat, 5), { rounds: 0, cleanRounds: 0, glow: false });
+  // hard facts are per Count: a miss in the 2s comes early in the next round of the 2s only
+  assert.deepEqual(E.hardFacts(cat, 2), []);
+  E.logAnswer(cat, { set: 'hollow-2s', a: 7, b: 2, answer: 15, correct: false, ms: 5000, helped: true, retry: false, at: 9 });
+  assert.deepEqual(E.hardFacts(cat, 2), [[7, 2]]);
+  const nx = E.hollowStart(cat, list, 1, 2).state.queue;
+  assert.ok(nx.slice(1, 4).some(q => q.a * q.b === 14 && q.hard));
+  assert.ok(E.hollowStart(cat, list, 1, 1).state.queue.every(q => !q.hard));
+});
+
+test('grown-ups: the Counts, one table per Count', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  const cat = E.blankCat({});
+  [{ set: 'ch01-tails', a: 3, b: 1 }, { set: 'hollow-1s', a: 1, b: 9 }, { set: 'ch02-ears', a: 3, b: 2 }, { set: 'hollow-2s', a: 2, b: 7 },
+    { set: 'ch02-pile', a: 10, b: 2 }, { set: 'mix', a: 4, b: 1, table: 1 }, { set: 'unknown-set', a: 5, b: 3 }]
+    .forEach(e => E.logAnswer(cat, Object.assign({ answer: e.a * e.b, correct: true, ms: 1000, helped: false, retry: false, at: 1 }, e)));
+  const t = E.factTables(cat, list);
+  assert.deepEqual(t.map(x => [x.table, x.name, x.rows.length]), [[1, 'Tails · the 1s', 3], [2, 'Ears · the 2s', 3], [3, 'The 3s', 1]]);
+});
+
+/* ------------------------------------------------ the book, every chapter */
+test('book: the title once, then a page per finished chapter, then the latest chapter’s teaser', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  const cat = E.blankCat({});
+  E.startChapter(cat, ch01, 1);
+  playNew(cat, ch01, { look: { sex: 'tom' }, clanname: 'Fern', dream: '', choices: { f004: 0 } });
+  let b = E.buildFullBook(cat, list);
+  assert.equal(b.title, 'Fernpaw’s First Moon');
+  assert.deepEqual(b.pages, [{ id: 'ch01', number: 1, heading: 'Chapter 1: Through the Glass',
+    recap: ['Fernpaw stepped through the glass.', 'He noticed everything.'], dream: 'Fernpaw slept too soundly to dream.', dreamText: '' }]);
+  assert.deepEqual(b.teaser, { title: 'Chapter 2: After the Storm', lines: ['Tomorrow, Fernpaw: ears.'], built: true, next: 'ch02' });
+  E.startChapter(cat, ch02, 2);
+  playNew(cat, ch02, { dream: 'i saw a dragon', choices: { a10: 0 } });
+  b = E.buildFullBook(cat, list);
+  assert.deepEqual(b.pages.map(p => p.heading), ['Chapter 1: Through the Glass', 'Chapter 2: After the Storm']);
+  assert.deepEqual(b.pages[1].recap, ['Fernpaw counted the prey pile.', 'He peeked under the Old Bridge.']);
+  assert.equal(b.pages[1].dream, 'Fernpaw’s dream: “I saw a dragon.”');
+  assert.equal(b.pages[0].dream, 'Fernpaw slept too soundly to dream.', 'each chapter keeps its own dream line');
+  assert.deepEqual(b.teaser, { title: 'Chapter 3: Under the Old Bridge', lines: ['Something sniffles in the dark.'], built: false, next: null });
+  // a chapter she's partway through has no page yet
+  const half = E.blankCat({});
+  E.startChapter(half, ch01, 1);
+  assert.deepEqual(E.buildFullBook(half, list).pages, []);
+  assert.equal(E.buildFullBook(half, list).teaser, null);
+});
+
+/* ------------------------------------------------ the fixture chapters, whole */
+test('the fixture chapters are sound and play through, both paths', () => {
+  const { ch01, ch02 } = fixtures();
+  assert.deepEqual(E.checkStory(ch01), []);
+  assert.deepEqual(E.checkStory(ch02), []);
+  for (const path of [0, 1]) {
+    const cat = finishedCat({ ch01 });
+    E.startChapter(cat, ch02, 10);
+    const seq = playNew(cat, ch02, { choices: { a10: path }, miss: ['1x4', '2x6', '8x2'] });
+    assert.equal(seq[seq.length - 1], 'a12');
+    assert.ok(seq.includes(path ? 'r01' : 'b01'));
+    assert.equal(cat.flags.ch2Path, path ? 'river' : 'bridge');
+    assert.deepEqual(Object.keys(cat.lessons).sort(), ['ch01-tails', 'ch02-ears', 'ch02-pile', 'ch02-tails']);
+    assert.equal(E.lessonClean(cat, 'ch02-tails'), false, 'the warm-up had a miss');
+    assert.equal(E.firstTry(cat, '10x2'), true);
+    assert.ok(cat.nest.includes('riffle-stone'));
+    assert.deepEqual(E.learnedCounts(cat, [ch01, ch02]).map(c => c.table), [1, 2]);
+  }
+});
+
+/* ------------------------------------------------ every real chapter, through the engine */
+test('every chapter in app/story plays to an end through the engine (all right, then all wrong)', () => {
+  const { load } = require('./_load.js');
+  const all = load().story;
+  const list = E.chapters(all);
+  assert.ok(list.length >= 1);
+  assert.deepEqual(list.map(s => s.number), list.map((s, i) => i + 1), 'chapters are numbered 1, 2, 3…');
+  list.forEach(story => {
+    assert.deepEqual(E.checkStory(story), [], story.id);
+    for (const wrong of [false, true]) {
+      const cat = E.blankCat({ now: 1 });
+      list.filter(s => s.number < story.number).forEach(s => { cat.finished[s.id] = 1; });
+      E.startChapter(cat, story, 1);
+      // every frame's options, with the first visible one chosen
+      const seq = V1.play(E, story, cat, V1.script({ miss: [], allWrong: wrong }));
+      assert.ok(story.frames[seq[seq.length - 1]].end, story.id + ' reaches its end');
+      assert.ok(E.isFinished(cat, story.id));
+      Object.keys(story.counts || {}).forEach(id => {
+        const reached = seq.some(f => story.frames[f].counts && story.frames[f].counts.set === id);
+        if (reached) assert.ok(cat.lessons[id] && cat.lessons[id].finished, story.id + ' ' + id + ' finishes');
+      });
+    }
+  });
+});
+
+/* ------------------------------------------------ balloons know the size of a face: the art measures it */
+test('face sizes for balloons: the art’s r (cats, Riffle, otters, dogs), kept between 1.8 and 16; small fixed sizes for the sparrow, the moth and the Tall One', () => {
+  require('../app/ui.js');
+  const L = PC.ui.layout;
+  assert.equal(L.parseCats, undefined, 'faces are measured by the art (tests/scenes.test.js), no longer estimated from the markup');
+  const heads = [{ x: 10, y: 20, r: 2.5 }, { x: 30, y: 40, r: 7.69 }, { x: 50, y: 60, r: 40 }, { x: 1, y: 1, r: 0.5 },
+    { x: 5, y: 5 }, { x: 6, y: 6 }, { x: 7, y: 7 }, { x: 8, y: 8 }, { x: 9, y: 9, r: NaN }, null];
+  const cast = [{ who: 'tallyheart' }, { who: 'otter', variant: 2 }, { who: 'dog', variant: 1 }, { who: 'riffle' },
+    { who: 'sparrow' }, { who: 'moth' }, { who: 'tallone' }, { who: 'constructor' }, { who: 'player' }, { who: 'player' }];
+  const out = L.castHeads(heads, cast);
+  assert.deepEqual(out.map(o => o.who), cast.map(c => c.who));
+  assert.deepEqual(out.map(o => o.h && o.h.r), [2.5, 7.69, 16, 1.8, 2.5, 2.5, 2, 6.5, 6.5, null]);
+  assert.deepEqual(out[1].h, { x: 30, y: 40, r: 7.69 });
+  // heads keyed by who (an older art's shape) still work
+  assert.deepEqual(L.castHeads({ tallyheart: { x: 1, y: 2, r: 3 }, 'clancat-2': { x: 4, y: 5 } }, []), [{ who: 'tallyheart', h: { x: 1, y: 2, r: 3 } }, { who: 'clancat', h: { x: 4, y: 5, r: 6.5 } }]);
+});
+
+/* One speaker talking twice chains the second balloon to the first (a neck, placed with it: chapter
+ * 1's f008, f009, f013, f029a, f029b, f059, f064, f071 as they went live); two dogs in a row are two
+ * speakers, each with a tail to its own head (chapter 2's f056). */
+test('balloons: one cat speaking twice is one speaker (chained); two dogs in a row are two (PC.ui.layout.speakerRuns)', () => {
+  require('../app/ui.js');
+  const L = PC.ui.layout;
+  const { load } = require('./_load.js');
+  const all = load().story, cat = E.blankCat({});
+  const runs = (ch, id) => {
+    const f = all[ch].frames[id], cast = f.scene.cast;
+    const heads = L.castHeads(cast.map((c, i) => ({ x: 10 + i, y: 10 })), cast);
+    return L.speakerRuns(heads, E.balloons(f, cat)).map(r => [r.slot, r.same]);
+  };
+  // the same cat, twice: one speaker, the second balloon continues the first
+  for (const id of ['f008', 'f009', 'f013', 'f029a', 'f029b', 'f059', 'f064', 'f071']) assert.deepEqual(runs('ch01', id), [[0, false], [0, true]], 'ch01 ' + id);
+  for (const id of ['f009', 'f020', 'f025']) assert.deepEqual(runs('ch02', id).slice(0, 2), [[0, false], [0, true]], 'ch02 ' + id);
+  // three dogs: each balloon its own dog, none continuing the one before
+  const dogs = runs('ch02', 'f056');
+  assert.ok(dogs.length >= 2);
+  assert.deepEqual(dogs.map(r => r[1]), dogs.map(() => false), 'two dogs in a row are two speakers');
+  assert.deepEqual(dogs.slice(0, 2).map(r => r[0]), [0, 1]);
+  // the pure pieces
+  const list = [{ who: 'dog' }, { who: 'dog' }, { who: 'tallyheart' }];
+  assert.deepEqual([0, 1, 2, 5].map(n => L.speakerSlot(list, 'dog', n)), [0, 1, 0, 0], 'more balloons than dogs: the first dog');
+  assert.equal(L.speakerSlot(list, 'tallyheart', 1), 0, 'a second balloon from the one Tallyheart is hers');
+  assert.equal(L.speakerSlot(list, 'riffle', 3), 0, 'a voice from outside the panel');
+  assert.deepEqual(L.speakerRuns(list, [{ who: 'riffle' }, { who: 'riffle' }, { who: '' }, { who: '' }]).map(r => r.same), [false, true, false, false],
+    'a voice from outside, twice, is one speaker; narration never chains');
+  // hidden balloons still count: the nth from E.balloons wins over counting what is shown
+  assert.deepEqual(L.speakerRuns(list, [{ who: 'dog', nth: 1 }, { who: 'dog', nth: 1 }]).map(r => [r.slot, r.same]), [[1, false], [1, true]]);
+});
+
+/* ================================================================ one place per chapter
+ * Each chapter keeps its own place (frame, back-history, lesson in progress): reading a finished
+ * chapter again never moves her place in another (docs/build.md, "Chapter 2 (v0.3)", the save). */
+const walkBack = (cat, story) => { const out = []; while (E.back(cat, story)) out.push(cat.frame); return out; };
+
+test('places: reading chapter 1 again partway through chapter 2 keeps her chapter-2 page; the hub button picks it up there', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  const cat = finishedCat({ ch01 });
+  E.startChapter(cat, ch02, 10);
+  playNew(cat, ch02, { choices: { a08: 1 } }, 'a09');
+  assert.equal(cat.frame, 'a09');
+  const hist = clone(cat.history), status = E.status(cat, list);
+  assert.ok(hist.length >= 8 && status === 'Chapter 2 · page ' + (hist.length + 1), status);
+  // the hub: "Read chapter 1 again"
+  E.startChapter(cat, ch01, 20);
+  assert.deepEqual([cat.chapter, cat.frame, cat.history], ['ch01', 'f001', []], 'chapter 1 from its first page');
+  assert.deepEqual(clone(E.place(cat, 'ch02')), { frame: 'a09', history: hist, lesson: null }, 'chapter 2 keeps its place');
+  playNew(cat, ch01, {}, 'f005');
+  assert.equal(E.status(cat, list), 'Chapter 1 · page 5');
+  const p = E.progress(cat, list);
+  assert.equal(p.next, ch02, 'the big button is still chapter 2');
+  assert.equal(p.nextInProgress, true, '"Keep reading Chapter 2"');
+  assert.equal(p.nextPage, hist.length + 1);
+  assert.equal(p.page, 5, 'the page of the chapter she is reading');
+  // the big button: the same frame, the same pages behind it
+  E.openChapter(cat, ch02, 30);
+  assert.deepEqual([cat.chapter, cat.frame, cat.history], ['ch02', 'a09', hist]);
+  assert.equal(E.status(cat, list), status);
+  assert.deepEqual(cat.places, {}, 'a finished chapter keeps no place: it is read again from its start');
+  assert.equal(E.openChapter(cat, ch02, 31).frame, 'a09', 'opening the chapter she is reading changes nothing');
+  // and on to the end, as if never interrupted
+  const seq = playNew(cat, ch02, { choices: { a10: 1 } });
+  assert.deepEqual(seq, ['a09', 'a10', 'r01', 'a11', 'a12']);
+  assert.ok(E.isFinished(cat, 'ch02'));
+  assert.equal(cat.nest.filter(x => x === 'riffle-stone').length, 1);
+  // a chapter never started opens at its start; a finished one too
+  const fresh = finishedCat({ ch01 });
+  E.openChapter(fresh, ch02, 5);
+  assert.deepEqual([fresh.chapter, fresh.frame, fresh.history], ['ch02', 'a01', []]);
+  E.openChapter(fresh, ch01, 6);
+  assert.deepEqual([fresh.chapter, fresh.frame], ['ch01', 'f001']);
+  assert.deepEqual(Object.keys(fresh.places), ['ch02'], 'chapter 2, on its first page, keeps that page');
+  assert.equal(E.progress(fresh, list).nextInProgress, false, 'on its first page: the button still says "Chapter 2: After the Storm"');
+});
+
+test('places: a lesson in progress in chapter 2 waits through chapter 1 read again (its own lesson too) and resumes at the same question', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  // a cat stopped three answers into the ears lesson (one of them missed)
+  const c = finishedCat({ ch01 });
+  E.startChapter(c, ch02, 10);
+  playNew(c, ch02, { miss: ['2x5'], stopIn: { a04: 3 } });
+  assert.equal(c.frame, 'a04');
+  assert.equal(c.lesson.state.pos, 3);
+  const lesson = clone(c.lesson), asked = c.counts.length;
+  assert.equal(E.lessonAt(c, ch02, 'a04'), c.lesson);
+  assert.equal(E.lessonAt(c, ch02, 'a02'), null, 'only at its own frame');
+  assert.equal(E.lessonAt(c, ch01, 'a04'), null, 'only in its own chapter');
+  E.startChapter(c, ch01, 20);
+  assert.equal(c.lesson, null, 'nothing going in chapter 1');
+  assert.deepEqual(clone(E.place(c, 'ch02').lesson), lesson, 'the lesson waits in chapter 2’s place');
+  assert.equal(E.progress(c, list).nextInProgress, true);
+  // chapter 1 again, to its end: its own lesson, which never touches chapter 2’s
+  const seq = playNew(c, ch01, { miss: ['3x1'] });
+  assert.equal(seq[seq.length - 1], 'f009');
+  assert.equal(c.lesson, null);
+  assert.deepEqual(clone(c.places.ch02.lesson), lesson);
+  E.openChapter(c, ch02, 30);
+  assert.equal(c.frame, 'a04');
+  assert.deepEqual(clone(c.lesson), lesson);
+  assert.equal(E.lessonAt(c, ch02, 'a04'), c.lesson, 'the counts frame resumes it');
+  assert.equal(E.counts.question(c.lesson.state).number, 4, 'at the same question');
+  playNew(c, ch02, { miss: [] });
+  assert.ok(E.isFinished(c, 'ch02'));
+  assert.equal(c.lessons['ch02-ears'].finished, true);
+  assert.equal(c.lessons['ch02-ears'].noHelp, false, 'the miss before chapter 1 still counts');
+  const ears = c.counts.filter(e => e.set === 'ch02-ears');
+  assert.equal(ears.length, c.lessons['ch02-ears'].answers, 'one lesson, answer by answer: ' + ears.length);
+  assert.ok(c.counts.length > asked);
+});
+
+test('places: Back stays inside the chapter she is reading, and each chapter’s pages come back with it', () => {
+  const { ch01, ch02 } = fixtures();
+  const cat = finishedCat({ ch01 });
+  E.startChapter(cat, ch02, 10);
+  playNew(cat, ch02, {}, 'a05');
+  const ch2hist = clone(cat.history);
+  E.startChapter(cat, ch01, 20);
+  playNew(cat, ch01, {}, 'f004');
+  assert.deepEqual(clone(cat.history), ['f001', 'f002', 'f003']);
+  assert.deepEqual(walkBack(cat, ch01), ['f003', 'f002', 'f001']);
+  assert.equal(E.canBack(cat), false, 'chapter 1’s first page: Back goes to camp, never into chapter 2');
+  assert.deepEqual(clone(E.place(cat, 'ch02').history), ch2hist, 'chapter 2’s pages are untouched');
+  playNew(cat, ch01, {}, 'f003');
+  E.openChapter(cat, ch02, 30);
+  assert.equal(cat.frame, 'a05');
+  const walk = walkBack(cat, ch02);
+  assert.deepEqual(walk, ch2hist.slice().reverse());
+  assert.ok(walk.every(id => /^a\d+$/.test(id)), 'only chapter 2’s frames: ' + walk.join(' '));
+  // the same frame ids in two chapters (the real chapters both start at f001) never mix either
+  const a = { id: 'ch01', number: 1, start: 'f001', frames: { f001: { next: 'f002' }, f002: { next: 'f003' }, f003: { end: true } } };
+  const b = { id: 'ch02', number: 2, start: 'f001', frames: { f001: { next: 'f002' }, f002: { next: 'f003' }, f003: { next: 'f004' }, f004: { end: true } } };
+  const k = E.blankCat({});
+  E.startChapter(k, a, 1); E.next(k, a, 2); E.next(k, a, 3);
+  E.startChapter(k, b, 4); E.next(k, b, 5); E.next(k, b, 6);
+  E.startChapter(k, a, 7); E.next(k, a, 8);
+  assert.deepEqual([k.frame, k.history], ['f002', ['f001']]);
+  E.openChapter(k, b, 9);
+  assert.deepEqual([k.chapter, k.frame, k.history], ['ch02', 'f003', ['f001', 'f002']]);
+});
+
+/* The other way round (the review of 2026-10-04): a round in progress used to vanish when a chapter
+ * lesson took the slot (Camp, the Training Hollow, a few answers, Camp, "Keep reading"), with no
+ * record and no treasure. It waits in `hollowWaiting` now, and the Hollow takes it back. */
+test('places: a Training Hollow round never gives way for good: a chapter lesson taking the slot leaves it waiting, and the Hollow takes it back (the real chapters)', () => {
+  const { load } = require('./_load.js');
+  const all = load().story, ch01 = all.ch01, ch02 = all.ch02, list = [ch01, ch02];
+  const cat = E.blankCat({ now: 1, id: 'hw' });
+  E.startChapter(cat, ch01, 1);
+  V1.play(E, ch01, cat, V1.script({ miss: [] }));
+  assert.ok(E.isFinished(cat, 'ch01'));
+  E.startChapter(cat, ch02, 10);
+  V1.play(E, ch02, cat, V1.script({ miss: [], stopIn: { f023: 1 } }));
+  assert.equal(cat.frame, 'f023');
+  const lesson = clone(cat.lesson);
+  assert.equal(lesson.state.pos, 1, 'the first Count of the 2s, one answer in');
+  // Camp, the Training Hollow: the chapter lesson waits in chapter 2's place, the round takes the slot
+  const h = E.hollowStart(cat, list, 50, 1);
+  assert.equal(E.holdLesson(cat), true);
+  cat.lesson = { mode: 'hollow', state: h.state };
+  V1.runLesson(E, cat, h.def, h.state, V1.script({ miss: [] }), 6);
+  const round = clone(cat.lesson);
+  assert.equal(round.state.pos, 6);
+  // Camp, "Keep reading": the Counts frame takes its lesson back, and the round waits
+  E.openChapter(cat, ch02, 60);
+  assert.deepEqual(clone(E.lessonAt(cat, ch02, 'f023')), lesson, 'the chapter lesson, at the same question');
+  assert.deepEqual(clone(cat.hollowWaiting), round, 'the round waits, at question 7');
+  assert.equal(cat.hollow.rounds, 0);
+  // a reload keeps both
+  const ls = memStorage(), save = E.newSave();
+  save.cats.push(cat); save.current = cat.id;
+  E.createStore(ls).save(save);
+  const her = E.getCat(E.createStore(ls).load(), 'hw');
+  assert.deepEqual(clone(her.hollowWaiting), round);
+  assert.deepEqual(clone(her.lesson), lesson);
+  // the Training Hollow again: the round comes back at question 7; the chapter lesson waits again
+  const r = E.hollowRound(her);
+  assert.deepEqual(clone(r), round);
+  assert.equal(her.lesson, r);
+  assert.equal(her.hollowWaiting, null);
+  assert.deepEqual(clone(her.places.ch02), { frame: null, history: [], lesson });
+  assert.equal(E.hollowRound(her), r, 'asked again: the same round, in the slot');
+  // the round finishes: it counts and pays its treasure; the chapter lesson is still there at its frame
+  const nest = her.nest.length;
+  V1.runLesson(E, her, h.def, r.state, V1.script({ miss: [] }));
+  assert.deepEqual([her.hollow.rounds, her.nest.length, her.lesson], [1, nest + 1, null]);
+  assert.equal(E.hollowRound(her), null, 'nothing in progress');
+  assert.deepEqual(clone(E.lessonAt(her, ch02, 'f023')), lesson);
+  // "Count them again" / "Let's count!" (E.beginLesson) over a round in progress leaves it waiting too
+  const h2 = E.hollowStart(her, list, 70, 2);
+  E.holdLesson(her);
+  her.lesson = { mode: 'hollow', state: h2.state };
+  V1.runLesson(E, her, h2.def, h2.state, V1.script({ miss: [] }), 2);
+  const round2 = clone(her.lesson);
+  E.go(her, ch02, 'f023', 71);
+  const fresh = E.chapterLesson(her, ch02, 'ch02-ears', 72, list);
+  E.beginLesson(her, ch02, 'f023', fresh.state);
+  assert.deepEqual(clone(her.hollowWaiting), round2);
+  // a round all answered but never recorded is counted, never kept waiting
+  const h3 = E.hollowStart(her, list, 80, 1);
+  her.hollowWaiting = null;
+  her.lesson = { mode: 'hollow', state: h3.state };
+  while (!E.counts.done(h3.state)) { const q = E.counts.question(h3.state); E.counts.answer(h3.state, h3.def, q.answer, 2000, 81); }
+  const rounds = her.hollow.rounds;
+  E.beginLesson(her, ch02, 'f023', E.chapterLesson(her, ch02, 'ch02-ears', 82, list).state);
+  assert.deepEqual([her.hollow.rounds, her.hollowWaiting], [rounds + 1, null], 'counted, once');
+  // junk in hollowWaiting never reaches the Hollow (as for the slot)
+  for (const junk of [{ mode: 'chapter', state: round.state }, { mode: 'hollow', state: { queue: 'x' } }, 7, 'round']) {
+    const m = E.migrate({ version: 2, cats: [Object.assign(clone(her), { hollowWaiting: junk })] });
+    assert.equal(m.cats[0].hollowWaiting, null, JSON.stringify(junk));
+  }
+});
+
+test('places: a Training Hollow round never costs a chapter lesson its place; the lesson comes back at its frame', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  const cat = finishedCat({ ch01 });
+  E.startChapter(cat, ch02, 10);
+  playNew(cat, ch02, { stopIn: { a04: 2 } });
+  const lesson = clone(cat.lesson);
+  // Back to the chapter's first page, the hub, the Training Hollow (the UI holds the lesson first)
+  walkBack(cat, ch02);
+  assert.equal(cat.frame, 'a01');
+  assert.equal(E.holdLesson(cat), true);
+  assert.equal(cat.lesson, null);
+  const h = E.hollowStart(cat, list, 50, 1);
+  cat.lesson = { mode: 'hollow', state: h.state };
+  V1.runLesson(E, cat, h.def, h.state, V1.script({}), 4);
+  assert.deepEqual(clone(E.place(cat, 'ch02').lesson), lesson, 'waiting in chapter 2’s place');
+  assert.equal(E.place(cat, 'ch02').frame, 'a01');
+  assert.equal(E.lessonAt(cat, ch02, 'a02'), null);
+  E.go(cat, ch02, 'a04', 60);
+  const back = E.lessonAt(cat, ch02, 'a04');
+  assert.deepEqual(clone(back), lesson, 'back at its frame, at the same question');
+  assert.equal(cat.lesson, back);
+  assert.deepEqual(cat.places, {});
+  // the same through another chapter: a round going when she opens chapter 2 again keeps the slot,
+  // and chapter 2's lesson waits for its frame
+  const c = finishedCat({ ch01 });
+  E.startChapter(c, ch02, 10);
+  playNew(c, ch02, { stopIn: { a04: 2 } });
+  const l2 = clone(c.lesson);
+  E.startChapter(c, ch01, 20);
+  const h2 = E.hollowStart(c, list, 21, 1);
+  assert.equal(E.holdLesson(c), false, 'nothing to hold');
+  c.lesson = { mode: 'hollow', state: h2.state };
+  V1.runLesson(E, c, h2.def, h2.state, V1.script({}), 3);
+  const round = c.lesson;
+  E.openChapter(c, ch02, 30);
+  assert.equal(c.lesson, round, 'the Hollow round keeps the slot');
+  assert.deepEqual(clone(c.places.ch02), { frame: null, history: [], lesson: l2 });
+  assert.deepEqual(clone(E.place(c, 'ch02')), { frame: 'a04', history: c.history, lesson: l2 });
+  assert.deepEqual(clone(E.lessonAt(c, ch02, 'a04')), l2);
+  // a Hollow round is never dropped by reading a chapter from its start
+  const d = finishedCat({ ch01 });
+  const h3 = E.hollowStart(d, list, 1, 1);
+  d.lesson = { mode: 'hollow', state: h3.state };
+  E.startChapter(d, ch01, 2);
+  assert.equal(d.lesson.mode, 'hollow');
+});
+
+test('places: saves from before them migrate with none and nothing else changed; a place goes through the store unchanged; junk is dropped', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  for (const save of Object.values(V1SAVES)) {
+    const m = E.migrate(clone(save));
+    m.cats.forEach(c => assert.deepEqual(c.places, {}));
+    // the version-2 shape before places (chapter 2's first build) migrates to the same thing
+    const before = clone(m);
+    before.cats.forEach(c => delete c.places);
+    assert.deepEqual(E.migrate(before), m);
+  }
+  // a version-2 cat from before places, partway through chapter 2: its place is the one it reads
+  const old = clone(finishedCat({ ch01 }));
+  delete old.places;
+  E.startChapter(old, ch02, 10);
+  playNew(old, ch02, { stopIn: { a04: 1 } });
+  delete old.places;
+  const m = E.migrate({ version: 2, cats: [clone(old)], current: old.id }).cats[0];
+  assert.deepEqual(clone(E.place(m, 'ch02')), { frame: 'a04', history: old.history, lesson: old.lesson });
+  // partway through chapter 2, reading chapter 1 again: store, reload, carry on
+  E.startChapter(m, ch01, 20);
+  playNew(m, ch01, {}, 'f003');
+  const save = E.newSave(); save.cats.push(m); save.current = m.id;
+  const ls = memStorage(), store = E.createStore(ls);
+  assert.equal(store.save(save), true);
+  const back = E.createStore(ls).load();
+  assert.deepEqual(back, clone(save));
+  assert.deepEqual(E.migrate(clone(back)), back, 'idempotent');
+  const c = back.cats[0];
+  E.openChapter(c, ch02, 30);
+  assert.deepEqual([c.frame, clone(c.history), clone(c.lesson)], ['a04', old.history, old.lesson]);
+  assert.equal(E.counts.question(c.lesson.state).number, 2);
+  // anything else in places is dropped, never thrown
+  const junk = E.migrate({ cats: [{ id: 'j', finished: {}, places: { a: 'nope', b: { history: ['x'] }, c: { frame: 'f002', history: 'x' }, d: { lesson: { mode: 'chapter', frame: 'f004', state: {} } }, e: null } }] }).cats[0];
+  // (d's lesson has an empty state: no queue to take up, so it goes, and its place with it)
+  assert.deepEqual(junk.places, { c: { frame: 'f002', history: [], lesson: null } });
+  assert.deepEqual(E.migrate({ cats: [{ id: 'k', places: 'x' }] }).cats[0].places, {});
+});
+
+test('places: a lesson whose last answer is in but was never recorded is recorded on the way out, not parked', () => {
+  const { ch01, ch02 } = fixtures();
+  const cat = finishedCat({ ch01 });
+  E.startChapter(cat, ch02, 10);
+  playNew(cat, ch02, {}, 'a04');
+  const r = E.chapterLesson(cat, ch02, 'ch02-ears', 11, [ch01, ch02]);
+  cat.lesson = { mode: 'chapter', frame: 'a04', chapter: 'ch02', state: r.state };
+  while (!E.counts.done(r.state)) { const q = E.counts.question(r.state); E.logAnswer(cat, E.counts.answer(r.state, r.def, q.answer, 2000, 12).entry); }
+  E.startChapter(cat, ch01, 20);
+  assert.equal(cat.lessons['ch02-ears'].finished, true);
+  assert.equal(E.place(cat, 'ch02').lesson, null);
+  assert.equal(cat.lesson, null);
+});
+
+/* ------------------------------------------------ one lesson slot, several Counts frames close together
+ * Chapter 2 has Counts frames a page or two apart (the warm-up a02, the ears a04, the pile a06).
+ * The buttons on a Counts frame, as app/ui.js wires them: "Let’s count!" and "Count them again"
+ * start a lesson there (E.chapterLesson, then E.beginLesson); Next on a finished Count is
+ * E.finishCounts with its summary. */
+function countHere(cat, story, list, answers, t) {
+  const id = E.frameId(cat, story), f = story.frames[id];
+  const r = E.chapterLesson(cat, story, f.counts.set, t, list);
+  E.beginLesson(cat, story, id, r.state);
+  answerIn(cat, story, r.def, r.state, answers, t);
+  return r;
+}
+function answerIn(cat, story, def, st, n, t) {
+  for (let i = 0; i < n && !E.counts.done(st); i++) {
+    const q = E.counts.question(st);
+    const res = E.counts.answer(st, def, q.answer, 2000, t + i);
+    E.logAnswer(cat, res.entry);
+    if (res.done) E.recordLesson(cat, st);
+    else cat.lesson = { mode: 'chapter', frame: cat.frame, chapter: story.id, state: st };
+  }
+}
+const nextOnCount = (cat, story, t) => E.finishCounts(cat, story, cat.lessons[story.frames[E.frameId(cat, story)].counts.set], t);
+// a cat at question 5 of the ears lesson (a04), the warm-up (a02) and the skip-count (a03) behind her
+function midEars() {
+  const { ch01, ch02 } = fixtures();
+  const cat = finishedCat({ ch01 });
+  E.startChapter(cat, ch02, 10);
+  playNew(cat, ch02, { miss: [], stopIn: { a04: 4 } });
+  assert.equal(cat.frame, 'a04');
+  assert.equal(E.counts.question(cat.lesson.state).number, 5);
+  return { ch01, ch02, list: [ch01, ch02], cat, lesson: clone(cat.lesson) };
+}
+
+test('lessons: Next on an earlier Count she finished never costs a later lesson in progress its place (Back two pages, Next, Next: the same question)', () => {
+  const { ch02, cat, lesson } = midEars();
+  E.back(cat, ch02); E.back(cat, ch02);
+  assert.equal(cat.frame, 'a02');
+  assert.ok(cat.lessons['ch02-tails'], 'the warm-up is finished: its frame offers Count them again and Next');
+  assert.equal(E.lessonAt(cat, ch02, 'a02'), null);
+  assert.ok(nextOnCount(cat, ch02, 20));
+  assert.equal(cat.frame, 'a03');
+  assert.deepEqual(clone(cat.lesson), lesson, 'Next on the warm-up leaves the ears lesson in the slot');
+  // through the store, as a reload on the skip-count would
+  const ls = memStorage();
+  E.createStore(ls).save({ version: 2, cats: [cat], current: cat.id, settings: {} });
+  const c = E.createStore(ls).load().cats[0];
+  E.next(c, ch02, 21);
+  const back = E.lessonAt(c, ch02, 'a04');
+  assert.deepEqual(clone(back), lesson, 'the ears frame resumes it');
+  assert.equal(E.counts.question(back.state).number, 5, 'at the same question, not “Let’s count!” from the first');
+  // and on to the end: one lesson, answer by answer
+  playNew(c, ch02, { miss: [] });
+  assert.ok(E.isFinished(c, 'ch02'));
+  assert.equal(c.counts.filter(e => e.set === 'ch02-ears').length, c.lessons['ch02-ears'].answers);
+
+  // Next on a finished Count leaves a Training Hollow round in the slot, too (it waits in the Hollow)
+  const h = midEars();
+  E.back(h.cat, h.ch02); E.back(h.cat, h.ch02);
+  assert.equal(E.holdLesson(h.cat), true);
+  const r = E.hollowStart(h.cat, h.list, 30, 1);
+  h.cat.lesson = { mode: 'hollow', state: r.state };
+  V1.runLesson(E, h.cat, r.def, r.state, V1.script({}), 3);
+  const round = h.cat.lesson;
+  assert.ok(nextOnCount(h.cat, h.ch02, 40));
+  assert.equal(h.cat.lesson, round);
+  assert.deepEqual(clone(h.cat.places.ch02.lesson), h.lesson, 'and the ears lesson still waits for its frame');
+});
+
+test('lessons: “Count them again” on an earlier Count: the lesson in progress further on waits for its frame and comes back at the same question', () => {
+  const { ch02, list, cat, lesson } = midEars();
+  E.back(cat, ch02); E.back(cat, ch02);
+  const r = countHere(cat, ch02, list, 1, 30);   // one answer into the warm-up's two
+  assert.equal(cat.lesson.frame, 'a02', 'the warm-up again has the slot');
+  assert.deepEqual(clone(cat.places.ch02), { frame: null, history: [], lesson }, 'the ears lesson waits in chapter 2’s place');
+  assert.equal(E.lessonAt(cat, ch02, 'a02'), cat.lesson, 'the warm-up again resumes at its own frame');
+  answerIn(cat, ch02, r.def, r.state, 99, 40);
+  assert.equal(cat.lesson, null, 'recorded at its last answer');
+  assert.ok(nextOnCount(cat, ch02, 60));
+  E.next(cat, ch02, 61);
+  assert.equal(cat.frame, 'a04');
+  const back = E.lessonAt(cat, ch02, 'a04');
+  assert.deepEqual(clone(back), lesson);
+  assert.equal(E.counts.question(back.state).number, 5, 'at the same question');
+  assert.deepEqual(cat.places, {});
+
+  // counting the warm-up again, she leaves for the Training Hollow: the ears lesson keeps its place
+  // and the warm-up again is let go (a first go is never pushed out by a Count counted again)
+  const h = midEars();
+  E.back(h.cat, h.ch02); E.back(h.cat, h.ch02);
+  countHere(h.cat, h.ch02, h.list, 1, 30);
+  assert.equal(E.holdLesson(h.cat), true);
+  assert.equal(h.cat.lesson, null);
+  assert.deepEqual(clone(h.cat.places.ch02), { frame: null, history: [], lesson: h.lesson });
+
+  // the same when she reads chapter 1 again instead: chapter 2's place keeps the ears lesson
+  const p = midEars();
+  E.back(p.cat, p.ch02); E.back(p.cat, p.ch02);
+  countHere(p.cat, p.ch02, p.list, 1, 30);
+  E.startChapter(p.cat, p.ch01, 50);
+  assert.equal(E.place(p.cat, 'ch02').frame, 'a02');
+  assert.deepEqual(clone(E.place(p.cat, 'ch02').lesson), p.lesson);
+  E.openChapter(p.cat, p.ch02, 60);
+  assert.equal(p.cat.frame, 'a02');
+  assert.equal(E.lessonAt(p.cat, p.ch02, 'a02'), null, 'the warm-up again was let go: Count them again and Next');
+  assert.ok(nextOnCount(p.cat, p.ch02, 61));
+  E.next(p.cat, p.ch02, 62);
+  assert.deepEqual(clone(E.lessonAt(p.cat, p.ch02, 'a04')), p.lesson);
+});
+
+test('lessons: random walks through the buttons, reloads and Camp included, never lose a first go at a Count, and its frame always resumes it; nor a Hollow round', () => {
+  const { ch01, ch02 } = fixtures(), list = [ch01, ch02];
+  let T = 1000, waited = 0, lost = [], roundsLost = [], roundsWaited = 0;
+  const now = () => (T += 1000);
+  const done1 = finishedCat({ ch01 });   // most walks start on chapter 2, where the Counts are close together
+  for (let seed = 1; seed <= 40; seed++) {
+    const rng = E.util.rng(seed), pick = (a) => a[Math.floor(rng() * a.length)];
+    const ls = memStorage(), store = E.createStore(ls);
+    let save = E.newSave(), cat;
+    if (seed % 4) { cat = clone(done1); save.cats.push(cat); } else cat = E.addCat(save, { now: now() });
+    save.current = cat.id;
+    let story = null, run = null, view = 'frame';
+    // app/ui.js's renderFrame, up to what a Counts frame shows: a lesson in progress there resumes
+    const render = () => {
+      if (cat.lesson && cat.lesson.mode !== 'hollow' && cat.lesson.state && E.counts.done(cat.lesson.state)) E.settleLesson(cat);
+      story = E.chapter(cat.chapter, list) || E.firstChapter(list);
+      const id = E.frameId(cat, story), f = story.frames[id];
+      cat.frame = id; run = null; view = 'frame';
+      if (E.kindOf(f) === 'counts' && E.lessonAt(cat, story, id)) {
+        run = { def: Object.assign({ id: f.counts.set }, E.countsSet(f.counts.set, story, list)), st: cat.lesson.state, mode: 'chapter' };
+      }
+    };
+    const open = () => {   // her card on "Who's playing?"
+      let s = E.chapter(cat.chapter, list);
+      if (!s || cat.frame == null) { s = E.upNext(cat, list) || E.firstChapter(list); E.openChapter(cat, s, now()); }
+      story = s;
+      if (E.isFinished(cat, s.id) && E.kindOf(E.currentFrame(cat, s)) === 'end') { view = 'hub'; run = null; } else render();
+    };
+    const answer = (n, wrong) => {
+      for (let i = 0; i < n && !E.counts.done(run.st); i++) {
+        const q = E.counts.question(run.st);
+        const res = E.counts.answer(run.st, run.def, wrong ? q.answer + 1 : q.answer, 2000, now());
+        E.logAnswer(cat, res.entry);
+        if (res.done) E.recordLesson(cat, run.st);
+        else if (run.mode === 'chapter') cat.lesson = { mode: 'chapter', frame: cat.frame, chapter: story.id, state: run.st };
+        else cat.lesson = { mode: run.mode, state: run.st };
+      }
+      if (!E.counts.done(run.st)) return;
+      if (run.mode === 'chapter') { if (E.finishCounts(cat, story, E.counts.summary(run.st), now())) render(); }
+      else { run = null; view = 'hub'; }
+    };
+    const count = () => {   // "Let’s count!" or "Count them again"
+      const id = E.frameId(cat, story), f = story.frames[id];
+      const r = E.chapterLesson(cat, story, f.counts.set, now(), list);
+      E.beginLesson(cat, story, id, r.state);
+      run = { def: r.def, st: r.state, mode: 'chapter' };
+    };
+    const next = () => {
+      const f = story.frames[E.frameId(cat, story)], k = E.kindOf(f);
+      if (k === 'counts') {
+        if (!cat.lessons[f.counts.set]) return count();
+        if (E.finishCounts(cat, story, cat.lessons[f.counts.set], now())) render();
+        return;
+      }
+      if (k === 'end') { view = 'hub'; return; }
+      if (k === 'next' || k === 'skip') E.next(cat, story, now());
+      else if (k === 'look') E.confirmLook(cat, story, null, now());
+      else if (k === 'choice') E.choose(cat, story, pick(E.options(f, cat)).index, now());
+      else if (k === 'input') E.submitInput(cat, story, 'Fern', now());
+      render();
+    };
+    const hollow = (n) => {   // app/ui.js's renderHollow: the round in progress (back from waiting), else a new one
+      const L = E.hollowRound(cat);   // the UI holds a chapter lesson before a round takes the slot
+      if (L && L.state && !E.counts.done(L.state)) run = { def: E.hollowDef(list, L.state.table || 1), st: L.state, mode: 'hollow' };
+      else {
+        if (L) E.settleLesson(cat);
+        const r = E.hollowStart(cat, list, now(), pick(E.learnedCounts(cat, list)).table);
+        E.holdLesson(cat);
+        cat.lesson = { mode: 'hollow', state: r.state };
+        run = { def: r.def, st: r.state, mode: 'hollow' };
+      }
+      answer(n);
+      run = null; view = 'hub';
+    };
+    // every first go at a Count in progress (not a Count counted again), wherever it waits
+    const firstGoes = () => {
+      const out = new Map();
+      const add = (L, ch) => {
+        if (!L || L.mode === 'hollow' || !L.state || E.counts.done(L.state) || cat.lessons[L.state.set]) return;
+        out.set((L.chapter || ch) + ':' + L.state.set + ':' + L.state.startedAt, L);
+      };
+      add(cat.lesson, cat.chapter);
+      Object.keys(cat.places || {}).forEach(id => add(cat.places[id] && cat.places[id].lesson, id));
+      return out;
+    };
+    // a Training Hollow round in progress, in the slot or waiting while a chapter lesson has it
+    const roundOf = () => [cat.lesson, cat.hollowWaiting].map(L => (L && L.mode === 'hollow' && L.state && !E.counts.done(L.state) ? L.state.startedAt : null)).find(x => x != null);
+    open();
+    for (let step = 0; step < 300; step++) {
+      const acts = ['reload'];
+      if (view === 'frame') {
+        acts.push('back', 'back');
+        if (E.hasFinished(cat)) acts.push('camp');   // the bar's Camp button, mid-chapter or mid-lesson
+        if (run) acts.push('answer1', 'answer1', 'answerAll', 'answerWrong');
+        else {
+          acts.push('next', 'next', 'next', 'next');
+          const f = story.frames[E.frameId(cat, story)];
+          if (f.counts && cat.lessons[f.counts.set]) acts.push('again', 'again');
+        }
+      } else {
+        const p = E.progress(cat, list);
+        if (p.next) acts.push('big', 'big');
+        p.finished.forEach(s => acts.push('read:' + s.id));
+        if (E.learnedCounts(cat, list).length) acts.push('hollow0', 'hollow3', 'hollowAll');
+      }
+      const a = pick(acts), before = firstGoes(), round = roundOf(), rounds = cat.hollow.rounds;
+      if (a === 'next') next();
+      else if (a === 'back') { run = null; if (E.back(cat, story)) render(); else view = 'hub'; }
+      else if (a === 'camp') { run = null; view = 'hub'; }
+      else if (a === 'again') count();
+      else if (a === 'answer1') answer(1);
+      else if (a === 'answerAll') answer(999);
+      else if (a === 'answerWrong') answer(1, true);
+      else if (a === 'big') { E.openChapter(cat, E.progress(cat, list).next, now()); render(); }
+      else if (a.startsWith('read:')) { E.startChapter(cat, E.chapter(a.slice(5), list), now()); render(); }
+      else if (a === 'hollow0') hollow(0);
+      else if (a === 'hollow3') hollow(3);
+      else if (a === 'hollowAll') hollow(999);
+      else if (a === 'reload') {
+        save.current = cat.id;
+        store.save(save);
+        save = E.createStore(ls).load();
+        cat = E.getCat(save, save.current);
+        open();
+      }
+      const after = firstGoes();
+      before.forEach((L, k) => {
+        if (!after.has(k) && !cat.lessons[k.split(':')[1]]) lost.push('seed ' + seed + ' step ' + step + ': ' + a + ' lost ' + k + ' (now at ' + cat.chapter + ':' + cat.frame + ')');
+      });
+      // a Hollow round in progress is never dropped: it goes on, or it is counted
+      if (round != null && roundOf() !== round && cat.hollow.rounds === rounds) roundsLost.push('seed ' + seed + ' step ' + step + ': ' + a + ' dropped a Hollow round (now at ' + cat.chapter + ':' + cat.frame + ')');
+      if (round != null && roundOf() === round && cat.hollowWaiting) roundsWaited++;
+      // on a Counts frame, a first go that belongs there always resumes: never “Let’s count!” from question 1
+      if (view === 'frame') {
+        const id = E.frameId(cat, story);
+        if (story.frames[id].counts) after.forEach((L, k) => {
+          if (!k.startsWith(story.id + ':') || L.frame !== id) return;
+          waited++;
+          if (!(run && run.st.startedAt === L.state.startedAt)) lost.push('seed ' + seed + ' step ' + step + ': ' + a + ' showed ' + id + ' without its lesson ' + k);
+        });
+      }
+    }
+  }
+  assert.deepEqual(lost.slice(0, 5), [], lost.length + ' lessons lost');
+  assert.ok(waited > 100, 'the walks went back to lessons in progress: ' + waited);
+  assert.deepEqual(roundsLost.slice(0, 5), [], roundsLost.length + ' Hollow rounds dropped');
+  assert.ok(roundsWaited > 20, 'the walks left Hollow rounds waiting while a chapter lesson had the slot: ' + roundsWaited);
+});
+
+/* ------------------------------------------------ the teasers: the end of her book, and the hub's "coming soon" */
+test('teasers: every chapter in app/story has one (a title and at least one line), and her book ends on it', () => {
+  const { load } = require('./_load.js');
+  const all = E.chapters(load().story);
+  // a placeholder chapter (every frame's board "STUB.") is still being written: it has no teaser yet
+  const list = all.filter(s => !Object.values(s.frames || {}).every(f => /^STUB\b/.test(f.board || '')));
+  assert.ok(list.some(s => s.id === 'ch01'));
+  list.forEach(story => {
+    const t = story.teaser;
+    assert.ok(t && typeof t.title === 'string' && t.title.trim(), story.id + ' has a teaser with a title');
+    const lines = Array.isArray(t.lines) ? t.lines : [t.lines];
+    assert.ok(lines.length >= 1 && lines.every(l => typeof l === 'string' && l.trim()), story.id + '’s teaser has at least one line');
+    const cat = E.blankCat({ now: 1 });
+    cat.name = 'Fern';
+    all.forEach(s => { if (s.number <= story.number) cat.finished[s.id] = 1; });
+    const b = E.buildFullBook(cat, all);
+    assert.equal(b.pages[b.pages.length - 1].id, story.id);
+    assert.equal(b.teaser.title, E.fill(t.title, cat));
+    assert.deepEqual(b.teaser.lines, lines.map(l => E.fill(l, cat)));
+  });
+});
+
+test('teasers: chapter 1’s says what chapter 2 brings, without giving away the pile; “Next” while chapter 2 is built, “coming soon” in the book and the hub while it isn’t', () => {
+  const ch01 = realCh01(), { ch02 } = fixtures();
+  const cat = E.blankCat({ now: 1 });
+  cat.finished.ch01 = 1;
+  const t = E.buildFullBook(cat, [ch01, ch02]).teaser;
+  assert.deepEqual(t, { title: 'Chapter 2: After the Storm', lines: [
+    'Tomorrow, Tallyheart has a new Count for you: **ears**. Somebody should count the prey pile, too.',
+    'And what made that enormous splash down by the river?'
+  ], built: true, next: 'ch02' });
+  assert.ok(!t.lines.some(l => /smaller/i.test(l)), 'nothing about the pile looking smaller: that is what her count is meant to catch');
+  const alone = E.buildFullBook(cat, [ch01]).teaser;
+  assert.deepEqual(alone, Object.assign({}, t, { built: false, next: null }));
+  assert.deepEqual(E.progress(cat, [ch01]).soon, alone);
+  assert.equal(E.progress(cat, [ch01, ch02]).soon, null, 'chapter 2 built: the hub offers it instead');
+});
+
+/* ------------------------------------------------ the final review */
+test('“Close.” is one hop of the count off (1 on the 1s, as chapter 1 had it; 2 on the 2s), or exactly one group off (the check’s row of eight)', () => {
+  const near = (def, fact, given) => {
+    const st = E.counts.start(def, { facts: [fact] });
+    const res = E.counts.answer(st, def, given, 9000, 1);
+    assert.equal(res.correct, false);
+    return res.near;
+  };
+  const ones = { table: 1 }, twos = { table: 2 };
+  // the 1s: one off is close, two off is not (chapter 1 unchanged)
+  assert.equal(near(ones, [3, 1], 2), true);
+  assert.equal(near(ones, [3, 1], 4), true);
+  assert.equal(near(ones, [3, 1], 5), false);
+  assert.equal(near(ones, [1, 10], 0), false, '0 for 1 × 10 is not close');
+  // the 2s: one pair off is close, more is not
+  assert.equal(near(twos, [4, 2], 6), true);
+  assert.equal(near(twos, [2, 4], 10), true);
+  assert.equal(near(twos, [4, 2], 7), true);
+  assert.equal(near(twos, [4, 2], 5), false, 'three off is more than a pair');
+  assert.equal(near(twos, [4, 2], 11), false);
+  assert.equal(near(twos, [9, 2], 14), false);
+  // a fact pictured another way (the check: two rows of eight, the sand counting by twos): a hop of
+  // two off is close, and so is exactly one row off (one row counted, or three); anything else
+  // within a row is not
+  const check = { a: 2, b: 8, groups: 2, per: 8 };
+  assert.deepEqual([14, 15, 17, 18, 8, 24].filter(n => !near(twos, check, n)), [], 'a hop off, or a whole row off');
+  assert.deepEqual([7, 9, 10, 12, 13, 19, 20, 23, 25].filter(n => near(twos, check, n)), [], 'not close: 9, 10, 12, 20…');
+  // the real check and the pile, through the chapter's own sets
+  const { load } = require('./_load.js');
+  const sets = load().story.ch02.counts;
+  assert.deepEqual([8, 9, 10, 12, 14, 18, 20, 24].map(n => near(sets['ch02-check'], sets['ch02-check'].facts[0], n)), [true, false, false, false, true, true, false, true]);
+  assert.deepEqual([17, 18, 22, 23].map(n => near(sets['ch02-pile'], sets['ch02-pile'].facts[0], n)), [false, true, true, false]);
+  // nothing typed that is a number: not close
+  assert.equal(near(twos, [4, 2], ''), false);
+});
+
+test('keys: a held-down Enter never turns more than one page, and a key on a screen just drawn waits like a tap (PC.ui.keys)', () => {
+  require('../app/ui.js');
+  const K = PC.ui.keys;
+  assert.ok(K && typeof K.fresh === 'function');
+  const drawn = 10000;
+  // auto-repeat of Enter or Space is never a press
+  assert.equal(K.fresh({ key: 'Enter', repeat: true }, drawn, drawn + 5000), false);
+  assert.equal(K.fresh({ key: ' ', repeat: true }, drawn, drawn + 5000), false);
+  assert.equal(K.fresh({ key: 'Enter', repeat: false }, drawn, drawn + 5000), true);
+  // a page key in the first moments of a new screen is the end of the last press, as a double tap is
+  for (const key of ['Enter', ' ', 'ArrowRight', 'ArrowLeft']) {
+    assert.equal(K.fresh({ key }, drawn, drawn + 100), false, key + ' too soon');
+    assert.equal(K.fresh({ key }, drawn, drawn + K.GUARD_MS + 1), true, key + ' after the guard');
+  }
+  // typing is never held back: digits for the keypad, letters, Backspace
+  for (const key of ['7', 'a', 'Backspace']) assert.equal(K.fresh({ key, repeat: true }, drawn, drawn + 1), true, key);
+});
+
+test('Riffle’s stone stays one of a kind: no Hollow treasure is a striped stone, and the speckled pebble keeps its id for old saves', () => {
+  const pebble = E.treasure('pebble');
+  assert.ok(pebble, 'the id stays, so a nest that has it keeps it');
+  assert.match(pebble.name, /speckled/i);
+  E.TREASURES.forEach(t => assert.doesNotMatch(t.name, /strip|band/i, t.id + ': only Riffle’s stone has a stripe'));
+  assert.match(E.gift('riffle-stone').name, /white stripe all the way around/);
+  // a save from before the rename shows the new name for the same treasure
+  const cat = E.blankCat({});
+  cat.nest = ['pebble', 'riffle-stone'];
+  const items = E.nestItems(cat);
+  assert.deepEqual(items.map(x => x.treasure.id), ['pebble', 'riffle-stone']);
+  assert.match(items[0].treasure.name, /speckled/);
+});
+
+test('migrate drops a malformed lesson (in places or the slot), so nothing later throws on it; a good one is kept as it was', () => {
+  const ch02 = require('../app/story/ch02.js').story.ch02;
+  const ch01 = require('../app/story/ch01.js').story.ch01;
+  const good = E.chapterLesson(E.blankCat({}), ch02, 'ch02-ears', 1, [ch01, ch02]).state;
+  const goodL = { mode: 'chapter', frame: 'f023', chapter: 'ch02', state: good };
+  const junk = [
+    'nonsense', 42, [], { state: 'x' }, { state: {} }, { state: { queue: 'no', pos: 0, log: [], requeues: {} } },
+    { state: { queue: [{ a: 3, b: 2 }], pos: 'one', log: [], requeues: {} } },
+    { state: { queue: [{ a: 3, b: 2 }], pos: 5, log: [], requeues: {} } },
+    { state: { queue: [{ a: 3, b: 2 }], pos: -1, log: [], requeues: {} } },
+    { state: { queue: [{ a: 3, b: 2 }], pos: 0.5, log: [], requeues: {} } },
+    { state: { queue: [{ a: 'x', b: 2 }], pos: 0, log: [], requeues: {} } },
+    { state: { queue: [null], pos: 0, log: [], requeues: {} } },
+    { state: { queue: [{ a: 3, b: 2 }], pos: 0, requeues: {} } },
+    { state: { queue: [{ a: 3, b: 2 }], pos: 0, log: [], requeues: [] } },
+    { state: { queue: [{ a: 3, b: 2 }], pos: 0, log: [7], requeues: {} } },
+    { mode: 'lunch', state: good }, { frame: {}, state: good }, { chapter: 7, state: good },
+    { state: Object.assign({}, good, { lines: 'x' }) }, { state: Object.assign({}, good, { pool: {} }) }
+  ];
+  junk.forEach((L, i) => {
+    const raw = { version: 2, cats: [{ id: 'c1', name: 'Moon', chapter: 'ch01', frame: 'f010', history: [], lesson: L,
+      finished: { ch01: 5 }, dreams: {}, flags: {}, choices: {}, lessons: {}, counts: [], nest: [], hollow: { rounds: 0, byTable: {} },
+      places: { ch02: { frame: 'f023', history: ['f001'], lesson: L } } }] };
+    const cat = E.migrate(raw).cats[0];
+    assert.equal(cat.lesson, null, 'junk ' + i + ' in the slot is dropped: ' + JSON.stringify(L));
+    assert.deepEqual(cat.places.ch02, { frame: 'f023', history: ['f001'], lesson: null }, 'junk ' + i + ' in places is dropped, the place kept');
+    // and what used to throw doesn't
+    E.openChapter(cat, ch02, 2);
+    assert.equal(E.lessonAt(cat, ch02, 'f023'), null);
+    assert.equal(E.place(cat, 'ch02').frame, 'f023');
+  });
+  // a place that held only a junk lesson (no frame) is let go
+  const onlyJunk = E.migrate({ version: 2, cats: [{ id: 'c2', places: { ch02: { frame: null, lesson: junk[5] } } }] }).cats[0];
+  assert.deepEqual(onlyJunk.places, {});
+  // a real lesson survives, unchanged, in both spots, and migrate stays idempotent
+  const keep = { version: 2, cats: [{ id: 'c3', chapter: 'ch02', frame: 'f023', history: [], lesson: goodL, finished: { ch01: 5 },
+    places: { ch01: { frame: 'f040', history: [], lesson: { mode: 'chapter', frame: 'f062', chapter: 'ch01', state: good } } } }] };
+  const once = E.migrate(JSON.parse(JSON.stringify(keep)));
+  assert.deepEqual(once.cats[0].lesson, goodL);
+  assert.deepEqual(once.cats[0].places.ch01.lesson.state, good);
+  assert.deepEqual(E.migrate(JSON.parse(JSON.stringify(once))), once);
+  const her = once.cats[0];
+  assert.ok(E.lessonAt(her, ch02, 'f023'), 'the good lesson is taken up at its frame');
+  // E.okLesson is what decides
+  assert.equal(E.okLesson(goodL), true);
+  junk.forEach(L => assert.equal(E.okLesson(L), false));
 });

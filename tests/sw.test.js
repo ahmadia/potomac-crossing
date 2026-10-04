@@ -74,3 +74,39 @@ test('install precaches past the HTTP cache; activate keeps other games’ cache
   assert.ok((await get('https://x.test/pc/app/ui.js')).ok);
   assert.ok((await get('https://x.test/pc/?from=homescreen', 'navigate')).ok);
 });
+
+/* Chapter 2 on: every app file is a script index.html loads, in build.md's order, and precached,
+ * so a new chapter or set never ships missing offline. */
+function appFiles(dir) {
+  const out = [];
+  for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+    const rel = dir + '/' + e.name;
+    if (e.isDirectory()) out.push(...appFiles(rel));
+    else if (/\.js$/.test(e.name)) out.push(rel);
+  }
+  return out;
+}
+
+test('every app/ script (art, sets, every chapter, engine, ui) is loaded by index.html and precached', () => {
+  const scripts = [];
+  html.replace(/<script\s+src="(app\/[^"]+\.js)"/g, (m, u) => scripts.push(u));
+  for (const f of appFiles('app')) {
+    assert.ok(scripts.includes(f), f + ' exists but index.html does not load it');
+    assert.ok(ASSETS.includes('./' + f), f + ' is not precached in sw.js (bump CACHE too)');
+  }
+  assert.ok(scripts.some(s => /^app\/story\/ch02\.js$/.test(s)), 'chapter 2 is loaded');
+});
+
+test('load order: art, then sets, then the chapters in number order, then the engine, then the UI', () => {
+  const scripts = [];
+  html.replace(/<script\s+src="(app\/[^"]+\.js)"/g, (m, u) => scripts.push(u));
+  const at = (re) => scripts.findIndex(s => re.test(s));
+  const last = (re) => scripts.length - 1 - scripts.slice().reverse().findIndex(s => re.test(s));
+  assert.ok(at(/^app\/art\/cats\.js$/) < at(/^app\/art\/scenes\.js$/));
+  assert.ok(last(/^app\/art\/scenes\.js$/) < at(/^app\/art\/sets\//), 'sets register with scenes.js');
+  assert.ok(last(/^app\/art\//) < at(/^app\/story\//));
+  const chapters = scripts.filter(s => /^app\/story\/ch\d+\.js$/.test(s));
+  assert.deepEqual(chapters, chapters.slice().sort(), 'chapters in order');
+  assert.ok(last(/^app\/story\//) < at(/^app\/engine\.js$/));
+  assert.equal(scripts[scripts.length - 1], 'app/ui.js');
+});

@@ -1,6 +1,9 @@
 /* Potomac Crossing · app/art/scenes.js
  *
- * The sets and the panel renderer.  PC.art.render(scene, ctx) -> { svg, heads }.
+ * The sets and the panel renderer.  PC.art.render(scene, ctx) -> { svg, heads, keep }.
+ * heads: one per cast member, in cast order: null when out of shot, else { x, y } in percent of
+ * the panel, plus r (the face's radius, percent of the panel width) for cats, Riffle, the otters
+ * and the dogs (see faceR).
  *
  * Every set is drawn in a 1600 x 1000 world, and each camera is a 16:10 viewBox onto it
  * (docs/build.md, "Art vocabulary").  A few cameras look at a set from somewhere the wide
@@ -168,6 +171,8 @@
   }
 
   // ------------------------------------------------------------------ palettes (time of day)
+  // The daylight palettes (morning, day) carry `day: true`: no lamps, fireflies or star-lit gaps,
+  // and lit windows read as glints on the glass (`lit` at `litOp` of the usual strength).
 
   var PAL = {
     sunset: {
@@ -224,6 +229,30 @@
       stone: '#4F5566', stoneDark: '#343848', stoneLight: '#6A7084', moss: '#33503F',
       sand: '#66667A', sandDark: '#4C4C60', sandLight: '#7A7A8E',
       water: '#0F1824', shade: '#03060C', ink: '#03060C', starOp: 0
+    },
+    // chapter 2: the morning after the storm, washed clean, low sun, everything wet and bright
+    morning: {
+      sky: ['#8FB8DA', '#A9C9E2', '#C5DAE8', '#E3E6E0', '#F6E7C8'],
+      sun: '#FFF4D6', glow: '#FFE2A8', haze: '#D8E2E6',
+      glassTop: '#9CC6DA', glassBot: '#4F7E96', glassEdge: '#DDF0F6', refl: '#FFF1CF', lit: '#F2FAFC', litP: 0.04, litOp: 0.45, mullion: '#1F3A48',
+      grass: '#5E9152', grassFar: '#8DB070', grassNear: '#3C6B43', grassLight: '#A8CC7A',
+      leaf: '#336447', leafMid: '#4A7F55', leafLight: '#86B567', rim: '#FFF0C8',
+      wood: '#8F6A50', woodLight: '#B98F6C', woodDark: '#5C4334',
+      stone: '#C2BCB2', stoneDark: '#8A857E', stoneLight: '#E6E1D6', moss: '#86A85A',
+      sand: '#E6CF9E', sandDark: '#C7AA74', sandLight: '#F4E6C2',
+      water: '#6F98B8', shade: '#2C3A4A', ink: '#25303C', starOp: 0, day: true
+    },
+    // full daylight (the afternoon walk, the Crossing)
+    day: {
+      sky: ['#5FA3DC', '#7DB6E4', '#9CC9EA', '#BFDDEE', '#DCEDF2'],
+      sun: '#FFFBE6', glow: '#FFF3C4', haze: '#CFE3EE',
+      glassTop: '#8EC3E0', glassBot: '#3E7392', glassEdge: '#E2F4FB', refl: '#FFFFFF', lit: '#F4FBFE', litP: 0.03, litOp: 0.4, mullion: '#1A3444',
+      grass: '#5C9A4C', grassFar: '#8CBB66', grassNear: '#3A7040', grassLight: '#A9D27A',
+      leaf: '#2F6A40', leafMid: '#468650', leafLight: '#86BF62', rim: '#FFFFFF',
+      wood: '#94704F', woodLight: '#C29A72', woodDark: '#5E4532',
+      stone: '#C8C4BA', stoneDark: '#8C8880', stoneLight: '#EEEAE0', moss: '#88AE58',
+      sand: '#EBD39E', sandDark: '#CBAE74', sandLight: '#F7EAC6',
+      water: '#5F8FB8', shade: '#2A3A4C', ink: '#222C38', starOp: 0, day: true
     }
   };
 
@@ -405,12 +434,23 @@
   function defaultPose(who) {
     return who === 'sparrow' ? 'perch' : who === 'moth' ? 'fly' : who === 'tallone' ? 'stand' : 'sit';
   }
+  // A cast member's drawing options for cats.js: pose, mood, variant, the player's look, and the
+  // cast extras cats.js draws (`flatEars: true`; `holds: 'stone'` with `holdAt`). `purr` and `lift`
+  // are the scene's own (fxPurr, liftPlan), not the drawing's.
+  var CAST_EXTRAS = ['flatEars', 'holds', 'holdAt'];
   function charOpts(S, who, m) {
     var o = { pose: (m && m.pose) || defaultPose(who), mood: (m && m.mood) || 'neutral' };
     if (m && m.variant != null) o.variant = m.variant;
+    if (m) CAST_EXTRAS.forEach(function (k) { if (m[k] != null) o[k] = m[k]; });
     if (who === 'player') {
       o.look = S.look || {};
       if (o.look.sex) o.sex = o.look.sex;
+    }
+    // a Clan cat never wears her coat (cats.js, clanVariant): it knows her look, and the other Clan
+    // cats in the panel, so a spare coat is one nobody else here wears
+    if (who === 'clancat') {
+      o.look = S.look || {};
+      o.taken = (S.cast || []).filter(function (c) { return c && c.who === 'clancat'; }).map(function (c) { return c.variant; });
     }
     return o;
   }
@@ -606,7 +646,7 @@
         }
       }
     }
-    s += path(lit, p.lit, { opacity: n(0.92 - far * 0.35) });
+    s += path(lit, p.lit, { opacity: n((0.92 - far * 0.35) * (p.litOp || 1)) });
     if (p.refl) {
       var a = top + 90 + (base - top - 90) * (0.1 + r() * 0.35), th = 36 + r() * 90, k = 0.45;
       var y0 = Math.max(a, topAt(x + w) + 4);
@@ -692,15 +732,17 @@
   }
 
   function lampPost(S, x, base, top, k) {
-    var p = S.pal, s = '', post = '#2C3838', lt = top + 13 * k, lb = top + 82 * k, mid = (lt + lb) / 2;
-    s += circ(x, mid, 200 * k, S.radU([[0, '#FFF1C0', 0.8], [0.28, '#FFDC8E', 0.3], [1, '#FFD98A', 0]], x, mid, 200 * k), { 'class': 'pcs-lamp' });
+    var p = S.pal, s = '', post = '#2C3838', lt = top + 13 * k, lb = top + 82 * k, mid = (lt + lb) / 2, off = p.day;
+    // by day the lamp is off: no glow, pale glass with a glint
+    if (!off) s += circ(x, mid, 200 * k, S.radU([[0, '#FFF1C0', 0.8], [0.28, '#FFDC8E', 0.3], [1, '#FFD98A', 0]], x, mid, 200 * k), { 'class': 'pcs-lamp' });
     s += path('M' + n(x - 6 * k) + ' ' + n(lb + 6 * k) + 'L' + n(x - 8 * k) + ' ' + n(base - 16 * k) + 'L' + n(x - 20 * k) + ' ' + n(base) +
       'H' + n(x + 20 * k) + 'L' + n(x + 8 * k) + ' ' + n(base - 16 * k) + 'L' + n(x + 6 * k) + ' ' + n(lb + 6 * k) + 'Z', post);
     s += rect(x + 2.5 * k, lb + 10 * k, 3 * k, base - lb - 30 * k, p.rim, { opacity: 0.5 });
     s += rect(x - 11 * k, lb + 30 * k, 22 * k, 7 * k, post);
     s += rect(x - 19 * k, lb, 38 * k, 8 * k, post);
-    s += path('M' + n(x - 19 * k) + ' ' + n(lb) + 'L' + n(x - 26 * k) + ' ' + n(lt) + 'H' + n(x + 26 * k) + 'L' + n(x + 19 * k) + ' ' + n(lb) + 'Z', '#FFEFB8');
-    s += ell(x, mid + 4 * k, 11 * k, 20 * k, '#FFFCEA');
+    s += path('M' + n(x - 19 * k) + ' ' + n(lb) + 'L' + n(x - 26 * k) + ' ' + n(lt) + 'H' + n(x + 26 * k) + 'L' + n(x + 19 * k) + ' ' + n(lb) + 'Z', off ? mix(p.glassTop, '#FFFFFF', 0.55) : '#FFEFB8');
+    s += off ? ell(x, mid + 4 * k, 8 * k, 15 * k, '#F2F0E6', { opacity: 0.8 }) + poly([[x - 22 * k, lt + 8 * k], [x - 15 * k, lt + 4 * k], [x - 10 * k, lb - 4 * k], [x - 16 * k, lb - 2 * k]], '#FFFFFF', { opacity: 0.6 })
+      : ell(x, mid + 4 * k, 11 * k, 20 * k, '#FFFCEA');
     s += stroke('M' + n(x - 19 * k) + ' ' + n(lb) + 'L' + n(x - 26 * k) + ' ' + n(lt) + 'M' + n(x + 19 * k) + ' ' + n(lb) + 'L' + n(x + 26 * k) + ' ' + n(lt) +
       'M' + n(x) + ' ' + n(lb) + 'V' + n(lt), post, 3 * k);
     s += path('M' + n(x - 34 * k) + ' ' + n(lt + 2 * k) + 'L' + n(x - 13 * k) + ' ' + n(top) + 'H' + n(x + 13 * k) + 'L' + n(x + 34 * k) + ' ' + n(lt + 2 * k) + 'Z', post);
@@ -1159,13 +1201,13 @@
     for (k = 0; k < 19; k++) {
       var yA = T.ys[k], yB = T.ys[k + 1], eA = T.edge(yA), eB = T.edge(yB);
       for (j = 0; j < 10; j++) {
-        if (r() < 0.3) {
+        if (r() < (p.day ? p.litP * 2 : 0.3)) {
           var u0 = j / 10 + 0.012, u1 = (j + 1) / 10 - 0.012, ih = (yA - yB) * 0.14;
           lit += pts([[lerp(eA[0], eA[1], u0), yA - ih], [lerp(eA[0], eA[1], u1), yA - ih], [lerp(eB[0], eB[1], u1), yB + ih], [lerp(eB[0], eB[1], u0), yB + ih]]) + 'Z';
         }
       }
     }
-    tw += path(lit, p.lit, { opacity: 0.85 });
+    tw += path(lit, p.lit, { opacity: 0.85 * (p.litOp || 1) });
     tw += stroke(mull, p.mullion, 2.2, { opacity: 0.45 }) + stroke(floors, p.mullion, 3, { opacity: 0.55 });
     tw += stroke(floors, p.glassEdge, 1.2, { opacity: 0.35, transform: 'translate(0 -3)' });
     // the sunset sliding across the glass
@@ -1248,7 +1290,7 @@
     // Waffles's building: glass wall and her lit sliding door
     var wall = rect(-20, -20, 460, 1040, S.lin('bwall', [[0, p.glassTop], [1, p.glassBot]])) + rect(-20, -20, 460, 1040, S.grid(), { opacity: 0.6 });
     wall += rect(60, 250, 300, 650, '#EFE6DA') + rect(74, 264, 272, 636, S.lin('wroom', [[0, '#FCE3B2'], [1, '#F2B98A']]));
-    wall += circ(210, 430, 260, S.radU([[0, '#FFF4D0', 0.9], [1, '#FFE6A8', 0]], 210, 430, 260));
+    wall += circ(210, 430, 260, S.radU([[0, '#FFF4D0', p.day ? 0.45 : 0.9], [1, '#FFE6A8', 0]], 210, 430, 260));
     wall += path('M74 264H170Q150 560 196 900H74Z', '#F2A9B6') + stroke('M100 270Q92 560 120 896M140 270Q130 560 160 896', '#E07E98', 4, { opacity: 0.6 });
     wall += ell(270, 880, 70, 18, '#F7C6D0') + ell(270, 872, 60, 12, '#FBD9E0');
     wall += rect(440, -20, 14, 1040, p.glassEdge, { opacity: 0.6 }) + poly([[74, 520], [346, 380], [346, 440], [74, 580]], '#FFFFFF', { opacity: 0.18 });
@@ -1269,8 +1311,15 @@
     for (x = 440; x <= 1600; x += 290) over += rect(x - 6, 720, 14, 190, '#E6E0D8');
     var bulbs = '';
     for (i = 0; i < 22; i++) bulbs += dot(450 + i * 54, 752 + (i % 2) * 10, 7);
-    over += path(bulbs, '#FFE9A0', { 'class': 'pcs-twk', style: 'animation-duration:2.6s' });
-    over += path(bulbs, '#FFF6D0', { opacity: 0.5, transform: 'translate(-2 -2)' });
+    if (p.day) {
+      // switched off in the daytime: clear little bulbs with a glint
+      var glints = '';
+      for (i = 0; i < 22; i++) glints += dot(447 + i * 54, 749 + (i % 2) * 10, 2.4);
+      over += path(bulbs, '#DCE6EA', { opacity: 0.85 }) + path(glints, '#FFFFFF', { opacity: 0.9 });
+    } else {
+      over += path(bulbs, '#FFE9A0', { 'class': 'pcs-twk', style: 'animation-duration:2.6s' });
+      over += path(bulbs, '#FFF6D0', { opacity: 0.5, transform: 'translate(-2 -2)' });
+    }
     return { back: back, over: g(over, { filter: S.shadow('m') }), front: '' };
   }
 
@@ -1305,7 +1354,7 @@
     // lamp post (and the thirteenth sparrow)
     back += g(lampPost(S, 1105, 704, 280, 1), { filter: S.shadow('s') });
     var mothsAtLamp = '';
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < (p.day ? 0 : 3); i++) {
       var mx0 = 1105 + (i - 1) * 40, my0 = 296 + (i % 2) * 44;
       mothsAtLamp += g(ell(mx0 - 4, my0 - 2, 4.5, 2.6, '#F2E6CC') + ell(mx0 + 4, my0 - 2, 4.5, 2.6, '#F2E6CC') + ell(mx0, my0, 1.6, 3.4, '#B59A78'),
         { 'class': 'pcs-hover', style: 'animation-duration:' + (1.6 + i * 0.5) + 's' });
@@ -1318,6 +1367,7 @@
     back += path(clover(1260, 930, 9) + clover(1300, 950, 8) + clover(860, 960, 9), p.grassLight, { opacity: 0.9 });
     // the house: our door, open, and the patio step
     back += g(gardenHouse(S), { filter: S.shadow('l') });
+    if (o.towel) back += towel(S, 205, 822);
     if (o.dish) back += dish(S, 430, 836);
     if (o.moth) back += moth(S, 560, 620, 240);
     // grass in front of paws on the lawn (the paws close-up)
@@ -1335,7 +1385,7 @@
     s += rect(-20, -20, 282, 800, S.lin('hwall', [[0, p.glassTop], [1, p.glassBot]])) + rect(-20, -20, 282, 800, S.grid(), { opacity: 0.6 });
     var lit = '', r = rng(91);
     for (var y = 20; y < 290; y += 22) for (var x = 0; x < 250; x += 18) if (r() < p.litP) lit += 'M' + (x + 3) + ' ' + (y + 4) + 'h12v14h-12z';
-    s += path(lit, p.lit, { opacity: 0.8 }) + rect(-20, 296, 282, 14, mix(p.stone, p.glassBot, 0.2)) + rect(250, -20, 12, 800, p.glassEdge, { opacity: 0.5 });
+    s += path(lit, p.lit, { opacity: 0.8 * (p.litOp || 1) }) + rect(-20, 296, 282, 14, mix(p.stone, p.glassBot, 0.2)) + rect(250, -20, 12, 800, p.glassEdge, { opacity: 0.5 });
     s += poly([[-20, 120], [262, 40], [262, 90], [-20, 170]], p.refl, { opacity: 0.35 });
     // the open patio door with the warm room inside
     s += rect(34, 320, 214, 458, '#EFE6DA');
@@ -1346,7 +1396,7 @@
     s += ell(140, 770, 70, 10, '#D9788C');
     s += rect(46, 332, 76, 446, '#CDEBF0', { opacity: 0.22 }) + rect(116, 332, 10, 446, '#EFE6DA') + poly([[60, 332], [80, 332], [46, 520], [46, 470]], '#FFFFFF', { opacity: 0.25 });
     // light spilling out over the patio
-    s += poly([[122, 778], [236, 778], [500, 848], [140, 848]], '#FFD9A0', { opacity: 0.3 });
+    s += poly([[122, 778], [236, 778], [500, 848], [140, 848]], '#FFD9A0', { opacity: p.day ? 0.12 : 0.3 });
     // patio slab and step
     s += path('M-20 776H452L494 848H-20Z', S.lin('patio', [[0, p.stoneLight], [1, p.stone]]));
     s += stroke('M100 776L80 848M220 776L230 848M330 776L352 848M-20 810H473', p.stoneDark, 2, { opacity: 0.45 });
@@ -1359,6 +1409,26 @@
     return ell(x, y + 4, 40, 8, S.pal.shade, { opacity: 0.25 }) + path('M' + (x - 36) + ' ' + (y - 6) + 'Q' + x + ' ' + (y + 18) + ' ' + (x + 36) + ' ' + (y - 6) + 'Z', '#D9E3EA') +
       ell(x, y - 6, 36, 9, '#EEF4F7') + ell(x, y - 5, 29, 6.4, S.lin('water', [[0, '#9CC6D8'], [1, '#6E9FC0']])) +
       ell(x - 10, y - 7, 9, 2, '#FFFFFF', { opacity: 0.8 }) + ell(x + 12, y - 4, 5, 1.2, S.pal.rim, { opacity: 0.8 });
+  }
+
+  // A folded towel on the patio (the Tall One's, in case you come home soggy): x is its centre,
+  // y the patio under it.
+  function towel(S, x, y) {
+    var p = S.pal, w = 136, h = 30, x0 = x - w / 2, top = y - h, body = '#6FA8C8', lite = '#9ACBE2', dk = '#4C82A4', cream = '#F6F1E6';
+    var s = ell(x + 4, y + 1, w * 0.56, 9, p.shade, { opacity: 0.28 });
+    // the folded stack: three soft layers, the fold edge rounded at the right
+    s += rect(x0, top + 4, w, h - 4, dk, { rx: 13 });
+    s += rect(x0, top, w - 2, h - 6, body, { rx: 12 });
+    s += rect(x0 + 4, top - 7, w - 12, 15, lite, { rx: 7.5 });
+    s += stroke('M' + n(x0 + w - 14) + ' ' + n(top + 2) + 'q10 5 10 12M' + n(x0 + w - 16) + ' ' + n(top + 11) + 'q12 6 11 14', dk, 2.2, { opacity: 0.7 });
+    s += stroke('M' + n(x0 + 10) + ' ' + n(top + 12) + 'H' + n(x0 + w - 20) + 'M' + n(x0 + 8) + ' ' + n(top + 20) + 'H' + n(x0 + w - 22), dk, 1.6, { opacity: 0.35 });
+    // two cream stripes wrapping over the top, and a little fringe at the left end
+    s += rect(x0 + 24, top - 7, 11, h + 6, cream, { opacity: 0.95 }) + rect(x0 + 41, top - 7, 6, h + 6, cream, { opacity: 0.95 });
+    var fr = '';
+    for (var i = 0; i < 6; i++) fr += 'M' + n(x0 + 1) + ' ' + n(top + 1 + i * 4.4) + 'h-6';
+    s += stroke(fr, cream, 2, { opacity: 0.9 });
+    s += stroke('M' + n(x0 + 10) + ' ' + n(top - 5) + 'H' + n(x0 + w - 18), '#FFFFFF', 2.4, { opacity: 0.55 });
+    return g(s, { filter: S.shadow('s') });
   }
 
   function lawnCover(S, x, y, h) {
@@ -1403,6 +1473,8 @@
     back += ell(1000, 760, 420, 90, p.rim, { opacity: 0.16 }) + ell(560, 900, 300, 60, p.rim, { opacity: 0.1 });
     back += tufts(S, 0, 1600, 640, 1000, 130, 106, p.grassNear, p.grassLight, 1);
     back += flowers(S, 0, 1600, 660, 990, 30, 107, '#FFF6EA') + flowers(S, 0, 1600, 700, 990, 14, 108, '#F2C46D');
+    // seven rain puddles, the morning after the storm (Tallyheart counted them)
+    if (S.opts.puddles) back += puddles(S, [[640, 905, 64, 11], [1030, 870, 78, 12], [1170, 958, 120, 17], [410, 868, 54, 9], [870, 975, 104, 15], [530, 970, 70, 12], [1330, 846, 52, 8]], 106);
     // the back bramble arch behind the fountain
     back += g(path(mound(610, 990, 640, 520, 8, rng(109), 0.32, 0.2, 0.3), p.leaf) + bramble(S, 620, 980, 640, 540, { seed: 110, arches: 4, w: 8 }), { filter: S.shadow('m') });
     // paths of old stone, mossy
@@ -1447,18 +1519,27 @@
     return s;
   }
 
-  function fountain(S) {
-    var p = S.pal, s = '', r = rng(141);
+  // o.water: full of rain (default: the camp's rainFountain option)
+  function fountain(S, o) {
+    var p = S.pal, s = '', r = rng(141), wet = o && o.water != null ? !!o.water : !!(S.opts && S.opts.rainFountain);
     s += ell(800, 770, 270, 40, p.shade, { opacity: 0.22 });
     s += path('M562 700L566 760Q800 835 1034 760L1038 700Z', S.lin('basin', [[0, p.stone], [1, p.stoneDark]]));
     var bricks = '';
     for (var x = 590; x < 1020; x += 46) bricks += 'M' + x + ' ' + n(712 + Math.pow((x - 800) / 238, 2) * -6) + 'V' + n(760 + (1 - Math.pow((x - 800) / 238, 2)) * 26);
     s += stroke(bricks + 'M566 732Q800 800 1034 732', p.stoneDark, 2.5, { opacity: 0.6 });
-    s += ell(800, 700, 238, 52, p.stoneLight) + ell(800, 704, 208, 40, mix(p.stoneDark, p.sand, 0.35));
+    s += ell(800, 700, 238, 52, p.stoneLight) + ell(800, 704, 208, 40, wet ? fountainWater(S, 'basinwater') : mix(p.stoneDark, p.sand, 0.35));
     s += ell(800, 696, 238, 52, 'none', { stroke: p.rim, 'stroke-width': 4, opacity: 0.7, 'stroke-dasharray': '300 900', 'stroke-dashoffset': '-560' });
     var lv = '';
     for (var i = 0; i < 14; i++) lv += leafD(640 + r() * 320, 690 + r() * 26, 14, r() * 6.28, 5);
-    s += path(lv, '#C9853F', { opacity: 0.9 });
+    if (wet) {
+      // brimming: the sky in the water, rings where the drips land, a few leaves afloat
+      s += ell(800, 700, 204, 7, mix(p.stoneDark, p.shade, 0.3), { opacity: 0.35 }) + stroke('M660 712q60 -8 120 -2M840 716q70 -6 130 2', '#FFFFFF', 3, { opacity: 0.6 });
+      s += ell(760, 716, 34, 7, 'none', { stroke: '#FFFFFF', 'stroke-width': 2, opacity: 0.55, 'class': 'pcs-ring' }) +
+        ell(872, 708, 26, 5, 'none', { stroke: '#FFFFFF', 'stroke-width': 2, opacity: 0.5, 'class': 'pcs-ring', style: 'animation-delay:-1.8s' });
+      s += path(leafD(700, 714, 14, 0.4, 5) + leafD(910, 700, 13, 2.8, 5) + leafD(822, 724, 12, 5.6, 4.5), '#C9853F', { opacity: 0.9 });
+    } else {
+      s += path(lv, '#C9853F', { opacity: 0.9 });
+    }
     s += path(blob(600, 702, 34, 10, 8, r, 0.3, 0.3) + blob(1000, 706, 40, 10, 8, r, 0.3, 0.3) + blob(700, 748, 36, 12, 8, r, 0.3, 0.3), p.moss);
     // pedestal
     s += path('M768 708L778 530H822L832 708Z', S.lin('ped', [[0, p.stoneLight], [1, p.stoneDark]], 0, 0, 1, 0));
@@ -1466,14 +1547,53 @@
     s += path(blob(790, 640, 14, 30, 7, r, 0.3, 0.3), p.moss, { opacity: 0.9 });
     // the top bowl, a mossy seat
     s += path('M694 488C698 524 750 540 800 540C850 540 902 524 906 488Z', S.lin('bowl', [[0, p.stone], [1, p.stoneDark]]));
-    s += ell(800, 488, 106, 22, p.stoneLight) + ell(800, 489, 94, 17, p.moss) + ell(790, 485, 70, 9, mix(p.moss, '#FFFFFF', 0.25), { opacity: 0.5 });
+    if (wet) {
+      // the top bowl full to the brim, spilling over in drips
+      s += ell(800, 488, 106, 22, p.stoneLight) + ell(800, 489, 94, 17, fountainWater(S, 'bowlwater')) + stroke('M744 486q30 -5 62 -2', '#FFFFFF', 3, { opacity: 0.7 });
+    } else {
+      s += ell(800, 488, 106, 22, p.stoneLight) + ell(800, 489, 94, 17, p.moss) + ell(790, 485, 70, 9, mix(p.moss, '#FFFFFF', 0.25), { opacity: 0.5 });
+    }
     s += ell(800, 486, 106, 22, 'none', { stroke: p.rim, 'stroke-width': 3, opacity: 0.8, 'stroke-dasharray': '150 400', 'stroke-dashoffset': '-280' });
     s += path('M712 500q-4 14 2 24q4-10 6-22zM884 502q4 12-1 20q-4-8-6-18z', p.moss);
     s += path('M846 534q10 14 4 26q-8-10-8-24z', '#6A8A48');
+    if (wet) {
+      s += waterDrops(S, [[702, 516, 5, false], [898, 516, 5, false], [760, 538, 4.5, false], [700, 560, 5, true], [702, 630, 5, true], [898, 590, 5, true], [896, 660, 5, true], [760, 610, 4.5, true]], 142);
+    }
     return s;
+  }
+  // Rainwater in a stone basin: the sky, lighter at the far edge.
+  function fountainWater(S, key) {
+    var p = S.pal;
+    return S.lin(key, [[0, mix(p.sky[p.sky.length - 2], '#FFFFFF', 0.25)], [0.55, mix(p.sky[2], p.water, 0.3)], [1, mix(p.sky[1], p.water, 0.55)]]);
   }
 
   // ------------------------------------------------------------------ HOLLOW
+
+  // Where the claw marks go on the old tree, [x, y, size] each, in order: one Count each, left to
+  // right. One or two marks are full size side by side at her reach (the first exactly where chapter
+  // 1 scratched it); three to six are smaller, three to a row, so all of them fit on the trunk, clear
+  // of the knot hole, and inside the tree close-up.
+  function markSpots(count) {
+    if (count <= 2) return [[1126, 516, 1], [1188, 516, 1]].slice(0, count);
+    var k = 0.72, out = [];
+    for (var i = 0; i < count; i++) out.push([(i < 3 ? 1104 : 1112) + (i % 3) * 50, i < 3 ? 500 : 570, k]);
+    return out;
+  }
+  // glow: true lights every mark; a list lights mark i when glow[i] is true. ('auto' is the UI's to
+  // fill in from the cat; left unfilled, as in the gallery, nothing glows and no marks are drawn.)
+  function markGlows(glow, i) { return Array.isArray(glow) ? glow[i] === true : glow === true; }
+  // How deep each mark is: 0 a fresh scratch, 1 deeper, 2 deepest (drawn wider, with a dark groove
+  // down the middle). depth: a number for every mark, or a list, one per mark (true counts as 1).
+  // Left out (or 'auto' left unfilled), practice has deepened every mark but the newest, the oldest
+  // most: two marks are [1, 0], three [2, 1, 0], so "your first mark is a little deeper".
+  function markDepths(depth, count) {
+    var out = [];
+    for (var i = 0; i < count; i++) {
+      var d = Array.isArray(depth) ? depth[i] : typeof depth === 'number' || typeof depth === 'boolean' ? depth : Math.min(2, count - 1 - i);
+      out.push(d === true ? 1 : clamp(Math.round(+d || 0), 0, 2));
+    }
+    return out;
+  }
 
   function drawHollow(S) {
     var p = S.pal, o = S.opts, back = '', front = '', r = rng(151);
@@ -1512,28 +1632,41 @@
     tree += path('M1120 880C1060 870 1000 884 960 900C1010 896 1070 892 1150 900ZM1320 880C1380 874 1440 886 1490 904C1430 900 1380 896 1310 900Z', '#6A4A36');
     tree += ell(1206, 690, 18, 26, '#3A281E') + ell(1210, 694, 10, 16, '#24180F');
     tree += path(blob(1180, 820, 50, 22, 8, rng(156), 0.3, 0.3), p.moss, { opacity: 0.9 });
-    // claw marks: one for every Count she knows
+    // claw marks: one for every Count she knows, left to right (markSpots); each glows on its own
     var marks = clamp(Math.round(+o.marks || 0), 0, 6), mk = '', glow = '';
-    var mkIn = '', sparks = '';
+    var mkIn = '', mkLit = '', sparks = '', glowTight = '', spots = markSpots(marks), kx0 = 1e9, ky0 = 1e9, kx1 = -1e9, ky1 = -1e9;
+    var depths = markDepths(o.depth, marks), core = '', coreLit = '';
     for (i = 0; i < marks; i++) {
-      var mx = 1126 + (i % 3) * 48, my = 516 + Math.floor(i / 3) * 98;
+      var mx = spots[i][0], my = spots[i][1], k = spots[i][2], lit = markGlows(o.glow, i), dp = depths[i];
       for (var j = 0; j < 3; j++) {
-        var x0 = mx + j * 14, y0 = my - j * 5, x1 = x0 + 20, y1 = y0 + 70;
-        mk += taper([x0, y0], [x0 + 9, y0 + 22], [x0 + 15, y0 + 46], [x1, y1], 11, 2, 10);
-        mkIn += taper([x0 - 1, y0 + 1], [x0 + 8, y0 + 23], [x0 + 14, y0 + 46], [x1 - 1, y1 - 2], 5, 1, 10);
+        var x0 = mx + j * 14 * k, y0 = my - j * 5 * k, x1 = x0 + 20 * k, y1 = y0 + 70 * k;
+        // a deeper mark is gouged wider, and its groove is dark down the middle
+        mk += taper([x0, y0], [x0 + 9 * k, y0 + 22 * k], [x0 + 15 * k, y0 + 46 * k], [x1, y1], 11 * k * (1 + 0.24 * dp), 2 * k * (1 + 0.5 * dp), 10);
+        var inner = taper([x0 - 1 * k, y0 + 1 * k], [x0 + 8 * k, y0 + 23 * k], [x0 + 14 * k, y0 + 46 * k], [x1 - 1 * k, y1 - 2 * k], 5 * k * (1 + 0.16 * dp), 1 * k, 10);
+        if (lit) mkLit += inner; else mkIn += inner;
+        if (dp) {
+          var groove = taper([x0 - 0.5 * k, y0 + 4 * k], [x0 + 8.5 * k, y0 + 24 * k], [x0 + 14.5 * k, y0 + 46 * k], [x1 - 2 * k, y1 - 8 * k], (1.4 + 1 * dp) * k, 0.4 * k, 10);
+          if (lit) coreLit += groove; else core += groove;
+        }
       }
-      if (o.glow) {
-        glow += ell(mx + 26, my + 32, 70, 82, '#FFD86E', { opacity: 0.85 });
-        for (j = 0; j < 4; j++) sparks += g(path(sparkleD(0, 0, 9 + j * 2), '#FFF8D8', { 'class': 'pcs-tw', style: 'animation-delay:-' + (j * 0.7).toFixed(1) + 's' }), { transform: tr(mx - 20 + j * 30, my - 20 + (j % 2) * 110) });
+      if (lit && marks === 1) {
+        glow += ell(mx + 26 * k, my + 32 * k, 70 * k, 82 * k, '#FFD86E', { opacity: 0.85 });
+        for (j = 0; j < 4; j++) sparks += g(path(sparkleD(0, 0, (9 + j * 2) * k), '#FFF8D8', { 'class': 'pcs-tw', style: 'animation-delay:-' + (j * 0.7).toFixed(1) + 's' }), { transform: tr(mx + (-20 + j * 30) * k, my + (-20 + (j % 2) * 110) * k) });
+      } else if (lit) {
+        // beside other marks, each glow keeps to its own mark, so a plain one beside it stays plain
+        glowTight += ell(mx + 25 * k, my + 32 * k, 38 * k, 62 * k, '#FFD86E', { opacity: 0.9 });
+        for (j = 0; j < 4; j++) sparks += g(path(sparkleD(0, 0, (8 + j * 2) * k), '#FFF8D8', { 'class': 'pcs-tw', style: 'animation-delay:-' + (j * 0.7).toFixed(1) + 's' }), { transform: tr(mx + (-10 + j * 20) * k, my + (-16 + (j % 2) * 100) * k) });
       }
+      kx0 = Math.min(kx0, mx - 22 * k); ky0 = Math.min(ky0, my - 22 * k); kx1 = Math.max(kx1, mx + 74 * k); ky1 = Math.max(ky1, my + 90 * k);
     }
     if (marks) {
-      // the marks are what the panel is about: ask the lettering to keep off them
-      var rows = Math.ceil(marks / 3), cols = Math.min(marks, 3);
-      (S.keep = S.keep || []).push({ x: 1104, y: 494, w: (cols - 1) * 48 + 96, h: (rows - 1) * 98 + 112 });
+      // the marks are what the panel is about: ask the lettering to keep off all of them
+      (S.keep = S.keep || []).push({ x: kx0, y: ky0, w: kx1 - kx0, h: ky1 - ky0 });
     }
     if (glow) tree += g(g(glow, { filter: S.blur('markglow', 22) }), { 'class': 'pcs-pulse' });
-    tree += path(mk, '#3A281E') + path(mkIn, o.glow ? '#FFF6D0' : '#E9D2A6', { 'class': o.glow ? 'pcs-pulse' : null }) + sparks;
+    if (glowTight) tree += g(g(glowTight, { filter: S.blur('markglow2', 10) }), { 'class': 'pcs-pulse' });
+    tree += path(mk, '#3A281E') + path(mkIn, '#E9D2A6') + path(mkLit, '#FFF6D0', { 'class': 'pcs-pulse' }) +
+      path(core, '#6B4A32', { opacity: 0.9 }) + path(coreLit, '#E3A752', { opacity: 0.8 }) + sparks;
     // the canopy, tipping over the hollow
     var can = '';
     can += path(blob(780, 120, 560, 170, 16, rng(157), 0.2, 0.32), p.rim, { transform: 'translate(0 -8)' });
@@ -1542,7 +1675,11 @@
     var dap = '';
     for (i = 0; i < 160; i++) dap += leafD(260 + r() * 1040, 30 + r() * 260, 14 + r() * 10, r() * 6.28, 5);
     can += path(dap, p.leafLight, { opacity: 0.55 });
-    back += g(tree + can, { filter: S.shadow('l') });
+    // close on the trunk (`tree`), the canopy is far above the panel (it ends near y 320, the camera
+    // starts at 430), so it is left out: the same picture, and the trunk's papercut shadow alone stays
+    // small enough for Quick Look (tools/frames.mjs), which drops a filtered group whose region
+    // passes about 4,000 pixels, the trunk and the claw marks with it
+    back += g(S.cam === 'tree' ? tree : tree + can, { filter: S.shadow('l') });
     // hanging twigs
     back += stroke('M420 230q-10 60 6 120M520 260q4 50-8 90M940 250q10 50 0 100', '#5E4232', 3) +
       path(leafD(426, 350, 16, 1.8, 6) + leafD(512, 350, 16, 1.2, 6) + leafD(940, 350, 16, 1.6, 6), p.leafMid);
@@ -1569,7 +1706,9 @@
     var p = S.pal, back = '', r = rng(171), storm = S.opts.weather === 'storm', cloudy = S.opts.weather === 'cloudy', rc = roseCols(S);
     // the rosebush fills the middle of the sky, so the Sky River runs across the top, above it
     back += sky(S, 0, 0, 1600, 760, { seed: 172, cloudy: cloudy, riverAt: { cx: 800, cy: 80, L: 2000, ang: -7, T: 72 } });
-    if (S.tod === 'night' && !cloudy) back += moon(S, 1330, 150, 44);
+    // no moon unless a frame asks for one: her first night is a new moon (the case: "there was no
+    // moon that night"), so Russet's "by moonlight" is a lie a careful reader can catch
+    if (S.opts.moon && S.tod === 'night' && !cloudy) back += moon(S, 1330, 150, 44);
     back += towers(S, [
       { x: 20, w: 170, top: 240, base: 700, far: 0.5 }, { x: 210, w: 120, top: 330, base: 700, far: 0.6, cap: 'slant' },
       { x: 1180, w: 150, top: 280, base: 700, far: 0.55, cap: 'spire' }, { x: 1400, w: 200, top: 200, base: 700, far: 0.45, cap: 'step' }
@@ -1585,8 +1724,8 @@
     var tex = '';
     for (var i = 0; i < 280; i++) tex += leafD(220 + r() * 1160, 170 + r() * 600, 16 + r() * 12, r() * 6.28, 6);
     bush += path(tex, p.leafLight, { opacity: 0.45 });
-    // the hollow beneath it
-    bush += path('M650 818Q640 570 800 556Q960 570 950 818Z', '#0B0F14');
+    // the hollow beneath it (by day a deep green shade, not the black of night)
+    bush += path('M650 818Q640 570 800 556Q960 570 950 818Z', p.day ? mix(p.leaf, '#06100C', 0.72) : '#0B0F14');
     bush += ell(800, 770, 130, 60, S.radB('denin2', [[0, '#4E6A50', 0.55], [1, '#4E6A50', 0]]));
     bush += path(mound(660, 940, 820, 792, 8, rng(178), 0.3, 0.2, 0.2), p.moss);
     bush += bramble(S, 160, 1440, 816, 150, { seed: 177, w: 11, fruit: false, len: 300, canes: 16, openings: [[800, 300, 262]] });
@@ -1600,14 +1739,40 @@
     back += g(g(bush, sway), { filter: S.shadow('l') });
     back += stonePath(S, [[800, 1000], [800, 840]], { size: 34, seed: 179, y0: 700 });
     if (storm) back += path(blob(400, 930, 120, 16, 10, rng(180), 0.2, 0.3) + blob(1150, 960, 150, 18, 10, rng(181), 0.2, 0.3), '#3A4A60', { opacity: 0.6 });
+    if (S.opts.drips) back += denDripsOutside(S);
     var front = g(fernClump(S, -40, 1010, 260, { seed: 182, count: 6, spread: 1.5, lean: 0.4 }) + fernClump(S, 1650, 1010, 260, { seed: 183, count: 6, spread: 1.5, lean: -0.4 }), { filter: S.shadow('m') });
     return { back: back, over: '', front: front };
   }
 
   var DEN_DOOR = 'M1210 900C1196 640 1270 430 1390 420C1510 430 1584 640 1570 900Z';
 
+  // Riffle's stone in her nest (the den's `stone` option), drawn on the moss in front of whoever
+  // lies there: true (or 'auto' left unfilled) between her front paws, 'nose' just past her nose,
+  // where she can see it, 'chin' tucked under her chin. With nobody in the nest, in the front moss.
+  // It always rests on something: a cat lying with her head down (curled up, or lying flat) has it
+  // by her nose or under her chin, at her head; a cat holding her head up (a loaf, sitting) has it on
+  // the moss, under her chin just in front of her paws, or out past her nose, never in the air.
+  function denStone(S, x, y, k) {
+    var o = S.opts.stone;
+    if (!o) return '';
+    var r = 12 * k, crest = y - 4 * k, sx = x - 140 * k * 0.1, sy = crest;
+    var m = null, a = S.anchorMap && S.anchorMap.nest;
+    (S.cast || []).forEach(function (c) { if (c && c.at === 'nest' && CAT_IDS[c.who || 'clancat'] && !m) m = c; });
+    if (m && a) {
+      var pl = castPlan(S, m, a, refH()), hb = castBoxes(pl).head, dir = pl.face === 'left' ? -1 : 1;
+      var hx = (hb[0] + hb[2]) / 2, hw = hb[2] - hb[0];
+      // head up: her chin is well above the moss, where the stone would hang in the air
+      var up = crest - hb[3] > r * 2;
+      if (o === 'nose') { sx = (dir > 0 ? hb[2] : hb[0]) + dir * r * 1.2; sy = up ? crest : clamp(hb[3] - r * 0.6, hb[1] + hw * 0.5, crest); }
+      else if (o === 'chin') { sx = hx + dir * hw * (up ? 0.24 : 0.06); sy = up ? crest : clamp(hb[3] + r * 0.2, hb[1] + hw * 0.6, crest); }
+      else { sx = hx + dir * hw * 0.12; sy = crest; }
+    }
+    return luckyStone(S, sx, sy, r);
+  }
+
   function drawDenInside(S) {
     var p = S.pal, back = '', front = '', r = rng(191), storm = S.opts.weather === 'storm', cloudy = S.opts.weather === 'cloudy', rc = roseCols(S), i;
+    var day = !!p.day;
     // outside, through the doorway
     var out = sky(S, 1180, 380, 420, 560, { seed: 192, starCount: 70, boltX: 0.5, boltH: 0.6, cloudy: cloudy });
     out += path(mound(1150, 1650, 760, 640, 8, rng(193), 0.3, 0.3, 0.3), p.leaf) + rect(1180, 740, 420, 200, S.lin('doorground', [[0, p.grassFar], [1, p.grassNear]]));
@@ -1616,7 +1781,8 @@
     back += g(out, { 'clip-path': S.clip('door', path(DEN_DOOR, '#fff')) });
     S.weatherClip = S.clip('door', path(DEN_DOOR, '#fff'));
     // the back of the hollow: a wall of leaves in the dark
-    var dark = storm ? ['#0B1316', '#14211B'] : ['#0F1C24', '#1A2E27'];
+    // (by day: a shady green, lit from the door and through the leaves)
+    var dark = storm ? ['#0B1316', '#14211B'] : day ? [mix(p.leaf, '#0E1A14', 0.55), mix(p.leafMid, '#0E1A14', 0.5)] : ['#0F1C24', '#1A2E27'];
     var wallD = 'M0 0H1600V1000H0Z' + DEN_DOOR;
     back += path(wallD, S.lin('denwall', [[0, dark[0]], [1, dark[1]]]), { 'fill-rule': 'evenodd' });
     var wl = '', wl2 = '';
@@ -1632,7 +1798,13 @@
     // the floor: soft moss
     back += path('M0 730Q400 700 800 712Q1100 720 1230 760L1230 1000H0Z', S.lin('denfloor', [[0, mix(p.moss, '#000000', 0.2)], [1, mix(p.moss, '#000000', 0.5)]]));
     back += path(blob(300, 960, 240, 30, 12, rng(196), 0.25, 0.3) + blob(900, 985, 280, 30, 12, rng(197), 0.25, 0.3), p.moss, { opacity: 0.55 });
-    back += ell(1180, 930, 420, 90, S.radB('doorpool', [[0, storm || cloudy ? '#7F92B4' : '#C9D8FF', storm ? 0.12 : cloudy ? 0.14 : 0.22], [1, '#C9D8FF', 0]]));
+    if (day) {
+      // sunlight through the door: a warm pool on the floor and a soft shaft of light
+      back += ell(1180, 930, 440, 96, S.radB('doorsun', [[0, '#FFF1C4', 0.5], [1, '#FFF1C4', 0]]));
+      back += g(poly([[1236, 470], [1420, 420], [1120, 1000], [560, 1000]], S.linU([[0, '#FFF3CC', 0.26], [1, '#FFF3CC', 0.04]], 1300, 430, 800, 1000)), { style: 'mix-blend-mode:screen' });
+    } else {
+      back += ell(1180, 930, 420, 90, S.radB('doorpool', [[0, storm || cloudy ? '#7F92B4' : '#C9D8FF', storm ? 0.12 : cloudy ? 0.14 : 0.22], [1, '#C9D8FF', 0]]));
+    }
     // old rose stems, rising out of the floor into the leaves
     var stemCol = storm ? '#3E3530' : '#5A4638', stems = '', thorns = '', sprigs = '';
     var ST = [[60, 1010, 170, 250, 78], [470, 1010, 560, 210, 40], [870, 1010, 760, 220, 46], [1150, 1010, 1110, 300, 60]];
@@ -1664,9 +1836,10 @@
       if (r() < 0.5) hang += hd; else hang2 += hd;
     }
     ceil += path(hang, p.leaf) + path(hang2, p.leafMid);
-    // starlight between the leaves (under cloud the gaps show only dark sky)
-    if (!storm) for (i = 0; i < 16; i++) gaps += sparkleD(60 + r() * 1100, 30 + r() * 120, 3 + r() * 3);
-    if (!cloudy) ceil += path(gaps, '#FFF6DE', { opacity: 0.85, 'class': 'pcs-twk' });
+    // starlight between the leaves (under cloud the gaps show only dark sky); by day, bright sky
+    if (!storm) for (i = 0; i < 16; i++) { var gx = 60 + r() * 1100, gy = 30 + r() * 120, gr = 3 + r() * 3; gaps += day ? dot(gx, gy, gr * 1.5) : sparkleD(gx, gy, gr); }
+    if (day) ceil += path(gaps, mix(p.sky[1], '#FFFFFF', 0.35), { opacity: 0.75 });
+    else if (!cloudy) ceil += path(gaps, '#FFF6DE', { opacity: 0.85, 'class': 'pcs-twk' });
     var drops = [[260, 260], [620, 220], [980, 250]];
     for (i = 0; i < drops.length; i++) {
       var dx = drops[i][0], dy = drops[i][1], dl = 90 + r() * 70;
@@ -1680,7 +1853,7 @@
       stroke('M1188 920C1172 640 1252 404 1390 396C1528 404 1612 640 1596 920', p.rim, 3, { opacity: storm ? 0.2 : 0.45, transform: 'translate(0 -10)' }) +
       path(leafD(1230, 600, 44, 2.2, 14) + leafD(1270, 470, 42, 2.6, 13) + leafD(1340, 410, 40, 3.0, 12) + leafD(1470, 430, 42, 0.4, 13) + leafD(1550, 560, 44, 0.9, 14), p.leafMid);
     // fireflies on a clear night
-    if (!storm) {
+    if (!storm && !day) {
       var ff = '';
       for (i = 0; i < 8; i++) ff += g(circ(200 + r() * 900, 380 + r() * 300, 9, '#FFF2A0', { opacity: 0.25 }) + circ(200 + r() * 900, 380 + r() * 300, 3.5, '#FFF7C0'), { 'class': 'pcs-float', style: 'animation-delay:-' + (i * 0.8).toFixed(1) + 's' });
       back += ff;
@@ -1690,14 +1863,107 @@
     for (i = 0; i < N.length; i++) {
       var nn = nest(S, N[i][1], N[i][2], N[i][3], N[i][0] === 'nest');
       back += nn.back;
-      S.covers[N[i][0]] = nn.front;
+      S.covers[N[i][0]] = nn.front + (N[i][0] === 'nest' ? denStone(S, N[i][1], N[i][2], N[i][3]) : '');
     }
     if (storm) {
+      // rain leaking through the roof: each drop falls from the leaves and fades (pcs-drip, as the
+      // morning's drips do; reduced motion leaves them hanging)
       var dr = '';
-      for (i = 0; i < 10; i++) dr += g(path('M0 0q4 8 0 12q-4-4 0-12z', '#9FB8D8', { transform: tr(150 + r() * 1000, 230 + r() * 200) }), { 'class': 'pcs-float', style: 'animation-duration:2.2s;animation-delay:-' + (r() * 2).toFixed(1) + 's' });
+      for (i = 0; i < 10; i++) dr += g(path('M0 0q4 8 0 12q-4-4 0-12z', '#9FB8D8', { transform: tr(150 + r() * 1000, 230 + r() * 200) }), { 'class': 'pcs-drip', style: 'animation-duration:2.2s;animation-delay:-' + (r() * 2).toFixed(1) + 's' });
       back += dr;
     }
+    if (S.opts.drips) back += denDripsInside(S);
     return { back: back, over: '', front: front };
+  }
+
+  // A water drop with its point up; (x, y) is the bottom of the drop.
+  function dropD(x, y, rr) {
+    return 'M' + n(x) + ' ' + n(y - rr * 2.7) + 'Q' + n(x + rr * 0.35) + ' ' + n(y - rr * 1.7) + ' ' + n(x + rr) + ' ' + n(y - rr * 0.9) +
+      'A' + n(rr) + ' ' + n(rr) + ' 0 1 1 ' + n(x - rr) + ' ' + n(y - rr * 0.9) + 'Q' + n(x - rr * 0.35) + ' ' + n(y - rr * 1.7) + ' ' + n(x) + ' ' + n(y - rr * 2.7) + 'Z';
+  }
+  // Drops [x, y, r, falling]: hanging ones sit still, falling ones slide down and fade (pcs-drip),
+  // each with its own delay, so a column of them reads as drip, drip, drip.
+  function waterDrops(S, list, seed) {
+    var r = rng(seed || 401), still = '', glint = '', fall = '', col = mix(S.pal.sky[2] || '#CFE6F2', '#E8F6FF', 0.6);
+    for (var i = 0; i < list.length; i++) {
+      var d = list[i], x = d[0], y = d[1], rr = d[2];
+      var one = path(dropD(x, y, rr), col, { opacity: 0.9 }) + circ(x - rr * 0.35, y - rr * 1.05, rr * 0.32, '#FFFFFF');
+      if (d[3]) fall += g(one, { 'class': 'pcs-drip', style: 'animation-delay:-' + (r() * 2.4).toFixed(1) + 's' });
+      else { still += dropD(x, y, rr); glint += dot(x - rr * 0.35, y - rr * 1.05, rr * 0.32); }
+    }
+    return path(still, col, { opacity: 0.9 }) + path(glint, '#FFFFFF') + fall;
+  }
+  // Soft spots of sunlight through the leaves, [cx, cy, rx, ry] each: warm, bright in the middle,
+  // fading at the edge.
+  function sunSpots(S, list) {
+    var f = S.radB('sunspot', [[0, '#FFF4B8', 0.85], [0.5, '#FFE58A', 0.5], [1, '#FFE58A', 0]]), s = '';
+    for (var i = 0; i < list.length; i++) s += ell(list[i][0], list[i][1], list[i][2], list[i][3], f);
+    return s;
+  }
+  // Tiny glints of water on wet leaves.
+  function wetGlints(S, x0, x1, y0, y1, count, seed, keepOut) {
+    var r = rng(seed), d = '', tw = '';
+    for (var i = 0; i < count; i++) {
+      var x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0), rr = 2.2 + r() * 2.6;
+      if (keepOut && keepOut(x, y)) continue;
+      if (i % 6 === 0) tw += path(sparkleD(x, y, rr * 2.4), '#FFFFFF', { 'class': 'pcs-twk', style: 'animation-delay:-' + (r() * 3.6).toFixed(1) + 's' });
+      else d += dot(x, y, rr);
+    }
+    return path(d, '#F2FAFF', { opacity: 0.85 }) + tw;
+  }
+
+  // The morning after the storm, inside the den: sun spots on the moss, water dripping from the
+  // leaves overhead (over every nest, and from the doorway's arch), a shiny wet patch by the door.
+  function denDripsInside(S) {
+    var p = S.pal, s = '';
+    if (p.sun) s += sunSpots(S, [[420, 760, 80, 20], [180, 905, 100, 22], [760, 935, 120, 24], [520, 992, 90, 18], [985, 818, 70, 15], [1150, 912, 80, 17],
+      [930, 762, 46, 11], [1060, 872, 60, 12], [330, 820, 60, 12]]);
+    // rain that blew in at the door
+    s += puddles(S, [[1300, 935, 110, 14], [1480, 955, 70, 10]], 413);
+    var D = [];
+    // from the ceiling's leaf tips, over the nests and the floor
+    [[300, 300], [345, 290], [600, 245], [655, 250], [1010, 300], [1085, 320], [1180, 350], [800, 230], [140, 330]].forEach(function (t) { D.push([t[0], t[1], 6, false]); });
+    // falling: columns of drops over each nest (the nest close-up sees the right-hand ones)
+    [[300, 420], [300, 600], [655, 380], [655, 640], [1010, 520], [1010, 760], [1085, 600], [1085, 820], [1180, 700], [800, 520], [1100, 712]].forEach(function (t) { D.push([t[0], t[1], 5.5, true]); });
+    // from the doorway's arch
+    [[1262, 520], [1330, 430], [1452, 432], [1530, 520]].forEach(function (t) { D.push([t[0], t[1], 6.5, false]); });
+    [[1262, 640], [1530, 680]].forEach(function (t) { D.push([t[0], t[1], 6, true]); });
+    s += waterDrops(S, D, 415);
+    s += wetGlints(S, 40, 1180, 170, 330, 40, 416);
+    return s;
+  }
+  // Outside, the morning after: the rosebush glitters, drops hang from the den's arch and fall past
+  // the doorway, puddles on the grass and the path, dapples of sun at the den mouth.
+  function denDripsOutside(S) {
+    var p = S.pal, s = '';
+    // the bush's outline, as drawn in drawDenOutside, so the glints stay on the leaves
+    var inBush = function (x, y) {
+      var u = (x - 800) / 660, top = 816 - 716 * Math.sqrt(Math.max(0, 1 - u * u));
+      return !(y > top + 20 && y < 800 && Math.abs(u) < 0.96) || (Math.abs(x - 800) < 170 && y > 540);
+    };
+    s += wetGlints(S, 150, 1450, 120, 790, 150, 421, inBush);
+    s += puddles(S, [[330, 905, 120, 16], [1230, 940, 150, 18], [640, 975, 70, 10], [1010, 885, 60, 9]], 422);
+    if (p.sun) s += sunSpots(S, [[800, 832, 100, 14], [700, 884, 50, 9], [905, 905, 64, 10]]);
+    var D = [];
+    // along the arch over the den mouth, and from a few roses and leaves higher up
+    [[668, 640], [690, 600], [728, 568], [800, 548], [872, 568], [910, 600], [932, 640], [420, 520], [1180, 500], [560, 330], [1030, 300]].forEach(function (t) { D.push([t[0], t[1], 6, false]); });
+    [[690, 700], [910, 690], [800, 640], [420, 600], [1180, 590]].forEach(function (t) { D.push([t[0], t[1], 5.5, true]); });
+    s += waterDrops(S, D, 424);
+    return s;
+  }
+  // Rain puddles, [cx, cy, rx, ry] each: the sky in them, a wet dark rim, a glint.
+  function puddles(S, list, seed) {
+    var p = S.pal, r = rng(seed || 431), wet = '', water = '', shine = '', ring = '';
+    var fill = S.lin('puddle', [[0, mix(p.sky[1], p.water, 0.35)], [0.7, p.sky[2]], [1, mix(p.sky[3] || p.sky[2], '#FFFFFF', 0.12)]]);
+    for (var i = 0; i < list.length; i++) {
+      var x = list[i][0], y = list[i][1], rx = list[i][2], ry = list[i][3];
+      wet += blob(x, y + ry * 0.15, rx * 1.14, ry * 1.4, 11, r, 0.14, 0.1);
+      water += blob(x, y, rx, ry, 11, r, 0.14, 0.08);
+      shine += 'M' + n(x - rx * 0.5) + ' ' + n(y - ry * 0.15) + 'h' + n(rx * 0.32) + 'M' + n(x + rx * 0.05) + ' ' + n(y + ry * 0.25) + 'h' + n(rx * 0.22);
+      if (i % 2 === 0) ring += ell(x + rx * 0.2, y, rx * 0.3, ry * 0.42, 'none', { stroke: '#FFFFFF', 'stroke-width': 2, opacity: 0.6, 'class': 'pcs-ring', style: 'animation-delay:-' + (r() * 3.6).toFixed(1) + 's' });
+    }
+    return path(wet, mix(p.grassNear, p.shade, 0.35), { opacity: 0.4 }) + path(water, fill) +
+      stroke(shine, '#FFFFFF', 2.6, { opacity: 0.75 }) + ring;
   }
 
   function nest(S, x, y, k, special) {
@@ -1725,6 +1991,24 @@
       frontS += path(blob(x - rx * 0.5, y + ry * 0.8, 10 * k, 7 * k, 6, r, 0.3, 0.3), roseCols(S)[0]);
     }
     return { back: backS, front: frontS };
+  }
+
+  // Riffle's lucky stone: a smooth, nearly black pebble with a white band all the way round it,
+  // centred at (x, y), r its half-height (world units). The band curves like a smile, so it reads
+  // as going round the back. o: { shadow: false, sparkle: true, tilt: degrees }.
+  function luckyStone(S, x, y, r, o) {
+    o = o || {};
+    var rx = r * 1.3, ry = r, out = '';
+    if (o.shadow !== false) out += ell(x + r * 0.12, y + ry * 0.8, rx * 0.95, ry * 0.32, S.pal.shade, { opacity: 0.4 });
+    var yu = -0.16 * ry, yl = 0.2 * ry, c = 0.42 * ry;
+    var xu = rx * Math.sqrt(1 - yu * yu / (ry * ry)), xl = rx * Math.sqrt(1 - yl * yl / (ry * ry));
+    var band = 'M' + n(-xu) + ' ' + n(yu) + 'Q0 ' + n(yu + c) + ' ' + n(xu) + ' ' + n(yu) + 'L' + n(xl) + ' ' + n(yl) + 'Q0 ' + n(yl + c) + ' ' + n(-xl) + ' ' + n(yl) + 'Z';
+    var st = ell(0, 0, rx, ry, '#24252C', { stroke: '#121318', 'stroke-width': n(r * 0.12) }) +
+      ell(-rx * 0.22, -ry * 0.32, rx * 0.62, ry * 0.42, '#3C3E4A', { opacity: 0.85 }) +
+      path(band, '#F6F3EC') + ell(-rx * 0.48, -ry * 0.5, rx * 0.2, ry * 0.11, '#FFFFFF', { opacity: 0.7, transform: 'rotate(-20 ' + n(-rx * 0.48) + ' ' + n(-ry * 0.5) + ')' });
+    out += g(st, { transform: 'translate(' + n(x) + ' ' + n(y) + ') rotate(' + n(o.tilt == null ? -8 : o.tilt) + ')' });
+    if (o.sparkle) out += g(path(sparkleD(0, 0, r * 0.55), '#FFF8D8', { 'class': 'pcs-tw' }), { transform: tr(x + rx * 0.45, y + ry * 0.05) });
+    return out;
   }
 
   // ------------------------------------------------------------------ SKY
@@ -1800,7 +2084,9 @@
 
   function drawTitle(S) {
     var p = S.pal, back = '', front = '', r = rng(221);
-    back += sky(S, 0, 0, 1600, 700, { sun: [1120, 620], sunR: 620 });
+    // by day the sun stands high over the river, and its glitter on the water moves under it
+    var sx = p.day ? 1250 : 1120, sd = sx - 1120;
+    back += sky(S, 0, 0, 1600, 700, p.day ? { sun: [sx, 170], sunR: 420 } : { sun: [1120, 620], sunR: 620 });
     back += plane(S, 1000, 210, 1.7, 'left') + plane(S, 1380, 130, 1.1, 'left') + plane(S, 1530, 70, 0.7, 'left');
     // the far shore and the Needle
     back += path('M560 620Q800 590 1100 604Q1350 596 1600 606V650H560Z', mix(p.haze, p.sky[1], 0.4));
@@ -1813,9 +2099,9 @@
     ]), { filter: S.shadow('m') });
     // the river
     back += rect(0, 640, 1600, 360, S.lin('triver', [[0, mix(p.sky[4], p.water, 0.25)], [0.4, mix(p.sky[2], p.water, 0.5)], [1, p.water]]));
-    back += poly([[1060, 640], [1180, 640], [1300, 1000], [940, 1000]], S.linU([[0, p.sun || p.glow, 0.55], [1, p.sun || p.glow, 0]], 0, 640, 0, 1000));
+    back += poly([[1060 + sd, 640], [1180 + sd, 640], [1300 + sd, 1000], [940 + sd, 1000]], S.linU([[0, p.sun || p.glow, p.day ? 0.4 : 0.55], [1, p.sun || p.glow, 0]], 0, 640, 0, 1000));
     var gl = '';
-    for (var i = 0; i < 60; i++) { var y = 650 + Math.pow(r(), 1.2) * 340, x = 960 + (r() - 0.5) * (300 + (y - 640) * 1.4); gl += 'M' + n(x) + ' ' + n(y) + 'h' + n(14 + (y - 640) * 0.12); }
+    for (var i = 0; i < 60; i++) { var y = 650 + Math.pow(r(), 1.2) * 340, x = 960 + sd + (r() - 0.5) * (300 + (y - 640) * 1.4); gl += 'M' + n(x) + ' ' + n(y) + 'h' + n(14 + (y - 640) * 0.12); }
     back += stroke(gl, '#FFF0C8', 3, { opacity: 0.75, 'class': 'pcs-glint' });
     var gl2 = '';
     for (i = 0; i < 40; i++) { y = 660 + r() * 320; gl2 += 'M' + n(r() * 900) + ' ' + n(y) + 'h' + n(20 + (y - 640) * 0.15); }
@@ -1834,7 +2120,7 @@
     back += train;
     var tw = '';
     for (i = 0; i < 5; i++) for (var j = 0; j < 4; j++) { var wx = 646 + i * 62 + j * 13, wy = 690 - (640 + i * 62) * 0.025 - 20; tw += 'M' + n(wx) + ' ' + n(wy) + 'h8v8h-8z'; }
-    back += path(tw, '#FFD27F', { opacity: 0.9 });
+    back += path(tw, p.day ? mix(p.sky[2], '#FFFFFF', 0.4) : '#FFD27F', { opacity: 0.9 });
     // the low stone wall in the foreground
     var wall = path('M560 1000V852Q560 838 576 838H1640V1000Z', S.lin('twall', [[0, p.stone], [1, p.stoneDark]]));
     var mortar = '';
@@ -1899,6 +2185,13 @@
     for (i = 0; i < 9; i++) { var dx = 470 + i * 82 + r() * 30; drape += 'M' + n(dx - 22) + ' 606q22 ' + n(26 + r() * 40) + ' 44 0z'; }
     f += path(drape, p.moss) + path('M1100 612q16 40 4 70q-12-26-14-62z', p.moss);
     f += fernClump(S, 1120, 612, 90, { seed: 164, count: 5, spread: 1.6, lean: 0.4 });
+    if (S.opts.rainFountain) {
+      // brimming with rain: a bright wet edge, dark wet streaks, drips falling from the lip
+      f += ell(800, 590, 352, 9, mix(p.sky[2], '#FFFFFF', 0.4), { opacity: 0.8 });
+      f += stroke('M520 640q6 30 2 60M640 668q4 26 0 50M960 668q-4 26 0 50M1080 642q-6 30-2 58', mix(p.stoneDark, p.shade, 0.3), 9, { opacity: 0.35 });
+      f += waterDrops(S, [[472, 622, 7, false], [610, 642, 7, false], [990, 642, 7, false], [1128, 622, 7, false], [472, 700, 7, true], [472, 820, 7, true],
+        [610, 730, 7, true], [990, 760, 7, true], [1128, 690, 7, true], [1128, 860, 7, true], [800, 760, 7, true]], 160);
+    }
     back += g(f, { filter: S.shadow('l') });
     front += g(fernClump(S, -60, 1060, 420, { seed: 166, count: 7, spread: 1.4, lean: 0.55 }) + fernClump(S, 1680, 1060, 420, { seed: 167, count: 7, spread: 1.4, lean: -0.55 }), { filter: S.shadow('m') });
     return { back: back, over: '', front: front };
@@ -1922,6 +2215,7 @@
     var st = '', P = [[-40, 300], [240, 360], [480, 420], [1180, 540], [1420, 640], [1660, 760]];
     st += stonePath(S, P, { size: 70, seed: 168, y0: 0, y1: 1000 });
     back += st;
+    if (S.opts.puddles) back += puddles(S, [[300, 640, 130, 62], [1300, 880, 130, 58], [600, 170, 90, 40], [1060, 290, 104, 44], [150, 930, 96, 44], [1460, 420, 80, 38], [880, 980, 70, 26]], 176);
     back += tufts(S, 0, 1600, 0, 1000, 120, 169, p.grassNear, p.grassLight, 1.2);
     back += flowers(S, 0, 1600, 0, 1000, 30, 170, '#FFF6EA') + flowers(S, 0, 1600, 0, 1000, 14, 171, '#F2C46D');
     var lv = '';
@@ -1985,7 +2279,10 @@
     tower: {
       label: 'looking up the glass tower', tod: 'sunset', draw: drawTower,
       cams: {
-        up: { box: [0, 0, 1600], comp: 'up' }, balcony: { box: [0, 0, 1600], comp: 'balcony' },
+        // on the balcony a cast member marked `lift: true` (Waffles flopped on her back, say) is
+        // raised onto a pouf, so her face clears the rail; unmarked, a cat stays on the tiles behind
+        // the rail (chapter 1's peer rests her chin on it)
+        up: { box: [0, 0, 1600], comp: 'up' }, balcony: { box: [0, 0, 1600], comp: 'balcony', lift: { y: 720, gap: 10, seat: 24, ask: true } },
         // close on Waffles: framed on her head, face about a third of the panel; a cat whose chin
         // would sink behind the rail is raised onto a pouf, so the rail top shows below her chin
         'balcony-close': { box: [300, 380, 840], comp: 'balcony', head: { face: 0.42, at: [0.56, 0.38] }, lift: { y: 720, gap: 10, seat: 24 } }
@@ -2008,7 +2305,7 @@
           'hedge-gap': A(1390, 718, 210), doorway: A(178, 778, 255)
         }
       },
-      opts: { sparrows: 'number', lampSparrow: [true, false], dish: [true, false], moth: [true, false] }, defaults: { sparrows: 12 }
+      opts: { sparrows: 'number', lampSparrow: [true, false], dish: [true, false], moth: [true, false], towel: [true, false] }, defaults: { sparrows: 12 }
     },
     camp: {
       label: 'CrystalClan camp at last light', tod: 'golden', todMap: { sunset: 'golden' }, draw: drawCamp,
@@ -2026,7 +2323,7 @@
         fountain: { 'fountain-top': A(800, 598, 440, 'left', { elev: true }) },
         entrance: { entrance: A(800, 820, 500) }
       },
-      opts: {}, defaults: {}
+      opts: { puddles: [true, false], rainFountain: [true, false] }, defaults: {}
     },
     hollow: {
       label: 'the Training Hollow', tod: 'golden', todMap: { sunset: 'golden' }, draw: drawHollow,
@@ -2034,10 +2331,20 @@
       anchors: {
         main: {
           'sand-left': A(640, 892, 280), 'sand-right': A(930, 892, 280, 'left'), sunpatch: A(330, 846, 255), tree: A(1066, 868, 270),
-          'sunpatch-2': A(140, 856, 258), 'sunpatch-3': A(500, 852, 256, 'left')
+          'sunpatch-2': A(140, 856, 258), 'sunpatch-3': A(500, 852, 256, 'left'),
+          // on the far side of the old tree, the trunk between her and the rim: a teacher clearly
+          // apart from the five cats she is counting (f019, f021)
+          'tree-far': A(1440, 905, 284, 'left'),
+          // five cats along the back rim of the hollow, drying in the sun (rim-5 at the right end, by the tree)
+          'rim-1': A(490, 786, 223, 'left'), 'rim-2': A(635, 774, 216, 'left'), 'rim-3': A(780, 770, 214, 'left'),
+          'rim-4': A(925, 774, 216, 'left'), 'rim-5': A(1070, 786, 223, 'left')
         }
       },
-      opts: { marks: [0, 1], glow: [true, false] }, defaults: { marks: 0 }
+      // marks: one claw mark per Count (0-6); glow: true, or a list of booleans, one per mark
+      // ('auto' for both: the UI fills them in from the cat before drawing); depth: 0 fresh, 1 deeper,
+      // 2 deepest, for every mark or a list, one per mark (left out or unfilled: every mark but the
+      // newest is deeper, the oldest most, as practice deepens them)
+      opts: { marks: [0, 1, 2, 3, 4, 5, 6, 'auto'], glow: [true, false, 'auto'], depth: [0, 1, 2, 'auto'] }, defaults: { marks: 0 }
     },
     den: {
       label: "the apprentices' den", tod: 'night', draw: drawDen,
@@ -2052,7 +2359,9 @@
           nest: A(1060, 892, 250), 'sleeper-1': A(330, 814, 245), 'sleeper-2': A(640, 856, 250, 'left')
         }
       },
-      opts: { weather: ['clear', 'cloudy', 'storm'] }, defaults: { weather: 'clear' }
+      // stone: Riffle's lucky stone in her nest (true: between her paws; 'nose' or 'chin', where she
+      // put it; 'auto' is the UI's to fill from her choice, and left unfilled is true)
+      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'] }, defaults: { weather: 'clear' }
     },
     sky: {
       label: 'the Sky River', tod: 'night', draw: drawSky,
@@ -2069,12 +2378,28 @@
     title: {
       label: 'the river at dusk', tod: 'sunset', draw: drawTitle,
       cams: { wide: { box: [0, 0, 1600] } },
-      anchors: { main: { wall: A(1180, 840, 255, 'left') } },
+      // wall-2: a second cat on the wall, left of the first
+      anchors: { main: { wall: A(1180, 840, 255, 'left'), 'wall-2': A(900, 840, 255, 'left') } },
       opts: {}, defaults: {}
     }
   };
   var SET_ORDER = ['room', 'tower', 'garden', 'camp', 'hollow', 'den', 'sky', 'river', 'title'];
-  var FX = ['sunset', 'dusk', 'night', 'stars', 'skyriver', 'rain', 'lightning', 'glow', 'purr', 'sparkle', 'zzz', 'motion'];
+  var FX = ['sunset', 'dusk', 'night', 'stars', 'skyriver', 'rain', 'lightning', 'glow', 'purr', 'sparkle', 'zzz', 'motion', 'morning', 'day', 'bonk'];
+
+  /* A set defined in its own file (app/art/sets/*.js, loaded after this one) joins the table here:
+   * art.defineSet('bridge', { label, tod, draw, cams, anchors, opts, defaults, todMap?, todFixed? }),
+   * the same shape as the entries above. Its draw(S) uses the painters in art.kit. */
+  art.defineSet = function (id, def) {
+    if (!id || !def || typeof def.draw !== 'function' || !def.cams || !def.anchors) throw new Error('defineSet: bad set ' + id);
+    def.opts = def.opts || {};
+    def.defaults = def.defaults || {};
+    SETS[id] = def;
+    if (SET_ORDER.indexOf(id) < 0) SET_ORDER.push(id);
+    refreshVocab();
+    return def;
+  };
+  /* An effect name a set file adds (drawn by that set itself from S.fx). */
+  art.defineFx = function (name) { if (FX.indexOf(name) < 0) FX.push(name); refreshVocab(); };
 
   function camList(set) { return Object.keys(set.cams); }
   function compOf(set, camId) { return set.cams[camId].comp || 'main'; }
@@ -2135,7 +2460,7 @@
       s = Math.max(s, (a.y - S.box.y + S.box.h * 0.04) / th);
     }
     var pl = { who: who, co: co, s: s, face: face, x: a.x, y: ay, lift: 0 };
-    liftPlan(S, pl);
+    liftPlan(S, pl, m);
     return pl;
   }
   function planChar(pl) {
@@ -2158,14 +2483,35 @@
     return { head: w(hb), body: w(bb), cat: !!ch.headBox };
   }
   // A camera with `lift` ({ y, gap }) raises any cat whose chin would fall below y - gap, so a face
-  // never sits behind the balcony rail; a cat raised by `seat` or more sits on a pouf.
-  function liftPlan(S, pl) {
+  // never sits behind the balcony rail; a cat raised by `seat` or more sits on a pouf. With `ask`,
+  // only a cast member marked `lift: true` is raised.
+  function liftPlan(S, pl, m) {
     var L = S.camDef && S.camDef.lift;
-    if (!L || !CAT_IDS[pl.who]) return;
+    if (!L || !CAT_IDS[pl.who] || (L.ask && !(m && m.lift === true))) return;
     var hb = castBoxes(pl).head, over = hb[3] - (L.y - L.gap);
     if (over > 0) { pl.y -= over; pl.lift = over; }
   }
   var CAT_IDS = { player: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, snorter: 1, clancat: 1 };
+  // A face's size, for balloon tails and for keeping the lettering off it: its radius in percent of
+  // the panel width (a head's `r`). A cat's is a fifth of its 200 box (chapter 1's measure, which the
+  // UI used to estimate from the markup); anything else with a head box (Riffle, the otters, the
+  // dogs) gets the same share of its head box as a sitting cat's face has of its own. The sparrow,
+  // the moth, the Tall One and placeholder drawings report none (the UI knows their sizes).
+  var faceCal = { fn: undefined, k: 0 };
+  function faceShare() {
+    var fn = art.character;
+    if (faceCal.fn === fn) return faceCal.k;
+    var c = getChar('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }), hb = c.headBox;
+    faceCal = { fn: fn, k: hb && !c.placeholder ? 0.2 * c.h / ((hb.x1 - hb.x0 + hb.y1 - hb.y0) / 2) : 0 };
+    return faceCal.k;
+  }
+  function faceR(S, who, ch, s) {
+    if (!ch || ch.placeholder) return null;
+    var world = null, hb = ch.headBox;
+    if (CAT_IDS[who]) world = 0.2 * ch.h * s;
+    else if (hb && faceShare()) world = faceShare() * ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2 * s;
+    return world != null && world > 0 && isFinite(world) ? world / S.box.w * 100 : null;
+  }
   function seat(S, bb, top, floor) {
     var w = Math.max(60, (bb[2] - bb[0]) * 0.84), cx = (bb[0] + bb[2]) / 2, x0 = cx - w / 2, h = Math.max(20, floor - top);
     var buttons = '';
@@ -2200,17 +2546,30 @@
       var c = placeChar(S, who, co, a.x, ay, pl.s, face, tint ? { filter: tint } : null);
       var bx = castBoxes(pl, c.ch);
       var piece = '';
-      if (pl.lift > 0 && pl.lift >= S.camDef.lift.seat) piece += g(seat(S, bx.body, ay - 6, a.y), tint ? { filter: tint } : null);
-      if (who !== 'moth' && !a.air && co.pose !== 'fall') piece += ell(a.x, ay - 1, c.w * 0.4, Math.max(2.5, a.h * 0.045), S.pal.shade, { opacity: 0.28 });
+      // the pouf's top meets the body's lowest point: at the feet for a sitting cat, higher for a
+      // loaf, and well above the feet line for one flopped on her back (the `fall` pose), who
+      // would otherwise float over it
+      var seated = pl.lift > 0 && pl.lift >= S.camDef.lift.seat, restY = seated ? Math.min(ay, bx.body[3]) : ay;
+      if (seated) piece += g(seat(S, bx.body, restY - 6, a.y), tint ? { filter: tint } : null);
+      if (who !== 'moth' && !a.air && co.pose !== 'fall') piece += ell(a.x, restY - 1, c.w * 0.4, Math.max(2.5, a.h * 0.045), S.pal.shade, { opacity: 0.28 });
+      // `holds: 'stone'` is drawn by cats.js with the cat (in her paws, or in the mouth on her feet),
+      // which reports where it is (`held`, in its box): the sparkle effect twinkles on it
       piece += c.svg;
+      var held = null;
+      if (c.ch.held) {
+        var hsx = c.ch.placeholder && (face || 'right') !== drawnFacing() ? -pl.s : pl.s;
+        held = { x: a.x + (c.ch.held.x - c.ch.w / 2) * hsx, y: ay + (c.ch.held.y - c.ch.h) * pl.s, r: c.ch.held.r * pl.s };
+      }
       if (typeof m.at === 'string' && S.covers[m.at] && !covered[m.at]) { piece += S.covers[m.at]; covered[m.at] = true; }
       if (a.z === 'behind') behind += piece; else front += piece;
       var px = (c.head[0] - S.box.x) / S.box.w * 100, py = (c.head[1] - S.box.y) / S.box.h * 100;
       var inside = px >= 0 && px <= 100 && py >= 0 && py <= 100;
-      heads.push(inside ? { x: Math.round(px * 10) / 10, y: Math.round(py * 10) / 10 } : null);
+      var hr = faceR(S, who, c.ch, pl.s);
+      heads.push(inside ? (hr != null ? { x: Math.round(px * 10) / 10, y: Math.round(py * 10) / 10, r: Math.round(hr * 100) / 100 } : { x: Math.round(px * 10) / 10, y: Math.round(py * 10) / 10 }) : null);
       var toP = function (b) { return [(b[0] - S.box.x) / S.box.w * 1600, (b[1] - S.box.y) / S.box.h * 1000, (b[2] - S.box.x) / S.box.w * 1600, (b[3] - S.box.y) / S.box.h * 1000]; };
       info.push({ who: who, pose: co.pose, mood: co.mood, face: face, px: px * 16, py: py * 10, hp: c.h / S.box.h * 1000, wp: c.w / S.box.w * 1600, footY: (ay - S.box.y) / S.box.h * 1000, footX: (a.x - S.box.x) / S.box.w * 1600,
-        hb: toP(bx.head), bb: toP(bx.body) });
+        hb: toP(bx.head), bb: toP(bx.body), purr: m.purr === true,
+        held: held ? { x: (held.x - S.box.x) / S.box.w * 1600, y: (held.y - S.box.y) / S.box.h * 1000, r: held.r / S.box.w * 1600 } : null });
     }
     var spare = '';
     for (var k in S.covers) if (!covered[k]) spare += S.covers[k];
@@ -2249,27 +2608,71 @@
     return d;
   }
 
+  // Purring. Cast members marked `purr: true` purr alone: rings ripple out from each of them, sound
+  // arcs ring them and 'purrr' floats behind them, and nobody else in the panel purrs (Riffle, who
+  // has never heard a purr, stays quiet). With nobody marked, it is chapter 1's whole-camp purr:
+  // every cast member purrs, fixed spots stand in for cats out of shot, and the rings fill the camp.
   function fxPurr(S, info) {
-    var s = '', r = rng(321), col = '#FFF1C8', srcs = [], i;
-    for (i = 0; i < info.length; i++) if (info[i]) srcs.push([info[i].footX, info[i].footY - info[i].hp * 0.42, Math.max(60, info[i].wp * 0.5), Math.max(50, info[i].hp)]);
-    var fixed = [[300, 660, 90, 120], [1280, 670, 90, 120], [800, 600, 80, 110]];
-    for (i = 0; i < fixed.length && srcs.length < 3; i++) srcs.push(fixed[i]);
-    // soft rings rippling out through the whole camp
-    for (i = 0; i < 3; i++) s += ell(800, 700, 560, 190, 'none', { stroke: col, 'stroke-width': 4, opacity: 0.45, 'class': 'pcs-ring', style: 'animation-delay:-' + (i * 1.2).toFixed(1) + 's' });
+    var s = '', r = rng(321), col = '#FFF1C8', srcs = [], i, marked = [];
+    for (i = 0; i < info.length; i++) if (info[i] && info[i].purr) marked.push(info[i]);
+    var who = marked.length ? marked : info.filter(function (c) { return c; });
+    var words = [], sides = [];
+    if (!marked.length) for (i = 0; i < who.length; i++) srcs.push([who[i].footX, who[i].footY - who[i].hp * 0.42, Math.max(60, who[i].wp * 0.5), Math.max(50, who[i].hp)]);
+    // a marked purrer's arcs hug her own body (its box, not the drawing's whole square), and a side
+    // with someone else beside it (Riffle, leaning in to listen) keeps its arcs to itself: they never
+    // cross a friend's face or body
+    for (i = 0; i < marked.length; i++) {
+      var mb = marked[i].bb || [marked[i].footX - marked[i].wp / 4, marked[i].footY - marked[i].hp * 0.8, marked[i].footX + marked[i].wp / 4, marked[i].footY];
+      var mk = clamp(marked[i].hp / 260, 0.5, 1.6), mh = Math.max(40, (mb[2] - mb[0]) * 0.5 + 6), reach = mh + 3 * 16 * mk + 6;
+      var mcx = (mb[0] + mb[2]) / 2, mcy = mb[1] + (mb[3] - mb[1]) * 0.55, span = reach * Math.sin(0.55) + 6;
+      var free = [-1, 1].map(function (side) {
+        return !info.some(function (o) {
+          if (!o || o === marked[i] || o.purr) return false;
+          return [o.hb, o.bb].some(function (b) {
+            if (!b) return false;
+            var x0 = side > 0 ? mcx + mh * 0.6 : mcx - reach, x1 = side > 0 ? mcx + reach : mcx - mh * 0.6;
+            return b[0] < x1 && b[2] > x0 && b[1] < mcy + span && b[3] > mcy - span;
+          });
+        });
+      });
+      srcs.push([mcx, mcy, mh, Math.max(50, marked[i].hp)]);
+      sides.push(free);
+    }
+    if (marked.length) {
+      // rings from each purring cat's middle, and two 'purrr's behind it (away from the way it faces)
+      for (i = 0; i < marked.length; i++) {
+        var c = marked[i], b = c.bb || [c.footX - c.wp / 2, c.footY - c.hp, c.footX + c.wp / 2, c.footY];
+        var cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2, rx = Math.max(90, Math.max(b[2] - b[0], b[3] - b[1]) * 0.62), back = c.face === 'left' ? 1 : -1;
+        for (var q = 0; q < 3; q++) s += ell(cx, cy, rx, rx * 0.6, 'none', { stroke: col, 'stroke-width': 4, opacity: 0.45, 'class': 'pcs-ring', style: 'animation-delay:-' + (q * 1.2).toFixed(1) + 's' });
+        // a 'purrr' is about 110 wide at size 1: one beside its back when there is room there, and
+        // one over its head, leaning back, so neither covers its face or a friend's
+        var ws = clamp(c.hp / 260, 0.6, 1.5), half = 60 * ws, room = back < 0 ? b[0] : 1600 - b[2];
+        var h = c.hb || b, hx = (h[0] + h[2]) / 2;
+        if (room >= half * 2 + 10) words.push([(back < 0 ? b[0] : b[2]) + back * (half + 8), clamp(cy, 60, 960), back * 8, ws]);
+        words.push([clamp(hx + back * half, half + 4, 1596 - half), Math.max(50 * ws, h[1] - 14 * ws), -back * 6, ws * 0.9]);
+      }
+    } else {
+      var fixed = [[300, 660, 90, 120], [1280, 670, 90, 120], [800, 600, 80, 110]];
+      for (i = 0; i < fixed.length && srcs.length < 3; i++) srcs.push(fixed[i]);
+      // soft rings rippling out through the whole camp
+      for (i = 0; i < 3; i++) s += ell(800, 700, 560, 190, 'none', { stroke: col, 'stroke-width': 4, opacity: 0.45, 'class': 'pcs-ring', style: 'animation-delay:-' + (i * 1.2).toFixed(1) + 's' });
+      words = [[230, 470, -8, 1], [1290, 500, 7, 1], [800, 330, 0, 1]];
+    }
     // little sound arcs on both sides of every purring cat
     for (i = 0; i < srcs.length; i++) {
-      var x = srcs[i][0], y = srcs[i][1], half = srcs[i][2], k = clamp(srcs[i][3] / 260, 0.5, 1.6), arcs = '';
+      var x = srcs[i][0], y = srcs[i][1], half = srcs[i][2], k = clamp(srcs[i][3] / 260, 0.5, 1.6), arcs = '', sd = sides[i] || [true, true];
       for (var j = 1; j <= 3; j++) {
         var R = half + j * 16 * k, a = 0.55;
-        arcs += 'M' + n(x + Math.cos(-a) * R) + ' ' + n(y + Math.sin(-a) * R) + 'A' + n(R) + ' ' + n(R) + ' 0 0 1 ' + n(x + Math.cos(a) * R) + ' ' + n(y + Math.sin(a) * R);
-        arcs += 'M' + n(x - Math.cos(-a) * R) + ' ' + n(y + Math.sin(-a) * R) + 'A' + n(R) + ' ' + n(R) + ' 0 0 0 ' + n(x - Math.cos(a) * R) + ' ' + n(y + Math.sin(a) * R);
+        if (sd[1]) arcs += 'M' + n(x + Math.cos(-a) * R) + ' ' + n(y + Math.sin(-a) * R) + 'A' + n(R) + ' ' + n(R) + ' 0 0 1 ' + n(x + Math.cos(a) * R) + ' ' + n(y + Math.sin(a) * R);
+        if (sd[0]) arcs += 'M' + n(x - Math.cos(-a) * R) + ' ' + n(y + Math.sin(-a) * R) + 'A' + n(R) + ' ' + n(R) + ' 0 0 0 ' + n(x - Math.cos(a) * R) + ' ' + n(y + Math.sin(a) * R);
       }
+      if (!arcs) continue;
       s += g(stroke(arcs, '#7A4E2A', 6 * k, { opacity: 0.18 }) + stroke(arcs, col, 3.5 * k, { opacity: 0.9 }), { 'class': 'pcs-purr', style: 'animation-delay:-' + (r() * 2.4).toFixed(1) + 's' });
     }
-    var words = [[230, 470, -8], [1290, 500, 7], [800, 330, 0]];
     for (i = 0; i < words.length; i++) {
-      s += g('<text x="' + words[i][0] + '" y="' + words[i][1] + '" text-anchor="middle" font-family="&quot;Comic Neue&quot;, &quot;Chalkboard SE&quot;, &quot;Comic Sans MS&quot;, sans-serif" font-size="46" font-style="italic" font-weight="700" fill="' + col +
-        '" stroke="#7A4E2A" stroke-width="3" stroke-opacity=".35" paint-order="stroke" transform="rotate(' + words[i][2] + ' ' + words[i][0] + ' ' + words[i][1] + ')">purrr</text>',
+      var w = words[i];
+      s += g('<text x="' + n(w[0]) + '" y="' + n(w[1]) + '" text-anchor="middle" font-family="&quot;Comic Neue&quot;, &quot;Chalkboard SE&quot;, &quot;Comic Sans MS&quot;, sans-serif" font-size="' + n(46 * w[3]) + '" font-style="italic" font-weight="700" fill="' + col +
+        '" stroke="#7A4E2A" stroke-width="3" stroke-opacity=".35" paint-order="stroke" transform="rotate(' + w[2] + ' ' + n(w[0]) + ' ' + n(w[1]) + ')">purrr</text>',
         { 'class': 'pcs-purr', style: 'animation-delay:-' + (i * 0.8).toFixed(1) + 's' });
     }
     return s;
@@ -2277,9 +2680,22 @@
 
   // The Sky River: a glowing band of light packed with tiny stars, rising left to right.
 
+  // Sparkles. When someone holds Riffle's stone (f075: he has just set it in her paws), they twinkle
+  // on the stone itself: one on its white band, two small ones beside it. Otherwise they scatter
+  // round the first cast member.
   function fxSparkle(S, info) {
-    var r = rng(331), s = '', cx = 800, cy = 450;
-    for (var i = 0; i < info.length; i++) if (info[i]) { cx = info[i].px; cy = info[i].py; break; }
+    var r = rng(331), s = '', cx = 800, cy = 450, i;
+    var held = info.filter(function (c) { return c && c.held; }).map(function (c) { return c.held; });
+    if (held.length) {
+      held.forEach(function (h, j) {
+        var rr = Math.max(6, h.r);
+        [[0.05, -0.15, 1.15, 0], [1.6, -1.25, 0.6, 0.9], [-1.5, -0.9, 0.45, 1.7]].forEach(function (t) {
+          s += g(path(sparkleD(0, 0, rr * t[2]), t[2] > 1 ? '#FFF8D8' : '#FFE08A', { 'class': 'pcs-tw', style: 'animation-delay:-' + (t[3] + j * 0.4).toFixed(1) + 's' }), { transform: tr(h.x + rr * t[0], h.y + rr * t[1]) });
+        });
+      });
+      return s;
+    }
+    for (i = 0; i < info.length; i++) if (info[i]) { cx = info[i].px; cy = info[i].py; break; }
     for (i = 0; i < 18; i++) {
       var a = r() * Math.PI * 2, d = 120 + r() * 520, x = clamp(cx + Math.cos(a) * d * 1.3, 40, 1560), y = clamp(cy + Math.sin(a) * d * 0.8, 40, 960), rr = 10 + r() * 22;
       s += g(path(sparkleD(0, 0, rr), i % 3 ? '#FFF6D8' : '#FFE08A', { 'class': 'pcs-tw', style: 'animation-delay:-' + (r() * 3).toFixed(1) + 's' }), { transform: tr(x, y) });
@@ -2302,6 +2718,33 @@
           '" fill="#EAF0FF" stroke="#1C2440" stroke-width="' + n(3 * k) + '" paint-order="stroke" text-anchor="middle">' + L[0] + '</text>',
           { 'class': 'pcs-z', style: 'animation-delay:-' + (j * 0.9 + i * 0.4).toFixed(1) + 's' });
       }
+    }
+    return s;
+  }
+
+  // A bonk: a smooth grey pebble bouncing off the first cast member's head, two little motion ticks
+  // and three stars circling the bump (Riffle's slippery pebble). Nobody in the panel: mid-panel.
+  function fxBonk(S, info) {
+    var c = null, i;
+    for (i = 0; i < info.length; i++) if (info[i]) { c = info[i]; break; }
+    var hb = c && c.hb ? c.hb : [740, 330, 860, 450], hw = Math.max(40, hb[2] - hb[0]), cx = (hb[0] + hb[2]) / 2, top = hb[1];
+    var k = clamp(hw / 130, 0.5, 2.4), back = c && c.face === 'left' ? 1 : -1;
+    // the pebble, bouncing up and away behind the head
+    var px = clamp(cx + back * hw * 0.32, 30, 1570), py = Math.max(24 * k, top - 40 * k), s = '';
+    s += g(ell(0, 0, 18 * k, 12 * k, '#A39E96', { stroke: '#5F5A55', 'stroke-width': n(2.5 * k) }) + ell(-5 * k, -4 * k, 8 * k, 4 * k, '#D9D5CE', { opacity: 0.9 }),
+      { transform: 'translate(' + n(px) + ' ' + n(py) + ') rotate(' + (back * 18) + ')' });
+    // motion ticks: the path it took off the top of the head
+    var tk = 'M' + n(cx - back * 6 * k) + ' ' + n(top + 2 * k) + 'Q' + n((cx + px) / 2) + ' ' + n(top - 26 * k) + ' ' + n(px - back * 16 * k) + ' ' + n(py + 12 * k) +
+      'M' + n(cx + back * 10 * k) + ' ' + n(top + 6 * k) + 'Q' + n((cx + px) / 2 + back * 14 * k) + ' ' + n(top - 14 * k) + ' ' + n(px - back * 4 * k) + ' ' + n(py + 18 * k);
+    s += stroke(tk, '#FFFFFF', 4 * k, { opacity: 0.85, 'stroke-dasharray': n(10 * k) + ' ' + n(7 * k) });
+    // three little stars circling the bump
+    for (i = 0; i < 3; i++) {
+      var a = Math.PI * (1.1 + i * 0.4), sx = cx + Math.cos(a) * hw * 0.55, sy = top + 6 * k + Math.sin(a) * 18 * k, d = '';
+      for (var j = 0; j < 10; j++) {
+        var rr = (j % 2 ? 0.45 : 1) * 13 * k, an = -Math.PI / 2 + j * Math.PI / 5;
+        d += (j ? 'L' : 'M') + n(sx + Math.cos(an) * rr) + ' ' + n(sy + Math.sin(an) * rr);
+      }
+      s += path(d + 'Z', '#FFE27A', { stroke: '#7A4E2A', 'stroke-width': n(2 * k), 'stroke-linejoin': 'round', 'class': 'pcs-tw', style: 'animation-delay:-' + (i * 0.9).toFixed(1) + 's' });
     }
     return s;
   }
@@ -2390,8 +2833,9 @@
     if (scene.opts && typeof scene.opts === 'object') for (k in scene.opts) opts[k] = scene.opts[k];
     var fx = {}, list = Array.isArray(scene.fx) ? scene.fx : [];
     for (var i = 0; i < list.length; i++) fx[list[i]] = true;
-    var tod = fx.night ? 'night' : fx.dusk ? 'dusk' : fx.sunset ? 'sunset' : set.tod;
+    var tod = fx.night ? 'night' : fx.dusk ? 'dusk' : fx.sunset ? 'sunset' : fx.morning ? 'morning' : fx.day ? 'day' : set.tod;
     if (set.todMap && set.todMap[tod]) tod = set.todMap[tod];
+    if (set.todFixed) tod = set.todFixed;
     if (setId === 'den' && opts.weather === 'storm') tod = 'storm';
     if (setId === 'river' || setId === 'sky') tod = setId === 'river' ? 'storm' : 'night';
     var cast = Array.isArray(scene.cast) ? scene.cast.filter(function (c) { return c && typeof c === 'object'; }) : [];
@@ -2427,6 +2871,7 @@
     if (fx.sparkle) over += fxSparkle(S, C.info);
     if (fx.zzz) over += fxZzz(S, C.info);
     if (fx.motion) over += fxMotion(S, C.info);
+    if (fx.bonk) over += fxBonk(S, C.info);
     var rainy = fx.rain || tod === 'storm';
     if (rainy) weather += fxRain(S);
     if (fx.lightning) weather += fxFlash(S);
@@ -2502,19 +2947,43 @@
     '@keyframes pcs-glint{0%,100%{opacity:.25}50%{opacity:.9}}',
     '.pcs-splash{animation:pcs-splash 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}',
     '@keyframes pcs-splash{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,1.07)}}',
+    '.pcs-drip{animation:pcs-drip 2.4s ease-in infinite}',
+    '@keyframes pcs-drip{0%{transform:translate(0,-30px);opacity:0}15%{opacity:1}80%{opacity:1}100%{transform:translate(0,90px);opacity:0}}',
     '}'
   ].join('\n');
 
   // ------------------------------------------------------------------ vocabulary (docs/build.md, Art vocabulary)
 
   var vocab = art.vocab || (art.vocab = {});
-  vocab.sets = {};
-  SET_ORDER.forEach(function (id) {
-    var set = SETS[id], anchors = [], seen = {};
-    for (var c in set.anchors) for (var k in set.anchors[c]) if (!seen[k]) { seen[k] = true; anchors.push(k); }
-    vocab.sets[id] = { cams: camList(set), anchors: anchors, opts: JSON.parse(JSON.stringify(set.opts)) };
-  });
-  vocab.fx = FX.slice();
+  function refreshVocab() {
+    vocab.sets = {};
+    SET_ORDER.forEach(function (id) {
+      var set = SETS[id], anchors = [], seen = {};
+      for (var c in set.anchors) for (var k in set.anchors[c]) if (!seen[k]) { seen[k] = true; anchors.push(k); }
+      vocab.sets[id] = { cams: camList(set), anchors: anchors, opts: JSON.parse(JSON.stringify(set.opts)) };
+    });
+    vocab.fx = FX.slice();
+  }
+  refreshVocab();
+
+  /* The painters and helpers, for sets defined in their own files (art.defineSet). Everything here
+   * works in the 1600 x 1000 world; S is the render context a set's draw(S) receives (S.pal is the
+   * palette for the time of day, S.opts the set options, S.fx the effects, S.lin/linU/radB/radU/
+   * clip/pattern/filter/blur/shadow make defs). */
+  art.kit = {
+    WORLD_W: WORLD_W, WORLD_H: WORLD_H, TENTHS: TENTHS, PAL: PAL,
+    n: n, n4: n4, lerp: lerp, clamp: clamp, sgn: sgn, rng: rng, seedOf: seedOf, gauss: gauss, hexRgb: hexRgb, rgbHex: rgbHex, mix: mix, esc: esc,
+    attrs: attrs, rect: rect, circ: circ, ell: ell, path: path, stroke: stroke, pts: pts, poly: poly, g: g, tr: tr, dot: dot,
+    leafD: leafD, bladeD: bladeD, sparkleD: sparkleD, bez2: bez2, bez3: bez3, mound: mound, blob: blob, scallops: scallops, taper: taper,
+    skyGrad: skyGrad, sky: sky, stars: stars, skyRiver: skyRiver, clouds: clouds, cloudBank: cloudBank, bolt: bolt, moon: moon,
+    tower: tower, towers: towers, plane: plane, hedge: hedge, fence: fence, lampPost: lampPost, tufts: tufts, flowers: flowers,
+    frond: frond, fernClump: fernClump, bramble: bramble, stonePath: stonePath, rose: rose, silhouettes: silhouettes,
+    sparrowRow: sparrowRow, moth: moth, splash: splash, denMound: denMound, nest: nest, fountain: fountain, luckyStone: luckyStone,
+    // the morning after the storm: puddles(S, [[cx, cy, rx, ry], …]), waterDrops(S, [[x, y, r, falling], …]),
+    // dropD(x, y, r) (one drop's outline), sunSpots(S, [[cx, cy, rx, ry], …]), wetGlints(S, x0, x1, y0, y1, count, seed)
+    puddles: puddles, waterDrops: waterDrops, dropD: dropD, sunSpots: sunSpots, wetGlints: wetGlints,
+    anchor: A
+  };
 
   // For the gallery and the tests: where each camera looks and where each anchor is.
   art.sceneInfo = function (setId) {

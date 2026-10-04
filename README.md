@@ -13,6 +13,7 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 **Status (2026-10-04):** chapter 1 is built as a static web app (`index.html`, `app/`; the stack is
 in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/ch01.md`](docs/storyboard/ch01.md), and deployed on GitHub Pages from `main`.
+It is developed on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
 
 ## Docs
 

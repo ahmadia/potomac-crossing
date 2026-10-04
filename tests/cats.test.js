@@ -250,6 +250,24 @@ test('cats report a head box and body box inside their 200 x 200 box', () => {
   assert.ok(A.character('waffles', { pose: 'sit' }).headBox.y0 < A.character('waffles', { pose: 'sit' }).head.y - 30, 'her bow and ears count');
 });
 
+test('a slim cat’s head rests on its chest as a full-built cat’s does, in every pose where it sits on top', () => {
+  // Lissa spotted the skinny grey tom's head floating above his body as he slept through the storm
+  // (ch01 f077, pose lie): a slim chest sits lower, and the head has to come down with it. Overlap is
+  // how far the head box reaches below the top of the chest, over the head box's height.
+  const overlap = (who, pose) => {
+    const r = A.character(who, { pose, mood: 'sleepy' });
+    return (r.headBox.y1 - r.chestTop.y) / (r.headBox.y1 - r.headBox.y0);
+  };
+  for (const pose of ['sit', 'lookup', 'lie', 'loaf', 'stand', 'walk', 'peer', 'stretch']) {
+    const full = overlap('clancat', pose);
+    for (const who of ['snorer', 'glintstar', 'snorter', 'mutterer']) {
+      const o = overlap(who, pose);
+      // three quarters, not all: Glintstar's tall ears make her head box taller, so her ratio reads lower
+      assert.ok(o >= full * 0.75, `${who}/${pose}: the head reaches the chest (${o.toFixed(2)}, a full-built cat ${full.toFixed(2)})`);
+    }
+  }
+});
+
 test('white markings show on pale fur (white, cream, calico); mid and dark furs are unchanged', () => {
   const strip = (x) => x.replace(/pc[0-9a-z]+-[0-9a-z]+/g, 'id');
   const svg = (fur, marking) => strip(A.cat({ look: { fur, marking, eyes: 'green', sex: 'she' }, pose: 'sit', mood: 'neutral' }).svg);

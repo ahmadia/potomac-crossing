@@ -406,6 +406,9 @@
         wrap: [[52, 182], [32, 194], [20, 188], [18, 168]], out: [[52, 178], [30, 178], [16, 166], [14, 146]] } }
   };
 
+  // poses whose head rests on top of the chest, so it follows a slim cat's lower chest down
+  var NECK_FOLLOWS = { sit: 1, lookup: 1, lie: 1, loaf: 1, stand: 1, walk: 1, peer: 1, stretch: 1 };
+
   var MOOD_TAIL = { happy: 'up', proud: 'up', wonder: 'up', laugh: 'up', shout: 'up', dreamy: 'wrap',
     kind: 'wrap', sleepy: 'wrap', worried: 'down', stern: 'out', sniff: 'out' };
   var EAR_ANG = { neutral: 0, happy: -2, dreamy: 4, wonder: -6, worried: 24, scared: 58, sleepy: 14, laugh: 6,
@@ -796,8 +799,10 @@
     // ----- head placement
     var hrot = P.head[2] + (HEAD_ROT[mood] || 0) * (pose === 'curl' || pose === 'flat' ? 0.5 : 1) + (sp.rot || 0);
     // a slim cat's chest is smaller and sits lower (grow keeps its bottom); a head resting on top of
-    // the chest comes down with it, or a close-up (fountain-close) shows a gap under the chin
-    var neckDrop = pose === 'sit' || pose === 'lookup' ? Math.max(0, (chest[1] - chest[2]) - (P.chest[1] - P.chest[2])) : 0;
+    // the chest comes down with it, or the head floats with a gap under the chin (fountain-close's
+    // sit; the skinny grey tom lying asleep in the storm, f077). Not where the head rests on the
+    // ground beside the chest (curl, flat, crouch, fall): there it is already attached.
+    var neckDrop = NECK_FOLLOWS[pose] ? Math.max(0, (chest[1] - chest[2]) - (P.chest[1] - P.chest[2])) : 0;
     var hpos = [P.head[0] + (mood === 'sniff' ? 5 : 0), P.head[1] + neckDrop + (mood === 'sniff' ? 2 : mood === 'proud' || mood === 'solemn' ? -2 : 0)];
     var hsc = sp.headS || 1;
     var hm = mul(mT(hpos[0], hpos[1]), mul(mR(hrot), mS(hsc)));
@@ -852,7 +857,8 @@
     return {
       svg: svg, w: 200, h: 200, head: { x: Math.round(hc[0] * 10) / 10, y: Math.round(hc[1] * 10) / 10 },
       headBox: headBox, bounds: bounds,
-      _marks: { M: M, scale: sc, tail: tailD, tailTip: add(tl.at(1).p, tl.at(1).t, tl.at(1).w * 0.6), ears:[apply(M, apply(hm, [-21, -38])), apply(M, apply(hm, [21, -38]))], paws: paws }
+      _marks: { M: M, scale: sc, tail: tailD, tailTip: add(tl.at(1).p, tl.at(1).t, tl.at(1).w * 0.6), ears:[apply(M, apply(hm, [-21, -38])), apply(M, apply(hm, [21, -38]))], paws: paws,
+        chestTop: apply(M, [chest[0], chest[1] - chest[2]]) }
     };
   }
 
@@ -1010,7 +1016,7 @@
     else if (who === 'moth') r = moth(o);
     else r = buildCat(catSpec(PRESETS[who] || who === 'player' || who === 'clancat' ? who : 'clancat', o), o);
     var out = { svg: r.svg, w: r.w, h: r.h, head: r.head };
-    if (r.headBox) { out.headBox = r.headBox; out.bounds = r.bounds; }
+    if (r.headBox) { out.headBox = r.headBox; out.bounds = r.bounds; out.chestTop = { x: r._marks.chestTop[0], y: r._marks.chestTop[1] }; }
     return out;
   };
 

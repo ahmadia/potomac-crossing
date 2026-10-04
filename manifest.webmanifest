@@ -1,0 +1,16 @@
+{
+  "name": "Potomac Crossing",
+  "short_name": "Potomac",
+  "description": "A graphic-novel story game: a pillow cat joins CrystalClan on a mythic Potomac River, and learns the Counts.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#140f26",
+  "theme_color": "#211a3d",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

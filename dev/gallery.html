@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scenes Gallery</title>
+<style>
+  :root { --bg: #1d1830; --card: #2a2342; --edge: #40365e; --ink: #f6eedf; --muted: #b9add6; --gold: #f2c46d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 ui-rounded, "Chalkboard SE", "Comic Sans MS", system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: rgba(29, 24, 48, .94); padding: 8px 0 10px; margin: -16px 0 8px;
+    border-bottom: 1px solid var(--edge); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  h1 { font-size: 20px; margin: 4px 0 6px; }
+  h2 { font-size: 17px; margin: 26px 0 10px; color: var(--gold); border-bottom: 2px solid var(--edge); padding-bottom: 4px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 13px; }
+  .controls select { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--edge); border-radius: 6px; padding: 2px 4px; }
+  nav { margin-top: 6px; font-size: 12.5px; }
+  nav a { color: var(--muted); margin-right: 10px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 18px; }
+  figure { margin: 0; width: 800px; max-width: 100%; }
+  .panel { position: relative; width: 100%; aspect-ratio: 16 / 10; background: #000; border: 3px solid #0d0a16; border-radius: 6px; overflow: hidden; }
+  .panel > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .panel .ov { position: absolute; inset: 0; pointer-events: none; }
+  .head { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #ff3b6b; border: 2px solid #fff; }
+  .head b { position: absolute; left: 14px; top: -6px; font-size: 11px; color: #fff; text-shadow: 0 0 3px #000, 0 0 3px #000; white-space: nowrap; }
+  .anchor { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; }
+  .anchor::before, .anchor::after { content: ""; position: absolute; background: #5ff; left: 8px; top: 0; width: 2px; height: 18px; }
+  .anchor::after { transform: rotate(90deg); }
+  .anchor b { position: absolute; left: 12px; top: 4px; font-size: 11px; color: #5ff; text-shadow: 0 0 3px #000, 0 0 3px #000; white-space: nowrap; }
+  figcaption { margin-top: 6px; font-size: 13px; }
+  figcaption code { color: var(--gold); font-size: 12.5px; }
+  figcaption .meta { color: var(--muted); font-size: 12px; }
+  figcaption .board { color: var(--ink); opacity: .85; font-size: 12.5px; margin-top: 3px; }
+  .pending { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+  .err { color: #ff8a8a; }
+  body.only { padding: 4px; }
+  body.only header { position: static; margin: 0; padding: 0; }
+  body.only header .controls, body.only nav, body.only h1, body.only h2 { display: none; }
+  body.only figure { width: 100%; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Potomac Crossing · sets, cameras and the chapter's frames</h1>
+  <div class="controls">
+    <label>Fur <select id="fur"></select></label>
+    <label>Marking <select id="marking"></select></label>
+    <label>Eyes <select id="eyes"></select></label>
+    <label>She/tom <select id="sex"><option value="she">she-cat</option><option value="tom">tom</option></select></label>
+    <label><input type="checkbox" id="showHeads"> heads</label>
+    <label><input type="checkbox" id="showAnchors"> anchors</label>
+    <label><input type="checkbox" id="placeholder"> placeholder cats</label>
+    <span id="status" class="meta"></span>
+  </div>
+  <nav id="nav"></nav>
+</header>
+<main>
+  <section id="sets"></section>
+  <section id="chapter"></section>
+</main>
+
+<script src="../app/art/cats.js"></script>
+<script src="../app/art/scenes.js"></script>
+<script src="../app/story/ch01.js"></script>
+<script>
+(function () {
+  'use strict';
+  var PC = window.PC || {};
+  var art = PC.art || {};
+  var $ = function (id) { return document.getElementById(id); };
+  if (typeof art.render !== 'function') { document.body.insertAdjacentHTML('beforeend', '<p class="err">PC.art.render is missing: app/art/scenes.js did not load.</p>'); return; }
+
+  var st = document.createElement('style'); st.textContent = art.css || ''; document.head.appendChild(st);
+
+  // ---- look picker (cats.js names when it is loaded)
+  var looks = (art.vocab && art.vocab.looks) || {
+    fur: ['black', 'white', 'silver-tabby', 'brown-tabby', 'ginger', 'cream', 'grey', 'tortie', 'calico'],
+    marking: ['none', 'white-paws', 'white-chest', 'back-stripe', 'nose-splash'],
+    eyes: ['green', 'amber', 'blue', 'copper', 'odd']
+  };
+  function fill(sel, list, val) { sel.innerHTML = list.map(function (v) { return '<option' + (v === val ? ' selected' : '') + '>' + v + '</option>'; }).join(''); }
+  fill($('fur'), looks.fur, 'silver-tabby'); fill($('marking'), looks.marking, 'white-chest'); fill($('eyes'), looks.eyes, 'green');
+  function look() { return { fur: $('fur').value, marking: $('marking').value, eyes: $('eyes').value, sex: $('sex').value }; }
+
+  var realChar = art.character;
+  var fakeChar = function () { throw new Error('placeholder'); };
+  fakeChar.placeholder = true;
+
+  // ---- a sample cast for every set x camera, modelled on how chapter 1 uses them
+  function c(who, at, pose, mood, more) { var o = { who: who, at: at, pose: pose || 'sit', mood: mood || 'neutral' }; for (var k in more) o[k] = more[k]; return o; }
+  var SAMPLES = {
+    room: {
+      wide: { opts: { door: 'open' }, cast: [c('player', 'cushion', 'sit', 'wonder', { facing: 'left' }), c('tallone', 'doorway', 'water', 'neutral', { facing: 'left' })], fx: ['sunset'] },
+      cushion: { opts: { door: 'closed' }, cast: [c('player', 'cushion', 'sit', 'dreamy')], fx: ['sunset'] },
+      glass: { opts: { door: 'closed', reflection: true, clan: true }, cast: [c('player', 'glass', 'peer', 'wonder')], fx: ['dusk'] },
+      outside: { opts: { door: 'closed', clan: true }, cast: [], fx: ['dusk'] }
+    },
+    tower: {
+      up: { cast: [c('player', 'window', 'lookup', 'wonder'), c('waffles', 'railing', 'peer', 'shout', { facing: 'left' })], fx: ['dusk'] },
+      balcony: { cast: [c('waffles', 'railing', 'peer', 'happy', { facing: 'left' })], fx: ['sunset'] },
+      'balcony-close': { cast: [c('waffles', 'railing', 'loaf', 'dreamy', { facing: 'left' })], fx: ['dusk'] }
+    },
+    garden: {
+      wide: { opts: { sparrows: 12, lampSparrow: true, dish: true, moth: true }, cast: [c('player', 'lawn', 'walk', 'wonder'), c('tallyheart', 'fence-foot', 'sit', 'neutral', { facing: 'left' })], fx: ['dusk'] },
+      paws: { cast: [c('player', 'lawn', 'stand', 'wonder')], fx: ['dusk'] },
+      step: { opts: { dish: true }, cast: [c('player', 'lawn', 'sit', 'wonder', { facing: 'left' }), c('tallone', 'doorway', 'stand', 'neutral')], fx: ['dusk'] },
+      fence: { opts: { sparrows: 12, lampSparrow: true }, cast: [c('tallyheart', 'fence-foot', 'lookup', 'neutral'), c('player', 'lawn', 'sit', 'happy')], fx: ['dusk'] },
+      lamp: { opts: { sparrows: 12, lampSparrow: true }, cast: [], fx: ['dusk', 'glow'] },
+      meet: { cast: [c('player', 'lawn', 'lookup', 'wonder'), c('tallyheart', 'fence-foot', 'sit', 'kind', { facing: 'left', size: 1.15 })], fx: ['dusk'] },
+      hedge: { cast: [c('tallyheart', 'hedge-gap', 'walk', 'happy')], fx: ['dusk'] }
+    },
+    camp: {
+      reveal: { cast: [c('glintstar', 'fountain-top', 'sit', 'neutral', { facing: 'left' }), c('player', 'entrance', 'stand', 'wonder', { size: 0.8 }), c('tallyheart', 'center', 'walk', 'happy', { size: 0.8 }), c('clancat', 'crowd-left', 'sit', 'sniff', { variant: 2 }), c('clancat', 'crowd-right', 'loaf', 'neutral', { variant: 5, facing: 'left' })], fx: ['sunset', 'glow'] },
+      crowd: { cast: [c('clancat', 'crowd-left', 'crouch', 'sniff', { variant: 1 }), c('clancat', 'crowd-right', 'stand', 'stern', { variant: 3, facing: 'left' }), c('snorter', 'center', 'sit', 'laugh', { facing: 'left' }), c('glintstar', 'fountain-top', 'sit', 'stern', { facing: 'left' })], fx: ['sunset'] },
+      fountain: { cast: [c('glintstar', 'fountain-top', 'stand', 'stern', { facing: 'left' })], fx: ['sunset'] },
+      'fountain-close': { cast: [c('glintstar', 'fountain-top', 'sit', 'solemn', { facing: 'left' })], fx: ['sunset', 'glow'] },
+      entrance: { cast: [c('player', 'entrance', 'sit', 'worried', { size: 0.85 })], fx: ['sunset'] },
+      ferns: { cast: [c('snorter', 'ferns', 'fall', 'laugh')], fx: ['sunset', 'motion'] },
+      purr: { cast: [c('glintstar', 'fountain-top', 'sit', 'kind', { facing: 'left', size: 0.8 }), c('player', 'center', 'sit', 'happy', { size: 0.8 }), c('tallyheart', 'entrance', 'sit', 'happy', { size: 0.8 }), c('clancat', 'crowd-left', 'loaf', 'happy', { variant: 4, size: 0.8 }), c('clancat', 'crowd-right', 'sit', 'happy', { variant: 6, facing: 'left', size: 0.8 }), c('snorter', 'ferns', 'loaf', 'happy', { facing: 'left', size: 0.8 })], fx: ['dusk', 'purr'] }
+    },
+    hollow: {
+      wide: { opts: { marks: 1, glow: true }, cast: [c('tallyheart', 'sand-left', 'stand', 'kind'), c('clancat', 'sunpatch', 'curl', 'sleepy', { variant: 3, facing: 'left' }), c('clancat', 'sunpatch-2', 'loaf', 'sleepy', { variant: 1 }), c('clancat', 'sunpatch-3', 'curl', 'sleepy', { variant: 5 })], fx: ['sunset', 'zzz'] },
+      lesson: { cast: [c('tallyheart', 'sand-left', 'sit', 'kind'), c('player', 'sand-right', 'sit', 'wonder', { facing: 'left' })], fx: ['sunset'] },
+      sand: { cast: [c('tallyheart', 'sand-left', 'crouch', 'proud')], fx: ['sunset'] },
+      tree: { opts: { marks: 1, glow: true }, cast: [c('tallyheart', 'tree', 'stretch', 'proud')], fx: ['sunset', 'sparkle'] }
+    },
+    den: {
+      outside: { opts: { weather: 'clear' }, cast: [c('tallyheart', 'entrance-left', 'stand', 'kind'), c('player', 'entrance-right', 'stand', 'wonder', { facing: 'left' })], fx: ['night', 'stars', 'skyriver'] },
+      inside: { opts: { weather: 'clear' }, cast: [c('snorer', 'sleeper-1', 'curl', 'sleepy'), c('mutterer', 'sleeper-2', 'curl', 'sleepy', { facing: 'left' }), c('player', 'doorway', 'peer', 'wonder', { facing: 'left' })], fx: ['night', 'zzz'] },
+      nest: { opts: { weather: 'clear' }, cast: [c('player', 'nest', 'curl', 'sleepy')], fx: ['night', 'zzz', 'sparkle'] },
+      doorway: { opts: { weather: 'storm' }, cast: [c('tallyheart', 'doorway', 'lie', 'kind', { facing: 'left' }), c('player', 'nest', 'flat', 'worried')], fx: ['night', 'rain', 'lightning'] }
+    },
+    sky: {
+      up: { cast: [], fx: ['night', 'stars', 'skyriver'] },
+      cats: { cast: [c('tallyheart', 'ground-left', 'lookup', 'kind'), c('player', 'ground-right', 'lookup', 'wonder', { facing: 'left' })], fx: ['night', 'stars', 'skyriver'] }
+    },
+    river: { crash: { opts: { splash: true }, cast: [], fx: ['night', 'rain', 'lightning'] } },
+    title: { wide: { cast: [], fx: [] } }
+  };
+  var EXTRA = [
+    ['room', 'glass', { opts: { door: 'closed', reflection: true }, cast: [], fx: ['dusk'] }, 'the look chooser: reflection only'],
+    ['den', 'outside', { opts: { weather: 'storm' }, cast: [c('tallyheart', 'doorway', 'lie', 'kind')], fx: ['night', 'lightning'] }, 'storm outside'],
+    ['den', 'outside', { opts: { weather: 'cloudy' }, cast: [], fx: ['night'] }, 'cloudy: the stars go out'],
+    ['den', 'doorway', { opts: { weather: 'cloudy' }, cast: [c('player', 'nest', 'curl', 'sleepy')], fx: ['night'] }, 'cloudy, from inside'],
+    ['tower', 'balcony-close', { cast: [c('waffles', 'railing', 'stand', 'shout', { facing: 'left' })], fx: ['dusk'] }, 'close-up: stand / shout'],
+    ['tower', 'balcony-close', { cast: [c('waffles', 'railing', 'crouch', 'shout', { facing: 'left' })], fx: ['dusk'] }, 'close-up: crouch / shout (raised onto her pouf)'],
+    ['den', 'doorway', { opts: { weather: 'clear' }, cast: [c('tallyheart', 'entrance-left', 'sit', 'kind'), c('player', 'entrance-right', 'sit', 'worried', { facing: 'left' })], fx: ['night', 'stars'] }, 'the worry talk, as the story frames it'],
+    ['garden', 'wide', { opts: { sparrows: 3 }, cast: [c('player', { x: 980, y: 760, scale: 1 }, 'sit', 'happy')], fx: ['night', 'stars'] }, 'custom spot and fx night'],
+    ['camp', 'reveal', { cast: [], fx: ['dusk', 'sparkle'] }, 'camp at dusk'],
+    ['title', 'wide', { cast: [c('player', 'wall', 'sit', 'dreamy', { facing: 'left' })], fx: ['dusk'] }, 'title with the player on the wall']
+  ];
+
+  // ---- panels, rendered when they scroll into view
+  var panels = [];
+  // ?only=garden%20/%20meet shows just the panels whose title contains that text
+  var only = new URLSearchParams(location.search).get('only');
+  if (only) document.body.classList.add('only');
+  // ?w=380 makes the panels smaller, to see many at once
+  var w = +new URLSearchParams(location.search).get('w');
+  if (w > 0) { var st2 = document.createElement('style'); st2.textContent = 'body figure{width:' + w + 'px !important} figcaption .board{display:none} body.only .grid{gap:6px}'; document.head.appendChild(st2); }
+  function figure(host, scene, title, meta, board) {
+    if (only && (title + ' ' + meta).indexOf(only) < 0) return;
+    var fig = document.createElement('figure');
+    fig.innerHTML = '<div class="panel"><div class="pending">…</div></div><figcaption><code>' + title + '</code> <span class="meta">' + meta + '</span>' +
+      (board ? '<div class="board">' + board.replace(/</g, '&lt;') + '</div>' : '') + '</figcaption>';
+    host.appendChild(fig);
+    var p = { el: fig.querySelector('.panel'), scene: scene, done: false };
+    panels.push(p);
+    io.observe(p.el);
+    p.el._p = p;
+  }
+  function draw(p) {
+    p.done = true;
+    art.character = $('placeholder').checked ? fakeChar : realChar;
+    var t0 = performance.now(), r;
+    try { r = art.render(p.scene, { look: look() }); }
+    catch (e) { p.el.innerHTML = '<div class="pending err">' + e.message + '</div>'; console.error(e); return; }
+    var ms = performance.now() - t0, html = r.svg, ov = '';
+    if ($('showHeads').checked) (r.heads || []).forEach(function (h, i) {
+      if (h) ov += '<span class="head" style="left:' + h.x + '%;top:' + h.y + '%"><b>' + i + ' ' + ((p.scene.cast[i] || {}).who || '') + '</b></span>';
+    });
+    if ($('showAnchors').checked) ov += anchorMarks(p.scene, r.svg);
+    p.el.innerHTML = html + '<div class="ov">' + ov + '</div>';
+    p.el.title = (r.svg.length / 1024).toFixed(0) + ' KB, ' + ms.toFixed(0) + ' ms';
+  }
+  function anchorMarks(scene, svg) {
+    var info = art.sceneInfo && art.sceneInfo(scene.set);
+    var m = /viewBox="([^"]+)"/.exec(svg);
+    if (!info || !m) return '';
+    var vb = m[1].split(' ').map(Number), cam = info.cams[scene.cam] || {}, A = info.anchors[cam.comp || 'main'] || {}, s = '';
+    Object.keys(A).forEach(function (k) {
+      var a = A[k];
+      if (!a.x && !a.y) return;
+      var x = (a.x - vb[0]) / vb[2] * 100, y = (a.y - vb[1]) / vb[3] * 100;
+      if (x < 0 || x > 100 || y < 0 || y > 100) return;
+      s += '<span class="anchor" style="left:' + x + '%;top:' + y + '%"><b>' + k + '</b></span>';
+    });
+    return s;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting && !e.target._p.done) draw(e.target._p); });
+  }, { rootMargin: '600px 0px' });
+  function redraw() {
+    panels.forEach(function (p) {
+      p.done = false;
+      var r = p.el.getBoundingClientRect();
+      if (r.bottom > -600 && r.top < innerHeight + 600) draw(p);
+    });
+  }
+  ['fur', 'marking', 'eyes', 'sex', 'showHeads', 'showAnchors', 'placeholder'].forEach(function (id) { $(id).addEventListener('change', redraw); });
+
+  // ---- section 1: every set x camera
+  var sets = (art.vocab && art.vocab.sets) || {}, nav = '';
+  Object.keys(sets).forEach(function (setId) {
+    var h = document.createElement('h2'); h.id = 'set-' + setId; h.textContent = setId; $('sets').appendChild(h);
+    nav += '<a href="#set-' + setId + '">' + setId + '</a>';
+    var grid = document.createElement('div'); grid.className = 'grid'; $('sets').appendChild(grid);
+    sets[setId].cams.forEach(function (cam) {
+      var smp = (SAMPLES[setId] || {})[cam] || { cast: [], fx: [] };
+      var scene = { set: setId, cam: cam, opts: smp.opts || {}, cast: smp.cast || [], fx: smp.fx || [] };
+      figure(grid, scene, setId + ' / ' + cam, 'fx: ' + (scene.fx.join(', ') || 'none') + (Object.keys(scene.opts).length ? ' · opts: ' + JSON.stringify(scene.opts) : '') +
+        ' · cast: ' + scene.cast.map(function (m) { return m.who + '@' + (typeof m.at === 'string' ? m.at : 'xy') + ' ' + m.pose; }).join(', '));
+    });
+  });
+  var hx = document.createElement('h2'); hx.id = 'extras'; hx.textContent = 'options and edge cases'; $('sets').appendChild(hx);
+  nav += '<a href="#extras">extras</a>';
+  var gx = document.createElement('div'); gx.className = 'grid'; $('sets').appendChild(gx);
+  EXTRA.forEach(function (e) {
+    var scene = { set: e[0], cam: e[1], opts: e[2].opts || {}, cast: e[2].cast || [], fx: e[2].fx || [] };
+    figure(gx, scene, e[0] + ' / ' + e[1], e[3] + ' · fx: ' + (scene.fx.join(', ') || 'none'));
+  });
+
+  // ---- section 2: every frame of chapter 1, as the story asks for it
+  var ch = PC.story && PC.story.ch01;
+  if (ch && ch.frames) {
+    var h2 = document.createElement('h2'); h2.id = 'chapter'; h2.textContent = 'Chapter 1: ' + (ch.title || '') + ' (' + Object.keys(ch.frames).length + ' frames)';
+    $('chapter').appendChild(h2);
+    nav += '<a href="#chapter">chapter 1</a>';
+    var g2 = document.createElement('div'); g2.className = 'grid'; $('chapter').appendChild(g2);
+    Object.keys(ch.frames).forEach(function (id) {
+      var f = ch.frames[id], s = f.scene || {};
+      figure(g2, s, id + ' · ' + s.set + ' / ' + s.cam, 'fx: ' + ((s.fx || []).join(', ') || 'none') + (s.opts && Object.keys(s.opts).length ? ' · ' + JSON.stringify(s.opts) : ''),
+        (f.board || '').slice(0, 260));
+    });
+  } else {
+    $('chapter').innerHTML = '<p class="meta">app/story/ch01.js is not loaded, so the chapter section is empty.</p>';
+  }
+  $('nav').innerHTML = nav;
+  $('status').textContent = (realChar ? 'cats.js loaded' : 'no cats.js: placeholder cats') + ' · ' + panels.length + ' panels';
+})();
+</script>
+</body>
+</html>

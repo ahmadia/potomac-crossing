@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Potomac Crossing app icon: a cat on a stone wall, a dusk river, glass towers.
+       Full-bleed and opaque, with everything that matters inside the centre 80% (maskable safe). -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1538"/>
+      <stop offset="0.38" stop-color="#43295f"/>
+      <stop offset="0.62" stop-color="#a24f62"/>
+      <stop offset="0.76" stop-color="#ee8a4c"/>
+      <stop offset="0.82" stop-color="#ffc067"/>
+    </linearGradient>
+    <linearGradient id="glassA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4b3b80"/>
+      <stop offset="1" stop-color="#271e4e"/>
+    </linearGradient>
+    <linearGradient id="glassB" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a4590"/>
+      <stop offset="1" stop-color="#2b2154"/>
+    </linearGradient>
+    <linearGradient id="river" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3470"/>
+      <stop offset="1" stop-color="#1a1840"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a3c55"/>
+      <stop offset="1" stop-color="#2a2133"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff2b0"/>
+      <stop offset="0.5" stop-color="#ffd27a" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#ffb05a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#sky)"/>
+
+  <!-- stars and the moon -->
+  <g fill="#fff6dc">
+    <circle cx="92" cy="74" r="2.4"/><circle cx="150" cy="44" r="1.8"/><circle cx="214" cy="86" r="2"/>
+    <circle cx="300" cy="52" r="1.6"/><circle cx="64" cy="132" r="1.6"/><circle cx="452" cy="150" r="1.8"/>
+  </g>
+  <path d="M408 70a30 30 0 1 0 28 44a24 24 0 1 1 -28 -44z" fill="#ffe9a8"/>
+
+  <!-- the low sun behind the towers -->
+  <circle cx="300" cy="352" r="120" fill="url(#sun)"/>
+
+  <!-- glass towers -->
+  <g>
+    <rect x="34" y="176" width="74" height="200" fill="url(#glassA)"/>
+    <rect x="118" y="120" width="62" height="256" fill="url(#glassB)"/>
+    <rect x="190" y="198" width="54" height="178" fill="url(#glassA)"/>
+    <rect x="330" y="140" width="66" height="236" fill="url(#glassB)"/>
+    <rect x="406" y="104" width="72" height="272" fill="url(#glassA)"/>
+    <path d="M118 120 l62 -18 v18z" fill="#5a4590"/>
+    <path d="M406 104 l36 -22 l36 22z" fill="#4b3b80"/>
+  </g>
+  <!-- the sunset caught in the glass -->
+  <g fill="#ffc98a" opacity="0.22">
+    <path d="M34 300 l74 -60 v40 l-74 60z"/>
+    <path d="M118 250 l62 -50 v34 l-62 50z"/>
+    <path d="M330 260 l66 -54 v36 l-66 54z"/>
+    <path d="M406 230 l72 -58 v40 l-72 58z"/>
+  </g>
+  <!-- lit windows -->
+  <g fill="#ffd36b">
+    <rect x="46" y="196" width="10" height="8"/><rect x="86" y="232" width="10" height="8"/><rect x="66" y="268" width="10" height="8"/>
+    <rect x="130" y="144" width="9" height="8"/><rect x="160" y="186" width="9" height="8"/><rect x="130" y="230" width="9" height="8"/>
+    <rect x="200" y="220" width="9" height="8"/><rect x="226" y="262" width="9" height="8"/>
+    <rect x="344" y="166" width="10" height="8"/><rect x="372" y="208" width="10" height="8"/><rect x="344" y="250" width="10" height="8"/>
+    <rect x="418" y="128" width="10" height="8"/><rect x="456" y="170" width="10" height="8"/><rect x="418" y="214" width="10" height="8"/><rect x="456" y="258" width="10" height="8"/>
+  </g>
+
+  <!-- the river, with the sunset on it -->
+  <rect x="0" y="372" width="512" height="56" fill="url(#river)"/>
+  <g stroke="#ffb866" stroke-linecap="round" opacity="0.85">
+    <path d="M250 384h96" stroke-width="5"/>
+    <path d="M226 398h138" stroke-width="4" opacity="0.8"/>
+    <path d="M262 412h76" stroke-width="3.5" opacity="0.7"/>
+  </g>
+  <!-- the bridge, far off -->
+  <path d="M0 366 h512" stroke="#2a2152" stroke-width="6"/>
+  <g fill="#2a2152"><rect x="60" y="366" width="8" height="10"/><rect x="170" y="366" width="8" height="10"/><rect x="430" y="366" width="8" height="10"/></g>
+
+  <!-- the stone wall -->
+  <rect x="0" y="424" width="512" height="88" fill="url(#wall)"/>
+  <rect x="0" y="418" width="512" height="14" rx="3" fill="#5f4f6b"/>
+  <g stroke="#1e1726" stroke-width="3" opacity="0.6">
+    <path d="M0 462h512M0 496h512"/>
+    <path d="M70 432v30M168 432v30M262 432v30M362 432v30M452 432v30"/>
+    <path d="M24 462v34M118 462v34M214 462v34M312 462v34M408 462v34M496 462v34"/>
+  </g>
+
+  <!-- the cat on the wall, looking at the towers -->
+  <g fill="#140f22">
+    <ellipse cx="238" cy="372" rx="50" ry="50"/>
+    <path d="M198 416 Q196 384 214 356 L266 356 Q296 380 292 420 Z"/>
+    <path d="M260 340 Q268 384 270 420 L292 420 Q290 380 282 338 Z"/>
+    <circle cx="276" cy="302" r="34"/>
+    <path d="M252 286 L254 244 L280 274 Z"/>
+    <path d="M282 272 L306 238 L308 290 Z"/>
+    <path d="M196 410 C 162 416 150 452 170 474 C 178 482 188 478 184 470 C 172 452 182 432 204 426 Z"/>
+  </g>
+  <!-- warm rim light along the cat's back -->
+  <path d="M309 296 Q 306 326 288 346" fill="none" stroke="#ffb866" stroke-width="3" stroke-linecap="round" opacity="0.75"/>
+</svg>

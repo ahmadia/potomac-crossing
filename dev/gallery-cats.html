@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cats Gallery</title>
+<style>
+  :root { --bg: #f6efe2; --ink: #3b2f2a; --card: #fffaf0; --edge: #e6d6bb; --muted: #8a7a6c; }
+  body.dusk { --bg: #3e3352; --ink: #f3e9ff; --card: #574a70; --edge: #6d5f8a; --muted: #cbbde6; }
+  body.night { --bg: #141a2e; --ink: #e6ecff; --card: #212a45; --edge: #2f3a5c; --muted: #9aa6c8; }
+  body.grass { --bg: #7fae63; --ink: #20341a; --card: #93c174; --edge: #6e9c55; --muted: #2f4a26; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
+    font: 14px/1.4 ui-rounded, "Chalkboard SE", "Comic Sans MS", system-ui, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+  h1 { font-size: 20px; margin: 0 12px 0 0; }
+  h2 { font-size: 16px; margin: 22px 0 8px; border-bottom: 2px solid var(--edge); padding-bottom: 4px; }
+  h3 { font-size: 13px; margin: 10px 0 4px; color: var(--muted); font-weight: 600; }
+  nav a { color: var(--ink); margin-right: 10px; font-size: 13px; }
+  label { font-size: 13px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; margin-bottom: 6px; }
+  .cell { background: var(--card); border: 1px solid var(--edge); border-radius: 10px; padding: 4px; text-align: center; }
+  .cell svg { display: block; }
+  .cell small { display: block; font-size: 10.5px; color: var(--muted); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rowlabel { width: 86px; font-size: 12px; font-weight: 700; align-self: center; }
+  .wide svg { width: 100%; height: auto; max-width: 900px; }
+  .stage { background: linear-gradient(#ffd9a8, #f6b98a 60%, #8fbf6e 60%); border-radius: 12px; padding: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Potomac Crossing: cats gallery</h1>
+  <label>Size <select id="size"><option>90</option><option selected>120</option><option>160</option><option>220</option></select></label>
+  <label>Background <select id="bg"><option value="">paper</option><option>dusk</option><option>night</option><option>grass</option></select></label>
+  <nav id="nav"></nav>
+</header>
+<main id="out"></main>
+<script src="../app/art/cats.js"></script>
+<script>
+(function () {
+  var A = PC.art, V = A.vocab;
+  var q = new URLSearchParams(location.search);
+  var only = q.get('only');
+  var sizeSel = document.getElementById('size'), bgSel = document.getElementById('bg');
+  if (q.get('size')) {
+    if (![].some.call(sizeSel.options, function (o) { return o.value === q.get('size'); })) sizeSel.add(new Option(q.get('size')));
+    sizeSel.value = q.get('size');
+  }
+  if (q.get('bg')) bgSel.value = q.get('bg');
+  var CATS = ['player', 'tallyheart', 'glintstar', 'waffles', 'grizzled', 'snorer', 'mutterer', 'snorter'];
+  var CLAN = [1, 2, 3, 4, 5, 6];
+  var POSE_MOOD = { sit: 'neutral', stand: 'happy', walk: 'happy', crouch: 'stern', curl: 'sleepy', loaf: 'kind',
+    lookup: 'wonder', flat: 'scared', lie: 'kind', fall: 'laugh', stretch: 'proud', peer: 'wonder' };
+
+  function svgOf(r, size) {
+    var h = size * r.h / r.w;
+    return '<svg viewBox="0 0 ' + r.w + ' ' + r.h + '" width="' + size + '" height="' + h + '">' + r.svg + '</svg>';
+  }
+  function cell(r, label, size) {
+    return '<div class="cell">' + svgOf(r, size) + '<small title="' + label + '">' + label + '</small></div>';
+  }
+  function who(id) { return typeof id === 'number' ? ['clancat', { variant: id }] : [id, {}]; }
+  function ch(id, o) {
+    var w = who(id), opts = Object.assign({}, w[1], o);
+    return A.character(w[0], opts);
+  }
+  function name(id) { return typeof id === 'number' ? 'clancat ' + id : id; }
+
+  var sections = {
+    focus: ['Focus (?only=focus&ids=a,b&pose=sit&mood=neutral&facing=right&size=360)', function (S) {
+      if (only !== 'focus') return '';
+      var h = '<div class="row">';
+      var list = [];
+      (q.get('ids') || 'tallyheart').split(',').forEach(function (id) {
+        (q.get('mood') === 'all' ? V.moods : [q.get('mood') || 'neutral']).forEach(function (m) {
+          (q.get('pose') === 'all' ? V.poses : [q.get('pose') || 'sit']).forEach(function (p) { list.push([id, m, p]); });
+        });
+      });
+      list.forEach(function (it) {
+        var id = it[0];
+        var o = { pose: it[2], mood: it[1], facing: q.get('facing') || 'right' };
+        var r;
+        if (/^\d$/.test(id)) r = ch(+id, o);
+        else if (id.indexOf(':') > 0) { var f = id.split(':'); r = A.cat(Object.assign(o, { look: { fur: f[0], marking: f[1] || 'none', eyes: f[2] || 'green', sex: f[3] || 'she' } })); }
+        else r = A.character(id, Object.assign(o, id === 'tallone' ? { pose: q.get('pose') || 'stand' } : id === 'sparrow' ? { pose: q.get('pose') || 'perch' } : {}));
+        h += cell(r, id + ' · ' + o.pose + ' · ' + o.mood, S);
+      });
+      return h + '</div>';
+    }],
+    sheet: ['Model sheet', function (S) {
+      var h = '<div class="row">';
+      CATS.concat(CLAN).forEach(function (id) { h += cell(ch(id, { pose: 'sit', mood: 'neutral' }), name(id), S * 1.6); });
+      return h + '</div>';
+    }],
+    poses: ['Every pose (mood per pose)', function (S) {
+      var h = '';
+      CATS.concat([1, 4]).forEach(function (id) {
+        h += '<div class="row"><div class="rowlabel">' + name(id) + '</div>';
+        V.poses.forEach(function (p) { h += cell(ch(id, { pose: p, mood: POSE_MOOD[p] }), p + ' · ' + POSE_MOOD[p], S); });
+        h += '</div>';
+      });
+      return h;
+    }],
+    neutralposes: ['Every pose, neutral', function (S) {
+      var h = '';
+      ['tallyheart', 'player', 'waffles'].forEach(function (id) {
+        h += '<div class="row"><div class="rowlabel">' + name(id) + '</div>';
+        V.poses.forEach(function (p) { h += cell(ch(id, { pose: p, mood: 'neutral' }), p, S); });
+        h += '</div>';
+      });
+      return h;
+    }],
+    moods: ['Every mood (sit)', function (S) {
+      var h = '';
+      CATS.concat([2, 6]).forEach(function (id) {
+        h += '<div class="row"><div class="rowlabel">' + name(id) + '</div>';
+        V.moods.forEach(function (m) { h += cell(ch(id, { pose: 'sit', mood: m }), m, S); });
+        h += '</div>';
+      });
+      return h;
+    }],
+    left: ['Facing left', function (S) {
+      var h = '';
+      CATS.forEach(function (id) {
+        h += '<div class="row"><div class="rowlabel">' + name(id) + '</div>';
+        ['sit', 'stand', 'walk', 'lie', 'peer', 'stretch'].forEach(function (p) {
+          h += cell(ch(id, { pose: p, mood: POSE_MOOD[p], facing: 'left' }), p + ' ←', S);
+        });
+        h += cell(ch(id, { pose: 'sit', mood: 'neutral', facing: 'right' }), 'sit →', S);
+        h += '</div>';
+      });
+      return h;
+    }],
+    looks: ['Player looks', function (S) {
+      var h = '<h3>fur × marking (green eyes, she-cat)</h3>';
+      V.looks.fur.forEach(function (f) {
+        h += '<div class="row"><div class="rowlabel">' + f + '</div>';
+        V.looks.marking.forEach(function (m) {
+          h += cell(A.cat({ look: { fur: f, marking: m, eyes: 'green', sex: 'she' }, pose: 'sit', mood: 'neutral' }), m, S);
+        });
+        h += cell(A.cat({ look: { fur: f, marking: 'none', eyes: 'amber', sex: 'tom' }, pose: 'stand', mood: 'happy' }), 'tom · stand', S);
+        h += cell(A.cat({ look: { fur: f, marking: 'white-paws', eyes: 'blue', sex: 'she' }, pose: 'walk', mood: 'happy', facing: 'left' }), 'paws · walk', S);
+        h += cell(A.cat({ look: { fur: f, marking: 'back-stripe', eyes: 'copper', sex: 'she' }, pose: 'crouch', mood: 'stern' }), 'stripe · crouch', S);
+        h += '</div>';
+      });
+      h += '<h3>eyes</h3>';
+      ['black', 'white', 'ginger', 'grey'].forEach(function (f) {
+        h += '<div class="row"><div class="rowlabel">' + f + '</div>';
+        V.looks.eyes.forEach(function (e) {
+          h += cell(A.cat({ look: { fur: f, marking: 'none', eyes: e, sex: 'she' }, pose: 'sit', mood: 'neutral' }), e, S);
+          h += cell(A.cat({ look: { fur: f, marking: 'none', eyes: e, sex: 'tom' }, pose: 'sit', mood: 'neutral', facing: 'left' }), e + ' tom ←', S);
+        });
+        h += '</div>';
+      });
+      return h;
+    }],
+    small: ['Small sizes (moods at 120, 80, 60)', function (S) {
+      var h = '';
+      [120, 80, 60].forEach(function (sz) {
+        h += '<div class="row"><div class="rowlabel">' + sz + 'px</div>';
+        ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn'].forEach(function (m, i) {
+          var id = ['tallyheart', 'player', 'glintstar', 'waffles', 'snorter', 'mutterer', 'snorer', 'snorter', 'grizzled', 'tallyheart', 'glintstar', 'tallyheart', 'waffles', 'glintstar'][i];
+          h += cell(ch(id, { pose: 'sit', mood: m }), m, sz);
+        });
+        h += '</div>';
+      });
+      return h;
+    }],
+    others: ['The Tall One, sparrow, moth', function (S) {
+      var h = '<div class="row">';
+      ['stand', 'water', 'set-dish'].forEach(function (p) {
+        h += cell(A.character('tallone', { pose: p }), 'tallone ' + p, S * 1.2);
+        h += cell(A.character('tallone', { pose: p, facing: 'left' }), p + ' ←', S * 1.2);
+      });
+      h += '</div><div class="row">';
+      ['perch', 'fluffed'].forEach(function (p) {
+        h += cell(A.character('sparrow', { pose: p }), 'sparrow ' + p, S);
+        h += cell(A.character('sparrow', { pose: p, facing: 'left' }), p + ' ←', S);
+      });
+      h += cell(A.character('moth', { pose: 'fly' }), 'moth', S);
+      h += cell(A.character('moth', { pose: 'fly', facing: 'left' }), 'moth ←', S);
+      h += '</div>';
+      // relative scale: the Tall One next to cats, a sparrow and a moth at one world scale
+      var k = 0.6, stage = '<svg viewBox="0 0 900 400" width="900" height="400">';
+      function put(r, x) { stage += '<g transform="translate(' + x + ',' + (390 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; }
+      put(A.character('tallone', { pose: 'stand' }), 40);
+      put(A.character('player', { pose: 'sit', mood: 'wonder', look: { fur: 'black', marking: 'white-paws', eyes: 'green' } }), 220);
+      put(A.character('tallyheart', { pose: 'sit', mood: 'kind', facing: 'left' }), 360);
+      put(A.character('glintstar', { pose: 'sit', mood: 'stern', facing: 'left' }), 500);
+      put(A.character('waffles', { pose: 'sit', mood: 'laugh', facing: 'left' }), 640);
+      put(A.character('sparrow', { pose: 'perch' }), 800);
+      put(A.character('moth', { pose: 'fly' }), 850);
+      stage += '</svg>';
+      h += '<h3>one scale, together</h3><div class="stage">' + stage + '</div>';
+      return h;
+    }],
+    counts: ['Counts pictures', function (S) {
+      var h = '';
+      [[1, 0], [3, 2], [5, 5], [8, 3], [10, 7]].forEach(function (g) {
+        h += '<h3>table 1 · groups ' + g[0] + ' · highlight ' + g[1] + '</h3><div class="wide">' + A.countsPicture({ table: 1, groups: g[0], highlight: g[1] }) + '</div>';
+      });
+      [[2, 3, 3], [3, 4, 5], [4, 3, 6], [5, 3, 7], [10, 2, 13], [6, 2, 4]].forEach(function (g) {
+        h += '<h3>table ' + g[0] + ' · groups ' + g[1] + ' · highlight ' + g[2] + '</h3><div class="wide">' + A.countsPicture({ table: g[0], groups: g[1], highlight: g[2] }) + '</div>';
+      });
+      return h;
+    }],
+    sand: ['Sand tallies', function (S) {
+      var h = '';
+      [[3, 1, 2], [1, 5, 3], [6, 1, 6], [9, 1, 4], [1, 10, 7], [4, 2, 5]].forEach(function (g) {
+        h += '<h3>groups ' + g[0] + ' · per ' + g[1] + ' · counted ' + g[2] + '</h3><div class="wide" style="max-width:560px">' + A.sand({ groups: g[0], per: g[1], counted: g[2] }) + '</div>';
+      });
+      return h;
+    }]
+  };
+
+  var nav = document.getElementById('nav');
+  nav.innerHTML = Object.keys(sections).map(function (k) { return '<a href="?only=' + k + '">' + k + '</a>'; }).join('') + '<a href="?">all</a>';
+
+  function render() {
+    var S = +sizeSel.value;
+    document.body.className = bgSel.value;
+    var h = '';
+    Object.keys(sections).forEach(function (k) {
+      if (only && only !== k) return;
+      if (!only && k === 'focus') return;
+      h += '<section id="' + k + '"><h2>' + sections[k][0] + '</h2>' + sections[k][1](S) + '</section>';
+    });
+    document.getElementById('out').innerHTML = h;
+  }
+  sizeSel.onchange = render;
+  bgSel.onchange = render;
+  render();
+})();
+</script>
+</body>
+</html>

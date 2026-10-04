@@ -8,7 +8,9 @@ Potomac Crossing is a story game Aron is designing for Lissa (8) and her friends
 - **Where it lives.** Development happens on the Mac mini, in `~/potomac-crossing` (since
   2026-10-04). GitHub `ahmadia/potomac-crossing` is the shared remote, and GitHub Pages serves
   `main` at https://ahmadia.github.io/potomac-crossing/. The Air's copy is frozen: it has a
-  `MOVED-TO-MINI` note and is not edited.
+  `MOVED-TO-MINI` note and is not edited. The mini pushes with a **deploy key** that reaches
+  this repo only: SSH alias `github-potomac-crossing`, key `~/.ssh/potomac_crossing_deploy`,
+  repo deploy key 165338954 (revoke under Settings > Deploy keys).
 - **Phase: chapter 1 is live.** It deploys whenever `main` is pushed. The stack and file layout
   are in `docs/build.md`; follow it. Static site, no build step, no dependencies.
   **Bump `CACHE` in `sw.js` whenever a cached file changes**, or installed iPads keep the old
@@ -45,6 +47,9 @@ Potomac Crossing is a story game Aron is designing for Lissa (8) and her friends
 - **Clicks after a resize.** In the browser pane, after `resize_window`, coordinate clicks can
   land far off-screen. Before chasing a "button doesn't work" bug, confirm with
   `elementFromPoint` and a `pointerdown` listener.
+- **`gh` on the mini** is logged in through the macOS keychain, which SSH sessions can't
+  read, so `gh auth status` over SSH reports the token as invalid. Git pushes don't need
+  `gh`; they use the deploy key.
 - **Potion Lab's cache.** Potion Lab shares the `ahmadia.github.io` origin, and its `sw.js`
   deletes every cache but its own when it updates. That empties this game's offline copy until
   the next online visit. The fix belongs in Potion Lab and has not been made.

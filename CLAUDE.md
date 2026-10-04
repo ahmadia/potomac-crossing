@@ -17,7 +17,8 @@ Potomac Crossing is a story game Aron is designing for Lissa (8) and her friends
   `node --test tests/` fails, because a directory argument is read as a file). On the mini, Node
   is the official LTS build installed in user space at `~/.local/node` (not Homebrew), put on
   PATH by `~/.zprofile`. Regenerate the storyboard with `node tools/storyboard.mjs` whenever
-  `app/story/` or the tool changes; never hand-edit `docs/storyboard/`.
+  `app/story/` or the tool changes; never hand-edit `docs/storyboard/`
+  (`tests/storyboard.test.js` fails when it is stale).
 - Local check: `python3 -m http.server 8790` in the repo root, then `http://localhost:8790/`;
   `dev/gallery.html` shows all the art.
 - **Decisions are Aron's.** Add new ones to the README's list with a date. A proposal moves

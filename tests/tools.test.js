@@ -17,3 +17,11 @@ test('shots.mjs: on a locked screen each shot gets a fresh short session; LOCKED
   assert.equal(ask.status, 0, ask.stderr);
   assert.match(ask.stdout, /^(locked|unlocked): /, 'reads the lock from the window server, or says unlocked when it cannot');
 });
+
+test('shots.mjs: STORY=fixture3 stands the fixture chapter 3 in (chapter 3’s screens before its story is written); STORY=fixture keeps chapter 2’s', () => {
+  const run = (story) => spawnSync(process.execPath, [SHOTS, '--lock'], { encoding: 'utf8', env: Object.assign({}, process.env, { LOCKED: '1', STORY: story }) });
+  assert.match(run('fixture3').stdout, /stories from tests\/fixtures\/chapters\.js: ch03$/m);
+  assert.match(run('fixture').stdout, /stories from tests\/fixtures\/chapters\.js: ch02$/m);
+  assert.match(run('fixture,fixture3').stdout, /: ch02, ch03$/m);
+  assert.doesNotMatch(run('').stdout, /stories from/);
+});

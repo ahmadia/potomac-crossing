@@ -888,7 +888,9 @@ test('counts: every set’s facts, in order, with their arithmetic and pictures'
   assert.equal(e.done, 'That’s the twos.');
   assert.deepEqual(e.praise, ['You hopped it!', 'Two by two, like a real hunter.', 'Yes! Two ears for every cat.', 'Two ears, every time.', 'Ears are trickier than tails, and you’re doing it anyway.']);
   assert.deepEqual(e.fast, ['You didn’t even have to hop that time.', 'Quick as a pounce!', 'You knew that one before I finished asking.']);
-  assert.deepEqual(e.fastAfterMiss, ['Ha! You didn’t even look at the sand that time.']);
+  // chapter 3's Build notes: "scratches", true at the den doorway and the pile (which borrow these
+  // questions and scratch them in the earth) and in the Hollow alike
+  assert.deepEqual(e.fastAfterMiss, ['Ha! You didn’t even look at the scratches that time.']);
   e.fast.forEach(l => assert.doesNotMatch(l, /sand/, 'a fast line with no miss before it has no sand to mention'));
   assert.match(e.helpIntro, /^Close\. /);
   assert.equal(e.helpIntroFar, e.helpIntro.replace(/^Close\.\s*/, ''));

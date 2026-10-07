@@ -132,7 +132,7 @@ box), and Clan cats find every one of them very strange. Players can coin more.
 6. **Noticing, and thinking for yourself.** Look closely, ask questions, and check what everyone
    "knows." Being young doesn't make you wrong.
 7. **Fairness.** Judge others by what they do, not by how they look. Everyone deserves a fair
-   hearing. She was doubted for being a pillow cat, so she gives Drizzle the fair hearing she got.
+   hearing. She was doubted for being a pillow cat, so she gives Sprinkle the fair hearing she got.
 8. **Kindness to the small and the hurt.**
 9. **Belonging and home.** The Clan is family. Goodbyes can be happy and sad at once.
 10. **Wonder in familiar places.** Her own river, seen the way a cat sees it.
@@ -165,6 +165,7 @@ Teaching order: 1, 2, 5, 10, then 3 and 4. How module one teaches them is in
 2. **The group game, later:** the friends meet at the Crossing and compare which dragonets
    each of them found. Finished players leave their favorite stones on a cairn at the
    Crossing, which is how they first learn the others exist.
-3. **Warrior names come in a later module**, and what each player did in module one is part
-   of theirs.
+3. **Warrior names come at the end of module one** (2026-10-06): passing the Warrior Counts opens
+   a Warrior Ceremony chapter after chapter 10, and what each player did this moon is part of
+   her name.
 4. **A hook:** a badger's track in the mud upriver.

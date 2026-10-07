@@ -7,13 +7,21 @@
  *   node tools/shots.mjs OUTDIR f077 f034                 chapter 1 frames
  *   node tools/shots.mjs OUTDIR ch02:f010 ch02:f031a      another chapter's frames (PC.debug.goto(frame, chapter))
  *   node tools/shots.mjs OUTDIR ch01:f062@againBtn        open a frame, then tap a button on it (here: the lesson)
+ *   WAIT=3500 node tools/shots.mjs OUTDIR ch03:f060@nextBtn@keys=1,2,ok   tap, then type on the keypad (a miss: the help);
+ *                                                         locked, a shot taken that late in its session comes back
+ *                                                         blank, so use DUMP=1 there (the markup), or shoot unlocked
  *   node tools/shots.mjs OUTDIR hub book hollow nest who title    the other screens
+ *   node tools/shots.mjs OUTDIR book#ch03 book#dragonets  the book, scrolled to a chapter's page or the dragonets
  *   node tools/shots.mjs --lock                           is the screen locked (so: a session a shot)? no Safari
  *   SIZE=820x1180 node tools/shots.mjs …                  iPad portrait (default 1180x820, landscape)
  *   CAT='{"name":"Moon","finished":["ch01","ch02"],"at":"ch02:f090",…}' node tools/shots.mjs …
  *   EXTRA=2 node tools/shots.mjs OUTDIR who               two more cats on the device (one partway, one new)
  *   STORY=fixture node tools/shots.mjs …                  chapter 2 replaced by tests/fixtures/chapters.js's (in
- *                                                         the page only), to see chapter-2 screens before it is written
+ *                                                         the page only), to see chapter-2 screens before it is written;
+ *                                                         STORY=fixture3 does the same for chapter 3 (both: fixture,fixture3)
+ *   DUMP=1 node tools/shots.mjs OUTDIR …                  no screenshots: each target's screen markup with the art
+ *                                                         emptied (OUTDIR/target.html), to diff ui.js's lettering and
+ *                                                         layout before and after a change
  *   SHEET=1 node tools/shots.mjs OUTDIR nest who f085 hub four targets to a contact sheet (2 × 2, each a full-size
  *                                                         page shown at half size), one screenshot a sheet; more
  *                                                         targets make more sheets. The panes are fitted to the
@@ -75,10 +83,24 @@ function screenLocked() {
   try { return /"CGSSessionScreenIsLocked"=Yes/.test(execFileSync('ioreg', ['-n', 'Root', '-d1'], { encoding: 'utf8' })); } catch { return false; }
 }
 const LOCKED = process.env.LOCKED != null && process.env.LOCKED !== '' ? process.env.LOCKED === '1' : screenLocked();
-// `node tools/shots.mjs --lock`: say which way it would shoot, and stop (no Safari, no server)
-if (argv[0] === '--lock') { console.log(LOCKED ? 'locked: a fresh short session for each shot' : 'unlocked: one session for every shot'); process.exit(0); }
+
 const DRY = !!process.env.DRY;   // no screenshots: print what each target's screen says (free to run, nothing to look at)
-const FIXTURE = process.env.STORY === 'fixture' ? require(join(ROOT, 'tests/fixtures/chapters.js'))().ch02 : null;
+// DUMP=1: no screenshots: save each target's screen markup with the art emptied (OUTDIR/target.html),
+// to compare the lettering and layout ui.js draws before and after a change (cmp or diff the files)
+const DUMP = !!process.env.DUMP;
+const DUMP_JS = `var s = document.getElementById('screen').cloneNode(true);
+  Array.prototype.forEach.call(s.querySelectorAll('.art, .sface, .face, .portrait, .dn-pic'), function (a) { a.innerHTML = ''; });
+  return '<!-- ' + innerWidth + 'x' + innerHeight + ' -->\\n' + s.innerHTML.replace(/></g, '>\\n<');`;
+// STORY=fixture: chapter 2 replaced by the fixture's; STORY=fixture3: chapter 3 (both: STORY=fixture,fixture3)
+const STORIES = String(process.env.STORY || '').split(',');
+const FX = STORIES.some(x => /^fixture3?$/.test(x)) ? require(join(ROOT, 'tests/fixtures/chapters.js'))() : null;
+const FIXTURE = FX ? Object.assign({}, STORIES.includes('fixture') ? { ch02: FX.ch02 } : {}, STORIES.includes('fixture3') ? { ch03: FX.ch03 } : {}) : null;
+// `node tools/shots.mjs --lock`: say which way it would shoot (and which chapters a STORY stands in), and stop (no Safari, no server)
+if (argv[0] === '--lock') {
+  console.log(LOCKED ? 'locked: a fresh short session for each shot' : 'unlocked: one session for every shot');
+  if (FIXTURE) console.log('stories from tests/fixtures/chapters.js: ' + Object.keys(FIXTURE).join(', '));
+  process.exit(0);
+}
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
@@ -114,7 +136,7 @@ const STILL = `if (!document.getElementById('shots-still')) document.head.insert
 /* Runs in the page: a fresh device with one test cat (save version 2) set up as CAT says. */
 const SETUP = `
   var o = arguments[0], fixture = arguments[1], E = PC.engine;
-  if (fixture) PC.story.ch02 = fixture;
+  if (fixture) Object.keys(fixture).forEach(function (k) { PC.story[k] = fixture[k]; });
   localStorage.clear(); PC.debug.reset();
   var first = E.firstChapter(PC.story);
   PC.debug.goto(first.start, first.id);
@@ -194,7 +216,7 @@ async function session(fn) {
       await wd('POST', S + '/url', { url: site });
       await sleep(LOCKED ? 350 : 800);
       await run(STILL);
-      if (FIXTURE) await run('PC.story.ch02 = arguments[0]; return true;', [FIXTURE]);
+      if (FIXTURE) await run('var fx = arguments[0]; Object.keys(fx).forEach(function (k) { PC.story[k] = fx[k]; }); return true;', [FIXTURE]);
       if (!told) console.log('cats on the device: ' + more);
     }
     return await fn(S, run);
@@ -205,7 +227,10 @@ async function session(fn) {
 
 /* Up to four targets, each in a full-size frame of the game, on one page: the panes are scaled to the
  * page's own measured size (clientWidth/clientHeight: a scroll bar, page zoom, a window the screen
- * could not make big enough), then checked, so the right-hand column always fits. */
+ * could not make big enough), then checked, so the right-hand column always fits. Each pane sets up
+ * its own test cat (SETUP, run in the pane's window): in Safari's automation session here,
+ * localStorage does not carry from one document to another, so a pane never sees the cat the
+ * outer page saved (it would open on "Who's playing?"). */
 async function sheet(S, run, four) {
   const ready = await run(`
     var site = arguments[0], n = arguments[1], W = arguments[2], H = arguments[3];
@@ -229,17 +254,20 @@ async function sheet(S, run, four) {
   }
   const res = await run(`
     var out = [], frames = document.querySelectorAll('iframe'), targets = arguments[0], still = arguments[1], fixture = arguments[2];
+    var setup = arguments[3], cat = arguments[4];
     for (var i = 0; i < frames.length; i++) {
       var w = frames[i].contentWindow, PC = w.PC, t = targets[i].split('@'), target = t[0];
       try {
         w.eval(still);
-        if (fixture) PC.story.ch02 = fixture;
+        // the test cat, set up in the pane's own window (its PC, its storage), as SETUP does a page
+        var made = new w.Function(setup).apply(null, [cat, fixture]);
+        if (made !== true) { out.push(targets[i] + ': setting up the test cat: ' + made); continue; }
         if (/^(hub|book|hollow|nest|who|title)$/.test(target)) PC.debug.go(target, { from: 'hub' });
         else { var cf = target.indexOf(':') >= 0 ? target.split(':') : ['ch01', target]; var r = PC.debug.goto(cf[1], cf[0]); if (r !== cf[1]) { out.push(targets[i] + ': ' + r); continue; } }
         out.push(true);
       } catch (e) { out.push(targets[i] + ': ' + e.message); }
     }
-    return out;`, [four, '(function(){' + STILL.replace(/return true;$/, '') + '})()', FIXTURE]);
+    return out;`, [four, '(function(){' + STILL.replace(/return true;$/, '') + '})()', FIXTURE, SETUP, CAT]);
   res.forEach((r) => { if (r !== true) console.error(r); });
   if (four.some(t => t.includes('@'))) {
     await sleep(450);   // past each page's double-tap guard
@@ -266,29 +294,45 @@ async function sheet(S, run, four) {
     return;
   }
   const png = await wd('GET', S + '/screenshot');
-  const file = join(outDir, 'sheet-' + four.map(t => t.replace(/[:@]/g, '-')).join('_') + '.png');
+  const file = join(outDir, 'sheet-' + four.map(t => t.replace(/[:@#]/g, '-')).join('_') + '.png');
   await writeFile(file, Buffer.from(png, 'base64'));
   console.log(file);
 }
 
 /* One target on its own page: open it (and tap a button on it), then shoot. */
 async function shoot(S, run, t) {
-  const [target, click] = t.split('@');
+  const [target0, ...clicks] = t.split('@');
+  // book#ch03 or book#dragonets: the book, scrolled to that page
+  const [target, anchor] = target0.split('#');
   const screen = /^(hub|book|hollow|nest|who|title)$/.test(target);
   const [ch, fid] = target.includes(':') ? target.split(':') : ['ch01', target];
   const ok = await run(screen
-    ? 'if (!PC.debug.cat()) PC.debug.go("who"); else PC.debug.go(arguments[0], { from: "hub" }); return true;'
-    : 'var r = PC.debug.goto(arguments[1], arguments[0]); return r === arguments[1] || r;', screen ? [target] : [ch, fid]);
+    ? 'if (!PC.debug.cat()) PC.debug.go("who"); else PC.debug.go(arguments[0], { from: "hub" });' +
+      'var a = arguments[1] && document.getElementById("book-" + arguments[1]); if (arguments[1] && !a) return "no page " + arguments[1]; if (a) a.scrollIntoView({ block: "start" }); return true;'
+    : 'var r = PC.debug.goto(arguments[1], arguments[0]); return r === arguments[1] || r;', screen ? [target, anchor || null] : [ch, fid]);
   if (ok !== true) { console.error(t + ': ' + ok); return; }
-  if (click) {
+  // each @ taps a button by its id, in turn; @keys=3,4,ok presses the lesson's keypad (a wrong answer
+  // shows the help: WAIT=ms waits for its count before the shot)
+  for (const click of clicks) {
     await sleep(LOCKED ? 420 : 600);   // past the double-tap guard
-    const c = await run('var b = document.getElementById(arguments[0]); if (!b) return "no #" + arguments[0]; b.click(); return true;', [click]);
+    const c = await run('var k = /^keys=/.test(arguments[0]) ? arguments[0].slice(5).split(",") : null;' +
+      'if (k) { for (var i = 0; i < k.length; i++) { var kb = document.querySelector(".key[data-k=\\"" + k[i] + "\\"]"); if (!kb) return "no key " + k[i]; kb.click(); } return true; }' +
+      'var b = document.getElementById(arguments[0]); if (!b) return "no #" + arguments[0]; b.click(); return true;', [click]);
     if (c !== true) { console.error(t + ': ' + c); return; }
   }
-  await sleep(LOCKED ? 450 : 900);   // fonts and layout (and, unlocked, the entrance animation)
+  await sleep((LOCKED ? 450 : 900) + (+process.env.WAIT || 0));   // fonts and layout (and, unlocked, the entrance animation)
   if (DRY) { console.log(t + ': ' + await run('return document.getElementById("screen").innerText.replace(/\\s+/g, " ").slice(0, 300);')); return; }
+  if (DUMP) {
+    // the page's own markup, the lettering laid out over the panel included, with the art's drawings
+    // (the panel, the speakers' faces, the portraits) emptied: what ui.js put on the screen
+    const html = await run(DUMP_JS);
+    const file = join(outDir, t.replace(/[:@#]/g, '-') + '.html');
+    await writeFile(file, html);
+    console.log(file);
+    return;
+  }
   const png = await wd('GET', S + '/screenshot');
-  const file = join(outDir, t.replace(/[:@]/g, '-') + '.png');
+  const file = join(outDir, t.replace(/[:@#]/g, '-') + '.png');
   await writeFile(file, Buffer.from(png, 'base64'));
   console.log(file);
 }

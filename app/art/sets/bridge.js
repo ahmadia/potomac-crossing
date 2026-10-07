@@ -1,10 +1,10 @@
 /* Potomac Crossing · app/art/sets/bridge.js
  *
- * The set: the Old Bridge (chapter 2), the rail bridge's near (Virginia) end, by day: old stone
+ * The set: the Old Bridge (chapters 2 and 3), the rail bridge's near (Virginia) end, by day: old stone
  * legs, an iron truss on top, the river brown and swirly after the storm, the reeds squashed flat.
  *
- * Four compositions in the 1600 x 1000 world, one per camera (docs/build.md, "Art vocabulary,
- * chapter 2"), each camera showing the whole of its own:
+ * Five compositions in the 1600 x 1000 world, one per camera (docs/build.md, "Art vocabulary,
+ * chapter 2", and "Chapter 3 (v0.4)"), each camera showing the whole of its own:
  *   main   `bank`: wide from the riverbank. The bridge runs from its near end at the left out
  *          across the river to the right; the dark space under the near end sits at the left, a
  *          rock at its shadow's edge, and a trail of drag marks through flattened reeds comes up
@@ -21,14 +21,37 @@
  *          running on into the dark; dry ground rising at the back to meet the deck; drips.
  *          Anchors: `mud` (by the water, front), `inside` (further in, on the marks).
  *   back   `back`: the very back of the dark. A heap of old stones with a dry nook in it, where
- *          `eyes` shows two big round shining eyes ('open'), half closed ('blink'), or nothing.
- *          Anchor: `near` (big, bottom left, looking in; a ridge of mud hides its paws).
+ *          `eyes` shows two big round shining eyes ('open'), half closed ('blink'), or nothing;
+ *          'sprinkle' (chapter 3) draws them at her size, where her face is at `dragon` next panel.
+ *          Anchors: `near` (big, bottom left, looking in; a ridge of mud hides its paws), and
+ *          (chapter 3) `dragon` (Sprinkle's spot, sitting in the nook's mouth, a heron-sized dragonet
+ *          whose head is well above any cat's, facing the way in), `beside` (a cat pressed against
+ *          her flank, a step nearer, so drawn after her it sits against her body: list Sprinkle first),
+ *          `back-left` and `back-right` (Riffle and Tallyheart, nearer, either side of her). Depth
+ *          runs h = y - 560 here (a cat-height camera), so the four sit in one believable floor.
+ *   paws   `paws` (chapter 3): the dry floor at the back of the dark, close, from above; with
+ *          `pawsIn: true` the three forepaws of the promise piled in a warm pool of light, fanned
+ *          and offset so all fifteen claws show and can be counted: hers (from the player's look,
+ *          its fur and white paws), Sprinkle's (big, mist grey, five long pale claws) and Riffle's
+ *          (webbed, brown). Frame art, not a Counts picture. No anchors: a face is never in it.
  *
  * Options: `train: true` (an Ironsnake crossing on top: the whole train in `bank`, its cars and
  * wheels right overhead in `mouth`, grit shaken down in `under` and `back`), `eyes` ('none' |
  * 'open' | 'blink', drawn in `back`, and small in `under`; the render's `keep` names them so the
  * lettering stays off), `drag` (default true), `drips` (default true; they fall with the shared
  * pcs-float animation, so reduced motion leaves them hanging).
+ * Chapter 3: `pebble: 'in' | 'out' | 'paws'` (`mouth` and `under`: Riffle's fifth juggling pebble,
+ * a plain round brown one, in the dark, rolling out, or at her paws: the player's, else the first
+ * cat's, else a spot of the camera's own; kept clear of the lettering), `branch: true` (a fallen
+ * branch dragged across the back: in `back`, in front of `dragon`, so she can peek over it; small,
+ * a heap of sticks, at the far back in `under`), `prints: true` (Sprinkle's big five-claw prints,
+ * each as big as a heron's foot, beside the drag marks in `under` and `back`, alternating sides,
+ * never mentioned: chapter 7 compares the weasel's tiny ones against them; off by default so
+ * chapter 2's frames keep their look, and chapter 3 and every later chapter set it wherever the
+ * drag marks show), `pawsIn: true` (the `paws` camera's three forepaws; with `hop: true` each paw's
+ * five claws lit gold and its running total, 5, 10, 15, lettered beyond them). At `sunset` and `dusk`
+ * the light under the bridge changes (chapter 2 is all `day`): the low sun reaches far in as long
+ * gold shafts, or dusk leaves a soft rose light by the way in, so the dark still reads.
  *
  * The dark is mysterious and a little sad, never scary: cool blues with faint shapes of stones and
  * mud in them, soft rounded shapes, a warm rim of daylight at its edges, and gentle round eyes.
@@ -576,6 +599,9 @@
     if (o.drips !== false) {
       inner += drip(S, 520, 292, 330, 4.5, 0.7, c.drop, c.dark4) + drip(S, 800, 300, 400, 3.8, 1.6, c.drop, c.dark4) + drip(S, 340, 296, 420, 4, 0.2, c.drop, c.dark4);
     }
+    // chapter 3: Riffle's fifth pebble, in the dark at the foot of the slope, rolling out, or at her paws
+    var peb = pebbleProp(S, c, o.pebble, [620, 806, 262], [1000, 975, 337]);
+    inner += peb.back;
     back += g(inner, { 'clip-path': clipIn });
     // the right-hand leg: old stone, sunlit on its right, the flood's debris piled at its foot
     var leg = stoneFace(S, [[1070, gBot(1070) - 4], [1270, gBot(1270) - 4], [1282, 818], [1062, 818]], { rows: 11, per: 2, seed: 521, col: c.stone, dk: c.stoneDk, lt: c.stoneLt, rim: p.rim, rimOp: 0.6, lw: 3, moss: 0.3, mossW: 20 });
@@ -652,6 +678,7 @@
     var fr = [];
     for (i = 0; i < 12; i++) fr.push([-30 + r() * 140, 1000 + r() * 14, 120 + r() * 120]);
     front += g(reedBed(S, c, fr, { seed: 546, lean: 0.5, k: 2.4 }), { filter: S.shadow('s') });
+    front += peb.front;
     // the rain only falls outside
     S.weatherClip = S.clip('brmrain', path('M0 0H1600V1000H0Z' + opening, '#fff', { 'clip-rule': 'evenodd' }));
     return { back: back, over: over, front: front };
@@ -719,11 +746,25 @@
     for (i = 0; i < 70; i++) { x = 540 + r() * 1060; y = 560 + Math.pow(r(), 1.3) * 440; dots += blob(x, y, 2 + (y - 540) * 0.025 + r() * 4, 1.5 + (y - 540) * 0.012, 6, r, 0.3, 0.3); }
     fl += path(dots, mix(c.dark3, '#A09682', 0.25), { opacity: 0.55 });
     if (o.drag !== false) fl += dragMarks(S, U_MARKS, 220, 30, { lip: mix(c.mudLt, c.dark3, 0.5), bed: mix(c.mudWet, c.dark1, 0.3), deep: mix(c.mudDk, c.dark0, 0.45) });
+    // chapter 3: Sprinkle's own prints beside them, big, five long claws each
+    if (o.prints === true) fl += printsAlong(S, U_MARKS, 220, 30, { lip: mix(c.mudLt, c.dark4, 0.35), deep: mix(c.mudDk, c.dark0, 0.6), fs: 0.5, size: 0.82, gap: 0.55, step: 0.09, t0: 0.14, t1: 0.92 });
     fl += path(bs, c.dark2) + stroke(bsh, c.dark4, 2, { opacity: 0.5 });
     // the dark gathers toward the back and the right; daylight warms the mud by the water
     fl += path('M-10 470H1610V1010H-10Z', S.linU([[0, c.dark0, 0], [0.4, c.dark0, 0.2], [1, c.dark0, 0.6]], 420, 1000, 1300, 520));
     fl += ell(240, 940, 480, 170, S.radU([[0, c.warm, 0.32], [1, c.warm, 0]], 240, 940, 480));
     back += g(fl, { 'clip-path': fClip });
+    var ev = evening(S), ec = ev ? eveCol(S, ev) : null, eo = ev === 'gold' ? 1 : 0.55;
+    if (ev) {
+      // evening: the low light comes in long from the open side, in bands across the floor toward the back
+      var bands = '';
+      [[928, 986], [776, 812], [660, 680], [586, 596]].forEach(function (b) { bands += pts([[-10, b[0]], [1610, b[0] - 14], [1610, b[1] - 10], [-10, b[1]]]) + 'Z'; });
+      back += g(path(bands, S.linU([[0, ec, 0.5 * eo], [0.55, ec, 0.22 * eo], [1, ec, 0.04]], 0, 0, 1500, 0)), { 'clip-path': fClip, style: 'mix-blend-mode:screen' });
+      back += ell(160, 900, 560, 260, S.radU([[0, ec, 0.38 * eo], [1, ec, 0]], 160, 900, 560), { style: 'mix-blend-mode:screen' });
+    }
+    // chapter 3: the branch, a heap of old sticks at the far back; the pebble in the dark
+    if (o.branch === true) back += g(fallenBranch(S, c, 1080, 516, 1330, 494, 0.3, 731, 0.6), { 'data-art': 'branch' });
+    var peb = pebbleProp(S, c, o.pebble, [1150, 548, 140], [760, 930, 320]);
+    back += peb.back;
     // the stone legs along the open side, warm daylight on their edges; the deck's edge above
     U_LEGS.forEach(function (L) {
       var x0 = L[0], x1 = L[1], w = x1 - x0, Q = [[x0, uDeck(x0) - 4], [x1, uDeck(x1) - 4], [x1, uWater(x1) + 12], [x0, uWater(x0) + 12]];
@@ -740,9 +781,17 @@
         drip(S, 1460, 130, 700, 5.4, 0.1, c.drop, c.dark4) + drip(S, 800, 260, 430, 4.2, 1.9, c.drop, c.dark4);
     }
     if (o.train) back += grit(S, 300, 1500, 40, 560, 26, 605, mix(c.dark4, '#FFFFFF', 0.2));
+    // evening: the beams overhead catch it along their lower edges
+    if (ev) {
+      var edges = '';
+      [-300, 100, 500, 900, 1300].forEach(function (fx) { edges += pts([[fx + 30, -10], [lerp(fx, U_VP[0], 0.8) + 4, lerp(-10, U_VP[1], 0.8)]]); });
+      [[64, 0], [186, 0], [273, 0], [334, 0]].forEach(function (cb) { edges += pts([[-10, cb[0]], [1610, cb[0]]]); });
+      back += g(stroke(edges, ec, 3, { opacity: 0.32 * eo }), { 'clip-path': S.clip('brceil', path(ceil, '#fff')) });
+    }
     // dark clods of mud in the near right corner
     front += g(path(blob(1560, 1000, 200, 60, 10, rng(606), 0.25, 0.3) + blob(1380, 1020, 120, 36, 9, rng(607), 0.25, 0.3), mix(c.dark1, c.mudDk, 0.3)) +
       stroke('M1370 970q90 -36 230 -30', c.dark4, 3, { opacity: 0.4 }), { filter: S.shadow('m') });
+    front += peb.front;
     // the rain only shows in the daylight at the side
     S.weatherClip = S.clip('brurain', path(side, '#fff'));
     return { back: back, over: '', front: front };
@@ -796,6 +845,8 @@
     for (i = 0; i < 14; i++) leaves += leafD(r() * 1600, 720 + r() * 260, 16 + r() * 14, r() * 6.28, 6);
     fl += path(dust, mix(c.dark3, '#B0A690', 0.2), { opacity: 0.6 }) + path(leaves, mix(c.dark3, '#8A6A3E', 0.3), { opacity: 0.75 });
     if (o.drag !== false) fl += dragMarks(S, B_MARKS, 160, 46, { lip: mix(c.dark3, '#A09682', 0.2), bed: c.dark1, deep: c.dark0 });
+    // chapter 3: Sprinkle's own prints beside them, big, five long claws each
+    if (o.prints === true) fl += printsAlong(S, B_MARKS, 160, 46, { lip: mix(c.dark4, '#B7AC94', 0.35), deep: mix(c.dark0, '#0A0F1C', 0.3), fs: 0.55, size: 1.05, gap: 0.5, step: 0.14, t0: 0.12, t1: 0.92 });
     fl += path(fd, S.linU([[0, c.dark0, 0.55], [0.5, c.dark0, 0.2], [1, c.dark0, 0]], 0, 680, 0, 1000));
     back += g(fl, { 'clip-path': S.clip('brbfloor', path(fd, '#fff')) });
     // the beam overhead, warm daylight along its lower edge from the way she came in
@@ -806,22 +857,510 @@
     back += path(riv, c.dark3) + stroke(pts([[-10, 128], [1610, 92]]), S.linU([[0, c.warm, 0.7], [0.5, c.warm, 0.15], [1, c.warm, 0]], 0, 0, 1600, 0), 4);
     // daylight from behind, warming the near edge of things
     back += rect(-10, 500, 900, 520, S.radU([[0, c.warm, 0.3], [0.55, c.warm, 0.08], [1, c.warm, 0]], -60, 1080, 760));
+    var ev = evening(S);
+    if (ev) {
+      // evening: the low sun reaches right in from the way she came, long bands across the floor and
+      // light on the stones' faces (gold at sunset; a softer rose at dusk, so the dark still reads)
+      var ec = eveCol(S, ev), eo = ev === 'gold' ? 1 : 0.6, bands = '';
+      var wash = ev === 'gold' ? 0.2 : 0.08;
+      back += rect(-10, 120, 1620, 900, S.linU([[0, ec, wash], [0.45, ec, wash * 0.3], [1, ec, 0]], 0, 0, 1500, 0), { style: 'mix-blend-mode:screen' });
+      [[952, 1010], [838, 880], [752, 776]].forEach(function (b) { bands += pts([[-10, b[0]], [1610, b[0] - 30], [1610, b[1] - 22], [-10, b[1]]]) + 'Z'; });
+      back += g(path(bands, S.linU([[0, ec, 0.46 * eo], [0.6, ec, 0.2 * eo], [1, ec, 0.03]], 0, 0, 1500, 0)), { 'clip-path': S.clip('brbfloor', path(fd, '#fff')), style: 'mix-blend-mode:screen' });
+      back += stroke(pts([[-10, 128], [1610, 92]]), ec, 5, { opacity: 0.45 * eo });
+    }
     // the eyes (or only the dark), with their shine in a little puddle below
     if (o.eyes === 'open' || o.eyes === 'blink') {
       back += eyePair(S, c, 1040, 446, 44, 176, o.eyes);
       back += puddle(S, 1030, 772, 120, 16, 702, mix(c.dark0, '#0A1020', 0.4), c.dark3);
       back += ell(964, 772, 6, 2.5, '#FFD98A', { opacity: o.eyes === 'blink' ? 0.35 : 0.7 }) + ell(1104, 772, 6, 2.5, '#FFD98A', { opacity: o.eyes === 'blink' ? 0.35 : 0.7 });
       (S.keep = S.keep || []).push({ x: 840, y: 370, w: 400, h: 150 });
+    } else if (o.eyes === 'sprinkle') {
+      // chapter 3: her own two eyes, open in the dark exactly where her face is in the next panel
+      // (sitting up at `dragon`, unfolding): their size, their spacing, their place
+      back += eyePair(S, c, 907, 467, 26, 72, 'open');
+      back += puddle(S, 920, 772, 110, 15, 702, mix(c.dark0, '#0A1020', 0.4), c.dark3);
+      back += ell(871, 772, 5, 2.2, '#FFD98A', { opacity: 0.7 }) + ell(943, 772, 5, 2.2, '#FFD98A', { opacity: 0.7 });
+      (S.keep = S.keep || []).push({ x: 830, y: 425, w: 155, h: 85 });
     } else {
       back += puddle(S, 1030, 772, 120, 16, 702, mix(c.dark0, '#0A1020', 0.4), c.dark3);
     }
     if (o.drips !== false) back += drip(S, 560, 118, 750, 5.2, 0.4, c.drop, c.dark4) + drip(S, 1030, 92, 664, 4.6, 1.3, c.drop, c.dark4) + drip(S, 1440, 82, 640, 5, 0.9, c.drop, c.dark4);
     if (o.train) back += grit(S, 100, 1500, 110, 600, 22, 703, mix(c.dark4, '#FFFFFF', 0.2));
     // a low ridge of mud and stone right in front, over the paws of a cat looking in
+    // chapter 3: the fallen branch dragged across the back, in front of Sprinkle's spot (drawn just after
+    // whoever is at `dragon`, so she can peek over it and the others stand in front)
+    // A heap, not one limb: three limbs piled across her, so the sticks mass from the floor up to her
+    // shoulders and only her head, from the eyes up, rises over them (the text: "Now it looks like a
+    // heap of old sticks"); the thickest lies in front, the others behind it, higher
+    // (her face, peering over at `dragon`, stays clear of the forks: BRANCH_FACE)
+    if (o.branch === true) S.covers.dragon = g(fallenBranch(S, c, 880, 866, 1480, 700, 0.85, 743, 0.36, 1, BRANCH_FACE) + fallenBranch(S, c, 760, 884, 1500, 760, 0.9, 742, 0.33, 1, BRANCH_FACE) +
+      fallenBranch(S, c, 600, 872, 1490, 726, 1, 741, 0.3, 2, BRANCH_FACE), { 'data-art': 'branch', filter: S.shadow('m') });
     S.covers.near = g(path(mound(-80, 820, 1012, 950, 10, rng(704), 0.3, 0.3, 0.35), mix(c.dark2, c.mudDk, 0.25)) +
       stroke('M-10 966Q200 946 420 950Q640 954 800 990', c.warm, 4, { opacity: 0.45 }), { filter: S.shadow('m') });
     front += g(path(blob(1560, 1010, 180, 54, 10, rng(705), 0.25, 0.3), mix(c.dark1, c.mudDk, 0.3)), { filter: S.shadow('m') });
     S.weatherClip = S.clip('brbrain', rect(0, 0, 0, 0, '#fff'));
+    return { back: back, over: '', front: front };
+  }
+
+  // ------------------------------------------------------------------ chapter 3: the pebble, the prints, the branch, evening light
+
+  // Riffle's fifth juggling pebble: plain, round and brown. The text keeps its three stones apart:
+  // this one, Riffle's stone (nearly black, its white band) and Sprinkle's egg-smooth grey pebble.
+  var PEBBLE = { fill: '#93704F', dark: '#5D4331', light: '#C8A27D' };
+  var CAT_WHO = { player: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, snorter: 1, clancat: 1 };
+
+  // Where a cast member stands here: its anchor, or its own spot { x, y } (its height, unless given,
+  // from the nearest ground anchor). Null when it is out of this camera's sight.
+  function spotOf(S, m) {
+    var map = S.anchorMap || {}, at = m && m.at;
+    if (typeof at === 'string') return map[at] || null;
+    if (at && typeof at === 'object' && isFinite(+at.x) && isFinite(+at.y)) {
+      var best = null;
+      for (var k in map) if (!map[k].elev && (!best || Math.abs(map[k].y - at.y) < Math.abs(best.y - at.y))) best = map[k];
+      return { x: +at.x, y: +at.y, h: at.h > 0 ? +at.h : best ? best.h : 260, face: at.facing || 'right', elev: !!at.elev };
+    }
+    return null;
+  }
+  // The spot just in front of her forepaws (the player's, else the first cat's on the ground), on the
+  // ground a touch nearer than her feet: { x, y, h }. Without one, the camera's own spot fb [x, y, h].
+  function pawsSpot(S, fb) {
+    var cast = S.cast || [], m = null, a = null, i;
+    function pick(ok) {
+      for (i = 0; i < cast.length && !m; i++) {
+        var s = cast[i] && ok(cast[i]) ? spotOf(S, cast[i]) : null;
+        if (s && !s.elev) { m = cast[i]; a = s; }
+      }
+    }
+    pick(function (x) { return x.who === 'player'; });
+    pick(function (x) { return CAT_WHO[x.who]; });
+    if (!m) return { x: fb[0], y: fb[1], h: fb[2] };
+    var h = a.h * (m.size > 0 ? +m.size : 1), dir = (m.facing || a.face || 'right') === 'left' ? -1 : 1;
+    return { x: a.x + dir * h * 0.36, y: a.y + h * 0.025, h: h };
+  }
+  // The pebble resting on the ground at (x, y), radius r; `dim` (0..1) sinks it into the dark;
+  // `roll` adds a curl of spin on it.
+  function pebbleSvg(S, c, x, y, r, dim, roll) {
+    var f = mix(PEBBLE.fill, c.dark2, dim), dk = mix(PEBBLE.dark, c.dark0, dim), lt = mix(PEBBLE.light, c.dark3, dim * 0.8), cy = y - r * 0.9;
+    var s = ell(x, y - r * 0.05, r * 1.18, r * 0.26, S.pal.shade, { opacity: n(0.42 - dim * 0.2) });
+    s += ell(x, cy, r, r * 0.92, f, { stroke: dk, 'stroke-width': n(Math.max(1.4, r * 0.12)) });
+    s += path('M' + n(x - r * 0.9) + ' ' + n(cy + r * 0.18) + 'Q' + n(x) + ' ' + n(cy + r * 1.2) + ' ' + n(x + r * 0.9) + ' ' + n(cy + r * 0.18) +
+      'Q' + n(x) + ' ' + n(cy + r * 0.62) + ' ' + n(x - r * 0.9) + ' ' + n(cy + r * 0.18) + 'Z', dk, { opacity: 0.35 });
+    s += ell(x - r * 0.34, cy - r * 0.34, r * 0.34, r * 0.2, lt, { opacity: 0.85, transform: 'rotate(-28 ' + n(x - r * 0.34) + ' ' + n(cy - r * 0.34) + ')' });
+    if (roll) s += stroke('M' + n(x + r * 0.15) + ' ' + n(cy - r * 0.62) + 'A' + n(r * 0.62) + ' ' + n(r * 0.62) + ' 0 0 1 ' + n(x + r * 0.5) + ' ' + n(cy + r * 0.36), dk, Math.max(1.2, r * 0.11), { opacity: 0.6 });
+    return s;
+  }
+  // `pebble`: 'in' lies in the dark at `dark` [x, y, h] with a faint glint; 'out' rolls out toward her
+  // paws, two little hops behind it (the text's plink… plink…); 'paws' rests just in front of her
+  // forepaws (fb [x, y, h] when no cat is there). Returns { back, front }; the pebble goes in keep.
+  function pebbleProp(S, c, mode, dark, fb) {
+    var out = { back: '', front: '' }, x, y, r, s;
+    if (mode !== 'in' && mode !== 'out' && mode !== 'paws') return out;
+    S.keep = S.keep || [];
+    if (mode === 'in') {
+      r = dark[2] * 0.06;
+      out.back = g(pebbleSvg(S, c, dark[0], dark[1], r, 0.5, false) + path(K.dot(dark[0] - r * 0.32, dark[1] - r * 1.24, Math.max(1.5, r * 0.15)), '#FFF4DA', { opacity: 0.7, 'class': 'pcs-glint' }), { 'data-art': 'pebble' });
+      S.keep.push({ x: dark[0] - r * 2, y: dark[1] - r * 2.4, w: r * 4, h: r * 3 });
+      return out;
+    }
+    var at = pawsSpot(S, fb);
+    if (mode === 'paws') {
+      r = at.h * 0.06;
+      out.front = g(pebbleSvg(S, c, at.x, at.y, r, 0, false), { 'data-art': 'pebble' });
+      S.keep.push({ x: at.x - r * 1.6, y: at.y - r * 2.2, w: r * 3.2, h: r * 2.6 });
+      return out;
+    }
+    // 'out': most of the way from the dark to her paws, sinking less into the dark as it comes
+    var k = 0.6, h = lerp(dark[2], at.h, k);
+    x = lerp(dark[0], at.x, k); y = lerp(dark[1], at.y, k); r = h * 0.06;
+    var mx = lerp(dark[0], x, 0.5), my = lerp(dark[1], y, 0.5), hop = 'M' + n(dark[0]) + ' ' + n(dark[1] - r) +
+      'Q' + n(lerp(dark[0], mx, 0.5)) + ' ' + n(Math.min(dark[1], my) - h * 0.2) + ' ' + n(mx) + ' ' + n(my - r) +
+      'Q' + n(lerp(mx, x, 0.4)) + ' ' + n(Math.min(my, y) - h * 0.11) + ' ' + n(x - (x - mx) * 0.18) + ' ' + n(y - r * 1.4);
+    s = stroke(hop, mix(c.drop, '#FFFFFF', 0.4), Math.max(2, r * 0.18), { opacity: 0.75, 'stroke-dasharray': n(r * 0.7) + ' ' + n(r * 0.55) });
+    s += stroke('M' + n(mx - r * 0.9) + ' ' + n(my + r * 0.1) + 'q' + n(r * 0.9) + ' ' + n(-r * 0.5) + ' ' + n(r * 1.8) + ' 0', mix(c.drop, '#FFFFFF', 0.4), Math.max(1.5, r * 0.14), { opacity: 0.6 });
+    out.front = g(s + pebbleSvg(S, c, x, y, r, 0.15, true), { 'data-art': 'pebble' });
+    S.keep.push({ x: x - r * 1.6, y: y - r * 2.2, w: r * 3.2, h: r * 2.6 });
+    return out;
+  }
+
+  // One of Sprinkle's forepaw prints pressed into the ground at (x, y), L long, its toes pointing along
+  // the screen direction (tx, ty), foreshortened by fs (the ground seen from cat height): a broad
+  // pad, five long toe dents fanned like a hand, and a claw slash beyond each, a little apart, so the
+  // five claws can be counted. { pad, claws } paths.
+  var PRINT_FAN = [-0.82, -0.41, 0, 0.41, 0.82];
+  function printD(x, y, L, tx, ty, fs) {
+    var gx = tx, gy = ty / fs, gl = Math.sqrt(gx * gx + gy * gy) || 1, i, k;
+    gx /= gl; gy /= gl;
+    function P(u, v) { return [x + (gx * u - gy * v) * L, y + (gy * u + gx * v) * L * fs]; }
+    // a dent along the angle f: its middle at distance c, ru long, rv wide
+    function dent(f, c, ru, rv, ox) {
+      var cu = Math.cos(f), cv = Math.sin(f), Q = [];
+      for (var j = 0; j < 12; j++) { var t = Math.PI * 2 * j / 12, al = c + Math.cos(t) * ru, ac = Math.sin(t) * rv; Q.push(P(ox + cu * al - cv * ac, cv * al + cu * ac)); }
+      return pts(Q) + 'Z';
+    }
+    var pad = [];
+    for (k = 0; k < 16; k++) { var a = Math.PI * 2 * k / 16, ca = Math.cos(a); pad.push(P(-0.2 + ca * (ca > 0 ? 0.16 : 0.13), Math.sin(a) * (0.18 + (ca > 0 ? 0.04 : 0)))); }
+    var d = pts(pad) + 'Z', claws = '';
+    for (i = 0; i < 5; i++) {
+      var f = PRINT_FAN[i], cu = Math.cos(f), cv = Math.sin(f), c = i === 0 || i === 4 ? 0.22 : 0.27;
+      d += dent(f, c, 0.135, 0.055, -0.05);
+      // the claw: a narrow slash beyond the toe, pointing on along it
+      var c0 = c + 0.19, c1 = c + 0.37, w = 0.028;
+      claws += pts([P(-0.05 + cu * c0 - cv * w, cv * c0 + cu * w), P(-0.05 + cu * c1, cv * c1), P(-0.05 + cu * c0 + cv * w, cv * c0 - cu * w)]) + 'Z';
+    }
+    return { pad: d, claws: claws };
+  }
+  // Sprinkle's prints beside the drag marks P (the same cubic, w0 to w1 wide), one every `step` from t0
+  // to t1, sides taking turns, each its own group (data-art="print"). o: lip, deep, fs, size (print
+  // length as a share of the marks' width there), gap (how far out beside them), step, t0, t1.
+  function printsAlong(S, P, w0, w1, o) {
+    var s = '', side = 1;
+    for (var t = o.t0; t <= o.t1 + 1e-6; t += o.step) {
+      var q = along(P, t), w = lerp(w0, w1, t), L = w * o.size, off = side * (w * 0.5 + L * o.gap);
+      if (L < 8) break;
+      var pr = printD(q.x + q.nx * off, q.y + q.ny * off + L * 0.05 * side, L, q.tx, q.ty, o.fs), lift = n(Math.max(1.5, L * 0.035));
+      s += g(path(pr.pad, o.lip, { opacity: 0.7, transform: 'translate(0 ' + lift + ')' }) + path(pr.pad, o.deep, { opacity: 0.92 }) +
+        path(pr.claws, o.lip, { opacity: 0.6, transform: 'translate(0 ' + lift + ')' }) + path(pr.claws, o.deep), { 'data-art': 'print' });
+      side = -side;
+    }
+    return s;
+  }
+
+  // A fallen branch dragged across the back: a long limb lying on the floor from (x0, y0) (its thick
+  // end) to (x1, y1), forks and twigs standing up, a few dry leaves, loose sticks under it. k scales
+  // it; `dim` sinks it into the dark. A heap of old sticks, nothing more.
+  // `leafy` (the front limb of the told path's heap) grows its dry leaves that many times bigger;
+  // `clear` [x0, y0, x1, y1]: a fork that would rise into this box (her face, peering over the heap)
+  // stops short of it, so the sticks never cross her eyes.
+  var BRANCH_FACE = [790, 540, 975, 722];
+  function fallenBranch(S, c, x0, y0, x1, y1, k, seed, dim, leafy, clear) {
+    var lk = leafy || 1;
+    var r = rng(seed), wood = mix('#6E5646', c.dark2, dim), woodDk = mix('#3F3129', c.dark0, dim), woodLt = mix('#A88B6C', c.dark3, dim), leafC = mix('#8E6B3E', c.dark2, dim * 0.9);
+    var C = [[x0, y0], [lerp(x0, x1, 0.33), lerp(y0, y1, 0.33) + 26 * k], [lerp(x0, x1, 0.66), lerp(y0, y1, 0.66) + 18 * k], [x1, y1]];
+    var limb = ribbon(C, 0, 0, 50 * k, 14 * k, 0, 1, 24, 0.05), forks = '', twigs = '', leaves = '', sticks = '', bark = '', hi = '';
+    // loose sticks lying under it
+    for (var i = 0; i < 11; i++) {
+      var sx = lerp(x0, x1, 0.05 + r() * 0.9) + (r() - 0.5) * 60 * k, sy = lerp(y0, y1, (sx - x0) / ((x1 - x0) || 1)) + (-30 + r() * 56) * k, sa = (r() - 0.5) * 1.4, sl = (90 + r() * 120) * k;
+      sticks += bar([sx - Math.cos(sa) * sl / 2, sy - Math.sin(sa) * sl / 2], [sx + Math.cos(sa) * sl / 2, sy + Math.sin(sa) * sl / 2], 11 * k, 6 * k);
+    }
+    // forks standing up out of the limb, each with two twigs and a few dry leaves
+    [0.08, 0.18, 0.28, 0.38, 0.48, 0.58, 0.68, 0.78, 0.9].forEach(function (t, j) {
+      var q = along(C, t), up = -Math.PI / 2 + (j % 2 ? 0.5 : -0.45) + (r() - 0.5) * 0.5, len = (230 - t * 100) * k * (0.75 + r() * 0.45);
+      if (clear) {
+        // walk the fork up; where it would enter the box (with room for its leaves), it ends below it
+        for (var cl = 0; cl < 12 && len > 20; cl++) {
+          var hx = q.x + Math.cos(up) * len, hy = q.y + Math.sin(up) * len, m = 34 * k * lk;
+          var lo = Math.min(q.x, hx) - m, hi = Math.max(q.x, hx) + m;
+          if (hi < clear[0] || lo > clear[2] || hy - m > clear[3]) break;
+          len *= 0.82;
+        }
+      }
+      var ex = q.x + Math.cos(up) * len, ey = q.y + Math.sin(up) * len;
+      forks += bar([q.x, q.y], [ex, ey], (20 - t * 9) * k, 5 * k);
+      for (var tw = 0; tw < 2; tw++) {
+        var tt = 0.45 + tw * 0.3, bx = lerp(q.x, ex, tt), by = lerp(q.y, ey, tt), ta = up + (tw ? -0.7 : 0.75), tl = len * 0.42;
+        twigs += 'M' + n(bx) + ' ' + n(by) + 'L' + n(bx + Math.cos(ta) * tl) + ' ' + n(by + Math.sin(ta) * tl);
+        leaves += leafD(bx + Math.cos(ta) * tl, by + Math.sin(ta) * tl, 26 * k * lk, ta + 0.3, 10 * k * lk) + leafD(bx + Math.cos(ta) * tl * 0.6, by + Math.sin(ta) * tl * 0.6, 22 * k * lk, ta - 1.2, 8 * k * lk) +
+          leafD(bx + Math.cos(ta) * tl * 0.85, by + Math.sin(ta) * tl * 0.85, 20 * k * lk, ta + 1.9, 8 * k * lk);
+      }
+      leaves += leafD(ex, ey, 28 * k * lk, up + 0.2, 11 * k * lk) + leafD(ex, ey, 24 * k * lk, up - 1.4, 9 * k * lk);
+    });
+    for (i = 0; i < 9; i++) { var q2 = along(C, 0.05 + i * 0.1); bark += 'M' + n(q2.x - 18 * k) + ' ' + n(q2.y + (r() - 0.5) * 8 * k) + 'l' + n(30 * k) + ' ' + n((r() - 0.5) * 6 * k); }
+    for (i = 0; i <= 12; i++) { var q3 = along(C, i / 12), w3 = lerp(50, 14, i / 12) * k; hi += (i ? 'L' : 'M') + n(q3.x - q3.nx * w3 * 0.36) + ' ' + n(q3.y - q3.ny * w3 * 0.36); }
+    return path(sticks, mix(wood, woodDk, 0.35), { stroke: woodDk, 'stroke-width': n(2.5 * k), 'stroke-linejoin': 'round' }) + stroke(twigs, woodDk, 5 * k) +
+      path(forks, wood, { stroke: woodDk, 'stroke-width': n(3 * k), 'stroke-linejoin': 'round' }) +
+      path(limb, wood, { stroke: woodDk, 'stroke-width': n(3.5 * k), 'stroke-linejoin': 'round' }) + stroke(bark, woodDk, 2.5 * k, { opacity: 0.6 }) +
+      stroke(hi, woodLt, 3.5 * k, { opacity: 0.7 }) + path(leaves, leafC, { opacity: 0.92, stroke: mix(leafC, woodDk, 0.5), 'stroke-width': n(1.5 * k) });
+  }
+
+  // The evening under the bridge (chapter 2 is all day): 'gold' at sunset, when the low sun reaches far
+  // in; 'dusk' after it, a soft rose light by the way in. Null by day, morning, night and storm.
+  function evening(S) { return S.tod === 'sunset' || S.tod === 'golden' ? 'gold' : S.tod === 'dusk' ? 'dusk' : null; }
+  function eveCol(S, ev) { return ev === 'gold' ? mix(S.pal.sun || '#FFE9AE', '#FFC062', 0.55) : mix(S.pal.glow, '#E59AB4', 0.3); }
+
+  // ------------------------------------------------------------------ PAWS: the promise, three forepaws piled
+
+  // The cats' coats (app/art/cats.js, FUR: base, line, stripe, light, pattern, patches), so her own
+  // forepaw wears her look; tests/set-bridge.test.js checks they still match cats.js. A white-paws
+  // marking makes the paw white (bright white on a pale coat, as cats.js does).
+  var FURS = {
+    black: { base: '#3d3844', line: '#18161c', light: '#5b5465' },
+    white: { base: '#fbf8f2', line: '#a39787', light: '#ffffff' },
+    'silver-tabby': { base: '#c3cbd4', line: '#5a6574', stripe: '#6c7886', light: '#e4e9ef', pattern: 'tabby' },
+    'brown-tabby': { base: '#b5895b', line: '#4c3522', stripe: '#5b3f27', light: '#d5ae80', pattern: 'tabby' },
+    ginger: { base: '#e8913a', line: '#8f4a1b', stripe: '#b5602a', light: '#f7b86e', pattern: 'tabby' },
+    cream: { base: '#f2dbb1', line: '#a3855a', stripe: '#d8b47f', light: '#fcf0da', pattern: 'tabby' },
+    grey: { base: '#9ea5ad', line: '#4f565e', light: '#c3c9cf' },
+    tortie: { base: '#3f3330', line: '#1b1412', light: '#5e4b44', pattern: 'tortie', patches: ['#da853b', '#ecb877'] },
+    calico: { base: '#fbf8f2', line: '#998b7b', light: '#ffffff', pattern: 'calico', patches: ['#e3893a', '#3d3844'] }
+  };
+  var PALE_FUR = { white: 1, cream: 1, calico: 1 };
+  // Riffle (cats.js BEASTS.riffle's base, line and light), the skin between his toes a little paler
+  var RIFFLE_PAW = { base: '#8c5a36', line: '#3b2415', light: '#bd875a', web: '#b98a62', claw: '#f3e4c8' };
+  // Sprinkle: mist-grey matte scales in soft ridges, paler at the edges; five long pale claws
+  var SPRINKLE_PAW = { base: '#a3acb5', line: '#56606b', light: '#d6dce2', ridge: '#87919c', claw: '#efe9dd', clawLine: '#8b8476' };
+
+  // A paw's own frame: u along the paw (its toes at +u), v across; (ox, oy) the middle of its palm,
+  // `a` the direction its toes point (radians, screen), s its width in world units.
+  function pawFrame(ox, oy, a, s) {
+    var ca = Math.cos(a), sa = Math.sin(a);
+    return function (u, v) { return [ox + (u * ca - v * sa) * s, oy + (u * sa + v * ca) * s]; };
+  }
+  function ovalP(X, u0, v0, ru, rv, k) {
+    var P = [];
+    for (var i = 0; i < k; i++) { var t = Math.PI * 2 * i / k; P.push(X(u0 + Math.cos(t) * ru, v0 + Math.sin(t) * rv)); }
+    return P;
+  }
+  // an irregular patch of colour (a tortie's or a calico's), wobbling round (u0, v0)
+  function patchP(X, u0, v0, ru, rv, seed) {
+    var P = [], r = rng(seed), k = 16, ph = r() * 6.28, ph2 = r() * 6.28;
+    for (var i = 0; i < k; i++) {
+      var t = Math.PI * 2 * i / k, w = 1 + 0.18 * Math.sin(3 * t + ph) + 0.1 * Math.sin(5 * t + ph2);
+      P.push(X(u0 + Math.cos(t) * ru * w, v0 + Math.sin(t) * rv * w));
+    }
+    return P;
+  }
+  // a digit from distance r0 to r1 along the angle f from the palm's middle, w0 to w1 either side, round-tipped
+  function digitP(X, f, r0, r1, w0, w1) {
+    var cu = Math.cos(f), cv = Math.sin(f), nu = -cv, nv = cu, P = [X(cu * r0 + nu * w0, cv * r0 + nv * w0)];
+    for (var i = 0; i <= 6; i++) {
+      var a = Math.PI / 2 - Math.PI * i / 6, su = Math.sin(a) * w1, fu = Math.cos(a) * w1;
+      P.push(X(cu * (r1 + fu) + nu * su, cv * (r1 + fu) + nv * su));
+    }
+    P.push(X(cu * r0 - nu * w0, cv * r0 - nv * w0));
+    return P;
+  }
+  // a claw from its base (u0, v0), w either side, to its tip (u1, v1), bent a little to one side
+  function clawUV(X, u0, v0, u1, v1, w, bend) {
+    var du = u1 - u0, dv = v1 - v0, l = Math.sqrt(du * du + dv * dv) || 1, nu = -dv / l, nv = du / l, b = bend * l, um = (u0 + u1) / 2, vm = (v0 + v1) / 2;
+    return [X(u0 + nu * w, v0 + nv * w), X(um + nu * (w * 0.5 + b), vm + nv * (w * 0.5 + b)), X(u1 + nu * b * 0.6, v1 + nv * b * 0.6),
+      X(um - nu * (w * 0.5 - b), vm - nv * (w * 0.5 - b)), X(u0 - nu * w, v0 - nv * w)];
+  }
+  // a claw out along the angle f from the palm's middle, from r0 to r1
+  function clawP(X, f, r0, r1, w, bend) { var cu = Math.cos(f), cv = Math.sin(f); return clawUV(X, cu * r0, cv * r0, cu * r1, cv * r1, w, bend); }
+  // the arm, from the wrist (u0) back past the panel's edge: w0 either side at the wrist, w1 far back
+  function armP(X, u0, w0, w1) {
+    return [X(u0, -w0), X(-0.9, -w0 * 1.06), X(-1.8, -(w0 + w1) / 2 * 1.04), X(-6, -w1), X(-6, w1), X(-1.8, (w0 + w1) / 2 * 1.04), X(-0.9, w0 * 1.06), X(u0, w0)];
+  }
+  // fur along an arm's edges: little flicks of the line colour, w either side
+  function furFlicks(X, w, u0, u1, step) {
+    var d = '';
+    for (var u = u0; u > u1; u -= step) for (var sd = -1; sd <= 1; sd += 2) {
+      var a = X(u, sd * w * 0.98), b = X(u - step * 0.3, sd * w * 0.8), c2 = X(u - step * 0.12, sd * w * 0.99);
+      d += 'M' + n(a[0]) + ' ' + n(a[1]) + 'L' + n(b[0]) + ' ' + n(b[1]) + 'M' + n(c2[0]) + ' ' + n(c2[1]) + 'L' + n(b[0]) + ' ' + n(b[1]);
+    }
+    return d;
+  }
+
+  // One paw, papercut style: every body shape outlined together as one silhouette (each outline
+  // carries data-paw: nothing drawn after a claw may cover it, the tests check), then the arm, what
+  // lies on the arm (stripes, patches, scales), the paw's own shapes, its details, and its claws
+  // (data-claw, five a paw). P: { arm, shapes: [[points, fill], …], under, over, claws, line, lw,
+  // clawFill, clawLine }.
+  function pawSvg(who, P) {
+    var all = [[P.arm, P.armFill]].concat(P.shapes), outl = '', fills = '', cl = '';
+    all.forEach(function (sh) { outl += path(pts(sh[0]) + 'Z', P.line, { stroke: P.line, 'stroke-width': n(P.lw * 2), 'stroke-linejoin': 'round', 'data-paw': who }); });
+    P.shapes.forEach(function (sh) { fills += path(pts(sh[0]) + 'Z', sh[1]); });
+    P.claws.forEach(function (C) {
+      cl += path(pts(C) + 'Z', P.clawFill, { stroke: P.clawLine, 'stroke-width': n(Math.max(1.6, P.lw)), 'stroke-linejoin': 'round', 'data-claw': who });
+    });
+    return outl + path(pts(P.arm) + 'Z', P.armFill) + P.under + fills + P.over + cl;
+  }
+
+  // Her forepaw, from her look: the arm in her coat (tabby bands, tortie or calico patches), the paw
+  // white for white paws, four toes and the dewclaw up the side `dew` (+1 / -1), five claws out.
+  var CAT_TOES = [-0.68, -0.23, 0.23, 0.68];
+  function catPaw(X, s, look, dew) {
+    look = look || {};
+    var furId = FURS[look.fur] ? look.fur : 'brown-tabby', F = FURS[furId], white = look.marking === 'white-paws';
+    var pawC = white ? (PALE_FUR[furId] ? '#ffffff' : '#fcf9f3') : F.base, lw = Math.max(1.6, s * 0.013), under = '', shapes = [], claws = [];
+    if (F.pattern === 'tabby') {
+      var bands = '';
+      [-0.74, -1.16, -1.6, -2.06, -2.52].forEach(function (u, i) {
+        var w = 0.44 + (-0.3 - u) * 0.025, t = 0.08 + (i % 2) * 0.02;
+        bands += pts([X(u, -w), X(u + 0.07, -w * 0.3), X(u + 0.02, w * 0.25), X(u + 0.06, w), X(u - t, w), X(u - t - 0.03, w * 0.25), X(u - t + 0.04, -w * 0.3), X(u - t, -w)]) + 'Z';
+      });
+      under += path(bands, F.stripe, { opacity: 0.9 });
+    } else if (F.pattern === 'tortie' || F.pattern === 'calico') {
+      under += path(pts(patchP(X, -1.0, 0.16, 0.42, 0.3, 61)) + 'Z', F.patches[0]) + path(pts(patchP(X, -1.75, -0.14, 0.36, 0.3, 62)) + 'Z', F.patches[1]) +
+        path(pts(patchP(X, -2.5, 0.1, 0.4, 0.34, 63)) + 'Z', F.patches[0]);
+    }
+    under += path(pts([X(-0.36, 0.22), X(-6, 0.3), X(-6, 0.5), X(-0.36, 0.4)]) + 'Z', mix(F.base, F.line, 0.2), { opacity: 0.5 }) +
+      stroke(pts([X(-0.5, -0.26), X(-6, -0.34)]), F.light, s * 0.045, { opacity: 0.45 });
+    // a white paw: a sock over the wrist, its top softly scalloped
+    if (white) shapes.push([[X(-0.64, -0.41), X(-0.72, -0.2), X(-0.65, 0), X(-0.73, 0.2), X(-0.64, 0.41), X(-0.1, 0.47), X(-0.1, -0.47)], pawC]);
+    CAT_TOES.forEach(function (f) { shapes.push([ovalP(X, Math.cos(f) * 0.43, Math.sin(f) * 0.43, 0.2, 0.175, 16), pawC]); });
+    shapes.push([ovalP(X, 0, 0, 0.44, 0.5, 24), pawC]);
+    shapes.push([ovalP(X, -0.16, dew * 0.47, 0.12, 0.1, 12), pawC]);
+    var parts = '';
+    [-0.45, 0, 0.45].forEach(function (f) { parts += pts([X(Math.cos(f) * 0.3, Math.sin(f) * 0.3), X(Math.cos(f) * 0.56, Math.sin(f) * 0.56)]); });
+    var over = stroke(parts, F.line, lw * 1.3, { opacity: 0.7 }) + stroke(pts([X(-0.27, dew * 0.38), X(-0.1, dew * 0.42)]), F.line, lw, { opacity: 0.5 });
+    CAT_TOES.forEach(function (f) { claws.push(clawP(X, f, 0.56, 0.86, 0.05, 0.1)); });
+    claws.push(clawUV(X, -0.1, dew * 0.55, 0.1, dew * 0.8, 0.045, 0.1 * dew));
+    under += stroke(furFlicks(X, 0.45, -0.8, -3.2, 0.42), F.line, lw, { opacity: 0.4 });
+    return { arm: armP(X, -0.3, 0.4, 0.5), armFill: F.base, shapes: shapes, under: under, over: over, claws: claws, line: F.line, lw: lw,
+      clawFill: '#f8f3ea', clawLine: mix(F.line, '#7a6e66', 0.4) };
+  }
+
+  // Sprinkle's forepaw: big, mist grey, soft ridges of matte scales up the arm, a broad palm and five
+  // long digits fanned like a hand, each with a long pale claw.
+  var DRAGON_DIGITS = [-0.78, -0.39, 0, 0.39, 0.78];
+  function dragonPaw(X, s) {
+    var D = SPRINKLE_PAW, lw = Math.max(1.6, s * 0.01), shapes = [], claws = [], ridges = '', knuckles = '';
+    for (var u = -0.62; u > -6; u -= 0.3) {
+      var w = 0.27 + Math.min(0.06, (-u - 0.3) * 0.012), st = X(u, -w * 0.92);
+      ridges += 'M' + n(st[0]) + ' ' + n(st[1]);
+      for (var j = 0; j < 3; j++) {
+        var v0 = -w * 0.92 + j * w * 0.613, v1 = v0 + w * 0.613, mid = X(u + 0.1, (v0 + v1) / 2), e = X(u, v1);
+        ridges += 'Q' + n(mid[0]) + ' ' + n(mid[1]) + ' ' + n(e[0]) + ' ' + n(e[1]);
+      }
+    }
+    var under = stroke(ridges, D.ridge, lw * 1.4, { opacity: 0.75 }) + stroke(pts([X(-0.45, -0.21), X(-6, -0.28)]), D.light, s * 0.035, { opacity: 0.6 }) +
+      stroke(pts([X(-0.45, 0.21), X(-6, 0.28)]), mix(D.base, D.line, 0.25), s * 0.035, { opacity: 0.5 });
+    DRAGON_DIGITS.forEach(function (f, i) {
+      var r1 = i === 0 || i === 4 ? 0.62 : 0.72, cu = Math.cos(f), cv = Math.sin(f), nu = -cv, nv = cu;
+      shapes.push([digitP(X, f, 0.18, r1, 0.1, 0.078), D.base]);
+      [0.44, 0.58].forEach(function (rk) {
+        if (rk > r1 - 0.06) return;
+        var a = X(cu * rk + nu * 0.07, cv * rk + nv * 0.07), m = X(cu * (rk + 0.04), cv * (rk + 0.04)), b = X(cu * rk - nu * 0.07, cv * rk - nv * 0.07);
+        knuckles += 'M' + n(a[0]) + ' ' + n(a[1]) + 'Q' + n(m[0]) + ' ' + n(m[1]) + ' ' + n(b[0]) + ' ' + n(b[1]);
+      });
+      claws.push(clawP(X, f, r1 + 0.03, r1 + 0.4, 0.06, 0.12));
+    });
+    shapes.push([ovalP(X, -0.02, 0, 0.4, 0.44, 24), D.base]);
+    var over = stroke(knuckles, D.ridge, lw * 1.3, { opacity: 0.8 }) + path(pts(ovalP(X, -0.06, -0.12, 0.22, 0.14, 14)) + 'Z', D.light, { opacity: 0.45 });
+    return { arm: armP(X, -0.3, 0.26, 0.33), armFill: D.base, shapes: shapes, under: under, over: over, claws: claws, line: D.line, lw: lw, clawFill: D.claw, clawLine: D.clawLine };
+  }
+
+  // Riffle's forepaw: sleek brown, five short toes with the skin stretched between them (webbed),
+  // little pale claws.
+  var OTTER_TOES = [-0.92, -0.46, 0, 0.46, 0.92];
+  function otterPaw(X, s) {
+    var R = RIFFLE_PAW, lw = Math.max(1.6, s * 0.015), shapes = [], claws = [];
+    var tipR = OTTER_TOES.map(function (f, i) { return i === 0 || i === 4 ? 0.56 : 0.63; });
+    for (var i = 0; i < 4; i++) {
+      var g0 = OTTER_TOES[i], g1 = OTTER_TOES[i + 1], gm = (g0 + g1) / 2, rr = Math.min(tipR[i], tipR[i + 1]) - 0.07;
+      shapes.push([[X(Math.cos(g0) * 0.28, Math.sin(g0) * 0.28), X(Math.cos(g0) * rr, Math.sin(g0) * rr), X(Math.cos(gm) * (rr - 0.08), Math.sin(gm) * (rr - 0.08)),
+        X(Math.cos(g1) * rr, Math.sin(g1) * rr), X(Math.cos(g1) * 0.28, Math.sin(g1) * 0.28)], R.web]);
+    }
+    OTTER_TOES.forEach(function (f, i) {
+      shapes.push([digitP(X, f, 0.2, tipR[i], 0.08, 0.066), R.base]);
+      claws.push(clawP(X, f, tipR[i] + 0.04, tipR[i] + 0.22, 0.034, 0.1));
+    });
+    shapes.push([ovalP(X, 0, 0, 0.38, 0.44, 22), R.base]);
+    var under = stroke(furFlicks(X, 0.31, -0.8, -3.2, 0.5), R.line, lw, { opacity: 0.3 }) + stroke(pts([X(-0.45, -0.18), X(-6, -0.22)]), R.light, s * 0.05, { opacity: 0.55 }) +
+      path(pts([X(-0.36, 0.14), X(-6, 0.18), X(-6, 0.35), X(-0.36, 0.29)]) + 'Z', mix(R.base, R.line, 0.22), { opacity: 0.5 });
+    var over = path(pts(ovalP(X, -0.08, -0.12, 0.2, 0.13, 12)) + 'Z', R.light, { opacity: 0.4 });
+    return { arm: armP(X, -0.28, 0.29, 0.35), armFill: R.base, shapes: shapes, under: under, over: over, claws: claws, line: R.line, lw: lw, clawFill: R.claw, clawLine: R.line };
+  }
+
+  // The pile, bottom to top as the text has it: her paw held out, Sprinkle's big paw set on it, Riffle's
+  // slapped on top. Fanned and offset like hands piled in a circle: hers comes in from the bottom left,
+  // its toes up to the right; Sprinkle reaches down from the top right, her palm on the heel of it and
+  // her long digits spread down to the left; Riffle's comes up from below, his palm on her wrist, his
+  // webbed toes up top. Each palm rests on the one below, and each paw's toes and claws (her dewclaw
+  // too, on the side away from the pile) lie where nothing comes after them: fifteen claws, none
+  // covered, the nearest two of them 90 apart (tests/set-bridge.test.js checks every coat).
+  // PAW_PILE: [palm x, palm y, the toes' direction in degrees, the paw's width], found by trying many
+  // and keeping the one with the most room round every claw.
+  var PAW_PILE = { player: [1025, 532, -36, 260], sprinkle: [660, 520, 127, 330], riffle: [815, 351, -102, 240] };
+  // `hop: true` (the promise's second panel, Sprinkle hopping along by fives): every paw's five claws
+  // lit warm gold, and its running total, 5, 10 and 15 in pile order (hers, Sprinkle's, Riffle's),
+  // lettered just beyond its claw fan, outside the pile, where nothing covers it.
+  var HOP_GOLD = { fill: '#FFE07A', line: '#C98A12', glow: '#FFD86E' };
+  // whether (x, y) lies on any paw of the pile: its arm, palm and toes, or a claw (a little margin round each claw)
+  function inPoly(P, x, y) {
+    var c = false;
+    for (var i = 0, j = P.length - 1; i < P.length; j = i++) {
+      if ((P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) c = !c;
+    }
+    return c;
+  }
+  function pileHit(pile, x, y) {
+    return pile.some(function (pr) {
+      var P = pr[1];
+      if (inPoly(P.arm, x, y) || P.shapes.some(function (sh) { return inPoly(sh[0], x, y); })) return true;
+      // a claw keeps a wide berth: a number never sits in among the claws, only beyond them
+      return P.claws.some(function (C) { return C.some(function (q) { return Math.abs(q[0] - x) < 40 && Math.abs(q[1] - y) < 40; }) || inPoly(C, x, y); });
+    });
+  }
+  function pawPile(S) {
+    var L = PAW_PILE, s = '', hop = S.opts.hop === true, nums = '';
+    function at(k) { return pawFrame(L[k][0], L[k][1], L[k][2] * Math.PI / 180, L[k][3]); }
+    var pile = [['player', catPaw(at('player'), L.player[3], S.look, 1)], ['sprinkle', dragonPaw(at('sprinkle'), L.sprinkle[3])], ['riffle', otterPaw(at('riffle'), L.riffle[3])]];
+    var box = [1e9, 1e9, -1e9, -1e9];
+    pile.forEach(function (pr) {
+      pr[1].claws.forEach(function (C) { C.forEach(function (q) { box = [Math.min(box[0], q[0]), Math.min(box[1], q[1]), Math.max(box[2], q[0]), Math.max(box[3], q[1])]; }); });
+      pr[1].shapes.forEach(function (sh) { sh[0].forEach(function (q) { box = [Math.min(box[0], q[0]), Math.min(box[1], q[1]), Math.max(box[2], q[0]), Math.max(box[3], q[1])]; }); });
+    });
+    var numBoxes = [];
+    pile.forEach(function (pr, pi) {
+      var P = pr[1], body = pts(P.arm) + 'Z';
+      P.shapes.forEach(function (sh) { body += pts(sh[0]) + 'Z'; });
+      if (hop) {
+        // the claws lit, each with a soft glow under it
+        var glow = '', cx = 0, cy = 0, nq = 0;
+        P.claws.forEach(function (C) {
+          var mx = 0, my = 0;
+          C.forEach(function (q) { mx += q[0] / C.length; my += q[1] / C.length; });
+          glow += circ(mx, my, Math.max(16, L[pr[0]][3] * 0.07), HOP_GOLD.glow, { opacity: 0.5 });
+          cx += mx; cy += my; nq++;
+        });
+        P.over += glow;
+        P.clawFill = HOP_GOLD.fill; P.clawLine = HOP_GOLD.line;
+        // the running total: just beyond the fan, on the first spot (nearest first, straight out from
+        // the palm first, then turning either way) where it covers no paw, claw or arm of the pile
+        cx /= nq; cy /= nq;
+        var dx = cx - L[pr[0]][0], dy = cy - L[pr[0]][1], a0 = Math.atan2(dy, dx);
+        var fs = 76, hw = fs * 0.32 * String((pi + 1) * 5).length + 8, hh = fs * 0.42 + 8, tx = null, ty = null;
+        for (var dd = 50; dd <= 420 && tx === null; dd += 15) {
+          [0, -0.45, 0.45, -0.9, 0.9, -1.35, 1.35].forEach(function (da) {
+            if (tx !== null) return;
+            var qx = cx + Math.cos(a0 + da) * dd, qy = cy + Math.sin(a0 + da) * dd;
+            if (qx - hw < 20 || qx + hw > 1580 || qy - hh < 20 || qy + hh > 980) return;
+            var probe = [];
+            for (var px = -1; px <= 1; px += 0.5) for (var py = -1; py <= 1; py += 1) probe.push([qx + px * hw, qy + py * hh]);
+            if (!probe.some(function (q) { return pileHit(pile, q[0], q[1]); })) { tx = qx; ty = qy; }
+          });
+        }
+        if (tx === null) { tx = clamp(cx + Math.cos(a0) * 90, hw + 20, 1580 - hw); ty = clamp(cy + Math.sin(a0) * 90, hh + 20, 980 - hh); }
+        nums += '<text x="' + n(tx) + '" y="' + n(ty + fs * 0.36) + '" text-anchor="middle" font-family="Andika, &quot;Comic Neue&quot;, sans-serif" font-size="' + fs + '" font-weight="700" fill="#FFF4C8" stroke="#3A2A12" stroke-width="7" stroke-linejoin="round" paint-order="stroke" data-hop="' + ((pi + 1) * 5) + '">' + ((pi + 1) * 5) + '</text>';
+        numBoxes.push({ x: tx - hw, y: ty - hh, w: hw * 2, h: hh * 2 });
+      }
+      // a soft shadow on whatever is below
+      s += path(body, '#0B1020', { opacity: 0.3, transform: 'translate(9 15)' }) + pawSvg(pr[0], P);
+    });
+    // what the panel is about: every palm, toe and claw (not the arms), kept clear of the lettering,
+    // and the hop's numbers too
+    (S.keep = S.keep || []).push({ x: box[0] - 12, y: box[1] - 12, w: box[2] - box[0] + 24, h: box[3] - box[1] + 24 });
+    numBoxes.forEach(function (b) { S.keep.push(b); });
+    return s + nums;
+  }
+
+  function drawPaws(S) {
+    var p = S.pal, o = S.opts, c = cols(S), back = '', front = '', r = rng(801), i, x, y;
+    var ev = evening(S), lightC = ev ? eveCol(S, ev) : c.warm;
+    // the dry floor at the back of the dark, close and from above: pale dust, old leaves, a stone or two
+    back += rect(-10, -10, 1620, 1020, S.linU([[0, mix(c.dark2, '#7E7464', 0.16)], [1, mix(c.dark3, '#A09682', 0.22)]], 0, 0, 0, 1000));
+    var dust = '', leaves = '', st = '', sth = '';
+    for (i = 0; i < 160; i++) { x = r() * 1600; y = r() * 1000; dust += blob(x, y, 3 + r() * 7, 2 + r() * 4, 6, r, 0.3, 0.3); }
+    for (i = 0; i < 16; i++) leaves += leafD(r() * 1600, r() * 1000, 30 + r() * 26, r() * 6.28, 11);
+    [[120, 140, 70], [1480, 860, 90], [1390, 120, 60], [230, 900, 54], [1560, 420, 44]].forEach(function (q) {
+      st += blob(q[0], q[1], q[2], q[2] * 0.72, 9, r, 0.2, 0.3);
+      sth += 'M' + n(q[0] - q[2] * 0.6) + ' ' + n(q[1] - q[2] * 0.5) + 'q' + n(q[2] * 0.6) + ' ' + n(-q[2] * 0.3) + ' ' + n(q[2] * 1.2) + ' 0';
+    });
+    back += path(dust, mix(c.dark3, '#B0A690', 0.25), { opacity: 0.55 }) + path(leaves, mix(c.dark3, '#8A6A3E', 0.35), { opacity: 0.75 });
+    back += g(path(st, mix(c.dark1, c.dark2, 0.5), { stroke: c.dark0, 'stroke-width': 5, 'stroke-linejoin': 'round' }) + stroke(sth, c.dark4, 3, { opacity: 0.4 }), { filter: S.shadow('m') });
+    // the edge of a drag mark across the top corner
+    back += path(ribbon([[-40, 300], [200, 180], [420, 60], [560, -40]], 0, 0, 150, 120, 0, 1, 24, 0.1), c.dark1, { opacity: 0.7 }) +
+      stroke(smooth([[-40, 230], [200, 112], [420, -6]]), mix(c.dark3, '#A09682', 0.2), 4, { opacity: 0.5 });
+    // dark round the edges, and a warm pool of light where the paws meet
+    back += rect(-10, -10, 1620, 1020, S.radU([[0, c.dark0, 0], [0.55, c.dark0, 0.2], [1, c.dark0, 0.7]], 800, 520, 980));
+    back += ell(800, 540, 640, 440, S.radU([[0, lightC, ev === 'dusk' ? 0.3 : 0.42], [0.6, lightC, 0.12], [1, lightC, 0]], 800, 540, 640), { style: 'mix-blend-mode:screen' });
+    if (o.pawsIn === true) {
+      back += g(pawPile(S), { 'data-art': 'paws' });
+      back += rect(-10, -10, 1620, 1020, S.radU([[0, c.dark0, 0], [0.62, c.dark0, 0], [1, c.dark0, 0.55]], 800, 500, 960));
+    }
+    S.weatherClip = S.clip('brprain', rect(0, 0, 0, 0, '#fff'));
     return { back: back, over: '', front: front };
   }
 
@@ -831,6 +1370,7 @@
     if (S.comp === 'mouth') return drawMouth(S);
     if (S.comp === 'under') return drawUnder(S);
     if (S.comp === 'back') return drawBack(S);
+    if (S.comp === 'paws') return drawPaws(S);
     return drawBank(S);
   }
 
@@ -840,7 +1380,8 @@
       bank: { box: [0, 0, 1600] },
       mouth: { box: [0, 0, 1600], comp: 'mouth' },
       under: { box: [0, 0, 1600], comp: 'under' },
-      back: { box: [0, 0, 1600], comp: 'back' }
+      back: { box: [0, 0, 1600], comp: 'back' },
+      paws: { box: [0, 0, 1600], comp: 'paws' }
     },
     anchors: {
       // the riverbank; `rock` and `edge` also show here, small, at the dark's mouth
@@ -852,10 +1393,19 @@
       // `sun` sit side by side: f097a, f100a, f101a); its height is the depth there
       mouth: { rock: A(415, 708, 230, 'right', { elev: true }), edge: A(770, 880, 300, 'left'), sun: A(1330, 965, 340, 'left'), 'sun-edge': A(1100, 958, 337, 'right') },
       under: { mud: A(640, 900, 320), inside: A(1010, 640, 165) },
-      back: { near: A(360, 1000, 440) }
+      // chapter 3: Sprinkle in the nook's mouth, facing the way in; a cat pressed against her flank, just
+      // in front of her (list Sprinkle first, so the cat is drawn over her); Riffle and Tallyheart either
+      // side, nearer. A cat-height camera, so h = y - 560 all over this floor
+      back: {
+        near: A(360, 1000, 440), dragon: A(1040, 820, 260, 'left'), beside: A(1150, 850, 290, 'left'),
+        'back-left': A(560, 900, 340, 'right'), 'back-right': A(1430, 885, 325, 'left')
+      },
+      // the three forepaws, close: no faces in it
+      paws: {}
     },
-    opts: { train: [false, true], eyes: ['none', 'open', 'blink'], drag: [true, false], drips: [true, false] },
-    defaults: { train: false, eyes: 'none', drag: true, drips: true }
+    opts: { train: [false, true], eyes: ['none', 'open', 'blink', 'sprinkle'], drag: [true, false], drips: [true, false],
+      pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false], hop: [false, true] },
+    defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false }
   });
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;

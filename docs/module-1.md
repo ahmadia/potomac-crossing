@@ -1,7 +1,19 @@
 # Module one: *The Dragon Under the Bridge*
 
-*Solo · ten chapters of about 15–20 minutes · v0.4 · 2026-10-03*
+*Solo · ten chapters of about 15–20 minutes, then the Warrior Ceremony · v0.5 · 2026-10-06*
 *In the game the player is "you"; these notes say "she" because Lissa is the first player.*
+
+## Changes, 2026-10-06 (Aron; README decisions 34–37)
+
+- **Warrior at the end.** Lissa wants to be a warrior. She stays an apprentice through chapter 10;
+  the final challenge, **the Warrior Counts** (every multiplication pair up to 10 × 10, passed with
+  90% right), opens a short **Warrior Ceremony** chapter after chapter 10, where she gets her
+  warrior name. Below, "no warrior name in module one" now means "not before the ceremony chapter".
+- **Every table to 10 × 10.** Module one adds the 6s, 7s, 8s and 9s; where they go is proposed in
+  the README ("Raised by decisions 34–36") and waits on Aron. The Counts table below still shows
+  the old plan for chapters 5–10.
+- **Warrior hints from chapter 3.** Her denmate, the tortoiseshell apprentice, takes her warrior
+  assessment (the Warrior Counts) while she watches.
 
 ## Back cover
 
@@ -32,7 +44,7 @@
   impatient. She teaches the Counts.
 - **Riffle:** an otter pup from the Holt, and her best friend. Chatters nonstop, juggles pebbles,
   knows every rumor on the river.
-- **Drizzle and her clutch:** seven Mistscale dragonets scattered by the storm (below).
+- **Sprinkle and her clutch:** seven Mistscale dragonets scattered by the storm (below).
 - **Glintstar:** CrystalClan's leader, a silver she-cat with eyes the color of the river in
   winter. Fair, careful, pushed by the other Clans.
 - **Thymeleaf:** CrystalClan's medicine cat.
@@ -61,7 +73,7 @@ Every player's cat was born a pillow cat, so she has two names, and the player c
 
 ## The clutch: seven dragonets
 
-The storm scattered a clutch of seven Mistscale dragonets, all named for the weather. Drizzle
+The storm scattered a clutch of seven Mistscale dragonets, all named for the weather. Sprinkle
 is the one everybody meets. The other six hide along the river, and she finds them by playing:
 taking a path, using what she's good at, or going back to look. Each one is a single short
 scene. Each greets her with a riddle that's secretly one of the Counts she already knows
@@ -69,7 +81,7 @@ scene. Each greets her with a riddle that's secretly one of the Counts she alrea
 
 | Dragonet | Looks and manner | Hiding | Found by | Helps by |
 |---|---|---|---|---|
-| **Drizzle** | mist-grey, ridged scales; gentle, shy, homesick | under the Old Bridge with a hurt wing | everyone, chapter 3 | being the heart of the story; she can't fly, which breaks Russet's lie |
+| **Sprinkle** | mist-grey, ridged scales; gentle, shy, homesick | under the Old Bridge with a hurt wing | everyone, chapter 3 | being the heart of the story; she can't fly, which breaks Russet's lie |
 | **Thunder** | slate with yellow flecks; the smallest, with the loudest voice | a glass-tower rooftop, roaring at skymonsters he thinks are giant dragons | climbing, or following the roars (ch. 4) | from up high he's watched two skinny shapes carry prey toward the tracks |
 | **Puddle** | blue-grey with too-big feet; clumsy and funny | under the otters' ferry raft, the Holt's secret | noticing the raft rides low, or Riffle letting it slip (ch. 5) | saw "something with clever little paws" by the pile on the storm night |
 | **Fog** | so pale she's nearly see-through; silent | standing still in the Roaches Run reeds, copying Patience | waiting with Patience long enough (ch. 5) | saw the fox drop something glittering in the reeds |
@@ -93,15 +105,15 @@ pile as a "dragon scale," then tells the Clan he saw the dragon fly off with the
 moonlight. If the Clans drive the dragon away, the den and the pile are his.
 
 **What gives him away**
-1. He says he saw the dragon **fly** off. Drizzle can't fly: her wing is hurt.
+1. He says he saw the dragon **fly** off. Sprinkle can't fly: her wing is hurt.
 2. He says he saw it **by moonlight** on the night of the storm. There was no moon that night.
-3. The "scale" is smooth tower glass. Drizzle's scales are grey and ridged.
+3. The "scale" is smooth tower glass. Sprinkle's scales are grey and ridged.
 4. The prints by the pile have five small toes, not three big claws.
-5. **The Counts.** Four pieces go missing a night: twelve in three nights. Drizzle eats ten
+5. **The Counts.** Four pieces go missing a night: twelve in three nights. Sprinkle eats ten
    fish at a meal, so three nights of dragon meals would be thirty.
 
 **Red herrings:** the ReedClan patrol (seen near the border, but their own pile was raided
-too), Coil the snake (creepy, but innocent of this), and Drizzle herself.
+too), Coil the snake (creepy, but innocent of this), and Sprinkle herself.
 
 ## Paths: one culprit, different journeys
 
@@ -111,7 +123,7 @@ she finds each clue, but every chapter ends in the same place. What varies:
 - **What she's good at** opens different routes to the same clue (table below).
 - **Which dragonets she finds** (the clutch, above).
 - **Tell or keep the secret** (chapter 3). If she tells Tallyheart, her mentor helps hide
-  Drizzle and walks the night trail with her. If she keeps it, she sneaks food to Drizzle,
+  Sprinkle and walks the night trail with her. If she keeps it, she sneaks food to Sprinkle,
   nearly gets caught, and walks the night trail with Riffle.
 - **Which witness first** (chapters 5–6): the ferry otters, Patience, Coil, the ReedClan patrol.
 - **Her worry becomes her brave moment.** Too small: she fits through the weasels' tunnel.
@@ -122,9 +134,9 @@ Her warrior name waits for a later module, and what she does this moon will be p
 
 | Clue | Ways to find it |
 |---|---|
-| Drizzle can't fly | Known from chapter 3. Linking it to Russet's lie: noticing (ch. 4), Riffle (ch. 7), or Tallyheart (ch. 7, if told) |
+| Sprinkle can't fly | Known from chapter 3. Linking it to Russet's lie: noticing (ch. 4), Riffle (ch. 7), or Tallyheart (ch. 7, if told) |
 | No moon that night | Noticing; Patience; Princess Waffles ("I was up ALL night with my nerves"); the Sky River dream (ch. 6) |
-| The scale is glass | Her pillow-cat past (she has lived behind window glass all her life); noticing or the shiny-things worry; Riffle; Drizzle ("that's not mine"); Fog |
+| The scale is glass | Her pillow-cat past (she has lived behind window glass all her life); noticing or the shiny-things worry; Riffle; Sprinkle ("that's not mine"); Fog |
 | Five-toed prints, weasel fur | Noticing; climbing (from the bridge beams); Patience; the ferry otters; Puddle |
 | The tunnel | The too-small worry; sneaking (she watches the pile at night); Coil's tip |
 | The Counts | Always, with Tallyheart, in chapter 7 |
@@ -157,10 +169,12 @@ Her warrior name waits for a later module, and what she does this moon will be p
 
 **3. Under the Old Bridge**
 - *Story:* She finds the dragonet: hurt wing, can't fly, starving, homesick. They become
-  friends. Drizzle says she usually eats ten fish at a meal, and that the storm scattered her
+  friends. Sprinkle says she usually eats ten fish at a meal, and that the storm scattered her
   six brothers and sisters along the river. Will she look for them?
 - *Paths:* tell Tallyheart, or keep the secret.
-- *Counts:* the 5s (claws). Drizzle counts claws with her.
+- *Counts:* the 5s (claws). Sprinkle counts claws with her.
+- *The warrior hint (2026-10-06):* her denmate, the tortoiseshell apprentice, passes the Warrior
+  Counts in front of the Clan and is named a warrior; Tallyheart: "One day, that'll be you."
 
 **4. The Glittering Scale**
 - *Story:* More prey gone, and a "scale" by the pile. Russet turns up at the border, smiling:
@@ -189,8 +203,8 @@ Her warrior name waits for a later module, and what she does this moon will be p
 
 **7. The Counts Don't Lie**
 - *Story:* Prey vanishes even from a guarded pile. She works the numbers with Tallyheart:
-  four pieces a night for three nights is twelve. But Drizzle eats ten at a meal, and three
-  nights of that would be thirty. And Drizzle can't fly, so Russet lied. Then she finds the tunnel.
+  four pieces a night for three nights is twelve. But Sprinkle eats ten at a meal, and three
+  nights of that would be thirty. And Sprinkle can't fly, so Russet lied. Then she finds the tunnel.
 - *Counts:* the 3s again, mixed with earlier Counts. The Counts become evidence. ("A warrior who
   knows her Counts can't be fooled.")
 
@@ -204,7 +218,7 @@ Her warrior name waits for a later module, and what she does this moon will be p
 - *Counts:* the 4s (paws), in the morning lesson before the trail.
 
 **9. Featherlight**
-- *Story:* Drizzle has to fly by the full moon. Thymeleaf makes a remedy for her wing, and she
+- *Story:* Sprinkle has to fly by the full moon. Thymeleaf makes a remedy for her wing, and she
   gathers one ingredient from each territory: reed root from ReedClan, oak moss from GroveClan,
   river mint from the Holt, dew from the glass towers. Then she lays out her case file for the
   Gathering.
@@ -216,12 +230,13 @@ Her warrior name waits for a later module, and what she does this moon will be p
   On Gathering Island, Russet makes his case, and she answers each claim with a clue from her
   file (she picks which; a wrong pick gets a gentle nudge, never a fail). Snip and Snatch start
   blaming each other and confess, and the foxes are chased off the territories. Then the mist
-  rolls in: the Mistscales have come for their clutch. Drizzle's wing holds, and the dragonets
+  rolls in: the Mistscales have come for their clutch. Sprinkle's wing holds, and the dragonets
   she found come to stand beside her before they fly (if that's all seven, the eldest Mistscale
-  bows low to her). Drizzle presses the grey pebble into her paws, and under the full moon it
+  bows low to her). Sprinkle presses the grey pebble into her paws, and under the full moon it
   flashes blue and green: a mist stone, the Mistscales' thanks for saving one of their own.
   Glintstar honors her in front of every Clan: her moon is over, and she belongs to CrystalClan.
   She's still Minnowpaw, and Tallyheart tells her the warrior name is coming, with this moon in it.
+  *(2026-10-06: the Warrior Counts open here, and passing them opens the Warrior Ceremony chapter.)*
 - *Counts:* the Moon Ferry Counts: all six, mixed, with Clanmates cheering from the raft. Help
   is always there, and it can't be failed.
 - *Hook:* a badger's track in the mud upriver.
@@ -298,7 +313,7 @@ until she finds them, then room for her own drawing), and her drawing on the cov
 
 ## For grown-ups: the real mist stone
 
-Drizzle's gift is grey until the moonlight hits it, then it flashes blue and green. In real
+Sprinkle's gift is grey until the moonlight hits it, then it flashes blue and green. In real
 life that's **labradorite**. A tumbled pocket stone or palm stone runs roughly $5–20 at a rock
 shop, a museum store or online. If you can, choose it in person: tilt it under a single lamp,
 because the flash shows only at certain angles and some stones barely have it. A small

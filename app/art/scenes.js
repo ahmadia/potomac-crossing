@@ -435,9 +435,11 @@
     return who === 'sparrow' ? 'perch' : who === 'moth' ? 'fly' : who === 'tallone' ? 'stand' : 'sit';
   }
   // A cast member's drawing options for cats.js: pose, mood, variant, the player's look, and the
-  // cast extras cats.js draws (`flatEars: true`; `holds: 'stone'` with `holdAt`). `purr` and `lift`
-  // are the scene's own (fxPurr, liftPlan), not the drawing's.
-  var CAST_EXTRAS = ['flatEars', 'holds', 'holdAt'];
+  // cast extras cats.js draws (`flatEars: true`; `holds: 'stone' | 'pebble' | 'vole' | 'fish' |
+  // 'fish2'` with `holdAt`; chapter 3's `tear`, `mist`, `claws`, `puffed`, `squeeze` and `moss`, each
+  // `true`, and a juggling otter's `pebbles: 4 | 5`). `purr` and `lift` are the scene's own (fxPurr,
+  // liftPlan), not the drawing's.
+  var CAST_EXTRAS = ['flatEars', 'holds', 'holdAt', 'tear', 'mist', 'claws', 'puffed', 'squeeze', 'moss', 'pebbles'];
   function charOpts(S, who, m) {
     var o = { pose: (m && m.pose) || defaultPose(who), mood: (m && m.mood) || 'neutral' };
     if (m && m.variant != null) o.variant = m.variant;
@@ -464,8 +466,12 @@
     var ch = getChar(who, oo);
     var flip = ch.placeholder ? (face || 'right') !== drawnFacing() : false;
     var sx = flip ? -s : s;
-    var svg = '<g transform="' + tr(x, y, sx, s) + ' translate(' + n(-ch.w / 2) + ' ' + n(-ch.h) + ')"' + attrs(extra) + '>' + ch.svg + '</g>';
-    return { svg: svg, ch: ch, head: [x + (ch.head.x - ch.w / 2) * sx, y + (ch.head.y - ch.h) * s], w: ch.w * s, h: ch.h * s };
+    var at = '<g transform="' + tr(x, y, sx, s) + ' translate(' + n(-ch.w / 2) + ' ' + n(-ch.h) + ')"' + attrs(extra) + '>';
+    var out = { svg: at + ch.svg + '</g>', ch: ch, head: [x + (ch.head.x - ch.w / 2) * sx, y + (ch.head.y - ch.h) * s], w: ch.w * s, h: ch.h * s };
+    // `over`: a part of the drawing that goes over whoever comes after it in the cast (Sprinkle's tail,
+    // curled round the cat beside her), in the same box
+    if (typeof ch.over === 'string' && ch.over) out.over = at + ch.over + '</g>';
+    return out;
   }
 
   // ------------------------------------------------------------------ shared painters
@@ -1263,6 +1269,11 @@
       s += rect(x0 + 2, slabY - rh, w - 4, rh, '#CFE6EA', { opacity: special ? 0.22 : 0.4 }) +
         rect(x0, slabY - rh - 3, w, 4, special ? '#F4F0EA' : '#DAD3CB') + stroke('M' + n(x0 + 2) + ' ' + n(slabY) + 'V' + n(slabY - rh) + 'M' + n(x1 - 2) + ' ' + n(slabY) + 'V' + n(slabY - rh), '#DAD3CB', 2);
       if (special) {
+        // the wind chime (chime: true), tiny from down here, beside the geranium
+        if (S.opts.chime) {
+          var cs = chimeStand(S, x1 - 22, slabY - rh + 4, slabY - rh - 44, 14, 0.22);
+          s += cs.svg + windChime(S, cs.tip[0], cs.tip[1], 0.22);
+        }
         s += circ(x1 - 10, slabY - rh - 6, 6, '#F28CA6') + circ(x1 - 18, slabY - rh - 9, 5, '#F7B7C6') + rect(x1 - 20, slabY - rh - 2, 16, 8, '#C46A4A');
         var lights = '';
         for (var i = 0; i < 6; i++) lights += dot(x0 + 6 + i * (w - 12) / 5, slabY - rh - 1 + (i % 2) * 2, 1.8);
@@ -1270,6 +1281,40 @@
       }
     }
     return s;
+  }
+
+  // A wind chime (tower, chime: true), hanging from the top of its string at (x, y), k its size (1 on
+  // the balcony camera): a little wooden disc, five silver tubes on threads, the longest in the
+  // middle, a clapper and a pink heart of a wind sail. It sways gently from the top.
+  function windChime(S, x, y, k) {
+    var p = S.pal, s = '', tubes = '', caps = '', shine = '', threads = '';
+    var disc = y + 30 * k, lens = [62, 78, 94, 78, 62];
+    threads += 'M' + n(x) + ' ' + n(y) + 'V' + n(disc);
+    for (var i = 0; i < 5; i++) {
+      var tx = x + (i - 2) * 11 * k, ty = disc + (10 + Math.abs(i - 2) * 2) * k, L = lens[i] * k;
+      threads += 'M' + n(x + (i - 2) * 9 * k) + ' ' + n(disc) + 'L' + n(tx) + ' ' + n(ty);
+      tubes += 'M' + n(tx - 3 * k) + ' ' + n(ty) + 'h' + n(6 * k) + 'v' + n(L) + 'h' + n(-6 * k) + 'z';
+      caps += 'M' + n(tx - 3.6 * k) + ' ' + n(ty) + 'h' + n(7.2 * k) + 'v' + n(2.2 * k) + 'h' + n(-7.2 * k) + 'z';
+      shine += 'M' + n(tx + 1.2 * k) + ' ' + n(ty + 4 * k) + 'v' + n(L - 8 * k);
+    }
+    var clap = disc + 64 * k, sail = disc + 124 * k;
+    threads += 'M' + n(x) + ' ' + n(disc) + 'V' + n(sail - 8 * k);
+    s += stroke(threads, '#6B5A52', Math.max(0.6, 1.3 * k), { opacity: 0.9 });
+    s += ell(x, disc, 24 * k, 6.5 * k, '#9C6B48') + ell(x, disc - 1.5 * k, 24 * k, 4.5 * k, '#C8925E');
+    s += path(tubes, S.lin('chimetube', [[0, '#7E8C9C'], [0.45, '#E8EEF4'], [1, '#93A1B0']], 0, 0, 1, 0), { stroke: '#4E5866', 'stroke-width': n(Math.max(0.4, 1.1 * k)) }) + path(caps, '#4E5866');
+    s += stroke(shine, p.rim, Math.max(0.5, 1.4 * k), { opacity: 0.75 });
+    s += ell(x, clap, 7 * k, 2.6 * k, '#9C6B48');
+    // the sail: a little pink heart, Waffles's colour
+    s += path('M' + n(x) + ' ' + n(sail + 18 * k) + 'C' + n(x - 22 * k) + ' ' + n(sail + 4 * k) + ' ' + n(x - 14 * k) + ' ' + n(sail - 12 * k) + ' ' + n(x) + ' ' + n(sail - 4 * k) +
+      'C' + n(x + 14 * k) + ' ' + n(sail - 12 * k) + ' ' + n(x + 22 * k) + ' ' + n(sail + 4 * k) + ' ' + n(x) + ' ' + n(sail + 18 * k) + 'Z', '#F28CA6');
+    return g(s, { 'class': 'pcs-chime' });
+  }
+  // The chime's stand on the balcony: a shepherd's crook planted beside the geranium's pot, curling
+  // over at the top; returns the crook's tip, where the chime hangs.
+  function chimeStand(S, x0, base, top, reach, k) {
+    var tip = [x0 - reach, top + 26 * k];
+    var d = 'M' + n(x0) + ' ' + n(base) + 'V' + n(top + 30 * k) + 'C' + n(x0) + ' ' + n(top - 6 * k) + ' ' + n(x0 - reach) + ' ' + n(top - 10 * k) + ' ' + n(tip[0]) + ' ' + n(tip[1] - 10 * k);
+    return { svg: stroke(d, '#3E3A40', 6 * k) + stroke(d, '#8E8A90', 2 * k, { opacity: 0.6, transform: 'translate(' + n(-1.5 * k) + ' ' + n(-k) + ')' }), tip: tip };
   }
 
   function drawBalcony(S) {
@@ -1297,6 +1342,11 @@
     back += g(wall, { filter: S.shadow('l') });
     // balcony floor
     back += path('M0 900H1600V1000H0Z', mix(p.stone, p.glassBot, 0.2)) + rect(0, 900, 1600, 10, p.stoneLight, { opacity: 0.8 });
+    // the wind chime (chime: true), on a crook planted in the geranium's pot, hanging beside it
+    if (S.opts.chime) {
+      var cs = chimeStand(S, 1316, 800, 372, 96, 1.5);
+      back += g(cs.svg + windChime(S, cs.tip[0], cs.tip[1], 1.5), { filter: S.shadow('s') });
+    }
     // pots of pink flowers
     var fl = '';
     for (i = 0; i < 14; i++) fl += dot(1380 + (r() - 0.5) * 150, 690 + (r() - 0.5) * 90, 14 + r() * 8);
@@ -1477,6 +1527,11 @@
     if (S.opts.puddles) back += puddles(S, [[640, 905, 64, 11], [1030, 870, 78, 12], [1170, 958, 120, 17], [410, 868, 54, 9], [870, 975, 104, 15], [530, 970, 70, 12], [1330, 846, 52, 8]], 106);
     // the back bramble arch behind the fountain
     back += g(path(mound(610, 990, 640, 520, 8, rng(109), 0.32, 0.2, 0.3), p.leaf) + bramble(S, 620, 980, 640, 540, { seed: 110, arches: 4, w: 8 }), { filter: S.shadow('m') });
+    // a whole-camp purr's rings ripple out across the ground, behind the crowd and everyone else
+    back += purrRings(S);
+    // the whole Clan (crowd: true): the row behind the fountain, its bodies hidden by the basin
+    var crowd = !!S.opts.crowd;
+    if (crowd) back += crowdCats(S, CROWD.back, 0);
     // paths of old stone, mossy
     back += stonePath(S, [[830, 1000], [815, 860], [800, 770]], { size: 34, seed: 111, y0: 600 }) +
       stonePath(S, [[260, 830], [450, 790], [600, 760]], { size: 26, seed: 112, y0: 600 }) +
@@ -1486,9 +1541,13 @@
     back += g(denMound(S, 980, 1600, 778, 400, [[1150, 140, 122], [1436, 156, 134]], 122), { filter: S.shadow('l') });
     // the fountain
     back += g(fountain(S), { filter: S.shadow('l') });
+    // the crowd in front of the dens, on either side of the fountain
+    if (crowd) back += crowdCats(S, CROWD.sides, CROWD.back.length);
     // ferns: middle ground
     back += fernClump(S, 640, 790, 130, { seed: 131, count: 6 }) + fernClump(S, 960, 795, 120, { seed: 132, count: 6 }) +
       fernClump(S, 300, 812, 120, { seed: 133, count: 6 });
+    // and the nearer cats at the edges, among the ferns
+    if (crowd) back += crowdCats(S, CROWD.near, CROWD.back.length + CROWD.sides.length);
     // fern bed where an apprentice can fall over: the bed is behind him; the fronds in front of
     // him (and the framing ferns) keep clear of his head and body
     var avoid = spotBoxes(S, 'ferns');
@@ -1567,16 +1626,113 @@
     return S.lin(key, [[0, mix(p.sky[p.sky.length - 2], '#FFFFFF', 0.25)], [0.55, mix(p.sky[2], p.water, 0.3)], [1, mix(p.sky[1], p.water, 0.55)]]);
   }
 
+  // ------------------------------------------------------------------ the whole Clan (camp, crowd: true)
+
+  // The Warrior Counts: every cat in camp crowded round the fountain. Seats [x, y, facing, pose,
+  // size], feet on the ground in the camp's main composition, every cat turned to the fountain: a row
+  // behind it (between the dens, heads and shoulders over the basin), a group in front of each den,
+  // and the nearer cats among the ferns at the edges. The clearing in front of the fountain stays
+  // open: its foot (where a cat sits alone, small, to be tested) and the middle of camp.
+  var CROWD = {
+    back: [[652, 666, 'right', 'sit', 0.92], [700, 660, 'right', 'lookup', 1], [742, 670, 'right', 'sit', 0.66], [860, 670, 'left', 'sit', 0.7],
+      [902, 660, 'left', 'lookup', 1], [952, 666, 'left', 'sit', 0.92]],
+    sides: [[104, 756, 'right', 'lookup', 0.92], [276, 754, 'right', 'sit', 0.9], [1150, 756, 'left', 'sit', 0.9], [1388, 752, 'left', 'lookup', 0.92], [1480, 758, 'left', 'sit', 0.9],
+      [58, 786, 'right', 'sit', 1], [148, 776, 'right', 'loaf', 1], [236, 792, 'right', 'sit', 1.04], [312, 778, 'right', 'lookup', 0.96], [290, 806, 'right', 'sit', 0.66],
+      [1104, 782, 'left', 'sit', 0.98], [1186, 790, 'left', 'lookup', 1], [1232, 806, 'left', 'sit', 0.68], [1268, 780, 'left', 'sit', 1.04], [1350, 788, 'left', 'loaf', 1],
+      [1432, 778, 'left', 'sit', 0.96], [1522, 786, 'left', 'stand', 1]],
+    near: [[96, 874, 'right', 'sit', 1], [196, 858, 'right', 'lookup', 0.98], [1392, 862, 'left', 'sit', 1], [1505, 878, 'left', 'lookup', 1.02]]
+  };
+  // the coats round the fountain, in turn (each a Clan cat's variant; none ever wears her coat)
+  var CROWD_COATS = [3, 1, 6, 4, 2, 5, 1, 4, 6, 3, 5, 2];
+  var CROWD_MOODS = ['neutral', 'wonder', 'kind', 'neutral', 'proud', 'wonder', 'solemn', 'kind'];
+
+  // The cast tint filter for the time of day (one per panel), shared by the cast and the crowd.
+  function castTint(S) {
+    return (CAST_TINT[S.tod] && S.set !== 'room') ? S.filter('tint', '<feColorMatrix type="matrix" values="' + CAST_TINT[S.tod] + '"/>') : null;
+  }
+  // Where the panel's own cast stands (world boxes), so the crowd keeps clear of them: no crowd cat
+  // in front of one of them, or level with one, overlaps her, and none comes near a face (the
+  // balloons point there).
+  function castZones(S) {
+    var R = refH(), out = [], used = {}, cast = S.cast || [];
+    cast.forEach(function (m) { if (m && typeof m.at === 'string') used[m.at] = true; });
+    cast.forEach(function (m) {
+      if (!m) return;
+      var a = resolveAnchor(S, m, used);
+      if (!a) return;
+      var b = castBoxes(castPlan(S, m, a, R));
+      out.push({ y: a.y, head: b.head, body: b.body });
+    });
+    return out;
+  }
+  function boxHit(a, b, pad) {
+    pad = pad || 0;
+    return a[0] < b[2] + pad && a[2] > b[0] - pad && a[1] < b[3] + pad && a[3] > b[1] - pad;
+  }
+  // The crowd's seats that are free, drawn as Clan cats: the purr makes them all happy, eyes shut.
+  function crowdCats(S, seats, k0) {
+    var R = refH(), zones = S.crowdZones || (S.crowdZones = castZones(S)), tint = castTint(S), out = '';
+    var taken = (S.cast || []).filter(function (c) { return c && c.who === 'clancat'; }).map(function (c) { return c.variant; });
+    seats.forEach(function (st, j) {
+      var i = k0 + j, s = depthAt(S, st[1]) / R * st[4];
+      var o = { pose: st[3], mood: S.fx.purr ? 'happy' : CROWD_MOODS[i % CROWD_MOODS.length], variant: CROWD_COATS[i % CROWD_COATS.length], look: S.look || {}, taken: taken };
+      var c = placeChar(S, 'clancat', o, st[0], st[1], s, st[2], tint ? { filter: tint } : null);
+      var b = castBoxes({ who: 'clancat', co: o, s: s, face: st[2], x: st[0], y: st[1] }, c.ch);
+      // in a close camera (the 'ferns' close-up, a third of the camp wide) a face the panel's edge
+      // would cut through is left out: a crowd cat there is wholly in the picture or wholly out of
+      // it, never sliced at the eyes (the wide shots keep their full edges, cats small at the frame)
+      var hb = b.head, B = S.box;
+      if (B && B.w < 1000 && ((hb[1] < B.y && hb[3] > B.y) || (hb[0] < B.x && hb[2] > B.x) || (hb[0] < B.x + B.w && hb[2] > B.x + B.w))) return;
+      for (var z = 0; z < zones.length; z++) {
+        var hw = zones[z].head[2] - zones[z].head[0];
+        if (boxHit(b.body, zones[z].head, hw * 0.12)) return;
+        if (st[1] >= zones[z].y - 6 && boxHit(b.body, zones[z].body)) return;
+      }
+      // each crowd cat says where its body is (world units), for the tests and the gallery
+      out += g(ell(st[0], st[1] - 1, c.w * 0.4, Math.max(2.5, c.h * 0.045), S.pal.shade, { opacity: 0.28 }) + c.svg,
+        { 'data-crowd': 'cat', 'data-box': b.body.map(n).join(' '), 'data-head': b.head.map(n).join(' ') });
+    });
+    return out;
+  }
+  // From the low angle under the fountain: the crowd's heads and ears, dark against the light, along
+  // the bottom of the panel, all looking up at the leader (feet far below the panel). The middle,
+  // where the fountain's foot rises toward us, stays open.
+  var CROWD_HEADS = [[40, 1090, 'right', 440], [250, 1075, 'right', 410], [462, 1085, 'right', 430], [628, 1068, 'right', 370],
+    [972, 1068, 'left', 370], [1138, 1085, 'left', 430], [1350, 1075, 'left', 410], [1560, 1090, 'left', 440]];
+  function crowdHeads(S) {
+    var p = S.pal, R = refH(), out = '';
+    // dusky shapes, each lit along its top and right by the low sun behind the leader
+    var sil = S.filter('crowdsil', '<feFlood flood-color="' + mix(p.shade, p.leafMid, 0.28) + '"/><feComposite in2="SourceAlpha" operator="in" result="s"/>' +
+      '<feOffset in="SourceAlpha" dx="-6" dy="6" result="off"/>' +
+      '<feFlood flood-color="' + p.rim + '"/><feComposite in2="SourceAlpha" operator="in" result="rf"/>' +
+      '<feComposite in="rf" in2="off" operator="out" result="r"/>' +
+      '<feMerge><feMergeNode in="s"/><feMergeNode in="r"/></feMerge>');
+    CROWD_HEADS.forEach(function (st, i) {
+      out += placeChar(S, 'clancat', { pose: 'lookup', mood: 'neutral', variant: CROWD_COATS[i % CROWD_COATS.length] }, st[0], st[1], st[3] / R, st[2], { filter: sil }).svg;
+    });
+    return g(out, { 'data-crowd': 'heads' });
+  }
+  // From above, at the newcomer's feet (the entrance camera): more long shadows of watching cats,
+  // round every edge. [x, y, rotation, facing, size]
+  var CROWD_SHADOWS = [[700, -60, 180, 'right', 230], [1050, -40, 190, 'left', 190], [-60, 300, 100, 'right', 170], [-50, 700, 80, 'right', 210],
+    [1660, 760, -80, 'left', 200], [520, 1080, 10, 'right', 180], [1180, 1070, -12, 'left', 160]];
+
   // ------------------------------------------------------------------ HOLLOW
 
   // Where the claw marks go on the old tree, [x, y, size] each, in order: one Count each, left to
   // right. One or two marks are full size side by side at her reach (the first exactly where chapter
-  // 1 scratched it); three to six are smaller, three to a row, so all of them fit on the trunk, clear
-  // of the knot hole, and inside the tree close-up.
+  // 1 scratched it); three to six are smaller, three to a row; seven to ten (every table to ten times
+  // ten) smaller again, four to a row, each row set in a little as the trunk leans: all of them on the
+  // trunk, clear of the knot hole, and inside the tree close-up.
+  var MAX_MARKS = 10;
   function markSpots(count) {
     if (count <= 2) return [[1126, 516, 1], [1188, 516, 1]].slice(0, count);
-    var k = 0.72, out = [];
-    for (var i = 0; i < count; i++) out.push([(i < 3 ? 1104 : 1112) + (i % 3) * 50, i < 3 ? 500 : 570, k]);
+    var out = [], i;
+    if (count <= 6) {
+      for (i = 0; i < count; i++) out.push([(i < 3 ? 1104 : 1112) + (i % 3) * 50, i < 3 ? 500 : 570, 0.72]);
+      return out;
+    }
+    for (i = 0; i < count; i++) { var row = Math.floor(i / 4); out.push([[1100, 1110, 1116][row] + (i % 4) * 35, 505 + row * 55, 0.55]); }
     return out;
   }
   // glow: true lights every mark; a list lights mark i when glow[i] is true. ('auto' is the UI's to
@@ -1633,7 +1789,7 @@
     tree += ell(1206, 690, 18, 26, '#3A281E') + ell(1210, 694, 10, 16, '#24180F');
     tree += path(blob(1180, 820, 50, 22, 8, rng(156), 0.3, 0.3), p.moss, { opacity: 0.9 });
     // claw marks: one for every Count she knows, left to right (markSpots); each glows on its own
-    var marks = clamp(Math.round(+o.marks || 0), 0, 6), mk = '', glow = '';
+    var marks = clamp(Math.round(+o.marks || 0), 0, MAX_MARKS), mk = '', glow = '';
     var mkIn = '', mkLit = '', sparks = '', glowTight = '', spots = markSpots(marks), kx0 = 1e9, ky0 = 1e9, kx1 = -1e9, ky1 = -1e9;
     var depths = markDepths(o.depth, marks), core = '', coreLit = '';
     for (i = 0; i < marks; i++) {
@@ -1763,7 +1919,16 @@
       var hx = (hb[0] + hb[2]) / 2, hw = hb[2] - hb[0];
       // head up: her chin is well above the moss, where the stone would hang in the air
       var up = crest - hb[3] > r * 2;
-      if (o === 'nose') { sx = (dir > 0 ? hb[2] : hb[0]) + dir * r * 1.2; sy = up ? crest : clamp(hb[3] - r * 0.6, hb[1] + hw * 0.5, crest); }
+      if (o === 'nose') {
+        sx = (dir > 0 ? hb[2] : hb[0]) + dir * r * 1.2; sy = up ? crest : clamp(hb[3] - r * 0.6, hb[1] + hw * 0.5, crest);
+        // head up, with someone else beside the nest (Murmurpaw at its edge): out past the head box
+        // it would land at her paws and read as hers, so it lies on our cat's own moss, ahead of her paws
+        if (up && (S.cast || []).some(function (c) {
+          if (!c || c === m || !CAT_IDS[c.who || 'clancat'] && c.who !== 'riffle') return false;
+          var ca = resolveAnchor(S, c, {}), bb = ca && castBoxes(castPlan(S, c, ca, refH())).body;
+          return bb && sx + r > bb[0] - r && sx - r < bb[2] + r && sy > bb[1];
+        })) sx = hx + dir * hw * 0.45;
+      }
       else if (o === 'chin') { sx = hx + dir * hw * (up ? 0.24 : 0.06); sy = up ? crest : clamp(hb[3] + r * 0.2, hb[1] + hw * 0.6, crest); }
       else { sx = hx + dir * hw * 0.12; sy = crest; }
     }
@@ -2193,6 +2358,8 @@
         [610, 730, 7, true], [990, 760, 7, true], [1128, 690, 7, true], [1128, 860, 7, true], [800, 760, 7, true]], 160);
     }
     back += g(f, { filter: S.shadow('l') });
+    // the whole Clan (crowd: true): heads and ears along the bottom, looking up at her
+    if (S.opts.crowd) back += crowdHeads(S);
     front += g(fernClump(S, -60, 1060, 420, { seed: 166, count: 7, spread: 1.4, lean: 0.55 }) + fernClump(S, 1680, 1060, 420, { seed: 167, count: 7, spread: 1.4, lean: -0.55 }), { filter: S.shadow('m') });
     return { back: back, over: '', front: front };
   }
@@ -2227,6 +2394,13 @@
     for (i = 0; i < spots.length; i++) {
       var c = placeChar(S, 'clancat', { pose: 'sit', mood: 'neutral', variant: i + 1 }, spots[i][0], spots[i][1], 300 / R, spots[i][3] < 0 ? 'right' : 'left', { filter: sh });
       back += g(c.svg, { opacity: 0.24, transform: 'rotate(' + spots[i][2] + ' ' + spots[i][0] + ' ' + spots[i][1] + ')' });
+    }
+    // the whole Clan (crowd: true): shadows of watching cats round every edge
+    if (S.opts.crowd) {
+      CROWD_SHADOWS.forEach(function (st, j) {
+        var cs = placeChar(S, 'clancat', { pose: 'sit', mood: 'neutral', variant: CROWD_COATS[j] }, st[0], st[1], st[4] / R, st[3], { filter: sh });
+        back += g(cs.svg, { opacity: 0.22, transform: 'rotate(' + st[2] + ' ' + st[0] + ' ' + st[1] + ')', 'data-crowd': 'shadow' });
+      });
     }
     // fronds leaning in over the edges
     front += g(fernClump(S, -80, 1060, 380, { seed: 172, count: 6, spread: 1.3, lean: 0.6 }) + fernClump(S, 1680, 1080, 360, { seed: 173, count: 6, spread: 1.3, lean: -0.6 }) +
@@ -2291,18 +2465,27 @@
         up: { window: A(700, 1000, 215, 'right', { z: 'behind' }), railing: A(0, 0, 84, 'left', { z: 'behind', elev: true, balcony: true }) },
         balcony: { railing: A(800, 905, 520, 'left', { z: 'behind' }) }
       },
-      opts: {}, defaults: {}
+      // chime: a wind chime on Waffles's balcony, hanging beside her geranium (chapter 3: CrystalClan
+      // hears it every day, so "clear as a chime" points at something)
+      opts: { chime: [true, false] }, defaults: {}
     },
     garden: {
       label: 'the garden at dusk', tod: 'sunset', draw: drawGarden,
       cams: {
         wide: { box: [0, 0, 1600] }, paws: { box: [540, 760, 260], follow: 0.95 }, step: { box: [0, 330, 860] }, fence: { box: [300, 330, 840] },
-        lamp: { box: [985, 215, 240] }, meet: { box: [490, 400, 720] }, hedge: { box: [1100, 420, 500] }
+        lamp: { box: [985, 215, 240] }, meet: { box: [490, 400, 720] }, hedge: { box: [1100, 420, 500] },
+        // close at the gap, framed on the first cast member's head (chapter 3, the kept path: her nod,
+        // eyes down, the vole in her mouth, Tallyheart at the edge)
+        'hedge-close': { box: [1150, 520, 400], head: { face: 0.3, at: [0.6, 0.42] } }
       },
       anchors: {
         main: {
           step: A(330, 846, 270), lawn: A(660, 846, 280), 'fence-foot': A(780, 678, 205, 'left'), 'lamp-top': A(1105, 281, 150, 'left', { elev: true }),
-          'hedge-gap': A(1390, 718, 210), doorway: A(178, 778, 255)
+          'hedge-gap': A(1390, 718, 210), doorway: A(178, 778, 255),
+          // on the lawn just left of the gap, in the hedge close-up too: a second cat at the hedge
+          // (chapter 3, the kept path at sunset: Tallyheart in the gap, you with your vole); its height
+          // is the lawn's own depth there, so a spot of its own ({ x, y }) sizes exactly as before
+          'hedge-side': A(1205, 726, 222.9)
         }
       },
       opts: { sparrows: 'number', lampSparrow: [true, false], dish: [true, false], moth: [true, false], towel: [true, false] }, defaults: { sparrows: 12 }
@@ -2323,7 +2506,10 @@
         fountain: { 'fountain-top': A(800, 598, 440, 'left', { elev: true }) },
         entrance: { entrance: A(800, 820, 500) }
       },
-      opts: { puddles: [true, false], rainFountain: [true, false] }, defaults: {}
+      // crowd: the whole Clan crowded round the fountain (the Warrior Counts, chapter 3): rows of cats
+      // behind the cast, never in front of one or near a face; heads along the bottom from below the
+      // fountain; more watching shadows from above
+      opts: { puddles: [true, false], rainFountain: [true, false], crowd: [true, false] }, defaults: {}
     },
     hollow: {
       label: 'the Training Hollow', tod: 'golden', todMap: { sunset: 'golden' }, draw: drawHollow,
@@ -2340,11 +2526,11 @@
           'rim-4': A(925, 774, 216, 'left'), 'rim-5': A(1070, 786, 223, 'left')
         }
       },
-      // marks: one claw mark per Count (0-6); glow: true, or a list of booleans, one per mark
+      // marks: one claw mark per Count (0-10, every table to ten times ten); glow: true, or a list of booleans, one per mark
       // ('auto' for both: the UI fills them in from the cat before drawing); depth: 0 fresh, 1 deeper,
       // 2 deepest, for every mark or a list, one per mark (left out or unfilled: every mark but the
       // newest is deeper, the oldest most, as practice deepens them)
-      opts: { marks: [0, 1, 2, 3, 4, 5, 6, 'auto'], glow: [true, false, 'auto'], depth: [0, 1, 2, 'auto'] }, defaults: { marks: 0 }
+      opts: { marks: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'auto'], glow: [true, false, 'auto'], depth: [0, 1, 2, 'auto'] }, defaults: { marks: 0 }
     },
     den: {
       label: "the apprentices' den", tod: 'night', draw: drawDen,
@@ -2491,7 +2677,12 @@
     var hb = castBoxes(pl).head, over = hb[3] - (L.y - L.gap);
     if (over > 0) { pl.y -= over; pl.lift = over; }
   }
-  var CAT_IDS = { player: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, snorter: 1, clancat: 1 };
+  // (`murmurchime`: the tortie named, chapter 3, if cats.js gives her a cast id of her own)
+  var CAT_IDS = { player: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, murmurchime: 1, snorter: 1, clancat: 1 };
+  // Bigger than a cat (Sprinkle, heron-sized): drawn in the cats' units like everyone (cats.js gives
+  // her a box bigger than a cat's, so a cat's anchor fits her), her face's r from her head box as the
+  // otters' and dogs' are, and her shadow under her body rather than her whole box.
+  var BIG = { sprinkle: 1 };
   // A face's size, for balloon tails and for keeping the lettering off it: its radius in percent of
   // the panel width (a head's `r`). A cat's is a fifth of its 200 box (chapter 1's measure, which the
   // UI used to estimate from the markup); anything else with a head box (Riffle, the otters, the
@@ -2535,8 +2726,8 @@
   }
 
   function drawCast(S, cast) {
-    var behind = '', front = '', heads = [], info = [], used = {}, covered = {}, R = refH();
-    var tint = (CAST_TINT[S.tod] && S.set !== 'room') ? S.filter('tint', '<feColorMatrix type="matrix" values="' + CAST_TINT[S.tod] + '"/>') : null;
+    var behind = '', front = '', heads = [], info = [], used = {}, covered = {}, R = refH(), overBehind = '', overFront = '';
+    var tint = castTint(S);
     for (var i = 0; i < cast.length; i++) if (cast[i] && typeof cast[i].at === 'string') used[cast[i].at] = true;
     for (i = 0; i < cast.length; i++) {
       var m = cast[i] || {};
@@ -2551,29 +2742,43 @@
       // would otherwise float over it
       var seated = pl.lift > 0 && pl.lift >= S.camDef.lift.seat, restY = seated ? Math.min(ay, bx.body[3]) : ay;
       if (seated) piece += g(seat(S, bx.body, restY - 6, a.y), tint ? { filter: tint } : null);
-      if (who !== 'moth' && !a.air && co.pose !== 'fall') piece += ell(a.x, restY - 1, c.w * 0.4, Math.max(2.5, a.h * 0.045), S.pal.shade, { opacity: 0.28 });
+      if (BIG[who]) {
+        // bigger than a cat, and her box is mostly neck, wings and tail: the shadow lies under her
+        // body as drawn (none when only her eyes show in the dark)
+        if (co.pose !== 'eyes') piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
+      } else if (who !== 'moth' && !a.air && co.pose !== 'fall') piece += ell(a.x, restY - 1, c.w * 0.4, Math.max(2.5, a.h * 0.045), S.pal.shade, { opacity: 0.28 });
       // `holds: 'stone'` is drawn by cats.js with the cat (in her paws, or in the mouth on her feet),
       // which reports where it is (`held`, in its box): the sparkle effect twinkles on it
       piece += c.svg;
       var held = null;
       if (c.ch.held) {
         var hsx = c.ch.placeholder && (face || 'right') !== drawnFacing() ? -pl.s : pl.s;
-        held = { x: a.x + (c.ch.held.x - c.ch.w / 2) * hsx, y: ay + (c.ch.held.y - c.ch.h) * pl.s, r: c.ch.held.r * pl.s };
+        held = { what: c.ch.held.what, x: a.x + (c.ch.held.x - c.ch.w / 2) * hsx, y: ay + (c.ch.held.y - c.ch.h) * pl.s, r: c.ch.held.r * pl.s };
       }
       if (typeof m.at === 'string' && S.covers[m.at] && !covered[m.at]) { piece += S.covers[m.at]; covered[m.at] = true; }
       if (a.z === 'behind') behind += piece; else front += piece;
+      if (c.over) { if (a.z === 'behind') overBehind += c.over; else overFront += c.over; }
       var px = (c.head[0] - S.box.x) / S.box.w * 100, py = (c.head[1] - S.box.y) / S.box.h * 100;
       var inside = px >= 0 && px <= 100 && py >= 0 && py <= 100;
+      if (!inside && BIG[who]) {
+        // a head that tops a cat's camera (Sprinkle at a cat's spot, her head well above everyone's):
+        // when a good part of her face is still in the panel, the balloon points at what shows of it
+        var hv = [Math.max(bx.head[0], S.box.x), Math.max(bx.head[1], S.box.y), Math.min(bx.head[2], S.box.x + S.box.w), Math.min(bx.head[3], S.box.y + S.box.h)];
+        var full = (bx.head[2] - bx.head[0]) * (bx.head[3] - bx.head[1]);
+        if (hv[2] > hv[0] && hv[3] > hv[1] && full > 0 && (hv[2] - hv[0]) * (hv[3] - hv[1]) >= full * 0.35) {
+          px = ((hv[0] + hv[2]) / 2 - S.box.x) / S.box.w * 100; py = ((hv[1] + hv[3]) / 2 - S.box.y) / S.box.h * 100; inside = true;
+        }
+      }
       var hr = faceR(S, who, c.ch, pl.s);
       heads.push(inside ? (hr != null ? { x: Math.round(px * 10) / 10, y: Math.round(py * 10) / 10, r: Math.round(hr * 100) / 100 } : { x: Math.round(px * 10) / 10, y: Math.round(py * 10) / 10 }) : null);
       var toP = function (b) { return [(b[0] - S.box.x) / S.box.w * 1600, (b[1] - S.box.y) / S.box.h * 1000, (b[2] - S.box.x) / S.box.w * 1600, (b[3] - S.box.y) / S.box.h * 1000]; };
       info.push({ who: who, pose: co.pose, mood: co.mood, face: face, px: px * 16, py: py * 10, hp: c.h / S.box.h * 1000, wp: c.w / S.box.w * 1600, footY: (ay - S.box.y) / S.box.h * 1000, footX: (a.x - S.box.x) / S.box.w * 1600,
         hb: toP(bx.head), bb: toP(bx.body), purr: m.purr === true,
-        held: held ? { x: (held.x - S.box.x) / S.box.w * 1600, y: (held.y - S.box.y) / S.box.h * 1000, r: held.r / S.box.w * 1600 } : null });
+        held: held ? { what: held.what, x: (held.x - S.box.x) / S.box.w * 1600, y: (held.y - S.box.y) / S.box.h * 1000, r: held.r / S.box.w * 1600 } : null });
     }
     var spare = '';
     for (var k in S.covers) if (!covered[k]) spare += S.covers[k];
-    return { behind: behind, front: front, spare: spare, heads: heads, info: info };
+    return { behind: behind + overBehind, front: front + overFront, spare: spare, heads: heads, info: info };
   }
 
   // ------------------------------------------------------------------ effects (panel space: 1600 x 1000)
@@ -2612,6 +2817,18 @@
   // arcs ring them and 'purrr' floats behind them, and nobody else in the panel purrs (Riffle, who
   // has never heard a purr, stays quiet). With nobody marked, it is chapter 1's whole-camp purr:
   // every cast member purrs, fixed spots stand in for cats out of shot, and the rings fill the camp.
+  // The whole-camp purr's rings (nobody marked purr: chapter 1's camp, the naming's wide panel): soft
+  // rings rippling out through the camp, in panel units like the rest of the fx, but drawn behind
+  // everyone, the crowd and the cast, so they never run across a face (in a close camera one ring is
+  // a single line across the panel). A set with a crowd puts them under it; otherwise they go just
+  // over the set's back layer. Once a panel.
+  function purrRings(S) {
+    if (S.purrRingsDone || !S.fx || !S.fx.purr || (S.cast || []).some(function (c) { return c && c.purr; })) return '';
+    S.purrRingsDone = true;
+    var s = '', kx = S.box.w / WORLD_W;
+    for (var i = 0; i < 3; i++) s += ell(800, 700, 560, 190, 'none', { stroke: '#FFF1C8', 'stroke-width': 4, opacity: 0.45, 'class': 'pcs-ring', style: 'animation-delay:-' + (i * 1.2).toFixed(1) + 's' });
+    return g(s, { transform: 'translate(' + n(S.box.x) + ' ' + n(S.box.y) + ') scale(' + n4(kx) + ')', 'class': 'pcs-fx-under' });
+  }
   function fxPurr(S, info) {
     var s = '', r = rng(321), col = '#FFF1C8', srcs = [], i, marked = [];
     for (i = 0; i < info.length; i++) if (info[i] && info[i].purr) marked.push(info[i]);
@@ -2654,9 +2871,20 @@
     } else {
       var fixed = [[300, 660, 90, 120], [1280, 670, 90, 120], [800, 600, 80, 110]];
       for (i = 0; i < fixed.length && srcs.length < 3; i++) srcs.push(fixed[i]);
-      // soft rings rippling out through the whole camp
-      for (i = 0; i < 3; i++) s += ell(800, 700, 560, 190, 'none', { stroke: col, 'stroke-width': 4, opacity: 0.45, 'class': 'pcs-ring', style: 'animation-delay:-' + (i * 1.2).toFixed(1) + 's' });
-      words = [[230, 470, -8, 1], [1290, 500, 7, 1], [800, 330, 0, 1]];
+      // the soft rings rippling out through the whole camp are drawn behind everyone (purrRings);
+      // the three words keep off every face: a word over a head lifts to just above it
+      words = [[230, 470, -8, 1], [1290, 500, 7, 1], [800, 330, 0, 1]].map(function (w) {
+        for (var t = 0; t < 3; t++) {
+          var ws = w[3], box = [w[0] - 60 * ws, w[1] - 40 * ws, w[0] + 60 * ws, w[1] + 8 * ws], hit = null;
+          for (var j = 0; j < info.length && !hit; j++) {
+            var hb = info[j] && info[j].hb;
+            if (hb && box[0] < hb[2] && box[2] > hb[0] && box[1] < hb[3] && box[3] > hb[1]) hit = hb;
+          }
+          if (!hit) break;
+          w = [w[0], Math.max(46 * ws, hit[1] - 24), w[2], ws];
+        }
+        return w;
+      });
     }
     // little sound arcs on both sides of every purring cat
     for (i = 0; i < srcs.length; i++) {
@@ -2680,12 +2908,13 @@
 
   // The Sky River: a glowing band of light packed with tiny stars, rising left to right.
 
-  // Sparkles. When someone holds Riffle's stone (f075: he has just set it in her paws), they twinkle
-  // on the stone itself: one on its white band, two small ones beside it. Otherwise they scatter
-  // round the first cast member.
+  // Sparkles. When someone holds Riffle's stone (f075: he has just set it in her paws), or Sprinkle
+  // her pebble, they twinkle on the stone itself: one on its white band, two small ones beside it.
+  // A vole or a fish held in a mouth never sparkles. Otherwise they scatter round the first cast member.
+  var SPARKLY = { stone: 1, pebble: 1 };
   function fxSparkle(S, info) {
     var r = rng(331), s = '', cx = 800, cy = 450, i;
-    var held = info.filter(function (c) { return c && c.held; }).map(function (c) { return c.held; });
+    var held = info.filter(function (c) { return c && c.held && (c.held.what == null || SPARKLY[c.held.what]); }).map(function (c) { return c.held; });
     if (held.length) {
       held.forEach(function (h, j) {
         var rr = Math.max(6, h.r);
@@ -2724,14 +2953,17 @@
 
   // A bonk: a smooth grey pebble bouncing off the first cast member's head, two little motion ticks
   // and three stars circling the bump (Riffle's slippery pebble). Nobody in the panel: mid-panel.
+  // Bonking Riffle himself, it is his own fifth juggling pebble (chapter 3): plain, round and brown,
+  // as the bridge set draws it rolling back out of the dark.
+  var BONK_PEBBLE = { grey: ['#A39E96', '#5F5A55', '#D9D5CE'], fifth: ['#93704F', '#5D4331', '#C8A27D'] };
   function fxBonk(S, info) {
     var c = null, i;
     for (i = 0; i < info.length; i++) if (info[i]) { c = info[i]; break; }
     var hb = c && c.hb ? c.hb : [740, 330, 860, 450], hw = Math.max(40, hb[2] - hb[0]), cx = (hb[0] + hb[2]) / 2, top = hb[1];
-    var k = clamp(hw / 130, 0.5, 2.4), back = c && c.face === 'left' ? 1 : -1;
+    var k = clamp(hw / 130, 0.5, 2.4), back = c && c.face === 'left' ? 1 : -1, pc = BONK_PEBBLE[c && c.who === 'riffle' ? 'fifth' : 'grey'];
     // the pebble, bouncing up and away behind the head
     var px = clamp(cx + back * hw * 0.32, 30, 1570), py = Math.max(24 * k, top - 40 * k), s = '';
-    s += g(ell(0, 0, 18 * k, 12 * k, '#A39E96', { stroke: '#5F5A55', 'stroke-width': n(2.5 * k) }) + ell(-5 * k, -4 * k, 8 * k, 4 * k, '#D9D5CE', { opacity: 0.9 }),
+    s += g(ell(0, 0, 18 * k, 12 * k, pc[0], { stroke: pc[1], 'stroke-width': n(2.5 * k) }) + ell(-5 * k, -4 * k, 8 * k, 4 * k, pc[2], { opacity: 0.9 }),
       { transform: 'translate(' + n(px) + ' ' + n(py) + ') rotate(' + (back * 18) + ')' });
     // motion ticks: the path it took off the top of the head
     var tk = 'M' + n(cx - back * 6 * k) + ' ' + n(top + 2 * k) + 'Q' + n((cx + px) / 2) + ' ' + n(top - 26 * k) + ' ' + n(px - back * 16 * k) + ' ' + n(py + 12 * k) +
@@ -2888,7 +3120,7 @@
       '" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" class="pcs-panel pcs-set-' + setId + ' pcs-cam-' + camId +
       '" role="img" aria-label="' + esc(label) + '">' +
       '<defs>' + S.defs.join('') + '</defs>' +
-      layers.back + C.spare + C.behind + (layers.over || '') + castFront + (layers.front || '') + fxSvg + '</svg>';
+      layers.back + purrRings(S) + C.spare + C.behind + (layers.over || '') + castFront + (layers.front || '') + fxSvg + '</svg>';
     // keep: areas the lettering should not cover (the claw marks), in percent of the panel
     var keep = [];
     (S.keep || []).forEach(function (k) {
@@ -2902,6 +3134,7 @@
 
   art.css = [
     '.pcs-panel{display:block;overflow:hidden}',
+    '.pcs-fx-under{pointer-events:none}',
     '@media (prefers-reduced-motion: no-preference){',
     '.pcs-twk{animation:pcs-twk 3.6s ease-in-out infinite}',
     '@keyframes pcs-twk{0%,100%{opacity:1}50%{opacity:.25}}',
@@ -2947,6 +3180,8 @@
     '@keyframes pcs-glint{0%,100%{opacity:.25}50%{opacity:.9}}',
     '.pcs-splash{animation:pcs-splash 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}',
     '@keyframes pcs-splash{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,1.07)}}',
+    '.pcs-chime{animation:pcs-chime 3.4s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 0}',
+    '@keyframes pcs-chime{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}',
     '.pcs-drip{animation:pcs-drip 2.4s ease-in infinite}',
     '@keyframes pcs-drip{0%{transform:translate(0,-30px);opacity:0}15%{opacity:1}80%{opacity:1}100%{transform:translate(0,90px);opacity:0}}',
     '}'

@@ -845,7 +845,7 @@ types it, and it goes in her book.*
   - *Riffle’s gift is a wishing stone: a dark pebble with a white quartz band running all the way
     around, unbroken (real ones are usually dark basalt with a quartz band). They turn up free on
     beaches and riverbanks, so it could be a second real stone she holds long before the
-    labradorite. It is dark on purpose, so it never looks like Drizzle’s smooth grey pebble. The
+    labradorite. It is dark on purpose, so it never looks like Sprinkle’s smooth grey pebble. The
     text calls it “your first gift from a friend,” not her first treasure, because Training Hollow
     rounds may already have put treasures in her nest; and the Hollow’s own “shiny striped pebble”
     should be renamed (Build) so this stone stays one of a kind.*

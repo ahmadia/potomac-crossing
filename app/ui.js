@@ -42,8 +42,9 @@
     return t1 - t0 > 0.02;
   }
   /* Find a spot for a w×h box inside a W×H panel: never over a face, never over a placed box,
-   * close above its speaker's head, in reading order after the previous box. Returns {x,y} or
-   * null when nothing fits (the caller then stacks the balloons under the panel). */
+   * close above its speaker's head, in reading order after the previous box. Returns the box
+   * {x, y, w, h, cost} (so readsAfter can judge it) or null when nothing fits (the caller then
+   * stacks the balloons under the panel). */
   function findSpot(o) {
     var W = o.W, H = o.H, w = o.w, h = o.h, m = o.margin == null ? 8 : o.margin;
     if (w > W - 2 * m || h > H - 2 * m) return null;
@@ -95,7 +96,7 @@
           if (y < prev.y + prev.h && y + h > prev.y && x < prev.x) cost += 60;
         }
         for (i = 0; i < bodies.length; i++) cost += overlapArea(r, bodies[i]) * 0.012;
-        if (cost < bestCost) { bestCost = cost; best = { x: x, y: y, cost: cost }; }
+        if (cost < bestCost) { bestCost = cost; best = { x: x, y: y, w: w, h: h, cost: cost }; }
       }
     }
     return best;
@@ -176,8 +177,57 @@
     });
     return out;
   }
+  /* A crowded panel's fallback spot still has to read after the balloon before it: on a lower tier
+   * (its top below that balloon's middle) or on the same tier to its right, never above it nor on its
+   * tier to its left. When no spot passes, the balloons stack beside the panel, in order. */
+  function readsAfter(b, prev) {
+    // side by side (sharing more than half the shorter one's height) is one tier: read left to right
+    var ov = Math.min(b.y + b.h, prev.y + prev.h) - Math.max(b.y, prev.y);
+    if (ov > Math.min(b.h, prev.h) * 0.5) return b.x >= prev.x + prev.w - 4;
+    return b.y >= prev.y + prev.h * 0.5;
+  }
+  /* A sound effect's lettering: LOUD sounds big and gold, quiet ones (all lower case) small and pale;
+   * a long one ("CLANKETY-CLANK! RUMMMBLE-RUMMMBLE!") shrinks until its estimated width fits the panel
+   * (the estimate runs about a fifth wide for Bangers, so the real line keeps a margin, rotated too). */
+  function sfxFit(text, W) {
+    var quiet = text === text.toLowerCase();
+    var size = clamp(W * 0.085, 30, 92) * (text.length > 9 ? 0.82 : 1) * (quiet ? 0.6 : 1);
+    var estW = text.length * size * 0.5 + size * 0.4, estH = size * 1.05;
+    var maxW = W * 0.92;
+    if (estW > maxW) { size *= maxW / estW; estW = maxW; estH = size * 1.05; }
+    return { quiet: quiet, size: size, estW: estW, estH: estH };
+  }
+  /* Where a sound effect goes: the freest of nine spots (the top corners first; a face costs less
+   * than a caption or a balloon, which would hide it) at its fitted size, as chapters 1 and 2 placed
+   * it: a face alone never shrinks it (chapter 2's PLIP! lands on the cat's nose). Only when the best
+   * spot would sit under a caption or a balloon does the lettering shrink (down to half, never below
+   * 18px unless it was smaller to start with), and then on until a spot is clear of faces too, if
+   * one is (chapter 3's train runs along the top, clear of the cats' faces). Returns
+   * { box: {x, y, w, h}, size, clear } (clear: no caption or balloon over it). */
+  function sfxPlace(text, W, H, faces, placed) {
+    var fit = sfxFit(text, W), size0 = fit.size, estW0 = fit.estW, estH0 = fit.estH;
+    var best = null, bestScore = Infinity, bestHidden = true, size = size0;
+    [1, 0.85, 0.72, 0.6, 0.5].some(function (sk) {
+      var s2 = sk === 1 ? size0 : Math.max(Math.min(18, size0), size0 * sk), eW = estW0 * s2 / size0, eH = estH0 * s2 / size0;
+      var spots = [
+        [W - eW - W * 0.04, H * 0.06], [W * 0.04, H * 0.06], [W - eW - W * 0.04, H - eH - H * 0.08],
+        [W * 0.04, H - eH - H * 0.08], [(W - eW) / 2, H * 0.08], [(W - eW) / 2, H - eH - H * 0.1],
+        // when captions fill the top corners and faces the bottom: halfway down a side, or the middle
+        [W * 0.04, (H - eH) * 0.45], [W - eW - W * 0.04, (H - eH) * 0.45], [(W - eW) / 2, (H - eH) * 0.45]
+      ];
+      spots.forEach(function (p, k) {
+        var r = { x: p[0], y: p[1], w: eW, h: eH }, score = k * 2 + (1 - sk) * 40, hidden = false;
+        (faces || []).forEach(function (c) { if (rectCircle(r, c)) score += 1000; });
+        // captions and balloons sit on top of the lettering, so any overlap hides it: worse than a face
+        (placed || []).forEach(function (b) { var a = overlapArea(r, b); if (a > 0) { score += 1500 + a / 50; hidden = true; } });
+        if (score < bestScore) { bestScore = score; best = r; size = s2; bestHidden = hidden; }
+      });
+      return sk === 1 ? !bestHidden : bestScore < 1000;
+    });
+    return { box: best, size: size, clear: !bestHidden };
+  }
   UI.layout = { findSpot: findSpot, tailGeom: tailGeom, rectCircle: rectCircle, overlap: overlap, segHitsRect: segHitsRect, castHeads: castHeads,
-    speakerSlot: speakerSlot, speakerRuns: speakerRuns };
+    speakerSlot: speakerSlot, speakerRuns: speakerRuns, readsAfter: readsAfter, sfxFit: sfxFit, sfxPlace: sfxPlace };
 
   /* Keys that turn pages (Enter, Space, → and ←) get the guard taps have: held down, Enter's
    * auto-repeat would go title → hub → chapter 2 in one press, so a repeated Enter or Space is never
@@ -193,6 +243,67 @@
   }
   var UI_GUARD_MS = 350;
   UI.keys = { fresh: keyFresh, GUARD_MS: UI_GUARD_MS, PAGE_KEYS: PAGE_KEYS };
+
+  /* ---------------------------------------------------------------- speakers (pure: tested in Node)
+   * A balloon's name tag: its own `name` ("A small voice" before Sprinkle shows herself; tokens
+   * filled), else the chapter's `names` for that speaker (chapter 3's tortie: "{Murmur}paw"), else the
+   * player's Clan name, an otter's or a dog's by variant, the art's name, or the list below. `fill`
+   * fills the cat's tokens. Read to me gives each speaker a pitch and a pace of their own. */
+  var NAMES = {
+    tallyheart: 'Tallyheart', glintstar: 'Glintstar', waffles: 'Princess Waffles', tallone: 'The Tall One',
+    grizzled: 'Grizzled old tom', snorer: 'Snoring apprentice', mutterer: 'Muttering apprentice', snorter: 'Snorting apprentice',
+    clancat: 'A Clan cat', sparrow: 'Sparrow', moth: 'Moth',
+    riffle: 'Riffle', otter: 'An otter', dog: 'A dog',
+    sprinkle: 'Sprinkle', murmurchime: '{Murmur}chime'
+  };
+  // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
+  var VARIANT_NAMES = {
+    otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
+    dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' }
+  };
+  var PITCH = { waffles: 1.45, tallyheart: 0.92, glintstar: 0.85, grizzled: 0.6, player: 1.2, snorer: 1.1, mutterer: 1.3, snorter: 1.15, clancat: 1.0, tallone: 1.0,
+    riffle: 1.5, otter: 1.05, dog: 0.9, sprinkle: 1.38, murmurchime: 1.3 };
+  var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 } };
+  // Sprinkle is shy: a little slower than everyone else's 0.95
+  var RATE = { sprinkle: 0.86 };
+  function pitchOf(who, variant) {
+    var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
+    return v || PITCH[who] || 1;
+  }
+  function rateOf(who) { return RATE[who] || 0.95; }
+  function speakerLabel(s, o) {
+    o = o || {};
+    var f = o.fill || function (x) { return x; };
+    if (s.name) return f(s.name);
+    var names = o.story && o.story.names;
+    if (names && typeof names[s.who] === 'string') return f(names[s.who]);
+    if (s.who === 'player') return o.cat && o.cat.name ? o.cat.name + 'paw' : 'You';
+    if (VARIANT_NAMES[s.who]) return VARIANT_NAMES[s.who][s.variant || 1] || NAMES[s.who];
+    var ch = PC.art && (PC.art.characters || PC.art.cast);
+    if (ch && !Array.isArray(ch) && ch[s.who] && ch[s.who].name) return ch[s.who].name;
+    return NAMES[s.who] ? f(NAMES[s.who]) : (s.who ? String(s.who).charAt(0).toUpperCase() + String(s.who).slice(1) : '');
+  }
+  /* A voice the story hasn't shown yet keeps its face to itself in the stacked balloons: a named
+   * balloon whose speaker isn't in the picture, or is only eyes in the dark ("A small voice"), or
+   * hides her face under her tail ("A muffled voice", "The tail"). */
+  function faceHidden(s, member) { return !!s.name && (!member || member.pose === 'eyes' || member.pose === 'hide'); }
+  UI.speakers = { label: speakerLabel, pitch: pitchOf, rate: rateOf, faceHidden: faceHidden, NAMES: NAMES };
+  /* The grown-ups corner's words for the story's flags (every flag a chapter sets has words here;
+   * filled with the cat's tokens, so a tom reads "his"). */
+  var FLAG_WORDS = {
+    stepOut: { chase: 'chased the moth out the door', slow: 'stepped out slowly' },
+    spokeUp: { 'true': 'spoke up about the thirteenth sparrow', 'false': 'stayed quiet about the sparrow' },
+    joinReason: { learn: 'asked to join to learn everything', count: 'asked to join because “I can learn to count anything”', brave: 'asked to join because “I’m braver than I look”' },
+    specialty: { noticing: 'good at noticing', sneaking: 'good at sneaking', climbing: 'good at climbing', swimming: 'likes water (swimming)', friends: 'good at making friends' },
+    worry: { small: 'worries about being too small', water: 'worries about deep water', talk: 'talks when nervous', shiny: 'distracted by shiny things' },
+    // chapter 2
+    ch2SaidAloud: { 'true': 'said the missing prey out loud, to the whole Clan', 'false': 'whispered the missing prey to Tallyheart, who told the whole camp' },
+    ch2Path: { bridge: 'peeked under the Old Bridge, against the rule (chapter 3 remembers)', river: 'stayed by the river with Riffle and heard the tower roar (chapters 3 and 4 remember)' },
+    ch2Stone: { nose: 'put Riffle’s stone by {their} nose (chapter 3 remembers)', chin: 'put Riffle’s stone under {their} chin (chapter 3 remembers)' },
+    // chapter 3
+    ch3Told: { 'true': 'told Tallyheart about Sprinkle, and Tallyheart helped hide her (later chapters remember)', 'false': 'kept Sprinkle’s secret: only Riffle knows too (later chapters remember)' }
+  };
+  UI.flagWords = FLAG_WORDS;
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
   var doc = root.document;
@@ -228,6 +339,8 @@
   var NUMW = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   function numWord(n) { return NUMW[n] || String(n); }
   function cap1(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  // "tails and ears", "tails, ears and claws"
+  function andList(a) { return a.length > 2 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join(' and '); }
 
   /* ---------------------------------------------------------------- art adapters */
   function artRender(scene, look) {
@@ -335,40 +448,19 @@
   }
 
   /* ---------------------------------------------------------------- speakers */
-  var NAMES = {
-    tallyheart: 'Tallyheart', glintstar: 'Glintstar', waffles: 'Princess Waffles', tallone: 'The Tall One',
-    grizzled: 'Grizzled old tom', snorer: 'Snoring apprentice', mutterer: 'Muttering apprentice', snorter: 'Snorting apprentice',
-    clancat: 'A Clan cat', sparrow: 'Sparrow', moth: 'Moth',
-    riffle: 'Riffle', otter: 'An otter', dog: 'A dog'
-  };
-  // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
-  var VARIANT_NAMES = {
-    otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
-    dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' }
-  };
-  var PITCH = { waffles: 1.45, tallyheart: 0.92, glintstar: 0.85, grizzled: 0.6, player: 1.2, snorer: 1.1, mutterer: 1.3, snorter: 1.15, clancat: 1.0, tallone: 1.0,
-    riffle: 1.5, otter: 1.05, dog: 0.9 };
-  var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 } };
-  function pitchOf(who, variant) {
-    var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
-    return v || PITCH[who] || 1;
-  }
-  function speakerName(s) {
-    if (s.name) return fill(s.name);
-    if (s.who === 'player') return cat && cat.name ? cat.name + 'paw' : 'You';
-    if (VARIANT_NAMES[s.who]) return VARIANT_NAMES[s.who][s.variant || 1] || NAMES[s.who];
-    var ch = PC.art && (PC.art.characters || PC.art.cast);
-    if (ch && ch[s.who] && ch[s.who].name) return ch[s.who].name;
-    return NAMES[s.who] || cap1(String(s.who || ''));
-  }
+  function speakerName(s) { return speakerLabel(s, { cat: cat, story: story, fill: fill }); }
   /* A frame's balloons as she sees them (E.balloons: `when` applied). The nth balloon from a who
-   * belongs to the nth of them in the cast (hidden balloons still count), for its coat and voice. */
+   * belongs to the nth of them in the cast (hidden balloons still count), for its coat and voice.
+   * `digits` (the Warrior Counts: "7 × 8") are lettered small in Andika beside the balloon. */
   function balloonsOf(frame) {
     var cast = (frame.scene && frame.scene.cast) || [];
     return E.balloons(frame, cat).map(function (s) {
       var mine = cast.filter(function (c) { return c && c.who === s.who; });
       var member = mine[s.nth] || mine[0];
-      return { who: s.who || '', text: fill(s.text || ''), kind: s.kind || 'say', name: s.name, nth: s.nth, variant: member && member.variant, raw: s };
+      var b = { who: s.who || '', text: fill(s.text || ''), kind: s.kind || 'say', name: s.name, nth: s.nth, variant: member && member.variant, raw: s };
+      if (typeof s.digits === 'string' && s.digits) b.digits = s.digits;
+      if (faceHidden(s, member)) b.noFace = true;
+      return b;
     }).filter(function (b) { return b.text; });
   }
   function captionsOf(frame) { return E.captions(frame, cat).map(fill).filter(Boolean); }
@@ -666,7 +758,10 @@
     var scr = $('screen');
     scr.innerHTML = frameShell(kind, id);
     var panel = $('panel');
-    var heads = drawArt(panel, shownFrame(f), cat.look);
+    var kept = E.keptSkip(story, id, cat);
+    var heads = kept ? drawKept(panel, kept.skip) : drawArt(panel, shownFrame(f), cat.look);
+    // a kept counting picture sits on the lesson's sand, as on the skip page and in the lesson
+    if (kept) panel.classList.add('lesson-panel');
     var caps = captionsOf(f), balloons = balloonsOf(f);
     panel.setAttribute('aria-label', caps.length ? plain(caps.join(' ')) : (balloons.length ? 'A comic panel' : 'A comic panel'));
 
@@ -681,8 +776,11 @@
     // right above the answers, so the prompt is always read before the options
     var ctx = { panel: panel, frame: f, heads: heads, caps: caps, balloons: balloons, keepCaptions: kind === 'choice' || kind === 'input' || kind === 'look' || kind === 'end' };
     // the page a skip-count turns to shows the number the count reached, big, over the picture
-    var into = skipInto(id);
+    var into = E.skipInto(story, id, cat);
     if (into) { var sv = E.skipView(into, 0); ctx.bigNum = String(sv.groups * sv.table); }
+    // a skip-count that keeps its totals (`keep`): its counting picture, every group lit and the
+    // running totals under them, stays up on the pages after it, to the lesson that follows
+    if (kept) { ctx.keepCaptions = true; ctx.forceStack = true; }
     // When everything fits in the panel, the panel gets the whole page (landscape especially):
     // try that first, and fall back to the two-column spread when text has to sit beside it.
     var frameEl = scr.querySelector('.frame');
@@ -787,8 +885,10 @@
     // 2. balloons
     var bs = ctx.balloons || [];
     var runs = speakerRuns(heads, bs);
-    var spots = [];
-    var allFit = bs.length > 0;
+    var spots = [], placedBefore = placed.length;
+    // a page that shows a counting picture in place of its scene has no faces to point at: its
+    // balloons go beside it, as on the skip-count itself
+    var allFit = bs.length > 0 && !ctx.forceStack;
     var padX = fs * 0.95, padY = fs * 0.62;
     for (var bi = 0; bi < bs.length && allFit; bi++) {
       var b = bs[bi];
@@ -810,19 +910,30 @@
       var tw = Math.ceil(t.offsetWidth) + 1, th = Math.ceil(t.offsetHeight);
       var ex = b.kind === 'shout' ? 12 : (b.kind === 'think' ? 10 : 0);
       var bw = tw + padX * 2 + ex * 2, bh = th + padY * 2 + ex * 2;
+      // `digits` (the Warrior Counts' "7 × 8"): a small tag in Andika hanging under the balloon's
+      // edge, with room kept for it below the balloon
+      var pill = null, pw = 0, ph = 0, extra = 0;
+      if (b.digits) {
+        pill = doc.createElement('span');
+        pill.className = 'dpill';
+        pill.textContent = b.digits;
+        pill.style.visibility = 'hidden';
+        ov.appendChild(pill);
+        pw = Math.ceil(pill.offsetWidth); ph = Math.ceil(pill.offsetHeight); extra = Math.round(ph * 0.75);
+      }
+      var bhR = bh + extra;
       var prevSpot = spots.length ? spots[spots.length - 1] : null;
       var link = prevSpot && same && prevSpot.b === bs[bi - 1] ? prevSpot : null;
       // reading order: each balloon goes below the one before it, or to its right; only when that is
       // impossible (a crowded panel) is it allowed elsewhere, and then only for a different speaker
       var capFirst = bi === 0 && layout.captions === 'panel' && placed.length ? capBox : null;
-      var spot = findSpot({ W: W, H: H, w: bw, h: bh, faces: faceList, bodies: bodies, placed: placed, head: hd, near: link ? link.box : null, after: prevSpot ? prevSpot.box : null, afterCap: capFirst, prev: prevSpot ? prevSpot.box : null, index: bi, margin: 8 });
-      if (!spot && capFirst) spot = findSpot({ W: W, H: H, w: bw, h: bh, faces: faceList, bodies: bodies, placed: placed, head: hd, index: bi, margin: 8 });
+      var spot = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, near: link ? link.box : null, after: prevSpot ? prevSpot.box : null, afterCap: capFirst, prev: prevSpot ? prevSpot.box : null, index: bi, margin: 8 });
+      if (!spot && capFirst) spot = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, index: bi, margin: 8 });
       if (!spot && prevSpot && !link) {
         // a crowded panel: anywhere free will do, as long as it still reads after the balloon before
         // it (at or below it, or to its right); otherwise the balloons stack under the panel, in order
-        var fb = findSpot({ W: W, H: H, w: bw, h: bh, faces: faceList, bodies: bodies, placed: placed, head: hd, prev: prevSpot.box, index: bi, margin: 8 });
-        var pb0 = prevSpot.box;
-        if (fb && (fb.y >= pb0.y - 4 || fb.x >= pb0.x + pb0.w - 4)) spot = fb;
+        var fb = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, prev: prevSpot.box, index: bi, margin: 8 });
+        if (fb && readsAfter({ x: fb.x, y: fb.y, w: bw, h: bhR }, prevSpot.box)) spot = fb;
       }
       var box = null;
       if (spot && link) {
@@ -833,21 +944,31 @@
       }
       if (!spot && link) {
         // no room after it: place the two as one block, the first on top
+        // (the block still reads after whatever came before the pair: f081's "THAT'S HIM!" and "He
+        // climbs…" never go up above the shout they answer)
         var gapY = 14, pb = link.box, others = placed.filter(function (p) { return p !== pb; });
-        var blk = findSpot({ W: W, H: H, w: Math.max(pb.w, bw), h: pb.h + gapY + bh, faces: faceList, bodies: bodies, placed: others, head: link.hd, near: link.link ? link.link.box : null, after: link.link ? link.link.box : null, prev: spots.length > 1 ? spots[spots.length - 2].box : null, index: bi - 1, margin: 8 });
+        var before = link.link ? link.link.box : (spots.length > 1 ? spots[spots.length - 2].box : null);
+        var blk = findSpot({ W: W, H: H, w: Math.max(pb.w, bw), h: pb.h + gapY + bhR, faces: faceList, bodies: bodies, placed: others, head: link.hd, near: link.link ? link.link.box : null, after: before, prev: spots.length > 1 ? spots[spots.length - 2].box : null, index: bi - 1, margin: 8 });
         if (blk) {
           var bwid = Math.max(pb.w, bw);
           var nb = { x: blk.x + (bwid - pb.w) / 2, y: blk.y, w: pb.w, h: pb.h };
           placed[placed.indexOf(pb)] = nb; link.box = nb;
           box = { x: blk.x + (bwid - bw) / 2, y: blk.y + pb.h + gapY, w: bw, h: bh };
         } else {
-          spot = findSpot({ W: W, H: H, w: bw, h: bh, faces: faceList, bodies: bodies, placed: placed, head: hd, near: link.box, after: link.box, prev: link.box, index: bi, margin: 8 });
+          spot = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, near: link.box, after: link.box, prev: link.box, index: bi, margin: 8 });
           if (spot) box = { x: spot.x, y: spot.y, w: bw, h: bh };
         }
       } else if (spot) box = { x: spot.x, y: spot.y, w: bw, h: bh };
-      if (!box) { allFit = false; t.remove(); break; }
+      if (!box) { allFit = false; t.remove(); if (pill) pill.remove(); break; }
       placed.push(box);
-      spots.push({ b: b, el: t, box: box, hd: hd, tw: tw, ex: ex, link: link });
+      var pillAt = null;
+      if (pill) {
+        // on the side away from the tail, so it never sits on it
+        var leftSide = hd && hd.x > box.x + box.w / 2;
+        pillAt = { x: leftSide ? box.x + 14 : box.x + box.w - pw - 14, y: box.y + bh - Math.round(ph * 0.25), w: pw, h: ph };
+        placed.push(pillAt);
+      }
+      spots.push({ b: b, el: t, box: box, hd: hd, tw: tw, ex: ex, link: link, pill: pill, pillAt: pillAt });
     }
     // balloons that would bury the picture (a small screen, a lot of talk) go under the panel
     var talkArea = spots.reduce(function (a, sp) { return a + sp.box.w * sp.box.h; }, 0);
@@ -859,12 +980,13 @@
         s.el.style.top = (s.box.y + padY + s.ex) + 'px';
         s.el.style.width = s.tw + 'px';
         s.el.style.visibility = '';
+        if (s.pill) { s.pill.style.left = s.pillAt.x + 'px'; s.pill.style.top = s.pillAt.y + 'px'; s.pill.style.visibility = ''; }
         drawBalloon(svgParts, s, W, H);
         reading.push({ text: s.b.text, who: s.b.who, variant: s.b.variant });
       });
     } else if (bs.length) {
-      spots.forEach(function (s) { s.el.remove(); });
-      placed = placed.slice(0, placed.length - spots.length);
+      spots.forEach(function (s) { s.el.remove(); if (s.pill) s.pill.remove(); });
+      placed = placed.slice(0, placedBefore);
       layout.balloons = 'stack';
       stack.innerHTML = bs.map(function (b) { return stackBalloon(b); }).join('');
       bs.forEach(function (b) { reading.push({ text: b.text, who: b.who, variant: b.variant }); });
@@ -887,9 +1009,10 @@
 
   function stackBalloon(b, extraClass) {
     var right = b.who === 'player';
-    var face = speakerFace(b.who, b.variant);
+    var face = b.noFace ? '' : speakerFace(b.who, b.variant);
     return '<div class="sbrow' + (right ? ' right' : '') + '">' + (face ? '<span class="sface" aria-hidden="true">' + face + '</span>' : '') +
-      '<div class="sb ' + esc(b.kind || '') + (right ? ' right' : '') + ' ' + (extraClass || '') + '"><span class="who">' + esc(speakerName(b)) + '</span>' + (b.html != null ? b.html : rich(b.text)) + '</div></div>';
+      '<div class="sb ' + esc(b.kind || '') + (right ? ' right' : '') + ' ' + (extraClass || '') + '"><span class="who">' + esc(speakerName(b)) + '</span>' + (b.html != null ? b.html : rich(b.text)) +
+      (b.digits ? '<span class="dpill">' + esc(b.digits) + '</span>' : '') + '</div></div>';
   }
   function drawBalloon(parts, s, W, H) {
     var box = s.box, kind = s.b.kind, ex = s.ex;
@@ -965,24 +1088,10 @@
   function drawSfx(parts, text, W, H, faces, placed, frame) {
     // LOUD sounds are big and gold; quiet ones (all lower case: "tink", "sniff… sniff…") are small and pale
     var quiet = text === text.toLowerCase();
-    var size = clamp(W * 0.085, 30, 92) * (text.length > 9 ? 0.82 : 1) * (quiet ? 0.6 : 1);
-    var estW = text.length * size * 0.5 + size * 0.4, estH = size * 1.05;
     var hash = 0; for (var i = 0; i < (frame && frame.sfx || '').length; i++) hash = (hash * 31 + frame.sfx.charCodeAt(i)) | 0;
     var rot = ((hash & 1) ? 7 : -8) * (quiet ? 0.5 : 1);
-    var spots = [
-      [W - estW - W * 0.04, H * 0.06], [W * 0.04, H * 0.06], [W - estW - W * 0.04, H - estH - H * 0.08],
-      [W * 0.04, H - estH - H * 0.08], [(W - estW) / 2, H * 0.08], [(W - estW) / 2, H - estH - H * 0.1],
-      // when captions fill the top corners and faces the bottom: halfway down a side, or the middle
-      [W * 0.04, (H - estH) * 0.45], [W - estW - W * 0.04, (H - estH) * 0.45], [(W - estW) / 2, (H - estH) * 0.45]
-    ];
-    var best = null, bestScore = Infinity;
-    spots.forEach(function (p, k) {
-      var r = { x: p[0], y: p[1], w: estW, h: estH }, score = k * 2;
-      faces.forEach(function (c) { if (rectCircle(r, c)) score += 1000; });
-      // captions and balloons sit on top of the lettering, so any overlap hides it: worse than a face
-      placed.forEach(function (b) { var a = overlapArea(r, b); if (a > 0) score += 1500 + a / 50; });
-      if (score < bestScore) { bestScore = score; best = r; }
-    });
+    // sized to fit the panel, and smaller still rather than cover a balloon (sfxPlace)
+    var pl = sfxPlace(text, W, H, faces, placed), best = pl.box, size = pl.size, estW = best.w, estH = best.h;
     var cx = best.x + estW / 2, cy = best.y + estH * 0.82;
     var sw = quiet ? Math.max(3, size * 0.14) : Math.max(4, size * 0.12);
     var t = '<text x="' + f1(cx) + '" y="' + f1(cy) + '" text-anchor="middle" font-size="' + f1(size) + '"' + (quiet ? ' letter-spacing="1"' : '');
@@ -1112,26 +1221,34 @@
     var panel = $('panel'), art = panel.querySelector('.art'), ov = panel.querySelector('.ov');
     panel.classList.add('lesson-panel', 'tappable');
     var caps = captionsOf(f), intro = balloonsOf(f);
-    var teacher = sk.teacher || (intro[0] && intro[0].who) || 'tallyheart';
-    var thing = sk.thing || (sk.table === 2 ? 'ear' : 'thing'), things = sk.things || (sk.table === 2 ? 'ears' : 'things');
+    // `paws: 'own'` (the bedtime hop): her own two forepaws, the glow taking turns; the number is
+    // in her own murmur unless the frame names a teacher
+    var own = sk.paws === 'own';
+    var teacher = sk.teacher || (own ? 'player' : (intro[0] && intro[0].who) || 'tallyheart');
+    var DEF_THINGS = { 2: ['ear', 'ears'], 5: ['claw', 'claws'] }[sk.table] || ['thing', 'things'];
+    var thing = sk.thing || DEF_THINGS[0], things = sk.things || DEF_THINGS[1];
     var v0 = E.skipView(sk, 0);
-    panel.setAttribute('aria-label', 'Counting picture: ' + numWord(v0.groups) + ' groups of ' + numWord(v0.table) + '. Touch the glowing one.');
+    panel.setAttribute('aria-label', own ? 'Your two forepaws on the moss. Touch the glowing one.'
+      : 'Counting picture: ' + numWord(v0.groups) + ' groups of ' + numWord(v0.table) + '. Touch the glowing one.');
     $('colTop').innerHTML = caps.map(function (c) { return '<p class="caption">' + rich(c) + '</p>'; }).join('');
     function draw(fresh) {
       var v = E.skipView(sk, taps);
-      art.innerHTML = artCall('countsPicture', { table: v.table, groups: v.groups, per: v.per, highlight: v.highlight, totals: true, next: !v.done, who: sk.who, thing: thing, things: things, look: cat && cat.look }) ||
-        countsFallback(v.groups, v.per, v.highlight);
+      var po = { table: v.table, groups: v.groups, per: v.per, highlight: v.highlight, totals: true, next: !v.done, who: sk.who, thing: thing, things: things, look: cat && cat.look };
+      // her own paws: each tap lights that paw's five claws again (v.lit), the other one glows next (v.nextPaw)
+      if (own) { po.paws = 'own'; po.taps = v.taps; po.lit = v.lit; po.nextPaw = v.nextPaw; po.totals = false; }
+      art.innerHTML = artCall('countsPicture', po) || countsFallback(v.groups, v.per, v.highlight);
       hopGroup();
       ov.innerHTML = v.total ? '<div class="skipnum' + (fresh && !reduceMotion ? ' pop' : '') + '" aria-hidden="true">' + v.total + '</div>' : '';
       var lines = intro.slice();
-      if (v.taps) lines.push({ who: teacher, html: '<span class="counter">' + esc(v.count) + '</span>' });
+      if (v.taps) lines.push(own ? { who: teacher, kind: 'whisper', html: '<span class="counter">' + esc(v.count) + '</span>' }
+        : { who: teacher, html: '<span class="counter">' + esc(v.count) + '</span>' });
       if (v.done && sk.done) lines.push({ who: teacher, text: fill(sk.done) });
       $('stack').innerHTML = lines.map(function (b) { return stackBalloon(b); }).join('');
       // the bottom row: Back (and Next, only after a done line); counting is done on the cats
       var showNext = v.done && !!sk.done;
       $('interact').innerHTML = '<div class="next-row">' + backBottom() +
         (showNext ? '<button class="btn go big" id="nextBtn" type="button">Next <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
-          : (v.done ? '' : '<button class="sr" id="countBtn" type="button">Count the next ' + esc(sk.table === 2 ? 'cat' : 'one') + '</button>')) + '</div>';
+          : (v.done ? '' : '<button class="sr" id="countBtn" type="button">' + esc(own ? 'Tap your next forepaw.' : 'Count the next ' + (sk.table === 2 ? 'cat' : sk.table === 5 ? 'paw' : 'one')) + '</button>')) + '</div>';
       wireBackBottom();
       if ($('nextBtn')) $('nextBtn').addEventListener('click', advance);
       if ($('countBtn')) $('countBtn').addEventListener('click', function () { tap(); var b = $('countBtn'); if (b) b.focus({ preventScroll: true }); });
@@ -1204,11 +1321,18 @@
     currentSpeech = caps.map(function (c) { return { text: c }; }).concat(intro.map(function (b) { return { text: b.text, who: b.who, variant: b.variant }; }));
     persist();
   }
-  /* The frame a skip-count turns to: it shows the number the count reached (the 10 over "TEN!"). */
-  function skipInto(id) {
-    var frames = (story && story.frames) || {};
-    for (var k in frames) if (Object.prototype.hasOwnProperty.call(frames, k) && frames[k] && frames[k].skip && frames[k].skip.next === id) return frames[k].skip;
-    return null;
+  /* A page after a skip-count that keeps its totals: the count's picture, every group lit, the
+   * running totals (5, 10, 15, 20, 25) under the groups. No faces to point balloons at. */
+  function drawKept(panel, sk) {
+    var v = E.skipView(sk, sk.groups);
+    var DEF_THINGS = { 2: ['ear', 'ears'], 5: ['claw', 'claws'] }[v.table] || ['thing', 'things'];
+    var po = { table: v.table, groups: v.groups, per: v.per, highlight: v.highlight, totals: true, next: false, who: sk.who,
+      thing: sk.thing || DEF_THINGS[0], things: sk.things || DEF_THINGS[1], look: cat && cat.look };
+    if (sk.paws === 'own') { po.paws = 'own'; po.taps = v.taps; po.lit = v.lit; po.nextPaw = null; po.totals = false; }
+    panel.querySelector('.art').innerHTML = artCall('countsPicture', po) || countsFallback(v.groups, v.per, v.highlight);
+    var hs = [];
+    hs.keep = [];
+    return hs;
   }
   function isTyping(e) {
     var t = e.target; if (!t) return false;
@@ -1235,7 +1359,7 @@
         '<div class="chips" id="ideas" hidden>' + sugg.map(function (s) { return '<button class="chip" type="button" aria-pressed="false" data-v="' + esc(s) + '">' + esc(s) + '</button>'; }).join('') + '</div>' +
         '<div class="row end">' + backBottom() + '<button class="btn go big" id="okBtn" type="button" disabled>That’s my name!</button></div>';
     } else {
-      html = '<textarea class="field" id="inp" maxlength="' + E.DREAM_MAX + '" placeholder="' + esc(inp.placeholder ? fill(inp.placeholder) : 'Otters… a giant fish… flying over the river…') + '" aria-label="Your dream" enterkeyhint="done"></textarea>' +
+      html = '<textarea class="field" id="inp" maxlength="' + E.DREAM_MAX + '" placeholder="' + esc(inp.placeholder ? fill(inp.placeholder) : 'Otters… a giant fish…') + '" aria-label="Your dream" enterkeyhint="done"></textarea>' +
         '<p class="hint">You can skip this. It goes in your book.</p>' +
         '<div class="row end">' + backBottom() + '<button class="btn quiet" id="skipBtn" type="button">Skip</button><button class="btn go big" id="okBtn" type="button" disabled>Put it in my book</button></div>';
     }
@@ -1369,7 +1493,9 @@
       E.beginLesson(cat, story, id, st);
       persist();
     }
-    var intro = resume ? [] : balloonsOf(f);
+    // a Counts frame that showed its balloons over a kept skip picture (f036 after the rim) doesn't
+    // say them again over the first question: they were just read
+    var intro = resume || E.keptSkip(story, id, cat) ? [] : balloonsOf(f);
     var finish = function (sum) { if (E.finishCounts(cat, story, sum, now())) { persist(); go('frame'); } };
     runLesson({
       def: def, state: st, intro: intro, mode: 'chapter',
@@ -1464,39 +1590,18 @@
       var svg = artCall('countsPicture', { table: q.table || L.per, groups: L.groups, per: L.per, highlight: highlight || 0, kind: L.kind, layout: L.layout, thought: L.thought, who: L.who || undefined, thing: thing, things: things, look: cat && cat.look });
       art.innerHTML = svg || countsFallback(L.groups, L.per, highlight || 0);
     }
-    /* "Three cats. How many tails?": a group is a cat unless the set says otherwise (the pile's
-     * pairs); a picture in rows is counted in rows, and says how long they are ("Two rows of eight."). */
-    function generic() {
-      var L = look();
-      if (L.layout === 'rows') return cap1(numWord(q.groups)) + ' ' + (q.groups === 1 ? 'row' : 'rows') + ' of ' + numWord(q.per) + '. How many ' + things + '?';
-      var unit = D.unit || 'cat', units = D.units || (D.unit ? D.unit + 's' : 'cats');
-      return cap1(numWord(q.groups)) + ' ' + (q.groups === 1 ? unit : units) + '. How many ' + things + '?';
-    }
     function fillQ(t) { return E.fill(t, cat, { a: q.a, b: q.b, answer: q.answer, groups: q.groups, per: q.per, thing: thing, things: things }); }
     function balloonLines(x) {
       return asList(x).map(function (b) { return typeof b === 'string' ? { text: b } : b; }).filter(function (b) { return b && b.text; })
         .map(function (b) { return b.kind === 'caption' ? { text: fillQ(b.text), kind: 'caption' } : { who: b.who || teacher, text: fillQ(b.text), kind: b.kind }; });
     }
-    /* What is said before she answers: the question's own prompt (a line, or balloons from anyone),
-     * else the generic question. A retry: "Here's that one again." and the generic question, or the
-     * prompt the fact keeps for it. A borrowed question: the line that says where it is from ("One
-     * from this morning."), then its own lesson's question. */
+    /* What is said before she answers (E.promptLines: the question's own prompt, the set's first
+     * question, a retry's againIntro, a borrowed question's fillIntro, or the generic question), with
+     * the cat's tokens filled. */
     function promptLines() {
-      var again = 'Here’s that one again.';
-      if (q.retry) {
-        if (typeof q.prompt === 'string') return [{ who: teacher, text: again + ' ' + fillQ(q.prompt) }];
-        if (q.prompt != null) return [{ who: teacher, text: again }].concat(balloonLines(q.prompt));
-        return [{ who: teacher, text: again + ' ' + generic() }];
-      }
-      if (q.filler && q.from && def.fillIntro) return [{ who: teacher, text: fill(def.fillIntro) + ' ' + generic() }];
-      if (q.prompt != null) {
-        if (typeof q.prompt === 'string') return [{ who: teacher, text: fillQ(q.prompt) }];
-        return balloonLines(q.prompt);
-      }
-      // the chapter's first question is about the cats in the picture before it (story-7)
-      if (D.firstPrompt && q.number === 1) return [{ who: teacher, text: fillQ(D.firstPrompt) }];
-      if (D.prompt) return [{ who: teacher, text: fillQ(D.prompt) }];
-      return [{ who: teacher, text: generic() }];
+      return E.promptLines(def, D, q).map(function (l) {
+        return l.kind === 'caption' ? { text: fill(l.text), kind: 'caption' } : { who: l.who, text: fill(l.text), kind: l.kind };
+      });
     }
     /* The clock is for the fact, not the reading: it starts again when the question has been read
      * aloud (Read to me) and when the picture has finished lighting up, unless she is already typing. */
@@ -1533,6 +1638,10 @@
       first = false;
       say(lines);
       showQ('', '');
+      // a long intro (two balloons and a caption over the first question) can push the keypad's
+      // last row below the screen: bring the whole keypad into view, whatever the intro's length
+      var kb = pad.getBoundingClientRect().bottom, vh = root.innerHeight || 0;
+      if (vh && kb > vh) root.scrollBy(0, kb - vh + 8);
       t0 = performance.now();
       var asked = q;
       if (q.light) lightUp(asked);
@@ -1588,34 +1697,32 @@
       }
     }
     function help(res) {
-      var hp = res.help, total = hp.groups * hp.per, counted = 0, startedAt = now(), ticking = false;
-      // the 2s are counted out by twos, like ears: each step lights a pair of scratches
-      var step = hp.step || 1;
+      // the help as the engine plans it (E.helpPlan): its first line (the five-or-zero reminder, "Close."
+      // only when she was close: one hop of the count off, or exactly one group off), who keeps the count
+      // (the teacher, or the player: under the bridge she hops and Sprinkle swipes), the ground (the
+      // lesson set's: sand, the earth by the doorway and the pile, the mud), and swipes on the 5s
+      var plan = E.helpPlan(def, D, q, res);
+      var hp = res.help, total = plan.total, counted = 0, startedAt = now(), ticking = false;
+      var step = plan.step, counter = plan.counter;
       pad.classList.add('away');
-      // "Close." only when she was close (the engine's res.near: one hop of the count off, so one on
-      // the 1s and one pair on the 2s, or exactly one group off, the check's row of eight): 0 for
-      // 1 × 10 is not, nor 10 for the check's 16. The intro
-      // is the set the question was asked as (a borrowed one's own).
-      var near = !!res.near;
-      var helpIntro = D.helpIntro || 'Let’s scratch it out together.';
-      var intro = fill(near ? helpIntro : (D.helpIntroFar || helpIntro.replace(/^Close\.\s*/, '')));
+      var intro = fill(plan.intro);
       say([{ who: teacher, text: intro }]);
       speakItems([{ text: intro, who: teacher }]);
       // the scratches match the picture: a picture in rows is scratched in rows (lit a column at a
-      // time, top and bottom together), and the pile's are scratched in the earth beside it
-      var pic = look(), rowsLayout = pic.layout === 'rows';
+      // time, top and bottom together)
       var sand = function () {
-        art.innerHTML = artCall('sand', { groups: hp.groups, per: hp.per, counted: counted, layout: rowsLayout ? 'rows' : undefined, ground: pic.kind === 'prey' ? 'earth' : undefined }) || sandFallback(hp.groups, hp.per, counted);
+        var o = { groups: hp.groups, per: hp.per, counted: counted, layout: plan.layout || undefined, ground: plan.ground === 'sand' ? undefined : plan.ground };
+        if (plan.style) o.style = plan.style;
+        art.innerHTML = artCall('sand', o) || sandFallback(hp.groups, hp.per, counted);
       };
       var nums = [];
       sand();
       var finishHelp = function () {
         panel.removeEventListener('click', tapCount);
         counted = total; sand();
-        nums = []; for (var i = step; i <= total; i += step) nums.push(i);
-        if (nums[nums.length - 1] !== total) nums.push(total);
+        nums = plan.nums.slice();
         var line = fill(res.line);
-        say([{ who: teacher, html: '<span class="counter">' + nums.join(' · ') + '</span>' }].concat(line ? [{ who: teacher, text: line }] : []));
+        say([{ who: counter, html: '<span class="counter">' + nums.join(' · ') + '</span>' }].concat(line ? [{ who: teacher, text: line }] : []));
         typed = String(hp.answer);
         showQ(typed, 'right');
         speakItems([{ text: hp.a + ' times ' + hp.b + ' is ' + hp.answer + '. ' + line, who: teacher }]);
@@ -1631,8 +1738,8 @@
         nums.push(counted);
         sand();
         var lastSb = stack.lastElementChild && stack.lastElementChild.querySelector('.sb');
-        if (lastSb) lastSb.innerHTML = '<span class="who">' + esc(speakerName({ who: teacher })) + '</span><span class="counter">' + nums.join(' · ') + '</span>';
-        if (save.settings.readAloud) speakItems([{ text: String(counted), who: teacher }]);
+        if (lastSb) lastSb.innerHTML = '<span class="who">' + esc(speakerName({ who: counter })) + '</span><span class="counter">' + nums.join(' · ') + '</span>';
+        if (save.settings.readAloud) speakItems([{ text: String(counted), who: counter }]);
         if (counted >= total) later(finishHelp, 700);
         else later(tick, (reduceMotion ? 700 : 620) * (step > 1 ? 1.25 : 1));
       };
@@ -1642,7 +1749,7 @@
       };
       panel.addEventListener('click', tapCount);
       later(function () {
-        say([{ who: teacher, text: intro }, { who: teacher, text: '…' }]);
+        say([{ who: teacher, text: intro }, { who: counter, text: '…' }]);
         ticking = true;
         tick();
       }, 900);
@@ -1711,11 +1818,12 @@
       '<div class="hero"><span class="face" aria-hidden="true">' + catPortrait(cat.look, 'proud') + '</span>' +
       '<div><h1 class="h1" style="text-align:left">' + esc(E.displayName(cat)) + '</h1><p class="note" style="text-align:left">Apprentice of CrystalClan' +
       (latest ? ' · Chapter ' + (latest.number || 1) + ' finished' : '') + '</p></div></div>' +
-      '<div class="hub">' + big +
+      // "… is coming soon" stands where the big button goes, so it never sinks below the screen
+      '<div class="hub">' + big + soon +
       (latest ? hubBtn('book', 'Read my book', ICON.book) : '') +
       (learned.length ? hubBtn('hollow', 'The Training Hollow', ICON.tree) : '') +
       hubBtn('nest', 'My nest', ICON.nest) +
-      again + soon +
+      again +
       '</div></section>';
     Array.prototype.forEach.call(doc.querySelectorAll('[data-go]'), function (b) {
       b.addEventListener('click', function () {
@@ -1747,6 +1855,7 @@
           pg.recap.map(function (p) { return '<p>' + rich(p) + '</p>'; }).join('') +
           (pg.dream ? '<p class="dream">' + rich(pg.dream) + '</p>' : '') + '</section>';
       }).join('') : '<p class="chap">Finish a chapter, and it goes in your book.</p>') +
+      dragonetPages(b.dragonets) +
       '<div class="sig">' + esc(E.displayName(cat)) + ' of CrystalClan</div>' +
       '</article>' +
       '<div class="links no-print"><button class="btn" id="printBtn" type="button">Print my book</button></div>' +
@@ -1771,6 +1880,41 @@
       pg.recap.forEach(function (p) { currentSpeech.push({ text: p }); });
       if (pg.dream) currentSpeech.push({ text: pg.dream });
     });
+    if (b.dragonets) {
+      currentSpeech.push({ text: 'The dragonets.' });
+      b.dragonets.found.forEach(function (d) { currentSpeech.push({ text: d.name + '.' }); d.lines.forEach(function (l) { currentSpeech.push({ text: l }); }); });
+      if (b.dragonets.toFind) currentSpeech.push({ text: cap1(numWord(b.dragonets.toFind)) + ' more, still to find.' });
+    }
+  }
+  /* The dragonets in her book (module-1, "Her book"): a page for each one she has found, with room
+   * for her own drawing, and the rest of the clutch as silhouettes, still to find. */
+  function dragonetPages(dn) {
+    if (!dn || !dn.found.length) return '';
+    var found = dn.found.map(function (d) {
+      return '<div class="dragonet"><div class="dn-pic" aria-hidden="true">' + dragonetArt(d.id, false, 0) + '</div>' +
+        '<div class="dn-text"><h3>' + esc(d.name) + '</h3>' + d.lines.map(function (l) { return '<p>' + rich(l) + '</p>'; }).join('') +
+        '<div class="dn-draw" aria-hidden="true">Draw ' + esc(d.name) + ' here</div></div></div>';
+    }).join('');
+    var sil = '';
+    for (var i = 0; i < dn.toFind; i++) sil += '<div class="dragonet sil"><div class="dn-pic">' + dragonetArt(dn.found[0].id, true, i) + '</div></div>';
+    var more = cap1(numWord(dn.toFind)) + ' more, still to find.';
+    return '<section class="bookpage dragonets" id="book-dragonets"><h2 class="chap">The dragonets</h2>' + found +
+      (sil ? '<div class="dn-find" aria-hidden="true">' + sil + '</div><p class="dn-more">' + esc(more) + '</p>' : '') + '</section>';
+  }
+  /* A dragonet, sitting: the art's (PC.art.character), or a plain shape until the art has her; as
+   * a silhouette, every other one facing the other way. */
+  function dragonetArt(id, silhouette, i) {
+    try {
+      if (PC.art && typeof PC.art.character === 'function' && PC.art.vocab && PC.art.vocab.cast && PC.art.vocab.cast.indexOf(id) >= 0) {
+        var out = wrapChar(PC.art.character(id, { pose: 'sit', mood: silhouette ? 'neutral' : 'happy', facing: i % 2 ? 'left' : 'right' }), false);
+        if (out) return out;
+      }
+    } catch (e) { if (root.console) console.warn('PC.art.character failed', e); }
+    var flip = i % 2 ? ' transform="translate(200 0) scale(-1 1)"' : '';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g' + flip + ' fill="' + (silhouette ? '#1b1622' : '#9aa3ad') + '" stroke="#1b1622" stroke-width="4" stroke-linejoin="round">' +
+      '<path d="M48 176 C40 130 60 96 92 92 C96 70 104 46 122 38 C140 32 156 42 156 58 C156 72 142 80 130 76 C122 90 122 104 130 120 C146 140 150 162 140 176 Z"/>' +
+      '<path d="M50 172 C26 170 14 150 22 132 C30 146 40 152 56 150 Z"/><path d="M96 104 C70 80 44 78 30 92 C52 96 70 108 84 126 Z"/>' +
+      (silhouette ? '' : '<circle cx="138" cy="54" r="7" fill="#fff6dc"/><circle cx="139" cy="54" r="3.5" fill="#1b1622" stroke="none"/>') + '</g></svg>';
   }
 
   /* ================================================================ the Training Hollow, one claw mark per Count */
@@ -1806,7 +1950,7 @@
     };
     var glowing = defs.filter(function (d) { return d.glow; });
     if (one && one.glow) f.say.push({ who: 'tallyheart', text: 'Look at your claw mark. It glows now. You know your ' + (one.def.things || 'tails') + '.' });
-    else if (glowing.length) f.say.push({ who: 'tallyheart', text: 'Look at your claw marks. Your ' + glowing.map(function (d) { return d.def.things; }).join(' and ') + ' ' + (glowing.length === 1 ? 'mark glows' : 'marks glow') + ' now.' });
+    else if (glowing.length) f.say.push({ who: 'tallyheart', text: 'Look at your claw marks. Your ' + andList(glowing.map(function (d) { return d.def.things; })) + ' ' + (glowing.length === 1 ? 'mark glows' : 'marks glow') + ' now.' });
     var heads = drawArt(panel, shownFrame(f), cat.look);
     var ctx = { panel: panel, frame: f, heads: heads, caps: captionsOf(f), balloons: balloonsOf(f) };
     relayoutFn = function () { layoutText(ctx); };
@@ -1926,7 +2070,7 @@
         var u = new SpeechSynthesisUtterance(txt);
         var v = pickVoice(); if (v) u.voice = v;
         u.lang = (v && v.lang) || 'en-US';
-        u.rate = 0.95;
+        u.rate = rateOf(it.who);
         u.pitch = pitchOf(it.who, it.variant);
         speechSynthesis.speak(u);
         last = u;
@@ -1953,16 +2097,6 @@
     leaf.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     leaf.addEventListener('click', function (e) { e.preventDefault(); });
   }
-  var FLAG_WORDS = {
-    stepOut: { chase: 'chased the moth out the door', slow: 'stepped out slowly' },
-    spokeUp: { 'true': 'spoke up about the thirteenth sparrow', 'false': 'stayed quiet about the sparrow' },
-    joinReason: { learn: 'asked to join to learn everything', count: 'asked to join because “I can learn to count anything”', brave: 'asked to join because “I’m braver than I look”' },
-    specialty: { noticing: 'good at noticing', sneaking: 'good at sneaking', climbing: 'good at climbing', swimming: 'likes water (swimming)', friends: 'good at making friends' },
-    worry: { small: 'worries about being too small', water: 'worries about deep water', talk: 'talks when nervous', shiny: 'distracted by shiny things' },
-    // chapter 2
-    ch2SaidAloud: { 'true': 'said the missing prey out loud, to the whole Clan', 'false': 'whispered the missing prey to Tallyheart, who told the whole camp' },
-    ch2Path: { bridge: 'peeked under the Old Bridge, against the rule (chapter 3 remembers)', river: 'stayed by the river with Riffle and heard the tower roar (chapter 4 remembers)' }
-  };
   function fmtMs(ms) { return ms == null ? '–' : (ms / 1000).toFixed(1) + ' s'; }
   /* Each chapter's progress, for grown-ups. */
   function chapterProgress(c, s) {
@@ -1995,7 +2129,7 @@
       var lookTxt = [lookDef('sex', c.look.sex).label, lookDef('fur', c.look.fur).label, lookDef('marking', c.look.marking).label, lookDef('eyes', c.look.eyes).label + ' eyes'].join(' · ');
       var flags = Object.keys(c.flags || {}).filter(function (k) { return k !== 'looked'; }).map(function (k) {
         var w = FLAG_WORDS[k] && FLAG_WORDS[k][String(c.flags[k])];
-        return '<li>' + esc(w || (k + ': ' + c.flags[k])) + '</li>';
+        return '<li>' + esc(w ? E.fill(w, c) : (k + ': ' + c.flags[k])) + '</li>';
       }).join('');
       // choices are keyed "chapter:frame"; listed by chapter, in the order made
       var choices = Object.keys(c.choices || {}).map(function (key) {

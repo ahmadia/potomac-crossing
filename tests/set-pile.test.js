@@ -100,7 +100,7 @@ test('vocab: the pile set lists exactly the cameras, anchors and options of the 
   for (const o of spec.opts) assert.ok(Object.prototype.hasOwnProperty.call(v.opts, o), 'option ' + o + ' from build.md');
   assert.equal(v.opts.pairs, 'number');
   assert.equal(v.opts.lit, 'number');
-  assert.deepEqual(v.opts.dug, [true, false]);
+  assert.deepEqual(v.opts.dug, [true, false, 'big']);   // 'big': chapter 3 (docs/build.md, "Chapter 3 (v0.4)")
   assert.deepEqual(v.opts.vole, [true, false]);
   const info = art.sceneInfo('pile');
   assert.equal(info.defaults.pairs, 8, 'eight pairs by default');
@@ -133,7 +133,7 @@ test('every option value renders in every camera, and out-of-range values are cl
   const values = [];
   for (let p = 0; p <= 10; p++) values.push({ pairs: p });
   for (let l = 0; l <= 10; l++) values.push({ lit: l });
-  values.push({ dug: true }, { dug: false }, { vole: true }, { vole: false }, { pairs: 0, vole: true }, { pairs: 10, lit: 10, dug: true, vole: true },
+  values.push({ dug: true }, { dug: false }, { dug: 'big' }, { dug: 'big', pairs: 7, vole: true }, { vole: true }, { vole: false }, { pairs: 0, vole: true }, { pairs: 10, lit: 10, dug: true, vole: true },
     { pairs: 99 }, { pairs: -3 }, { lit: 40 }, { pairs: 'lots' }, { lit: null }, {});
   for (const cam of CAMS) for (const opts of values) {
     const scene = { set: 'pile', cam, opts, cast: [], fx: [] };
@@ -204,6 +204,58 @@ test('dug: soft dug-up earth behind the pile, only when asked', () => {
     const plain = art.render({ set: 'pile', cam }).svg, dug = art.render({ set: 'pile', cam, opts: { dug: true } }).svg;
     assert.ok(dug.length > plain.length + 2000, cam + ': the earth is drawn');
     assert.equal(art.render({ set: 'pile', cam, opts: { dug: false } }).svg.length, plain.length, cam + ': dug: false is the default');
+  }
+});
+
+// the earth's paths: every filled path (the lumps, their tops and the crumbs are each one)
+const soilPaths = (svg) => (svg.match(/<path d="([^"]+)" fill="#[0-9a-f]{6}"[^>]*>/gi) || []).length;
+// what `opts` adds to the plain scene: the markup between the two renders' common start and end
+function added(cam, opts) {
+  const a = strip(art.render({ set: 'pile', cam, opts: { pairs: 7 } }).svg), b = strip(art.render({ set: 'pile', cam, opts: Object.assign({ pairs: 7 }, opts) }).svg);
+  let i = 0, j = 0;
+  while (i < a.length && a[i] === b[i]) i++;
+  while (j < a.length - i && a[a.length - 1 - j] === b[b.length - 1 - j]) j++;
+  return b.slice(i, b.length - j);
+}
+// the horizontal reach of the shapes in some markup (their absolute first points)
+function reach(markup) {
+  const xs = [...markup.matchAll(/<(?:path d="M|ellipse cx=")(-?[\d.]+)/g)].map((m) => +m[1]);
+  return [Math.min(...xs), Math.max(...xs)];
+}
+
+test('dug: \'big\' (chapter 3, two nights on): the same patch, bigger: wider, fresh earth on top, a second dip', () => {
+  for (const cam of CAMS) for (const fx of [['morning'], ['sunset']]) {
+    const dug = art.render({ set: 'pile', cam, opts: { dug: true, pairs: 7 }, fx }).svg, big = art.render({ set: 'pile', cam, opts: { dug: 'big', pairs: 7 }, fx }).svg;
+    assert.ok(big.length > dug.length + 2500, cam + ' ' + fx + ': more earth');
+    assert.ok(soilPaths(big) > soilPaths(dug) + 20, cam + ' ' + fx + ': fresh lumps and crumbs');
+    // it stays behind the pile: the stacks are where they were
+    assert.deepEqual(art.render({ set: 'pile', cam, opts: { dug: 'big', pairs: 7 }, fx }).keep, art.render({ set: 'pile', cam, opts: { dug: true, pairs: 7 }, fx }).keep, cam + ': the pile itself unchanged');
+  }
+  for (const cam of ['wide', 'low']) {
+    const old = reach(added(cam, { dug: true })), now = reach(added(cam, { dug: 'big' }));
+    // (in the low camera it has the arch's legs either side, so it grows more up than out)
+    assert.ok(now[1] - now[0] > (old[1] - old[0]) * (cam === 'low' ? 1.04 : 1.08), cam + ': wider than two nights ago: ' + old + ' then, ' + now + ' now');
+    if (cam === 'low') assert.ok(now[0] > 150 && now[1] < 1200, 'low: still inside the arch\'s legs: ' + now);
+  }
+});
+
+test('pairs: seven pairs read right: three stacks behind, four in front, each stack two pieces, the back ones in the gaps and topped above the front row', () => {
+  for (const cam of CAMS) {
+    const r = art.render({ set: 'pile', cam, opts: { pairs: 7, dug: 'big' } });
+    assert.equal(r.keep.length, 7, cam + ': seven stacks');
+    const cx = r.keep.map((k) => k.x + k.w / 2), top = r.keep.map((k) => k.y), bottom = r.keep.map((k) => k.y + k.h);
+    // the layout lists the back row first (3), then the front row (4)
+    const back = [0, 1, 2], front = [3, 4, 5, 6];
+    for (const b of back) {
+      const left = front.filter((f) => cx[f] < cx[b]), right = front.filter((f) => cx[f] > cx[b]);
+      assert.ok(left.length && right.length, cam + ': back stack ' + b + ' sits in a gap of the front row');
+      assert.ok(bottom[b] < Math.max(...bottom), cam + ': the back row stands behind');
+      const pieceH = (r.keep[b].h) / 2.2;
+      assert.ok(top[b] < Math.min(...front.map((f) => top[f])) - pieceH * 0.5, cam + ': its top piece shows above the front row');
+    }
+    // every stack is two pieces (the prey's noses: a mouse or a vole, twice per stack)
+    const noses = (r.svg.match(/fill="#(E58C9C|B8707C)"/gi) || []).length;
+    assert.equal(noses, 14, cam + ': fourteen pieces, two a stack');
   }
 });
 

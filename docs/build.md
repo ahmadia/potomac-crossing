@@ -108,7 +108,7 @@ captions, balloons and sound effects stay off.
 |---|---|---|---|
 | `room`: ground-floor home at dusk; tall glass patio door, round cushion, lamp, rug, plants; through the glass: lawn, hedge, fence, lamp post, glowing glass towers, airplanes | `wide`, `cushion`, `glass` (close on the glass), `outside` (looking out through the glass at the garden; tiny wild cats far off) | `cushion`, `floor`, `glass`, `doorway` | `door: 'closed'\|'open'`, `reflection: true` (player's reflection in the glass), `clan: true` (tiny Clan silhouettes in the garden) |
 | `tower`: outside, looking up a glass tower at dusk; balconies; one ground-floor window | `up` (the ground-floor window at the bottom, a tiny balcony nineteen floors up), `balcony` (close on the balcony railing, city and airplanes behind), `balcony-close` (close on Waffles at the railing) | `window` (behind the ground-floor glass), `railing` | — |
-| `garden`: the lawn between the patio and the hedge, dusk; fence with sparrows, lamp post, hedge with a gap, patio step | `wide`, `paws` (extreme close-up of paws on grass), `step` (the patio step, open door, the Tall One's legs), `fence` (the row of sparrows, a cat below), `lamp` (top of the lamp post), `meet` (two cats, medium), `hedge` (the gap in the hedge) | `step`, `lawn`, `fence-foot`, `lamp-top`, `hedge-gap`, `doorway` | `sparrows: 12` (on the fence; the 13th sits on the lamp when `lampSparrow: true`), `dish: true`, `moth: true` |
+| `garden`: the lawn between the patio and the hedge, dusk; fence with sparrows, lamp post, hedge with a gap, patio step | `wide`, `paws` (extreme close-up of paws on grass), `step` (the patio step, open door, the Tall One's legs), `fence` (the row of sparrows, a cat below), `lamp` (top of the lamp post), `meet` (two cats, medium), `hedge` (the gap in the hedge), `hedge-close` (close at the gap, framed on the first cast member's head; chapter 3) | `step`, `lawn`, `fence-foot`, `lamp-top`, `hedge-gap`, `doorway` | `sparrows: 12` (on the fence; the 13th sits on the lamp when `lampSparrow: true`), `dish: true`, `moth: true` |
 | `camp`: the wild garden behind the hedge, last golden light; brambles arching over dens, ferns, mossy stone paths, a dry stone fountain in the middle, glass towers all around | `reveal` (wide establishing), `crowd` (cats staring), `fountain` (low angle up at the fountain top), `fountain-close` (close on the fountain top; a cat there fills the panel, head and shoulders), `entrance` (high angle down at the newcomer), `ferns`, `purr` (wide, whole camp) | `entrance`, `fountain-top`, `fountain-foot`, `crowd-left`, `crowd-right`, `ferns`, `center` | — |
 | `hollow`: sandy hollow at the edge of camp under an old leaning tree; a sun patch | `wide`, `lesson` (two cats, medium), `sand` (close on the sand), `tree` (close on the trunk) | `sand-left`, `sand-right`, `sunpatch`, `tree` | `marks: 0\|1` (claw marks on the trunk), `glow: true` |
 | `den`: the apprentices' den under an enormous rosebush, night | `outside`, `inside`, `nest` (close on one nest), `doorway` (from inside, looking out at the entrance) | `entrance-left`, `entrance-right`, `doorway`, `nest`, `sleeper-1`, `sleeper-2` | `weather: 'clear'\|'cloudy'\|'storm'` (cloudy: cloud covers the stars and moon, no rain) |
@@ -474,3 +474,154 @@ time (the check's two rows of eight); `ground: 'earth'` scratches them in the ea
   (a test runs it); a scene says the frame's own time of day. `tools/frames.mjs` renders through
   Quick Look, which drops a shadowed group too big for its filter buffer (its header). `tools/shots.mjs`
   reads the screen lock and, locked, takes each target in a fresh short session (its header).
+
+## Chapter 3 (v0.4)
+
+Chapter 3, *Under the Old Bridge*, is [`chapters/03-under-the-old-bridge.md`](chapters/03-under-the-old-bridge.md)
+(v0.4), built in `app/story/ch03.js`. **Its "Build" notes are the engine spec for this chapter**
+(the Counts sets and their keys, borrowed questions' voice and ground, `E.hardFacts` and reading
+time, the tree, the tortie's labels, the book): build them as written, and record here, briefly,
+each key as it is implemented. The names below are fixed so the art, the engine and the story agree.
+
+**Engine, beyond the text's Build notes**: a frame may carry `when` (the same matching as lines):
+a frame whose `when` doesn't match is skipped, forward and back, as if its `next` led straight on
+(chapter 3's river-path screen for Sprinkle's littlest brother). Balloons may carry `digits: '7 × 8'`:
+the numbers lettered small in Andika beside the balloon (the Warrior Counts she watches; never
+typed, never logged). The book gains a page per dragonet found, `book.dragonet: { id, name, lines }`
+on the chapter that finds it (Sprinkle in chapter 3), with the other six as silhouettes "still to
+find". `skip` gains `paws: 'own'` (her own two forepaws on the moss, the glow taking turns) and
+`keep: true` (the running totals stay under the groups after the last tap).
+
+**Cast, new**: `sprinkle`, a Mistscale dragonet (the text's "Art needs" describe her): about a
+heron's size (sitting, her head is well above Tallyheart's), long neck and tail, mist-grey matte
+scales in soft ridges, a paler belly, big round shining eyes, two soft nubs for horns, never toothy,
+five long pale claws on each forepaw, wings of fog-pale skin with the right one drooping and half
+open (no wound). Poses: `eyes` (only her eyes in the dark), `unfold`, `hide` (face under her tail),
+`sniff`, `sit`, `wings` (both open, the right drooping), `flat` (squeezed flat), `gulp` (head back,
+gulping), `burp`, `pawsup` (both forepaws up, claws spread), `pawup` (one forepaw up), `draw` (one
+claw drawing in the mud), `touch` (a forepaw laid gently forward), `peek`, `curl` (curled, her tail
+wrapping round whoever is at the next anchor), `lie`.
+
+**Moods, new for everyone**: `sad` (homesick, a wobbly mouth) and `shy` (eyes down, a small smile).
+
+**Cast extras** (keys on a cast entry, passed through to the character): `holds: 'stone' | 'pebble'
+| 'vole' | 'fish' | 'fish2'` (Riffle's stone; Sprinkle's egg-smooth grey pebble with a faint
+green-blue cast, never banded; a vole in her mouth; one or two fish in Riffle's mouth); `tear: true`
+(a misty tear); `mist: true` (a little cloud of breath, or a burp); `claws: true` (claws out on a
+raised or forward paw); `puffed: true` (fur puffed double); `squeeze: true` (eyes squeezed shut);
+`moss: true` (moss pulled over the ears); `flatEars: true` (as before); on a juggling otter,
+`pebbles: 4 | 5` (four pebbles on the arc; five: four on the arc and the fifth, plain round brown,
+in his paw; three by default, as in chapter 2). A vole in the mouth sits on the mouth (no mood mouth
+drawn: a mouthful). New cat poses: `pawup` (sitting, one forepaw raised) and `tummy` (on her back,
+paws in the air). New otter poses: `dive`, `hush` (a paw over his mouth). Sprinkle's `hide`: her tail
+arches from behind her rump over her back and its broad end lies across both eyes, all the rest of
+her in plain sight; her `sniff` pose draws the sniff lines whatever the mood.
+
+**Sets**: `bridge` gains `pebble: 'in' | 'out' | 'paws'` (on `mouth` and `under`: Riffle's fifth
+juggling pebble, plain round brown, in the dark, rolling out, at her paws; never grey, which is
+Sprinkle's), `branch: true` (fallen branches heaped across the back, up to her chin, her face clear),
+`eyes: 'sprinkle'` (on `back`: two eyes at her size, exactly where her face is at `dragon` in the
+next panel; chapter 2's `open` and `blink` stay as they were), `hop: true` (on `paws` with `pawsIn`:
+every paw's five claws lit gold, 5, 10 and 15 lettered beyond them in pile order),
+`prints: true` (Sprinkle's big five-claw prints beside the drag marks in `under` and `back`; the
+default wherever the drag marks are drawn), beams visible overhead in `under`; anchors in the
+`back` composition `dragon` (Sprinkle's spot), `beside` (a cat pressed against her side),
+`back-left`, `back-right` (besides `near`); and a camera `paws` with `pawsIn: true`: three forepaws
+piled, fanned and offset so all fifteen claws show (her fur from the player's look, Sprinkle's grey,
+Riffle's webbed brown). `pile` gains `dug: 'big'`. `tower` gains `chime: true` (a wind chime on
+Waffles' balcony beside her geranium). `camp` gains `crowd: true` (the whole Clan crowded round
+the fountain, rows of cats behind the named cast; in a close camera a crowd cat whose face the
+panel's edge would cut is left out). `hollow` takes `marks: 0–10` and `depth`. The whole-camp purr
+(nobody marked `purr`) draws its rings behind everyone (under the crowd in camp) and lifts a word
+that would sit on a face to just above it.
+
+**Counts art**: `countsPicture` learns the 5s with `who` (each forepaw in that cat's fur, the cat
+small behind it; Sprinkle's paws bigger and grey), `kind: 'mud'` (little forepaws drawn in the mud,
+five claw marks each), `paws: 'own'` with `look` (her own two forepaws, the glow taking turns).
+`sand` learns `style: 'swipe'` (five short parallel lines a group) and `ground: 'sand' | 'earth' |
+'mud'`.
+
+### Engine and UI, as built (chapter 3)
+
+`E.VERSION = '0.3.0 (chapter 3, 2026-10-06)'`; the save stays version 2 (nothing new is stored).
+Each key below is checked by `E.checkStory` and tested on the fixture chapter 3 in
+`tests/fixtures/chapters.js` (`tests/engine.test.js`, "chapter 3").
+
+- **Frame `when`**: `E.shows(frame, cat)`; every page turn lands through `E.landing(cat, story, to)`
+  (Next, a choice, an input, the look, a Counts frame's Next, a chapter's start), and Back passes
+  over a page that no longer shows. A frame with `when` has exactly one way on (`next`); the start
+  frame has none. `E.go` itself is exact (`PC.debug.goto` opens any frame).
+- **Balloon `digits`**: a short line ("7 × 8", "56") lettered in Andika on a small tag hanging
+  under the balloon's edge, on the side away from its tail (room is kept for it); in a stacked
+  balloon, after the words. Never read as an answer, never logged.
+- **Speakers**: `sprinkle` is "Sprinkle"; a balloon's `name` wins ("A small voice"). A named voice
+  whose speaker isn't in the picture, or is there only as `pose: 'eyes'` or `pose: 'hide'` (her face
+  under her tail), shows no face in a stacked balloon. A chapter may carry `names: { mutterer: '{Murmur}paw' }` (that chapter's label
+  for a speaker with no `name` of its own); chapters 1 and 2 have none. Tokens `{Murmur}`,
+  `{murmur}`, `{MURMUR}`: "Murmur", or "Mutter" when her own Clan name is Murmur (`{Murmur}paw`,
+  `{Murmur}chime`, `{murmur}ing`, `{murmur}ed`). Read to me: Sprinkle at pitch 1.38, rate 0.86.
+- **Counts keys**: `warmHard.alt` as an ordered list (a single pair keeps chapter 2's rule, so
+  chapter 2 plays as it did) and `avoid` (both as the text's Build notes have them; when every
+  hard fact is avoided, nothing is hard and the facts are asked as written); `ground: 'sand' |
+  'earth' | 'mud'` (`E.helpGround`: the lesson set's, else earth for a prey picture, the borrowing
+  set's picture for a borrowed question; the Hollow is sand); `helpCounter: 'you'`;
+  `fillOrder: 'easiest'` (`E.fillPool(cat, set, stories, order)`); `fillVoice: 'borrower'`
+  (`E.questionDef` keeps the borrower's voice and takes the lender's `table`, `thing(s)`,
+  `unit(s)`, `picture`, `who`); `againIntro` (in such a set, a borrowed question coming back
+  opens with its `fillIntro` instead: never "my dinner again" for 1 × 5); `helpIntroNotFive` (on
+  the 5s, an answer ending in neither 0 nor 5: `res.notFive`); `done: null` as `done: ''`. The page's words come from the
+  engine: `E.promptLines(def, D, q)`, `E.genericQuestion`, `E.helpPlan(def, D, q, res)` (first line,
+  who counts, ground, `style: 'swipe'` on the 5s, the count). `PC.art.sand` gets `ground` and
+  `style`.
+- **`E.hardFacts(cat, table, stories)`** skips a right first ask read under a prompt
+  (`E.readFirst(entry, stories, memo, opener)`: its own `prompt` in its set, or, asked as the
+  first answer of its run of the set, the set's opener or a warm-up `alt` opener, when the set has a
+  `firstPrompt` or its Counts frame has balloons); a miss still counts.
+- **The skip-count on the 5s**: things default to claw/claws; VoiceOver's button "Count the next
+  paw." `keep: true` (`E.keptSkip`): the page it turns to, the plain pages after it and the first
+  Counts frame (until its lesson starts) draw the skip's picture, every group lit, `totals: true`,
+  with their balloons beside it. `paws: 'own'`: `PC.art.countsPicture` gets `paws: 'own'`,
+  `taps`, `lit` and `nextPaw` ('left' | 'right', from `E.skipView`) and no totals; the count is the
+  player's (unless the frame names a `teacher`), in a whisper; VoiceOver: "Tap your next forepaw."
+- **The tree and the Hollow**: `E.MAX_MARKS = 10`; the Hollow offers "Claws · the 5s"
+  (`ch03-claws`, the 5s' own set), never the warm-up, the pile or Sprinkle's sets; its round
+  definition drops `fillIntro`, `fillOrder`, `fillVoice`, `avoid` and `ground`.
+- **The book**: `book.dragonet: { id, name, lines }` (`E.dragonets`, `E.DRAGONETS = 7`): once its
+  chapter is finished, a "The dragonets" page after the chapters: the dragonet sitting
+  (`PC.art.character`), its name and lines, a dashed box "Draw Sprinkle here", and the rest of the
+  clutch as silhouettes, "Still to find". Printed on a page of its own.
+- **Grown-ups**: `ch3Told`, and chapter 2's `ch2Stone`, in words (`PC.ui.flagWords`, filled with the
+  cat's tokens). The light choices set nothing (`sets: {}`).
+- **Borrowing, the bridge's way**: a `fillOrder: 'easiest'` set borrows only the five easiest
+  (`E.EASIEST_POOL`: 1 × 5, 5 × 2, 5 × 3, 4 × 5, 5 × 5), never the lesson's hardest. Every borrowing
+  set takes fresh pairs first; with none left, the next pair in the pool's order, as chapter 2 did;
+  and an `avoid` pair only when nothing else is left (lesson state `avoid`, apart from the siblings'
+  `asked`: the warm-up never borrows the pile's 9 × 2 while it has another). Chapter 2 has no
+  `avoid`, so its fillers are as they were (the ninth golden script runs its pile and check out of
+  fresh pairs).
+- **Places**: a parked page that no longer shows (f081 after chapter 2 is read again on the other
+  path) reopens where a page turn from it lands (`E.openChapter` uses `E.landing`). The bedtime hop
+  (`paws: 'own'`) ends its murmur "…20…", trailing off.
+- **The page**: a Counts frame that showed its balloons over a kept skip picture doesn't repeat them
+  over the first question; the keypad scrolls into view when a long intro pushes it down; a kept
+  picture sits on the lesson's sand. A crowded panel's fallback spot, and a chained pair placed as one
+  block, still read after the balloon before them (`PC.ui.layout.readsAfter`). A sound effect shrinks
+  to fit the panel (`PC.ui.layout.sfxFit`), and further, to half (never below 18px unless it started
+  smaller), rather than cover a caption or a balloon; a face alone never shrinks it, so chapters 1
+  and 2 letter as they did (f001's PLIP! at the nose), and once a balloon has made it shrink it
+  shrinks on, if it can, to clear the faces too (`PC.ui.layout.sfxPlace`; f066's train along the
+  top). The hub puts "… is coming soon" where the big button goes. A dream input's default
+  placeholder is short enough for one line.
+- **Chapter 2, changed by name** (`tests/fixtures/ch02-golden.json`, recorded with 0.2.0, proves
+  the rest is unchanged): a borrowed ears question at the pile or the check is scratched in the
+  earth; the Hollow's hard picks follow the reading-time rule (the old tom's quick 10 × 2 no longer
+  clears a missed 2 × 10); so does the chapter 2 warm-up's hard pick (a slow but right 3 × 1, chapter
+  1's opener read under "How many tails on those three?", is no longer its hard fact; a missed one
+  still is); `ch02-ears`' `fastAfterMiss` says "scratches" (a line in `app/story/ch02.js`). The
+  rule reads "opens the set" from where a fact was asked (the first answer of its run of the set in
+  the log), not from its pair, so a warm-up's hard pick asked second is timed for itself even when
+  its pair is the written opener or an `alt` (4 × 2, 2 × 2, 2 × 1; chapter 2's 1 × 4).
+- **Tools**: `tools/storyboard.mjs` prints each of these where a chapter uses them (chapters 1
+  and 2's storyboards are unchanged); `tools/shots.mjs` takes `STORY=fixture3` (the fixture
+  chapter 3 in the page) and `DUMP=1` (each screen's markup, the art emptied, to diff the
+  lettering before and after a change).

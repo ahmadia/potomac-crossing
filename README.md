@@ -43,18 +43,21 @@ on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
 8. Module one has ten chapters and one culprit, with paths that let each friend's story go
    a little differently.
 9. Potomac Crossing and Potion Lab stay separate games.
-10. The math: the 1s, 2s, 5s and 10s, then the 3s and 4s, made as solid as possible
-    through lots of exposure; taught by a positive, encouraging mentor cat who reminds her
-    why the times tables matter; about 10–20% of play time; earlier lessons can be revisited.
+10. The math: the 1s, 2s, 5s and 10s, then the 3s and 4s, made as solid as possible through
+    lots of exposure; taught by a positive, encouraging mentor cat who reminds her why the times
+    tables matter; about 10–20% of play time; earlier lessons can be revisited. (Amended by 36:
+    every table to 10 × 10.)
 11. Lissa reads it herself.
 12. Lissa doesn't vote on the premise or title yet.
-13. No warrior name in module one: she ends it as an apprentice. Her reward is a stone that
+13. No warrior name in module one: she ends it as an apprentice. (Amended by 34: a Warrior
+    Ceremony chapter after chapter 10, once she passes the final challenge.) Her reward is a stone that
     also exists in real life, something cool that isn't expensive.
 14. The mentor is Tallyheart, a she-cat.
 15. One Clan for everyone: CrystalClan.
 16. Seven dragonets can be found by playing through the story.
 17. Each player names their own cat.
 18. The real-world stone is labradorite: Drizzle's grey "mist stone," which flashes blue and green.
+    (Drizzle is now Sprinkle: 38.)
 19. Dragonets a player doesn't find still get home with the clutch.
 20. Finding all seven earns a small extra: the eldest Mistscale bows to her.
 21. Agreed: the times tables are "the Counts," pictured by things a cat carries; Russet the fox
@@ -78,13 +81,29 @@ on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
 30. Chapter 2 is built and shipped without a separate review of its text; Aron reviews it live
     (2026-10-04).
 31. In chapter 2, the forbidden look under the Old Bridge finds a glimpse only: drag marks, a
-    sniffle, two big eyes that blink and vanish. Drizzle stays chapter 3's reveal; Tallyheart
+    sniffle, two big eyes that blink and vanish. the dragonet stays chapter 3's reveal; Tallyheart
     catches her coming out, more worried than cross (2026-10-04).
 32. Chapter 2's Counts: about 16 answers. Two warm-up questions on the 1s, skip-counting ears with
     a tap per cat, about ten on the 2s in both orders, then the prey pile counted in pairs
     (2026-10-04).
 33. The prey pile is simple cartoon prey: soft round shapes with tails, eyes shut, no blood
     (2026-10-04).
+34. She stays an apprentice through chapter 10. Passing the final challenge opens a short
+    Warrior Ceremony chapter after chapter 10, where she gets her warrior name. Lissa wants to be a
+    warrior, so the hints start in chapter 3 (2026-10-06; amends 13).
+35. The final challenge, the Warrior Counts: every multiplication pair up to 10 × 10, passed with
+    90% right (2026-10-06).
+36. Module one teaches every times table up to 10 × 10: the 6s, 7s, 8s and 9s are added
+    (2026-10-06; amends 10).
+37. Chapter 3's warrior hint: her denmate, the tortoiseshell apprentice, takes her warrior
+    assessment, every Count up to ten times ten, while she watches; Tallyheart: "One day, that'll
+    be you" (2026-10-06).
+38. The dragonet everyone meets is **Sprinkle**, not Drizzle: Warriors has a Drizzle (2026-10-06;
+    amends 18 and 21).
+39. The tortoiseshell apprentice is Murmurpaw, named Murmurchime when she passes the Warrior
+    Counts in chapter 3 (2026-10-06).
+40. "Mistscale" stays, on screen from chapter 3 (2026-10-06).
+41. Princess Waffles keeps her name (2026-10-06).
 
 ## Proposed, waiting on Aron
 
@@ -94,7 +113,7 @@ Chapter 1 is built on these exactly as written; confirm them or say what to chan
   practice, noticing and thinking for yourself, fairness, kindness to the small and hurt,
   belonging and home, wonder in familiar places.
 - Every chapter ends warm, in her nest; the hook to the next chapter is curious, never scary.
-- Drizzle practices flying in chapter 9, a twin for the Counts ("She didn't fly on her first
+- Sprinkle practices flying in chapter 9, a twin for the Counts ("She didn't fly on her first
   try either").
 - Princess Waffles: her old neighbor, a pillow cat nineteen floors up; zany, and a witness.
 - Her Tall One lets her go: the patio door stays open, with a dish of water on the step, and
@@ -127,8 +146,8 @@ built on the first choice in each:
   glittering scale lies beside it…"
 - **"One moon"**: her first night is moonless (the case), so the full-moon Gathering is about half a
   moon away. Proposed: keep it, since in Clan talk "a moon" runs to the next full moon.
-- **Names and words that may echo the books** (all from before chapter 2): "Princess" Waffles
-  (Warriors' Princess, Firestar's pet-cat sister; Duchess or Lady Waffles?); Thunder, chapter 4's
+- **Names and words that may echo the books** (all from before chapter 2; Princess Waffles stays,
+  decision 41): Thunder, chapter 4's
   dragonet (Warriors' Thunder; Rumble or Boom?); the Training Hollow (ThunderClan's training
   hollow; the Claw Tree Hollow?); chapter 1's Clan-name ideas, which make Warriors apprentice names
   (Hollypaw, Fernpaw, Stormpaw, Minnowpaw, Sedgepaw, Frostpaw) and "Moon" (Wings of Fire's
@@ -136,3 +155,44 @@ built on the first choice in each:
   leaf-fall).
 - **Dog names**: one draft named two Barking Field dogs for what their Tall Ones shout ("Good Boy",
   "Drop It"). Chapter 2 leaves them unnamed; chapter 8 could use the names.
+
+Raised by building chapter 3 (2026-10-06); chapter 3 is built on these:
+
+- **Chapter 2's warm-up and reading time.** The rule that a fact read under a long prompt only
+  counts when missed now also reaches chapter 2's warm-up: a slow but right 3 × 1 in chapter 1 is no
+  longer its hard fact (a missed one still is). `docs/build.md` names it; the alternative keeps
+  chapter 2 exactly as shipped.
+- **Sprinkle's book page** prints three lines of its own: "A Mistscale dragonet, as big as a heron,
+  with scales the color of mist." · "{name}paw found her under the Old Bridge, with a hurt wing and
+  an empty tummy." · "She eats ten fish at a meal, and now she counts her claws by fives." The recap
+  says "Tallyheart taught {name}paw {their} third Count" (the text's "{them} {their}" reads "her
+  her") and gives her siblings a sentence of their own, "Sprinkle's six brothers and sisters are
+  somewhere along the river."
+- **The kept path's walk**: she carries the vole across camp toward the hedge (where Waffles sees
+  her), comes out through the gap into her old garden, and meets Tallyheart on the lawn, coming home
+  from the wall at sunset.
+
+Raised by decisions 34–36 (2026-10-06); chapter 3 doesn't depend on them:
+
+- **Where the 6s to 9s go.** Proposed: chapter 5 the 9s ("one less than ten", right after the
+  10s), chapter 6 the 3s, chapter 7 the 6s (double the 3s), chapter 8 the 4s, chapter 9 the 8s
+  (double the 4s), chapter 10 the 7s. By chapter 10 the only 7s fact she hasn't met is 7 × 7, so
+  the Moon Ferry Counts become the 7s plus everything.
+- **Pictures for the new Counts**, things a cat knows: 6s, the whiskers on one cheek; 7s, the
+  sunrises in a quarter-moon; 8s, a spider's legs; 9s, a cat's nine lives (the elders swear by it).
+- **The Warrior Counts, for chapter 10:** whether 3 × 7 and 7 × 3 are one pair or two (55
+  questions or 100); one sitting or a few rounds; a missed question still gets the sand but counts
+  against the 90%; and she can try again from the Training Hollow whenever she likes.
+
+Raised by chapter 3 (`docs/chapters/03-under-the-old-bridge.md`, "For Aron to confirm"); built on
+the first choice in each:
+
+- **Module-1's clue 4 tells weasel from dragon by the prints' size, not by counting toes.** Chapter 3
+  shows that a Mistscale forepaw has five claws too, so "five toes" no longer clears Sprinkle.
+  Proposed clue: the prints by the pile are tiny, smaller than a cat's; Sprinkle's are as big as a
+  heron's foot (drawn beside the drag marks from chapter 3 on). The other option: three-toed hind
+  feet, like a heron's.
+- **Murmurpaw's Warrior Counts is a clean sweep**, as you described it ("quick and sure"). An
+  alternative with one freeze she recovers from ("Forty… forty-two") would show what "nine in every
+  ten" allows; it's written out in the chapter's notes.
+- **Dew** shares Warriors' Drizzle-and-Dew pairing; worth a look before chapter 9 names her.

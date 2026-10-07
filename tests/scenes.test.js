@@ -173,7 +173,8 @@ test('PC.art.vocab matches build.md: every chapter 1 set, camera, anchor and opt
     for (const a of ch.anchors) assert.ok(v.sets[id].anchors.includes(a), id + ': anchor ' + a);
     for (const o of ch.opts) assert.ok(Object.prototype.hasOwnProperty.call(v.sets[id].opts, o), id + ': option ' + o);
   }
-  assert.deepEqual(v.sets.hollow.opts.marks.filter((m) => typeof m === 'number'), [0, 1, 2, 3, 4, 5, 6], 'marks 0-6');
+  // chapter 3: every table to ten times ten, so one claw mark per Count up to ten
+  assert.deepEqual(v.sets.hollow.opts.marks.filter((m) => typeof m === 'number'), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'marks 0-10');
   for (const f of spec.fx.concat(['morning', 'day'])) assert.ok(v.fx.includes(f), 'fx ' + f);
   // option values are listed (an array of allowed values, or 'number')
   for (const [id, set] of Object.entries(v.sets)) for (const [k, vals] of Object.entries(set.opts)) {
@@ -218,7 +219,11 @@ test('Riffle, the otters (1-3) and the dogs (1-3), in every pose of theirs, at e
   for (const who of ['riffle', 'otter', 'dog']) {
     for (const variant of who === 'riffle' ? [1] : VARIANTS[who]) for (const pose of OTHER[who]) combos.push({ who, variant, pose });
   }
-  assert.equal(combos.length, 9 + 3 * 9 + 3 * 5, 'nine otter poses, five dog poses');
+  // chapter 2's nine otter poses and five dog poses, and chapter 3's two more for the otters (dive,
+  // hush) once cats.js draws them
+  const otterPoses = OTHER.otter.length;
+  assert.ok(otterPoses >= 9 && OTHER.dog.length >= 5, 'nine otter poses (eleven in chapter 3), five dog poses');
+  assert.equal(combos.length, otterPoses + 3 * otterPoses + 3 * OTHER.dog.length);
   let renders = 0;
   for (const [set, info] of Object.entries(v.sets)) {
     for (const cam of info.cams) {
@@ -435,7 +440,8 @@ test('PC.art.css: animation classes, all inside prefers-reduced-motion: no-prefe
   // every class used in the art is defined
   const used = new Set();
   for (const [set, info] of Object.entries(art.vocab.sets)) for (const cam of info.cams) {
-    for (const opts of [{ weather: 'storm', marks: 1, glow: true, splash: true, door: 'open', moth: true }, { drips: true, puddles: true, rainFountain: true, towel: true, marks: 6, glow: [true, false, true] }]) {
+    for (const opts of [{ weather: 'storm', marks: 1, glow: true, splash: true, door: 'open', moth: true }, { drips: true, puddles: true, rainFountain: true, towel: true, marks: 6, glow: [true, false, true] },
+      { chime: true, crowd: true, marks: 10, glow: true }]) {
       const svg = art.render({ set, cam, opts, cast: [{ who: 'player', at: info.anchors[0], pose: 'curl', mood: 'sleepy' }], fx: opts.drips ? ['morning'] : art.vocab.fx }).svg;
       for (const m of svg.match(/class="([^"]+)"/g) || []) m.slice(7, -1).split(/\s+/).forEach((c) => used.add(c));
     }
@@ -615,7 +621,22 @@ test('purr: cast members marked purr: true purr alone (rings, arcs and words are
   // nobody marked: every cast member purrs, with the fixed words and the camp-wide rings (chapter 1)
   const camp = art.render({ set: 'camp', cam: 'purr', cast: [Object.assign({}, purrer, { purr: undefined }), friend], fx: ['dusk', 'purr'] }, { look: LOOK });
   assert.deepEqual(words(camp.svg), [[230, 470], [1290, 500], [800, 330]]);
-  assert.equal((fxOf(camp.svg).match(/<ellipse cx="800" cy="700" rx="560" ry="190"/g) || []).length, 3);
+  // its rings ripple behind everyone (under the crowd and the cast), never across a face
+  assert.equal((fxOf(camp.svg).match(/<ellipse cx="800" cy="700" rx="560" ry="190"/g) || []).length, 0, 'not over the cast');
+  const under = (svg) => { const i = svg.indexOf('class="pcs-fx-under"'); return i < 0 ? '' : svg.slice(svg.lastIndexOf('<g', i), svg.indexOf('</g>', i)); };
+  assert.equal((under(camp.svg).match(/<ellipse cx="800" cy="700" rx="560" ry="190"/g) || []).length, 3, 'three rings, under');
+  const crowded = art.render({ set: 'camp', cam: 'purr', opts: { crowd: true }, cast: [friend], fx: ['morning', 'purr'] }, { look: LOOK });
+  assert.ok(crowded.svg.indexOf('pcs-fx-under') > 0 && crowded.svg.indexOf('pcs-fx-under') < crowded.svg.indexOf('data-crowd'), 'under the crowd too');
+  assert.equal((crowded.svg.match(/class="pcs-fx-under"/g) || []).length, 1, 'once');
+  assert.ok(!both.svg.includes('pcs-fx-under'), 'a marked purrer’s rings are her own, round her');
+  // a word over a face lifts to just above it: the naming's wide purr, Glintstar small on the fountain
+  const naming = art.render({ set: 'camp', cam: 'purr', opts: { crowd: true }, fx: ['morning', 'purr'], cast: [
+    { who: 'glintstar', pose: 'sit', mood: 'kind', at: 'fountain-top', facing: 'left', size: 0.8 },
+    { who: 'murmurchime', pose: 'sit', mood: 'happy', at: { x: 760, y: 860 }, facing: 'right', size: 0.8 }] }, { look: LOOK });
+  const g0 = naming.heads[0], NW = words(naming.svg);
+  assert.equal(NW.length, 3);
+  for (const [x, y] of NW) for (const h of naming.heads) assert.ok(Math.hypot(x - h.x * 16, (y - 18) - h.y * 10) > h.r * 16 + 10 || Math.abs(x - h.x * 16) > 80, 'clear of a face: ' + [x, y] + ' vs ' + JSON.stringify(h));
+  assert.ok(NW[2][1] < g0.y * 10 - g0.r * 10, 'the middle word above Glintstar’s head: ' + NW[2] + ' ' + JSON.stringify(g0));
 });
 
 test('den stone: Riffle\'s lucky stone in her nest, between her paws, by her nose or under her chin; small in the wide shots; never outside; held in her paws with holds: \'stone\' (drawn by cats.js, the sparkle on it)', { skip: !art.character && 'no cats.js' }, () => {
@@ -691,6 +712,12 @@ test('bonk: a pebble bounces off the first cast member\'s head, with three stars
   assert.ok(/fill="#A39E96"/.test(f), 'the pebble');
   // nobody in the panel: it still draws, mid-panel
   checkRender(art.render({ set: 'garden', cam: 'step', cast: [], fx: ['bonk'] }), { cast: [] }, 'bonk alone');
+  // chapter 3: bonking Riffle himself, it is his own fifth juggling pebble, plain round and brown (the
+  // bridge set's), off his own head; anyone else is bonked by the grey one, as in chapter 2's f063
+  const riffle = fxOf(art.render({ set: 'garden', cam: 'step', cast: [{ who: 'riffle', pose: 'juggle', mood: 'worried', at: 'step' }], fx: ['day', 'bonk'] }).svg);
+  assert.ok(/fill="#93704F" stroke="#5D4331"/.test(riffle) && !/#A39E96/.test(riffle), 'Riffle: the brown fifth pebble');
+  const f063 = require(path.join(ROOT, 'app/story/ch02.js')).story.ch02.frames.f063.scene;
+  assert.ok(/fill="#A39E96"/.test(fxOf(art.render(f063, { look: LOOK }).svg)), 'f063: the grey pebble off her head, as before');
 });
 
 test('den weather: cloudy hides the moon (when there is one) and the stars, with no rain or lightning, in every camera', () => {
@@ -847,7 +874,21 @@ test('garden towel: a folded towel on the patio step, beside the dish, in the st
   }
 });
 
-test('hollow marks 0-6: one claw mark per Count, three scratches each, left to right; all inside the keep area and the tree close-up; the first never moves for the second', () => {
+// The old tree's trunk (scenes.js, drawHollow: its two edges, cubic Béziers) and the knot hole: the
+// claw marks stay on the bark and off the hole.
+function bez3(a, b, c, d, t) { const u = 1 - t; return [0, 1].map((k) => u * u * u * a[k] + 3 * u * u * t * b[k] + 3 * u * t * t * c[k] + t * t * t * d[k]); }
+function trunkAt(y) {
+  const edge = (segs) => {
+    let best = null, bd = Infinity;
+    for (const sg of segs) for (let t = 0; t <= 1; t += 0.002) { const q = bez3(...sg, t), d = Math.abs(q[1] - y); if (d < bd) { bd = d; best = q[0]; } }
+    return best;
+  };
+  return [edge([[[1140, 880], [1120, 760], [1104, 640], [1098, 560]], [[1098, 560], [1088, 450], [1010, 330], [880, 250]]]),
+    edge([[[990, 230], [1130, 330], [1240, 440], [1262, 560]], [[1262, 560], [1280, 660], [1300, 780], [1340, 880]]])];
+}
+const KNOT = { x: 1206, y: 690, rx: 18, ry: 26 };
+
+test('hollow marks 0-10: one claw mark per Count, three scratches each, left to right; all on the trunk, off the knot hole, inside the keep area and the tree close-up; the first never moves for the second', () => {
   const marks = (m, cam) => {
     const r = art.render({ set: 'hollow', cam: cam || 'wide', opts: { marks: m }, cast: [] });
     const sc = shapes(r.svg, 'fill="#3A281E"');
@@ -857,7 +898,7 @@ test('hollow marks 0-6: one claw mark per Count, three scratches each, left to r
   };
   const tree = { x: 1000, y: 430, w: 400, h: 250 };
   let prev = null;
-  for (let m = 0; m <= 6; m++) {
+  for (let m = 0; m <= 10; m++) {
     const { r, sc, per } = marks(m);
     assert.equal(sc.length, 3 * m, m + ' marks: three scratches each');
     if (!m) { assert.deepEqual(r.keep, []); continue; }
@@ -866,11 +907,20 @@ test('hollow marks 0-6: one claw mark per Count, three scratches each, left to r
     const k = r.keep[0], kx0 = k.x * 16, ky0 = k.y * 10, kx1 = (k.x + k.w) * 16, ky1 = (k.y + k.h) * 10;
     for (const p of sc.flat()) {
       assert.ok(p[0] >= kx0 - 1 && p[0] <= kx1 + 1 && p[1] >= ky0 - 1 && p[1] <= ky1 + 1, m + ' marks: scratch point ' + p + ' inside keep ' + [kx0, ky0, kx1, ky1]);
-      assert.ok(p[0] >= tree.x && p[0] <= tree.x + tree.w && p[1] >= tree.y && p[1] <= tree.y + tree.h, m + ' marks: inside the tree close-up: ' + p);
+      assert.ok(p[0] >= tree.x && p[0] <= tree.x + tree.w && p[1] >= tree.y && p[1] <= tree.y + tree.h - 8, m + ' marks: inside the tree close-up: ' + p);
+      const e = trunkAt(p[1]);
+      assert.ok(p[0] > e[0] + 3 && p[0] < e[1] - 3, m + ' marks: on the bark: ' + p + ' trunk ' + e.map(Math.round));
+      assert.ok(Math.pow((p[0] - KNOT.x) / (KNOT.rx + 6), 2) + Math.pow((p[1] - KNOT.y) / (KNOT.ry + 6), 2) > 1, m + ' marks: off the knot hole: ' + p);
     }
     // left to right: each mark right of the one before, or the start of a new row below it
     const c = per.map((q) => centre(q.flat()));
     for (let i = 1; i < c.length; i++) assert.ok(c[i][0] > c[i - 1][0] + 20 || c[i][1] > c[i - 1][1] + 40, m + ' marks: mark ' + (i + 1) + ' follows mark ' + i);
+    // no two marks overlap: each mark's three scratches keep to their own box
+    const boxes = per.map((q) => { const xs = q.flat().map((p) => p[0]), ys = q.flat().map((p) => p[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; });
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i], b = boxes[j];
+      assert.ok(a[2] < b[0] || b[2] < a[0] || a[3] < b[1] || b[3] < a[1], m + ' marks: marks ' + (i + 1) + ' and ' + (j + 1) + ' apart');
+    }
     // the tree close-up keeps the lettering off all of them too
     const t = art.render({ set: 'hollow', cam: 'tree', opts: { marks: m }, cast: [] });
     assert.ok(t.keep.length === 1 && t.keep[0].x >= 0 && t.keep[0].x + t.keep[0].w <= 100.1 && t.keep[0].y + t.keep[0].h <= 100.1, m + ' marks: keep inside the tree panel');
@@ -883,9 +933,34 @@ test('hollow marks 0-6: one claw mark per Count, three scratches each, left to r
     }
     prev = per;
   }
-  // out of range is clamped, unfilled 'auto' draws none
-  assert.equal(marks(9).sc.length, 18);
+  // out of range is clamped (to ten), unfilled 'auto' draws none
+  assert.equal(marks(12).sc.length, 30);
+  assert.equal(marks(-2).sc.length, 0);
   assert.equal(marks('auto').sc.length, 0);
+});
+
+test('hollow marks, chapter 3: three marks after the claws lesson, the first two deeper by default ("your ears mark is deeper already"), and depth per mark', () => {
+  const draw = (opts) => {
+    const svg = art.render({ set: 'hollow', cam: 'tree', opts, cast: [], fx: ['sunset'] }).svg;
+    const outer = shapes(svg, 'fill="#3A281E"'), groove = shapes(svg, 'fill="#6B4A32" opacity="0.9"');
+    const widths = [];
+    for (let i = 0; i < outer.length; i += 3) widths.push([0, 1, 2].reduce((a, j) => { const xs = outer[i + j].map((p) => p[0]); return a + (Math.max(...xs) - Math.min(...xs)) / 3; }, 0));
+    // which marks have a groove: by where each groove sits
+    const centres = [];
+    for (let i = 0; i < outer.length; i += 3) centres.push(centre(outer.slice(i, i + 3).flat()));
+    const grooved = centres.map((c) => groove.filter((q) => { const g = centre(q); return Math.abs(g[0] - c[0]) < 22 && Math.abs(g[1] - c[1]) < 40; }).length);
+    return { widths, grooved };
+  };
+  const three = draw({ marks: 3 });
+  assert.deepEqual(three.grooved, [3, 3, 0], 'tails and ears deeper, claws fresh');
+  assert.ok(three.widths[0] > three.widths[2] + 1 && three.widths[1] > three.widths[2] + 1, 'the first two gouged wider: ' + three.widths.map((w) => w.toFixed(1)));
+  const given = draw({ marks: 3, depth: [1, 1, 0] });
+  assert.deepEqual(given.grooved, [3, 3, 0]);
+  assert.ok(Math.abs(given.widths[0] - given.widths[1]) < 0.5, 'depth per mark: the first two alike');
+  // ten marks, a list of depths, one per mark; the rest fresh
+  const ten = draw({ marks: 10, depth: [2, 2, 1, 1, 1] });
+  assert.equal(ten.widths.length, 10);
+  assert.deepEqual(ten.grooved, [3, 3, 3, 3, 3, 0, 0, 0, 0, 0]);
 });
 
 test('hollow glow: true lights every mark, a list lights mark by mark, and unfilled or empty lights none', () => {
@@ -1013,5 +1088,316 @@ test('chapter 2 sets (app/art/sets/*.js, as index.html loads them) match build.m
     for (const c of want.cams) assert.ok(got.cams.includes(c), id + ': camera ' + c);
     for (const a of want.anchors) assert.ok(got.anchors.includes(a), id + ': anchor ' + a);
     for (const o of want.opts) assert.ok(Object.prototype.hasOwnProperty.call(got.opts, o), id + ': option ' + o);
+  }
+});
+
+// ---------------------------------------------------------------- chapter 3 (build.md, "Chapter 3 (v0.4)")
+
+// Swap PC.art.character for a while (a spy, or a stand-in drawing), restoring it however fn ends.
+function withCharacter(fake, fn) {
+  const real = art.character;
+  art.character = fake;
+  try { return fn(); } finally { art.character = real; }
+}
+const strip = (svg) => svg.replace(/(id="|url\(#|href="#)[^")]+/g, '$1');
+
+test('chapter 3 cast extras reach the drawing: tear, mist, claws, puffed, squeeze, moss, and holds (pebble, vole, fish, fish2) with holdAt; purr, lift, size and at stay the scene\'s', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, calls = [];
+  const spy = function (who, opts) { calls.push({ who, opts: Object.assign({}, opts) }); return real(who, opts); };
+  const cast = [
+    { who: 'sprinkle', pose: 'sit', mood: 'sad', at: 'sand-left', tear: true, mist: true, holds: 'pebble', size: 0.8, purr: true },
+    { who: 'player', pose: 'pawup', mood: 'proud', at: 'sand-right', facing: 'left', claws: true, puffed: true, lift: true },
+    { who: 'snorer', pose: 'curl', mood: 'sleepy', at: 'sunpatch', moss: true },
+    { who: 'mutterer', pose: 'sit', mood: 'worried', at: 'sunpatch-2', squeeze: true, flatEars: true },
+    { who: 'riffle', pose: 'stand', mood: 'happy', at: 'tree', holds: 'fish2' },
+    { who: 'player', pose: 'walk', mood: 'worried', at: 'rim-3', holds: 'vole', holdAt: 'mouth' }
+  ];
+  const scene = { set: 'hollow', cam: 'wide', cast, fx: ['sunset'] };
+  const r = withCharacter(spy, () => art.render(scene, { look: LOOK }));
+  checkRender(r, scene, 'extras');
+  const EXTRAS = ['tear', 'mist', 'claws', 'puffed', 'squeeze', 'moss', 'flatEars', 'holds', 'holdAt'];
+  cast.forEach((m, i) => {
+    const call = calls.find((c) => c.who === m.who && c.opts.pose === m.pose && c.opts.mood === m.mood);
+    assert.ok(call, m.who + ' is drawn');
+    for (const k of EXTRAS) assert.equal(call.opts[k], m[k], i + ' ' + m.who + ': ' + k);
+    for (const k of ['purr', 'lift', 'size', 'at']) assert.equal(call.opts[k], undefined, i + ' ' + m.who + ': ' + k + ' stays the scene\'s');
+  });
+});
+
+test('sparkles twinkle on a held stone or Sprinkle\'s pebble, never on a vole or a fish in a mouth', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character;
+  // a stand-in that reports what it holds, as cats.js does: { what, x, y, r } in its box
+  const fake = function (who, opts) {
+    const c = real(who, opts);
+    if (opts && opts.holds) return Object.assign({}, c, { held: { what: opts.holds, at: 'paws', x: c.w / 2, y: c.h * 0.85, r: 9 } });
+    return c;
+  };
+  const tw = (holds) => withCharacter(fake, () => {
+    const r = art.render({ set: 'garden', cam: 'step', cast: [{ who: 'player', pose: 'sit', mood: 'happy', at: 'step', holds }], fx: ['day', 'sparkle'] }, { look: LOOK });
+    return (r.svg.slice(r.svg.indexOf('class="pcs-fx">')).match(/class="pcs-tw"/g) || []).length;
+  });
+  assert.equal(tw('stone'), 3, 'three twinkles on Riffle\'s stone');
+  assert.equal(tw('pebble'), 3, 'and on Sprinkle\'s pebble');
+  for (const h of ['vole', 'fish', 'fish2']) assert.equal(tw(h), 18, h + ': no twinkle on it; the sparkles scatter as without');
+});
+
+// A stand-in Sprinkle: a heron-sized drawing in the cats' units (a 440 box, three times her body's
+// width in wings and tail), her head high in the box, and, curled, an `over` part (her tail) drawn
+// over whoever comes after her.
+const DRIZ = { w: 440, h: 440, head: { x: 300, y: 70 }, headBox: { x0: 250, y0: 20, x1: 360, y1: 130 }, bounds: { x0: 150, y0: 20, x1: 330, y1: 438 } };
+function fakeSprinkle(real) {
+  return function (who, opts) {
+    if (who !== 'sprinkle') return real(who, opts);
+    const o = opts || {}, c = Object.assign({ svg: '<rect class="driz-body" x="150" y="20" width="180" height="418" fill="#9AA3A8"/>' }, JSON.parse(JSON.stringify(DRIZ)));
+    if (o.pose === 'curl') c.over = '<path class="driz-tail" d="M150 400Q60 420 40 380" fill="#9AA3A8"/>';
+    return c;
+  };
+}
+
+test('Sprinkle at a cat\'s anchor: drawn in the cats\' units (her bigger box makes her bigger), her face\'s r from her head box, her shadow under her body, none when only her eyes show', { skip: !art.character && 'no cats.js' }, () => {
+  const fake = fakeSprinkle(art.character);
+  withCharacter(fake, () => {
+    const a = art.sceneInfo('title').anchors.main.wall, s = a.h / 200;
+    const scene = { set: 'title', cam: 'wide', cast: [{ who: 'sprinkle', pose: 'sit', mood: 'shy', at: 'wall', facing: 'right' }, { who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'wall-2' }], fx: ['sunset'] };
+    const r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'sprinkle on the wall');
+    // the drawing is scaled exactly as a cat's at that spot would be
+    assert.ok(r.svg.includes('translate(' + a.x + ' ' + a.y + ') scale(' + Math.round(s * 10000) / 10000 + ' ' + Math.round(s * 10000) / 10000 + ') translate(-220 -440)'), 'her box at the cats\' scale');
+    const h = r.heads[0];
+    assert.ok(h, 'her head is in the panel');
+    assert.ok(Math.abs(h.x - (a.x + (300 - 220) * s) / 16) < 0.15 && Math.abs(h.y - (a.y - (440 - 70) * s) / 10) < 0.15, 'her head point, from her drawing: ' + JSON.stringify(h));
+    // r: the same share of her head box as a sitting cat's face has of its own
+    const cat = art.character('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }), hb = cat.headBox;
+    const share = 0.2 * cat.h / ((hb.x1 - hb.x0 + hb.y1 - hb.y0) / 2);
+    assert.ok(Math.abs(h.r - share * 110 * s / 1600 * 100) < 0.02, 'her r from her head box: ' + h.r);
+    assert.ok(h.y < r.heads[1].y - 8, 'her head well above Tallyheart\'s');
+    // her shadow: under her body (bounds x 150-330 of her box), not the whole box
+    // (the shadows' opacity, 0.28, is written to one decimal, as every number in the markup)
+    const shade = [...r.svg.matchAll(/<ellipse cx="([-\d.]+)" cy="([-\d.]+)" rx="([\d.]+)" ry="([\d.]+)" fill="#2A1F3D" opacity="0.3"\/>/g)].map((m) => m.slice(1).map(Number));
+    const under = shade.find((e) => Math.abs(e[1] - (a.y - 1)) < 0.2 && Math.abs(e[0] - (a.x + (240 - 220) * s)) < 0.2);
+    assert.ok(under, 'a shadow centred under her body: ' + JSON.stringify(shade));
+    assert.ok(Math.abs(under[2] - 180 * s * 0.42) < 0.2, 'as wide as her body, not her box: ' + under[2]);
+    // only her eyes in the dark: no shadow on the ground for her
+    const eyes = art.render({ set: 'title', cam: 'wide', cast: [{ who: 'sprinkle', pose: 'eyes', at: 'wall' }], fx: ['dusk'] }, { look: LOOK });
+    const shadeE = [...eyes.svg.matchAll(/<ellipse cx="[-\d.]+" cy="([-\d.]+)" rx="[\d.]+" ry="[\d.]+" fill="#[0-9A-F]+" opacity="0.3"\/>/g)].filter((m) => Math.abs(+m[1] - (a.y - 1)) < 0.2);
+    assert.equal(shadeE.length, 0, 'no shadow under eyes in the dark');
+  });
+});
+
+test('Sprinkle curled round the cat beside her: her tail (the drawing\'s `over`) goes over whoever comes after her in the cast; her head points the balloon at what shows of her face when it tops the camera', { skip: !art.character && 'no cats.js' }, () => {
+  withCharacter(fakeSprinkle(art.character), () => {
+    const scene = { set: 'title', cam: 'wide', cast: [{ who: 'sprinkle', pose: 'curl', mood: 'happy', at: 'wall' }, { who: 'player', pose: 'loaf', mood: 'happy', at: 'wall-2' }], fx: ['sunset'] };
+    const r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'curl');
+    const body = r.svg.indexOf('driz-body'), tail = r.svg.indexOf('driz-tail');
+    const player = r.svg.indexOf('<g transform="translate(900 840)');
+    assert.ok(body > 0 && player > body && tail > player, 'body, then the cat, then her tail over the cat: ' + [body, player, tail]);
+    assert.equal((r.svg.match(/driz-tail/g) || []).length, 1, 'one tail');
+    assert.ok(!art.render({ set: 'title', cam: 'wide', cast: [{ who: 'sprinkle', pose: 'sit', at: 'wall' }] }).svg.includes('driz-tail'), 'only curled');
+    // her head point above a cat's camera, most of her face still in it: the balloon points at her face
+    // (size 1.23 at the middle of camp, in the crowd camera: her head point just above the panel, nearly
+    // half her face in it)
+    const top = art.render({ set: 'camp', cam: 'crowd', cast: [{ who: 'sprinkle', pose: 'sit', at: 'center', size: 1.23 }], fx: ['sunset'] });
+    const vb = viewBox(top.svg), s = 285 / 200 * 1.23;
+    const hb = [830 + (250 - 220) * s, 912 - (440 - 20) * s, 830 + (360 - 220) * s, 912 - (440 - 130) * s];
+    assert.ok(912 - (440 - 70) * s < vb[1], 'her head point is above the camera');
+    const h = top.heads[0];
+    assert.ok(h && h.y >= 0 && h.y < 100, 'she still has a head: ' + JSON.stringify(h));
+    assert.ok(Math.abs(h.y - ((vb[1] + hb[3]) / 2 - vb[1]) / vb[3] * 100) < 0.2, 'in the middle of what shows of her face: ' + h.y);
+    // a face almost wholly out of the panel stays out (null), as anyone's does
+    const gone = art.render({ set: 'camp', cam: 'crowd', cast: [{ who: 'sprinkle', pose: 'sit', at: 'center', size: 1.4 }], fx: ['sunset'] });
+    assert.equal(gone.heads[0], null);
+  });
+});
+
+test('Sprinkle (cats.js): every pose of hers at every anchor of every set and camera; sitting at a cat\'s anchor, her head is well above Tallyheart\'s', { skip: !(art.vocab.otherPoses && art.vocab.otherPoses.sprinkle) && 'cats.js does not draw Sprinkle yet' }, () => {
+  const poses = art.vocab.otherPoses.sprinkle;
+  let renders = 0;
+  for (const [set, info] of Object.entries(art.vocab.sets)) {
+    for (const cam of info.cams) {
+      for (let start = 0; start < poses.length; start += info.anchors.length) {
+        const cast = info.anchors.map((at, i) => ({ who: 'sprinkle', pose: poses[(start + i + renders) % poses.length], mood: MOODS.concat(['sad', 'shy'])[(start + i) % 16], at, facing: i % 2 ? 'left' : 'right' }));
+        const scene = { set, cam, cast, fx: [set === 'den' || set === 'sky' ? 'night' : 'day'] };
+        checkRender(art.render(scene, { look: LOOK }), scene, set + '/' + cam + ' sprinkle');
+        renders++;
+      }
+    }
+  }
+  const r = art.render({ set: 'title', cam: 'wide', cast: [{ who: 'sprinkle', pose: 'sit', mood: 'shy', at: 'wall', facing: 'left' }, { who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'wall-2', facing: 'left' }], fx: ['sunset'] });
+  const d = r.heads[0], t = r.heads[1];
+  assert.ok(d && t && d.r > 0, 'both in shot; her face has a size');
+  const dh = art.character('sprinkle', { pose: 'sit', mood: 'shy', facing: 'left' }), th = art.character('tallyheart', { pose: 'sit', mood: 'kind', facing: 'left' });
+  assert.ok(dh.h > th.h, 'her box is bigger than a cat\'s');
+  assert.ok(dh.h - (dh.headBox.y0 + dh.headBox.y1) / 2 > th.h - th.headBox.y0, 'sitting, the middle of her face is above the tips of Tallyheart\'s ears');
+  assert.ok(d.y < t.y - 5, 'and so it is in the panel: ' + JSON.stringify([d, t]));
+});
+
+test('tower chime: a wind chime on Waffles\'s balcony beside her geranium, five tubes, hanging clear above the rail; tiny from the ground; none without the option; it sways only with motion allowed', () => {
+  assert.deepEqual(art.vocab.sets.tower.opts.chime, [true, false]);
+  const TUBES = /<path d="((?:M[-\d.]+ [-\d.]+h[-\d.]+v[-\d.]+h[-\d.]+z){5})" fill="url\(#[^)]+-l-chimetube\)"/;
+  for (const fx of [['sunset'], ['dusk'], ['morning'], ['day']]) {
+    const scene = { set: 'tower', cam: 'balcony', opts: { chime: true }, cast: [{ who: 'waffles', pose: 'peer', mood: 'shout', at: 'railing', facing: 'left' }], fx };
+    const r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'chime ' + fx);
+    assert.equal((r.svg.match(/class="pcs-chime"/g) || []).length, 1, 'one chime');
+    const m = TUBES.exec(r.svg);
+    assert.ok(m, 'five tubes');
+    const tubes = m[1].split('M').filter(Boolean).map((t) => t.match(/-?[\d.]+/g).map(Number));
+    const xs = tubes.map((t) => t[0]), bottoms = tubes.map((t) => t[1] + t[3]);
+    // beside the geranium (its pot spans x 1292-1468 below the rail; the flowers about x 1305-1455)
+    assert.ok(Math.min(...xs) > 1100 && Math.max(...xs) < 1300, 'beside the geranium, to its left: ' + xs.map(Math.round));
+    assert.ok(Math.max(...bottoms) < 712, 'every tube hangs clear above the rail top (720): ' + bottoms.map(Math.round));
+    assert.ok(bottoms[2] > bottoms[0] && bottoms[2] > bottoms[4], 'the longest in the middle');
+    // never over Waffles's face
+    const h = r.heads[0];
+    assert.ok(Math.min(...xs) > h.x * 16 + h.r * 16 + 20, 'clear of her face');
+    const plain = art.render({ set: 'tower', cam: 'balcony', cast: scene.cast, fx }, { look: LOOK });
+    assert.ok(!/pcs-chime|chimetube/.test(plain.svg), 'no chime without the option');
+    assert.equal(strip(art.render({ set: 'tower', cam: 'balcony', opts: { chime: false }, cast: scene.cast, fx }, { look: LOOK }).svg), strip(plain.svg), 'chime: false is no chime');
+  }
+  // from the ground, nineteen floors down: there, beside her geranium on the tiny balcony
+  const up = art.render({ set: 'tower', cam: 'up', opts: { chime: true }, cast: [], fx: ['sunset'] });
+  const um = TUBES.exec(up.svg);
+  assert.ok(um, 'the chime on the tiny balcony');
+  const ut = um[1].split('M').filter(Boolean).map((t) => t.match(/-?[\d.]+/g).map(Number));
+  assert.ok(ut.every((t) => t[0] > 1000 && t[0] < 1300 && t[1] > 100 && t[1] < 260 && t[3] < 30), 'tiny, up on her balcony: ' + JSON.stringify(ut[0]));
+  assert.ok(!/chimetube/.test(art.render({ set: 'tower', cam: 'up', cast: [], fx: ['sunset'] }).svg));
+  // the sway is CSS, inside the reduced-motion guard (checked for every class above), turning on its string
+  assert.ok(/\.pcs-chime\{animation:[^}]*transform-origin:50% 0\}/.test(art.css));
+});
+
+// The crowd cats' body boxes (world units), from the markup.
+const crowdBoxes = (svg) => [...svg.matchAll(/data-crowd="cat" data-box="([^"]+)"/g)].map((m) => m[1].split(' ').map(Number));
+const CAMP_MAIN = ['reveal', 'crowd', 'purr', 'ferns'];
+
+test('camp crowd: the whole Clan crowded round the fountain in the wide shots, every cat turned to it; heads from below the fountain, more shadows from above; nothing without the option', () => {
+  assert.deepEqual(art.vocab.sets.camp.opts.crowd, [true, false]);
+  for (const cam of art.vocab.sets.camp.cams) for (const fx of [['sunset'], ['morning'], ['dusk', 'purr']]) {
+    const scene = { set: 'camp', cam, opts: { crowd: true }, cast: [], fx };
+    checkRender(art.render(scene, { look: LOOK }), scene, 'crowd ' + cam + ' ' + fx);
+    const off = art.render({ set: 'camp', cam, opts: { crowd: false }, cast: [], fx }).svg;
+    assert.ok(!/data-crowd/.test(off), cam + ': no crowd without the option');
+    assert.equal(strip(off), strip(art.render({ set: 'camp', cam, cast: [], fx }).svg), cam + ': crowd: false is as before');
+  }
+  const wide = art.render({ set: 'camp', cam: 'reveal', opts: { crowd: true }, cast: [], fx: ['sunset'] });
+  const B = crowdBoxes(wide.svg);
+  assert.ok(B.length >= 24, 'a crowd: ' + B.length);
+  // all round the fountain: some behind it (heads over the basin), some on each side
+  assert.ok(B.filter((b) => b[3] < 680 && b[0] > 600 && b[2] < 1000).length >= 4, 'a row behind the fountain');
+  assert.ok(B.filter((b) => b[2] < 500).length >= 6 && B.filter((b) => b[0] > 1080).length >= 6, 'groups on both sides');
+  // every cat turned to the fountain: cats.js mirrors a cat facing left (a negative matrix)
+  for (const m of wide.svg.matchAll(/data-crowd="cat" data-box="([^"]+)">.*?<g transform="translate\(([-\d.]+) [-\d.]+\) scale[^"]*"[^>]*><g transform="matrix\((-?)/g)) {
+    const x = +m[2], left = m[3] === '-';
+    assert.equal(left, x > 800, 'the cat at x ' + x + ' faces the fountain');
+  }
+  // the clearing stays open: the fountain's foot, and the middle of camp in front of it
+  for (const b of B) {
+    assert.ok(!(b[2] > 410 && b[0] < 620 && b[3] > 700), 'nobody at the fountain\'s foot: ' + b);
+    assert.ok(!(b[2] > 640 && b[0] < 1000 && b[3] > 760), 'nobody in the middle, in front of the fountain: ' + b);
+  }
+  // every crowd cat is a Clan cat, in a Clan coat, never her coat (cats.js picks a spare, given her look)
+  const real = art.character, calls = [];
+  if (real) {
+    withCharacter(function (who, opts) { calls.push({ who, opts }); return real(who, opts); }, () => art.render({ set: 'camp', cam: 'purr', opts: { crowd: true }, cast: [], fx: ['dusk', 'purr'] }, { look: LOOK }));
+    const crowd = calls.filter((c) => c.opts && c.opts.look);
+    assert.ok(crowd.length >= 24 && crowd.every((c) => c.who === 'clancat' && c.opts.look === LOOK && Array.isArray(c.opts.taken)), 'Clan cats, told her look');
+    assert.ok(crowd.every((c) => c.opts.mood === 'happy'), 'the purr: every one of them happy, eyes shut');
+  }
+  // from below the fountain: heads along the bottom; from above: shadows round the edges
+  const low = art.render({ set: 'camp', cam: 'fountain', opts: { crowd: true }, cast: [{ who: 'glintstar', at: 'fountain-top', pose: 'stand', mood: 'stern', facing: 'left' }], fx: ['sunset'] });
+  assert.equal((low.svg.match(/data-crowd="heads"/g) || []).length, 1);
+  assert.equal((low.svg.match(/filter="url\(#[^)]+-f-crowdsil\)"/g) || []).length, 8, 'eight heads');
+  assert.deepEqual(low.heads, art.render({ set: 'camp', cam: 'fountain', cast: [{ who: 'glintstar', at: 'fountain-top', pose: 'stand', mood: 'stern', facing: 'left' }], fx: ['sunset'] }).heads, 'Glintstar where she was');
+  assert.equal((art.render({ set: 'camp', cam: 'fountain-close', opts: { crowd: true }, cast: [], fx: ['sunset'] }).svg.match(/data-crowd/g) || []).length, 1, 'the heads are below the close-up (drawn, out of shot)');
+  assert.equal((art.render({ set: 'camp', cam: 'entrance', opts: { crowd: true }, cast: [], fx: ['sunset'] }).svg.match(/data-crowd="shadow"/g) || []).length, 7);
+});
+
+test('camp crowd in the close ferns camera: no crowd cat’s face cut by the panel’s edge (wholly in or wholly out); the wide shots keep their full edges', () => {
+  for (const fx of [['morning'], ['morning', 'purr']]) {
+    const r = art.render({ set: 'camp', cam: 'ferns', opts: { crowd: true }, cast: [{ who: 'player', pose: 'sit', mood: 'happy', at: 'ferns', facing: 'left' }], fx }, { look: LOOK });
+    const [bx, by, bw] = viewBox(r.svg), B = { x: bx, y: by, w: bw };
+    const heads = [...r.svg.matchAll(/data-head="([^"]+)"/g)].map((m) => m[1].split(' ').map(Number));
+    assert.ok(heads.length > 0);
+    for (const h of heads) {
+      const cut = (h[1] < B.y && h[3] > B.y) || (h[0] < B.x && h[2] > B.x) || (h[0] < B.x + B.w && h[2] > B.x + B.w);
+      assert.ok(!cut, 'a face cut by the edge: ' + h + ' in ' + JSON.stringify(B));
+    }
+  }
+  const wide = art.render({ set: 'camp', cam: 'reveal', opts: { crowd: true }, cast: [], fx: ['morning'] });
+  assert.equal((wide.svg.match(/data-crowd="cat"/g) || []).length, 27, 'the wide shot: the whole crowd');
+});
+
+test('camp crowd never covers a face: rows behind the cast, none in front of a cast member or level with one overlapping her, none near a face; the cast stays where it was', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('camp').anchors.main, R = art.character('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }).h;
+  // a cast member's boxes in world units, from cats.js, at her anchor
+  const boxes = (m) => {
+    const a = typeof m.at === 'string' ? A[m.at] : m.at, s = (a.h || 240) / R * (m.size || 1), face = m.facing || a.face || 'right';
+    const ch = art.character(m.who, { pose: m.pose, mood: m.mood, facing: face, look: LOOK, variant: m.variant });
+    const w = (b) => [a.x + (b.x0 - ch.w / 2) * s, a.y + (b.y0 - ch.h) * s, a.x + (b.x1 - ch.w / 2) * s, a.y + (b.y1 - ch.h) * s];
+    return { y: a.y, head: w(ch.headBox), body: w(ch.bounds) };
+  };
+  const hit = (a, b, pad) => a[0] < b[2] + pad && a[2] > b[0] - pad && a[1] < b[3] + pad && a[3] > b[1] - pad;
+  const casts = [
+    // the Warrior Counts as the text has it: Glintstar above, Murmurpaw small and alone at the foot, you
+    // and Tallyheart at the front of the crowd
+    [{ who: 'glintstar', at: 'fountain-top', pose: 'sit', mood: 'solemn', facing: 'left' }, { who: 'mutterer', at: 'fountain-foot', pose: 'sit', mood: 'worried', size: 0.85 },
+      { who: 'tallyheart', at: 'crowd-left', pose: 'sit', mood: 'kind' }, { who: 'player', at: 'entrance', pose: 'sit', mood: 'wonder' }],
+    [{ who: 'player', at: 'crowd-right', pose: 'sit', mood: 'happy', facing: 'left' }, { who: 'tallyheart', at: 'ferns', pose: 'sit', mood: 'kind' }, { who: 'mutterer', at: 'center', pose: 'sit', mood: 'laugh' }],
+    [{ who: 'tallyheart', at: 'center', pose: 'stand', mood: 'proud' }, { who: 'player', at: { x: 1010, y: 915 }, pose: 'sit', mood: 'wonder', facing: 'left' }]
+  ];
+  // and everyone at every anchor in turn
+  Object.keys(A).filter((k) => !A[k].elev).forEach((k) => casts.push([{ who: 'player', at: k, pose: 'sit', mood: 'happy' }]));
+  for (const cast of casts) for (const cam of CAMP_MAIN) {
+    const scene = { set: 'camp', cam, opts: { crowd: true }, cast, fx: ['sunset'] };
+    const r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'crowd ' + cam + ' ' + cast.map((m) => m.who + '@' + JSON.stringify(m.at)).join(' '));
+    assert.deepEqual(r.heads, art.render({ set: 'camp', cam, cast, fx: ['sunset'] }, { look: LOOK }).heads, cam + ': the crowd moves nobody');
+    const B = crowdBoxes(r.svg), Z = cast.map(boxes);
+    for (const b of B) for (let i = 0; i < Z.length; i++) {
+      const z = Z[i];
+      assert.ok(!hit(b, z.head, 0), cam + ': a crowd cat ' + b.map(Math.round) + ' near ' + cast[i].who + '\'s face ' + z.head.map(Math.round));
+      if (b[3] >= z.y - 6) assert.ok(!hit(b, z.body, 0), cam + ': a crowd cat ' + b.map(Math.round) + ' in front of ' + cast[i].who);
+    }
+    // the crowd behind the cast is drawn first, so the cast is always on top of it
+    const lastCrowd = r.svg.lastIndexOf('data-crowd="cat"');
+    cast.forEach((m, i) => { if (r.heads[i]) assert.ok(r.svg.indexOf('<ellipse', lastCrowd) >= 0); });
+  }
+  // the Warrior Counts: Murmurpaw alone at the fountain's foot (no crowd cat within a cat's width of her)
+  const r = art.render({ set: 'camp', cam: 'crowd', opts: { crowd: true }, cast: casts[0], fx: ['sunset'] }, { look: LOOK });
+  const her = boxes(casts[0][1]);
+  for (const b of crowdBoxes(r.svg)) assert.ok(!hit(b, her.body, 30), 'Murmurpaw alone: ' + b.map(Math.round));
+});
+
+test('garden hedge-side: a second cat on the lawn beside the gap in the hedge, both faces clear of each other, in the close-up and the wide shot', () => {
+  const A = art.sceneInfo('garden').anchors.main;
+  assert.ok(A['hedge-side'] && A['hedge-side'].x < A['hedge-gap'].x - 150 && Math.abs(A['hedge-side'].y - A['hedge-gap'].y) < 12, 'beside the gap');
+  for (const cam of ['hedge', 'wide']) for (const fx of [['sunset'], ['dusk']]) {
+    const scene = { set: 'garden', cam, cast: [{ who: 'tallyheart', at: 'hedge-gap', pose: 'sit', mood: 'stern', facing: 'left' }, { who: 'player', at: 'hedge-side', pose: 'stand', mood: 'worried', holds: 'vole' }], fx };
+    const r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'hedge-side ' + cam);
+    const [t, p] = r.heads;
+    assert.ok(t && p, cam + ': both in shot');
+    if (t.r && p.r) assert.ok(Math.hypot((t.x - p.x) * 16, (t.y - p.y) * 10) > (t.r + p.r) * 16, cam + ': faces apart');
+    assert.ok(p.x < t.x, 'she is left of the gap');
+  }
+});
+
+test('every frame of chapter 3 renders with the art vocabulary (once it is written)', () => {
+  require(path.join(ROOT, 'app/story/ch03.js'));
+  const ch = PC.story && PC.story.ch03;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.board !== 'STUB.') : [];
+  for (const [id, f] of frames) {
+    const s = f.scene, v = art.vocab;
+    assert.ok(v.sets[s.set], id + ': set ' + s.set);
+    assert.ok(v.sets[s.set].cams.includes(s.cam), id + ': camera ' + s.set + '/' + s.cam);
+    for (const m of s.cast || []) if (typeof m.at === 'string') assert.ok(v.sets[s.set].anchors.includes(m.at), id + ': anchor ' + m.at + ' in ' + s.set);
+    // the UI fills 'auto' from the cat before drawing; here, three marks (the claws lesson done) and her stone by her nose
+    const o = Object.assign({}, s.opts || {});
+    if (o.marks === 'auto') o.marks = 3;
+    if (o.glow === 'auto') o.glow = [true, false, false];
+    if (o.depth === 'auto') delete o.depth;
+    if (o.stone === 'auto') o.stone = 'nose';
+    const scene = Object.assign({}, s, { opts: o });
+    checkRender(art.render(scene, { look: LOOK }), scene, 'ch03 ' + id);
   }
 });

@@ -1,6 +1,6 @@
 /* Potomac Crossing · app/art/sets/pile.js
  *
- * The set: the prey pile in camp (chapter 2), and PC.art.prey, the one piece of prey that both
+ * The set: the prey pile in camp (chapters 2 and 3), and PC.art.prey, the one piece of prey that both
  * the set and the Counts pictures draw.
  *
  *   pile: a shady corner of camp under a low arch of brambles; the pile sits in the arch's
@@ -14,7 +14,8 @@
  *     low    a medium two-shot at cat height beside the pile, the arch overhead (its own composition)
  *     close  the pile fills the panel (the low composition, close)
  *   Options: pairs 0-10 (default 8), lit 0-10 (the first n stacks glow, back row first, left to
- *   right), dug: true (soft, lumpy, dug-up earth behind the pile), vole: true (one plump vole on
+ *   right), dug: true (soft, lumpy, dug-up earth behind the pile; 'big', chapter 3, two nights on:
+ *   the same patch wider and higher, fresh darker earth on top, a second dip), vole: true (one plump vole on
  *   the ground in front of the pile, just right of `pile-left`: the one Tallyheart nudges over, off
  *   the top of the front row's first vole stack, which keeps only its bottom piece).
  *   The stacks (and the vole) are reported in `keep`, one box each, so the lettering stays off the prey.
@@ -249,7 +250,11 @@
   }
 
   // Soft, lumpy, freshly turned earth (the `dug` clue): lumps behind the pile, crumbs round it.
-  function dugEarth(S, cx, base, w, k, seed) {
+  // `big` (chapter 3, two nights on, "the dug earth behind the pile is bigger"): the same patch
+  // spread wider and heaped higher, a crest of fresh, darker earth turned up on top of the old, a
+  // second soft dip where it has fallen in, and crumbs scattered further.
+  function dugEarth(S, cx, base, w, k, seed, big) {
+    if (big) { w *= 1.22; k *= 1.2; }
     var r = rng(seed), p = S.pal, soil = mix('#7A5638', p.shade, 0.18), soilLt = mix('#A27A55', p.rim, 0.12), soilDk = mix('#4E3524', p.shade, 0.2);
     var lumps = '', tops = '', crumbs = '', i;
     var y0 = base - 40 * k;
@@ -268,7 +273,23 @@
     }
     var roots = stroke('M' + n(cx - w * 0.3) + ' ' + n(y0 - 6 * k) + 'q' + n(10 * k) + ' ' + n(-16 * k) + ' ' + n(26 * k) + ' ' + n(-12 * k) +
       'M' + n(cx + w * 0.36) + ' ' + n(y0 - 2 * k) + 'q' + n(-6 * k) + ' ' + n(-14 * k) + ' ' + n(-20 * k) + ' ' + n(-14 * k), mix('#C9A27A', p.shade, 0.2), 2.4 * k);
-    return lumps + tops + roots + crumbs;
+    if (!big) return lumps + tops + roots + crumbs;
+    var r2 = rng(seed + 57), fresh = mix('#5C3F2A', p.shade, 0.16), freshLt = mix('#8C6646', p.rim, 0.12), more = '', moreTops = '', far = '';
+    // the fresh crest: newer lumps heaped along the top of the old ones
+    for (i = 0; i < 9; i++) {
+      var fu = (i / 8 - 0.5) * 1.6, fx = cx + fu * w * 0.5 + (r2() - 0.5) * 18 * k, fy = y0 - (1 - fu * fu * 0.6) * 40 * k + (r2() - 0.5) * 8 * k;
+      var frx = (22 + r2() * 18) * k, fry = (12 + r2() * 9) * k;
+      more += path(blob(fx, fy, frx, fry, 8, r2, 0.25, 0.32), fresh);
+      moreTops += path(blob(fx - frx * 0.2, fy - fry * 0.4, frx * 0.5, fry * 0.36, 7, r2, 0.3, 0.3), freshLt, { opacity: 0.75 });
+    }
+    // a second dip, at the left, where it has fallen in too
+    more += ell(cx - w * 0.26, y0 - 14 * k, 30 * k, 9 * k, soilDk, { opacity: 0.9 });
+    // crumbs thrown further out
+    for (i = 0; i < 22; i++) {
+      var sd2 = i % 2 ? 1 : -1, fcx = cx + sd2 * (w * 0.46 + r2() * w * 0.14), fcy = base - r2() * 40 * k;
+      far += path(blob(fcx, fcy, (4 + r2() * 6) * k, (3 + r2() * 3) * k, 6, r2, 0.3, 0.3), r2() < 0.5 ? fresh : soilLt);
+    }
+    return lumps + tops + more + moreTops + roots + crumbs + far;
   }
 
   // Leaves along a bramble mass's edge, and its leafy texture, inside a shape built from mounds.
@@ -420,7 +441,7 @@
     back += K.fernClump(S, 1000, 852, 150, { seed: 418, count: 6, avoid: avoid }) + K.fernClump(S, 40, 860, 180, { seed: 419, count: 6, avoid: avoid });
     back += K.tufts(S, 0, 960, 840, 1000, 50, 420, p.grassNear, p.grassLight, 1.2);
     // the pile
-    if (o.dug) back += dugEarth(S, MAIN.cx, MAIN.base - 36, 420, 0.9, 421);
+    if (o.dug) back += dugEarth(S, MAIN.cx, MAIN.base - 36, 420, 0.9, 421, o.dug === 'big');
     var pile = pileSvg(S, MAIN.cx, MAIN.base, MAIN.pw, 7), vole = o.vole ? looseVole(S, MAIN.vole[0], MAIN.vole[1], MAIN.pw * MAIN.vole[2]) : null;
     back += g(pile.svg + (vole ? vole.svg : ''), S.tod === 'morning' || S.tod === 'day' ? null : { filter: pileTint(S) });
     keepBoxes(S, pile.boxes.concat(vole ? [vole.box] : []));
@@ -551,7 +572,9 @@
     arch += stroke(drip, stemCol, 5) + path(dl, p.leafMid);
     back += floorSpots + g(arch, { filter: S.shadow('l') });
     // the pile and what's behind it
-    if (o.dug) back += dugEarth(S, LOW.cx, LOW.base - 76, 760, 1.5, 518);
+    // (big: grown from a slightly narrower base here, a touch to the left, so it stays inside the arch's legs)
+    var bigDug = o.dug === 'big';
+    if (o.dug) back += dugEarth(S, bigDug ? LOW.cx - 30 : LOW.cx, LOW.base - 76, bigDug ? 660 : 760, 1.5, 518, bigDug);
     var pile = pileSvg(S, LOW.cx, LOW.base, LOW.pw, 7), vole = o.vole ? looseVole(S, LOW.vole[0], LOW.vole[1], LOW.pw * LOW.vole[2]) : null;
     back += g(pile.svg + (vole ? vole.svg : ''), wet ? null : { filter: pileTint(S) });
     keepBoxes(S, pile.boxes.concat(vole ? [vole.box] : []));
@@ -581,7 +604,7 @@
         'pile-left': A(180, 946, 396), beside: A(1305, 914, 376, 'left'), 'pile-right': A(1458, 932, 396, 'left')
       }
     },
-    opts: { pairs: 'number', lit: 'number', dug: [true, false], vole: [true, false] },
+    opts: { pairs: 'number', lit: 'number', dug: [true, false, 'big'], vole: [true, false] },
     defaults: { pairs: 8, lit: 0, dug: false, vole: false }
   });
 

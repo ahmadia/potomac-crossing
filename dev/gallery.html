@@ -69,6 +69,7 @@
 <script src="../app/art/sets/riverbank.js"></script>
 <script src="../app/story/ch01.js"></script>
 <script src="../app/story/ch02.js"></script>
+<script src="../app/story/ch03.js"></script>
 <script>
 (function () {
   'use strict';
@@ -172,7 +173,30 @@
     ['hollow', 'tree', { opts: { marks: 2, glow: [true, false] }, cast: [c('tallyheart', 'tree', 'stretch', 'proud')], fx: ['morning'] }, 'chapter 2: the second claw mark beside the first'],
     ['hollow', 'tree', { opts: { marks: 6, glow: [true, false, true, false, false, true] }, cast: [], fx: ['morning'] }, 'six marks (marks: 6), glow per mark'],
     ['title', 'wide', { cast: [c('player', 'wall', 'sit', 'wonder', { facing: 'left' }), c('tallyheart', 'wall-2', 'sit', 'proud', { facing: 'left' })], fx: ['day'] }, 'chapter 2: the wall above the river by day (wall, wall-2)'],
-    ['title', 'wide', { cast: [c('player', 'wall', 'walk', 'happy', { facing: 'left' }), c('tallyheart', 'wall-2', 'walk', 'kind', { facing: 'left' })], fx: ['sunset'] }, 'chapter 2: walking home along the wall at sunset']
+    ['title', 'wide', { cast: [c('player', 'wall', 'walk', 'happy', { facing: 'left' }), c('tallyheart', 'wall-2', 'walk', 'kind', { facing: 'left' })], fx: ['sunset'] }, 'chapter 2: walking home along the wall at sunset'],
+    // chapter 3: chapter 1's sets in new light, with new props
+    ['den', 'inside', { opts: { weather: 'clear', moon: false, stone: 'nose' }, cast: [c('snorer', 'sleeper-1', 'curl', 'sleepy', { moss: true }), c('mutterer', 'sleeper-2', 'sit', 'worried', { facing: 'left', squeeze: true }),
+      c('player', 'nest', 'lie', 'sleepy', { facing: 'left' })], fx: ['night'] }, 'chapter 3: before sunrise (no moon): Murmurpaw bolt upright, eyes squeezed shut; the grey tom with moss over his ears; her stone by her nose'],
+    ['den', 'inside', { opts: { weather: 'clear', moon: false, stone: 'chin' }, cast: [c('snorer', 'sleeper-1', 'curl', 'sleepy'), c('player', 'nest', 'loaf', 'sleepy', { facing: 'left' })], fx: ['night'] }, 'chapter 3: bedtime: Murmurchime\u2019s nest empty (she sleeps with the warriors now); her stone under her chin'],
+    ['den', 'doorway', { opts: { weather: 'clear' }, cast: [c('tallyheart', 'doorway', 'sit', 'happy', { facing: 'left' }), c('player', 'nest', 'sit', 'wonder')], fx: ['morning'] }, 'chapter 3: Tallyheart at the doorway in the morning'],
+    ['tower', 'balcony', { opts: { chime: true }, cast: [c('waffles', 'railing', 'peer', 'shout', { facing: 'left' })], fx: ['sunset'] }, 'chapter 3: chime: a wind chime beside her geranium (\u201cclear as a chime\u201d)'],
+    ['tower', 'up', { opts: { chime: true }, cast: [c('waffles', 'railing', 'peer', 'shout', { facing: 'left' })], fx: ['sunset'] }, 'chapter 3: the chime, tiny, nineteen floors up'],
+    ['camp', 'reveal', { opts: { crowd: true }, cast: [c('glintstar', 'fountain-top', 'sit', 'solemn', { facing: 'left' }), c('mutterer', 'fountain-foot', 'sit', 'worried', { size: 0.85 }),
+      c('tallyheart', 'crowd-left', 'sit', 'kind'), c('player', 'entrance', 'sit', 'wonder')], fx: ['sunset'] }, 'chapter 3: crowd: the whole Clan round the fountain for the Warrior Counts; Murmurpaw small and alone at its foot'],
+    ['camp', 'crowd', { opts: { crowd: true }, cast: [c('glintstar', 'fountain-top', 'sit', 'stern', { facing: 'left' }), c('mutterer', 'fountain-foot', 'sit', 'proud')], fx: ['sunset'] }, 'chapter 3: crowd: Murmurpaw answering, sitting up taller'],
+    ['camp', 'purr', { opts: { crowd: true }, cast: [c('glintstar', 'fountain-top', 'sit', 'kind', { facing: 'left', size: 0.8 }), c('mutterer', 'fountain-foot', 'sit', 'happy', { size: 0.8 }),
+      c('player', 'entrance', 'sit', 'happy', { size: 0.8 }), c('tallyheart', 'crowd-left', 'sit', 'happy', { size: 0.8 })], fx: ['dusk', 'purr'] }, 'chapter 3: crowd: the whole camp hums her new name (every crowd cat happy, eyes shut)'],
+    ['camp', 'fountain', { opts: { crowd: true }, cast: [c('glintstar', 'fountain-top', 'stand', 'solemn', { facing: 'left' })], fx: ['sunset', 'glow'] }, 'chapter 3: crowd from below: the Clan\u2019s heads along the bottom, looking up at her'],
+    ['camp', 'entrance', { opts: { crowd: true }, cast: [c('mutterer', 'entrance', 'sit', 'worried', { size: 0.85 })], fx: ['sunset'] }, 'chapter 3: crowd from above: shadows of the whole Clan round the edges'],
+    ['camp', 'ferns', { opts: { crowd: true }, cast: [c('mutterer', 'ferns', 'sit', 'laugh', { facing: 'left' })], fx: ['dusk'] }, 'chapter 3: crowd: Murmurchime grinning across the crowd'],
+    ['hollow', 'wide', { opts: { marks: 2 }, cast: [c('tallyheart', 'tree-far', 'pawup', 'proud', { facing: 'left', claws: true }), c('clancat', 'rim-1', 'pawup', 'proud', { variant: 1, claws: true }),
+      c('mutterer', 'rim-2', 'pawup', 'happy', { claws: true }), c('clancat', 'rim-3', 'pawup', 'neutral', { variant: 4, claws: true }), c('clancat', 'rim-4', 'pawup', 'proud', { variant: 6, claws: true }),
+      c('grizzled', 'rim-5', 'pawup', 'stern', { claws: true }), c('player', 'sunpatch-2', 'sit', 'wonder')], fx: ['sunset'] }, 'chapter 3: five rim cats, a forepaw each, claws out (Murmurchime among them, the old tom last)'],
+    ['hollow', 'tree', { opts: { marks: 3 }, cast: [c('tallyheart', 'tree', 'stretch', 'proud')], fx: ['sunset'] }, 'chapter 3: a third claw mark; the first two a little deeper (marks: 3, depth by default)'],
+    ['hollow', 'tree', { opts: { marks: 10, glow: [true, true, false, true] }, cast: [], fx: ['sunset'] }, 'marks: 10: one day, ten marks (every table to ten times ten), four to a row'],
+    ['garden', 'hedge', { cast: [c('tallyheart', 'hedge-gap', 'sit', 'stern', { facing: 'left' }), c('player', 'hedge-side', 'stand', 'worried', { holds: 'vole' })], fx: ['sunset'] }, 'chapter 3: hedge-side: at the hedge at sunset, a vole in your mouth'],
+    ['title', 'wide', { cast: [c('tallyheart', 'wall', 'sit', 'scared', { facing: 'left', puffed: true }), c('player', 'wall-2', 'sit', 'worried')], fx: ['sunset'] }, 'chapter 3: on the wall at sunset, her fur puffed up'],
+    ['title', 'wide', { cast: [c('sprinkle', 'wall', 'sit', 'shy', { facing: 'left', holds: 'pebble' }), c('tallyheart', 'wall-2', 'sit', 'kind')], fx: ['sunset'] }, 'chapter 3: Sprinkle at a cat\u2019s anchor (her bigger box makes her bigger; her head well above Tallyheart\u2019s)']
   ];
 
   // ---- panels, rendered when they scroll into view
@@ -256,13 +280,15 @@
   });
 
   // ---- section 2: every frame of every chapter, as the story asks for it
-  // (the UI fills `marks: 'auto'` and `glow: 'auto'` from the cat; here they show as two marks, the first glowing)
-  function preview(s) {
-    if (!s || !s.opts || (s.opts.marks !== 'auto' && s.opts.glow !== 'auto')) return s;
-    var o = {}, k;
+  // (the UI fills `marks: 'auto'` and `glow: 'auto'` from the cat; here a chapter's frames show one mark
+  // per chapter so far, chapter 2's two and chapter 3's three, the first glowing; `stone: 'auto'` by her nose)
+  function preview(s, number) {
+    if (!s || !s.opts || (s.opts.marks !== 'auto' && s.opts.glow !== 'auto' && s.opts.stone !== 'auto')) return s;
+    var o = {}, k, m = Math.max(1, Math.min(10, number || 2));
     for (k in s.opts) o[k] = s.opts[k];
-    if (o.marks === 'auto') o.marks = 2;
-    if (o.glow === 'auto') o.glow = [true, false];
+    if (o.marks === 'auto') o.marks = m;
+    if (o.glow === 'auto') { o.glow = [true]; while (o.glow.length < m) o.glow.push(false); }
+    if (o.stone === 'auto') o.stone = 'nose';
     var t = {};
     for (k in s) t[k] = s[k];
     t.opts = o;
@@ -279,7 +305,7 @@
     var g2 = document.createElement('div'); g2.className = 'grid'; $('chapter').appendChild(g2);
     Object.keys(ch.frames).forEach(function (id) {
       var f = ch.frames[id], s = f.scene || {};
-      figure(g2, preview(s), cid + ' ' + id + ' · ' + s.set + ' / ' + s.cam, 'fx: ' + ((s.fx || []).join(', ') || 'none') + (s.opts && Object.keys(s.opts).length ? ' · ' + JSON.stringify(s.opts) : ''),
+      figure(g2, preview(s, ch.number), cid + ' ' + id + ' · ' + s.set + ' / ' + s.cam, 'fx: ' + ((s.fx || []).join(', ') || 'none') + (s.opts && Object.keys(s.opts).length ? ' · ' + JSON.stringify(s.opts) : ''),
         (f.board || '').slice(0, 260));
     });
   });

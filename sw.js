@@ -1,6 +1,6 @@
 /* Potomac Crossing: offline cache (scope: this folder).
    Bump CACHE whenever any file below changes, so installed iPads pull the new version. */
-var CACHE = 'potomac-crossing-v9';
+var CACHE = 'potomac-crossing-v11';
 var ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ var ASSETS = [
   './app/art/sets/riverbank.js',
   './app/story/ch01.js',
   './app/story/ch02.js',
+  './app/story/ch03.js',
   './app/engine.js',
   './app/ui.js',
   './manifest.webmanifest',

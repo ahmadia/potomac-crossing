@@ -2,7 +2,7 @@
  * (docs/build.md, "Chapter 2 (v0.3)") in a few frames each, so the engine is tested without the
  * real chapter 2. A fresh copy on every call:
  *
- *   const chapters = require('./fixtures/chapters.js');   const { ch01, ch02 } = chapters();
+ *   const chapters = require('./fixtures/chapters.js');   const { ch01, ch02, ch03 } = chapters();
  *
  * ch01: chapter 1's interactions in miniature (look, pet name, a choice, Clan name, the 1s, a
  *       dream, the end), with a teaser for chapter 2.
@@ -11,6 +11,7 @@
  *       rightPicture), a pile lesson that fills from the 2s (fillFrom), the claw marks from the
  *       cat (marks/glow 'auto'), a gift, a path choice, a dream, the end, and a teaser for chapter 3
  *       (not built).
+ * ch03: chapter 3's contract (docs/build.md, "Chapter 3 (v0.4)"), below.
  * Not a test file (node --test only runs *.test.js).
  */
 'use strict';
@@ -144,7 +145,170 @@ function chapters() {
     teaser: { title: 'Chapter 3: Under the Old Bridge', lines: ['Something sniffles in the dark.'] }
   };
 
-  return { ch01, ch02 };
+  const ch03 = chapter3();
+  return { ch01, ch02, ch03 };
 }
 
+/* ch03: chapter 3's engine contract (docs/chapters/03-under-the-old-bridge.md, "Build"; docs/build.md,
+ * "Chapter 3 (v0.4)") in a few frames: the tortie's labels and the {Murmur} token, a light choice,
+ * the adaptive ears warm-up (an ordered alt list, `avoid`, help in the earth, borrowing yesterday's
+ * ears), the pile (9 × 2 in a thought cloud, 7 × 2 a check), the Warrior Counts' digits, the
+ * skip-count on the 5s that keeps its totals, the claws lesson with its five-or-zero help, Sprinkle's
+ * two sets in her own voice (help in the mud, the player hopping, borrowing the easiest claws),
+ * a frame shown only on the river path, the tell-or-keep choice, the bedtime hop on her own
+ * forepaws, the dream, the end, the book's dragonet page and a teaser. Every set's lines are the
+ * text's. It borrows from `ch02-ears`: pass chapter 2 (the real one, or the fixture) beside it. */
+function chapter3() {
+  const RIM = [{ who: 'clancat', variant: 1 }, { who: 'mutterer' }, { who: 'clancat', variant: 3 }, { who: 'clancat', variant: 4 }, { who: 'grizzled' }];
+  const den = (fx) => ({ set: 'den', cam: 'inside', opts: { weather: 'clear', moon: false, stone: 'auto' },
+    cast: [{ who: 'player', pose: 'lie', mood: 'sleepy', at: 'nest' }, { who: 'snorer', pose: 'curl', mood: 'sleepy', at: 'sleeper-1', moss: true }], fx: [fx] });
+  const bridge = (cam, cast, opts) => ({ set: 'bridge', cam, opts: opts || {}, cast: cast || [], fx: ['day'] });
+  const EARS_PRAISE = ['You hopped it!', 'Two by two, like a real hunter.', 'Yes! Two ears for every cat.', 'Two ears, every time.', 'Ears are trickier than tails, and you’re doing it anyway.'];
+  return {
+    id: 'ch03', number: 3, title: 'Under the Old Bridge', start: 'd01',
+    names: { mutterer: '{Murmur}paw' },
+    frames: {
+      d01: {
+        scene: Object.assign(den('night'), { cast: [{ who: 'player', pose: 'lie', mood: 'sleepy', at: 'nest' }, { who: 'mutterer', pose: 'sit', mood: 'worried', at: 'sleeper-2', squeeze: true }] }),
+        caption: ['A whisper wakes you.', { when: { ch2Path: 'bridge' }, text: 'For a heartbeat, you think of the sniffle under the bridge.' },
+          { when: { ch2Path: 'river' }, text: 'For a heartbeat, you think of the roar with a hiccup.' }],
+        say: [{ who: 'snorer', text: '{Murmur}paw. You’ve been {murmur}ing ALL night.' }, { who: 'mutterer', text: 'It’s my Warrior Counts today.' }],
+        next: 'd02'
+      },
+      d02: { choice: { options: [
+        { label: '“You count in your sleep!”', sets: {}, next: 'd03a' },
+        { label: '“I’ll purr the loudest when you pass.”', sets: {}, next: 'd03b' }
+      ] } },
+      d03a: { say: [{ who: 'mutterer', text: 'I DO?' }], next: 'd04' },
+      d03b: { say: [{ who: 'mutterer', text: 'When I pass.', kind: 'whisper' }], next: 'd04' },
+      d04: { scene: { set: 'den', cam: 'doorway', opts: { weather: 'clear' }, cast: [{ who: 'tallyheart', pose: 'sit', mood: 'happy', at: 'doorway' }], fx: ['morning'] },
+        say: [{ who: 'tallyheart', text: 'Morning, {name}paw! Ears first, to wake up your whiskers.' }], counts: { set: 'ch03-ears', next: 'd05' } },
+      d05: { say: [{ who: 'tallyheart', text: 'Now, count the prey pile.' }], counts: { set: 'ch03-pile', next: 'd06' } },
+      d06: {
+        say: [{ who: 'glintstar', text: 'Seven times eight.', digits: '7 × 8' }, { who: 'mutterer', text: 'Fifty-six.', digits: '56' }],
+        next: 'd07'
+      },
+      d07: {
+        say: [{ who: 'tallyheart', text: 'Hop by fives. Five, ten, fifteen!' }],
+        skip: { table: 5, groups: 5, who: RIM, thing: 'claw', things: 'claws', keep: true, next: 'd08' }
+      },
+      d08: { say: [{ who: 'tallyheart', text: 'TWENTY-FIVE!', kind: 'shout' }, { who: 'grizzled', text: 'Can I put my paw down now?' }], next: 'd09' },
+      d09: { say: [{ who: 'tallyheart', text: 'Five paws, five claws each. Five times five makes twenty-five.' }], counts: { set: 'ch03-claws', next: 'd10' } },
+      d10: { scene: { set: 'hollow', cam: 'tree', opts: { marks: 'auto', glow: 'auto' }, cast: [] }, say: [{ who: 'tallyheart', text: 'Claws. That’s your third Count.' }], next: 'd11' },
+      d11: { scene: bridge('mouth', [{ who: 'player', pose: 'sit', mood: 'wonder', at: 'edge' }], { pebble: 'paws' }),
+        say: [{ who: 'sprinkle', name: 'A small voice', text: 'You dropped that.' }], next: 'd12' },
+      d12: { scene: bridge('back', [{ who: 'sprinkle', pose: 'pawsup', mood: 'happy', at: 'dragon' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'beside' }]),
+        say: [{ who: 'sprinkle', text: 'At home, I eat a fish for every claw on my forepaws.' }], counts: { set: 'ch03-dinner', next: 'd13' } },
+      d13: { scene: bridge('under', [{ who: 'sprinkle', pose: 'draw', mood: 'sad', at: 'mud', tear: true }]),
+        say: [{ who: 'sprinkle', text: 'The storm blew my six brothers and sisters all along the river.', kind: 'whisper' }],
+        caption: ['Six forepaws, five claws each. How many claws in the mud?'], counts: { set: 'ch03-six', next: 'd14' } },
+      d14: { when: { ch2Path: 'river' }, say: [{ who: 'player', text: 'We heard him! On the tallest tower!', kind: 'shout' }, { who: 'sprinkle', text: 'THAT’S HIM!' }], next: 'd15' },
+      d15: { choice: { prompt: 'Will you tell your Clan about me?', options: [
+        { label: 'Tell Tallyheart.', sets: { ch3Told: true }, next: 't01' },
+        { label: 'Keep the secret.', sets: { ch3Told: false }, next: 'k01' }
+      ] } },
+      t01: { caption: ['You find Tallyheart on the wall at sunset.'], next: 'd16' },
+      k01: { caption: ['You carry your supper toward the hedge.'], next: 'd16' },
+      d16: { scene: Object.assign(den('night'), {}), caption: [{ when: { ch3Told: true }, text: 'A secret shared feels lighter.' }, { when: { ch3Told: false }, text: 'The secret is small, but it wriggles.' }],
+        skip: { table: 5, groups: 4, paws: 'own', next: 'd17' } },
+      d17: { say: [{ who: 'snorer', text: 'Oh no. Not ANOTHER one.' }], next: 'd18' },
+      d18: { input: { kind: 'dream', next: 'd19' } },
+      d19: { caption: ['End of Chapter Three.'], end: true }
+    },
+    counts: {
+      'ch03-ears': {
+        table: 2, thing: 'ear', things: 'ears', teacher: 'tallyheart',
+        facts: [[4, 2], [6, 2]],
+        warmHard: { table: 2, at: 1, alt: [[2, 3], [2, 2], [2, 1]] },
+        avoid: [[9, 2], [7, 2]],
+        ground: 'earth', fillFrom: 'ch02-ears', fillIntro: 'One from yesterday.',
+        ask: '{a} × {b}', praise: EARS_PRAISE,
+        fast: ['You didn’t even have to hop that time.', 'Quick as a pounce!', 'You knew that one before I finished asking.'],
+        helpIntro: 'Close. Let’s scratch it out together: two lines for every cat, like ears.',
+        helpIntroFar: 'Let’s scratch it out together: two lines for every cat, like ears.',
+        miss: 'There. We’ll come back to that one.', missLast: 'There. Now you’ve seen it counted.',
+        remembered: 'Last time, {a} × {b} made you stop and think. Not today!',
+        rememberedSlow: '{a} × {b} again, and you got it. It’s getting easier.',
+        done: null
+      },
+      'ch03-pile': {
+        table: 2, thing: 'piece', things: 'pieces', unit: 'pair', units: 'pairs', teacher: 'tallyheart',
+        picture: { kind: 'prey', layout: 'stacks' }, fillFrom: 'ch02-ears', fillIntro: 'One from yesterday.',
+        facts: [
+          { a: 9, b: 2, picture: { kind: 'prey', layout: 'stacks', thought: true }, prompt: [{ who: 'grizzled', text: 'Nine pairs. How many pieces?' }],
+            right: [{ who: 'grizzled', text: 'Hmph.' }, { who: 'grizzled', text: 'Right.' }], rightAgain: true },
+          { a: 7, b: 2, light: 'groups', check: true,
+            prompt: [{ kind: 'caption', text: 'You touch your nose to each little stack. One pair. Two pairs… Seven pairs. And that’s all. How many pieces?' }] }
+        ],
+        ask: '{a} × {b}', praise: [],
+        helpIntro: 'Close. Let’s scratch it out: two marks for every pair.', helpIntroFar: 'Let’s scratch it out: two marks for every pair.',
+        miss: 'There. We’ll come back to that one.', missLast: 'There. Now you’ve seen it counted.', again: ['There it is. You remembered that one.'],
+        done: null
+      },
+      'ch03-claws': {
+        table: 5, thing: 'claw', things: 'claws', unit: 'paw', units: 'paws', teacher: 'tallyheart',
+        facts: [
+          { a: 4, b: 5, who: RIM.slice(0, 4) },
+          { a: 5, b: 2, right: [{ who: 'tallyheart', text: 'Ten! Two paws, five claws each. Yesterday it was five cats, two ears each. Same ten!' }], rightAgain: true },
+          [1, 5], [5, 5],
+          { a: 5, b: 6, lit: 25, prompt: 'Six paws. The first five have twenty-five claws. Now hop on from twenty-five!', retryPrompt: true,
+            right: [{ who: 'tallyheart', text: 'Thirty! Murmurchime knew it the other way around this morning. Now you know both.' }], rightAgain: true },
+          [5, 8], [5, 3], [9, 5], [7, 5], [10, 5]
+        ],
+        firstPrompt: 'How many claws on the first four paws?',
+        ask: '{a} × {b}',
+        praise: ['You hopped it!', 'Hopping by fives, like a real hunter.', 'Yes! Five claws on every forepaw.', 'Claws are trickier than ears, and you’re doing it anyway.', 'Hop, hop, hop!'],
+        fast: ['You didn’t even have to hop that time.', 'Quick as a pounce!', 'You knew that one before I finished asking.'],
+        fastAfterMiss: ['Ha! You didn’t even look at the sand that time.'],
+        helpIntro: 'Close. Let’s scratch it out together: one swipe for every paw, five lines a swipe.',
+        helpIntroFar: 'Let’s scratch it out together: one swipe for every paw, five lines a swipe.',
+        helpIntroNotFive: 'Remember: hopping by fives, every number ends in a five or a zero. Let’s scratch it out together.',
+        miss: 'There. We’ll come back to that one.', missLast: 'There. Now you’ve seen it counted.',
+        remembered: 'Last time, {a} × {b} made you stop and think. Not today!',
+        done: 'That’s the fives.'
+      },
+      'ch03-dinner': {
+        table: 5, thing: 'fish', things: 'fish', unit: 'forepaw', units: 'forepaws', teacher: 'sprinkle',
+        facts: [{ a: 2, b: 5, who: [{ who: 'sprinkle' }, { who: 'sprinkle' }],
+          prompt: [{ who: 'player', text: 'Hop by fives!' }, { kind: 'caption', text: 'Two forepaws, five claws each. How many fish at a meal?' }],
+          retryPrompt: 'Two forepaws, five claws each. How many fish at a meal?',
+          right: [{ who: 'sprinkle', text: 'TEN! How did you DO that?' }, { who: 'player', text: 'Five, ten. Hopping!' }],
+          rightAgain: [{ who: 'sprinkle', text: 'TEN! Hopping really works!' }] }],
+        ground: 'mud', helpCounter: 'you', helpIntro: 'Let’s scratch it in the mud. You hop!',
+        fillFrom: 'ch03-claws', fillIntro: 'Count another one with me.', fillOrder: 'easiest', fillVoice: 'borrower',
+        againIntro: 'Let’s count my dinner again!',
+        ask: '{a} × {b}',
+        praise: ['Hop, hop, hop! Like you showed me.', 'My claws say yes!'], fast: ['Even faster than Mama!'],
+        fastAfterMiss: ['You didn’t even look at the mud!'], again: ['You remembered! I knew you would.'],
+        miss: 'There! We’ll count that one again soon.', missLast: 'There. Now we’ve counted it together.',
+        done: null
+      },
+      'ch03-six': {
+        table: 5, thing: 'claw', things: 'claws', unit: 'forepaw', units: 'forepaws', teacher: 'sprinkle',
+        picture: { kind: 'mud' },
+        facts: [{ a: 6, b: 5, right: [{ who: 'sprinkle', text: 'Thirty claws.', kind: 'whisper' }], rightAgain: true }],
+        ground: 'mud', helpCounter: 'you', helpIntro: 'Let’s scratch it in the mud. You hop!',
+        fillFrom: 'ch03-claws', fillIntro: 'Count another one with me.', fillOrder: 'easiest', fillVoice: 'borrower',
+        againIntro: 'Let’s count them again.',
+        ask: '{a} × {b}',
+        praise: ['Yes. Five claws each.'], again: ['Yes. Five claws each.'], fast: ['You knew that one.'], fastAfterMiss: ['You knew that one.'],
+        miss: 'There. We’ll count them again in a moment.', missLast: 'There. Now we’ve counted them together.',
+        done: null
+      }
+    },
+    book: {
+      title: '{name}paw’s First Moon',
+      recap: [
+        { text: 'Under the Old Bridge, {they} found Sprinkle, a Mistscale dragonet with a hurt wing.' },
+        { when: { ch3Told: true }, text: '{name}paw told Tallyheart, and Tallyheart helped hide Sprinkle behind a fallen branch.' },
+        { when: { ch3Told: false }, text: '{name}paw kept Sprinkle’s secret, carried {their} own supper to the bridge, and nearly got caught.' }
+      ],
+      noDream: 'After all that, {name}paw’s dream stayed a secret too.',
+      dragonet: { id: 'sprinkle', name: 'Sprinkle', lines: ['A Mistscale dragonet, as big as a heron.', '{name}paw found her under the Old Bridge.'] }
+    },
+    teaser: { title: 'Chapter 4: The Glittering Scale', lines: ['Tomorrow, Tallyheart has a new Count for you: both forepaws.'] }
+  };
+}
+
+chapters.chapter3 = chapter3;
 module.exports = chapters;

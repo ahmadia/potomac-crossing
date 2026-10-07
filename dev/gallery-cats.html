@@ -52,7 +52,10 @@
   var CATS = ['player', 'tallyheart', 'glintstar', 'waffles', 'grizzled', 'snorer', 'mutterer', 'snorter'];
   var CLAN = [1, 2, 3, 4, 5, 6];
   var POSE_MOOD = { sit: 'neutral', stand: 'happy', walk: 'happy', crouch: 'stern', curl: 'sleepy', loaf: 'kind',
-    lookup: 'wonder', flat: 'scared', lie: 'kind', fall: 'laugh', stretch: 'proud', peer: 'wonder' };
+    lookup: 'wonder', flat: 'scared', lie: 'kind', fall: 'laugh', stretch: 'proud', peer: 'wonder', pawup: 'happy', tummy: 'happy' };
+  // chapter 3: Sprinkle's poses, each with a mood the text gives it
+  var DZ_MOOD = { eyes: 'neutral', unfold: 'scared', hide: 'scared', sniff: 'sniff', sit: 'shy', wings: 'sad', flat: 'scared', gulp: 'happy',
+    burp: 'wonder', pawsup: 'happy', pawup: 'sad', draw: 'sad', touch: 'kind', peek: 'shy', curl: 'kind', lie: 'neutral' };
 
   function svgOf(r, size) {
     var h = size * r.h / r.w;
@@ -161,8 +164,8 @@
       var h = '';
       [120, 80, 60].forEach(function (sz) {
         h += '<div class="row"><div class="rowlabel">' + sz + 'px</div>';
-        ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn'].forEach(function (m, i) {
-          var id = ['tallyheart', 'player', 'glintstar', 'waffles', 'snorter', 'mutterer', 'snorer', 'snorter', 'grizzled', 'tallyheart', 'glintstar', 'tallyheart', 'waffles', 'glintstar'][i];
+        ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn', 'sad', 'shy'].forEach(function (m, i) {
+          var id = ['tallyheart', 'player', 'glintstar', 'waffles', 'snorter', 'mutterer', 'snorer', 'snorter', 'grizzled', 'tallyheart', 'glintstar', 'tallyheart', 'waffles', 'glintstar', 'mutterer', 'tallyheart'][i];
           h += cell(ch(id, { pose: 'sit', mood: m }), m, sz);
         });
         h += '</div>';
@@ -198,7 +201,7 @@
       return h;
     }],
     otters: ['Otters: Riffle and the ferry otters, every pose', function (S) {
-      var h = '', PM = { stand: 'happy', sit: 'neutral', scramble: 'happy', swim: 'happy', float: 'happy', juggle: 'laugh', slide: 'laugh', hug: 'happy', sun: 'sleepy' };
+      var h = '', PM = { stand: 'happy', sit: 'neutral', scramble: 'happy', swim: 'happy', float: 'happy', juggle: 'laugh', slide: 'laugh', hug: 'happy', sun: 'sleepy', dive: 'happy', hush: 'worried' };
       [['riffle', 1, 'Riffle'], ['otter', 1, 'old ferry otter'], ['otter', 2, 'otter 2'], ['otter', 3, 'otter 3']].forEach(function (b) {
         h += '<div class="row"><div class="rowlabel">' + b[2] + '</div>';
         V.otherPoses.otter.forEach(function (p) { h += cell(A.character(b[0], { variant: b[1], pose: p, mood: PM[p] }), p + ' · ' + PM[p], S); });
@@ -274,6 +277,85 @@
       ];
       var h = '';
       list.forEach(function (it) { h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:720px">' + A.countsPicture(it[1]) + '</div>'; });
+      return h;
+    }],
+    sprinkle: ['Sprinkle (chapter 3): every pose, every mood, at one scale', function (S) {
+      var h = '<h3>every pose (her mood in the text)</h3><div class="row">';
+      V.otherPoses.sprinkle.forEach(function (p) { h += cell(A.character('sprinkle', { pose: p, mood: DZ_MOOD[p] }), p + ' · ' + DZ_MOOD[p], S * 1.7); });
+      h += '</div><h3>facing left (her right wing still the drooping one)</h3><div class="row">';
+      ['sit', 'wings', 'lie', 'touch', 'curl'].forEach(function (p) { h += cell(A.character('sprinkle', { pose: p, mood: DZ_MOOD[p], facing: 'left' }), p + ' ←', S * 1.7); });
+      h += '</div><h3>every mood (sit)</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('sprinkle', { pose: 'sit', mood: m }), m, S * 1.4); });
+      h += '</div><h3>extras: her pebble, a misty tear, mist, squeezed shut</h3><div class="row">';
+      h += cell(A.character('sprinkle', { pose: 'sit', mood: 'shy', holds: 'pebble' }), 'sit · holds pebble', S * 1.7);
+      h += cell(A.character('sprinkle', { pose: 'lie', mood: 'kind', holds: 'pebble' }), 'lie · holds pebble', S * 1.7);
+      h += cell(A.character('sprinkle', { pose: 'pawup', mood: 'sad', tear: true }), 'pawup · tear', S * 1.7);
+      h += cell(A.character('sprinkle', { pose: 'lie', mood: 'neutral', mist: true }), 'lie · mist (breath)', S * 1.7);
+      h += cell(A.character('sprinkle', { pose: 'flat', mood: 'scared', squeeze: true }), 'flat · squeeze', S * 1.7);
+      // one scale: a sitting Tallyheart, the player and Riffle beside her; her curl round a cat
+      var k = 0.55, stage = '<svg viewBox="0 0 1100 230" width="100%" style="max-width:1100px">';
+      function put(r, x, front) { stage += '<g transform="translate(' + (x - r.w * k / 2) + ',' + (220 - r.h * k) + ') scale(' + k + ')">' + (front ? r.front || '' : r.svg) + '</g>'; }
+      put(A.character('sprinkle', { pose: 'sit', mood: 'happy' }), 200);
+      put(A.character('tallyheart', { pose: 'sit', mood: 'kind', facing: 'left' }), 400);
+      put(A.character('player', { pose: 'sit', mood: 'wonder', facing: 'left', look: { fur: 'black', marking: 'white-paws', eyes: 'green' } }), 490);
+      put(A.character('riffle', { pose: 'sit', mood: 'happy', facing: 'left' }), 570);
+      var curl = A.character('sprinkle', { pose: 'curl', mood: 'kind' }), nx = 870 + (curl.nest.x - curl.w / 2) * k;
+      put(curl, 870);
+      put(A.character('player', { pose: 'loaf', mood: 'sleepy', look: { fur: 'black', marking: 'white-paws', eyes: 'green' } }), nx);
+      put(curl, 870, true);
+      stage += '</svg>';
+      return h + '</div><h3>one scale: her head well above Tallyheart’s; curled round the player (`nest`, then `front` over her)</h3><div class="stage">' + stage + '</div>';
+    }],
+    extras3: ['Chapter 3: new poses, moods and extras', function (S) {
+      var h = '<h3>cats: pawup (claws), tummy, sad, shy</h3><div class="row">';
+      h += cell(ch('player', { pose: 'pawup', mood: 'happy', claws: true }), 'player pawup · claws', S);
+      h += cell(ch('grizzled', { pose: 'pawup', mood: 'stern', claws: true }), 'old tom pawup · claws', S);
+      h += cell(ch('murmurchime', { pose: 'pawup', mood: 'proud', claws: true }), 'murmurchime pawup', S);
+      h += cell(ch('player', { pose: 'tummy', mood: 'happy' }), 'player tummy', S);
+      h += cell(ch('tallyheart', { pose: 'sit', mood: 'sad' }), 'tallyheart sad', S);
+      h += cell(ch('tallyheart', { pose: 'sit', mood: 'shy' }), 'tallyheart shy', S);
+      h += '</div><h3>cats: puffed, squeeze, moss, tear, mist, claws, holds</h3><div class="row">';
+      h += cell(ch('player', { pose: 'sit', mood: 'scared', puffed: true }), 'player puffed', S);
+      h += cell(ch('tallyheart', { pose: 'sit', mood: 'stern', puffed: true }), 'tallyheart puffed', S);
+      h += cell(ch('mutterer', { pose: 'sit', mood: 'neutral', squeeze: true }), 'murmurpaw squeeze', S);
+      h += cell(ch('snorer', { pose: 'lie', mood: 'sleepy', moss: true }), 'grey tom moss', S);
+      h += cell(ch('player', { pose: 'sit', mood: 'sad', tear: true }), 'player tear', S);
+      h += cell(ch('player', { pose: 'sit', mood: 'neutral', mist: true }), 'player mist', S);
+      h += cell(ch('tallyheart', { pose: 'crouch', mood: 'stern', claws: true }), 'tallyheart crouch claws', S);
+      h += cell(ch('player', { pose: 'walk', mood: 'worried', holds: 'vole' }), 'player vole (mouth)', S);
+      h += cell(ch('grizzled', { pose: 'lie', mood: 'solemn', holds: 'vole', holdAt: 'paws' }), 'old tom vole (paws)', S);
+      h += cell(ch('player', { pose: 'loaf', mood: 'kind', holds: 'pebble' }), 'pebble (Sprinkle’s)', S);
+      h += cell(ch('player', { pose: 'loaf', mood: 'kind', holds: 'stone' }), 'stone (Riffle’s)', S);
+      h += '</div><h3>otters: dive, hush, one fish, two fish</h3><div class="row">';
+      h += cell(A.character('riffle', { pose: 'dive', mood: 'happy' }), 'riffle dive', S);
+      h += cell(A.character('riffle', { pose: 'hush', mood: 'wonder' }), 'riffle hush', S);
+      h += cell(A.character('riffle', { pose: 'sit', mood: 'proud', holds: 'fish' }), 'riffle fish', S);
+      h += cell(A.character('riffle', { pose: 'stand', mood: 'happy', holds: 'fish2' }), 'riffle fish2', S);
+      h += cell(A.character('riffle', { pose: 'swim', mood: 'happy', holds: 'fish' }), 'riffle swim fish', S);
+      h += cell(A.character('otter', { variant: 1, pose: 'hush', mood: 'worried' }), 'old otter hush', S);
+      return h + '</div>';
+    }],
+    counts3: ['Counts pictures, chapter 3: the 5s', function (S) {
+      var rim = [{ who: 'clancat', variant: 1 }, { who: 'mutterer' }, { who: 'clancat', variant: 3 }, { who: 'clancat', variant: 5 }, { who: 'grizzled' }];
+      var look = { fur: 'brown-tabby', marking: 'none', eyes: 'green' };
+      var list = [
+        ['the Tap: five raised forepaws on the rim, each in its cat’s fur (highlight 10, totals, next)', { table: 5, groups: 5, highlight: 10, totals: true, next: true, who: rim, look: look }],
+        ['the Tap done: 5, 10, 15, 20, 25 under the paws; the old tom’s ears flat', { table: 5, groups: 5, highlight: 25, totals: true, who: rim, look: look }],
+        ['4 × 5, the lesson’s first: the first four rim cats', { table: 5, groups: 4, highlight: 0, who: rim.slice(0, 4), look: look }],
+        ['5 × 6: forepaws in a row, the first five lit together as twenty-five', { table: 5, groups: 6, highlight: 25 }],
+        ['Sprinkle’s dinner, 2 × 5: her two grey forepaws, claws spread (highlight 7)', { table: 5, groups: 2, highlight: 7, who: [{ who: 'sprinkle' }, { who: 'sprinkle' }] }],
+        ['six little forepaws drawn in the mud, lit together after a right answer', { table: 5, groups: 6, per: 5, kind: 'mud', highlight: 30 }],
+        ['the bedtime tap: her own two forepaws on the moss (highlight 15, totals, next)', { table: 5, groups: 4, per: 5, highlight: 15, totals: true, next: true, paws: 'own', look: { fur: 'calico', marking: 'white-paws', eyes: 'odd' } }],
+        ['the bedtime tap, a ginger tabby, after two taps', { table: 5, groups: 4, per: 5, highlight: 10, totals: true, next: true, paws: 'own', look: { fur: 'ginger', marking: 'none', eyes: 'amber' } }]
+      ];
+      var h = '';
+      list.forEach(function (it) { h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:720px">' + A.countsPicture(it[1]) + '</div>'; });
+      [['claw swipes in the sand (7 × 5, counted 15)', { groups: 7, per: 5, counted: 15, style: 'swipe' }],
+        ['claw swipes in the mud (Sprinkle’s help, 6 × 5, all counted)', { groups: 6, per: 5, counted: 30, style: 'swipe', ground: 'mud' }],
+        ['claw swipes in the earth (2 × 5, counted 5)', { groups: 2, per: 5, counted: 5, style: 'swipe', ground: 'earth' }],
+        ['scratches in the mud (9 × 2, counted 6)', { groups: 9, per: 2, counted: 6, ground: 'mud' }]].forEach(function (it) {
+        h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:560px">' + A.sand(it[1]) + '</div>';
+      });
       return h;
     }],
     sand: ['Sand tallies', function (S) {

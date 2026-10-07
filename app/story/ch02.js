@@ -1438,7 +1438,9 @@
           'Quick as a pounce!',
           'You knew that one before I finished asking.'
         ],
-        fastAfterMiss: ['Ha! You didn’t even look at the sand that time.'],
+        // "scratches", not "sand": chapter 3's warm-up and pile borrow these questions and scratch
+        // them in the earth (chapter 3's Build notes), and the line stays true in the Hollow
+        fastAfterMiss: ['Ha! You didn’t even look at the scratches that time.'],
         // asked over the three-cat picture on the lesson's first question (the first three on the rim)
         firstPrompt: 'How many ears on the first three?',
         helpIntro: 'Close. Let’s scratch it out together: two lines for every cat, like ears.',

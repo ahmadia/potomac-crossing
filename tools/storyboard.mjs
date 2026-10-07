@@ -11,8 +11,13 @@
  * order, with each choice's branches grouped under it: the shot (the frame's `board`), the scene
  * in plain words, the captions, the balloons with who says them, the sound effect, the condition
  * a line or an option shows under (`when`), a gift, and what the reader does next (the skip-count
- * and each Counts lesson, with its questions, included). Written for an illustrator, a grown-up
- * reading along, or anyone checking the chapter without playing it. No dependencies.
+ * and each Counts lesson, with its questions, included). Chapter 3 on: a frame shown only `when` it
+ * matches, a balloon's `digits`, a skip-count that keeps its totals or hops on her own forepaws, the
+ * Counts sets' new keys (an ordered warm-up alt, `avoid`, `ground`, `helpCounter`, `fillOrder`,
+ * `fillVoice`, `againIntro`, `helpIntroNotFive`, `done: null`), the chapter's speaker `names`, and
+ * the book's dragonet page; each printed only where a chapter uses it, so earlier storyboards stay
+ * as they were. Written for an illustrator, a grown-up reading along, or anyone checking the
+ * chapter without playing it. No dependencies.
  */
 import { createRequire } from 'node:module';
 import { writeFileSync, mkdirSync, readdirSync } from 'node:fs';
@@ -66,7 +71,7 @@ const CAMS = {
   wide: 'wide shot', cushion: 'medium on the cushion', glass: 'close on the glass', outside: 'looking out through the glass at the garden',
   up: 'looking up', balcony: 'close on the balcony railing, city behind', 'balcony-close': 'close on Waffles at the balcony railing, the railing below her chin, city behind', paws: 'extreme close-up of paws on grass',
   step: 'the patio step and open door, at cat height', fence: 'the row of sparrows on the fence, a cat below', lamp: 'the top of the lamp post',
-  meet: 'two cats, medium', hedge: 'the gap in the hedge', reveal: 'wide establishing shot', crowd: 'the cats, staring',
+  meet: 'two cats, medium', hedge: 'the gap in the hedge', 'hedge-close': 'close at the gap in the hedge, at cat height', reveal: 'wide establishing shot', crowd: 'the cats, staring',
   fountain: 'low angle up at the fountain top', 'fountain-close': 'close on the fountain top, head and shoulders', entrance: 'high angle down at the newcomer', ferns: 'in the ferns', purr: 'wide, the whole camp',
   lesson: 'two cats, medium, over the sand', sand: 'close on the sand', tree: 'close on the trunk', inside: 'inside',
   nest: 'close on one nest', doorway: 'from inside, looking out at the entrance', cats: 'from behind two cats looking up',
@@ -79,7 +84,8 @@ const SET_CAMS = {
   sky: { up: 'looking up, mostly sky' },
   pile: { wide: 'wide: the pile left of centre, Clan cats crowding round, the fountain’s edge at right', close: 'close: the pile fills the panel', low: 'medium two-shot beside the pile' },
   bridge: { bank: 'wide from the riverbank, the dark space under the near end at left', mouth: 'close on the dark from outside in the sun, a rock at the shadow’s edge',
-    under: 'inside the dark, her view: mud with deep drag marks running into the dark, dry ground further back, drips', back: 'the very back of the dark' },
+    under: 'inside the dark, her view: mud with deep drag marks running into the dark, dry ground further back, drips', back: 'the very back of the dark',
+    paws: 'extreme close-up of forepaws piled together' },
   field: { wide: 'wide shot of the field and its fence', fence: 'close on the wire, a nose squashed through, cats on the path', dogs: 'the dogs bouncing at the fence, seen from the path' },
   crossing: { wide: 'wide shot of the point, the river and the raft', low: 'looking up from the rocks: an airplane’s belly and its row of round windows, enormous and very low',
     rocks: 'medium on the rocks', raft: 'close on the raft' },
@@ -89,7 +95,9 @@ const WHO = {
   player: 'you (the reader’s cat)', tallyheart: 'Tallyheart', glintstar: 'Glintstar', waffles: 'Princess Waffles',
   tallone: 'the Tall One (legs, slippers and hands only)', grizzled: 'the grizzled old tom', snorer: 'the snoring apprentice',
   mutterer: 'the muttering apprentice', snorter: 'the snorting apprentice', clancat: 'a Clan cat', sparrow: 'a sparrow', moth: 'a moth',
-  riffle: 'Riffle, the otter pup', otter: 'an otter', dog: 'a dog'
+  riffle: 'Riffle, the otter pup', otter: 'an otter', dog: 'a dog',
+  // chapter 3
+  sprinkle: 'Sprinkle, a Mistscale dragonet (about a heron’s size, mist-grey, her right wing drooping)', murmurchime: 'Murmurchime, the tortoiseshell warrior'
 };
 // otters and dogs by variant, as the game names them
 const VARIANT_WHO = {
@@ -99,7 +107,8 @@ const VARIANT_WHO = {
 const SPEAKER = {
   player: 'You', tallyheart: 'Tallyheart', glintstar: 'Glintstar', waffles: 'Princess Waffles', tallone: 'The Tall One',
   grizzled: 'Grizzled old tom', snorer: 'Snoring apprentice', mutterer: 'Muttering apprentice', snorter: 'Snorting apprentice',
-  clancat: 'A Clan cat', sparrow: 'Sparrow', moth: 'Moth', riffle: 'Riffle', otter: 'An otter', dog: 'A dog'
+  clancat: 'A Clan cat', sparrow: 'Sparrow', moth: 'Moth', riffle: 'Riffle', otter: 'An otter', dog: 'A dog',
+  sprinkle: 'Sprinkle', murmurchime: 'Murmurchime'
 };
 const VARIANT_SPEAKER = {
   otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
@@ -112,18 +121,26 @@ const POSES = {
   // otters and dogs (chapter 2)
   scramble: 'scrambling', swim: 'swimming, head and back above the water', float: 'floating on his back, tummy up', juggle: 'juggling pebbles',
   slide: 'belly-sliding', hug: 'hugging his own tail', sun: 'lying on his back in the sun', jump: 'jumping up, paws on the fence',
-  bounce: 'bouncing', howl: 'howling'
+  bounce: 'bouncing', howl: 'howling',
+  // chapter 3: cats, otters, and Sprinkle
+  pawup: 'one forepaw raised', tummy: 'on her back, paws in the air', dive: 'diving', hush: 'a paw over his mouth',
+  eyes: 'only her eyes, shining in the dark', unfold: 'unfolding: a long neck, a ridged back, a tail that goes on and on',
+  hide: 'hiding her face under her tail', sniff: 'sniffing', wings: 'wings open, the right one drooping, half open', gulp: 'head back, gulping',
+  burp: 'burping a little cloud of mist', pawsup: 'both forepaws up, claws spread', draw: 'drawing in the mud with one claw',
+  touch: 'a forepaw laid gently forward', peek: 'peeking out'
 };
 const OTTER_STAND = 'standing up on his hind legs';
+const SPRINKLE_POSE = { curl: 'curled up, her tail wrapped round whoever is beside her', flat: 'squeezed flat' };
 const MOODS = {
   neutral: '', happy: 'happy', dreamy: 'dreamy', wonder: 'full of wonder', worried: 'worried', scared: 'scared', sleepy: 'sleepy',
-  laugh: 'laughing', stern: 'stern', kind: 'kind', proud: 'proud', sniff: 'sniffing', shout: 'shouting', solemn: 'solemn'
+  laugh: 'laughing', stern: 'stern', kind: 'kind', proud: 'proud', sniff: 'sniffing', shout: 'shouting', solemn: 'solemn',
+  sad: 'sad (homesick, a wobbly mouth)', shy: 'shy (eyes down, a small smile)'
 };
 const FX = {
   sunset: 'sunset light', dusk: 'dusk', night: 'night', stars: 'stars', skyriver: 'the Sky River', rain: 'rain',
   lightning: 'lightning', glow: 'a glow', purr: 'purring lines', sparkle: 'sparkles', zzz: 'sleepy zzz', motion: 'motion lines',
   shake: 'the panel shakes', flash: 'a white flash', morning: 'morning light, washed clean after the storm', day: 'daylight',
-  bonk: 'a pebble bonks off the first one’s head, little stars circling the bump'
+  bonk: 'a pebble bonks off the first one’s head, little stars circling the bump', mist: 'a little cloud of mist'
 };
 const ANCH = {
   cushion: 'on the cushion', floor: 'on the floor', glass: 'at the glass', doorway: 'in the doorway', window: 'behind the ground-floor window',
@@ -145,8 +162,12 @@ const ANCH = {
   'path-right': 'on the path, right', 'dog-1': 'at the fence', 'dog-2': 'at the fence', 'dog-3': 'at the fence', field: 'far off in the field',
   'rock-left': 'on the rocks, left', 'rock-right': 'on the rocks, right', 'rock-high': 'up on a high rock', shore: 'on the shore',
   pebbles: 'by a heap of pebbles', 'raft-1': 'on the raft', 'raft-2': 'on the raft', 'raft-3': 'on the raft', water: 'in the water',
-  'bank-top': 'popping up over the top of the bank', slope: 'on the muddy slope', bank: 'on the bank'
+  'bank-top': 'popping up over the top of the bank', slope: 'on the muddy slope', bank: 'on the bank',
+  // chapter 3
+  dragon: 'in Sprinkle’s spot at the very back', 'back-left': 'at the back, left', 'back-right': 'at the back, right', 'hedge-side': 'beside the hedge'
 };
+// anchor names that mean something different in a particular set
+const SET_ANCH = { bridge: { beside: 'pressed against Sprinkle’s side' } };
 const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 
 /* ------------------------------------------------------------------ helpers */
@@ -197,9 +218,10 @@ function optWords(set, k, v) {
   if (k === 'splash') return v ? 'a huge splash' : '';
   if (k === 'pairs') return v + ' pair' + (v === 1 ? '' : 's') + ' of prey, stacked two high';
   if (k === 'lit') return v ? 'the first ' + v + ' stack' + (v === 1 ? '' : 's') + ' glow' + (v === 1 ? 's' : '') : '';
-  if (k === 'dug') return v ? 'soft, lumpy, dug-up earth behind the pile' : '';
+  if (k === 'dug') return v === 'big' ? 'a bigger patch of soft, lumpy, dug-up earth behind the pile' : v ? 'soft, lumpy, dug-up earth behind the pile' : '';
   if (k === 'train') return v ? 'an Ironsnake (a train) crossing on top' : '';
-  if (k === 'eyes') return v === 'open' ? 'two big round shining eyes at the very back' : v === 'blink' ? 'the two big eyes, blinking' : '';
+  if (k === 'eyes') return v === 'open' ? 'two big round shining eyes at the very back' : v === 'blink' ? 'the two big eyes, blinking' :
+    v === 'sprinkle' ? 'two big round shining eyes in the dark, her size, just where her face is when she sits up in the nook' : '';
   if (k === 'drag') return v ? 'deep drag marks in the mud' : 'no drag marks';
   if (k === 'plane') return v === 'low' ? (set === 'riverbank' ? 'an airplane low over the river, its shadow on the water' : 'an airplane very low overhead') : v === 'high' ? 'an airplane high up' : 'no airplane';
   if (k === 'pebbles') return v ? 'a heap of pebbles' : '';
@@ -217,6 +239,14 @@ function optWords(set, k, v) {
     return Array.isArray(v) ? 'the claw marks ' + v.map(d => dw[d === true ? 1 : +d] || 'fresh').join(', ') : 'every claw mark ' + (dw[v === true ? 1 : +v] || 'fresh');
   }
   if (k === 'vole') return v ? 'one plump vole nudged off the top of a stack, lying in front of the pile' : '';
+  // chapter 3
+  if (k === 'chime') return v ? 'a wind chime on Waffles’ balcony, beside her geranium' : '';
+  if (k === 'crowd') return v ? 'the whole Clan crowded round the fountain, rows of cats behind' : '';
+  if (k === 'pebble') return v === 'in' ? 'Riffle’s fifth pebble, plain round brown, in the dark' : v === 'out' ? 'the brown pebble rolling out of the dark' : v === 'paws' ? 'the brown pebble at her paws' : '';
+  if (k === 'branch') return v ? 'fallen branches heaped across the back, like a pile of old sticks, up to Sprinkle’s chin' : '';
+  if (k === 'prints') return v ? 'Sprinkle’s big five-claw prints in the mud beside the drag marks' : 'no prints';
+  if (k === 'pawsIn') return v ? 'three forepaws piled together, fanned so all fifteen claws show: hers, Sprinkle’s grey, Riffle’s webbed brown' : '';
+  if (k === 'hop') return v ? 'every paw’s five claws lit warm gold, with 5, 10 and 15 lettered beyond them in pile order' : '';
   return k + ': ' + JSON.stringify(v);
 }
 /* ------------------------------------------------------------------ one chapter */
@@ -283,6 +313,7 @@ function board(storyPath, outPath) {
   }
   function poseWords(c) {
     if (c.pose === 'stand' && (c.who === 'otter' || c.who === 'riffle')) return OTTER_STAND;
+    if (c.who === 'sprinkle' && SPRINKLE_POSE[c.pose]) return SPRINKLE_POSE[c.pose];
     return POSES[c.pose] || c.pose;
   }
   // the cast extras the art draws (docs/build.md, "Chapter 2"): flat ears, the stone, her own purr, the pouf
@@ -292,6 +323,19 @@ function board(storyPath, outPath) {
     if (c.holds === 'stone') out.push(['stand', 'walk', 'peer', 'stretch'].includes(c.pose) && !c.holdAt ? 'carrying Riffle’s stone in the mouth' : 'Riffle’s stone at the front paws');
     if (c.purr) out.push('purring (the purr lines come from this one alone)');
     if (c.lift) out.push('lifted onto a pouf, the face above the rail');
+    // chapter 3's extras
+    if (c.holds === 'pebble') out.push('holding her plain grey pebble, smooth as an egg');
+    if (c.holds === 'vole') out.push('a vole in the mouth');
+    if (c.holds === 'fish') out.push('a fish in the mouth');
+    if (c.holds === 'fish2') out.push('two fish in the mouth');
+    if (c.tear) out.push('a misty tear');
+    if (c.mist) out.push('a little cloud of mist');
+    if (c.claws) out.push('claws out');
+    if (c.puffed) out.push('fur puffed up double');
+    if (c.squeeze) out.push('eyes squeezed shut');
+    if (c.moss) out.push('moss pulled over the ears');
+    if (c.pebbles === 4) out.push('four pebbles in the air');
+    if (c.pebbles === 5) out.push('four pebbles in the air and the fifth, plain round brown, in his paw');
     return out;
   }
   function sceneWords(sc) {
@@ -301,7 +345,7 @@ function board(storyPath, outPath) {
     if (sc.cam) parts.push('Camera: ' + ((SET_CAMS[sc.set] || {})[sc.cam] || CAMS[sc.cam] || sc.cam) + ' (`' + sc.cam + '`).');
     const cast = (sc.cast || []).map(c => {
       const bits = [whoWords(c)];
-      const where = c.at && typeof c.at === 'object' ? 'at a spot of this frame’s own (x ' + c.at.x + ', y ' + c.at.y + ')' : ANCH[c.at] || (c.at ? 'at ' + c.at : null);
+      const where = c.at && typeof c.at === 'object' ? 'at a spot of this frame’s own (x ' + c.at.x + ', y ' + c.at.y + ')' : (SET_ANCH[sc.set] || {})[c.at] || ANCH[c.at] || (c.at ? 'at ' + c.at : null);
       const how = [poseWords(c), c.mood ? (MOODS[c.mood] != null ? MOODS[c.mood] : c.mood) : null, where, c.facing ? 'facing ' + c.facing : null]
         .concat(extraWords(c)).filter(Boolean).join(', ');
       const coat = c.variant && !VARIANT_WHO[c.who] ? ', coat ' + c.variant : '';
@@ -317,6 +361,8 @@ function board(storyPath, outPath) {
     return parts.join(' ');
   }
   function speaker(b) {
+    // a chapter's own names for a speaker (chapter 3's tortie: "{Murmur}paw")
+    if (!b.name && story.names && typeof story.names[b.who] === 'string') b = Object.assign({}, b, { name: story.names[b.who] });
     let base = SPEAKER[b.who] || b.who || 'Someone';
     if (VARIANT_SPEAKER[b.who] && b.variant) base = VARIANT_SPEAKER[b.who][b.variant] || base;
     return b.name ? b.name + ' (' + base + ')' : base;
@@ -343,10 +389,10 @@ function board(storyPath, outPath) {
     if (x.table) notes.push('from the ' + x.table + 's');
     if (x.groups != null || x.per != null) notes.push('pictured as ' + (x.groups != null ? x.groups : '?') + ' × ' + (x.per != null ? x.per : '?'));
     if (x.picture) notes.push(pictureWords(x.picture));
-    if (Array.isArray(x.who) && x.who.length) notes.push('its own cats in the picture');
+    if (Array.isArray(x.who) && x.who.length) notes.push(x.who.every(c => c && c.who === 'sprinkle') ? 'Sprinkle’s own forepaws in the picture' : 'its own cats in the picture');
     if (x.lit) notes.push('the first ' + x.lit + ' lit as it is asked');
     if (x.light) notes.push(x.light === 'rows' ? 'lit a row at a time as it is asked' : 'lit a group at a time as it is asked');
-    if (x.prompt != null) notes.push('its own question' + (x.retryPrompt ? ', kept on its retry' : ''));
+    if (x.prompt != null) notes.push('its own question' + (x.retryPrompt === true ? ', kept on its retry' : x.retryPrompt ? ', and another of its own on its retry' : ''));
     else if (x.retryPrompt != null && x.retryPrompt !== true) notes.push('its own question on its retry');
     if (x.right != null) notes.push('its own lines after a right answer');
     if (x.rightAgain != null) notes.push('its own lines after a right retry');
@@ -356,7 +402,7 @@ function board(storyPath, outPath) {
   }
   function pictureWords(p) {
     if (!p) return '';
-    const bits = [p.kind === 'prey' ? 'prey' : 'cats'];
+    const bits = [p.kind === 'prey' ? 'prey' : p.kind === 'mud' ? 'forepaws drawn in the mud' : 'cats'];
     if (p.layout === 'rows') bits.push('in rows');
     if (p.thought) bits.push('in a thought cloud');
     return bits.join(' ');
@@ -370,9 +416,20 @@ function board(storyPath, outPath) {
     const set = (story.counts || {})[f.counts.set] || {};
     const facts = (set.facts || []).map(factLabel).join(', ');
     const out = ['**Then the Counts lesson** `' + f.counts.set + '` (' + (set.things || 'things') + (set.picture ? ', ' + pictureWords(set.picture) : '') + '): ' + facts + '.'];
-    if (set.warmHard) out[0] += ' It adapts: a ' + (set.warmHard.table || set.table) + 's fact that was hard for her last time takes question ' + ((set.warmHard.at || 0) + 1) + (set.warmHard.alt ? ', and its twin becomes ' + fact(set.warmHard.alt).a + ' × ' + fact(set.warmHard.alt).b : '') + '.';
-    out[0] += ' She types each answer on the keypad; a miss gets the sand count and comes back two questions later' +
-      (set.fillFrom ? ' (the questions in between come from `' + set.fillFrom + '`, never a pair asked already while there is another, each asked in that lesson’s picture and words' +
+    const pairs = list => asList(list).map(x => fact(x).a + ' × ' + fact(x).b);
+    const altIsList = set.warmHard && Array.isArray(set.warmHard.alt) && (Array.isArray(set.warmHard.alt[0]) || (set.warmHard.alt[0] && typeof set.warmHard.alt[0] === 'object'));
+    if (set.warmHard && altIsList) {
+      out[0] += ' It adapts: a ' + (set.warmHard.table || set.table) + 's fact that was hard for her last time takes question ' + ((set.warmHard.at || 0) + 1) +
+        (set.avoid ? ' (never ' + pairs(set.avoid).join(' or ') + ', either way round, while there is another)' : '') +
+        ', and when the opener is one of her hardest facts or that fact’s pair, the first of ' + pairs(set.warmHard.alt).join(', ') + ' that is neither opens instead.';
+    } else if (set.warmHard) out[0] += ' It adapts: a ' + (set.warmHard.table || set.table) + 's fact that was hard for her last time takes question ' + ((set.warmHard.at || 0) + 1) + (set.warmHard.alt ? ', and its twin becomes ' + fact(set.warmHard.alt).a + ' × ' + fact(set.warmHard.alt).b : '') + '.';
+    // where a miss is scratched, and who keeps the count (chapter 3's keys; a set without them reads as chapter 2's)
+    const GROUND = { sand: 'on the sand', earth: 'in the earth', mud: 'in the mud' };
+    const missWords = set.ground || set.helpCounter ? 'a miss gets the count scratched ' + (GROUND[set.ground] || 'on the sand') +
+      (set.helpCounter === 'you' ? ', ' + (SPEAKER[set.teacher] || 'the teacher') + ' swiping and the player keeping the count' : '') + ',' : 'a miss gets the sand count';
+    out[0] += ' She types each answer on the keypad; ' + missWords + ' and comes back two questions later' +
+      (set.fillFrom ? ' (the questions in between come from `' + set.fillFrom + '`' + (set.fillOrder === 'easiest' ? ', the easiest first' : '') +
+        ', never a pair asked already while there is another, each asked in that lesson’s picture and ' + (set.fillVoice === 'borrower' ? 'this lesson’s own voice' : 'words') +
         (set.fillIntro ? ' after “' + q(set.fillIntro) + '”' : '') + ')' : '') + '. On to ' + f.counts.next + '.';
     const lines = [];
     (set.facts || []).forEach(x => {
@@ -385,8 +442,9 @@ function board(storyPath, outPath) {
       const rp = x.retryPrompt === true ? x.prompt : x.retryPrompt;
       if (rp != null && rp !== false) {
         lines.push('- Asking ' + x.a + ' × ' + x.b + ' again after a miss:');
-        if (typeof rp === 'string') lines.push('  - **' + (SPEAKER[set.teacher] || 'Tallyheart') + '**: “Here’s that one again. ' + q(rp) + '”');
-        else lines.push('  - **' + (SPEAKER[set.teacher] || 'Tallyheart') + '**: “Here’s that one again.”', ...balloonLines(rp, f));
+        const again = set.againIntro || 'Here’s that one again.';
+        if (typeof rp === 'string') lines.push('  - **' + (SPEAKER[set.teacher] || 'Tallyheart') + '**: “' + again + ' ' + q(rp) + '”');
+        else lines.push('  - **' + (SPEAKER[set.teacher] || 'Tallyheart') + '**: “' + again + '”', ...balloonLines(rp, f));
       }
       if (x.right != null) {
         lines.push('- After ' + x.a + ' × ' + x.b + ', right the first time' + (x.rightPicture ? ' (the picture regroups as ' + (x.rightPicture.groups) + ' × ' + (x.rightPicture.per) + ')' : '') + ':');
@@ -398,7 +456,10 @@ function board(storyPath, outPath) {
         lines.push(...balloonLines(asList(ra).map(b => (typeof b === 'string' ? { text: b } : b)), f));
       }
     });
+    if (set.againIntro) lines.push('- Before a question comes back: “' + q(set.againIntro) + '”');
+    if (set.helpIntroNotFive) lines.push('- After a miss that ends in neither a five nor a zero: “' + q(set.helpIntroNotFive) + '”');
     if (set.done) lines.push('- At the end: “' + q(set.done) + '”');
+    else if (set.done === null) lines.push('- No closing line: the next frame goes straight on.');
     if (lines.length) out.push('', lines.join('\n'));
     return out.join('\n');
   }
@@ -406,9 +467,14 @@ function board(storyPath, outPath) {
     const s = f.skip, t = s.table || 2, g = s.groups || 5;
     const nums = Array.from({ length: g }, (_, i) => (i + 1) * t).join(', ');
     const who = (s.who || []).map(c => (c.who === 'clancat' ? 'a Clan cat' + (c.variant ? ' (coat ' + c.variant + ')' : '') : whoWords(c))).join(', ');
-    return '**Then she counts by ' + t + 's** (the skip-count): ' + g + ' taps, one on each ' + (t === 2 ? 'cat' : 'group') + ' in turn (the next one glows; a tap anywhere else makes it wiggle), each lighting its ' + t + ' and adding its running total: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
+    if (s.paws === 'own') {
+      return '**Then she hops by ' + t + 's on her own forepaws** (the skip-count): ' + g + ' taps on her own two forepaws, left, right, left, right (the next one glows; a tap anywhere else makes it wiggle), each lighting that paw’s claws and putting the next number in her own murmur: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
+        (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : ' The last tap turns the page to ' + s.next + ', which shows the ' + (g * t) + '.');
+    }
+    return '**Then she counts by ' + t + 's** (the skip-count): ' + g + ' taps, one on each ' + (t === 2 ? 'cat' : t === 5 ? 'raised forepaw' : 'group') + ' in turn (the next one glows; a tap anywhere else makes it wiggle), each lighting its ' + (t === 5 ? 'five claws' : t) + ' and adding its running total: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
       (who ? ' In the picture, left to right: ' + who + '.' : '') +
-      (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : ' The last tap turns the page to ' + s.next + ', which shows the ' + (g * t) + '.');
+      (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : ' The last tap turns the page to ' + s.next + ', which shows the ' + (g * t) + '.') +
+      (s.keep ? ' The running totals stay under the ' + (t === 5 ? 'paws' : 'groups') + ' on the pages after it, up to the lesson.' : '');
   }
   function interaction(f) {
     if (f.end) return '**Then:** the chapter ends, and her book opens at this chapter’s page: the recap of the reader’s choices and the dream line.';
@@ -433,6 +499,7 @@ function board(storyPath, outPath) {
     if (f.board) out.push('**Shot.** ' + q(f.board));
     else out.push('**Shot.** (no board written)');
     out.push('');
+    if (f.when) out.push('**Shows only if** ' + whenWords(f.when) + '; otherwise the page turns straight on to ' + exits(f)[0] + '.', '');
     out.push('**Scene.** ' + sceneWords(f.scene));
     if (f.image) out.push('', '**Image.** `' + f.image + '` replaces the drawn panel.');
     const caps = asList(f.caption).map(c => (typeof c === 'string' ? { text: c } : c || {}));
@@ -440,11 +507,15 @@ function board(storyPath, outPath) {
     const say = withVariants(f, asList(f.say));
     if (say.length) {
       out.push(''); out.push('**Balloons**'); out.push('');
-      say.forEach(b => out.push('- **' + speaker(b) + '**' + kindWord(b.kind) + ': “' + q(b.text) + '”' + onlyIf(b.when)));
+      say.forEach(b => out.push('- **' + speaker(b) + '**' + kindWord(b.kind) + ': “' + q(b.text) + '”' + onlyIf(b.when) +
+        (b.digits ? ' *(lettered small beside it, in Andika: ' + q(b.digits) + ')*' : '')));
     }
     if (f.sfx) { out.push(''); out.push('**Sound effect:** ' + q(f.sfx)); }
     const into = ids0.find(k => F[k].skip && F[k].skip.next === id);
     if (into) { const sk = F[into].skip; out.push('', '**The count:** the skip-count’s ' + ((sk.groups || 5) * (sk.table || 2)) + ' (from ' + into + ') shows big over the picture, in the times-table font.'); }
+    const kept = E.keptSkip(story, id);
+    if (kept) out.push('', '**The totals stay:** in place of this scene, the counting picture from ' + kept.id + ', every ' + (kept.skip.table === 5 ? 'paw' : 'group') + ' lit, its running totals (' +
+      Array.from({ length: kept.skip.groups || 5 }, (_, i) => (i + 1) * (kept.skip.table || 2)).join(', ') + ') under them' + (f.counts ? ', until the lesson starts' : '') + '; the balloons sit beside it.');
     if (f.gift) {
       const g = E && E.gift(f.gift);
       out.push('', '**Gift:** ' + (g ? g.name + ' (from ' + g.from + ', `' + f.gift + '`)' : '`' + f.gift + '` (not in E.GIFTS)') +
@@ -524,7 +595,8 @@ function board(storyPath, outPath) {
   md.push('- **Captions**: the narration boxes, read first. **Balloons**: who speaks, in order. **Sound effect**: the big lettering. A line marked *(only if …)* shows only to a reader whose choices match.');
   md.push('- **Then**: what the reader does next (tap Next, choose, type, pick a look, count by twos, or do a Counts lesson).');
   md.push('');
-  md.push('Where the reader makes a choice, each option’s frames are grouped under a **Branch** heading, and the branches meet again at the frame named after them. `{name}` is the first part of her Clan name (Moon makes Moonpaw), `{petname}` is what her Tall One calls her, and `{they}`/`{them}`/`{their}` become she/her/her or he/him/his.');
+  md.push('Where the reader makes a choice, each option’s frames are grouped under a **Branch** heading, and the branches meet again at the frame named after them. `{name}` is the first part of her Clan name (Moon makes Moonpaw), `{petname}` is what her Tall One calls her, and `{they}`/`{them}`/`{their}` become she/her/her or he/him/his.' +
+    (/\{(Murmur|murmur|MURMUR)\}/.test(JSON.stringify(story)) ? ' `{Murmur}`/`{murmur}` is the tortoiseshell’s name word: Murmur (Murmurpaw, Murmurchime, murmuring), or Mutter for a reader whose own Clan name is Murmur.' : ''));
   md.push('');
   md.push('## At a glance');
   md.push('');
@@ -557,6 +629,13 @@ function board(storyPath, outPath) {
     });
     if (story.book.noDream) md.push('- (no dream typed) ' + q(story.book.noDream));
     md.push('');
+    const dn = story.book.dragonet;
+    if (dn) {
+      md.push('**A dragonet page:** ' + q(dn.name) + ' (`' + dn.id + '`), found in this chapter. Her book gains a page for ' + q(dn.name) + ', with room for her own drawing, beside the clutch still to find (silhouettes, seven dragonets in all):');
+      md.push('');
+      md.push(asList(dn.lines).map(l => '> ' + q(l)).join('\n>\n'));
+      md.push('');
+    }
   }
   if (story.teaser) {
     md.push('## Coming next');

@@ -1,6 +1,6 @@
 # Module one: *The Dragon Under the Bridge*
 
-*Solo · ten chapters of about 15–20 minutes, then the Warrior Ceremony · v0.5 · 2026-10-06*
+*Solo · ten chapters of about 15–20 minutes, then the Warrior Ceremony · v0.6 · 2026-10-10*
 *In the game the player is "you"; these notes say "she" because Lissa is the first player.*
 
 ## Changes, 2026-10-06 (Aron; README decisions 34–37)
@@ -9,18 +9,27 @@
   the final challenge, **the Warrior Counts** (every multiplication pair up to 10 × 10, passed with
   90% right), opens a short **Warrior Ceremony** chapter after chapter 10, where she gets her
   warrior name. Below, "no warrior name in module one" now means "not before the ceremony chapter".
-- **Every table to 10 × 10.** Module one adds the 6s, 7s, 8s and 9s; where they go is proposed in
-  the README ("Raised by decisions 34–36") and waits on Aron. The Counts table below still shows
-  the old plan for chapters 5–10.
+- **Every table to 10 × 10.** Module one adds the 6s, 7s, 8s and 9s (placed 2026-10-10: see the
+  Counts table below).
 - **Warrior hints from chapter 3.** Her denmate, the tortoiseshell apprentice, takes her warrior
   assessment (the Warrior Counts) while she watches.
+
+## Changes, 2026-10-10 (Aron; README decisions 42–45)
+
+- **Names.** The dragonet everyone meets is **Sprinkle** (was Drizzle); the littlest, on the tower
+  roof, is **Squall** (was Thunder); the fox is **Reynard** (was Russet): the books have the old
+  names.
+- **The README's proposals are confirmed**: the 6s–9s go where the Counts table below now shows;
+  clue 4 is the prints' size; the two extra clues are in the clue table; the back cover is loosened.
+- **The Case File.** From chapter 4 she keeps a Case File she can open any time: a card for each
+  clue she finds, a little picture and one line. In chapter 10 she answers Reynard by picking cards.
 
 ## Back cover
 
 > For moons you've watched the wild cats of CrystalClan through the glass. The night you join
 > them, the great leaf-drop storm hits, and something huge crashes into the river under the Old
-> Bridge. By morning, prey is missing from the Clan's pile, a glittering scale lies beside it,
-> and every cat in camp is whispering one word: *dragon.* Only you have seen her up close: a
+> Bridge. By morning, prey is missing from the Clan's pile. Soon a glittering scale lies beside
+> it, and every cat in camp is whispering one word: *dragon.* Only you have seen her up close: a
 > dragonet no bigger than a heron, shivering in the dark with a hurt wing and a smooth grey
 > pebble in her claws. The storm scattered her six brothers and sisters all along the river. A
 > smiling fox says he saw her steal the prey. At the full-moon Gathering the Clans will drive her
@@ -48,8 +57,8 @@
 - **Glintstar:** CrystalClan's leader, a silver she-cat with eyes the color of the river in
   winter. Fair, careful, pushed by the other Clans.
 - **Thymeleaf:** CrystalClan's medicine cat.
-- **Russet:** a charming fox. The culprit.
-- **Snip and Snatch:** weasel siblings who do Russet's sneaking.
+- **Reynard:** a charming fox. The culprit.
+- **Snip and Snatch:** weasel siblings who do Reynard's sneaking.
 - **Coil:** the water snake in the Old Bridge's stones. Trades secrets.
 - **Patience:** the heron at Roaches Run. Sees everything; talks if you bring her a fish.
 - **A ReedClan patrol:** suspicious neighbors.
@@ -77,15 +86,15 @@ The storm scattered a clutch of seven Mistscale dragonets, all named for the wea
 is the one everybody meets. The other six hide along the river, and she finds them by playing:
 taking a path, using what she's good at, or going back to look. Each one is a single short
 scene. Each greets her with a riddle that's secretly one of the Counts she already knows
-(Thunder: "Five claws on each front foot. How many claws?"), and each can help with the case.
+(Squall: "Five claws on each front foot. How many claws?"), and each can help with the case.
 
 | Dragonet | Looks and manner | Hiding | Found by | Helps by |
 |---|---|---|---|---|
-| **Sprinkle** | mist-grey, ridged scales; gentle, shy, homesick | under the Old Bridge with a hurt wing | everyone, chapter 3 | being the heart of the story; she can't fly, which breaks Russet's lie |
-| **Thunder** | slate with yellow flecks; the smallest, with the loudest voice | a glass-tower rooftop, roaring at skymonsters he thinks are giant dragons | climbing, or following the roars (ch. 4) | from up high he's watched two skinny shapes carry prey toward the tracks |
+| **Sprinkle** | mist-grey, ridged scales; gentle, shy, homesick | under the Old Bridge with a hurt wing | everyone, chapter 3 | being the heart of the story; she can't fly, which breaks Reynard's lie |
+| **Squall** | slate with yellow flecks; the smallest, with the loudest voice | a glass-tower rooftop, roaring at skymonsters he thinks are giant dragons | climbing, or following the roars (ch. 4) | from up high he's watched two skinny shapes carry prey toward the tracks |
 | **Puddle** | blue-grey with too-big feet; clumsy and funny | under the otters' ferry raft, the Holt's secret | noticing the raft rides low, or Riffle letting it slip (ch. 5) | saw "something with clever little paws" by the pile on the storm night |
-| **Fog** | so pale she's nearly see-through; silent | standing still in the Roaches Run reeds, copying Patience | waiting with Patience long enough (ch. 5) | saw the fox drop something glittering in the reeds |
-| **Sleet** | silver-white, the eldest; bold and bossy | the long grass of fox country, "spying on the enemy" | following the fox trail (ch. 6) | heard Russet talk about "the dry den" |
+| **Wisp** | so pale she's nearly see-through; silent | standing still in the Roaches Run reeds, copying Patience | waiting with Patience long enough (ch. 5) | saw the fox drop something glittering in the reeds |
+| **Sleet** | silver-white, the eldest; bold and bossy | the long grass of fox country, "spying on the enemy" | following the fox trail (ch. 6) | heard Reynard talk about "the dry den" |
 | **Hail** | white with grey speckles; bouncy, full of questions | a hollow log in the Barking Field, where the dogs think she's a strange dog | taking the Barking Field route (ch. 8) | leads the dogs in circles so you can slip past |
 | **Dew** | pearly green, the tiniest; sweet and sleepy | an oak hollow in GroveClan's woods | gathering oak moss (ch. 9) | knows the moss that helps a dragon's wing |
 
@@ -97,10 +106,10 @@ story never depends on.
 
 ## The case (writer's notes, spoilers)
 
-**What really happened.** Russet wants the dry den under the Old Bridge before frost-time,
+**What really happened.** Reynard wants the dry den under the Old Bridge before frost-time,
 and he would rather steal than hunt. The storm hands him a plan: a dragonet has crashed under
 the bridge, so blame her. Each night Snip and Snatch come up through a tunnel under
-CrystalClan's prey pile and carry off four pieces. Russet leaves a shard of tower glass by the
+CrystalClan's prey pile and carry off four pieces. Reynard leaves a shard of tower glass by the
 pile as a "dragon scale," then tells the Clan he saw the dragon fly off with the prey by
 moonlight. If the Clans drive the dragon away, the den and the pile are his.
 
@@ -108,7 +117,8 @@ moonlight. If the Clans drive the dragon away, the den and the pile are his.
 1. He says he saw the dragon **fly** off. Sprinkle can't fly: her wing is hurt.
 2. He says he saw it **by moonlight** on the night of the storm. There was no moon that night.
 3. The "scale" is smooth tower glass. Sprinkle's scales are grey and ridged.
-4. The prints by the pile have five small toes, not three big claws.
+4. The prints by the pile are tiny: five little toes close together, smaller than a cat's.
+   Sprinkle's forepaw is as big as a heron's foot, with five long claws (size, not count).
 5. **The Counts.** Four pieces go missing a night: twelve in three nights. Sprinkle eats ten
    fish at a meal, so three nights of dragon meals would be thirty.
 
@@ -134,13 +144,15 @@ Her warrior name waits for a later module, and what she does this moon will be p
 
 | Clue | Ways to find it |
 |---|---|
-| Sprinkle can't fly | Known from chapter 3. Linking it to Russet's lie: noticing (ch. 4), Riffle (ch. 7), or Tallyheart (ch. 7, if told) |
+| Sprinkle can't fly | Known from chapter 3. Linking it to Reynard's lie: noticing (ch. 4), Riffle (ch. 7), or Tallyheart (ch. 7, if told) |
 | No moon that night | Noticing; Patience; Princess Waffles ("I was up ALL night with my nerves"); the Sky River dream (ch. 6) |
-| The scale is glass | Her pillow-cat past (she has lived behind window glass all her life); noticing or the shiny-things worry; Riffle; Sprinkle ("that's not mine"); Fog |
-| Five-toed prints, weasel fur | Noticing; climbing (from the bridge beams); Patience; the ferry otters; Puddle |
+| The scale is glass | Her pillow-cat past (she has lived behind window glass all her life); noticing or the shiny-things worry; Riffle; Sprinkle ("that's not mine"); Wisp |
+| Tiny five-toed prints, weasel fur | Noticing; climbing (from the bridge beams); Patience; the ferry otters; Puddle |
+| The dug earth behind the pile | Noticing (chapters 2–3): a fourth way to the tunnel |
+| The tidy stacks | Everyone, chapter 2: a careful thief, not the weather |
 | The tunnel | The too-small worry; sneaking (she watches the pile at night); Coil's tip |
 | The Counts | Always, with Tallyheart, in chapter 7 |
-| The stash | Always, in chapter 8 (Thunder can point the way sooner) |
+| The stash | Always, in chapter 8 (Squall can point the way sooner) |
 
 ## The ten chapters
 
@@ -177,11 +189,11 @@ Her warrior name waits for a later module, and what she does this moon will be p
   Counts in front of the Clan and is named a warrior; Tallyheart: "One day, that'll be you."
 
 **4. The Glittering Scale**
-- *Story:* More prey gone, and a "scale" by the pile. Russet turns up at the border, smiling:
+- *Story:* More prey gone, and a "scale" by the pile. Reynard turns up at the border, smiling:
   he saw the dragon fly off with it by moonlight. Glintstar gives the dragon until the full moon.
   She opens her case file.
 - *Paths:* if she's good at noticing, she catches "fly" right away; everyone else catches it
-  later. Climbing the towers, or following the roars, finds Thunder.
+  later. Climbing the towers, or following the roars, finds Squall.
 - *Counts:* the 10s (both forepaws). Story use: Tallyheart's new rule stacks the pile in rows of
   ten ("then a gap shows in a heartbeat"), and she counts the rows.
 
@@ -189,7 +201,7 @@ Her warrior name waits for a later module, and what she does this moon will be p
 - *Story:* Riffle rafts her through the Roar (the courage test) to question witnesses: the
   gossiping ferry otters, and Patience, who talks only for fish.
 - *Paths:* which witness first; routes to the prints and the fur. The raft rides low because
-  Puddle is hiding under it, and Patience's reeds hide Fog from any cat who won't wait.
+  Puddle is hiding under it, and Patience's reeds hide Wisp from any cat who won't wait.
 - *Counts:* review of the 1s, 2s, 5s and 10s. Story use: paying Patience ("two fish for every
   answer").
 
@@ -204,13 +216,13 @@ Her warrior name waits for a later module, and what she does this moon will be p
 **7. The Counts Don't Lie**
 - *Story:* Prey vanishes even from a guarded pile. She works the numbers with Tallyheart:
   four pieces a night for three nights is twelve. But Sprinkle eats ten at a meal, and three
-  nights of that would be thirty. And Sprinkle can't fly, so Russet lied. Then she finds the tunnel.
+  nights of that would be thirty. And Sprinkle can't fly, so Reynard lied. Then she finds the tunnel.
 - *Counts:* the 3s again, mixed with earlier Counts. The Counts become evidence. ("A warrior who
   knows her Counts can't be fooled.")
 
 **8. The Night Trail**
 - *Story:* Through the tunnel, or around the Barking Field (sneak, climb, or distract the
-  dogs), to the weasel holes by the tracks. She overhears Russet bragging to Snip and Snatch
+  dogs), to the weasel holes by the tracks. She overhears Reynard bragging to Snip and Snatch
   about the den and the pile, and finds the stash: stolen prey and a heap of tower glass. A
   chase, more funny than scary, and she gets away with proof.
 - *Paths:* Tallyheart or Riffle beside her; the worry moment. The Barking Field route finds
@@ -227,7 +239,7 @@ Her warrior name waits for a later module, and what she does this moon will be p
 
 **10. The Gathering**
 - *Story:* On the Moon Ferry upriver, Tallyheart runs the Counts with her to steady her nerves.
-  On Gathering Island, Russet makes his case, and she answers each claim with a clue from her
+  On Gathering Island, Reynard makes his case, and she answers each claim with a clue from her
   file (she picks which; a wrong pick gets a gentle nudge, never a fail). Snip and Snatch start
   blaming each other and confess, and the foxes are chased off the territories. Then the mist
   rolls in: the Mistscales have come for their clutch. Sprinkle's wing holds, and the dragonets
@@ -252,12 +264,13 @@ of exposure, in about 10–20% of her play time.
 | 2 | 2s (ears) | 1s, 2s; counting the pile in pairs |
 | 3 | 5s (claws) | 2s, 5s |
 | 4 | 10s (both forepaws) | 2s, 5s, 10s; the pile in rows of ten |
-| 5 | none | 1s, 2s, 5s, 10s; paying the heron |
+| 5 | 9s (a cat's nine lives) | "one less than ten"; 1s, 2s, 5s, 10s; paying the heron |
 | 6 | 3s (patrols) | 3s and earlier; the guard patrols |
-| 7 | none | 3s and earlier; the Counts as evidence |
+| 7 | 6s (whiskers on one cheek) | double the 3s; the Counts as evidence |
 | 8 | 4s (paws) | 4s and earlier |
-| 9 | none | 4s and earlier; remedy doses |
-| 10 | none | all six: the Moon Ferry Counts |
+| 9 | 8s (a spider's legs) | double the 4s; remedy doses |
+| 10 | 7s (sunrises in a quarter-moon) | only 7 × 7 is new; the Moon Ferry Counts, every table |
+| after 10 | none | the Warrior Counts (every pair to 10 × 10, 90% to pass), then the Warrior Ceremony |
 
 **A lesson** takes 2–3 minutes and 15–20 answers (chapter 1's, on the 1s alone, is shorter):
 - a warm-up of two or three she already knows;

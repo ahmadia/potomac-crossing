@@ -16,7 +16,7 @@ const DRAG_CAMS = ['bank', 'mouth', 'under', 'back'];   // the cameras with drag
 const ANCHORS = { bank: ['bank-left', 'bank-right', 'reeds'], mouth: ['rock', 'edge', 'sun', 'sun-edge'], under: ['mud', 'inside'],
   back: ['near', 'dragon', 'beside', 'back-left', 'back-right'], paws: [] };
 const OPTS = { train: [true, false], eyes: ['none', 'open', 'blink', 'sprinkle'], drag: [true, false], drips: [true, false],
-  pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false], hop: [false, true] };
+  pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true] };
 const CH3_OPTS = ['pebble', 'branch', 'prints', 'pawsIn', 'hop'];
 
 // ---------------------------------------------------------------- helpers
@@ -518,4 +518,216 @@ test('bridge (chapter 3): evening under the bridge: gold at sunset, a softer ros
   }
   // the paws close-up's pool of light takes the evening's colour too
   assert.notEqual(strip(render('paws', { pawsIn: true }, [], ['day']).svg), strip(render('paws', { pawsIn: true }, [], ['sunset']).svg));
+});
+
+// ================================================================ chapter 4 (docs/build.md, "Chapter 4 (v0.4)"; the
+// chapter text's Build notes): pawsIn: 'both', the thirty-claw promise
+
+const crypto = require('crypto');
+const FRIENDS = ['sprinkle', 'player', 'riffle'];   // the pile's order: Sprinkle holds out both forepaws, hers go on top, then Riffle's
+const both = (opts, fx, look) => renderL('paws', Object.assign({ pawsIn: 'both' }, opts || {}), [], fx || ['day'], look);
+const pawsGroup = (svg) => { const a = svg.indexOf('<g data-art="paws"'), b = svg.indexOf('</g><rect', a); return svg.slice(a, b); };
+// the paws of a pile, in drawing order: each paw's outline pieces come in one run, before its claws
+function pawsOf(svg) {
+  const out = [];
+  for (const p of pawParts(svg)) {
+    if (p.kind === 'paw' && (!out.length || out[out.length - 1].claws.length)) out.push({ who: p.who, shapes: [], claws: [] });
+    out[out.length - 1][p.kind === 'paw' ? 'shapes' : 'claws'].push(p);
+  }
+  return out;
+}
+function distTo(P, x, y) {
+  if (inside(P, x, y)) return 0;
+  let d = Infinity;
+  for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
+    const a = P[j], b = P[i], dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+    d = Math.min(d, Math.hypot(x - a[0] - t * dx, y - a[1] - t * dy));
+  }
+  return d;
+}
+
+test('bridge (chapter 4): build.md names pawsIn: \'both\', and the set takes it, on the paws camera only', () => {
+  const md = fs.readFileSync(path.join(ROOT, 'docs/build.md'), 'utf8');
+  const sec = md.slice(md.indexOf('## Chapter 4 (v0.4)')).replace(/\s+/g, ' ');
+  assert.ok(sec.includes("`pawsIn: 'both'`"), 'build.md names pawsIn: \'both\'');
+  assert.deepEqual(art.vocab.sets.bridge.opts.pawsIn, [true, false, 'both']);
+  assert.equal(art.sceneInfo('bridge').defaults.pawsIn, false, 'off by default');
+  for (const cam of DRAG_CAMS) {
+    assert.equal(pawParts(render(cam, { pawsIn: 'both', hop: true }).svg).length, 0, cam + ': no paws pile');
+    assert.equal(strip(render(cam, { pawsIn: 'both', hop: 2 }).svg), strip(render(cam, {}).svg), cam + ': nothing of it');
+  }
+  // every light the chapter might ask for
+  for (const fx of [['day'], ['sunset'], ['dusk'], ['night'], ['morning']]) for (const hop of [false, true, 0, 1, 2, 3]) checkRender(both({ hop }, fx), [], 'both ' + fx + ' hop ' + hop);
+  assert.ok(!/fill="#0{3,6}"/i.test(both({ hop: true }).svg), 'the dark is never black');
+  assert.equal(strip(both({ hop: 2 }).svg), strip(both({ hop: 2 }).svg), 'deterministic');
+});
+
+test('bridge (chapter 4): chapter 3\'s promise is as it was: three forepaws, drawn exactly as before', () => {
+  // sha1 of the pile's own markup (ids stripped), recorded from the chapter 3 build
+  const GOLD = { calico: '5693c15789e24f4d', 'calico:hop': '041956767a8b516a', black: '26edc826571ac868', 'black:hop': 'e471644293cd07b1', ginger: '1e92eadbd1866309', 'ginger:hop': '29ace89a797023f1' };
+  const LOOKS = { calico: LOOK, black: { fur: 'black', marking: 'none' }, ginger: { fur: 'ginger' } };
+  for (const [name, look] of Object.entries(LOOKS)) for (const hop of [false, true]) {
+    const svg = strip(renderL('paws', { pawsIn: true, hop }, [], ['day'], look).svg);
+    assert.equal(crypto.createHash('sha1').update(pawsGroup(svg)).digest('hex').slice(0, 16), GOLD[name + (hop ? ':hop' : '')], name + (hop ? ', hopped' : '') + ': as chapter 3 drew it');
+  }
+  const three = pawsOf(render('paws', { pawsIn: true }).svg);
+  assert.deepEqual(three.map((p) => p.who), ['player', 'sprinkle', 'riffle'], 'chapter 3: hers at the bottom, then Sprinkle\'s, then Riffle\'s');
+  assert.ok(!/data-lit/.test(render('paws', { pawsIn: true, hop: true }).svg), 'chapter 3\'s pile carries no data-lit');
+  // every chapter 3 frame at the paws camera asks for the three (pawsIn: true)
+  for (const f of Object.values(PC.story.ch03.frames)) if (f.scene && f.scene.set === 'bridge' && f.scene.cam === 'paws') assert.equal(f.scene.opts.pawsIn, true);
+});
+
+test('bridge (chapter 4): the thirty-claw promise: six forepaws piled, a friend\'s pair to a layer, thirty claws, ten each, not one covered', () => {
+  const looks = art.vocab.looks.fur.map((fur, i) => ({ fur, marking: art.vocab.looks.marking[i % art.vocab.looks.marking.length], eyes: 'green', sex: i % 2 ? 'tom' : 'she' }));
+  for (const look of looks) {
+    const r = both({}, ['day'], look), paws = pawsOf(r.svg), parts = pawParts(r.svg), claws = parts.filter((p) => p.kind === 'claw');
+    checkRender(r, [], 'both ' + look.fur);
+    assert.equal(paws.length, 6, look.fur + ': six forepaws');
+    // piled in the text's order, a pair at a time
+    assert.deepEqual(paws.map((p) => p.who), ['sprinkle', 'sprinkle', 'player', 'player', 'riffle', 'riffle'], look.fur + ': Sprinkle\'s two, hers on top, then Riffle\'s');
+    paws.forEach((p, i) => assert.equal(p.claws.length, 5, look.fur + ': five claws on paw ' + i));
+    assert.equal(claws.length, 30);
+    for (const who of FRIENDS) assert.equal(claws.filter((c) => c.who === who).length, 10, look.fur + ': ten claws for ' + who);
+    // not one covered: nothing drawn after a claw (another paw's arm, palm or toes, or a later claw) lies on its tip or its base
+    for (const c of claws) {
+      const later = parts.filter((p) => p.at > c.at && (p.kind === 'paw' || p.who !== c.who));
+      for (const pt of [tipOf(c), baseOf(c), [(tipOf(c)[0] + baseOf(c)[0]) / 2, (tipOf(c)[1] + baseOf(c)[1]) / 2]]) {
+        assert.ok(!later.some((p) => inside(p.P, pt[0], pt[1])), look.fur + ': ' + c.who + '\'s claw at ' + pt.map(Math.round) + ' shows');
+        // and with room round it, so it can be counted
+        const near = Math.min(...later.filter((p) => p.kind === 'paw').map((p) => distTo(p.P, pt[0], pt[1])).concat([Infinity]));
+        assert.ok(near > 12, look.fur + ': ' + c.who + '\'s claw at ' + pt.map(Math.round) + ' has room (' + near.toFixed(0) + ')');
+      }
+    }
+    // each claw apart from every other, all of them in the panel and where the lettering keeps off
+    for (let i = 0; i < claws.length; i++) for (let j = i + 1; j < claws.length; j++) assert.ok(Math.hypot(tipOf(claws[i])[0] - tipOf(claws[j])[0], tipOf(claws[i])[1] - tipOf(claws[j])[1]) > 40, look.fur + ': claw tips apart');
+    const k = r.keep[0];
+    for (const c of claws) for (const q of c.P) {
+      assert.ok(q[0] > 40 && q[0] < 1560 && q[1] > 40 && q[1] < 960, look.fur + ': a claw whole in the panel: ' + q.map(Math.round));
+      assert.ok(q[0] / 16 > k.x && q[0] / 16 < k.x + k.w && q[1] / 10 > k.y && q[1] / 10 < k.y + k.h, look.fur + ': claws inside keep');
+    }
+    assert.equal(r.keep.length, 1, 'the pile, and nothing else, without the hop');
+  }
+  // only with pawsIn: 'both'; no face in it
+  const faces = both({}, ['day']);
+  assert.deepEqual(art.render({ set: 'bridge', cam: 'paws', opts: { pawsIn: 'both' }, cast: [{ who: 'sprinkle', at: 'dragon' }, { who: 'player' }, { who: 'riffle', at: 'near' }], fx: ['day'] }, { look: LOOK }).heads, [null, null, null], 'balloons in the close-up come from off the panel');
+  assert.ok(/<g data-art="paws" data-lit="0">/.test(faces.svg), 'the pile is the Tap\'s target, and says nobody is lit');
+});
+
+test('bridge (chapter 4): fanned so all thirty show: three rows of ten, top to bottom in pile order, each friend\'s two paws side by side', () => {
+  const paws = pawsOf(both().svg);
+  const mid = (cl) => [cl.reduce((s, c) => s + tipOf(c)[0], 0) / cl.length, cl.reduce((s, c) => s + tipOf(c)[1], 0) / cl.length];
+  const rows = FRIENDS.map((who) => paws.filter((p) => p.who === who));
+  rows.forEach((pair, i) => {
+    assert.equal(pair.length, 2);
+    const a = mid(pair[0].claws), b = mid(pair[1].claws);
+    // side by side: level with each other, a paw's width and more apart
+    assert.ok(Math.abs(a[1] - b[1]) < 30, FRIENDS[i] + ': her two paws level: ' + [a[1], b[1]].map(Math.round));
+    assert.ok(Math.abs(a[0] - b[0]) > 220, FRIENDS[i] + ': a pair, side by side');
+    // a row: all ten claws of the pair within a band, the next friend's row below it
+    const ys = pair[0].claws.concat(pair[1].claws).map((c) => tipOf(c)[1]);
+    if (i) {
+      const prev = rows[i - 1][0].claws.concat(rows[i - 1][1].claws).map((c) => tipOf(c)[1]);
+      assert.ok(Math.min(...ys.slice().sort((p, q) => p - q).slice(0, 8)) > Math.min(...prev) + 60, FRIENDS[i] + ': her row lies below ' + FRIENDS[i - 1] + '\'s');
+      assert.ok(ys.reduce((s, y) => s + y, 0) / 10 > prev.reduce((s, y) => s + y, 0) / 10 + 90, FRIENDS[i] + ': a row of its own');
+    }
+  });
+  // every arm reaches in from the bottom edge (her own forepaws as she sees them): each paw's toes point up the panel
+  for (const p of paws) { const m = mid(p.claws), palm = p.shapes[p.shapes.length - 2].P, py = palm.reduce((s, q) => s + q[1], 0) / palm.length; assert.ok(m[1] < py - 40, p.who + ': toes up, arm from the bottom'); }
+  // each upper paw rests on the pair below: its palm's middle lies on a paw of the friend beneath
+  const middle = (P) => [P.reduce((s, q) => s + q[0], 0) / P.length, P.reduce((s, q) => s + q[1], 0) / P.length];
+  [2, 3, 4, 5].forEach((i) => {
+    const palm = paws[i].shapes.reduce((best, sh) => (sh.P.length > best.P.length ? sh : best), paws[i].shapes[0]), c = middle(palm.P);
+    const below = paws.slice(i < 4 ? 0 : 2, i < 4 ? 2 : 4);
+    assert.ok(below.some((p) => p.shapes.some((sh) => inside(sh.P, c[0], c[1]))), paws[i].who + ' paw ' + i + ' rests on the pair below: ' + c.map(Math.round));
+  });
+  // Sprinkle's are the biggest, with the longest claws; hers next; Riffle's webbed and smallest
+  const len = (c) => Math.hypot(tipOf(c)[0] - baseOf(c)[0], tipOf(c)[1] - baseOf(c)[1]);
+  const mean = (who) => { const cs = paws.filter((p) => p.who === who).flatMap((p) => p.claws); return cs.reduce((s, c) => s + len(c), 0) / cs.length; };
+  assert.ok(mean('sprinkle') > mean('player') * 1.4 && mean('sprinkle') > mean('riffle') * 1.4, 'Sprinkle\'s claws long, easy to count');
+});
+
+test('bridge (chapter 4): both of her forepaws wear her look; Sprinkle\'s are mist grey, Riffle\'s his webbed brown', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'app/art/cats.js'), 'utf8');
+  const FUR = Function('return ' + /var FUR = (\{[\s\S]*?\n  \});/.exec(src)[1])();
+  for (const fur of art.vocab.looks.fur) for (const marking of ['none', 'white-paws']) {
+    const svg = both({}, ['day'], { fur, marking }).svg, parts = pawParts(svg);
+    const first = (who) => parts.find((p) => p.who === who).at;
+    const mine = svg.slice(first('player'), first('riffle'));
+    // two arms in her coat, outlined in her coat's line
+    assert.ok(mine.split('fill="' + FUR[fur].base + '"').length - 1 >= 2, fur + ': both arms in her coat');
+    assert.ok(mine.includes('stroke="' + FUR[fur].line + '"'), fur + ': outlined in her coat\'s line');
+    if (FUR[fur].stripe && FUR[fur].pattern === 'tabby') assert.ok(mine.split('fill="' + FUR[fur].stripe + '"').length - 1 >= 2, fur + ': tabby bands on both');
+    if (FUR[fur].patches) for (const pc of FUR[fur].patches) assert.ok(mine.includes('fill="' + pc + '"'), fur + ': patches');
+    const white = (mine.match(/fill="#(ffffff|fcf9f3)"/gi) || []).length;
+    if (marking === 'white-paws') assert.ok(white >= 10, fur + ': two white paws');
+    else if (fur !== 'white' && fur !== 'calico') assert.equal(white, 0, fur + ': no white paws unless she has them');
+  }
+  const svg = both().svg, parts = pawParts(svg), dz = svg.slice(parts.find((p) => p.who === 'sprinkle').at, parts.find((p) => p.who === 'player').at);
+  const body = /<path d="[^"]+" fill="(#[0-9a-f]{6})"(?! stroke)/i.exec(dz.slice(dz.indexOf('data-paw="sprinkle"')))[1];
+  const v = parseInt(body.slice(1), 16), rgb = [v >> 16, (v >> 8) & 255, v & 255];
+  assert.ok(Math.max(...rgb) - Math.min(...rgb) < 30, 'Sprinkle: mist grey: ' + body);
+  const rif = /riffle: \{[^\n]*\n[^\n]*pal: \{ base: '(#[0-9a-f]{6})', line: '(#[0-9a-f]{6})'/.exec(src);
+  const riffle = svg.slice(parts.find((p) => p.who === 'riffle').at);
+  assert.ok(riffle.split('fill="' + rif[1] + '"').length - 1 >= 2 && riffle.includes('stroke="' + rif[2] + '"'), 'Riffle\'s own brown, on both');
+});
+
+test('bridge (chapter 4): the hop lights a friend\'s pair at a time: ten claws gold and 10, 20, 30 lettered beside their rows, on no paw', () => {
+  const gold = (svg, who) => (svg.match(new RegExp('fill="#FFE07A"[^>]*data-claw="' + (who || '[a-z]+') + '"', 'g')) || []).length;
+  const numsOf = (svg) => [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)"[^>]*font-size="(\d+)"[^>]*data-hop="(\d+)"[^>]*>(\d+)</g)].map((m) => ({ x: +m[1], y: +m[2] - +m[3] * 0.36, fs: +m[3], n: +m[4], text: m[5] }));
+  for (const look of [LOOK, { fur: 'black', marking: 'none' }, { fur: 'white', marking: 'white-paws' }]) {
+    for (let n = 0; n <= 3; n++) {
+      const r = both({ hop: n }, ['day'], look), nums = numsOf(r.svg);
+      assert.equal(gold(r.svg), n * 10, 'hop ' + n + ': ' + n * 10 + ' claws lit');
+      FRIENDS.forEach((who, i) => assert.equal(gold(r.svg, who), i < n ? 10 : 0, 'hop ' + n + ': ' + who + (i < n ? ' lit' : ' not yet')));
+      assert.deepEqual(nums.map((q) => q.text), ['10', '20', '30'].slice(0, n), 'hop ' + n + ': the running totals so far, by tens');
+      nums.forEach((q) => assert.equal(String(q.n), q.text));
+      assert.ok(new RegExp('<g data-art="paws" data-lit="' + n + '">').test(r.svg), 'hop ' + n + ': the pile says how far the hop has got');
+      assert.equal(r.keep.length, 1 + n, 'hop ' + n + ': the pile and each number keep the lettering off');
+      // the same six paws in the same places: lighting moves nothing
+      assert.deepEqual(pawParts(r.svg).map((p) => p.P), pawParts(both({}, ['day'], look).svg).map((p) => p.P), 'hop ' + n + ': the pile holds still');
+    }
+    // hop: true is every friend; `lit` counts as `hop` does (the Tap may pass either); out of range is clamped
+    assert.equal(strip(both({ hop: true }, ['day'], look).svg), strip(both({ hop: 3 }, ['day'], look).svg));
+    for (let n = 0; n <= 3; n++) assert.equal(strip(both({ lit: n }, ['day'], look).svg), strip(both({ hop: n }, ['day'], look).svg), 'lit ' + n + ' is hop ' + n);
+    assert.equal(strip(both({ hop: 9 }, ['day'], look).svg), strip(both({ hop: 3 }, ['day'], look).svg));
+    assert.equal(strip(both({ hop: -2 }, ['day'], look).svg), strip(both({}, ['day'], look).svg));
+    assert.equal(strip(both({ hop: 'all' }, ['day'], look).svg), strip(both({}, ['day'], look).svg), 'an odd value lights nobody');
+    assert.equal(strip(both({ hop: false, lit: 2 }, ['day'], look).svg), strip(both({ hop: 2 }, ['day'], look).svg), 'hop: false (the default) with lit: 2 is two friends');
+    // each number beside its own friend's row of claws, to its right, level with it; on no paw, arm or claw
+    const r = both({ hop: true }, ['day'], look), parts = pawParts(r.svg), nums = numsOf(r.svg);
+    FRIENDS.forEach((who, i) => {
+      const cl = parts.filter((p) => p.kind === 'claw' && p.who === who), xs = cl.map((c) => tipOf(c)[0]), ys = cl.map((c) => tipOf(c)[1]), q = nums[i];
+      assert.ok(q.x > Math.max(...xs) + 30, who + ': ' + q.text + ' beyond its claws: ' + q.x + ' vs ' + Math.max(...xs).toFixed(0));
+      assert.ok(q.x < Math.max(...xs) + 260, who + ': and near them');
+      assert.ok(q.y > Math.min(...ys) - 40 && q.y < Math.max(...ys) + 60, who + ': level with its row: ' + q.y.toFixed(0) + ' in ' + [Math.min(...ys), Math.max(...ys)].map(Math.round));
+      const hw = q.fs * 0.32 * q.text.length + 8, hh = q.fs * 0.42 + 8;
+      for (let dx = -1; dx <= 1; dx += 0.5) for (let dy = -1; dy <= 1; dy += 0.5) {
+        const px = q.x + dx * hw, py = q.y + dy * hh;
+        assert.ok(!parts.some((p) => inside(p.P, px, py)), who + ': ' + q.text + ' on no paw');
+        assert.ok(px > 20 && px < 1580 && py > 20 && py < 980, who + ': ' + q.text + ' in the panel');
+      }
+      assert.ok(Math.min(...parts.map((p) => distTo(p.P, q.x, q.y))) > 40, who + ': ' + q.text + ' clear of the pile');
+      if (i) assert.ok(q.y > nums[i - 1].y + 100, 'the totals run down the panel: ' + nums.map((z) => Math.round(z.y)));
+    });
+    for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) assert.ok(Math.abs(nums[i].y - nums[j].y) > 110, 'no two totals crowd each other');
+    // gold: the claws' own fill, with a soft glow under each; the unlit ones keep their pale claws
+    const one = both({ hop: 1 }, ['day'], look).svg;
+    assert.equal((one.match(/fill="#FFD86E"/g) || []).length, 10, 'a glow under each lit claw');
+    assert.equal((one.match(/data-claw="[a-z]+"/g) || []).length, 30, 'thirty claws whatever is lit');
+  }
+});
+
+test('bridge (chapter 4): whatever chapter 4 puts under the bridge renders, and its paws frames ask for both forepaws', () => {
+  const st = PC.story.ch04;
+  if (!st || !st.frames) return;
+  const v = art.vocab.sets.bridge;
+  for (const [fid, f] of Object.entries(st.frames)) {
+    const sc = f.scene;
+    if (!sc || sc.set !== 'bridge') continue;
+    assert.ok(v.cams.includes(sc.cam), fid + ': camera ' + sc.cam);
+    for (const [k, val] of Object.entries(sc.opts || {})) assert.ok(Array.isArray(v.opts[k]) && v.opts[k].includes(val), fid + ': ' + k + '=' + JSON.stringify(val));
+    checkRender(art.render(sc, { look: LOOK }), sc.cast || [], 'ch04 ' + fid);
+    if (sc.opts && sc.opts.pawsIn) assert.equal(sc.opts.pawsIn, 'both', fid + ': the thirty-claw promise is six forepaws (three friends, ten claws each)');
+    if (sc.opts && sc.opts.pawsIn) assert.equal(sc.cam, 'paws', fid + ': pawsIn belongs to the paws camera');
+  }
 });

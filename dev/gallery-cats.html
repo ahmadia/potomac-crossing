@@ -52,10 +52,15 @@
   var CATS = ['player', 'tallyheart', 'glintstar', 'waffles', 'grizzled', 'snorer', 'mutterer', 'snorter'];
   var CLAN = [1, 2, 3, 4, 5, 6];
   var POSE_MOOD = { sit: 'neutral', stand: 'happy', walk: 'happy', crouch: 'stern', curl: 'sleepy', loaf: 'kind',
-    lookup: 'wonder', flat: 'scared', lie: 'kind', fall: 'laugh', stretch: 'proud', peer: 'wonder', pawup: 'happy', tummy: 'happy' };
+    lookup: 'wonder', flat: 'scared', lie: 'kind', fall: 'laugh', stretch: 'proud', peer: 'wonder', pawup: 'happy', tummy: 'happy', situp: 'proud' };
   // chapter 3: Sprinkle's poses, each with a mood the text gives it
   var DZ_MOOD = { eyes: 'neutral', unfold: 'scared', hide: 'scared', sniff: 'sniff', sit: 'shy', wings: 'sad', flat: 'scared', gulp: 'happy',
-    burp: 'wonder', pawsup: 'happy', pawup: 'sad', draw: 'sad', touch: 'kind', peek: 'shy', curl: 'kind', lie: 'neutral' };
+    burp: 'wonder', pawsup: 'happy', pawup: 'sad', draw: 'sad', touch: 'kind', peek: 'shy', curl: 'kind', lie: 'neutral',
+    check: 'worried', tailout: 'shy', tailup: 'shy' };
+  // chapter 4: Reynard's and Squall's poses, each with a mood the text gives it
+  var FOX_MOOD = { sit: 'neutral', comb: 'proud', chest: 'kind', think: 'dreamy', lean: 'solemn', flap: 'happy', slip: 'scared', dash: 'worried' };
+  var SQ_MOOD = { hug: 'worried', sit: 'neutral', roar: 'shout', hiccup: 'wonder', halt: 'stern', tall: 'proud', point: 'neutral', snap: 'happy', pawup: 'proud' };
+  var HOLDS_POLE = { hug: 1, roar: 1, halt: 1 };
 
   function svgOf(r, size) {
     var h = size * r.h / r.w;
@@ -252,6 +257,8 @@
       put(A.character('dog', { variant: 3, pose: 'stand', mood: 'shout' }));
       put(A.character('dog', { variant: 2, pose: 'stand', mood: 'happy' }));
       put(A.character('dog', { variant: 1, pose: 'stand', mood: 'happy' }));
+      put(A.character('reynard', { pose: 'sit', mood: 'neutral', facing: 'left' }));
+      put(A.character('squall', { pose: 'sit', mood: 'stern', facing: 'left' }));
       return '<div class="stage"><svg viewBox="0 0 ' + Math.ceil(x) + ' 400" width="100%" style="max-width:' + Math.ceil(x * 1.4) + 'px">' + stage + '</svg></div>';
     }],
     counts: ['Counts pictures', function (S) {
@@ -354,6 +361,110 @@
         ['claw swipes in the mud (Sprinkle’s help, 6 × 5, all counted)', { groups: 6, per: 5, counted: 30, style: 'swipe', ground: 'mud' }],
         ['claw swipes in the earth (2 × 5, counted 5)', { groups: 2, per: 5, counted: 5, style: 'swipe', ground: 'earth' }],
         ['scratches in the mud (9 × 2, counted 6)', { groups: 9, per: 2, counted: 6, ground: 'mud' }]].forEach(function (it) {
+        h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:560px">' + A.sand(it[1]) + '</div>';
+      });
+      return h;
+    }],
+    reynard: ['Reynard (chapter 4): every pose, every mood, at one scale', function (S) {
+      var h = '<h3>every pose (his mood in the text); the smile is on in all but the slip</h3><div class="row">';
+      V.otherPoses.reynard.forEach(function (p) { h += cell(A.character('reynard', { pose: p, mood: FOX_MOOD[p] }), p + ' · ' + FOX_MOOD[p], S * 1.7); });
+      h += '</div><h3>facing left (as he faces the Clan from the long grass)</h3><div class="row">';
+      V.otherPoses.reynard.forEach(function (p) { h += cell(A.character('reynard', { pose: p, mood: FOX_MOOD[p], facing: 'left' }), p + ' ←', S * 1.7); });
+      h += '</div><h3>every mood, his way (sit): lids, brows and ears; the mouth stays shut and smiling</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('reynard', { pose: 'sit', mood: m, facing: 'left' }), m, S * 1.4); });
+      h += '</div><h3>flick: one ear flicks, the smile holds ("every Clan will hear your story")</h3><div class="row">';
+      h += cell(A.character('reynard', { pose: 'sit', mood: 'neutral', flick: true, facing: 'left' }), 'sit · flick', S * 1.7);
+      h += cell(A.character('reynard', { pose: 'comb', mood: 'proud', flick: true, facing: 'left' }), 'comb · flick', S * 1.7);
+      // one scale: never bigger than Tallyheart
+      var k = 0.62, stage = '<svg viewBox="0 0 1000 200" width="100%" style="max-width:1000px">';
+      function put(r, x) { stage += '<g transform="translate(' + (x - r.w * k / 2) + ',' + (190 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; }
+      put(A.character('glintstar', { pose: 'sit', mood: 'solemn' }), 110);
+      put(A.character('tallyheart', { pose: 'sit', mood: 'stern' }), 230);
+      put(A.character('player', { pose: 'sit', mood: 'wonder', look: { fur: 'black', marking: 'white-paws', eyes: 'green' } }), 330);
+      put(A.character('reynard', { pose: 'comb', mood: 'proud', facing: 'left' }), 520);
+      put(A.character('reynard', { pose: 'sit', mood: 'neutral', facing: 'left' }), 700);
+      put(A.character('tallyheart', { pose: 'sit', mood: 'neutral', facing: 'left' }), 860);
+      stage += '</svg>';
+      return h + '</div><h3>one scale: about Tallyheart’s size, his ear tips never above hers; leaner, longer in the leg and the tail</h3><div class="stage">' + stage + '</div>';
+    }],
+    squall: ['Squall (chapter 4): every pose, every mood, at one scale', function (S) {
+      var h = '<h3>every pose (his mood in the text); hug, roar and halt hold the pole (drawn here with pole: true; a set draws its own on his box’s centre line)</h3><div class="row">';
+      V.otherPoses.squall.forEach(function (p) { h += cell(A.character('squall', { pose: p, mood: SQ_MOOD[p], pole: !!HOLDS_POLE[p] }), p + ' · ' + SQ_MOOD[p], S * 1.7); });
+      h += '</div><h3>facing left</h3><div class="row">';
+      V.otherPoses.squall.forEach(function (p) { h += cell(A.character('squall', { pose: p, mood: SQ_MOOD[p], facing: 'left', pole: !!HOLDS_POLE[p] }), p + ' ←', S * 1.7); });
+      h += '</div><h3>every mood (sit): the fierce little brows stay unless the mood lifts them</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('squall', { pose: 'sit', mood: m }), m, S * 1.4); });
+      h += '</div><h3>his chin wobbling at the pole; the Tap (lit: 5); a tear; without a pole drawn</h3><div class="row">';
+      h += cell(A.character('squall', { pose: 'hug', mood: 'sad', pole: true }), 'hug · sad', S * 1.7);
+      h += cell(A.character('squall', { pose: 'pawup', mood: 'proud', lit: 5 }), 'pawup · lit: 5', S * 1.7);
+      h += cell(A.character('squall', { pose: 'sit', mood: 'sad', tear: true }), 'sit · sad · tear', S * 1.7);
+      h += cell(A.character('squall', { pose: 'roar', mood: 'scared', pole: true }), 'roar · scared', S * 1.7);
+      h += cell(A.character('squall', { pose: 'hug', mood: 'neutral' }), 'hug (the set’s pole)', S * 1.7);
+      var k = 0.6, stage = '<svg viewBox="0 0 1000 220" width="100%" style="max-width:1000px">';
+      function put(r, x) { stage += '<g transform="translate(' + (x - r.w * k / 2) + ',' + (210 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; }
+      put(A.character('sprinkle', { pose: 'sit', mood: 'happy' }), 200);
+      put(A.character('tallyheart', { pose: 'sit', mood: 'kind', facing: 'left' }), 420);
+      put(A.character('player', { pose: 'sit', mood: 'wonder', look: { fur: 'black', marking: 'white-paws', eyes: 'green' } }), 560);
+      put(A.character('squall', { pose: 'sit', mood: 'stern', facing: 'left' }), 680);
+      put(A.character('squall', { pose: 'tall', mood: 'proud', facing: 'left' }), 820);
+      put(A.character('riffle', { pose: 'sit', mood: 'happy', facing: 'left' }), 930);
+      stage += '</svg>';
+      return h + '</div><h3>one scale: about a third of his sister, no bigger than our cat (sitting); standing as tall as he can</h3><div class="stage">' + stage + '</div>';
+    }],
+    extras4: ['Chapter 4: situp, wink, bark, Sprinkle’s new poses', function (S) {
+      var h = '<h3>situp: on the haunches, both forepaws raised, claws out ("We look like squirrels")</h3><div class="row">';
+      CATS.concat(CLAN).forEach(function (id) { h += cell(ch(id, { pose: 'situp', mood: id === 'grizzled' ? 'stern' : id === 'tallyheart' ? 'proud' : 'worried' }), name(id), S); });
+      h += '</div><h3>wink: the front eye, whatever the mood</h3><div class="row">';
+      ['kind', 'neutral', 'happy', 'proud', 'stern'].forEach(function (m) { h += cell(ch('tallyheart', { pose: 'sit', mood: m, wink: true, facing: 'left' }), 'wink · ' + m, S); });
+      h += cell(ch('tallyheart', { pose: 'peer', mood: 'kind', wink: true }), 'at the doorway', S);
+      h += '</div><h3>holds: bark (a blank curl of her Case File)</h3><div class="row">';
+      h += cell(ch('player', { pose: 'sit', mood: 'happy', holds: 'bark' }), 'sit (paws)', S);
+      h += cell(ch('tallyheart', { pose: 'stand', mood: 'happy', holds: 'bark' }), 'stand (mouth)', S);
+      h += cell(ch('tallyheart', { pose: 'stretch', mood: 'proud', holds: 'bark' }), 'peeling (stretch)', S);
+      h += cell(ch('player', { pose: 'crouch', mood: 'wonder', holds: 'bark', holdAt: 'nose' }), 'crouch · nose', S);
+      h += cell(ch('player', { pose: 'curl', mood: 'sleepy', holds: 'bark', holdAt: 'chin' }), 'curl · chin', S);
+      h += cell(ch('player', { pose: 'situp', mood: 'happy', holds: 'bark' }), 'situp (held up)', S);
+      h += cell(ch('player', { pose: 'pawup', mood: 'neutral', claws: true, holds: 'bark' }), 'one claw on bark', S);
+      h += '</div><h3>Sprinkle: check, tailout, tailup (after hide)</h3><div class="row">';
+      ['check', 'tailout', 'hide', 'tailup'].forEach(function (p) {
+        h += cell(A.character('sprinkle', { pose: p, mood: p === 'hide' ? 'sad' : DZ_MOOD[p] }), p, S * 2);
+        h += cell(A.character('sprinkle', { pose: p, mood: p === 'hide' ? 'sad' : DZ_MOOD[p], facing: 'left' }), p + ' ←', S * 2);
+      });
+      return h + '</div>';
+    }],
+    counts4: ['Counts pictures, chapter 4: the 10s', function (S) {
+      var rim = [{ who: 'clancat', variant: 1 }, { who: 'clancat', variant: 2 }, { who: 'clancat', variant: 3 }, { who: 'clancat', variant: 4 }, { who: 'grizzled' }];
+      var look = { fur: 'calico', marking: 'white-paws', eyes: 'odd' };
+      var list = [
+        ['the Tap: the five rim cats, both forepaws out (highlight 20, totals, next)', { table: 10, groups: 5, highlight: 20, totals: true, next: true, who: rim, look: look }],
+        ['the Tap done: 10 to 50 under the cats; the old tom’s ears flat', { table: 10, groups: 5, highlight: 50, totals: true, who: rim, look: look }],
+        ['4 × 10, the lesson’s first: the first four rim cats', { table: 10, groups: 4, highlight: 0, who: rim.slice(0, 4), look: look }],
+        ['10 × 2, right: the two cats’ claws lit', { table: 10, groups: 2, highlight: 20 }],
+        ['6 × 10: the first five cats’ claws lit together as fifty', { table: 10, groups: 6, highlight: 50 }],
+        ['10 × 9', { table: 10, groups: 9, highlight: 0 }],
+        ['10 × 10: two rows of five', { table: 10, groups: 10, highlight: 100 }],
+        ['the warm-up’s 2 × 5: Tallyheart’s own two forepaws (highlight 5, totals)', { table: 5, groups: 2, highlight: 5, totals: true, who: [{ who: 'tallyheart' }, { who: 'tallyheart' }] }],
+        ['the old tom’s count: three rows of ten last night, a thought', { table: 10, groups: 3, per: 10, kind: 'prey', layout: 'rows', thought: true }],
+        ['the two front rows, the first lit', { table: 10, groups: 2, per: 10, kind: 'prey', layout: 'rows', highlight: 10 }],
+        ['tonight’s four rows of ten (highlight 30)', { table: 10, groups: 4, per: 10, kind: 'prey', layout: 'rows', highlight: 30 }],
+        ['Squall’s riddle: seven little forepaws scratched in the roof’s grit (highlight 10)', { table: 5, groups: 7, per: 5, kind: 'grit', highlight: 10 }],
+        ['the roof Tap: Squall’s one raised forepaw, glowing', { table: 5, groups: 1, highlight: 0, totals: true, next: true, who: [{ who: 'squall' }] }],
+        ['the roof Tap, tapped: five claws lit', { table: 5, groups: 1, highlight: 5, totals: true, who: [{ who: 'squall' }] }],
+        ['the promise Tap (paws: promise): six piled forepaws, before a tap', { table: 10, groups: 3, per: 10, highlight: 0, paws: 'promise', next: true, look: look }],
+        ['the promise: Sprinkle’s ten and her own ten counted (totals)', { table: 10, groups: 3, per: 10, highlight: 20, paws: 'promise', next: true, totals: true, look: look }],
+        ['the promise: thirty (a black cat)', { table: 10, groups: 3, per: 10, highlight: 30, paws: 'promise', look: { fur: 'black', marking: 'none', eyes: 'amber' } }],
+        ['the bedtime Tap (paws: own at table 10): both forepaws on the moss, before a tap', { table: 10, groups: 5, per: 10, highlight: 0, paws: 'own', next: true, look: look }],
+        ['the bedtime Tap, three pats (a ginger tabby)', { table: 10, groups: 5, per: 10, highlight: 30, paws: 'own', next: true, look: { fur: 'ginger', marking: 'none', eyes: 'amber' } }]
+      ];
+      var h = '';
+      list.forEach(function (it) { h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:720px">' + A.countsPicture(it[1]) + '</div>'; });
+      [['pairs of swipes in the sand (10 × 3, counted 10): two swipes for every cat', { groups: 3, per: 10, counted: 10, style: 'swipe', pair: true }],
+        ['pairs of swipes: 10 × 9 (counted 40)', { groups: 9, per: 10, counted: 40, style: 'swipe', pair: true }],
+        ['pairs of swipes: 10 × 10', { groups: 10, per: 10, counted: 0, style: 'swipe', pair: true }],
+        ['a borrowed tens question beside the pile: pairs of swipes in the earth (5 × 10, counted 20)', { groups: 5, per: 10, counted: 20, style: 'swipe', pair: true, ground: 'earth' }],
+        ['the pile’s help: ten marks a row in the earth, lit a whole row at a time (3 × 10, step 10, counted 10)', { groups: 3, per: 10, counted: 10, layout: 'rows', ground: 'earth', step: 10 }],
+        ['tonight’s help: four rows (step 10, counted 30)', { groups: 4, per: 10, counted: 30, layout: 'rows', ground: 'earth', step: 10 }],
+        ['Squall’s help: swipes in the roof’s grit (7 × 5, counted 15)', { groups: 7, per: 5, counted: 15, style: 'swipe', ground: 'grit' }]].forEach(function (it) {
         h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:560px">' + A.sand(it[1]) + '</div>';
       });
       return h;

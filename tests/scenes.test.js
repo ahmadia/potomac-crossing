@@ -13,6 +13,8 @@ const art = PC.art;
 // chapter 2's sets, as index.html loads them, so every sweep below covers every set
 const SET_FILES = (fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').match(/<script\s+src="app\/art\/sets\/[^"]+\.js"/g) || []).map((m) => m.match(/app\/[^"]+/)[0]);
 SET_FILES.forEach((f) => require(path.join(ROOT, f)));
+// chapter 4: the Case File's cards (scenes.js draws her bark with cards.js's own pieces when it is there)
+if (has('app/art/cards.js')) require(path.join(ROOT, 'app/art/cards.js'));
 
 const LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
 const WHO = ['player', 'tallyheart', 'glintstar', 'waffles', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'tallone', 'sparrow', 'moth', 'riffle', 'otter', 'dog'];
@@ -176,10 +178,11 @@ test('PC.art.vocab matches build.md: every chapter 1 set, camera, anchor and opt
   // chapter 3: every table to ten times ten, so one claw mark per Count up to ten
   assert.deepEqual(v.sets.hollow.opts.marks.filter((m) => typeof m === 'number'), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'marks 0-10');
   for (const f of spec.fx.concat(['morning', 'day'])) assert.ok(v.fx.includes(f), 'fx ' + f);
-  // option values are listed (an array of allowed values, or 'number')
+  // option values are listed (an array of allowed values, or 'number'; chapter 4: 'cards', a list of card pictures)
   for (const [id, set] of Object.entries(v.sets)) for (const [k, vals] of Object.entries(set.opts)) {
-    assert.ok(Array.isArray(vals) || vals === 'number', id + '.' + k + ' lists its values');
+    assert.ok(Array.isArray(vals) || vals === 'number' || vals === 'cards', id + '.' + k + ' lists its values');
   }
+  assert.deepEqual(Object.entries(v.sets).flatMap(([id, set]) => Object.keys(set.opts).filter((k) => set.opts[k] === 'cards').map((k) => id + '.' + k)), ['hollow.cards'], 'one option takes a list of cards');
 });
 
 
@@ -671,6 +674,14 @@ test('den stone: Riffle\'s lucky stone in her nest, between her paws, by her nos
     assert.ok(dir * (nose.st[0] - (dir > 0 ? nose.head[2] : nose.head[0])) > 0, facing + ': by her nose, just past her face: ' + nose.st + ' head ' + nose.head.map(Math.round));
     assert.ok(chin.st[0] > chin.head[0] && chin.st[0] < chin.head[2] && chin.st[1] > (chin.head[1] + chin.head[3]) / 2, facing + ': under her chin: ' + chin.st + ' head ' + chin.head.map(Math.round));
     assert.ok(paws.st[1] > chin.head[3] && paws.st[0] > paws.head[0] && paws.st[0] < paws.head[2], facing + ': between her paws, below her head: ' + paws.st);
+  }
+  // chapter 4, "You sniff your paws": nose down at her forepaws, a stone under her chin would lie on them (the picture
+  // would be of a cat sniffing a stone), so for that panel it lies past her nose; any other mood keeps it under her chin
+  for (const facing of ['right', 'left']) {
+    const put = (stone, mood) => stones(art.render({ set: 'den', cam: 'nest', opts: { stone }, cast: [{ who: 'player', pose: 'crouch', mood, at: 'nest', facing }], fx: ['morning'] }, { look: LOOK }).svg)[0];
+    assert.deepEqual(put('chin', 'sniff'), put('nose', 'sniff'), facing + ': sniffing her paws, the chin stone lies where the nose stone does');
+    assert.notDeepEqual(put('chin', 'wonder'), put('nose', 'wonder'), facing + ': otherwise under her chin, as she put it');
+    assert.ok((put('chin', 'sniff')[0] - put('chin', 'wonder')[0]) * (facing === 'left' ? -1 : 1) > 20, facing + ': further out the way she faces');
   }
   // small in the wide shot, bigger in the close-up (the same stone)
   const wide = stones(art.render({ set: 'den', cam: 'inside', opts: { stone: true }, cast: [loaf('right')], fx: ['night'] }).svg)[0];
@@ -1400,4 +1411,838 @@ test('every frame of chapter 3 renders with the art vocabulary (once it is writt
     const scene = Object.assign({}, s, { opts: o });
     checkRender(art.render(scene, { look: LOOK }), scene, 'ch03 ' + id);
   }
+});
+
+// ================================================================ chapter 4 (docs/build.md, "Chapter 4 (v0.4)")
+
+// ---------------------------------------------------------------- chapters 1-3 look exactly as they did
+
+// <ch13-fingerprint>
+// One fingerprint for every camera of chapter 1's nine sets, as chapters 1-3 use them: a cast at
+// every anchor they had, with and without every option they had, in five lights, drawn with
+// placeholder cats, so only scenes.js is in the picture (cats.js may change; these must not).
+const CH13 = {
+  anchors: {
+    room: ['cushion', 'floor', 'glass', 'doorway'], tower: ['window', 'railing'], garden: ['step', 'lawn', 'fence-foot', 'lamp-top', 'hedge-gap', 'doorway', 'hedge-side'],
+    camp: ['entrance', 'fountain-top', 'fountain-foot', 'crowd-left', 'crowd-right', 'ferns', 'center'],
+    hollow: ['sand-left', 'sand-right', 'sunpatch', 'tree', 'sunpatch-2', 'sunpatch-3', 'tree-far', 'rim-1', 'rim-2', 'rim-3', 'rim-4', 'rim-5'],
+    den: ['entrance-left', 'entrance-right', 'doorway', 'nest', 'sleeper-1', 'sleeper-2'], sky: ['ground-left', 'ground-right'], river: ['bank'], title: ['wall', 'wall-2']
+  },
+  opts: { door: 'open', reflection: true, clan: true, sparrows: 12, lampSparrow: true, dish: true, moth: true, towel: true, puddles: true, rainFountain: true, crowd: true, chime: true,
+    marks: 3, glow: [true, false, true], weather: 'clear', drips: true, stone: 'nose', splash: true },
+  fx: [[], ['night', 'stars', 'skyriver'], ['morning'], ['dusk', 'rain', 'lightning'], ['sunset', 'purr', 'sparkle', 'zzz', 'motion', 'glow', 'bonk']],
+  who: ['player', 'tallyheart', 'waffles', 'grizzled', 'clancat', 'sparrow', 'moth', 'tallone', 'riffle', 'sprinkle'],
+  poses: ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer']
+};
+function ch13Fingerprint(art, crypto) {
+  const fake = function () { throw new Error('placeholder'); };
+  fake.placeholder = true;
+  const real = art.character, out = {};
+  art.character = fake;
+  try {
+    for (const set of Object.keys(CH13.anchors)) {
+      for (const cam of art.vocab.sets[set].cams) {
+        const h = crypto.createHash('sha1');
+        CH13.fx.forEach((fx, f) => {
+          const cast = CH13.anchors[set].map((at, i) => {
+            const k = i + f, who = CH13.who[k % CH13.who.length];
+            const m = { who, at, pose: CH13.poses[(k * 5) % CH13.poses.length], mood: ['neutral', 'happy', 'sleepy', 'scared'][k % 4], facing: k % 2 ? 'left' : 'right', variant: (k % 6) + 1 };
+            if (k % 5 === 0) m.size = 0.85;
+            if (k % 7 === 0) m.purr = true;
+            if (k % 4 === 1) m.lift = true;
+            return m;
+          });
+          // a moon is asked for at night only: at dusk or sunset it drew nothing before chapter 4,
+          // and is the young moon now (the one deliberate change, tested below)
+          const opts = Object.assign({}, CH13.opts, fx.includes('night') ? { moon: true } : {});
+          for (const scene of [{ set, cam, opts, cast, fx }, { set, cam, cast: cast.slice(0, 2), fx }, { set, cam, opts: { weather: f % 2 ? 'storm' : 'cloudy', marks: 10, depth: [2, 1, 0], glow: true, stone: 'chin' }, cast: [], fx }]) {
+            const r = art.render(scene, { look: { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' } });
+            h.update(r.svg.replace(/pcs[0-9a-z]+-/g, '') + JSON.stringify(r.heads) + JSON.stringify(r.keep));
+          }
+        });
+        out[set + '/' + cam] = h.digest('hex').slice(0, 16);
+      }
+    }
+  } finally { art.character = real; }
+  return out;
+}
+// </ch13-fingerprint>
+const CH13_FINGERPRINT = {
+  'room/wide': '1c060c96692a8094', 'room/cushion': '7bd537b108b3312d', 'room/glass': '4652bc4f27c59950', 'room/outside': 'a5fec3c0419d252a',
+  'tower/up': '3e305d8a72779fd1', 'tower/balcony': '79a707cac5a1d77e', 'tower/balcony-close': '3e86a8936d1adede',
+  'garden/wide': '21134a9369b2fa32', 'garden/paws': 'ac65070c5b22a910', 'garden/step': 'f9637629d33d02ab', 'garden/fence': 'd391c862a8fa2e57', 'garden/lamp': '18eda060614bff28',
+  'garden/meet': '55807ec6b2f15f08', 'garden/hedge': 'e8e7020ce5b0f14a', 'garden/hedge-close': 'b1555508971c43b9',
+  'camp/reveal': '82d2b71e8ae0209e', 'camp/crowd': '96218e76d85441e4', 'camp/fountain': '68ff733bb524a469', 'camp/entrance': '7411b4ff9e385650', 'camp/fountain-close': 'f23e1c54970d3492',
+  'camp/ferns': '8a8cbfa4c44c4cd3', 'camp/purr': '54b99ac976dd6911',
+  'hollow/wide': '9cc363695139e221', 'hollow/lesson': '27178ecdcaa607b7', 'hollow/sand': '22575ad532bb51b1', 'hollow/tree': '1a75e6bdf7879c08',
+  'den/outside': '2835ed7eb7615b45', 'den/inside': '9add5e42e49787df', 'den/nest': 'd036e0b1ac61ab7d', 'den/doorway': '30c9140ff0a4ea45',
+  'sky/up': 'fcf06935598addc6', 'sky/cats': 'de9e7845a2de172a', 'river/crash': '36031dec6afdee48', 'title/wide': 'c3078ad2d62c5efb'
+};
+
+test('chapters 1-3 look exactly as they did: every camera of chapter 1\'s nine sets, a cast at every anchor, with and without every option, in five lights, matches its fingerprint from before chapter 4', () => {
+  const now = ch13Fingerprint(art, require('crypto'));
+  assert.deepEqual(Object.keys(now), Object.keys(CH13_FINGERPRINT), 'the same sets and cameras, in the same order');
+  for (const k of Object.keys(CH13_FINGERPRINT)) assert.equal(now[k], CH13_FINGERPRINT[k], k + ' draws something else than it did for chapters 1-3');
+  // the real cats are back, and the placeholders left nothing behind
+  assert.ok(!art.character || !art.character.placeholder);
+});
+
+// ---------------------------------------------------------------- chapter 4: helpers
+
+const NEW_OPTS = { tower: { light: [false, true], roar: [false, true], ding: [false, true] }, den: { hidden: [false, true] }, hollow: { bark: [false, 'falling', 'sand', 'row'], heap: [false, true] } };
+// the markup of the group that carries data-prop="name" (to its closing tag), or '' when it is not drawn
+function prop(svg, name) {
+  const at = svg.indexOf('data-prop="' + name + '"');
+  if (at < 0) return '';
+  const start = svg.lastIndexOf('<', at);
+  if (svg.slice(start, start + 2) !== '<g') return svg.slice(start, svg.indexOf('>', at) + 1);
+  const re = /<g[\s>]|<\/g>/g;
+  re.lastIndex = start;
+  let depth = 0, m;
+  while ((m = re.exec(svg))) {
+    depth += m[0] === '</g>' ? -1 : 1;
+    if (!depth) return svg.slice(start, m.index + 4);
+  }
+  return svg.slice(start);
+}
+const pathPoints = (markup) => [...markup.matchAll(/<path d="([^"]+)"/g)].flatMap((m) => (m[1].match(/[ML]-?[\d.]+ -?[\d.]+/g) || []).map((t) => t.slice(1).split(' ').map(Number)));
+// the tower from below: its two edges at height y (scenes.js, TOWER.edge), and its floors
+const towerEdge = (y) => { const t = (1000 - y) / 960; return [230 + 330 * t, 1370 - 330 * t]; };
+const towerUp = (opts, cast, fx) => {
+  const scene = { set: 'tower', cam: 'up', opts: opts || {}, cast: cast || [], fx: fx || ['day'] };
+  const r = art.render(scene, { look: LOOK });
+  checkRender(r, scene, 'tower/up ' + JSON.stringify(opts || {}));
+  return r;
+};
+// pieces of bark pressed flat (scenes.js, barkAt): standing (the nest's row) or lying (the sand's)
+const PIECE = /<g transform="translate\(([-\d.]+) ([-\d.]+)\) rotate\((-?[\d.]+)\) (scale|matrix)\(([\d.]+)[^)]*\) translate\(-[\d.]+ -[\d.]+\)" data-bark="(card|blank)">/g;
+const pieces = (svg) => [...svg.matchAll(PIECE)].map((m) => ({ x: +m[1], y: +m[2], rot: +m[3], flat: m[4] === 'matrix', w: +m[5] * 200, kind: m[6] }));
+const corners = (svg) => [...svg.matchAll(/<g transform="translate\(([-\d.]+) ([-\d.]+)\) scale\([\d. ]+\) rotate\(-?[\d.]+\)" data-bark="corner">/g)].map((m) => ({ x: +m[1], y: +m[2] }));
+const inVb = (x, y, vb, pad) => x >= vb[0] + (pad || 0) && x <= vb[0] + vb[2] - (pad || 0) && y >= vb[1] + (pad || 0) && y <= vb[1] + vb[3] - (pad || 0);
+// a stand-in cards.js: remembers what it was asked for, in order
+function withCards(fake, fn) {
+  const had = Object.prototype.hasOwnProperty.call(art, 'cardGroup'), real = art.cardGroup;
+  if (fake === null) delete art.cardGroup; else art.cardGroup = fake;
+  try { return fn(); } finally { if (had) art.cardGroup = real; else delete art.cardGroup; }
+}
+const nestScene = (opts, cat, cam, fx) => ({ set: 'den', cam: cam || 'nest', opts: opts, cast: cat === null ? [] : [Object.assign({ who: 'player', at: 'nest', pose: 'lie', mood: 'happy', facing: 'right' }, cat || {})], fx: fx || ['night'] });
+const NEST_X = 1060;
+
+test('vocab, chapter 4: the tower\'s light, roar and ding with the corner and foot anchors; the den\'s bark and hidden; the hollow\'s bark and heap; build.md\'s chapter 4 section names them', () => {
+  const v = art.vocab.sets;
+  for (const [set, opts] of Object.entries(NEW_OPTS)) for (const [k, vals] of Object.entries(opts)) assert.deepEqual(v[set].opts[k], vals, set + '.' + k);
+  assert.deepEqual(v.den.opts.bark, [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 'den.bark: a number of pieces, or auto');
+  assert.ok(v.tower.anchors.includes('corner') && v.tower.anchors.includes('foot'), 'tower anchors: ' + v.tower.anchors);
+  assert.ok(v.hollow.opts.marks.includes(4), 'marks: 4');
+  // chapter 2's and 3's options are all still there, with the values they had
+  assert.deepEqual(v.tower.opts.chime, [true, false]);
+  assert.deepEqual(v.den.opts.moon, [false, true]);
+  assert.deepEqual(v.den.opts.stone, [false, true, 'nose', 'chin', 'auto']);
+  assert.deepEqual(v.hollow.opts.glow, [true, false, 'auto']);
+  // no option is on unless a frame asks: chapters 1-3 never did
+  const info = (set) => art.sceneInfo(set).defaults;
+  for (const [set, opts] of Object.entries(NEW_OPTS)) for (const k of Object.keys(opts)) assert.equal(info(set)[k], undefined, set + '.' + k + ' has no default');
+  assert.equal(info('den').bark, undefined);
+  const md = fs.readFileSync(path.join(ROOT, 'docs/build.md'), 'utf8'), at = md.indexOf('## Chapter 4');
+  assert.ok(at > 0, 'build.md has a chapter 4 section');
+  const ch4 = md.slice(at);
+  for (const k of ['light', 'roar', 'corner', 'ding', 'bark', 'hidden', 'moon', 'marks: 4', 'heap', 'wink: true', 'holds: \'bark\'']) assert.ok(ch4.includes('`' + k), 'build.md, chapter 4, names ' + k);
+});
+
+// ---------------------------------------------------------------- the tower from below
+
+test('tower light: the little red light stands above the picture until a frame asks; light: true brings it down to the very top, on its mast, blinking, and the lettering keeps off it', () => {
+  const plain = towerUp({}), lit = towerUp({ light: true });
+  assert.equal(prop(plain.svg, 'light'), '', 'no light in the picture by default');
+  assert.ok(/<circle cx="800" cy="-42" r="5" fill="#FF5A4E" class="pcs-blink"\/>/.test(plain.svg), 'chapters 1-3: the mast runs out of the top of the panel, its light above it');
+  assert.deepEqual(plain.keep, []);
+  const L = prop(lit.svg, 'light');
+  assert.ok(L, 'light: true draws it');
+  const core = /<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)" fill="#FF4B3E"\/>/.exec(L);
+  assert.ok(core, 'a red lamp');
+  const [cx, cy, cr] = core.slice(1).map(Number);
+  assert.equal(cx, 800, 'on the roof\'s middle');
+  assert.ok(cy - cr > 0 && cy + cr < 40, 'at the very top, whole, above the roof line (y 40): ' + cy);
+  assert.ok(cr >= 6 && cr <= 12, 'little: r ' + cr);
+  assert.ok(/class="pcs-blink"/.test(L), 'it blinks');
+  assert.ok(/<circle cx="800" cy="[\d.]+" r="[\d.]+" fill="url\(#/.test(L), 'with a glow');
+  assert.ok(!/cy="-42"/.test(lit.svg), 'one light, not two');
+  // its mast stands on the roof, under the lamp
+  assert.ok(new RegExp('<rect x="797" y="' + cy + '" width="6" height="[\\d.]+" fill="#[0-9A-Fa-f]{6}"/>').test(lit.svg), 'a mast under it');
+  assert.equal(lit.keep.length, 1);
+  const k = lit.keep[0];
+  assert.ok(k.x < 50 && k.x + k.w > 50 && k.y === 0 && k.h >= (cy + cr) / 10, 'keep covers the light: ' + JSON.stringify(k));
+  // light: false is the picture as it was
+  assert.equal(strip(towerUp({ light: false }).svg), strip(plain.svg));
+  // in every light of the day it is drawn; the balcony cameras (no roof in them) are unchanged by it
+  for (const fx of [['day'], ['sunset'], ['dusk'], ['night'], ['morning']]) assert.ok(prop(towerUp({ light: true }, [], fx).svg, 'light'), fx + ': lit');
+  for (const cam of ['balcony', 'balcony-close']) {
+    const a = art.render({ set: 'tower', cam, opts: {}, cast: [], fx: ['day'] }).svg, b = art.render({ set: 'tower', cam, opts: { light: true, roar: true, ding: true }, cast: [], fx: ['day'] }).svg;
+    assert.equal(strip(b), strip(a), cam + ': nothing of the roof');
+  }
+});
+
+test('tower roar: jagged sound lines in the sky on both sides of the roof, three a side, in the panel, clear of the tower, the neighbours, the airplanes and Waffles\'s balcony; the roar shows the light too', () => {
+  const r = towerUp({ roar: true, chime: true }, [{ who: 'waffles', at: 'railing', pose: 'peer', mood: 'shout', facing: 'left' }]);
+  const R = prop(r.svg, 'roar');
+  assert.ok(R, 'roar: true draws them');
+  assert.equal((R.match(/class="pcs-pulse"/g) || []).length, 3, 'three rings, each pulsing');
+  const rings = R.split('class="pcs-pulse"').slice(1).map((m) => pathPoints(m.slice(0, m.indexOf('</g>'))));
+  rings.forEach((P, i) => {
+    assert.ok(P.length >= 16, 'ring ' + i + ' is jagged: ' + P.length + ' points');
+    const left = P.filter((q) => q[0] < 800), right = P.filter((q) => q[0] > 800);
+    assert.ok(left.length >= 8 && right.length >= 8, 'ring ' + i + ' stands on both sides of the roof');
+    for (const q of P) {
+      assert.ok(q[0] > 20 && q[0] < 1580 && q[1] >= 0 && q[1] < 200, 'ring ' + i + ': in the panel, up by the roof: ' + q);
+      const e = towerEdge(Math.max(40, q[1]));
+      assert.ok(q[0] < e[0] - 8 || q[0] > e[1] + 8, 'ring ' + i + ': clear of the tower: ' + q + ' edges ' + e.map(Math.round));
+      // the neighbours' near edges (x 330 on the left above y 120, x 1290 on the right from y 300), and the airplanes (x 1290-1370, y 130-170; x 270-330, y 245-275)
+      assert.ok(q[0] > 345 && q[0] < 1275, 'ring ' + i + ': in the open sky between the towers: ' + q);
+    }
+    // jagged: neighbours zig and zag across the line
+    const zig = left.slice(1).filter((q, j) => Math.abs(q[0] - left[j][0]) > 5).length;
+    assert.ok(zig >= 6, 'ring ' + i + ': zigzag');
+  });
+  // each ring stands further out than the one before
+  const out = rings.map((P) => Math.min(...P.filter((q) => q[0] > 800).map((q) => q[0])));
+  assert.ok(out[0] < out[1] && out[1] < out[2], 'further and further out: ' + out);
+  // Waffles is well below them
+  assert.ok(r.heads[0] && r.heads[0].y > 20, 'Waffles at her railing, under the roar');
+  // the roar comes from the roof: the light is in the picture with it, unless a frame says no
+  assert.ok(prop(r.svg, 'light'), 'the light shows with the roar');
+  const dark = towerUp({ roar: true, light: false });
+  assert.ok(prop(dark.svg, 'roar') && !prop(dark.svg, 'light'), 'light: false keeps it out');
+  assert.equal(prop(towerUp({ light: true }).svg, 'roar'), '', 'no roar without the option');
+});
+
+test('tower ding: a small DING! lettered at the very top, beside the red light, in the panel; the lettering keeps off it; never without the option', () => {
+  const plain = towerUp({ light: true }), r = towerUp({ light: true, ding: true });
+  assert.ok(!/DING/.test(plain.svg));
+  const D = prop(r.svg, 'ding');
+  assert.ok(D, 'ding: true letters it');
+  const t = /<text x="([\d.]+)" y="([\d.]+)" text-anchor="middle" font-family="Bangers[^"]*" font-size="([\d.]+)"[^>]*>DING!<\/text>/.exec(D);
+  assert.ok(t, 'in the sound effects\' own lettering: ' + D.slice(0, 200));
+  const [x, y, size] = t.slice(1).map(Number);
+  assert.ok(size >= 36 && size <= 56, 'small: ' + size);
+  assert.ok(y - size > -6 && y < 90, 'at the very top: baseline ' + y);
+  assert.ok(x - 800 > 40 && x - 800 < 200, 'beside the light, not on it: ' + x);
+  assert.equal(r.keep.length, 2, 'the light and the DING');
+  const k = r.keep[1];
+  assert.ok(k.x * 16 <= x - 60 && (k.x + k.w) * 16 >= x + 60 && (k.y + k.h) * 10 >= y, 'keep covers the DING: ' + JSON.stringify(k));
+  assert.ok(prop(towerUp({ ding: true }).svg, 'light'), 'the DING shows the light too');
+  const bare = towerUp({ ding: true, light: false });
+  assert.ok(prop(bare.svg, 'ding') && !prop(bare.svg, 'light') && bare.keep.length === 1, 'unless a frame says light: false');
+  // all three together: the roar stands clear of the DING
+  const all = towerUp({ light: true, roar: true, ding: true });
+  for (const q of pathPoints(prop(all.svg, 'roar'))) assert.ok(q[0] < x - 110 || q[0] > x + 110, 'the roar keeps off the DING: ' + q);
+});
+
+test('tower corner: a climber on a balcony halfway up the tower\'s edge, behind its rail, in the panel, between the ground and Waffles; her balcony is drawn bigger only when she is on it; foot: outside, in front of the glass', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('tower').anchors.up, c = A.corner, f = A.foot;
+  assert.ok(c && c.elev && c.z === 'behind', 'corner is up on a balcony, behind its rail');
+  assert.ok(c.y > 420 && c.y < 580, 'halfway up (the ground floor is at y 800, the roof at 40): ' + c.y);
+  const e = towerEdge(c.y);
+  assert.ok(Math.abs(c.x - e[1]) < 80, 'on the tower\'s right edge: ' + c.x + ' edge ' + Math.round(e[1]));
+  assert.ok(f && f.y === 1000 && f.x > 520 && f.x < 1080 && f.z !== 'behind', 'foot: on the ground in front of the ground-floor glass');
+  // ... and not in the middle of the lit window, on her old room's pink rug (an ellipse at x 850, 110 either way):
+  // right of it, across the window's frame post, so she is plainly outside
+  assert.ok(f.x > 850 + 110 + 20, 'foot: clear of the rug: ' + f.x);
+  const waffles = { who: 'waffles', at: 'railing', pose: 'peer', mood: 'shout', facing: 'left' };
+  for (const pose of ['sit', 'stretch', 'stand', 'peer', 'lookup']) {
+    const r = towerUp({ light: true, roar: true }, [waffles, { who: 'player', at: 'corner', pose, mood: 'happy', facing: 'left' }], ['sunset']);
+    const w = r.heads[0], p = r.heads[1];
+    assert.ok(w && p, pose + ': both in the panel');
+    assert.ok(p.y > w.y + 15 && p.y < 62, pose + ': below Waffles, above the ground floor: ' + JSON.stringify([w, p]));
+    assert.ok(p.r >= w.r * 0.8, pose + ': a small cat, but no smaller than Waffles nineteen floors up: ' + p.r + ' vs ' + w.r);
+    // her balcony: bigger than the little ones, its slab under her feet, its rail drawn after her (over her)
+    const B = prop(r.svg, 'corner-balcony');
+    assert.ok(B, pose + ': her balcony');
+    const slab = /<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)"/.exec(B).slice(1).map(Number);
+    assert.ok(Math.abs(slab[1] - c.y) < 0.2 && slab[0] < c.x && slab[0] + slab[2] > c.x && slab[2] > 120, pose + ': the slab holds her: ' + slab);
+    const cat = r.svg.indexOf('translate(' + c.x + ' ' + c.y + ')'), rail = r.svg.indexOf('<rect x="' + (Math.round((slab[0] + 2) * 10) / 10) + '"', cat);
+    assert.ok(cat > 0 && rail > cat, pose + ': the rail is drawn over her');
+  }
+  // nobody on it: the little balcony chapters 1-3 drew, and no other
+  assert.equal(prop(towerUp({ light: true }, [waffles]).svg, 'corner-balcony'), '');
+  // foot: in the panel at the bottom, drawn after the glass (outside it), far bigger than the climber
+  const r = towerUp({}, [waffles, { who: 'player', at: 'foot', pose: 'lookup', mood: 'wonder', facing: 'right' }, { who: 'player', at: 'corner', pose: 'sit', mood: 'happy' }]);
+  assert.ok(r.heads[1] && r.heads[1].y > 75, 'at the foot of the tower: ' + JSON.stringify(r.heads[1]));
+  assert.ok(r.heads[1].r > r.heads[2].r * 1.7, 'near, so big; the climber far, so small');
+  assert.ok(r.svg.indexOf('translate(' + f.x + ' ' + f.y + ')') > r.svg.lastIndexOf('#CDEBF0'), 'in front of the glass');
+  // the old spot behind the glass is where it was
+  assert.deepEqual([A.window.x, A.window.y, A.window.h, A.window.z], [700, 1000, 215, 'behind']);
+  // and a spot of its own in this picture is sized as it always was (220 high: the two new anchors
+  // are kept out of the composition's depth), and a cast member with no spot still goes to the window
+  const own = towerUp({}, [{ who: 'clancat', variant: 2, at: { x: 640, y: 960 }, pose: 'sit', mood: 'happy' }]);
+  assert.ok(own.svg.includes('translate(640 960) scale(1.1 1.1) translate(-100 -200)'), 'a spot of its own: 220 high');
+  const nowhere = towerUp({}, [{ who: 'clancat', variant: 2, pose: 'sit', mood: 'happy' }]);
+  assert.ok(nowhere.svg.includes('translate(700 1000) scale('), 'no spot given: the window, as before');
+});
+
+// ---------------------------------------------------------------- the den: her Case File in her nest
+
+test('den bark: her pieces of bark stand in a row along her nest\'s front edge, as many as asked for, overlapping like roof tiles, the newest in front at the middle; in the panel in every inside camera; never seen from outside; none unless asked', { skip: !art.character && 'no cats.js' }, () => {
+  for (const cam of ['nest', 'inside', 'doorway']) {
+    assert.equal(pieces(art.render(nestScene({}, {}, cam), { look: LOOK }).svg).length, 0, cam + ': no bark before the Case File');
+    for (const n of [0, 1, 2, 5, 7, 9, 12]) {
+      const scene = nestScene({ bark: n, stone: 'nose' }, {}, cam), r = art.render(scene, { look: LOOK });
+      checkRender(r, scene, 'den/' + cam + ' bark ' + n);
+      const P = pieces(r.svg), vb = viewBox(r.svg);
+      assert.equal(P.length, n, cam + ': bark ' + n + ' is ' + n + ' pieces');
+      assert.equal(corners(r.svg).length, 0, cam + ': nothing under the moss');
+      if (!n) { assert.equal(prop(r.svg, 'nest-bark'), ''); continue; }
+      for (const q of P) {
+        assert.ok(!q.flat && q.w > 30 && q.w < 50, cam + ': standing, about a paw wide (the nest is 300 across): ' + q.w);
+        assert.ok(inVb(q.x - q.w / 2, q.y - q.w * 1.2, vb, 2) && inVb(q.x + q.w / 2, q.y, vb, 2), cam + ' bark ' + n + ': in the panel: ' + JSON.stringify(q));
+        // along the nest's front edge: within its width, on the front rim (below its middle line, above its outer edge)
+        assert.ok(Math.abs(q.x - NEST_X) < 148 && q.y > 886 && q.y < 886 + 46, cam + ': on the front rim: ' + JSON.stringify(q));
+      }
+      // one row, running in toward the middle, each piece over the one before
+      for (let i = 1; i < P.length; i++) {
+        const step = P[i].x - P[i - 1].x;
+        assert.ok(step > 4 && step < P[i].w * 0.6, cam + ' bark ' + n + ': overlapping like roof tiles: step ' + step.toFixed(1) + ' of ' + P[i].w.toFixed(1));
+      }
+      assert.ok(Math.abs(P[P.length - 1].x - NEST_X) <= Math.abs(P[0].x - NEST_X), cam + ': the newest nearest the middle');
+      // the lettering keeps off the row
+      assert.ok(r.keep.length >= 1, cam + ': keep');
+      const k = r.keep[r.keep.length - 1], kx0 = vb[0] + k.x / 100 * vb[2], kx1 = vb[0] + (k.x + k.w) / 100 * vb[2], ky0 = vb[1] + k.y / 100 * vb[3];
+      for (const q of P) assert.ok(q.x > kx0 - 1 && q.x < kx1 + 1 && q.y - q.w * 1.2 >= ky0 - 1.5, cam + ' bark ' + n + ': inside keep');
+    }
+  }
+  // from outside the den nothing of it shows
+  const out = art.render({ set: 'den', cam: 'outside', opts: { bark: 9, hidden: true }, cast: [], fx: ['night'] }).svg;
+  assert.equal(pieces(out).length + corners(out).length, 0, 'not seen from outside');
+  // 'auto' is the UI's to fill from the cat; left unfilled (the gallery, the storyboard), the seven every cat holds at bedtime
+  assert.equal(pieces(art.render(nestScene({ bark: 'auto' }), { look: LOOK }).svg).length, 7);
+  // more than fit are drawn closer, never past twenty-four
+  assert.equal(pieces(art.render(nestScene({ bark: 40 }), { look: LOOK }).svg).length, 24);
+  assert.equal(pieces(art.render(nestScene({ bark: -3 }), { look: LOOK }).svg).length, 0);
+});
+
+test('den bark: the row is on the side away from her head, whichever way she lies and in every pose; no piece on her face or on Riffle\'s stone; nobody home, it stands on the left', { skip: !art.character && 'no cats.js' }, () => {
+  const s = art.sceneInfo('den').anchors.inside.nest.h / 200;
+  const STONE = /translate\(([-\d.]+) ([-\d.]+)\) rotate\(-?[\d.]+\)"><ellipse cx="0" cy="0" rx="([\d.]+)" ry="[\d.]+" fill="#24252C"/;
+  for (const facing of ['right', 'left']) for (const pose of ['lie', 'loaf', 'curl', 'sit', 'pawup', 'flat', 'crouch']) for (const stone of [true, 'nose', 'chin']) for (const opts of [{ bark: 9 }, { bark: 9, hidden: true }, { bark: 5 }]) {
+    const scene = nestScene(Object.assign({ stone }, opts), { pose, facing }), r = art.render(scene, { look: LOOK }), label = [pose, facing, stone, JSON.stringify(opts)].join(' ');
+    const P = pieces(r.svg), C = corners(r.svg), dir = facing === 'left' ? 1 : -1;
+    assert.equal(P.length, opts.hidden ? opts.bark - 2 : opts.bark, label);
+    for (const q of P.concat(C)) assert.ok(dir * (q.x - NEST_X) > -8, label + ': away from her head: ' + q.x);
+    const head = worldHeadBox(r, 0, scene, 'player', Object.assign({ pose, mood: 'happy', facing, look: LOOK }, LOOK.sex ? { sex: LOOK.sex } : {}), s).box;
+    for (const q of P) {
+      const box = [q.x - q.w / 2, q.y - q.w * 1.2, q.x + q.w / 2, q.y];
+      // (her whiskers and cheek fur reach past her face; a piece may stand under her chin's edge, never over her eyes, nose or mouth)
+      const fx0 = head[0] + (head[2] - head[0]) * 0.2, fx1 = head[2] - (head[2] - head[0]) * 0.2, fy1 = head[3] - (head[3] - head[1]) * 0.12;
+      assert.ok(box[2] < fx0 || box[0] > fx1 || box[1] > fy1, label + ': a piece on her face: ' + box.map(Math.round) + ' face ' + head.map(Math.round));
+    }
+    const st = STONE.exec(r.svg);
+    assert.ok(st, label + ': her stone is drawn');
+    for (const q of P.concat(C.map((c) => ({ x: c.x, y: c.y, w: 30 })))) assert.ok(Math.abs(q.x - +st[1]) > q.w / 2 + +st[3] - 2 || +st[2] < q.y - q.w * 1.2, label + ': a piece on the stone: ' + JSON.stringify(q) + ' stone ' + st.slice(1, 4));
+  }
+  const empty = pieces(art.render(nestScene({ bark: 6 }, null), { look: LOOK }).svg);
+  assert.ok(empty.length === 6 && empty.every((q) => q.x < NEST_X + 8), 'nobody in the nest: on the left');
+});
+
+test('den hidden: the two about Sprinkle go under the moss: two fewer in the row, two corners showing at its inner end, small; with a list of her cards, those two by their pictures, else the newest two', { skip: !art.character && 'no cats.js' }, () => {
+  for (const cam of ['nest', 'inside', 'doorway']) for (const n of [2, 5, 7, 9]) {
+    const scene = nestScene({ bark: n, hidden: true }, { pose: 'loaf' }, cam), r = art.render(scene, { look: LOOK }), vb = viewBox(r.svg);
+    checkRender(r, scene, 'den/' + cam + ' hidden ' + n);
+    const P = pieces(r.svg), C = corners(r.svg), open = pieces(art.render(nestScene({ bark: n }, { pose: 'loaf' }, cam), { look: LOOK }).svg);
+    assert.equal(P.length, n - 2, cam + ' ' + n + ': two fewer in the row');
+    assert.equal(open.length, n);
+    assert.equal(C.length, 2, cam + ' ' + n + ': two corners');
+    for (const c of C) {
+      assert.ok(inVb(c.x, c.y - 24, vb, 2) && inVb(c.x, c.y, vb, 2), cam + ': the corners are in the panel: ' + JSON.stringify(c));
+      assert.ok(c.y > 886 && c.y < 886 + 50 && Math.abs(c.x - NEST_X) < 120, cam + ': in the front rim\'s moss');
+      // at the row's inner end: nearer the middle than every piece standing
+      for (const q of P) assert.ok(Math.abs(c.x - NEST_X) < Math.abs(q.x - NEST_X), cam + ' ' + n + ': past the row\'s inner end');
+    }
+    assert.ok(Math.abs(C[0].x - C[1].x) > 10, 'two, side by side');
+  }
+  // a corner is a corner: far smaller than a piece (a piece is about 40 by 48), and moss is drawn over its foot
+  const svg = art.render(nestScene({ bark: 7, hidden: true }), { look: LOOK }).svg, N = prop(svg, 'nest-bark');
+  const cornerPath = /data-bark="corner"><path d="([^"]+)"/.exec(N)[1].match(/-?[\d.]+/g).map(Number);
+  const xs = cornerPath.filter((v, i) => i % 2 === 0), ys = cornerPath.filter((v, i) => i % 2 === 1);
+  assert.ok(Math.max(...xs) - Math.min(...xs) < 36 && Math.max(...ys) - Math.min(...ys) < 30, 'a corner, not a card');
+  assert.ok(N.lastIndexOf('data-bark="corner"') < N.lastIndexOf('<path d="M'), 'moss tufts are drawn after the bark, over its foot');
+  // hidden alone still shows the two corners (she has put two under, whatever the row holds)
+  const alone = art.render(nestScene({ hidden: true }), { look: LOOK }).svg;
+  assert.equal(pieces(alone).length, 0);
+  assert.equal(corners(alone).length, 2);
+  // which two: with her cards as a list, the two about Sprinkle, wherever they are in it
+  const asked = [];
+  const spy = (o) => { asked.push(o.blank ? '(blank)' : o.picture); return { svg: '<rect class="spy-card" width="200" height="240" fill="#EDE1C5"/>', w: 200, h: 240 }; };
+  const row = (opts) => { asked.length = 0; withCards(spy, () => art.render(nestScene(opts), { look: LOOK })); return asked.slice(); };
+  assert.deepEqual(row({ bark: ['four-a-night', 'sprinkle-scales', 'tidy', 'cant-fly', 'scale'], hidden: true }), ['four-a-night', 'tidy', 'scale']);
+  assert.deepEqual(row({ bark: ['four-a-night', 'sprinkle-scales', 'tidy', 'cant-fly', 'scale'] }), ['four-a-night', 'sprinkle-scales', 'tidy', 'cant-fly', 'scale'], 'not hidden: the list as given, oldest first');
+  assert.deepEqual(row({ bark: [{ picture: 'four-a-night', mark: 'eye' }, { picture: 'tidy', mark: 'eye' }, { picture: 'cant-fly', mark: 'eye' }, { picture: 'later', mark: 'ear' }], hidden: true }), ['four-a-night', 'tidy'], 'one of the two is in the list: it, and the newest other');
+  assert.deepEqual(row({ bark: ['a', null, 'b'] }), ['a', '(blank)', 'b'], 'a blank piece in a list');
+  // a number: chapter 4's cards in the order every cat finds them; the eighth and ninth where they fall; more are blank
+  assert.deepEqual(row({ bark: 3 }), ['four-a-night', 'tidy', 'scale']);
+  assert.deepEqual(row({ bark: 7 }), ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly']);
+  assert.deepEqual(row({ bark: 7, hidden: true }), ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon'], 'the wing and the scales are the two under the moss');
+  // (an eighth is the dug earth, not Squall's shapes: a number never puts his clue in the nest of a cat who has not met him)
+  assert.deepEqual(row({ bark: 8 }), ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly']);
+  assert.ok(!row({ bark: 8, hidden: true }).includes('squall-shapes'));
+  assert.deepEqual(row({ bark: 9 }), ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly']);
+  assert.deepEqual(row({ bark: 9, hidden: true }), ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes']);
+  assert.deepEqual(row({ bark: 11 }).slice(0, 3), ['(blank)', '(blank)', 'four-a-night']);
+  // every piece carries its mark when a number is given (an eye for what she saw, an ear for what she was told)
+  const marks = [];
+  withCards((o) => { marks.push(o.mark); return spy(o); }, () => art.render(nestScene({ bark: 9 }), { look: LOOK }));
+  assert.deepEqual(marks, ['eye', 'eye', 'eye', 'eye', 'ear', 'ear', 'ear', 'eye', 'eye']);
+});
+
+test('den bark is the Case File\'s own bark: cards.js\'s pieces when it is loaded (her real cards), a plain piece of ours when it is not or when it fails; washed with the night as the cats are', { skip: !art.character && 'no cats.js' }, () => {
+  const scene = nestScene({ bark: 4 });
+  if (typeof art.cardGroup === 'function') {
+    const svg = art.render(scene, { look: LOOK }).svg, N = prop(svg, 'nest-bark');
+    const card = art.cardGroup({ picture: 'four-a-night', mark: 'eye' });
+    assert.ok(N.includes(card.svg), 'the first piece is her first card, exactly as cards.js draws it');
+    assert.ok(N.includes(art.cardGroup({ picture: 'fox-flew', mark: 'ear' }).svg), 'and the fox\'s FLEW, with its ear');
+    checkRender(art.render(scene, { look: LOOK }), scene, 'cards.js pieces');
+  }
+  for (const broken of [null, () => { throw new Error('no'); }, () => ({ svg: '', w: 200, h: 240 }), () => ({ svg: '<g/>', w: 0, h: 0 }), () => 'junk']) {
+    const r = withCards(broken, () => art.render(scene, { look: LOOK }));
+    checkRender(r, scene, 'our own bark');
+    const N = prop(r.svg, 'nest-bark');
+    assert.equal(pieces(r.svg).length, 4);
+    assert.ok(N.includes('fill="#EDE1C5" stroke="#8A7350"'), 'pale papery bark, in the cards\' own colours');
+    assert.equal((N.match(/stroke="#3A281E" stroke-width="4.3"/g) || []).length, 4, 'something scratched on each');
+  }
+  // by night the bark takes the same wash as the cats' fur; by day it is plain
+  assert.ok(/<g filter="url\(#[^)]*-f-tint\)"><g transform="[^"]+" data-bark=/.test(prop(art.render(scene, { look: LOOK }).svg, 'nest-bark')), 'night wash');
+  assert.ok(/data-count="4"><g><g transform="[^"]+" data-bark=/.test(prop(art.render(nestScene({ bark: 4 }, {}, 'nest', ['morning']), { look: LOOK }).svg, 'nest-bark')), 'no wash in the morning');
+});
+
+test('den moon, chapter 4: asked for at dusk (or sunset) from outside, the young moon, thin as a curl of bark and low over the towers; by night the crescent chapter 2 drew; never under cloud, by day or from inside', () => {
+  const den = (cam, opts, fx) => art.render({ set: 'den', cam, opts, cast: [], fx }, { look: LOOK }).svg;
+  const dusk = den('outside', { moon: true }, ['dusk']), M = prop(dusk, 'thin-moon');
+  assert.ok(M, 'a moon at dusk');
+  checkRender({ svg: dusk, heads: [] }, { cast: [] }, 'den outside, dusk, moon');
+  const at = /<g transform="translate\(([\d.]+) ([\d.]+)\) rotate\((-?[\d.]+)\)">/.exec(M).slice(1).map(Number);
+  const arc = /<path d="M0 -([\d.]+)A([\d.]+) [\d.]+ 0 0 1 0 [\d.]+A([\d.]+) [\d.]+ 0 0 0 0 -[\d.]+Z" fill="#FFF3D2"\/>/.exec(M).slice(1).map(Number);
+  const r = arc[0], thick = (arc[1] - arc[2]) / arc[1];
+  assert.ok(thick > 0.08 && thick <= 0.25, 'thin: a sliver ' + Math.round(thick * 100) + '% of its radius across');
+  assert.ok(at[0] - r > 0 && at[0] + r < 1600 && at[1] - r > 0, 'whole, in the panel: ' + at);
+  // low over the towers at the right (their tops are at y 200 and 280): just above them, not high in the sky
+  assert.ok(at[0] > 1380 && at[1] + r < 200 && at[1] + r > 120, 'low over the towers: ' + at);
+  assert.ok(at[2] > 10 && at[2] < 80, 'lit from below right, where the sun went down');
+  assert.ok(prop(den('outside', { moon: true }, ['sunset']), 'thin-moon'), 'at sunset too');
+  // by night it is the moon chapter 2 drew, where it was
+  const night = den('outside', { moon: true }, ['night']);
+  assert.ok(!prop(night, 'thin-moon') && night.includes('#FFF3D2') && /<circle cx="1330" cy="150" r="132"/.test(night), 'the night\'s crescent is unchanged');
+  for (const [opts, fx, why] of [[{ moon: true, weather: 'cloudy' }, ['dusk'], 'cloud'], [{ moon: false }, ['dusk'], 'not asked for'], [{}, ['dusk'], 'the default'], [{ moon: true }, ['morning'], 'morning'], [{ moon: true }, ['day'], 'day']]) {
+    const svg = den('outside', opts, fx);
+    assert.ok(!prop(svg, 'thin-moon') && !svg.includes('#FFF3D2'), 'no moon: ' + why);
+  }
+  for (const cam of ['inside', 'nest', 'doorway']) assert.ok(!prop(den(cam, { moon: true }, ['dusk']), 'thin-moon'), cam + ': never from inside');
+});
+
+// ---------------------------------------------------------------- the Training Hollow
+
+test('hollow, chapter 4: four marks, the first three a little deeper; a curl of bark falls from the newest in every camera, clear of the cast; later it lies on the sand; then a row of pieces, her first card at its head', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('hollow').anchors.main;
+  const hollow = (cam, opts, cast, fx) => {
+    const scene = { set: 'hollow', cam, opts, cast: cast || [], fx: fx || ['morning'] }, r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'hollow/' + cam + ' ' + JSON.stringify(opts));
+    return r;
+  };
+  // four marks; by default every mark but the newest is deeper (a dark groove down the middle)
+  const four = hollow('tree', { marks: 4 }).svg;
+  assert.equal(shapes(four, 'fill="#3A281E"').length, 12, 'four marks, three scratches each');
+  assert.equal(shapes(four, 'fill="#6B4A32" opacity="0.9"').length, 9, 'the first three are deeper; the fourth is fresh');
+  assert.equal(prop(four, 'bark-falling') + prop(four, 'bark-sand') + prop(four, 'bark-row'), '', 'no bark unless asked');
+  const curlAt = (svg, name) => { const m = /<g transform="translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+) [\d.]+\) rotate\((-?[\d.]+)\)">/.exec(prop(svg, name)); return m ? m.slice(1).map(Number) : null; };
+  // falling: one curl, in the air, in the panel, in every camera, with the lettering kept off it
+  const newest = shapes(four, 'fill="#3A281E"').slice(9).flat(), markY = Math.max(...newest.map((p) => p[1]));
+  for (const cam of ['tree', 'lesson', 'wide', 'sand']) {
+    const r = hollow(cam, { marks: 4, bark: 'falling' }), c = curlAt(r.svg, 'bark-falling'), vb = viewBox(r.svg);
+    assert.ok(c, cam + ': a curl of bark');
+    assert.ok(inVb(c[0] - 34, c[1] - 22, vb, 2) && inVb(c[0] + 34, c[1] + 22, vb, 2), cam + ': whole, in the panel: ' + c);
+    assert.ok(c[1] < 860, cam + ': in the air, not yet on the sand');
+    if (cam !== 'sand') assert.ok(c[1] > markY - 80, cam + ': below the newest mark (or just beside it): ' + c + ' mark ' + markY);
+    assert.ok(Math.abs(c[3]) > 10, cam + ': tumbling');
+    const k = r.keep[r.keep.length - 1], kx = vb[0] + (k.x + k.w / 2) / 100 * vb[2], ky = vb[1] + (k.y + k.h / 2) / 100 * vb[3];
+    // (the marks' own keep comes first, in the cameras that see them)
+    assert.ok(r.keep.length === (cam === 'sand' ? 1 : 2) && Math.abs(kx - c[0]) < 4 && Math.abs(ky - c[1]) < 4, cam + ': keep: ' + JSON.stringify(r.keep));
+    // it has come off the tree: clear of the claw marks themselves
+    for (const p of shapes(r.svg, 'fill="#3A281E"').flat()) assert.ok(Math.abs(p[0] - c[0]) > 34 || Math.abs(p[1] - c[1]) > 20, cam + ': off the marks');
+  }
+  // clear of the cast: Tallyheart stretching up the trunk, our cat on the sand (the SKRITCH panel, wide or two-shot)
+  const s = (a) => a.h / 200;
+  for (const cam of ['lesson', 'wide', 'tree']) for (const cast of [
+    [{ who: 'tallyheart', at: 'tree', pose: 'stretch', mood: 'proud', facing: 'right' }, { who: 'player', at: 'sand-right', pose: 'sit', mood: 'wonder', facing: 'right' }],
+    [{ who: 'tallyheart', at: 'tree', pose: 'stretch', mood: 'proud', facing: 'right' }, { who: 'player', at: 'sunpatch-3', pose: 'lookup', mood: 'wonder', facing: 'right' }],
+    [{ who: 'tallyheart', at: 'tree', pose: 'stretch', mood: 'proud', facing: 'left' }, { who: 'player', at: 'sand-left', pose: 'sit', mood: 'wonder', facing: 'right' }, { who: 'grizzled', at: 'rim-5', pose: 'walk', mood: 'stern', facing: 'left' }]
+  ]) {
+    const r = hollow(cam, { marks: 4, bark: 'falling' }, cast), c = curlAt(r.svg, 'bark-falling'), vb = viewBox(r.svg);
+    assert.ok(c && inVb(c[0], c[1], vb, 20), cam + ': the curl is in the panel with the cast there');
+    cast.forEach((m, i) => {
+      if (!r.heads[i]) return;
+      const b = worldBodyBox(r, i, m.who, Object.assign({ pose: m.pose, mood: m.mood, facing: m.facing }, m.who === 'player' ? { look: LOOK, sex: LOOK.sex } : {}), s(A[m.at]));
+      assert.ok(c[0] + 30 < b[0] || c[0] - 30 > b[2] || c[1] + 18 < b[1] || c[1] - 18 > b[3], cam + ': the curl is clear of ' + m.who + ': ' + c + ' body ' + b.map(Math.round));
+    });
+  }
+  // sand: the one curl, lying between the two sand spots at the cats' feet, in every camera that sees the sand
+  const between = (x, y, what) => assert.ok(x > A['sand-left'].x + 60 && x < A['sand-right'].x - 60 && Math.abs(y - A['sand-left'].y) < 30, what + ': on the sand between the two sand spots: ' + [x, y]);
+  for (const cam of ['lesson', 'sand', 'wide']) {
+    const r = hollow(cam, { marks: 4, bark: 'sand' }, [{ who: 'tallyheart', at: 'sand-left', pose: 'sit', mood: 'kind', facing: 'right' }, { who: 'player', at: 'sand-right', pose: 'flat', mood: 'sleepy', facing: 'left' }], ['day']);
+    const c = curlAt(r.svg, 'bark-sand'), vb = viewBox(r.svg);
+    assert.ok(c && inVb(c[0] - 36, c[1] - 14, vb, 2) && inVb(c[0] + 36, c[1] + 18, vb, 2), cam + ': the curl, whole, in the panel: ' + c);
+    between(c[0], c[1], cam);
+    assert.ok(Math.abs(c[3]) < 15, cam + ': lying still');
+    assert.equal(pieces(r.svg).length, 0, 'a curl, not yet a card');
+    assert.ok(/<ellipse [^>]*opacity="0.3"\/>/.test(prop(r.svg, 'bark-sand')), 'its shadow on the sand');
+  }
+  // row: her first card at the head (scratched), then three blank pieces, lying flat in a row
+  for (const cam of ['lesson', 'sand', 'wide']) {
+    const r = hollow(cam, { marks: 4, bark: 'row' }, [], ['day']), P = pieces(r.svg), vb = viewBox(r.svg);
+    assert.deepEqual(P.map((q) => q.kind), ['card', 'blank', 'blank', 'blank'], cam + ': her first card, then three blank pieces');
+    P.forEach((q, i) => {
+      assert.ok(q.flat, cam + ': lying on the sand');
+      between(q.x, q.y, cam + ' piece ' + i);
+      assert.ok(inVb(q.x - q.w / 2 - 6, q.y - q.w * 0.7, vb, 1) && inVb(q.x + q.w / 2 + 6, q.y + 2, vb, 1), cam + ': in the panel: ' + JSON.stringify(q));
+      if (i) assert.ok(q.x - P[i - 1].x > q.w * 0.9, cam + ': side by side, none on another');
+    });
+  }
+  if (typeof art.cardGroup === 'function') assert.ok(prop(hollow('sand', { bark: 'row' }).svg, 'bark-row').includes(art.cardGroup({ picture: 'four-a-night', mark: 'eye' }).svg), 'the first is this morning\'s row, with its eye');
+  // row with `cards`: the row as she has scratched it by this panel, card for card, then `blank` blank pieces
+  const asked = [];
+  const rowOf = (opts, cam) => withCards((o) => { asked.push(o); return { svg: '<path d="M0 0h200v240H0z"/>', w: 200, h: 240 }; }, () => { asked.length = 0; return hollow(cam || 'lesson', Object.assign({ marks: 4, bark: 'row' }, opts), [], ['day']); });
+  const SIX = [{ picture: 'four-a-night', mark: 'eye' }, { picture: 'tidy', mark: 'eye' }, { picture: 'dug-earth', mark: 'eye' }, { picture: 'scale', mark: 'eye' }, { picture: 'fox-flew', mark: 'ear' }, { picture: 'fox-moon', mark: 'ear' }];
+  for (const cam of ['lesson', 'sand', 'wide']) {
+    for (const [cards, blank] of [[SIX.slice(0, 2), 1], [SIX.slice(0, 4), 1], [SIX.slice(0, 5), 0], [SIX, 0], [SIX, 1], [[], 2], [SIX.slice(0, 1), 3]]) {
+      const r = rowOf({ cards, blank }, cam), P = pieces(r.svg), vb = viewBox(r.svg), what = cam + ' ' + cards.length + '+' + blank;
+      assert.deepEqual(P.map((q) => q.kind), cards.map(() => 'card').concat(Array(blank).fill('blank')), what + ': her cards, then the blank pieces');
+      assert.deepEqual(asked, cards.map((c) => ({ picture: c.picture, mark: c.mark })).concat(Array(blank).fill({ blank: true })), what + ': each card with its own picture and mark, in order');
+      P.forEach((q, i) => {
+        assert.ok(q.flat, what + ': lying on the sand');
+        between(q.x, q.y, what + ' piece ' + i);
+        assert.ok(inVb(q.x - q.w / 2 - 6, q.y - q.w * 0.7, vb, 1) && inVb(q.x + q.w / 2 + 6, q.y + 2, vb, 1), what + ': in the panel: ' + JSON.stringify(q));
+        if (i) assert.ok(q.x - P[i - 1].x > q.w * 0.9, what + ': side by side, none on another');
+      });
+      // the lettering keeps off the whole row, however long it is
+      const k = r.keep[r.keep.length - 1], x0 = vb[0] + k.x * vb[2] / 100, x1 = x0 + k.w * vb[2] / 100;
+      if (P.length) assert.ok(x0 <= P[0].x - P[0].w / 2 && x1 >= P[P.length - 1].x + P[P.length - 1].w / 2, what + ': the keep area covers the row: ' + [x0, x1]);
+    }
+  }
+  // up to five pieces lie as far apart as the four always did; with no list the row is what it was
+  assert.deepEqual(pieces(rowOf({ cards: SIX.slice(0, 4), blank: 0 }).svg).map((q) => [q.x, q.y, q.w]), pieces(hollow('lesson', { marks: 4, bark: 'row' }, [], ['day']).svg).map((q) => [q.x, q.y, q.w]), 'four pieces: where the four have always lain');
+  // the story's own entries, before the page has resolved them: a key, or { id }, with chapter 4's mark for that picture
+  rowOf({ cards: ['four-a-night', { id: 'dug-earth', when: { specialty: 'noticing' } }, 'fox-flew', { id: 'fox-moon' }, { picture: 'scale', mark: null }], blank: 0 });
+  assert.deepEqual(asked, [{ picture: 'four-a-night', mark: 'eye' }, { picture: 'dug-earth', mark: 'eye' }, { picture: 'fox-flew', mark: 'ear' }, { picture: 'fox-moon', mark: 'ear' }, { picture: 'scale', mark: null }]);
+  // `cards` and `blank` mean nothing without the row; a list that is not a list is the plain row
+  assert.equal(pieces(hollow('sand', { bark: 'sand', cards: SIX, blank: 2 }).svg).length, 0);
+  assert.deepEqual(pieces(hollow('sand', { bark: 'row', cards: 'auto', blank: 2 }).svg).map((q) => q.kind), ['card', 'blank', 'blank', 'blank']);
+  assert.deepEqual([art.vocab.sets.hollow.opts.cards, art.vocab.sets.hollow.opts.blank], ['cards', [0, 1, 2, 3]]);
+  // the row is not the nest's: unknown values draw nothing
+  for (const v of [true, 'auto', 3, 'heap']) assert.equal(pieces(hollow('sand', { bark: v }).svg).length, 0, 'bark: ' + v + ' is not a hollow value');
+});
+
+test('hollow heap: FLUMP, the five rim spots close up into a pile in the middle of the rim, three on the ground and two flopped over them, every face in the panel; nobody else moves; without it the rim is the row it was', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('hollow').anchors.main;
+  const poses = ['fall', 'tummy', 'flat', 'lie', 'fall'];
+  const five = [1, 2, 3, 4, 5].map((i) => ({ who: i === 5 ? 'grizzled' : 'clancat', at: 'rim-' + i, pose: poses[i - 1], mood: 'laugh', variant: i, facing: i % 2 ? 'left' : 'right' }));
+  const others = [{ who: 'tallyheart', at: 'tree-far', pose: 'sit', mood: 'laugh', facing: 'left', size: 1.2 }, { who: 'player', at: 'sunpatch-2', pose: 'sit', mood: 'laugh', facing: 'right' }];
+  const draw = (cam, heap) => {
+    const scene = { set: 'hollow', cam, opts: heap ? { marks: 4, heap: true } : { marks: 4 }, cast: five.concat(others), fx: ['morning'] }, r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'hollow/' + cam + (heap ? ' heap' : ' row'));
+    return r;
+  };
+  const wx = (r, i) => viewBox(r.svg)[0] + r.heads[i].x / 100 * viewBox(r.svg)[2], wy = (r, i) => viewBox(r.svg)[1] + r.heads[i].y / 100 * viewBox(r.svg)[3];
+  for (const cam of ['wide', 'lesson']) {
+    const row = draw(cam, false), heap = draw(cam, true);
+    for (let i = 0; i < 5; i++) assert.ok(heap.heads[i], cam + ': rim-' + (i + 1) + '\'s face is in the panel');
+    const hx = [0, 1, 2, 3, 4].map((i) => wx(heap, i)), rx = [0, 1, 2, 3, 4].map((i) => wx(row, i));
+    const span = Math.max(...hx) - Math.min(...hx), was = Math.max(...rx) - Math.min(...rx);
+    assert.ok(span < was * 0.62, cam + ': closed up: heads span ' + Math.round(span) + ' where the row spans ' + Math.round(was));
+    const mid = (Math.max(...hx) + Math.min(...hx)) / 2;
+    assert.ok(Math.abs(mid - A['rim-3'].x) < 70, cam + ': in the middle of the rim: ' + Math.round(mid));
+    // two flopped over the others: the second and fourth lie higher than the three on the ground
+    const hy = [0, 1, 2, 3, 4].map((i) => wy(heap, i));
+    assert.ok(Math.max(hy[1], hy[3]) < Math.min(hy[0], hy[2], hy[4]) + 10, cam + ': two on top: ' + hy.map(Math.round));
+    // a pile: each one lies partly on the one before (their bodies overlap)
+    const body = five.map((m, i) => { const t = new RegExp('translate\\(([\\d.]+) ([\\d.]+)\\) scale\\(([\\d.]+) [\\d.]+\\) translate\\(-100 -200\\)', 'g'); return [...heap.svg.matchAll(t)][i].slice(1).map(Number); });
+    for (let i = 1; i < 5; i++) assert.ok(Math.abs(body[i][0] - body[i - 1][0]) < 200 * body[i][2] * 0.6, cam + ': rim-' + (i + 1) + ' lies on rim-' + i);
+    // nobody else moves
+    for (const i of [5, 6]) assert.deepEqual(heap.heads[i], row.heads[i], cam + ': ' + others[i - 5].who + ' stays where she was');
+    // one soft shadow under the whole pile
+    assert.ok(prop(heap.svg, 'heap') && !prop(row.svg, 'heap'), cam + ': the pile\'s shadow');
+  }
+  // the heap is the option's: the anchors themselves are where chapters 2 and 3 put them
+  assert.deepEqual([1, 2, 3, 4, 5].map((i) => [A['rim-' + i].x, A['rim-' + i].y, A['rim-' + i].h]), [[490, 786, 223], [635, 774, 216], [780, 770, 214], [925, 774, 216], [1070, 786, 223]]);
+  // a falling curl still clears a cat in the heap
+  const scene = { set: 'hollow', cam: 'lesson', opts: { marks: 4, heap: true, bark: 'falling' }, cast: five, fx: ['morning'] };
+  checkRender(art.render(scene, { look: LOOK }), scene, 'heap and falling bark');
+});
+
+// ---------------------------------------------------------------- the new cast extras, and the two new characters
+
+test('chapter 4 cast extras reach the drawing: wink, flick and holds: \'bark\' (with holdAt); they are the painter\'s, and nothing of the scene\'s leaks in', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, calls = [];
+  const spy = function (who, opts) { calls.push({ who, opts: Object.assign({}, opts) }); return real(who, opts); };
+  const cast = [
+    { who: 'tallyheart', pose: 'peer', mood: 'happy', at: 'doorway', facing: 'left', wink: true },
+    { who: 'player', pose: 'pawup', mood: 'wonder', at: 'nest', facing: 'right', holds: 'bark', holdAt: 'paws', claws: true },
+    { who: 'reynard', pose: 'sit', mood: 'proud', at: 'sleeper-1', flick: true, size: 0.9 },
+    { who: 'snorer', pose: 'curl', mood: 'sleepy', at: 'sleeper-2' }
+  ];
+  const scene = { set: 'den', cam: 'inside', opts: { bark: 'auto' }, cast, fx: ['night'] };
+  const r = withCharacter(spy, () => art.render(scene, { look: LOOK }));
+  checkRender(r, scene, 'chapter 4 extras');
+  cast.forEach((m, i) => {
+    const call = calls.find((c) => c.who === m.who && c.opts.pose === m.pose && c.opts.mood === m.mood && c.opts.facing);
+    assert.ok(call, m.who + ' is drawn');
+    for (const k of ['wink', 'flick', 'holds', 'holdAt', 'claws']) assert.equal(call.opts[k], m[k], i + ' ' + m.who + ': ' + k);
+    for (const k of ['size', 'at', 'purr', 'lift']) assert.equal(call.opts[k], undefined, i + ' ' + m.who + ': ' + k + ' stays the scene\'s');
+  });
+  // a held piece of bark is the cat's to draw (cats.js); the sparkle effect never twinkles on it
+  const fake = function (who, opts) { const c = real(who, opts); return opts && opts.holds ? Object.assign({}, c, { held: { what: opts.holds, at: 'paws', x: c.w / 2, y: c.h * 0.85, r: 9 } }) : c; };
+  const tw = withCharacter(fake, () => { const s = art.render({ set: 'den', cam: 'nest', cast: [{ who: 'player', pose: 'sit', mood: 'happy', at: 'nest', holds: 'bark' }], fx: ['night', 'sparkle'] }, { look: LOOK }).svg; return (s.slice(s.indexOf('class="pcs-fx">')).match(/class="pcs-tw"/g) || []).length; });
+  assert.equal(tw, 18, 'bark does not sparkle: the sparkles scatter');
+});
+
+// Stand-ins for the two new characters, each far too big, to see the scenes hold them to size: a fox
+// 260 tall with a brush that fills half his box, and a dragonet as tall as a grown cat with wings.
+const FOX = { w: 320, h: 260, head: { x: 232, y: 62 }, headBox: { x0: 190, y0: 20, x1: 276, y1: 100 }, bounds: { x0: 20, y0: 8, x1: 280, y1: 258 } };
+const WHELP = { w: 260, h: 220, head: { x: 150, y: 60 }, headBox: { x0: 100, y0: 20, x1: 200, y1: 104 }, bounds: { x0: 40, y0: 20, x1: 220, y1: 218 } };
+function fakeNewcomers(real, fox, whelp) {
+  return function (who, opts) {
+    if (who !== 'reynard' && who !== 'squall') return real(who, opts);
+    const b = JSON.parse(JSON.stringify(who === 'reynard' ? fox : whelp));
+    // a pose with a different box: dashing off, he is long and low; standing tall, the dragonet is taller
+    if (opts && (opts.pose === 'dash' || opts.pose === 'tall')) { b.h += 60; b.head.y += 30; b.headBox.y0 += 30; b.headBox.y1 += 30; b.bounds.y1 += 60; }
+    return Object.assign({ svg: '<rect class="new-' + who + '" x="' + b.bounds.x0 + '" y="' + b.bounds.y0 + '" width="' + (b.bounds.x1 - b.bounds.x0) + '" height="' + (b.bounds.y1 - b.bounds.y0) + '" fill="#D8642A"/>' }, b);
+  };
+}
+// the scale a drawing was placed at, from its box's transform (feet at x, y; a w x h box)
+const placedScale = (svg, a, w, h) => { const m = new RegExp('translate\\(' + a.x + ' ' + a.y + '\\) scale\\(([\\d.]+) [\\d.]+\\) translate\\(-' + (w / 2) + ' -' + h + '\\)').exec(svg); return m ? +m[1] : null; };
+const sitTall = (who, look) => { const c = art.character(who, Object.assign({ pose: 'sit', mood: 'neutral' }, look ? { look, sex: look.sex } : {})); return c.h - c.headBox.y0; };
+
+test('Reynard at a cat\'s anchor is about Tallyheart\'s size and never bigger: sitting, the top of his head is no higher than hers would be there, whatever his box, his brush or the frame\'s size; every pose is scaled alike; never bigger in a panel than she is in it', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, tally = sitTall('tallyheart');
+  const near = (a, b, what) => assert.ok(Math.abs(a - b) < 0.0002, what + ': ' + a + ' vs ' + b);
+  withCharacter(fakeNewcomers(real, FOX, WHELP), () => {
+    const a = art.sceneInfo('title').anchors.main.wall, base = a.h / 200, tall = FOX.h - FOX.headBox.y0;
+    const fox = (m, cast) => { const scene = { set: 'title', cam: 'wide', cast: [Object.assign({ who: 'reynard', pose: 'sit', mood: 'happy', at: 'wall', facing: 'left' }, m)].concat(cast || []), fx: ['day'] }; const r = art.render(scene, { look: LOOK }); checkRender(r, scene, 'reynard ' + JSON.stringify(m)); return r; };
+    const r = fox({}), s = placedScale(r.svg, a, FOX.w, FOX.h);
+    assert.ok(s, 'his box, feet on the wall');
+    // head-top to feet, on screen: exactly Tallyheart's sitting there (his box is 260 of the cats' units tall, hers 200)
+    near(s, Math.round(base * tally / tall * 10000) / 10000, 'capped to her height');
+    assert.ok(s * tall <= base * tally + 0.05 && s < base, 'never bigger: ' + (s * tall).toFixed(1) + ' against her ' + (base * tally).toFixed(1));
+    // every pose at the same scale (a taller box does not shrink him further, nor a size above 1 grow him)
+    near(placedScale(fox({ pose: 'dash' }).svg, a, FOX.w, FOX.h + 60), s, 'dashing off');
+    near(placedScale(fox({ size: 1.4 }).svg, a, FOX.w, FOX.h), s, 'size 1.4 is held to the cap');
+    near(placedScale(fox({ size: 0.5 }).svg, a, FOX.w, FOX.h), Math.round(base * 0.5 * 10000) / 10000, 'a size can make him smaller');
+    // his face is lettered like anyone's: a head point and r from his head box
+    const cat = real('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }), hb = cat.headBox, share = 0.2 * cat.h / ((hb.x1 - hb.x0 + hb.y1 - hb.y0) / 2);
+    assert.ok(r.heads[0] && Math.abs(r.heads[0].r - share * ((FOX.headBox.x1 - FOX.headBox.x0) + (FOX.headBox.y1 - FOX.headBox.y0)) / 2 * s / 1600 * 100) < 0.02, 'r from his head box: ' + JSON.stringify(r.heads[0]));
+    // his shadow lies under his body, not under his whole box (which is half brush)
+    const shade = [...r.svg.matchAll(/<ellipse cx="([-\d.]+)" cy="([-\d.]+)" rx="([\d.]+)" ry="[\d.]+" fill="#[0-9A-F]{6}" opacity="0.3"\/>/g)].map((m) => m.slice(1).map(Number)).filter((e) => Math.abs(e[1] - (a.y - 1)) < 0.2);
+    assert.ok(shade.length === 1 && Math.abs(shade[0][2] - (FOX.bounds.x1 - FOX.bounds.x0) * s * 0.42) < 0.3, 'shadow as wide as his body: ' + JSON.stringify(shade));
+    // beside Tallyheart on the same wall: the top of his head comes no higher than the tips of her ears
+    const w2 = art.sceneInfo('title').anchors.main['wall-2'], both = fox({ at: 'wall-2' }, [{ who: 'tallyheart', pose: 'sit', mood: 'stern', at: 'wall', facing: 'left' }]);
+    const hisTop = w2.y - tall * placedScale(both.svg, w2, FOX.w, FOX.h), herTop = a.y - tally * base;
+    assert.ok(both.heads[0] && both.heads[1] && hisTop >= herTop - 0.5, 'his head is not above hers: ' + hisTop.toFixed(1) + ' vs ' + herTop.toFixed(1));
+    // never bigger in a panel than she is in it: he nearer the camera (the lawn), she far off at the fence's foot
+    const G = art.sceneInfo('garden').anchors.main, scene = { set: 'garden', cam: 'wide', cast: [{ who: 'reynard', pose: 'sit', mood: 'happy', at: 'lawn' }, { who: 'tallyheart', pose: 'sit', mood: 'stern', at: 'fence-foot', facing: 'left', size: 0.9 }], fx: ['day'] };
+    const g = art.render(scene, { look: LOOK }), gs = placedScale(g.svg, G.lawn, FOX.w, FOX.h);
+    checkRender(g, scene, 'the fox nearer than Tallyheart');
+    near(gs, Math.round(G['fence-foot'].h / 200 * 0.9 * tally / tall * 10000) / 10000, 'held to her size in the panel');
+    assert.ok(gs * tall <= G['fence-foot'].h / 200 * 0.9 * tally + 0.05);
+    // with her out of this camera's sight, only his own cap holds
+    const alone = art.render({ set: 'garden', cam: 'wide', cast: [{ who: 'reynard', pose: 'sit', mood: 'happy', at: 'lawn' }], fx: ['day'] }, { look: LOOK });
+    near(placedScale(alone.svg, G.lawn, FOX.w, FOX.h), Math.round(G.lawn.h / 200 * tally / tall * 10000) / 10000, 'alone on the lawn');
+  });
+  // a fox drawn smaller than Tallyheart is left as drawn (the cap never enlarges)
+  const small = JSON.parse(JSON.stringify(FOX)); small.headBox.y0 = 110; small.head.y = 140; small.headBox.y1 = 180;
+  withCharacter(fakeNewcomers(real, small, WHELP), () => {
+    const a = art.sceneInfo('title').anchors.main.wall;
+    const r = art.render({ set: 'title', cam: 'wide', cast: [{ who: 'reynard', pose: 'sit', mood: 'happy', at: 'wall' }], fx: ['day'] }, { look: LOOK });
+    near(placedScale(r.svg, a, FOX.w, FOX.h), Math.round(a.h / 200 * 10000) / 10000, 'not enlarged');
+  });
+  // nobody else is touched: Tallyheart, our cat and Sprinkle are placed at the anchor's own scale
+  const a = art.sceneInfo('title').anchors.main.wall;
+  for (const who of ['tallyheart', 'player', 'grizzled']) near(placedScale(art.render({ set: 'title', cam: 'wide', cast: [{ who, pose: 'sit', mood: 'kind', at: 'wall' }], fx: ['day'] }, { look: LOOK }).svg, a, 200, 200), Math.round(a.h / 200 * 10000) / 10000, who);
+});
+
+test('Squall at a cat\'s anchor is no bigger than our cat ("a dragon no bigger than you"): sitting, no taller than she sits there, for a she-cat and a tom; standing tall or hiccuping he is scaled as he sits; lettered and shadowed like the others', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character;
+  const near = (a, b, what) => assert.ok(Math.abs(a - b) < 0.0002, what + ': ' + a + ' vs ' + b);
+  for (const look of [LOOK, { fur: 'black', marking: 'none', eyes: 'green', sex: 'she' }]) {
+    const mine = sitTall('player', look), tall = WHELP.h - WHELP.headBox.y0;
+    withCharacter(fakeNewcomers(real, FOX, WHELP), () => {
+      const a = art.sceneInfo('title').anchors.main.wall, base = a.h / 200;
+      const sq = (m) => { const scene = { set: 'title', cam: 'wide', cast: [Object.assign({ who: 'squall', pose: 'sit', mood: 'proud', at: 'wall', facing: 'left' }, m), { who: 'player', pose: 'sit', mood: 'wonder', at: 'wall-2' }], fx: ['day'] }; const r = art.render(scene, { look }); checkRender(r, scene, 'squall ' + JSON.stringify(m)); return r; };
+      const r = sq({}), s = placedScale(r.svg, a, WHELP.w, WHELP.h);
+      near(s, Math.round(base * mine / tall * 10000) / 10000, look.sex + ': capped to our cat\'s sitting height');
+      assert.ok(s * tall <= base * mine + 0.05, 'no bigger than you');
+      // side by side on the wall, nose to nose: the top of his head no higher than hers
+      const top = (h, t) => h.y - 0; void top;
+      const hisTop = a.y - tall * s, herTop = art.sceneInfo('title').anchors.main['wall-2'].y - mine * art.sceneInfo('title').anchors.main['wall-2'].h / 200;
+      assert.ok(hisTop >= herTop - 0.5, look.sex + ': his head no higher than hers: ' + hisTop.toFixed(1) + ' vs ' + herTop.toFixed(1));
+      near(placedScale(sq({ pose: 'tall' }).svg, a, WHELP.w, WHELP.h + 60), s, 'standing as tall as he can: the same scale');
+      near(placedScale(sq({ size: 1.3 }).svg, a, WHELP.w, WHELP.h), s, 'a size above 1 is held to the cap');
+      assert.ok(r.heads[0] && r.heads[0].r > 0 && r.heads[1] && r.heads[1].r > 0, 'both faces are lettered: ' + JSON.stringify(r.heads));
+      const shade = [...r.svg.matchAll(/<ellipse cx="([-\d.]+)" cy="([-\d.]+)" rx="([\d.]+)" ry="[\d.]+" fill="#[0-9A-F]{6}" opacity="0.3"\/>/g)].map((m) => m.slice(1).map(Number)).filter((e) => Math.abs(e[1] - (a.y - 1)) < 0.2);
+      assert.ok(shade.some((e) => Math.abs(e[2] - (WHELP.bounds.x1 - WHELP.bounds.x0) * s * 0.42) < 0.3), 'his shadow under his body: ' + JSON.stringify(shade));
+    });
+  }
+  // should cats.js report no head box for one of them, the face still gets a size (from the box the scenes estimate)
+  const bare = function (who, opts) { const c = fakeNewcomers(real, FOX, WHELP)(who, opts); if (who === 'squall' || who === 'reynard') { delete c.headBox; delete c.bounds; } return c; };
+  withCharacter(bare, () => {
+    const scene = { set: 'title', cam: 'wide', cast: [{ who: 'squall', pose: 'sit', mood: 'proud', at: 'wall' }, { who: 'reynard', pose: 'sit', mood: 'happy', at: 'wall-2' }], fx: ['day'] };
+    const r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'no head boxes');
+    assert.ok(r.heads[0].r > 0 && r.heads[1].r > 0, 'r for both: ' + JSON.stringify(r.heads));
+  });
+});
+
+test('the real Reynard and Squall (cats.js, once it draws them): in every pose of theirs, at every cat anchor of chapter 1\'s sets, Reynard is never taller sitting than Tallyheart there and Squall never taller than our cat; both have a face to letter', { skip: !(art.vocab.otherPoses && art.vocab.otherPoses.reynard && art.vocab.otherPoses.squall) && 'cats.js does not draw Reynard and Squall yet' }, () => {
+  const tally = sitTall('tallyheart'), mine = sitTall('player', LOOK);
+  const tallOf = (who) => { const c = art.character(who, { pose: 'sit', mood: 'neutral' }); return c.h - (c.headBox ? c.headBox.y0 : 0); };
+  const fox = tallOf('reynard'), whelp = tallOf('squall');
+  // as drawn, in the cats' units: about Tallyheart's size; a third of Sprinkle, no bigger than a cat
+  assert.ok(fox > tally * 0.75, 'Reynard is about Tallyheart\'s size, not a little thing: ' + fox.toFixed(1) + ' against ' + tally.toFixed(1));
+  let n = 0;
+  for (const set of CH1_SETS) {
+    const info = art.sceneInfo(set), seen = {};
+    for (const cam of art.vocab.sets[set].cams) {
+      // one camera for each composition (the cameras of one composition share its anchors)
+      const comp = info.cams[cam].comp, anchors = seen[comp] ? [] : Object.entries(info.anchors[comp] || {}).filter(([, a]) => a.x || a.y);
+      seen[comp] = true;
+      for (const [at, a] of anchors) for (const [who, poses, cap, mineTall] of [['reynard', art.vocab.otherPoses.reynard, tally, fox], ['squall', art.vocab.otherPoses.squall, mine, whelp]]) {
+        const pose = poses[n % poses.length], scene = { set, cam, cast: [{ who, pose, mood: MOODS[n % MOODS.length], at, facing: n % 2 ? 'left' : 'right' }], fx: [set === 'den' || set === 'sky' ? 'night' : 'day'] };
+        const r = art.render(scene, { look: LOOK });
+        checkRender(r, scene, set + '/' + cam + ' ' + who + ':' + pose + '@' + at);
+        const ch = art.character(who, { pose, mood: scene.cast[0].mood, facing: scene.cast[0].facing });
+        const s = placedScale(r.svg, a, ch.w, ch.h);
+        if (s == null) continue;   // an anchor the drawing moves (the balcony's lift, the title's silhouette)
+        assert.ok(s * mineTall <= a.h / 200 * cap + 0.06, set + '/' + cam + ' ' + who + '@' + at + ': ' + (s * mineTall).toFixed(1) + ' against ' + (a.h / 200 * cap).toFixed(1));
+        if (r.heads[0]) assert.ok(r.heads[0].r > 0, who + ' has a face size');
+        n++;
+      }
+    }
+  }
+  assert.ok(n > 80, 'placements checked: ' + n);
+});
+
+// ---------------------------------------------------------------- every new option, everywhere; chapter 4's frames; the gallery
+
+test('every chapter 4 option value renders in every camera of its set, in every light, alone and all together, with a cast at every anchor', () => {
+  const lights = [[], ['morning'], ['dusk'], ['night']];
+  const values = { tower: { light: [true, false], roar: [true], ding: [true] }, den: { bark: ['auto', 1, 9, 12, ['four-a-night', null]], hidden: [true], moon: [true] }, hollow: { bark: ['falling', 'sand', 'row'], heap: [true], marks: [4] } };
+  let n = 0;
+  for (const [set, opts] of Object.entries(values)) {
+    const info = art.vocab.sets[set], all = {};
+    for (const [k, vals] of Object.entries(opts)) all[k] = vals[0];
+    for (const cam of info.cams) lights.forEach((fx, f) => {
+      const cast = info.anchors.map((at, i) => member(i + n, at, 0));
+      // each value alone, in turn with and without the cast; all of them together, both ways
+      Object.entries(opts).flatMap(([k, vals]) => vals.map((v) => ({ [k]: v }))).forEach((one, j) => {
+        const scene = { set, cam, opts: one, cast: (j + f) % 2 ? [] : cast, fx };
+        checkRender(art.render(scene, { look: LOOK }), scene, set + '/' + cam + ' ' + JSON.stringify(one) + ' ' + fx.join('+'));
+        n++;
+      });
+      for (const c of [cast, []]) {
+        const scene = { set, cam, opts: all, cast: c, fx };
+        checkRender(art.render(scene, { look: LOOK }), scene, set + '/' + cam + ' ' + JSON.stringify(all) + ' ' + fx.join('+'));
+        n++;
+      }
+    });
+  }
+  assert.ok(n > 300, 'renders: ' + n);
+  // and with placeholder cats (no cats.js): the props are the sets' own
+  const fake = function () { throw new Error('placeholder'); };
+  fake.placeholder = true;
+  const checkPlain = (r, scene, label) => {
+    checkXml(r.svg);
+    assert.ok(!/NaN|undefined|Infinity|="null"|\[object/.test(r.svg), label + ': no NaN/undefined in the markup');
+    assert.equal(r.heads.length, scene.cast.length, label);
+  };
+  withCharacter(fake, () => {
+    for (const scene of [
+      { set: 'tower', cam: 'up', opts: { light: true, roar: true, ding: true }, cast: [{ who: 'player', at: 'corner', pose: 'sit' }, { who: 'waffles', at: 'railing', pose: 'peer' }, { who: 'reynard', at: 'foot', pose: 'sit' }], fx: ['day'] },
+      { set: 'den', cam: 'nest', opts: { bark: 9, hidden: true, stone: 'nose' }, cast: [{ who: 'player', at: 'nest', pose: 'curl', facing: 'left' }], fx: ['night'] },
+      { set: 'hollow', cam: 'wide', opts: { marks: 4, bark: 'falling', heap: true }, cast: [1, 2, 3, 4, 5].map((i) => ({ who: 'clancat', at: 'rim-' + i, pose: 'fall', variant: i })).concat([{ who: 'squall', at: 'sand-left', pose: 'sit' }]), fx: ['morning'] }
+    ]) checkPlain(art.render(scene, { look: LOOK }), scene, 'placeholders: ' + scene.set);
+  });
+});
+
+test('every frame of chapter 4 renders with the art vocabulary (once it is written)', () => {
+  if (!has('app/story/ch04.js')) return;
+  require(path.join(ROOT, 'app/story/ch04.js'));
+  const ch = PC.story && PC.story.ch04;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.board !== 'STUB.') : [];
+  for (const [id, f] of frames) {
+    const s = f.scene, v = art.vocab;
+    assert.ok(v.sets[s.set], id + ': set ' + s.set);
+    assert.ok(v.sets[s.set].cams.includes(s.cam), id + ': camera ' + s.set + '/' + s.cam);
+    for (const m of s.cast || []) if (typeof m.at === 'string') assert.ok(v.sets[s.set].anchors.includes(m.at), id + ': anchor ' + m.at + ' in ' + s.set);
+    // the UI fills 'auto' from the cat before drawing; here, four marks, her stone by her nose, and the seven cards every cat holds
+    const o = Object.assign({}, s.opts || {});
+    if (o.marks === 'auto') o.marks = 4;
+    if (o.glow === 'auto') o.glow = [true, false, false, false];
+    if (o.depth === 'auto') delete o.depth;
+    if (o.stone === 'auto') o.stone = 'nose';
+    if (o.bark === 'auto') o.bark = 7;
+    const scene = Object.assign({}, s, { opts: o });
+    checkRender(art.render(scene, { look: LOOK }), scene, 'ch04 ' + id);
+    // the sets this file draws: what the text's Art needs ask of them
+    if (s.set === 'tower' && s.cam === 'up' && o.ding) assert.ok(!(s.cast || []).some((m) => m.at === 'foot' || m.at === 'window'), id + ': nobody at the foot of the tower when the little room goes DING');
+    if (s.set === 'tower') assert.ok(!(s.cast || []).some((m) => m.who === 'player' && m.at === 'window'), id + ': she is never back in her old room');
+    if (s.set === 'den' && o.hidden) assert.ok(o.bark, id + ': hidden goes with her bark');
+  }
+});
+
+test('the gallery (dev/gallery.html) loads every art script and chapter the game does, in the game\'s order; every sample on it names a set, a camera, anchors and options the art has, and renders', () => {
+  const game = (fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').match(/<script\s+src="(app\/(?:art|story)\/[^"]+\.js)"/g) || []).map((m) => m.match(/app\/[^"]+/)[0]);
+  const page = fs.readFileSync(path.join(ROOT, 'dev/gallery.html'), 'utf8');
+  const mine = (page.match(/<script\s+src="\.\.\/(app\/[^"]+\.js)"/g) || []).map((m) => m.match(/app\/[^"]+/)[0]);
+  assert.deepEqual(mine, game, 'the same scripts, in the same order');
+  for (const f of mine) assert.ok(has(f), f + ' exists');
+  // the page's own script parses, and its sample scenes (one per set and camera, and the extras) are real
+  const js = page.slice(page.lastIndexOf('<script>') + 8, page.lastIndexOf('</script>'));
+  assert.doesNotThrow(() => new Function(js), 'the page\'s script parses');
+  const from = js.indexOf('// ---- a sample cast'), to = js.indexOf('// ---- panels');
+  assert.ok(from > 0 && to > from, 'the samples are where they were');
+  const { SAMPLES, EXTRA } = new Function(js.slice(from, to) + '\nreturn { SAMPLES: SAMPLES, EXTRA: EXTRA };')();
+  const v = art.vocab, scenes = [];
+  for (const [set, cams] of Object.entries(SAMPLES)) for (const [cam, smp] of Object.entries(cams)) scenes.push([set + ' / ' + cam, { set, cam, opts: smp.opts || {}, cast: smp.cast || [], fx: smp.fx || [] }]);
+  for (const e of EXTRA) scenes.push([e[0] + ' / ' + e[1] + ' (' + e[3] + ')', { set: e[0], cam: e[1], opts: e[2].opts || {}, cast: e[2].cast || [], fx: e[2].fx || [] }]);
+  assert.ok(scenes.length >= 95, 'samples: ' + scenes.length);
+  const sets = new Set();
+  for (const [label, scene] of scenes) {
+    const set = v.sets[scene.set];
+    // (a set file that has not landed yet: its samples wait for it)
+    if (!set && !CH1_SETS.includes(scene.set)) continue;
+    assert.ok(set, label + ': set');
+    if (!set.cams.includes(scene.cam) && !CH1_SETS.includes(scene.set)) continue;
+    assert.ok(set.cams.includes(scene.cam), label + ': camera');
+    sets.add(scene.set);
+    for (const k of Object.keys(scene.opts)) assert.ok(Object.prototype.hasOwnProperty.call(set.opts, k), label + ': option ' + k);
+    for (const m of scene.cast) {
+      if (typeof m.at === 'string' && CH1_SETS.includes(scene.set)) assert.ok(set.anchors.includes(m.at), label + ': anchor ' + m.at);
+      assert.ok(!v.cast || v.cast.includes(m.who), label + ': cast ' + m.who);
+      if (CAT_LIKE.has(m.who) && v.poses) assert.ok(v.poses.includes(m.pose), label + ': pose ' + m.pose);
+      else if (v.otherPoses && v.otherPoses[m.who]) assert.ok(v.otherPoses[m.who].includes(m.pose), label + ': ' + m.who + ' pose ' + m.pose);
+      assert.ok(!v.moods || v.moods.includes(m.mood), label + ': mood ' + m.mood);
+    }
+    for (const f of scene.fx) assert.ok(v.fx.includes(f), label + ': fx ' + f);
+    checkRender(art.render(scene, { look: LOOK }), scene, 'gallery ' + label);
+  }
+  for (const set of CH1_SETS) assert.ok(sets.has(set), 'the gallery samples ' + set);
+  // every chapter 4 change to chapter 1's sets has a panel on the page
+  const extras = EXTRA.map((e) => JSON.stringify(e[2].opts || {}) + JSON.stringify(e[2].cast || []));
+  for (const k of ['"light":true', '"roar":true', '"ding":true', '"at":"corner"', '"at":"foot"', '"bark":"auto"', '"hidden":true', '"moon":true', '"bark":"falling"', '"bark":"sand"', '"bark":"row"', '"heap":true', '"marks":4',
+    '"wink":true', '"holds":"bark"', '"who":"reynard"', '"who":"squall"', '"pose":"situp"']) assert.ok(extras.some((x) => x.includes(k)), 'the gallery shows ' + k);
+});
+
+test('art.kit, chapter 4: the red light, the young moon and the bark are there for the sets in their own files', () => {
+  for (const k of ['redLight', 'thinMoon', 'barkCurl', 'barkAt']) assert.equal(typeof art.kit[k], 'function', 'kit.' + k);
+  // a piece of bark placed in the world: its foot at (x, y), as wide as asked
+  const piece = art.kit.barkAt({ picture: 'four-a-night', mark: 'eye' }, 500, 600, 40, 0, 0), flat = art.kit.barkAt(null, 500, 600, 40, 5, 0.5);
+  assert.ok(/^<g transform="translate\(500 600\) rotate\(0\) scale\(0\.2\) translate\(-100 -240\)" data-bark="card">/.test(piece), piece.slice(0, 120));
+  assert.ok(/^<g transform="translate\(500 600\) rotate\(5\) matrix\(0\.2 0 -0\.028 0\.1 0 0\) translate\(-100 -240\)" data-bark="blank">/.test(flat), flat.slice(0, 140));
+  checkXml('<svg>' + piece + flat + '</svg>');
 });

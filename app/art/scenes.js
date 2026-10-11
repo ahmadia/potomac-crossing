@@ -437,9 +437,10 @@
   // A cast member's drawing options for cats.js: pose, mood, variant, the player's look, and the
   // cast extras cats.js draws (`flatEars: true`; `holds: 'stone' | 'pebble' | 'vole' | 'fish' |
   // 'fish2'` with `holdAt`; chapter 3's `tear`, `mist`, `claws`, `puffed`, `squeeze` and `moss`, each
-  // `true`, and a juggling otter's `pebbles: 4 | 5`). `purr` and `lift` are the scene's own (fxPurr,
-  // liftPlan), not the drawing's.
-  var CAST_EXTRAS = ['flatEars', 'holds', 'holdAt', 'tear', 'mist', 'claws', 'puffed', 'squeeze', 'moss', 'pebbles'];
+  // `true`, and a juggling otter's `pebbles: 4 | 5`; chapter 4's `wink: true` (Tallyheart at the
+  // doorway), `holds: 'bark'` (a Case File card in a paw) and Reynard's `flick: true` (one ear
+  // flicks)). `purr` and `lift` are the scene's own (fxPurr, liftPlan), not the drawing's.
+  var CAST_EXTRAS = ['flatEars', 'holds', 'holdAt', 'tear', 'mist', 'claws', 'puffed', 'squeeze', 'moss', 'pebbles', 'wink', 'flick'];
   function charOpts(S, who, m) {
     var o = { pose: (m && m.pose) || defaultPose(who), mood: (m && m.mood) || 'neutral' };
     if (m && m.variant != null) o.variant = m.variant;
@@ -1180,6 +1181,56 @@
 
   function drawTower(S) { return S.comp === 'balcony' ? drawBalcony(S) : drawTowerUp(S); }
 
+  // A balcony on the tower's edge, seen from below: floor k (1-19), side 1 right or -1 left, `big`
+  // its size (1 for the little ones, 2.7 for Waffles's). Its box, and the spot where a cat sits on it.
+  function balconyBox(k, side, big) {
+    var y = TOWER.ys[k], e = TOWER.edge(y), fh = TOWER.ys[k - 1] - TOWER.ys[k];
+    var w = 96 * big * (0.8 + 0.2 * (1 - k / 19)), x0 = side > 0 ? e[1] - w * 0.7 : e[0] - w * 0.3, slabY = y + fh * 0.98;
+    return { x0: x0, x1: x0 + w, w: w, fh: fh, d: 20 * big, rh: fh * 0.55 * big, slabY: slabY, spot: { x: x0 + w * 0.42, y: slabY } };
+  }
+  // Chapter 4, the climber's balcony: the right-hand one eight floors up, halfway to Waffles's on
+  // the same edge ("balcony, balcony, balcony, roof"). With a cat on it (the `corner` anchor) it is
+  // drawn bigger (as Waffles's is, nineteen floors up), so she fits behind its rail as Waffles does.
+  var CORNER = { k: 8, side: 1, big: 1.7 };
+  // The little red light on the roof's mast (as the riverbank set draws the same light from the
+  // river path), blinking, with its glow: brought down into the picture by `light: true`.
+  var TOWER_LIGHT = { x: 800, y: 11, r: 8 };
+  function redLight(S, x, y, r, blink) {
+    var night = S.tod === 'night' || S.tod === 'storm' || S.tod === 'dusk', R = r * (night ? 7 : 5);
+    var halo = circ(x, y, R, S.radU([[0, '#FF6A5A', night ? 0.7 : 0.55], [0.35, '#FF5A4E', 0.22], [1, '#FF5A4E', 0]], x, y, R));
+    var core = circ(x, y, r, '#FF4B3E') + circ(x - r * 0.3, y - r * 0.3, r * 0.4, '#FFD0C8', { opacity: 0.9 });
+    return g(halo + core, { 'class': blink ? 'pcs-blink' : null });
+  }
+  // A roar from the roof, which is the very top of this picture: jagged sound lines standing in the
+  // sky on both sides of it, three a side, the nearest first (each pulses on the shared .pcs-pulse).
+  // Each is a bracket round the roof, ( on the left and ) on the right, bulging away from it, tall
+  // and narrow so it clears the tower as it widens; x0 is how far out the nearest stands, y0-y1 its height.
+  function roarSides(S, cx, x0, gap, y0, y1, seed) {
+    var r = rng(seed), out = '';
+    for (var ring = 0; ring < 3; ring++) {
+      var X = x0 + ring * gap, steps = 12, d = '', bulge = 26 + ring * 4, top = y0 + ring * 3, bot = y1 - ring * 9;
+      for (var side = -1; side <= 1; side += 2) {
+        var P = [];
+        for (var j = 0; j <= steps; j++) {
+          var t = j / steps, zig = (j % 2 ? 1 : -1) * 6.5 * (j === 0 || j === steps ? 0 : 1) + (r() - 0.5) * 2;
+          P.push([cx + side * (X - bulge + bulge * Math.sin(Math.PI * t) + zig), top + (bot - top) * t]);
+        }
+        // each line in two pieces, so it reads as sound and not as a fence
+        d += pts(P.slice(0, 7)) + pts(P.slice(8));
+      }
+      out += g(stroke(d, '#2A2236', 12, { opacity: 0.28 }) + stroke(d, '#FFFDF6', 6.5),
+        { 'class': 'pcs-pulse', style: 'animation-duration:1.2s;animation-delay:-' + (0.9 - ring * 0.3).toFixed(1) + 's' });
+    }
+    return g(out, { 'data-prop': 'roar' });
+  }
+  // The little room that goes DING (chapter 4, the riders' second screen): a small DING! lettered at
+  // the very top, beside the red light, with three ticks ringing off it.
+  function towerDing(S, x, y) {
+    var t = '<text x="' + n(x) + '" y="' + n(y) + '" text-anchor="middle" font-family="Bangers, &quot;Marker Felt&quot;, Impact, sans-serif" font-size="46" letter-spacing="2" fill="#FFE27A" stroke="#2A2236" stroke-width="6" stroke-linejoin="round" paint-order="stroke">DING!</text>';
+    var ticks = 'M' + n(x + 62) + ' ' + n(y - 44) + 'l12 -12M' + n(x + 72) + ' ' + n(y - 24) + 'l18 -5M' + n(x + 70) + ' ' + n(y - 2) + 'l16 6';
+    return g(g(t + stroke(ticks, '#2A2236', 8, { opacity: 0.3 }) + stroke(ticks, '#FFE27A', 4.5), { transform: 'rotate(-7 ' + n(x) + ' ' + n(y - 16) + ')' }), { 'data-prop': 'ding', 'class': 'pcs-pulse' });
+  }
+
   function drawTowerUp(S) {
     var p = S.pal, back = '', over = '', front = '', T = TOWER, r = rng(61);
     back += sky(S, 0, 0, 1600, 1000, { sun: [180, 760], sunR: 560 });
@@ -1221,13 +1272,33 @@
     tw += g(poly([[0, 760], [1600, 260], [1600, 420], [0, 920]], p.refl, { opacity: 0.32 }) + poly([[0, 560], [1600, 60], [1600, 120], [0, 620]], p.refl, { opacity: 0.22 }), { 'clip-path': towerClip });
     tw += path('M' + n(e0[1] - 14) + ' 1000L' + n(et[1] - 8) + ' ' + topY + 'H' + n(et[1]) + 'L' + n(e0[1]) + ' 1000Z', p.glassEdge, { opacity: 0.45 });
     tw += rect(et[0] - 10, topY - 14, et[1] - et[0] + 20, 16, p.glassBot) + rect(et[0] - 10, topY - 14, et[1] - et[0] + 20, 4, p.rim, { opacity: 0.7 });
-    tw += rect((et[0] + et[1]) / 2 - 3, topY - 80, 6, 66, p.glassBot) + circ((et[0] + et[1]) / 2, topY - 82, 5, '#FF5A4E', { 'class': 'pcs-blink' });
+    // the mast and its red light stand above the picture (chapters 1-3); `light: true` (and the roar
+    // and the DING, which come from the roof) brings the light down into it, at the very top
+    var o = S.opts, lit0 = o.light === true || (o.light == null && (o.roar || o.ding)), L = TOWER_LIGHT;
+    if (lit0) tw += rect(L.x - 3, L.y, 6, topY - 14 - L.y, p.glassBot) + rect(L.x - 8, topY - 20, 16, 7, p.glassBot, { rx: 2 });
+    else tw += rect((et[0] + et[1]) / 2 - 3, topY - 80, 6, 66, p.glassBot) + circ((et[0] + et[1]) / 2, topY - 82, 5, '#FF5A4E', { 'class': 'pcs-blink' });
     back += g(tw, { filter: S.shadow('l') });
-    // balconies
-    var bal = '';
+    if (lit0) {
+      back += g(redLight(S, L.x, L.y, L.r, true), { 'data-prop': 'light' });
+      (S.keep = S.keep || []).push({ x: L.x - 34, y: 0, w: 68, h: 40 });
+    }
+    if (o.roar) back += roarSides(S, L.x, 316, 44, 6, 156, 1191);
+    if (o.ding) {
+      back += towerDing(S, L.x + 112, 62);
+      (S.keep = S.keep || []).push({ x: L.x + 46, y: 2, w: 164, h: 74 });
+    }
+    // balconies (the climber's, when she is on it, is drawn bigger, its rail over her)
+    var bal = '', climber = (S.cast || []).some(function (c) { return c && c.at === 'corner'; });
     var list = [[3, 1], [6, -1], [8, 1], [11, -1], [13, 1], [16, -1]];
-    for (k = 0; k < list.length; k++) bal += balconySmall(S, list[k][0], list[k][1], false);
+    for (k = 0; k < list.length; k++) {
+      if (climber && list[k][0] === CORNER.k && list[k][1] === CORNER.side) continue;
+      bal += balconySmall(S, list[k][0], list[k][1], false);
+    }
     back += g(bal, { filter: S.shadow('s') });
+    if (climber) {
+      back += g(balconySmall(S, CORNER.k, CORNER.side, false, 'back', CORNER.big), { filter: S.shadow('s'), 'data-prop': 'corner-balcony' });
+      over += balconySmall(S, CORNER.k, CORNER.side, false, 'front', CORNER.big);
+    }
     // Waffles's balcony, nineteen floors up
     back += balconySmall(S, 19, 1, true, 'back');
     over += balconySmall(S, 19, 1, true, 'front');
@@ -1251,9 +1322,9 @@
   }
 
   // part: undefined = all, 'back' = slab, door and shade; 'front' = railing (drawn over the cat).
-  function balconySmall(S, k, side, special, part) {
+  function balconySmall(S, k, side, special, part, size) {
     var p = S.pal, y = TOWER.ys[k], e = TOWER.edge(y), fh = TOWER.ys[k - 1] - TOWER.ys[k];
-    var big = special ? 2.7 : 1, w = 96 * big * (0.8 + 0.2 * (1 - k / 19)), d = 20 * big, rh = fh * 0.55 * big;
+    var big = special ? 2.7 : size || 1, w = 96 * big * (0.8 + 0.2 * (1 - k / 19)), d = 20 * big, rh = fh * 0.55 * big;
     var x0 = side > 0 ? e[1] - w * 0.7 : e[0] - w * 0.3, x1 = x0 + w;
     var slabY = y + fh * 0.98;
     var s = '';
@@ -1717,6 +1788,54 @@
   var CROWD_SHADOWS = [[700, -60, 180, 'right', 230], [1050, -40, 190, 'left', 190], [-60, 300, 100, 'right', 170], [-50, 700, 80, 'right', 210],
     [1660, 760, -80, 'left', 200], [520, 1080, 10, 'right', 180], [1180, 1070, -12, 'left', 160]];
 
+  // ------------------------------------------------------------------ BARK (chapter 4: the Case File)
+
+  // The Training Tree's bark, peeled: pale and papery inside, brown outside. cards.js's own colours,
+  // so a curl on the sand, the row along her nest and the cards in her file are one thing.
+  var BARK = { face: '#EDE1C5', under: '#7C6444', edge: '#8A7350', grain: '#D9CAA6', lip: '#B48D61', lipLight: '#D2B084', lipEdge: '#7A5C3C', ink: '#3A281E' };
+
+  // A curl of bark as it comes off the tree, not yet pressed flat: a short strip, its pale inside
+  // up, one end rolled over and the other lifting. (x, y) its middle, k its size (1: about 56 wide).
+  function barkCurl(S, x, y, k, rot) {
+    var s = path('M-24 -7C-10 -11.5 8 -11.5 21 -8.5L24 6C10 2.5 -10 2.5 -24 7Z', BARK.under, { transform: 'translate(1.2 2)' }) +
+      path('M-24 -7C-10 -11.5 8 -11.5 21 -8.5L24 6C10 2.5 -10 2.5 -24 7Z', BARK.face, { stroke: BARK.edge, 'stroke-width': 1.5, 'stroke-linejoin': 'round' }) +
+      stroke('M-15 -3h8M-1 -5h9M-7 1.5h7M7 0h6', BARK.grain, 1.4) +
+      // the far end has rolled right over: the bark's brown outside, and the pale spiral of its edge
+      ell(23.5, -1.5, 6.2, 8.4, BARK.lip, { stroke: BARK.lipEdge, 'stroke-width': 1.4 }) +
+      stroke('M21.6 -5.4q5.4 1.2 3.4 6.6q-2.6 3.6 -4.6 -0.4', BARK.lipEdge, 1.2) + stroke('M26.6 -6.4q2 4.4 0.4 9', BARK.lipLight, 1.2) +
+      // the near end only lifts
+      path('M-24 -7C-29.5 -8.5 -31.5 -1 -28.5 4L-24 7Z', BARK.lip, { stroke: BARK.lipEdge, 'stroke-width': 1.3, 'stroke-linejoin': 'round' });
+    return g(s, { transform: tr(x, y, k) + ' rotate(' + n(rot || 0) + ')' });
+  }
+
+  // One piece of bark pressed flat, in a 200 x 240 box, as the Case File's cards are drawn: by
+  // cards.js's own cardGroup when it is loaded (looked up at call time: it loads after this file),
+  // so the nest's row and the sand's row show her real cards; without it, a plain piece of ours with
+  // a few scratches. card: { picture, mark }, a picture's key, or null for a blank piece.
+  var BARK_FACE = 'M32 16C76 12 124 13 168 16C181 17 189 26 188 40C190 96 186 148 189 202C189 217 181 226 166 226C122 230 78 227 34 229C20 229 12 220 13 206C10 150 15 96 12 42C11 27 19 17 32 16Z';
+  var BARK_SCRATCH = ['M44 150h18M70 150h18M96 150h18M122 150h18M44 120v-16M62 120v-16M80 120v-16M120 120v-16M138 120v-16M156 120v-16',
+    'M60 170C60 110 140 110 140 170M76 160q24 -34 48 0M100 96v-22', 'M50 104q50 -40 100 0M50 150q50 -40 100 0M70 186h60', 'M58 96L100 170L142 96ZM100 190h.1'];
+  function barkPiece(card) {
+    var o = card && typeof card === 'object' ? { picture: card.picture, mark: card.mark } : card ? { picture: String(card) } : { blank: true };
+    if (typeof art.cardGroup === 'function') {
+      try {
+        var r = art.cardGroup(o);
+        if (r && typeof r.svg === 'string' && r.svg && r.w > 0 && r.h > 0) return { svg: r.svg, w: r.w, h: r.h };
+      } catch (e) { /* our own piece, below */ }
+    }
+    var s = path(BARK_FACE, BARK.under, { transform: 'translate(2.6 3.4)' }) + path(BARK_FACE, BARK.face, { stroke: BARK.edge, 'stroke-width': 3.2, 'stroke-linejoin': 'round' }) +
+      stroke('M30 78h12M118 40h16M146 92h11M26 150h10M138 206h14M70 214h10', BARK.grain, 2.4);
+    if (!o.blank) s += stroke(BARK_SCRATCH[o.picture === 'four-a-night' ? 0 : 1 + seedOf(o.picture) % 3], BARK.ink, 4.3);
+    return { svg: s, w: 200, h: 240 };
+  }
+  // A piece placed in the world: its bottom centre at (x, y), `w` wide, leaning `rot` degrees; `flat`
+  // (0-1) lays it on the ground, seen from a cat's height (squashed, and sheared a little).
+  function barkAt(card, x, y, w, rot, flat) {
+    var b = barkPiece(card), k = w / b.w, f = flat ? clamp(flat, 0.2, 1) : 1;
+    var m = flat ? ' matrix(' + n4(k) + ' 0 ' + n4(-0.28 * k * f) + ' ' + n4(k * f) + ' 0 0)' : ' scale(' + n4(k) + ')';
+    return '<g transform="translate(' + n(x) + ' ' + n(y) + ') rotate(' + n(rot || 0) + ')' + m + ' translate(' + n(-b.w / 2) + ' ' + n(-b.h) + ')" data-bark="' + (card ? 'card' : 'blank') + '">' + b.svg + '</g>';
+  }
+
   // ------------------------------------------------------------------ HOLLOW
 
   // Where the claw marks go on the old tree, [x, y, size] each, in order: one Count each, left to
@@ -1751,8 +1870,92 @@
     return out;
   }
 
+  // Chapter 4, FLUMP: the five rim cats in a heap (`heap: true`). The story keeps its cast at
+  // rim-1 ... rim-5 and gives them their poses (fall, tummy, lie, flat); the five spots close up into
+  // a pile in the middle of the rim, three on the ground and two flopped across them, each cast
+  // member half over the one before. The two on top have no ground shadow of their own.
+  var HEAP = {
+    'rim-1': A(672, 792, 222, 'left'), 'rim-2': A(748, 724, 212, 'right', { elev: true, air: true }), 'rim-3': A(800, 796, 222, 'left'),
+    'rim-4': A(856, 728, 212, 'left', { elev: true, air: true }), 'rim-5': A(928, 792, 222, 'right')
+  };
+  // Where bark lies on the sand (`bark: 'sand'`, the one curl; `'row'`, her first card and three
+  // blank pieces, or the row a `cards` list gives): between the two sand anchors, at the cats' feet,
+  // inside every camera that sees the sand (the lesson two-shot's bottom edge is just below).
+  var SAND_BARK = { x: 785, y: 884 };
+  // The row on the sand (`bark: 'row'`), oldest first; null is a blank piece. With `cards` (a list:
+  // each a picture's key, { picture, mark }, or a story's own entry { id } before the page has
+  // resolved it, which is drawn for every cat), those pieces scratched, then `blank` blank pieces
+  // (0 to 3); with no list (the Tap frame's own scene, the gallery), her first card and three blank.
+  // A piece without a mark of its own takes chapter 4's for that picture (the fox's two: an ear).
+  var SAND_ROW_MAX = 8;
+  function sandRow(o) {
+    if (!Array.isArray(o.cards)) return [{ picture: 'four-a-night', mark: 'eye' }, null, null, null];
+    var marks = {};
+    BARK_ORDER.forEach(function (c) { marks[c.picture] = c.mark; });
+    BARK_EXTRA.forEach(function (e) { marks[e[1].picture] = e[1].mark; });
+    var row = o.cards.map(function (c) {
+      var pic = c && typeof c === 'object' ? c.picture || c.id : c;
+      if (!pic) return null;
+      pic = String(pic);
+      return { picture: pic, mark: c && typeof c === 'object' && c.mark !== undefined ? c.mark : marks[pic] || 'eye' };
+    }).slice(0, SAND_ROW_MAX);
+    for (var b = clamp(Math.round(+o.blank || 0), 0, 3); b > 0 && row.length < SAND_ROW_MAX; b--) row.push(null);
+    return row;
+  }
+  // Where the falling curl is caught in the air (`bark: 'falling'`), best first: beside the trunk
+  // under the newest mark, higher beside the marks, lower toward the sand, over the sand, and past
+  // the trunk. The first one inside the camera that no cast member covers is taken.
+  var FALL_BARK = [[1062, 640], [1046, 556], [1010, 770], [800, 800], [1318, 648]];
+  function fallSpot(S) {
+    var B = S.box, R = refH(), used = {}, boxes = [], first = null;
+    (S.cast || []).forEach(function (m) { if (m && typeof m.at === 'string') used[m.at] = true; });
+    (S.cast || []).forEach(function (m) {
+      var a = m && resolveAnchor(S, m, used);
+      if (a) boxes.push(castBoxes(castPlan(S, m, a, R)).body);
+    });
+    for (var i = 0; i < FALL_BARK.length; i++) {
+      var c = FALL_BARK[i], bb = [c[0] - 36, c[1] - 24, c[0] + 36, c[1] + 24];
+      if (B && (bb[0] < B.x + 8 || bb[2] > B.x + B.w - 8 || bb[1] < B.y + 8 || bb[3] > B.y + B.h - 8)) continue;
+      if (!first) first = c;
+      if (!boxes.some(function (b) { return boxHit(bb, b, 6); })) return c;
+    }
+    return first || FALL_BARK[0];
+  }
+  function hollowBark(S, marks) {
+    var o = S.opts, p = S.pal, s = '', i;
+    if (o.bark === 'sand') {
+      s += ell(SAND_BARK.x + 2, SAND_BARK.y + 11, 38, 6.5, p.shade, { opacity: 0.3 }) + barkCurl(S, SAND_BARK.x, SAND_BARK.y, 1.3, -7);
+      (S.keep = S.keep || []).push({ x: SAND_BARK.x - 44, y: SAND_BARK.y - 22, w: 88, h: 40 });
+    } else if (o.bark === 'row') {
+      // her first card at the head of the row (the tally she scratched, with its eye), then three blank
+      // pieces; or, with `cards`, the row as she has scratched it by this panel (sandRow). Up to five
+      // lie 34 apart, as the four always have; more close up, a little smaller, to stay between the cats
+      var row = sandRow(o), nRow = row.length, step = nRow > 1 ? Math.min(34, 150 / (nRow - 1)) : 0, pw = Math.min(33, step ? step - 1 : 33);
+      for (i = 0; i < nRow; i++) {
+        var bx = SAND_BARK.x + (i - (nRow - 1) / 2) * step, by = SAND_BARK.y + 9 + (i % 2) * 2;
+        s += ell(bx + 2, by, 20 * pw / 33, 4, p.shade, { opacity: 0.28 }) + barkAt(row[i], bx, by, pw, [-5, 4, -3, 6][i % 4], 0.55);
+      }
+      var half = Math.max(1, nRow - 1) * step / 2 + 23;
+      if (nRow) (S.keep = S.keep || []).push({ x: SAND_BARK.x - half, y: SAND_BARK.y - 16, w: half * 2, h: 34 });
+    } else if (o.bark === 'falling') {
+      // from the newest mark (or the bare trunk) down through the air, two little ticks behind it
+      var spot = marks ? markSpots(marks)[marks - 1] : [1120, 560, 1], from = [spot[0] + 6 * spot[2], spot[1] + 62 * spot[2]], c = fallSpot(S);
+      var dx = c[0] - from[0], dy = c[1] - from[1], L = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+      var t0 = Math.max(0, L - 78), t1 = Math.max(0, L - 34), ticks = '';
+      [-9, 9].forEach(function (off, j) {
+        var a0 = [from[0] + ux * (t0 + j * 10) + nx * off, from[1] + uy * (t0 + j * 10) + ny * off], a1 = [from[0] + ux * t1 + nx * off, from[1] + uy * t1 + ny * off];
+        ticks += 'M' + n(a0[0]) + ' ' + n(a0[1]) + 'Q' + n((a0[0] + a1[0]) / 2 + nx * off * 0.5) + ' ' + n((a0[1] + a1[1]) / 2 + ny * off * 0.5) + ' ' + n(a1[0]) + ' ' + n(a1[1]);
+      });
+      if (L > 40) s += stroke(ticks, '#FFFFFF', 3.6, { opacity: 0.8, 'stroke-dasharray': '9 7' });
+      s += barkCurl(S, c[0], c[1], 1, dx < 0 ? -28 : 24);
+      (S.keep = S.keep || []).push({ x: c[0] - 36, y: c[1] - 24, w: 72, h: 48 });
+    }
+    return s ? g(s, { 'data-prop': 'bark-' + o.bark }) : '';
+  }
+
   function drawHollow(S) {
     var p = S.pal, o = S.opts, back = '', front = '', r = rng(151);
+    if (o.heap) { S.spots = HEAP; S.anchorMap = anchorsFor(S); }
     back += sky(S, 0, 0, 1600, 620, { sun: [160, 470], sunR: 520 });
     back += towers(S, [
       { x: 40, w: 160, top: 150, base: 620, far: 0.45, cap: 'spire' }, { x: 230, w: 110, top: 260, base: 620, far: 0.6, cap: 'slant' },
@@ -1839,6 +2042,10 @@
     // hanging twigs
     back += stroke('M420 230q-10 60 6 120M520 260q4 50-8 90M940 250q10 50 0 100', '#5E4232', 3) +
       path(leafD(426, 350, 16, 1.8, 6) + leafD(512, 350, 16, 1.2, 6) + leafD(940, 350, 16, 1.6, 6), p.leafMid);
+    // chapter 4: the curl of bark (falling from the new mark; lying on the sand; a row of pieces to
+    // scratch), and the one soft shadow under the heap of rim cats
+    if (o.bark) back += hollowBark(S, marks);
+    if (o.heap) back += ell(800, 796, 226, 20, p.shade, { opacity: 0.2, 'data-prop': 'heap' });
     // front: grass lip of the hollow
     front += g(tufts(S, 0, 1600, 960, 1010, 40, 160, p.grassNear, p.grassLight, 2.2), { filter: S.shadow('s') });
     return { back: back, over: '', front: front };
@@ -1858,13 +2065,25 @@
         'A' + n(r * 0.78) + ' ' + n(r * 0.95) + ' 0 1 1 ' + n(x - r * 0.2) + ' ' + n(y - r) + 'Z', '#FFF3D2');
   }
 
+  // The young moon, a few evenings old (chapter 4: "a moon as thin as a curl of bark"): a sliver of
+  // light on the side the sun went down, the rest of its disc barely there. (x, y) its middle, r its
+  // radius, `tilt` degrees (0: lit on the right).
+  function thinMoon(S, x, y, r, tilt) {
+    var d = 'M0 ' + n(-r) + 'A' + n(r) + ' ' + n(r) + ' 0 0 1 0 ' + n(r) + 'A' + n(r * 0.8) + ' ' + n(r) + ' 0 0 0 0 ' + n(-r) + 'Z';
+    return g(circ(x, y, r * 2.6, S.radU([[0, '#FFF6DE', 0.2], [1, '#FFF6DE', 0]], x, y, r * 2.6)) +
+      g(circ(0, 0, r * 0.98, '#FFF3D2', { opacity: 0.07 }) + path(d, '#FFF3D2'), { transform: 'translate(' + n(x) + ' ' + n(y) + ') rotate(' + n(tilt || 0) + ')' }), { 'data-prop': 'thin-moon' });
+  }
+
   function drawDenOutside(S) {
     var p = S.pal, back = '', r = rng(171), storm = S.opts.weather === 'storm', cloudy = S.opts.weather === 'cloudy', rc = roseCols(S);
     // the rosebush fills the middle of the sky, so the Sky River runs across the top, above it
     back += sky(S, 0, 0, 1600, 760, { seed: 172, cloudy: cloudy, riverAt: { cx: 800, cy: 80, L: 2000, ang: -7, T: 72 } });
     // no moon unless a frame asks for one: her first night is a new moon (the case: "there was no
-    // moon that night"), so Russet's "by moonlight" is a lie a careful reader can catch
+    // moon that night"), so Reynard's "by moonlight" is a lie a careful reader can catch
     if (S.opts.moon && S.tod === 'night' && !cloudy) back += moon(S, 1330, 150, 44);
+    // chapter 4, the fourth evening: asked for at dusk (or sunset), the moon is the young one, thin
+    // and low over the towers at the right (the only moon so far; by night it is the crescent above)
+    else if (S.opts.moon && (S.tod === 'dusk' || S.tod === 'sunset') && !cloudy) back += thinMoon(S, 1496, 132, 40, 38);
     back += towers(S, [
       { x: 20, w: 170, top: 240, base: 700, far: 0.5 }, { x: 210, w: 120, top: 330, base: 700, far: 0.6, cap: 'slant' },
       { x: 1180, w: 150, top: 280, base: 700, far: 0.55, cap: 'spire' }, { x: 1400, w: 200, top: 200, base: 700, far: 0.45, cap: 'step' }
@@ -1919,6 +2138,9 @@
       var hx = (hb[0] + hb[2]) / 2, hw = hb[2] - hb[0];
       // head up: her chin is well above the moss, where the stone would hang in the air
       var up = crest - hb[3] > r * 2;
+      // nose to her forepaws (chapter 4: "You sniff your paws"): a stone tucked under her chin would lie
+      // on them, and the picture would be of a cat sniffing a stone; for that panel it lies past her nose
+      if (o === 'chin' && m.mood === 'sniff' && !up) o = 'nose';
       if (o === 'nose') {
         sx = (dir > 0 ? hb[2] : hb[0]) + dir * r * 1.2; sy = up ? crest : clamp(hb[3] - r * 0.6, hb[1] + hw * 0.5, crest);
         // head up, with someone else beside the nest (Murmurpaw at its edge): out past the head box
@@ -1933,6 +2155,79 @@
       else { sx = hx + dir * hw * 0.12; sy = crest; }
     }
     return luckyStone(S, sx, sy, r);
+  }
+
+  // Chapter 4: her Case File in her nest (`bark`): the pieces of bark stand in a row along its mossy
+  // edge, tucked into the front rim on the side away from her head, each leaning on the one before
+  // like roof tiles, the newest in front, at the middle. bark: a number (so many pieces: chapter 4's
+  // cards in the order every cat finds them, the eighth and ninth where those fall, then blank bark),
+  // a list of her cards, oldest first (each a picture's key or { picture, mark }: her own row, card
+  // for card), or 'auto', which the UI fills from the cat (E.resolveScene: that list, the cards her
+  // Case File shows, so the row is never a card ahead of her nor one she doesn't hold);
+  // left unfilled (the gallery, tools/frames.mjs) it is the seven cards every cat holds at bedtime.
+  // `hidden: true`: the two about Sprinkle are under the moss, so they are out of the row (by their
+  // pictures; else the newest two), and two corners of bark show at its inner end.
+  var BARK_ORDER = [{ picture: 'four-a-night', mark: 'eye' }, { picture: 'tidy', mark: 'eye' }, { picture: 'scale', mark: 'eye' }, { picture: 'fox-flew', mark: 'ear' },
+    { picture: 'fox-moon', mark: 'ear' }, { picture: 'sprinkle-scales', mark: 'eye' }, { picture: 'cant-fly', mark: 'eye' }];
+  // (given only a number, an eighth piece is taken for the dug earth, never for Squall's two shapes: a
+  // cat who has not been up the tower must not find his clue on her nest's edge; a list says which)
+  var BARK_EXTRA = [[2, { picture: 'dug-earth', mark: 'eye' }], [6, { picture: 'squall-shapes', mark: 'ear' }]];
+  var BARK_SECRET = { 'sprinkle-scales': 1, 'cant-fly': 1 }, BARK_MAX = 24;
+  function barkRow(S) {
+    var b = S.opts.bark, list;
+    if (Array.isArray(b)) list = b.slice(0, BARK_MAX).map(function (c) { return c && typeof c === 'object' ? c : c ? { picture: String(c) } : null; });
+    else {
+      var count = b === 'auto' || b === true ? BARK_ORDER.length : clamp(Math.round(+b || 0), 0, BARK_MAX);
+      list = BARK_ORDER.slice(0, Math.min(count, BARK_ORDER.length));
+      // an eighth and a ninth piece are the two not every cat finds, where they fall in the order;
+      // more than nine (a later chapter's, when only a number is given) are blank bark, the oldest
+      for (var e = 0; e < BARK_EXTRA.length && BARK_ORDER.length + e < count; e++) list.splice(BARK_EXTRA[e][0], 0, BARK_EXTRA[e][1]);
+      while (list.length < count) list.unshift(null);
+    }
+    var hid = 0;
+    if (S.opts.hidden) {
+      list = list.filter(function (c) { if (c && BARK_SECRET[c.picture] && hid < 2) { hid++; return false; } return true; });
+      while (hid < 2 && list.length) { list.pop(); hid++; }
+      hid = 2;   // the corners show whatever the row holds: she has put two under
+    }
+    return { row: list, hid: hid };
+  }
+  function denBark(S, x, y, k) {
+    var R = barkRow(S);
+    if (!R.row.length && !R.hid) return '';
+    // the side away from her head: the left, unless she lies facing left
+    var m = null, a = S.anchorMap && S.anchorMap.nest, d = -1;
+    (S.cast || []).forEach(function (c) { if (c && c.at === 'nest' && !m) m = c; });
+    if (m && a && castPlan(S, m, a, refH()).face === 'left') d = 1;
+    var p = S.pal, rx = 140 * k, ry = 40 * k, cw = 38 * k, ch = cw * 1.2, r = rng(seedOf('bark' + R.row.length + ':' + R.hid)), cards = '', tucks = '', lights = '';
+    // the middle of the rim's moss at xx: its bumps ring the lower half of the nest (nest())
+    function rim(xx) { var u = clamp((xx - x) / (rx * 0.86), -1, 1); return y + Math.sqrt(1 - u * u) * ry * 0.98; }
+    // a tuft of the rim's own moss over the foot of a piece, so it stands in the moss
+    function tuck(tx, ty, tr0) { tucks += dot(tx, ty, tr0); lights += dot(tx - tr0 * 0.25, ty - tr0 * 0.35, tr0 * 0.5); }
+    // the row runs along the front of the rim from the nest's end (t = 0) in to the middle; with
+    // two hidden, their corners take its inner end
+    var T = (R.hid ? 86 : 112) * k, nRow = R.row.length, step = nRow > 1 ? Math.min(15 * k, (T - cw) / (nRow - 1)) : 0, len = nRow ? cw + (nRow - 1) * step : 0, t0 = (T - len) / 2;
+    function at(t) { return x + d * (118 * k - t); }
+    var x0 = 1e9, x1 = -1e9, top = 1e9;
+    for (var i = 0; i < nRow; i++) {
+      var cx = at(t0 + cw / 2 + i * step), cy = rim(cx) + 2 * k;
+      cards += barkAt(R.row[i], cx, cy, cw, d * 8 + (r() - 0.5) * 5, 0);
+      tuck(cx - d * cw * 0.2 + (r() - 0.5) * 6 * k, cy + (r() - 0.3) * 4 * k, (6.5 + r() * 4.5) * k);
+      x0 = Math.min(x0, cx - cw * 0.75); x1 = Math.max(x1, cx + cw * 0.75); top = Math.min(top, cy - ch);
+    }
+    if (nRow) tuck(at(t0 + len) - d * 2 * k, rim(at(t0 + len)) + 3 * k, 9 * k);
+    for (i = 0; i < R.hid; i++) {
+      // pushed down under the moss, askew: one corner of each is left showing above it
+      var hx = at(T + (9 + i * 15) * k), hy = rim(hx) + 5 * k, rot = (i ? -1 : 1) * d * (16 + i * 10);
+      cards += g(path('M-15 3L-10 -19Q-8.5 -24.5 -3 -23.5L17 -16L14 3Z', BARK.under, { transform: 'translate(1 1.4)' }) +
+        path('M-15 3L-10 -19Q-8.5 -24.5 -3 -23.5L17 -16L14 3Z', BARK.face, { stroke: BARK.edge, 'stroke-width': 1.3, 'stroke-linejoin': 'round' }) +
+        stroke('M-5 -12h7M2 -6h6', BARK.grain, 1.1), { transform: tr(hx, hy, k * 0.92) + ' rotate(' + n(rot) + ')', 'data-bark': 'corner' });
+      for (var j = -1; j <= 1; j++) tuck(hx + j * 10 * k, hy + (1 - Math.abs(j)) * 2 * k + (r() - 0.5) * 3 * k, (9 + r() * 3) * k);
+      x0 = Math.min(x0, hx - 22 * k); x1 = Math.max(x1, hx + 22 * k); top = Math.min(top, hy - 26 * k);
+    }
+    (S.keep = S.keep || []).push({ x: x0, y: top, w: x1 - x0, h: y + ry - top });
+    var moss = mix(p.moss, '#FFFFFF', 0.06);
+    return g(g(cards, { filter: castTint(S) || null }) + path(tucks, moss) + path(lights, mix(moss, '#FFFFFF', 0.16), { opacity: 0.55 }), { 'data-prop': 'nest-bark', 'data-count': nRow });
   }
 
   function drawDenInside(S) {
@@ -2028,7 +2323,8 @@
     for (i = 0; i < N.length; i++) {
       var nn = nest(S, N[i][1], N[i][2], N[i][3], N[i][0] === 'nest');
       back += nn.back;
-      S.covers[N[i][0]] = nn.front + (N[i][0] === 'nest' ? denStone(S, N[i][1], N[i][2], N[i][3]) : '');
+      // her own nest: her bark stands along its front rim (tufts of the moss hold it), her stone on the moss
+      S.covers[N[i][0]] = nn.front + (N[i][0] === 'nest' ? ((S.opts.bark || S.opts.hidden) ? denBark(S, N[i][1], N[i][2], N[i][3]) : '') + denStone(S, N[i][1], N[i][2], N[i][3]) : '');
     }
     if (storm) {
       // rain leaking through the roof: each drop falls from the leaves and fades (pcs-drip, as the
@@ -2462,12 +2758,27 @@
         'balcony-close': { box: [300, 380, 840], comp: 'balcony', head: { face: 0.42, at: [0.56, 0.38] }, lift: { y: 720, gap: 10, seat: 24 } }
       },
       anchors: {
-        up: { window: A(700, 1000, 215, 'right', { z: 'behind' }), railing: A(0, 0, 84, 'left', { z: 'behind', elev: true, balcony: true }) },
+        up: {
+          window: A(700, 1000, 215, 'right', { z: 'behind' }), railing: A(0, 0, 84, 'left', { z: 'behind', elev: true, balcony: true }),
+          // chapter 4: `corner`, a climber on a balcony halfway up the tower's right edge, behind its
+          // rail as Waffles is behind hers (the balcony grows to hold her); and `foot`, outside on
+          // the ground at the foot of the tower, in front of the glass (she is never back in her
+          // old room, which is what `window` is)
+          corner: (function () { var b = balconyBox(CORNER.k, CORNER.side, CORNER.big); return A(Math.round(b.spot.x * 10) / 10, Math.round(b.spot.y * 10) / 10, 110, 'left', { z: 'behind', elev: true }); })(),
+          // (`elev`, though she is on the ground: the composition's depth for a spot of its own stays what it was)
+          // (in front of the lit window's right-hand curtain, across its white frame post: plainly outside
+          // the glass. At x 880 she stood in the middle of the window, on its pink rug: back in her old room)
+          foot: A(1010, 1000, 215, 'right', { elev: true })
+        },
         balcony: { railing: A(800, 905, 520, 'left', { z: 'behind' }) }
       },
       // chime: a wind chime on Waffles's balcony, hanging beside her geranium (chapter 3: CrystalClan
       // hears it every day, so "clear as a chime" points at something)
-      opts: { chime: [true, false] }, defaults: {}
+      // chapter 4, on `up`: light (the little red light on the roof's mast, at the very top of the
+      // picture, blinking), roar (jagged sound lines in the sky on both sides of the roof) and ding (a
+      // small DING! lettered at the very top, beside the light: the little room has arrived); the roar
+      // and the DING show the light too, unless light is false
+      opts: { chime: [true, false], light: [false, true], roar: [false, true], ding: [false, true] }, defaults: {}
     },
     garden: {
       label: 'the garden at dusk', tod: 'sunset', draw: drawGarden,
@@ -2530,7 +2841,14 @@
       // ('auto' for both: the UI fills them in from the cat before drawing); depth: 0 fresh, 1 deeper,
       // 2 deepest, for every mark or a list, one per mark (left out or unfilled: every mark but the
       // newest is deeper, the oldest most, as practice deepens them)
-      opts: { marks: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'auto'], glow: [true, false, 'auto'], depth: [0, 1, 2, 'auto'] }, defaults: { marks: 0 }
+      // chapter 4: bark, a curl of the tree's bark ('falling' from the newest mark, clear of the cast;
+      // 'sand', lying on the sand; 'row', her first card and three blank pieces in a row on the sand),
+      // and heap (the five rim spots close up into a pile: FLUMP). With 'row', cards (a list of card
+      // pictures, oldest first: the row as she has scratched it by this panel; the page hands over
+      // { picture, mark } for the entries that are this cat's, E.resolveScene) and blank (so many
+      // blank pieces after them)
+      opts: { marks: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'auto'], glow: [true, false, 'auto'], depth: [0, 1, 2, 'auto'],
+        bark: [false, 'falling', 'sand', 'row'], cards: 'cards', blank: [0, 1, 2, 3], heap: [false, true] }, defaults: { marks: 0 }
     },
     den: {
       label: "the apprentices' den", tod: 'night', draw: drawDen,
@@ -2547,7 +2865,12 @@
       },
       // stone: Riffle's lucky stone in her nest (true: between her paws; 'nose' or 'chin', where she
       // put it; 'auto' is the UI's to fill from her choice, and left unfilled is true)
-      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'] }, defaults: { weather: 'clear' }
+      // chapter 4: bark, her Case File along her nest's mossy edge (a number of pieces, or 'auto':
+      // her own cards, the UI's to fill with the list of them; denBark), and
+      // hidden (the two about Sprinkle under the moss: two fewer in the row, two corners showing);
+      // moon: true at dusk, from outside, is the young moon, thin and low
+      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
+        bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true] }, defaults: { weather: 'clear' }
     },
     sky: {
       label: 'the Sky River', tod: 'night', draw: drawSky,
@@ -2597,6 +2920,8 @@
     for (var k in base) {
       var a = base[k];
       if (a.balcony && S.balconySpot) a = A(S.balconySpot.x, S.balconySpot.y, a.h, a.face, { z: a.z, elev: true });
+      // spots a set's options move for this panel (the hollow's heap), by anchor name
+      if (S.spots && S.spots[k]) a = S.spots[k];
       out[k] = a;
     }
     return out;
@@ -2636,10 +2961,40 @@
     return null;
   }
 
+  // Chapter 4's two new characters at a cat's anchor. cats.js draws them in the cats' units, as it
+  // draws everyone, and the scenes hold them to the sizes Aron ruled on, whatever their boxes say:
+  // Reynard sits no taller than Tallyheart (about her size, and never bigger), and Squall no taller
+  // than our cat ("a dragon no bigger than you"). Tall is the top of the head to the feet, sitting: a
+  // fox's brush and a dragonet's wings don't count, and every pose is scaled as the sitting one is,
+  // so neither changes size from one panel to the next. A `size` on the cast member can make either
+  // smaller, never bigger than that.
+  var SIZE_CAP = { reynard: 'tallyheart', squall: 'player' };
+  function sitTall(S, who) {
+    var memo = S.sitTall || (S.sitTall = {});
+    if (memo[who] == null) {
+      var ch = getChar(who, charOpts(S, who, { pose: 'sit', mood: 'neutral' })), top = ch.headBox ? ch.headBox.y0 : ch.head ? Math.max(0, ch.head.y - ch.h * 0.18) : 0;
+      memo[who] = Math.max(1, ch.h - top);
+    }
+    return memo[who];
+  }
+  function sizeCap(S, who, m, a, R, s) {
+    var ref = SIZE_CAP[who];
+    if (!ref) return s;
+    var mine = sitTall(S, who), out = Math.min(s, a.h / R * sitTall(S, ref) / mine);
+    if (who !== 'reynard') return out;
+    // and never bigger in a panel than Tallyheart is in it: sitting, he comes no higher than she
+    // would sitting where she is, however near the camera his spot is
+    var t = null, cast = S.cast || [];
+    for (var i = 0; i < cast.length && !t; i++) if (cast[i] && cast[i].who === 'tallyheart') t = cast[i];
+    var ta = t && (typeof t.at === 'string' ? S.anchorMap && S.anchorMap[t.at] : resolveAnchor(S, t, {}));
+    if (ta && ta.h > 0) out = Math.min(out, ta.h / R * (t.size > 0 ? +t.size : 1) * sitTall(S, 'tallyheart') / mine);
+    return out;
+  }
+
   // How a cast member stands at spot `a`: who, drawing options, scale, facing and feet (world units).
   function castPlan(S, m, a, R) {
     var who = m.who || 'clancat', co = charOpts(S, who, m);
-    var s = a.h / R * (m.size > 0 ? +m.size : 1), face = m.facing || a.face || 'right', ay = a.y;
+    var s = sizeCap(S, who, m, a, R, a.h / R * (m.size > 0 ? +m.size : 1)), face = m.facing || a.face || 'right', ay = a.y;
     if (who === 'moth' && !a.elev) ay = a.y - a.h * 0.55;
     if (who === 'tallone' && S.box) {
       var th = getChar(who, co).h;
@@ -2683,6 +3038,9 @@
   // her a box bigger than a cat's, so a cat's anchor fits her), her face's r from her head box as the
   // otters' and dogs' are, and her shadow under her body rather than her whole box.
   var BIG = { sprinkle: 1 };
+  // Whose box is mostly tail or wings, so the shadow lies under the body as drawn, not the whole box:
+  // Sprinkle, and chapter 4's fox (his brush) and littlest dragonet (his stubby wings and tail).
+  var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1 };
   // A face's size, for balloon tails and for keeping the lettering off it: its radius in percent of
   // the panel width (a head's `r`). A cat's is a fifth of its 200 box (chapter 1's measure, which the
   // UI used to estimate from the markup); anything else with a head box (Riffle, the otters, the
@@ -2699,6 +3057,9 @@
   function faceR(S, who, ch, s) {
     if (!ch || ch.placeholder) return null;
     var world = null, hb = ch.headBox;
+    // the fox and the littlest dragonet are lettered like everyone with a face: should cats.js
+    // report no head box for one of them, the size comes from the box castBoxes estimates
+    if (!hb && SIZE_CAP[who] && ch.head) hb = { x0: ch.head.x - ch.w * 0.2, y0: ch.head.y - ch.h * 0.18, x1: ch.head.x + ch.w * 0.2, y1: ch.head.y + ch.h * 0.18 };
     if (CAT_IDS[who]) world = 0.2 * ch.h * s;
     else if (hb && faceShare()) world = faceShare() * ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2 * s;
     return world != null && world > 0 && isFinite(world) ? world / S.box.w * 100 : null;
@@ -2742,7 +3103,7 @@
       // would otherwise float over it
       var seated = pl.lift > 0 && pl.lift >= S.camDef.lift.seat, restY = seated ? Math.min(ay, bx.body[3]) : ay;
       if (seated) piece += g(seat(S, bx.body, restY - 6, a.y), tint ? { filter: tint } : null);
-      if (BIG[who]) {
+      if (OWN_SHADOW[who]) {
         // bigger than a cat, and her box is mostly neck, wings and tail: the shadow lies under her
         // body as drawn (none when only her eyes show in the dark)
         if (co.pose !== 'eyes') piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
@@ -3217,6 +3578,10 @@
     // the morning after the storm: puddles(S, [[cx, cy, rx, ry], …]), waterDrops(S, [[x, y, r, falling], …]),
     // dropD(x, y, r) (one drop's outline), sunSpots(S, [[cx, cy, rx, ry], …]), wetGlints(S, x0, x1, y0, y1, count, seed)
     puddles: puddles, waterDrops: waterDrops, dropD: dropD, sunSpots: sunSpots, wetGlints: wetGlints,
+    // chapter 4: redLight(S, x, y, r, blink) (the roof's little red light and its glow), thinMoon(S, x, y, r, tilt),
+    // barkCurl(S, x, y, k, rot) (a curl off the tree) and barkAt(card, x, y, w, rot, flat) (a piece pressed flat: a
+    // Case File card as cards.js draws it; card: { picture, mark }, a picture's key, or null for blank)
+    redLight: redLight, thinMoon: thinMoon, barkCurl: barkCurl, barkAt: barkAt,
     anchor: A
   };
 

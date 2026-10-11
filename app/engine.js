@@ -9,7 +9,14 @@
  * frames shown only `when` they match, the words the page says around a question (E.promptLines,
  * E.helpPlan: who counts, on which ground), borrowed questions in the borrower's voice, the adaptive
  * warm-up's ordered alt and `avoid`, reading time in E.hardFacts, and the book's dragonet pages
- * (docs/build.md, "Chapter 3 (v0.4)").
+ * (docs/build.md, "Chapter 3 (v0.4)"). Chapter 4 adds her Case File (a chapter's `cards`, a frame's
+ * `card`, the save's `cards`, E.cards, E.caseFile), two kinds of page (`scratch`: the bark Taps and
+ * the glitter Tap; `file`: her Case File opened the first time), flags set by reaching a frame and
+ * never unset (a frame's `sets`), an option's label that depends on her (`labelWhen`), a dragonet's
+ * page shown `when` she has found it, the 10s (the zero rule, swipes in pairs, a row at a time, the
+ * roof's grit), the skip-counts on both forepaws and on the pile of six, and the pictures and words
+ * the page is given (E.lessonPicture, E.sandOpts, E.skipPicture, E.skipWords, E.hollowLines), so Node
+ * can test them (docs/build.md, "Chapter 4 (v0.4)").
  *
  * Functions that change a cat change the object they are given (and return it or a result).
  * Nothing here reads the clock on its own: callers pass `now` (ms since epoch) where it matters,
@@ -21,7 +28,7 @@
   var PC = root.PC || (root.PC = {});
   var E = {};
 
-  E.VERSION = '0.3.0 (chapter 3, 2026-10-06)';
+  E.VERSION = '0.4.0 (chapter 4, 2026-10-10)';
   E.STORAGE_KEY = 'potomac-crossing.v1';   // the key stays: renaming it would strand every save
   E.SAVE_VERSION = 2;
   E.MAX_CATS = 4;
@@ -361,7 +368,9 @@
    * `finished` maps a chapter id to when its end frame was first reached; `dreams` maps a chapter
    * id to her dream as typed; `flags` and `choices` are one object for all chapters (a choice is
    * keyed "chapter:frame"); `lessons` holds finished lessons by set id; `hollow` counts every round
-   * and keeps each Count's rounds and glow in `byTable`; `nest` holds treasure and gift ids. */
+   * and keeps each Count's rounds and glow in `byTable`; `nest` holds treasure and gift ids; `cards`
+   * (chapter 4 on: a new optional field, the save stays version 2) holds her Case File's cards in
+   * the order found, { id, chapter, at } each. */
   E.newSave = function () {
     return { version: E.SAVE_VERSION, cats: [], current: null, settings: { readAloud: false, bigText: false } };
   };
@@ -390,6 +399,7 @@
       lesson: null,          // a lesson in progress: { mode, frame, state }
       hollowWaiting: null,   // a Training Hollow round in progress that gave way to a chapter lesson: { mode: 'hollow', state }
       nest: [],              // treasure and gift ids, in the order found
+      cards: [],             // her Case File: { id, chapter, at } for each card, in the order found
       hollow: blankHollow()  // { rounds, byTable: { '1': { rounds, cleanRounds, glow } } }
     };
   };
@@ -471,6 +481,7 @@
     if (st.lines != null && !isObj(st.lines)) return false;
     if ((st.pool != null && !Array.isArray(st.pool)) || (st.asked != null && !Array.isArray(st.asked))) return false;
     if (st.avoid != null && !Array.isArray(st.avoid)) return false;
+    if (st.own != null && !Array.isArray(st.own)) return false;
     return true;
   }
   E.okLesson = okLesson;
@@ -500,6 +511,13 @@
     });
     Object.keys(out.finished).forEach(function (k) { if (!out.finished[k]) delete out.finished[k]; });
     Object.keys(out.dreams).forEach(function (k) { if (typeof out.dreams[k] !== 'string') delete out.dreams[k]; });
+    // her Case File (none in a save from before chapter 4): each card once, as { id, chapter, at }
+    var held = {};
+    out.cards = out.cards.filter(function (k) {
+      if (!isObj(k) || typeof k.id !== 'string' || !k.id || held[k.id]) return false;
+      held[k.id] = true;
+      return true;
+    }).map(function (k) { return { id: k.id, chapter: typeof k.chapter === 'string' ? k.chapter : null, at: num(k.at, 0) }; });
     // places (none in a version-1 save, or a version-2 save from before them): { frame, history,
     // lesson } each; a place with no frame is a chapter lesson waiting for its frame (E.lessonAt)
     var pl = out.places;
@@ -700,9 +718,250 @@
     if (!out.length && opts.length) out.push({ option: opts[0], index: 0 });
     return out;
   };
+  /* An option's label as she reads it (tokens unfilled): the first of its `labelWhen` variants
+   * ([{ when, label }]) that matches her, else its `label` (chapter 4's tower choice, for a cat who
+   * has met Squall: "Go up and see Squall again."). */
+  E.optionLabel = function (option, cat) {
+    if (!option) return '';
+    var v = asList(option.labelWhen);
+    for (var i = 0; i < v.length; i++) if (isObj(v[i]) && typeof v[i].label === 'string' && E.matches(v[i].when, cat)) return v[i].label;
+    return option.label;
+  };
+
+  /* ------------------------------------------------------------ her Case File (chapter 4 on)
+   * A chapter may carry `cards: { id: { mark: 'eye' | 'ear', line, picture?, answers?, when?, link? } }`:
+   * a piece of bark for each thing she finds out, with one picture scratched on it (`picture`: the
+   * art's name for it, the card's id unless it says), one line, and a mark: an eye for what she saw
+   * herself, an ear for what she was only told. A frame gives cards with `card: 'id'`, or a list of
+   * ids and { id, when } entries; reaching the frame puts each in her file, once, like a gift (Back
+   * never takes one away, a second reading never gives it twice). `cat.cards` keeps them in the
+   * order found: { id, chapter, at }.
+   * A definition's `when` hides its card while it doesn't match (`squall-shapes`: she holds it from
+   * the roof, and her file shows it once the roof scene is finished: `{ foundSquall: true }`), except
+   * on the frame that gives it and the pages she reads on from it (while that frame is behind her in
+   * this reading: the roof's two last pages; Back past it hides it again). `answers` (on a claim, an
+   * ear card: the ids of the cards that answer it) is for chapter 10 and only stored now; with
+   * `link: { when, line }` the claim and the answers she holds are drawn touching once `when` matches
+   * (`{ ch4CaughtFly: true }`: "They can’t both be true."), and kept apart until then. */
+  function cardEntries(x) {
+    return asList(x).map(function (c) { return typeof c === 'string' ? { id: c } : c; })
+      .filter(function (c) { return isObj(c) && typeof c.id === 'string' && c.id; });
+  }
+  /* A card's definition: this chapter's, else any chapter's (a later chapter may give an earlier
+   * chapter's card: the roof, found later). Null when no chapter has it. */
+  E.cardDef = function (id, story, stories) {
+    if (story && isObj(story.cards) && isObj(story.cards[id])) return story.cards[id];
+    var list = storyList(stories);
+    for (var i = 0; i < list.length; i++) if (isObj(list[i].cards) && isObj(list[i].cards[id])) return list[i].cards[id];
+    return null;
+  };
+  /* The cards a frame shows her under its panel: its `card` entries whose own `when` matches
+   * ({ id, when?, line?, mark?, held? }). An entry with `held: true` is a card she already has, laid
+   * beside the new one for this one panel (the wing beside the fox's FLEW, for the cat who caught
+   * it): shown only when she holds it, and never given here. E.frameGives is the rest: the cards
+   * reaching the frame puts in her file. */
+  E.frameCards = function (frame, cat) {
+    return cardEntries(frame && frame.card).filter(function (c) { return E.matches(c.when, cat) && (c.held !== true || E.hasCard(cat, c.id)); });
+  };
+  E.frameGives = function (frame, cat) {
+    return cardEntries(frame && frame.card).filter(function (c) { return c.held !== true && E.matches(c.when, cat); });
+  };
+  /* Put a card in her Case File, once. Returns true when it is new. Her first card is where the file
+   * begins (`caseFile: true`, a flag for the story to read). */
+  E.giveCard = function (cat, id, chapterId, now) {
+    if (!cat || typeof id !== 'string' || !id) return false;
+    if (!Array.isArray(cat.cards)) cat.cards = [];
+    if (cat.cards.some(function (c) { return c && c.id === id; })) return false;
+    cat.cards.push({ id: id, chapter: chapterId || cat.chapter || null, at: now || 0 });
+    if (!isObj(cat.flags)) cat.flags = {};
+    cat.flags.caseFile = true;
+    return true;
+  };
+  E.hasCard = function (cat, id) { return !!(cat && Array.isArray(cat.cards) && cat.cards.some(function (c) { return c && c.id === id; })); };
+  /* Her Case File's button is there (the top bar on every frame, the hub) once she has reached a
+   * `file` frame: chapter 4's "Skritch". */
+  E.hasFile = function (cat) { return !!(cat && isObj(cat.flags) && cat.flags.caseFileOpen === true); };
+  // the ids the frame she is on gives her (a `card` frame, or a row of bark she is scratching), and
+  // the frames behind her in this reading (her back-history: a card given a page ago is still going
+  // into her file on the next page, before the frame that sets its flag; Back past the frame that
+  // gave it takes that frame out of her history, and the card out of her file)
+  function givenHere(cat, list) {
+    var out = {}, story = cat && E.chapter(cat.chapter, list);
+    if (!story || !story.frames) return out;
+    [cat.frame].concat(Array.isArray(cat.history) ? cat.history : []).forEach(function (id) {
+      var f = story.frames[id];
+      if (!f) return;
+      E.frameGives(f, cat).forEach(function (c) { out[c.id] = true; });
+      if (isObj(f.scratch)) cardEntries(f.scratch.cards).forEach(function (c) { if (E.matches(c.when, cat)) out[c.id] = true; });
+    });
+    return out;
+  }
+  /* Her cards as her Case File shows them, in the order found: [{ id, chapter, at, mark, line,
+   * picture, answers, link, shown }] (the line's tokens unfilled). A card whose definition is gone is
+   * skipped, never an error; one whose `when` doesn't match is left out, unless she is on the frame
+   * that gives it or has read on from it (givenHere). `opts.all` keeps those too, marked `shown:
+   * false` (the grown-ups corner). */
+  E.cards = function (cat, stories, opts) {
+    var out = [], list = E.chapters(stories), all = !!(opts && opts.all), here = null;
+    ((cat && cat.cards) || []).forEach(function (c) {
+      if (!isObj(c) || typeof c.id !== 'string') return;
+      var def = E.cardDef(c.id, E.chapter(c.chapter, list), list);
+      if (!def) return;
+      var shown = !def.when || E.matches(def.when, cat);
+      if (!shown) { here = here || givenHere(cat, list); shown = !!here[c.id]; }
+      if (!shown && !all) return;
+      out.push({
+        id: c.id, chapter: c.chapter || null, at: c.at || 0,
+        mark: def.mark === 'ear' ? 'ear' : 'eye', line: typeof def.line === 'string' ? def.line : '',
+        picture: typeof def.picture === 'string' && def.picture ? def.picture : c.id,
+        answers: asList(def.answers).filter(function (a) { return typeof a === 'string'; }),
+        link: isObj(def.link) ? def.link : null, shown: shown
+      });
+    });
+    return out;
+  };
+  /* The cards a frame shows under its panel as she reaches it: each with its definition, and
+   * whether its line and its mark are lettered there. The line is lettered once: when one of the
+   * frame's own balloons or captions already says it (her first card: the line is her balloon), or
+   * the entry says `line: false`, the card is its picture alone. `mark: false` leaves the mark off
+   * (her first card, before Tallyheart gives the eye and the ear their rule). */
+  function sayable(t) { return String(t == null ? '' : t).replace(/\*+/g, '').replace(/^[\s“"‘']+|[\s”"’']+$/g, '').replace(/\s+/g, ' '); }
+  E.cardsOn = function (frame, cat, story, stories) {
+    var said = E.balloons(frame, cat).map(function (b) { return sayable(E.fill(b.text, cat)); })
+      .concat(E.captions(frame, cat).map(function (c) { return sayable(E.fill(c, cat)); }));
+    var out = [];
+    E.frameCards(frame, cat).forEach(function (e) {
+      var def = E.cardDef(e.id, story, stories);
+      if (!def) return;
+      var line = typeof def.line === 'string' ? def.line : '';
+      var c = {
+        id: e.id, mark: def.mark === 'ear' ? 'ear' : 'eye', line: line,
+        picture: typeof def.picture === 'string' && def.picture ? def.picture : e.id,
+        showLine: e.line !== false && !!line && said.indexOf(sayable(E.fill(line, cat))) < 0,
+        showMark: e.mark !== false
+      };
+      if (e.held === true) c.held = true;   // a card she already holds, laid beside the new one
+      out.push(c);
+    });
+    return out;
+  };
+  /* A frame that gives a card makes the Case File's button wiggle and glow, once the button is there
+   * (so each new card is seen to go into the file she can open). Not the `file` frame itself, where
+   * the button glows until she taps it. */
+  E.fileWiggles = function (cat, story, frameId) {
+    var f = story && story.frames && story.frames[frameId];
+    return !!f && E.hasFile(cat) && !f.file && E.frameGives(f, cat).length > 0;
+  };
+  /* The Case File's screen: "{name}paw’s Case File", her cards in two groups, each in the order
+   * found: "What I saw myself" (the eye cards) and "What I was told (to check)" (the ear cards). Side
+   * by side on a wide screen; one above the other on a narrow one, the claims first (`narrow`): as one
+   * list, what she saw and then what she was told, the last thing she saw would lie beside the first
+   * thing she was told, and nothing may put "Sprinkle can’t fly." beside "The fox says it FLEW."
+   * before she has made that link herself. Once she has (the claim's `link.when` matches), the claim
+   * and the cards that answer it leave their groups and are drawn touching, across the groups, over
+   * the link's line (`links`). Empty places are never shown: the file never says how many there are. */
+  E.FILE_GROUPS = [
+    { mark: 'eye', title: 'What I saw myself', means: 'I saw this myself.' },
+    { mark: 'ear', title: 'What I was told (to check)', means: 'Somebody told me. A thing to check.' }
+  ];
+  E.FILE_COLS = { wide: 3, narrow: 2 };   // cards across a group (the page's CSS lays them out so)
+  E.caseFile = function (cat, stories) {
+    var cards = E.cards(cat, stories), by = {}, inLink = {}, links = [];
+    cards.forEach(function (c) { by[c.id] = c; });
+    cards.forEach(function (c) {
+      if (!c.link || inLink[c.id] || !E.matches(c.link.when, cat)) return;
+      var ans = c.answers.map(function (id) { return by[id]; }).filter(function (a) { return a && a.id !== c.id && !inLink[a.id]; });
+      if (!ans.length) return;
+      inLink[c.id] = true;
+      ans.forEach(function (a) { inLink[a.id] = true; });
+      links.push({ cards: ans.concat([c]), line: typeof c.link.line === 'string' && c.link.line ? c.link.line : 'They can’t both be true.' });
+    });
+    return {
+      title: E.fill('{name}paw’s Case File', cat),
+      groups: E.FILE_GROUPS.map(function (g) {
+        return { mark: g.mark, title: g.title, means: g.means, cards: cards.filter(function (c) { return c.mark === g.mark && !inLink[c.id]; }) };
+      }),
+      links: links, narrow: ['ear', 'eye'], count: cards.length
+    };
+  };
+  E.markMeans = function (mark) { return (E.FILE_GROUPS.filter(function (g) { return g.mark === mark; })[0] || E.FILE_GROUPS[0]).means; };
+  /* Whether two cards lie next to each other on the Case File's screen, in either layout: in one
+   * group, side by side or one above the other; across the groups, side by side (what she saw on the
+   * left: the card that ends a row of it and the claim that starts the same row of the other group),
+   * or, one group above the other with the claims first, the last row of claims over the first row
+   * of what she saw (the same column, or the last claim and the first thing she saw: one after the
+   * other as she reads). Two cards in one link touch. */
+  E.fileNeighbours = function (file, a, b) {
+    function where(id) {
+      var i, k;
+      for (i = 0; i < file.links.length; i++) for (k = 0; k < file.links[i].cards.length; k++) if (file.links[i].cards[k].id === id) return { link: i };
+      for (i = 0; i < file.groups.length; i++) for (k = 0; k < file.groups[i].cards.length; k++) {
+        if (file.groups[i].cards[k].id === id) return { g: i, i: k, n: file.groups[i].cards.length, mark: file.groups[i].mark };
+      }
+      return null;
+    }
+    var A = where(a), B = where(b);
+    if (!A || !B || a === b) return false;
+    if (A.link != null || B.link != null) return A.link != null && A.link === B.link;
+    return ['wide', 'narrow'].some(function (lay) {
+      var cols = E.FILE_COLS[lay], row = function (p) { return Math.floor(p.i / cols); }, col = function (p) { return p.i % cols; };
+      if (A.g === B.g) { var d = Math.abs(A.i - B.i); return (d === 1 && row(A) === row(B)) || d === cols; }
+      var eye = A.mark === 'eye' ? A : B, ear = A.mark === 'eye' ? B : A;
+      if (lay === 'wide') return row(eye) === row(ear) && (col(eye) === cols - 1 || eye.i === eye.n - 1) && col(ear) === 0;
+      var lastRow = Math.floor((ear.n - 1) / cols);
+      return row(ear) === lastRow && row(eye) === 0 && (col(ear) === col(eye) || (ear.i === ear.n - 1 && eye.i === 0));
+    });
+  };
+
+  /* `scratch`, the bark Taps (the skip-count's cousin): `scratch: { cards: ['tidy', { id, when }, …],
+   * next }` lays blank curls of bark in a row, the next one glowing; a tap scratches its picture in,
+   * letters its line under it and gives her the card; the last tap turns the page. `head` lists cards
+   * already scratched that lie at the head of the row (her first card). `draws: 'id'` is the same
+   * with no card: one curl, the tap scratches that card's picture and turns the page (the frame it
+   * turns to gives the card, with `card`). `tap: 'glint'` is the plainest form, with nothing
+   * scratched: the scene's glint pulses, a tap on it makes it flare and turns the page. Nothing can
+   * be got wrong, and nothing is logged.
+   * E.scratchPieces is the row as she sees it: [{ id, mark, line, picture, head?, draws?, done }]:
+   * a piece is done when she holds its card, so the row picks up where she left it. */
+  E.scratchPieces = function (frame, cat, story, stories) {
+    var sc = frame && frame.scratch, out = [];
+    if (!isObj(sc)) return out;
+    function piece(e, extra) {
+      var def = E.cardDef(e.id, story, stories) || {};
+      return Object.assign({ id: e.id, mark: def.mark === 'ear' ? 'ear' : 'eye', line: typeof def.line === 'string' ? def.line : '',
+        picture: typeof def.picture === 'string' && def.picture ? def.picture : e.id, done: E.hasCard(cat, e.id) }, extra || {});
+    }
+    cardEntries(sc.head).forEach(function (e) { out.push(piece(e, { head: true, done: true })); });
+    if (typeof sc.draws === 'string' && sc.draws) out.push(piece({ id: sc.draws }, { draws: true, done: false }));
+    cardEntries(sc.cards).forEach(function (e) { if (E.matches(e.when, cat)) out.push(piece(e)); });
+    return out;
+  };
+  /* One tap on the row: the next blank piece is scratched and its card is hers. Returns that card's
+   * id, or null when no piece is left (the page turns). */
+  E.scratchTap = function (cat, story, now) {
+    var id = E.frameId(cat, story), f = story.frames[id];
+    if (!f || !f.scratch) return null;
+    var next = E.scratchPieces(f, cat, story).filter(function (p) { return !p.head && !p.draws && !p.done; })[0];
+    if (!next) return null;
+    E.giveCard(cat, next.id, story.id, now);
+    if (now) cat.updated = now;
+    return next.id;
+  };
+  /* A scratch or file frame's words: the instruction under the panel and the hidden button's. */
+  E.tapWords = function (frame) {
+    var f = frame || {}, sc = f.scratch, fl = f.file;
+    if (isObj(fl) || fl === true) {
+      return { prompt: isObj(fl) && typeof fl.prompt === 'string' ? fl.prompt : '**Tap** your Case File. You can open it any time.', label: 'Open your Case File' };
+    }
+    if (!isObj(sc)) return { prompt: '', label: '' };
+    var kind = sc.tap ? 'tap' : sc.draws && !cardEntries(sc.cards).length ? 'draws' : 'cards';
+    var dp = kind === 'tap' ? (sc.tap === 'glint' ? '**Tap** the glitter.' : '') : kind === 'draws' ? '**Tap** the bark to scratch it.' : '**Tap** each piece of bark to scratch it.';
+    var dl = kind === 'tap' ? (sc.tap === 'glint' ? 'Look at the glitter.' : 'Tap it.') : kind === 'draws' ? 'Scratch the bark' : 'Scratch the next piece of bark';
+    return { kind: kind, prompt: typeof sc.prompt === 'string' ? sc.prompt : dp, label: typeof sc.label === 'string' && sc.label ? sc.label : dl };
+  };
 
   /* ------------------------------------------------------------ flow */
-  E.KINDS = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'end'];
+  E.KINDS = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'end'];
   E.kindOf = function (frame) {
     if (!frame) return null;
     if (frame.end) return 'end';
@@ -711,19 +970,31 @@
     if (frame.look) return 'look';
     if (frame.counts) return 'counts';
     if (frame.skip) return 'skip';
+    if (frame.scratch) return 'scratch';
+    if (frame.file) return 'file';
     if (frame.next) return 'next';
     return 'end';
   };
   /* A frame may carry `when` (matched as lines are: E.matches). A frame whose `when` doesn't match
-   * is skipped, forward and back, as if its `next` led straight on (chapter 3's river-path screen). */
+   * is skipped, forward and back, as if its `next` led straight on (chapter 3's river-path screen).
+   * Chapter 4: with `else: 'frameId'` beside its `when`, a frame that doesn't show leads there
+   * instead, so a choice, and the pages only it leads to, can be for some cats only (the roof offered
+   * again in a later chapter to a cat who has not found Squall: `when: { foundSquall: false }, else:
+   * …`; everyone else goes straight past the choice and the roof). */
   E.shows = function (frame, cat) { return !!frame && (!frame.when || E.matches(frame.when, cat)); };
   /* Where a page turn to `to` lands for her: `to`, or the first frame after it that shows. */
   E.landing = function (cat, story, to) {
-    for (var guard = 0; guard < 64 && to && story.frames[to] && !E.shows(story.frames[to], cat); guard++) to = E.exits(story.frames[to])[0];
+    for (var guard = 0; guard < 64 && to && story.frames[to] && !E.shows(story.frames[to], cat); guard++) {
+      var f = story.frames[to];
+      to = typeof f.else === 'string' && f.else ? f.else : E.exits(f)[0];
+    }
     return to;
   };
   /* Arriving on a frame: an end frame finishes its chapter (the first time); a gift frame puts its
-   * gift in her nest (once; Back never takes it away). */
+   * gift in her nest (once; Back never takes it away). Chapter 4: a frame's `sets` are flags set by
+   * reaching it and never unset (`foundSquall`, `ch4CaughtFly`: Back replaces what a choice set, never
+   * these); its `card` goes into her Case File (once, like a gift); and a `file` frame is where her
+   * Case File's button appears, for good (`caseFileOpen`). */
   function arrive(cat, story, id, now) {
     var f = story.frames[id];
     if (!f) return;
@@ -732,6 +1003,15 @@
       cat.finished[story.id] = now || 1;
     }
     if (f.gift) E.giveGift(cat, f.gift);
+    if (isObj(f.sets)) {
+      if (!isObj(cat.flags)) cat.flags = {};
+      Object.keys(f.sets).forEach(function (k) { cat.flags[k] = f.sets[k]; });
+    }
+    if (f.card != null) E.frameGives(f, cat).forEach(function (c) { E.giveCard(cat, c.id, story.id, now); });
+    if (f.file) {
+      if (!isObj(cat.flags)) cat.flags = {};
+      cat.flags.caseFileOpen = true;
+    }
   }
   /* ------------------------------------------------------------ places: one reading position per chapter
    * The chapter she is reading keeps its place on the cat itself (`chapter`, `frame`, `history`,
@@ -904,7 +1184,9 @@
   };
   E.next = function (cat, story, now) {
     var f = E.currentFrame(cat, story);
-    var to = f && (f.next || (f.look && f.look.next) || (f.skip && f.skip.next));
+    var to = f && (f.next || (f.look && f.look.next) || (f.skip && f.skip.next) || (f.scratch && f.scratch.next) || (f.file && f.file.next));
+    // a row of bark turns its page on the last tap; however the page turns, no card is left behind
+    if (f && f.scratch) for (var guard = 0; guard < 24 && E.scratchTap(cat, story, now); guard++);
     return E.go(cat, story, E.landing(cat, story, to), now);
   };
   /* A choice is remembered under "chapter:frame", so chapters never overwrite each other's. */
@@ -919,8 +1201,9 @@
     // a hidden option can't be chosen
     if (!E.options(f, cat).some(function (o) { return o.index === index; })) return false;
     var opt = f.choice.options[index];
+    var label = E.optionLabel(opt, cat);   // as she read it, before her pick changes anything
     if (isObj(opt.sets)) Object.keys(opt.sets).forEach(function (k) { cat.flags[k] = opt.sets[k]; });
-    cat.choices[E.choiceKey(story, id)] = { index: index, label: opt.label };
+    cat.choices[E.choiceKey(story, id)] = { index: index, label: label };
     return E.go(cat, story, E.landing(cat, story, opt.next), now);
   };
   /* Store what she typed (cleaned) and move on. For a dream, an empty value means skipped; each
@@ -979,13 +1262,22 @@
     if (k === 'look') return [frame.look.next];
     if (k === 'counts') return [frame.counts.next];
     if (k === 'skip') return [frame.skip.next];
+    if (k === 'scratch') return [frame.scratch.next];
+    if (k === 'file') return [frame.file.next];
     return [];
   };
 
   /* ------------------------------------------------------------ the skip-count
    * `skip: { table, groups, who?, next, done? }`: each tap counts the next group, lighting its
    * things and adding its running total (2, 4, 6…). Nothing can be got wrong and nothing is logged.
-   * skipView(skip, taps) is what the panel shows after that many taps. */
+   * skipView(skip, taps) is what the panel shows after that many taps.
+   * Chapter 4: `paws: 'both'` (the bedtime tens: her two forepaws patted down together, ten claws a
+   * tap, the count trailing off in her murmur: "10… 20… 30… 40… 50…"), `paws: 'pile'` (the promise:
+   * six piled forepaws, one friend's pair lit by each tap, the count in her own balloon), one group
+   * (Squall's raised forepaw: one tap, its five claws, a big 5), `prompt` (an instruction under the
+   * panel: "**Tap** the cats, left to right."), `label` (the hidden button's words for VoiceOver)
+   * and `carry: false` (the page it turns to doesn't show the number reached: the roof's 5 stays on
+   * the roof). */
   E.skipView = function (skip, taps) {
     skip = skip || {};
     var table = Math.max(1, num(skip.table, 2) | 0), groups = Math.max(1, num(skip.groups, 5) | 0);
@@ -997,8 +1289,8 @@
       table: table, groups: groups, per: table, taps: n, highlight: n * table,
       total: n * table, totals: totals, done: done,
       // the teacher's balloon keeps the count: "2… 4… 6…", and the last number on its own at the end
-      // (the bedtime hop, `paws: 'own'`, trails off sleepily: "5… 10… 15… 20…")
-      count: !n ? '' : totals.join('… ') + (done ? (skip.paws === 'own' ? '…' : '!') : '…')
+      // (the bedtime hop, `paws: 'own'`, trails off sleepily: "5… 10… 15… 20…"; so do the bedtime tens)
+      count: !n ? '' : totals.join('… ') + (done ? (skip.paws === 'own' || skip.paws === 'both' ? '…' : '!') : '…')
     };
     // `paws: 'own'` (the bedtime hop): her own two forepaws taking turns, left, right, left, right;
     // `lit` is the paw the last tap lit, `nextPaw` the one glowing for the next
@@ -1007,7 +1299,65 @@
       v.lit = n ? (n % 2 ? 'left' : 'right') : null;
       v.nextPaw = done ? null : (n % 2 ? 'right' : 'left');
     }
+    // `paws: 'both'` (the bedtime tens): both forepaws together, every tap; `paws: 'pile'` (the promise)
+    if (skip.paws === 'both') {
+      v.paws = 'both';
+      v.lit = n ? 'both' : null;
+      v.nextPaw = done ? null : 'both';
+    }
+    if (skip.paws === 'pile') v.paws = 'pile';
     return v;
+  };
+  /* The skip-count's picture, as PC.art.countsPicture takes it (the page adds her `look`), after
+   * that many taps: the groups, what is lit, the running totals under them, the next group glowing.
+   * Her own forepaws (`paws: 'own'`) take `taps`, `lit` and `nextPaw` and no totals; both together
+   * (`paws: 'both'`) are the art's `paws: 'own'` at table 10, with `both: true`; the promise
+   * (`paws: 'pile'`) is the art's `paws: 'promise'`, a friend's pair lit by each tap. */
+  var SKIP_THINGS = { 2: ['ear', 'ears'], 5: ['claw', 'claws'], 10: ['claw', 'claws'] };
+  function skipThings(skip, table) {
+    var d = SKIP_THINGS[table] || ['thing', 'things'];
+    return [skip.thing || d[0], skip.things || d[1]];
+  }
+  function skipPaws(skip, po, v) {
+    if (skip.paws === 'own') { po.paws = 'own'; po.taps = v.taps; po.lit = v.lit; po.nextPaw = v.nextPaw; po.totals = false; }
+    else if (skip.paws === 'both') { po.paws = 'own'; po.both = true; po.taps = v.taps; po.lit = v.lit; po.nextPaw = v.nextPaw; po.totals = false; }
+    else if (skip.paws === 'pile') { po.paws = 'promise'; po.taps = v.taps; }
+    return po;
+  }
+  E.skipPicture = function (skip, taps) {
+    skip = skip || {};
+    var v = E.skipView(skip, taps), t = skipThings(skip, skip.table);
+    return skipPaws(skip, { table: v.table, groups: v.groups, per: v.per, highlight: v.highlight, totals: true, next: !v.done, who: skip.who, thing: t[0], things: t[1] }, v);
+  };
+  /* The same picture on the pages a skip-count's totals stay on (`keep`): every group lit, nothing glowing. */
+  E.keptPicture = function (skip) {
+    skip = skip || {};
+    var v = E.skipView(skip, skip.groups), t = skipThings(skip, v.table);
+    var po = skipPaws(skip, { table: v.table, groups: v.groups, per: v.per, highlight: v.highlight, totals: true, next: false, who: skip.who, thing: t[0], things: t[1] }, v);
+    if (po.nextPaw != null) po.nextPaw = null;
+    return po;
+  };
+  /* The skip-count's words: who keeps the count (the frame's `teacher`; else the player on her own
+   * paws or the pile; else whoever speaks first on the frame, `first`; else Tallyheart), whether it
+   * is murmured, what is counted, the hidden button for VoiceOver and the panel's label. */
+  E.skipWords = function (skip, first) {
+    skip = skip || {};
+    var paws = skip.paws, mine = paws === 'own' || paws === 'both' || paws === 'pile';
+    var v0 = E.skipView(skip, 0), t = skipThings(skip, skip.table);
+    return {
+      teacher: skip.teacher || (mine ? 'player' : first || 'tallyheart'),
+      whisper: paws === 'own' || paws === 'both',
+      thing: t[0], things: t[1],
+      label: typeof skip.label === 'string' && skip.label ? skip.label
+        : paws === 'own' ? 'Tap your next forepaw.' : paws === 'both' ? 'Tap your forepaws.' : paws === 'pile' ? 'Count the next friend.'
+          : skip.table === 10 ? 'Count the next cat.' : 'Count the next ' + (skip.table === 2 ? 'cat' : skip.table === 5 ? 'paw' : 'one'),
+      aria: paws === 'own' ? 'Your two forepaws on the moss. Touch the glowing one.'
+        : paws === 'both' ? 'Your two forepaws on the moss. Touch them.'
+          : paws === 'pile' ? cap1(E.numWord(v0.groups * 2)) + ' forepaws in a pile. Touch the glowing pair.'
+            : v0.groups === 1 ? 'Counting picture: one group of ' + E.numWord(v0.table) + '. Touch it.'
+              : 'Counting picture: ' + E.numWord(v0.groups) + ' groups of ' + E.numWord(v0.table) + '. Touch the glowing one.',
+      prompt: typeof skip.prompt === 'string' ? skip.prompt : ''
+    };
   };
   /* `keep: true` on a skip: the running totals stay. The page it turns to, the plain pages after
    * that, and the first Counts frame they reach (until its lesson starts) show the skip's counting
@@ -1027,11 +1377,12 @@
     }
     return null;
   };
-  /* The skip-count a page comes straight after (it shows the number reached, big), or null. */
+  /* The skip-count a page comes straight after (it shows the number reached, big), or null. A skip
+   * with `carry: false` keeps its number to itself. */
   E.skipInto = function (story, frameId, cat) {
     var F = (story && story.frames) || {};
     for (var id in F) {
-      if (!own(F, id) || !F[id] || !F[id].skip) continue;
+      if (!own(F, id) || !F[id] || !F[id].skip || F[id].skip.carry === false) continue;
       if ((cat ? E.landing(cat, story, F[id].skip.next) : F[id].skip.next) === frameId) return F[id].skip;
     }
     return null;
@@ -1040,12 +1391,17 @@
   /* ------------------------------------------------------------ scene options from the cat
    * On the `hollow` set, `marks: 'auto'` is one mark per Count she has finished a chapter lesson
    * for, and `glow: 'auto'` lights each mark whose Count glows in the Training Hollow. On the `den`,
-   * `stone: 'auto'` is Riffle's stone where she put it (`flags.ch2Stone`). The story's own scene is
+   * `stone: 'auto'` is Riffle's stone where she put it (`flags.ch2Stone`), and `bark: 'auto'` is the
+   * cards along her nest's edge: the ones her Case File shows, in its order, each `{ picture, mark }`
+   * (chapter 4; a row drawn from a count would show cards she doesn't hold). On any set, a `cards`
+   * list (the hollow's row of bark on the sand) is written as a row of bark is, ids and `{ id, when }`
+   * entries: the entries that are hers become `{ picture, mark }`, whether or not she holds the card
+   * yet (the picture is the story's: what the panel shows her scratching). The story's own scene is
    * never changed: a resolved scene is a copy. */
   E.resolveScene = function (scene, cat, stories) {
     if (!scene || !isObj(scene.opts)) return scene;
     var o = scene.opts;
-    if (o.marks !== 'auto' && o.glow !== 'auto' && o.stone !== 'auto') return scene;
+    if (o.marks !== 'auto' && o.glow !== 'auto' && o.stone !== 'auto' && o.bark !== 'auto' && !Array.isArray(o.cards)) return scene;
     var s = clone(scene);
     if (o.marks === 'auto' || o.glow === 'auto') {
       var counts = E.learnedCounts(cat, stories).slice(0, E.MAX_MARKS);
@@ -1058,6 +1414,15 @@
     if (o.stone === 'auto') {
       var put = cat && isObj(cat.flags) ? cat.flags.ch2Stone : null;
       s.opts.stone = put === 'nose' || put === 'chin' ? put : true;
+    }
+    // `bark: 'auto'`: her Case File along the mossy edge of her nest, her own cards in her file's order
+    if (o.bark === 'auto') s.opts.bark = E.cards(cat, stories).map(function (c) { return { picture: c.picture, mark: c.mark }; });
+    // a `cards` list: the row as the story lays it, without the entries that are not this cat's
+    if (Array.isArray(o.cards)) {
+      s.opts.cards = E.frameCards({ card: o.cards }, cat).map(function (c) {
+        var def = E.cardDef(c.id, null, stories) || {};
+        return { picture: typeof def.picture === 'string' && def.picture ? def.picture : c.id, mark: def.mark === 'ear' ? 'ear' : 'eye' };
+      });
     }
     return s;
   };
@@ -1077,7 +1442,9 @@
    * lesson has asked already, nor one its sibling sets (the pile and the check: the sets of the
    * chapter that borrow from the same set) asked in this reading (state.asked), nor one the set
    * avoids (state.avoid: chapter 3's warm-up stays off the pile's pairs). An avoided pair comes last
-   * of all, after every other pair (chapter 2 has none, so it borrows as it did). A borrowed filler
+   * of all, after every other pair (chapter 2 has none, so it borrows as it did); so does one of the
+   * lesson's own pairs in a set that borrows the easiest (state.own, chapter 4: with its fresh pairs
+   * used up, the pile lends 1 × 10 and 5 × 10 again, never its own rows as 10 × 3). A borrowed filler
    * carries `from`, its lending set: it is asked in that set's picture and words, with that set's
    * praise (E.questionDef). With too few fillers the retry comes back as late as it can. Nothing
    * ever blocks: every answer moves the lesson forward.
@@ -1127,6 +1494,10 @@
     if (Array.isArray(opts.asked) && opts.asked.length) st.asked = opts.asked.slice();
     // the pairs the set avoids (`avoid`): a filler takes them only when nothing else is left
     if (Array.isArray(opts.avoid) && opts.avoid.length) st.avoid = opts.avoid.slice();
+    // chapter 4: the lesson's own pairs, for a set that borrows the easiest (`fillOrder: 'easiest'`):
+    // it never lends one of its own questions back, the other way round, while another pair is left
+    // (the pile's 3 × 10 and 2 × 10 never come back as 10 × 3 and 10 × 2)
+    if (Array.isArray(opts.own) && opts.own.length) st.own = opts.own.slice();
     return st;
   };
   C.done = function (st) { return !st || st.pos >= st.queue.length; };
@@ -1173,6 +1544,7 @@
     st.log.forEach(function (e) { asked[pairKey(e.a, e.b)] = true; });
     (st.asked || []).forEach(function (key) { asked[key] = true; });
     (st.avoid || []).forEach(function (key) { avoided[key] = true; });
+    (st.own || []).forEach(function (key) { avoided[key] = true; });
     var cands = [];
     (st.pool || []).forEach(function (p) { cands.push({ a: p.a, b: p.b, table: p.table, from: p.from }); });
     for (var i = st.log.length - 1; i >= 0; i--) {
@@ -1290,6 +1662,9 @@
       // on the 5s, an answer that ends in neither 5 nor 0 (34 for 7 × 5) gets the five-or-zero
       // reminder first (a set's helpIntroNotFive)
       if (qq.table === 5 && given != null && given % 5 !== 0) res.notFive = true;
+      // and on the 10s, one that doesn't end in a zero (13 for 3 × 10, 34 for 10 × 3) gets the zero
+      // rule first (a set's helpIntroNotTen)
+      if (qq.table === 10 && given != null && given % 10 !== 0) res.notTen = true;
       if (qq.table && qq.table !== 1) res.help.table = qq.table;
       if (qq.step !== 1) res.help.step = qq.step;
       var key = factKey(q.a, q.b);
@@ -1450,6 +1825,10 @@
       // `avoid` (the warm-up stays off the pile's pairs): what it borrows passes over them too,
       // while the pool has any other pair, fresh or not (state.avoid; fillers() takes them last)
       opts.avoid = Object.keys(pairSet(def.avoid));
+      // ... and, borrowing the easiest with an `avoid` list (chapter 4's four), never one of its own
+      // questions the other way round. Chapter 3's two such sets have no `avoid`: they borrow
+      // exactly as they did (Sprinkle's dinner, missed four times, still lends 5 × 2)
+      if (def.fillOrder === 'easiest' && opts.avoid.length) opts.own = Object.keys(pairSet(opts.facts));
     }
     return { def: def, state: C.start(def, opts) };
   };
@@ -1526,38 +1905,80 @@
     if (D.prompt) return [{ who: teacher, text: fillQ(D.prompt, D, q) }];
     return [{ who: teacher, text: E.genericQuestion(D, q) }];
   };
-  /* Where the help is scratched: the lesson set's `ground` ('sand', 'earth', 'mud'); else, for a
-   * borrowed question, earth when the borrowing set's own picture is prey (the pile scratches a
-   * borrowed ears question in the earth beside it), else sand; for its own question, earth for prey,
-   * mud for a picture drawn in the mud, else sand. The Training Hollow is always sand. */
+  /* Where the help is scratched: the lesson set's `ground` ('sand', 'earth', 'mud', and chapter 4's
+   * 'grit', the tower roof); else, for a borrowed question, earth when the borrowing set's own picture
+   * is prey (the pile scratches a borrowed ears question in the earth beside it), else sand; for its
+   * own question, earth for prey, mud for a picture drawn in the mud, grit for one scratched in the
+   * grit (`kind: 'grit'`, or a picture's own `ground`), else sand. The Training Hollow is always sand. */
+  E.GROUNDS = ['sand', 'earth', 'mud', 'grit'];
   E.helpGround = function (def, D, q) {
     def = def || {};
-    if (def.ground === 'sand' || def.ground === 'earth' || def.ground === 'mud') return def.ground;
+    if (E.GROUNDS.indexOf(def.ground) >= 0) return def.ground;
     var borrowed = q && q.from && def.id !== q.from;
-    var kind = borrowed ? (def.picture && def.picture.kind) : pictureOf(D || def, q || {}).kind;
-    return kind === 'prey' ? 'earth' : kind === 'mud' ? 'mud' : 'sand';
+    var pic = borrowed ? (def.picture || {}) : pictureOf(D || def, q || {});
+    if (pic.ground != null && E.GROUNDS.indexOf(pic.ground) >= 0) return pic.ground;
+    var kind = pic.kind;
+    return kind === 'prey' ? 'earth' : kind === 'mud' ? 'mud' : kind === 'grit' ? 'grit' : 'sand';
   };
-  /* The help after a miss (E.counts.answer's `help`, `near`, `notFive`, `line`): its first line, who
-   * keeps the count (the teacher, or with `helpCounter: 'you'` the player: under the bridge she hops
-   * and Sprinkle swipes), the ground, the scratches' style ('swipe': five short lines a paw, on the
-   * 5s) and the count, step by step (5 · 10 · 15 … on the 5s), then the miss line. */
+  /* The help after a miss (E.counts.answer's `help`, `near`, `notFive`, `notTen`, `line`): its first
+   * line, who keeps the count (the teacher, or with `helpCounter: 'you'` the player: under the bridge
+   * she hops and Sprinkle swipes), the ground, the scratches' style ('swipe': five short lines a paw,
+   * on the 5s) and the count, step by step (5 · 10 · 15 … on the 5s), then the miss line.
+   * Chapter 4, the 10s: an answer that doesn't end in a zero opens with the set's `helpIntroNotTen`;
+   * the swipes come in pairs, two for every cat, once for each forepaw (`pair: true`, hopped by tens);
+   * and a picture in rows of ten is scratched ten marks a row and lit a whole row at a time
+   * (`byRow: true`: the help hops by the row, 10 · 20 · 30). Both keys are there only when true. */
   E.helpPlan = function (def, D, q, res) {
     def = def || {}; D = D || def;
     var hp = res.help || {}, step = hp.step || 1, total = hp.groups * hp.per;
     var teacher = E.teacherOf(def, D);
     var helpIntro = D.helpIntro || 'Let’s scratch it out together.';
     var intro = res.notFive && D.helpIntroNotFive ? D.helpIntroNotFive
-      : res.near ? helpIntro : (D.helpIntroFar || helpIntro.replace(/^Close\.\s*/, ''));
+      : res.notTen && D.helpIntroNotTen ? D.helpIntroNotTen
+        : res.near ? helpIntro : (D.helpIntroFar || helpIntro.replace(/^Close\.\s*/, ''));
     var nums = [];
     for (var i = step; i <= total; i += step) nums.push(i);
     if (nums[nums.length - 1] !== total) nums.push(total);
-    var pic = pictureOf(D, q || {});
-    return {
+    var pic = pictureOf(D, q || {}), table = hp.table || (q && q.table), rows = pic.layout === 'rows';
+    var pair = table === 10 && hp.per === 10 && !rows;
+    var plan = {
       intro: intro, teacher: teacher, counter: D.helpCounter === 'you' ? 'player' : teacher,
-      ground: E.helpGround(def, D, q), style: (hp.table || (q && q.table)) === 5 && hp.per === 5 ? 'swipe' : null,
-      layout: pic.layout === 'rows' ? 'rows' : null,
+      ground: E.helpGround(def, D, q), style: (table === 5 && hp.per === 5) || pair ? 'swipe' : null,
+      layout: rows ? 'rows' : null,
       step: step, total: total, nums: nums, groups: hp.groups, per: hp.per, answer: hp.answer, line: res.line || ''
     };
+    if (pair) plan.pair = true;
+    if (rows && step > 1 && step === hp.per) plan.byRow = true;
+    return plan;
+  };
+  /* The scratches as PC.art.sand takes them, with `counted` of them lit: the plan's groups, ground
+   * and style; swipes in pairs for the 10s (`pair`); and `step` when the help hops a whole row at a
+   * time (the pile's rows of ten: after the first hop exactly the first row's ten marks are lit). */
+  E.sandOpts = function (plan, counted) {
+    plan = plan || {};
+    var o = { groups: plan.groups, per: plan.per, counted: counted, layout: plan.layout || undefined, ground: plan.ground === 'sand' ? undefined : plan.ground };
+    if (plan.style) o.style = plan.style;
+    if (plan.pair) o.pair = true;
+    if (plan.byRow) o.step = plan.step;
+    return o;
+  };
+  /* A question's picture as PC.art.countsPicture takes it (the page adds her `look`): the set's
+   * picture with the fact's own on top (cats or prey, stacks or rows, a thought cloud), `highlight`
+   * things lit, the fact's `who` (else the set's) in its places. `over` redraws it another way after
+   * a right answer (`rightPicture`: in rows unless it says otherwise). Chapter 4: forepaws scratched
+   * in the roof's grit are `kind: 'grit'` (a picture written `{ kind: 'mud', ground: 'grit' }` is the
+   * same), and a picture's `ground` goes to the art with it. */
+  E.lessonPicture = function (D, q, highlight, over) {
+    D = D || {}; q = q || {};
+    var p = Object.assign({}, D.picture || {}, q.picture || {}, over ? Object.assign({ layout: 'rows' }, over.picture || {}) : {});
+    var g = over && typeof over.groups === 'number' ? over.groups : q.groups;
+    var per = over && typeof over.per === 'number' ? over.per : q.per;
+    var who = q.who || (Array.isArray(D.who) ? D.who : null);
+    var o = { table: q.table || per, groups: g, per: per, highlight: highlight || 0, kind: p.kind, layout: p.layout, thought: p.thought,
+      who: who || undefined, thing: D.thing || 'tail', things: D.things || 'tails' };
+    if (p.kind === 'grit' || (p.kind === 'mud' && p.ground === 'grit')) { o.kind = 'grit'; o.ground = 'grit'; }
+    else if (p.ground != null) o.ground = p.ground;
+    return o;
   };
 
   /* A finished lesson goes on the cat the moment its last answer is in, not after the praise
@@ -1679,14 +2100,18 @@
   };
   /* The dragonets she has found: a page in her book for each, from the finished chapter that finds
    * it (`book.dragonet: { id, name, lines }`, Sprinkle in chapter 3), in chapter order; the rest of the
-   * clutch (E.DRAGONETS in all) are silhouettes, still to find. Null until she has found one. */
+   * clutch (E.DRAGONETS in all) are silhouettes, still to find. Null until she has found one.
+   * A dragonet with a `when` is one she may not find (Squall, chapter 4: `{ foundSquall: true }`): his
+   * page is there once it matches, whichever chapter she found him in, and not before. */
   E.dragonets = function (cat, stories) {
     var found = [], seen = {};
     E.chapters(stories).forEach(function (s) {
-      var d = s.book && s.book.dragonet;
-      if (!isObj(d) || !d.id || seen[d.id] || !E.isFinished(cat, s.id)) return;
-      seen[d.id] = true;
-      found.push({ id: d.id, name: E.fill(d.name || d.id, cat), lines: asList(d.lines).map(function (l) { return E.fill(l, cat); }), chapter: s.id });
+      asList(s.book && s.book.dragonet).forEach(function (d) {
+        if (!isObj(d) || !d.id || seen[d.id]) return;
+        if (d.when != null ? !E.matches(d.when, cat) : !E.isFinished(cat, s.id)) return;
+        seen[d.id] = true;
+        found.push({ id: d.id, name: E.fill(d.name || d.id, cat), lines: asList(d.lines).map(function (l) { return E.fill(l, cat); }), chapter: s.id });
+      });
     });
     return found.length ? { found: found, toFind: Math.max(0, E.DRAGONETS - found.length) } : null;
   };
@@ -1722,11 +2147,37 @@
     for (var i = 0; i < all.length; i++) if (all[i].table === table) return all[i];
     return null;
   };
-  /* "Tails · the 1s", "Ears · the 2s". */
+  /* "Tails · the 1s", "Ears · the 2s"; a set's `label` says it its own way ("Both forepaws · the 10s"). */
   E.countName = function (def, table) {
     table = table || setTable(def) || 1;
-    var things = (def && def.things) || (COUNT_THINGS[table] || ['thing', 'things'])[1];
+    var things = (def && (def.label || def.things)) || (COUNT_THINGS[table] || ['thing', 'things'])[1];
     return cap1(things) + ' · the ' + table + 's';
+  };
+  /* Tallyheart's word for a Count in the Training Hollow: the set's `hollowThings` ("tens": the 5s
+   * and the 10s are both claws), else its `things`. */
+  E.hollowWord = function (def) { return (def && (def.hollowThings || def.things)) || 'tails'; };
+  function andList(a) { return a.length > 2 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join(' and '); }
+  /* The Hollow's opening page: the Counts she can practise (each with its round's definition, its
+   * name for the button and whether its mark glows), Tallyheart's greeting, and her line about the
+   * marks that glow (or null). `opts.reward`: she has just finished a round. */
+  E.hollowLines = function (cat, stories, opts) {
+    var counts = E.learnedCounts(cat, stories).map(function (c) {
+      var def = E.hollowDef(stories, c.table);
+      return { table: c.table, def: def, glow: E.hollowTable(cat, c.table).glow, name: E.countName(def, c.table) };
+    });
+    var one = counts.length === 1 ? counts[0] : null;
+    var glowing = counts.filter(function (d) { return d.glow; });
+    var greet = opts && opts.reward ? 'Another round? I’ve got all evening.'
+      : one ? 'Back for more ' + E.hollowWord(one.def) + '? A full round earns a treasure for your nest.'
+        : counts.length ? 'Which Count today? A full round earns a treasure for your nest.' : 'Finish a Count in your story first. Then come back and practise it.';
+    var glow = one && one.glow ? 'Look at your claw mark. It glows now. You know your ' + E.hollowWord(one.def) + '.'
+      : glowing.length ? 'Look at your claw marks. Your ' + andList(glowing.map(function (d) { return E.hollowWord(d.def); })) + ' ' + (glowing.length === 1 ? 'mark glows' : 'marks glow') + ' now.' : null;
+    return { counts: counts, one: one, greet: greet, glow: glow };
+  };
+  E.hollowRoundLine = function (def) { return 'A round of ' + E.hollowWord(def) + '. Ready? Here we go.'; };
+  /* When a mark starts to glow: `many` Counts on the tree, and it names which. */
+  E.hollowGlowNote = function (def, many) {
+    return many ? 'Look! Your ' + E.hollowWord(def) + ' claw mark on the tree is glowing.' : 'Look! Your claw mark on the tree is glowing.';
   };
   /* The Counts she has learned (finished a chapter lesson of), in the order they are taught. */
   E.learnedCounts = function (cat, stories) {
@@ -1876,11 +2327,32 @@
 
   /* ------------------------------------------------------------ story checks */
   /* Problems with a story's frame graph, as strings (empty = fine). Used by tests and the UI's
-   * debug hook. */
-  E.checkStory = function (story) {
+   * debug hook. `stories` (optional: the other chapters) lets a frame use a Counts set or a card
+   * that another chapter defines (the roof found in a later chapter runs chapter 4's frames);
+   * without it, everything a chapter uses must be its own. */
+  E.checkStory = function (story, stories) {
     var errs = [];
     if (!story || !story.frames) return ['no frames'];
     if (!story.frames[story.start]) errs.push('start frame missing: ' + story.start);
+    var others = stories ? storyList(stories) : [];
+    function hasSet(id) { return !!((story.counts && story.counts[id]) || others.some(function (s) { return s.counts && s.counts[id]; })); }
+    function hasCard(id) { return !!((isObj(story.cards) && isObj(story.cards[id])) || others.some(function (s) { return isObj(s.cards) && isObj(s.cards[id]); })); }
+    // a card entry: 'id' or { id, when?, line?, mark? }; on a frame's `card` (`shown`) also `held: true`,
+    // a card she already has, laid beside the new one (a frame still gives at least one)
+    function checkCards(where, x, plain, shown) {
+      if (x == null) return;
+      asList(x).forEach(function (c, i) {
+        var id = typeof c === 'string' ? c : isObj(c) ? c.id : null;
+        if (typeof id !== 'string' || !id) { errs.push(where + ': card ' + i + ' is an id or { id, when }'); return; }
+        if (!hasCard(id)) errs.push(where + ': unknown card ' + id);
+        if (isObj(c)) { if (plain && c.when != null) errs.push(where + ': card ' + id + ' takes no when here'); else checkWhen(where + ' card ' + id, c.when); }
+        if (isObj(c) && c.held != null && !(shown && c.held === true)) errs.push(where + ': card ' + id + ': held is true, on a frame’s card only');
+      });
+      if (shown && asList(x).length && asList(x).every(function (c) { return isObj(c) && c.held === true; })) errs.push(where + ': every card is held: the frame gives none');
+    }
+    // flags a frame sets for good, by key: a choice must not set them too (Back would replace them)
+    var sticky = {};
+    Object.keys(story.frames).forEach(function (id) { var f = story.frames[id]; if (f && isObj(f.sets)) Object.keys(f.sets).forEach(function (k) { sticky[k] = id; }); });
     function checkWhen(where, w) {
       if (w == null) return;
       if (!isObj(w)) { errs.push(where + ': when must be an object'); return; }
@@ -1890,10 +2362,10 @@
     }
     Object.keys(story.frames).forEach(function (id) {
       var f = story.frames[id];
-      var kinds = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'end'].filter(function (k) { return f[k]; });
-      if (kinds.length !== 1) errs.push(id + ': needs exactly one of next/choice/input/look/counts/skip/end, has ' + (kinds.join(',') || 'none'));
+      var kinds = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'end'].filter(function (k) { return f[k]; });
+      if (kinds.length !== 1) errs.push(id + ': needs exactly one of next/choice/input/look/counts/skip/scratch/file/end, has ' + (kinds.join(',') || 'none'));
       E.exits(f).forEach(function (to) { if (!story.frames[to]) errs.push(id + ' -> missing ' + to); });
-      if (f.counts && !(story.counts && story.counts[f.counts.set])) errs.push(id + ': unknown counts set ' + f.counts.set);
+      if (f.counts && !hasSet(f.counts.set)) errs.push(id + ': unknown counts set ' + f.counts.set);
       if (f.skip && !(num(f.skip.table, 0) >= 1 && num(f.skip.groups, 0) >= 1)) errs.push(id + ': skip needs a table and groups');
       if (f.gift && !E.gift(f.gift)) errs.push(id + ': unknown gift ' + f.gift);
       asList(f.caption).forEach(function (c, i) {
@@ -1905,32 +2377,96 @@
         checkWhen(id + ' say ' + i, b.when);
         if (b.digits != null && (typeof b.digits !== 'string' || !b.digits.trim())) errs.push(id + ': say ' + i + ': digits is a short line, like "7 × 8"');
       });
-      if (f.choice) (f.choice.options || []).forEach(function (o, i) { if (o) checkWhen(id + ' option ' + i, o.when); });
+      if (f.choice) (f.choice.options || []).forEach(function (o, i) {
+        if (!o) return;
+        checkWhen(id + ' option ' + i, o.when);
+        // an option's label for a cat it matches: labelWhen: [{ when, label }], beside its plain label
+        if (o.labelWhen != null) {
+          if (typeof o.label !== 'string' || !o.label) errs.push(id + ' option ' + i + ': labelWhen needs a plain label beside it');
+          asList(o.labelWhen).forEach(function (v, n) {
+            if (!isObj(v) || typeof v.label !== 'string' || !v.label.trim() || !isObj(v.when)) errs.push(id + ' option ' + i + ': labelWhen ' + n + ' is { when, label }');
+            else checkWhen(id + ' option ' + i + ' labelWhen ' + n, v.when);
+          });
+        }
+        if (isObj(o.sets)) Object.keys(o.sets).forEach(function (k) { if (own(sticky, k)) errs.push(id + ' option ' + i + ': sets ' + k + ', which frame ' + sticky[k] + ' sets for good'); });
+      });
+      // chapter 4: flags set by reaching the frame, the cards it gives, the bark Taps, her Case File
+      if (f.sets != null && !(isObj(f.sets) && Object.keys(f.sets).every(function (k) { var v = f.sets[k]; return typeof v === 'string' || typeof v === 'boolean' || typeof v === 'number'; }))) {
+        errs.push(id + ': sets is an object of flags, like { foundSquall: true }');
+      }
+      checkCards(id, f.card, false, true);
+      if (f.scratch) {
+        var sc = f.scratch;
+        if (!isObj(sc)) errs.push(id + ': scratch is { cards | draws | tap, next }');
+        else {
+          var forms = ['cards', 'draws', 'tap'].filter(function (k) { return sc[k] != null; });
+          if (forms.length !== 1) errs.push(id + ': scratch needs exactly one of cards (the row of bark), draws (one curl, no card) or tap (the glint), has ' + (forms.join(',') || 'none'));
+          if (sc.cards != null && !(Array.isArray(sc.cards) && sc.cards.length)) errs.push(id + ': scratch cards is a list of cards');
+          checkCards(id + ' scratch', sc.cards);
+          checkCards(id + ' scratch head', sc.head, true);
+          if (sc.draws != null && (typeof sc.draws !== 'string' || !hasCard(sc.draws))) errs.push(id + ': scratch draws names no card: ' + sc.draws);
+          if (sc.tap != null && (typeof sc.tap !== 'string' || !sc.tap)) errs.push(id + ': scratch tap names what is tapped, like "glint"');
+          if (sc.at != null && !(isObj(sc.at) && num(sc.at.x, -1) >= 0 && num(sc.at.y, -1) >= 0)) errs.push(id + ': scratch at is { x, y } in percent of the panel');
+          ['prompt', 'label', 'ground'].forEach(function (k) { if (sc[k] != null && typeof sc[k] !== 'string') errs.push(id + ': scratch ' + k + ' is a line'); });
+        }
+      }
+      if (f.file && f.file !== true && !(isObj(f.file) && (f.file.prompt == null || typeof f.file.prompt === 'string'))) errs.push(id + ': file is { next, prompt? }');
       // a frame shown only `when` it matches is passed over as if its next led straight on
       if (f.when != null) {
         checkWhen(id + ' when', f.when);
-        if (E.exits(f).length !== 1) errs.push(id + ': a frame with when needs exactly one way on (next)');
+        // ... or, with `else`, to the frame it names (a choice some cats never see)
+        if (f.else == null && E.exits(f).length !== 1) errs.push(id + ': a frame with when needs exactly one way on (next), or an else');
         if (id === story.start) errs.push(id + ': the start frame always shows (no when)');
       }
-      if (f.skip && f.skip.paws != null && f.skip.paws !== 'own') errs.push(id + ': skip paws is "own"');
+      if (f.else != null) {
+        if (f.when == null) errs.push(id + ': else goes with a when (where the page turns when the frame does not show)');
+        if (typeof f.else !== 'string' || !story.frames[f.else]) errs.push(id + ' -> missing ' + f.else + ' (else)');
+      }
+      if (f.skip && f.skip.paws != null && ['own', 'both', 'pile'].indexOf(f.skip.paws) < 0) errs.push(id + ': skip paws is "own", "both" or "pile"');
       if (f.skip && f.skip.keep != null && typeof f.skip.keep !== 'boolean') errs.push(id + ': skip keep is true or false');
+      if (f.skip && f.skip.carry != null && typeof f.skip.carry !== 'boolean') errs.push(id + ': skip carry is true or false');
+      if (f.skip) ['prompt', 'label'].forEach(function (k) { if (f.skip[k] != null && typeof f.skip[k] !== 'string') errs.push(id + ': skip ' + k + ' is a line'); });
     });
-    var dn = story.book && story.book.dragonet;
-    if (dn != null && !(isObj(dn) && typeof dn.id === 'string' && dn.id && typeof dn.name === 'string' && dn.name)) errs.push('book.dragonet needs an id and a name');
+    asList(story.book && story.book.dragonet).forEach(function (dn) {
+      if (!(isObj(dn) && typeof dn.id === 'string' && dn.id && typeof dn.name === 'string' && dn.name)) errs.push('book.dragonet needs an id and a name');
+      else checkWhen('book.dragonet ' + dn.id, dn.when);
+    });
+    // her Case File's cards
+    if (story.cards != null && !isObj(story.cards)) errs.push('cards is an object: { id: { mark, line, picture } }');
+    Object.keys(isObj(story.cards) ? story.cards : {}).forEach(function (cid) {
+      var c = story.cards[cid];
+      if (!isObj(c)) { errs.push('card ' + cid + ': needs a mark and a line'); return; }
+      if (c.mark !== 'eye' && c.mark !== 'ear') errs.push('card ' + cid + ': mark is "eye" (she saw it herself) or "ear" (she was told)');
+      if (typeof c.line !== 'string' || !c.line.trim()) errs.push('card ' + cid + ': needs its one line');
+      if (c.picture != null && (typeof c.picture !== 'string' || !c.picture)) errs.push('card ' + cid + ': picture is the art’s name for its drawing');
+      if (c.answers != null && !(Array.isArray(c.answers) && c.answers.every(function (a) { return typeof a === 'string' && a; }))) errs.push('card ' + cid + ': answers is a list of card ids');
+      if (c.answers != null && c.mark !== 'ear') errs.push('card ' + cid + ': only a claim (an ear card) has answers');
+      checkWhen('card ' + cid, c.when);
+      if (c.link != null) {
+        if (!isObj(c.link) || (c.link.line != null && typeof c.link.line !== 'string')) errs.push('card ' + cid + ': link is { when, line }');
+        else checkWhen('card ' + cid + ' link', c.link.when);
+        if (!(Array.isArray(c.answers) && c.answers.length)) errs.push('card ' + cid + ': link needs answers (the cards it is drawn touching)');
+      }
+    });
+    if (story.names != null && !(isObj(story.names) && Object.keys(story.names).every(function (k) { return typeof story.names[k] === 'string' && story.names[k]; }))) {
+      errs.push('names is an object of labels by speaker, like { squall: "The little dragon" }');
+    }
     Object.keys(story.counts || {}).forEach(function (sid) {
       var d = story.counts[sid];
-      if (d.fillFrom && !E.countsSet(d.fillFrom, story)) errs.push('counts ' + sid + ': fillFrom names no set in this chapter: ' + d.fillFrom);
+      if (d.fillFrom && !E.countsSet(d.fillFrom, story, stories)) errs.push('counts ' + sid + ': fillFrom names no set in this chapter: ' + d.fillFrom);
       if (d.fillIntro != null && typeof d.fillIntro !== 'string') errs.push('counts ' + sid + ': fillIntro must be a line');
       if (d.fillIntro != null && !d.fillFrom) errs.push('counts ' + sid + ': fillIntro without fillFrom');
       // chapter 3's keys
-      if (d.ground != null && ['sand', 'earth', 'mud'].indexOf(d.ground) < 0) errs.push('counts ' + sid + ': ground is "sand", "earth" or "mud"');
+      if (d.ground != null && E.GROUNDS.indexOf(d.ground) < 0) errs.push('counts ' + sid + ': ground is "sand", "earth", "mud" or "grit"');
       if (d.fillOrder != null && d.fillOrder !== 'easiest') errs.push('counts ' + sid + ': fillOrder is "easiest"');
       if (d.fillVoice != null && d.fillVoice !== 'borrower') errs.push('counts ' + sid + ': fillVoice is "borrower"');
       if ((d.fillOrder != null || d.fillVoice != null) && !d.fillFrom) errs.push('counts ' + sid + ': fillOrder and fillVoice need fillFrom');
       if (d.helpCounter != null && d.helpCounter !== 'you') errs.push('counts ' + sid + ': helpCounter is "you"');
-      ['againIntro', 'helpIntroNotFive', 'helpIntro', 'helpIntroFar'].forEach(function (k) {
+      // chapter 4 adds the zero rule's line, the Hollow's button (`label`) and Tallyheart's word there (`hollowThings`)
+      ['againIntro', 'helpIntroNotFive', 'helpIntroNotTen', 'helpIntro', 'helpIntroFar', 'label', 'hollowThings'].forEach(function (k) {
         if (d[k] != null && (typeof d[k] !== 'string' || !d[k].trim())) errs.push('counts ' + sid + ': ' + k + ' is a line');
       });
+      if (isObj(d.picture) && d.picture.ground != null && E.GROUNDS.indexOf(d.picture.ground) < 0) errs.push('counts ' + sid + ': picture ground is "sand", "earth", "mud" or "grit"');
       if (d.done != null && typeof d.done !== 'string') errs.push('counts ' + sid + ': done is a line, \'\' or null');
       if (d.avoid != null && !(Array.isArray(d.avoid) && d.avoid.every(function (f) { var p = factPair(f); return p[0] >= 0 && p[1] >= 0; }))) errs.push('counts ' + sid + ': avoid is a list of facts, like [[9, 2], [7, 2]]');
       if (isObj(d.warmHard) && d.warmHard.alt != null) {

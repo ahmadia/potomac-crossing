@@ -1100,7 +1100,7 @@ goes in her book.*
   - ***The decisions, in short*** *(each is a bullet below; the rest are smaller. Murmurpaw’s test
     is built as a clean sweep, as ruling 1 has it, and a version with one miss is below if you want
     it):*
-    1. *Decided 2026-10-06: Sprinkle is renamed Sprinkle (README 38).*
+    1. *Decided 2026-10-06: Drizzle is renamed Sprinkle (README 38).*
     2. *Decided 2026-10-06: Murmurpaw, then Murmurchime (README 39).*
     3. *Decided 2026-10-06: keep “Mistscale” (README 40).*
     4. *Module-1’s clue 4: tell weasel from dragon by the prints’ size, not by counting toes.*
@@ -1262,7 +1262,7 @@ goes in her book.*
     Wings of Fire). A rename reaches chapters 1 and 2 too. When this chapter’s proposals move to the
     README, its Waffles line drops “Lady.”*
   - *Names already in use here that echo the books, checked 2026-10-06 against both wikis’ page titles
-    (flag only; your rulings): Warriors has pages for **Sprinkle** (a RiverClan cat in Dawn of the Clans,
+    (flag only; your rulings): Warriors has pages for **Drizzle** (a RiverClan cat in Dawn of the Clans,
     whose mentor is Dew), **Dew**, **Fog** and **Thunder**, all four clutch names; **Hailstar** and
     **Hailstep**; **Puddlekit**, **Puddlepaw** and **Puddleshine**; **Russetfur** (ShadowClan’s
     longtime deputy, the closest echo of Russet), **Russetkit** and **Russetpaw**; **Snipkit**;

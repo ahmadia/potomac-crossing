@@ -1,6 +1,6 @@
 /* Potomac Crossing · app/art/sets/pile.js
  *
- * The set: the prey pile in camp (chapters 2 and 3), and PC.art.prey, the one piece of prey that both
+ * The set: the prey pile in camp (chapters 2, 3 and 4), and PC.art.prey, the one piece of prey that both
  * the set and the Counts pictures draw.
  *
  *   pile: a shady corner of camp under a low arch of brambles; the pile sits in the arch's
@@ -19,6 +19,33 @@
  *   the ground in front of the pile, just right of `pile-left`: the one Tallyheart nudges over, off
  *   the top of the front row's first vole stack, which keeps only its bottom piece).
  *   The stacks (and the vole) are reported in `keep`, one box each, so the lettering stays off the prey.
+ *
+ *   Chapter 4 (docs/build.md, "Chapter 4 (v0.4)"; the chapter text's Build notes, "Sets and options"):
+ *   Tallyheart's rule, rows of ten. `rows` in place of `pairs`: a list, the front row first, each entry
+ *   a count or { n, gap } (places counted from 0: [10, 10, { n: 10, gap: [3, 4, 5, 6] }] is two full
+ *   rows and a back row of three pieces, four empty places, three pieces: the hole right in the
+ *   middle). One piece to a place, every piece facing the same way, mice and voles turn about; an
+ *   empty place is a smooth pressed mark in the earth. `lit` then counts rows (the front row first);
+ *   `pairs` and `vole` say nothing once there are rows.
+ *   back: 'shadow'  the back row is a band of the brambles' deep shade: only the dim shapes nearest
+ *                   its two ends show, and no gap, no dug earth and no "scale" can be made out (the
+ *                   picture is the same whatever the row holds, and whatever dug, scale and glint say)
+ *   dug             behind the back row, right behind its gap ('big': heaped up, as in chapter 3)
+ *   scale: true     the "scale" in the gap, leaning on the next piece: as big as a cat's paw, flat,
+ *                   shaped like a giant fish's scale (round at one end, a blunt point at the other),
+ *                   smooth at every edge, clear with a faint green cast, a white shine on it. Nothing
+ *                   like Sprinkle's matte grey ridges. Nobody ever holds it.
+ *   scale: 'behind' tonight: where it was found, on the bare earth behind the back row, a small glimmer
+ *   glint: true     the sun on it: a star of light that pulses softly (<g data-art="glint">; a wide
+ *                   unpainted circle in the group makes its box a generous target for the glitter Tap)
+ *   Cameras: rows (from the front, the rows running back under the brambles), gap (she has come to
+ *   the back row: the row across the panel, the earth behind it; this camera draws the back row
+ *   alone), and three close-ups with no anchors (a face is never in them; a balloon there comes from
+ *   off the panel): scale (where it leans, the piece it leans on beside it), through (the camp seen
+ *   through it, wavy and a little green inside its outline, as it always is outside), mirror (her
+ *   own small face in it, from the player's look). `wide`, `low` and `close` take `rows` too. The
+ *   five new cameras draw rows whatever the options say (the third morning's, when `rows` is missing).
+ *   Each row, the band and the "scale" are in `keep`.
  *
  *   PC.art.prey({ kind: 'mouse' | 'vole' | 'fish', lit, seed, facing?, part? }) -> { svg, w, h }:
  *   (the pile itself draws no fish; `fish` stays drawable only in case Aron rules to keep a few,
@@ -343,6 +370,8 @@
   // ------------------------------------------------------------------ wide (main composition)
 
   var MAIN = { cx: 615, base: 800, pw: 74, open: [335, 905, 548, 830], vole: [408, 902, 1.06] };
+  // chapter 4's rows of ten, small in the wide shot: ten across between the cat at `pile-left` and the old tom at `beside`
+  var MAINROWS = { cx: 622, y0: 838, k0: 0.385, yh: 560, a: 0.16, dugW: 4.6, dugK: 1.3, hit: 70, behind: 0.6, shade: 742, open: [345, 895] };
   // the thicket: two rounded mounds [x0, x1, top] on a base at y 846 (its top edge, for the leaf texture)
   var THICKET = [[-700, 830, 250], [420, 1050, 420]];
   function thicketTop(x) {
@@ -441,10 +470,19 @@
     back += K.fernClump(S, 1000, 852, 150, { seed: 418, count: 6, avoid: avoid }) + K.fernClump(S, 40, 860, 180, { seed: 419, count: 6, avoid: avoid });
     back += K.tufts(S, 0, 960, 840, 1000, 50, 420, p.grassNear, p.grassLight, 1.2);
     // the pile
-    if (o.dug) back += dugEarth(S, MAIN.cx, MAIN.base - 36, 420, 0.9, 421, o.dug === 'big');
-    var pile = pileSvg(S, MAIN.cx, MAIN.base, MAIN.pw, 7), vole = o.vole ? looseVole(S, MAIN.vole[0], MAIN.vole[1], MAIN.pw * MAIN.vole[2]) : null;
-    back += g(pile.svg + (vole ? vole.svg : ''), S.tod === 'morning' || S.tod === 'day' ? null : { filter: pileTint(S) });
-    keepBoxes(S, pile.boxes.concat(vole ? [vole.box] : []));
+    var rows = rowList(o);
+    if (rows) {
+      // chapter 4: rows of ten running back into the arch's mouth, on a little more of its floor
+      back += ell(ocx, obase - 52, (ox1 - ox0) * 0.45, 62, mix(p.wood, p.shade, 0.5), { opacity: 0.92 });
+      var rp = rowsPile(S, MAINROWS, rows, 7, 0);
+      back += rp.dug + g(rp.svg, wet ? null : { filter: pileTint(S) });
+      keepBoxes(S, rp.boxes);
+    } else {
+      if (o.dug) back += dugEarth(S, MAIN.cx, MAIN.base - 36, 420, 0.9, 421, o.dug === 'big');
+      var pile = pileSvg(S, MAIN.cx, MAIN.base, MAIN.pw, 7), vole = o.vole ? looseVole(S, MAIN.vole[0], MAIN.vole[1], MAIN.pw * MAIN.vole[2]) : null;
+      back += g(pile.svg + (vole ? vole.svg : ''), S.tod === 'morning' || S.tod === 'day' ? null : { filter: pileTint(S) });
+      keepBoxes(S, pile.boxes.concat(vole ? [vole.box] : []));
+    }
     // foreground: grass and a frond at the corners, clear of the cast
     front += g(K.tufts(S, 0, 1600, 975, 1012, 34, 422, p.grassNear, p.grassLight, 2) +
       K.fernClump(S, 1660, 1030, 260, { seed: 423, count: 5, spread: 1.4, lean: -0.5, avoid: avoid }) +
@@ -471,6 +509,8 @@
   // ------------------------------------------------------------------ low and close (cat height)
 
   var LOW = { cx: 715, base: 874, pw: 126, vole: [432, 964, 1.12] };
+  // chapter 4's rows of ten, between the cat at `pile-left` and the old tom at `beside` (and whole in the close-up)
+  var LOWROWS = { cx: 708, y0: 905, k0: 0.65, yh: 560, a: 0.24, dugW: 4.6, dugK: 1.3, hit: 84, behind: 0.6, shade: 744, open: [170, 1170] };
 
   function inPoly(P, x, y) {
     var c = false;
@@ -572,12 +612,21 @@
     arch += stroke(drip, stemCol, 5) + path(dl, p.leafMid);
     back += floorSpots + g(arch, { filter: S.shadow('l') });
     // the pile and what's behind it
-    // (big: grown from a slightly narrower base here, a touch to the left, so it stays inside the arch's legs)
-    var bigDug = o.dug === 'big';
-    if (o.dug) back += dugEarth(S, bigDug ? LOW.cx - 30 : LOW.cx, LOW.base - 76, bigDug ? 660 : 760, 1.5, 518, bigDug);
-    var pile = pileSvg(S, LOW.cx, LOW.base, LOW.pw, 7), vole = o.vole ? looseVole(S, LOW.vole[0], LOW.vole[1], LOW.pw * LOW.vole[2]) : null;
-    back += g(pile.svg + (vole ? vole.svg : ''), wet ? null : { filter: pileTint(S) });
-    keepBoxes(S, pile.boxes.concat(vole ? [vole.box] : []));
+    var rows = rowList(o);
+    if (rows) {
+      // chapter 4: rows of ten between the arch's legs, the floor carried a little further back for them
+      back += ell(LOWROWS.cx, 778, 560, 60, S.linU([[0, mix(p.wood, p.shade, 0.52)], [1, mix(p.wood, p.shade, 0.4)]], 0, 718, 0, 790));
+      var rp = rowsPile(S, LOWROWS, rows, 7, 0);
+      back += rp.dug + g(rp.svg, wet ? null : { filter: pileTint(S) });
+      keepBoxes(S, rp.boxes);
+    } else {
+      // (big: grown from a slightly narrower base here, a touch to the left, so it stays inside the arch's legs)
+      var bigDug = o.dug === 'big';
+      if (o.dug) back += dugEarth(S, bigDug ? LOW.cx - 30 : LOW.cx, LOW.base - 76, bigDug ? 660 : 760, 1.5, 518, bigDug);
+      var pile = pileSvg(S, LOW.cx, LOW.base, LOW.pw, 7), vole = o.vole ? looseVole(S, LOW.vole[0], LOW.vole[1], LOW.pw * LOW.vole[2]) : null;
+      back += g(pile.svg + (vole ? vole.svg : ''), wet ? null : { filter: pileTint(S) });
+      keepBoxes(S, pile.boxes.concat(vole ? [vole.box] : []));
+    }
     // foreground: grass and a frond at the bottom edge, clear of the cast
     var avoid = avoidBoxes(S, 16);
     front += g(K.tufts(S, 0, 1600, 985, 1014, 26, 519, p.grassNear, p.grassLight, 2.6) +
@@ -585,14 +634,496 @@
     return { back: back, over: '', front: front };
   }
 
-  function draw(S) { return S.comp === 'low' ? drawLow(S) : drawMain(S); }
+  // ================================================================== chapter 4: rows of ten, the gap, the "scale"
+
+  var circ = K.circ, n4 = K.n4;
+  var PLACE = 118;   // one place in a row, in a piece's own units (a mouse is 110 long)
+  var MORNING = [10, 10, { n: 10, gap: [3, 4, 5, 6] }];   // the third morning: thirty laid out, four gone from the back row
+
+  // `rows`: the pile laid in rows, the front row first. Each entry is a count (0-10) or { n, gap }
+  // (places counted from 0: { n: 10, gap: [3, 4, 5, 6] } is three pieces, four empty places, three
+  // pieces); a bare number is that many rows of ten. Null when the scene is in pairs (chapters 2, 3).
+  function rowList(o) {
+    var v = o ? o.rows : null, i;
+    if (typeof v === 'number' && isFinite(v)) { var a = []; for (i = 0; i < clamp(Math.round(v), 0, 5); i++) a.push(10); v = a; }
+    if (!Array.isArray(v)) return null;
+    return v.slice(0, 5).map(function (e) {
+      var obj = !!e && typeof e === 'object', count = optInt(obj ? e.n : e, 10, 0, 10), gap = [];
+      if (obj && Array.isArray(e.gap)) e.gap.forEach(function (j) { j = Math.round(+j); if (j >= 0 && j < count && gap.indexOf(j) < 0) gap.push(j); });
+      gap.sort(function (p1, p2) { return p1 - p2; });
+      return { n: count, gap: gap };
+    });
+  }
+
+  // Where things lie on a composition's floor. G = { cx, y0, k0, yh, a }: the front row's base and a
+  // piece's scale there, and how both shrink with each row back (toward yh, by a a row).
+  function depthGeo(G, d) { var s = 1 / (1 + G.a * d); return { y: G.yh + (G.y0 - G.yh) * s, k: G.k0 * s, sp: PLACE * G.k0 * s }; }
+  function rowGeo(G, rows, first) {
+    return rows.map(function (rw, i) {
+      var q = depthGeo(G, i), xs = [];
+      for (var j = 0; j < rw.n; j++) xs.push(G.cx + (j - (rw.n - 1) / 2) * q.sp);
+      // `r`: the row's own number in the pile (its kinds and seeds follow it, so the back row is the
+      // same pieces from every camera, the `gap` camera's close view of it too)
+      return { r: (first || 0) + i, n: rw.n, gap: rw.gap, y: q.y, k: q.k, sp: q.sp, xs: xs, h: PREY.mouse.bh * q.k };
+    });
+  }
+  // tidy: every piece faces the same way, mice and voles turn about, the rows out of step
+  function placeKind(r, j) { return (r + j) % 2 ? 'mouse' : 'vole'; }
+  function rowPiece(kind, seed, lit, part, x, y, k) {
+    var spec = PREY[kind], p1 = art.prey({ kind: kind, seed: seed, facing: 'right', lit: lit, part: part });
+    return p1.svg ? '<g transform="' + tr(x - (spec.bw + M * 2) * k / 2, y - (spec.bh + M) * k, k) + '">' + p1.svg + '</g>' : '';
+  }
+  // An empty place: the earth pressed smooth where a piece lay last night (so four empty places
+  // read as four, side by side).
+  function placeMark(S, x, y, sp) {
+    var p = S.pal;
+    return ell(x, y - sp * 0.05, sp * 0.4, sp * 0.09, mix(p.wood, p.shade, 0.6), { opacity: 0.6 }) +
+      ell(x, y - sp * 0.062, sp * 0.33, sp * 0.06, mix(p.wood, p.sand, 0.3), { opacity: 0.5 }) +
+      stroke('M' + n(x - sp * 0.34) + ' ' + n(y - sp * 0.01) + 'q' + n(sp * 0.34) + ' ' + n(sp * 0.085) + ' ' + n(sp * 0.68) + ' 0', mix(p.sand, p.rim, 0.4), Math.max(1, sp * 0.022), { opacity: 0.7 });
+  }
+  function rowSvg(S, row, lit, seed) {
+    var marks = '', shadows = '', glow = '', bodies = '', sparks = '';
+    for (var j = 0; j < row.n; j++) {
+      var x = row.xs[j];
+      if (row.gap.indexOf(j) >= 0) { marks += placeMark(S, x, row.y, row.sp); continue; }
+      var kind = placeKind(row.r, j), sd = seed + row.r * 16 + j;
+      shadows += ell(x, row.y - 1, row.sp * 0.45, row.sp * 0.075, S.pal.shade, { opacity: 0.3 });
+      if (lit) glow += rowPiece(kind, sd, true, 'glow', x, row.y, row.k);
+      bodies += rowPiece(kind, sd, lit, 'body', x, row.y, row.k);
+      if (lit) sparks += rowPiece(kind, sd, true, 'spark', x, row.y, row.k);
+    }
+    return g(marks, { 'data-art': 'places' }) + shadows + (glow ? g(glow, { 'class': 'pcs-pulse' }) : '') + bodies + sparks;
+  }
+
+  // `back: 'shadow'`: the back row under the brambles, before she walks to it. The brambles' shade
+  // lies over the back of the floor, a pool of it deepest in the middle; the row's two ends come out
+  // of it (its three outermost places each side, drawn whatever the row holds), and nothing in the
+  // middle can be made out: no gap, no dug earth, no "scale". The same picture whatever the back row
+  // holds and whatever dug, scale and glint say.
+  function shadowBand(S, G, row, seed) {
+    var p = S.pal, deep = mix(mix(p.wood, p.shade, 0.82), mix(p.leaf, p.shade, 0.8), 0.45), F = G.shade, s = '', ends = '', tips = '', j;
+    for (j = 0; j < row.n; j++) {
+      if (Math.abs(j - (row.n - 1) / 2) < 2.5) continue;
+      ends += ell(row.xs[j], row.y - 1, row.sp * 0.45, row.sp * 0.075, p.shade, { opacity: 0.3 }) + rowPiece(placeKind(row.r, j), seed + row.r * 16 + j, false, 'body', row.xs[j], row.y, row.k);
+    }
+    // the shade over the far floor, and the deep pool of it across the row's middle
+    s += ell(G.cx, F, (G.open[1] - G.open[0]) * 0.56, row.y + row.h * 1.25 - F, S.radB('pileshade', [[0, deep, 0.86], [0.74, deep, 0.78], [1, deep, 0]]));
+    s += ell(G.cx, row.y - row.h * 0.62, row.sp * 4.5, row.h * 1.9, S.radB('pileband', [[0, deep, 0.98], [0.44, deep, 0.97], [0.6, deep, 0.84], [0.82, deep, 0.4], [1, deep, 0]]));
+    // bramble tips hanging into it: this is the brambles' own shade
+    for (var i = 0; i < 5; i++) {
+      var tx = G.cx + (i - 2) * row.sp * 1.55 + (i % 2 ? 0.3 : -0.2) * row.sp, ty = row.y - row.h * 2.1 - (i % 2) * row.h * 0.3;
+      tips += leafD(tx, ty, row.sp * 0.46, 1.5 + (i % 3) * 0.25, row.sp * 0.15) + leafD(tx + row.sp * 0.15, ty - row.sp * 0.1, row.sp * 0.4, 0.7, row.sp * 0.13) + leafD(tx - row.sp * 0.1, ty - row.sp * 0.06, row.sp * 0.38, 2.5, row.sp * 0.12);
+    }
+    return ends + s + path(tips, mix(mix(p.leaf, p.shade, 0.7), p.leaf, 0.3), { opacity: 0.9 });
+  }
+
+  // ------------------------------------------------------------------ the "scale"
+
+  // Its outline in its own units, standing on its blunt point at (0, 0), the round end up: as big as
+  // a cat's paw (52 by 58, against a mouse's 110 by 64), flat, shaped like a giant fish's scale, and
+  // smooth at every edge. `u`: world units to a unit.
+  function scaleD(u) {
+    function q(x, y) { return n(x * u) + ' ' + n(y * u); }
+    return 'M' + q(-5, -1) + 'Q' + q(0, 2.2) + ' ' + q(5, -1) + 'C' + q(14, -9) + ' ' + q(24, -24) + ' ' + q(26, -38) +
+      'C' + q(27.4, -50) + ' ' + q(16, -58) + ' ' + q(0, -58) + 'C' + q(-16, -58) + ' ' + q(-27.4, -50) + ' ' + q(-26, -38) +
+      'C' + q(-24, -24) + ' ' + q(-14, -9) + ' ' + q(-5, -1) + 'Z';
+  }
+  // Clear, with a faint green cast where it is thickest (its edge), and a white shine: tower glass,
+  // nothing like a Mistscale's matte grey ridges.
+  var GLASS = { clear: '#E2F6EC', green: '#8ED4B2', deep: '#5FB392', line: '#3E9273' };
+
+  // Small, in a row: standing on its point at (x, y) and leaning `lean` (+1 right, -1 left) on the
+  // next piece; or `flat`, lying on the bare earth. Returns { svg, box (for keep), top (where the sun
+  // catches it: the glint's place) }.
+  function scaleSmall(S, at) {
+    var u = at.u, d = scaleD(u), rot = at.flat ? 74 * at.lean : 24 * at.lean;
+    var t = 'translate(' + n(at.x) + ' ' + n(at.y) + ')' + (at.flat ? ' scale(1 0.5)' : '') + ' rotate(' + rot + ')';
+    var s = ell(at.x + at.lean * u * (at.flat ? 24 : 9), at.y + u * 0.6, u * (at.flat ? 30 : 17), u * 3.2, S.pal.shade, { opacity: 0.3 });
+    var glass = path(d, 'none', { stroke: GLASS.deep, 'stroke-width': n(Math.max(0.8, u * 1.2)), 'stroke-linejoin': 'round', opacity: 0.6, transform: 'translate(' + n(u * 2.4) + ' ' + n(u * 1.2) + ')' }) +
+      path(d, GLASS.clear, { opacity: 0.58 }) +
+      path(d, 'none', { stroke: GLASS.green, 'stroke-width': n(u * 4), 'stroke-linejoin': 'round', opacity: 0.6, transform: 'translate(0 ' + n(-2.9 * u) + ') scale(0.9)' }) +
+      path(d, 'none', { stroke: GLASS.line, 'stroke-width': n(Math.max(1, u * 1.5)), 'stroke-linejoin': 'round', opacity: 0.9 }) +
+      stroke('M' + n(-16 * u) + ' ' + n(-20 * u) + 'L' + n(4 * u) + ' ' + n(-51 * u), '#FFFFFF', u * 7, { opacity: 0.36 }) +
+      stroke('M' + n(-3 * u) + ' ' + n(-12 * u) + 'L' + n(15 * u) + ' ' + n(-42 * u), '#FFFFFF', u * 2.4, { opacity: 0.3 }) +
+      stroke('M' + n(-17 * u) + ' ' + n(-45 * u) + 'L' + n(-9 * u) + ' ' + n(-52.5 * u), '#FFFFFF', Math.max(1.2, u * 2.2), { opacity: 0.95 });
+    s += g(glass, { transform: t });
+    var r = u * 62;
+    return { svg: g(s, { 'data-art': 'scale' }), box: { x: at.x - r * 0.75, y: at.y - (at.flat ? r * 0.5 : r), w: r * 1.5, h: at.flat ? r * 0.62 : r * 1.06 }, top: at.flat ? [at.x + at.lean * u * 26, at.y - u * 12] : [at.x + at.lean * u * 9, at.y - u * 47] };
+  }
+
+  // The glitter: a star of light where the sun catches the "scale". It pulses softly (pcs-pulse).
+  // With `hit`, the glitter Tap is on it: the group carries data-art="glint", and a wide unpainted
+  // circle makes its box a generous target for the UI.
+  function star(x, y, R, r2, rot) {
+    var P = [];
+    for (var i = 0; i < 8; i++) { var a = rot + Math.PI * i / 4, rr = i % 2 ? r2 : R; P.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]); }
+    return K.pts(P) + 'Z';
+  }
+  function glintSvg(S, x, y, r, hit) {
+    var s = circ(x, y, r * 1.7, S.radU([[0, '#FFFFFF', 0.9], [0.3, '#FFF7D2', 0.45], [1, '#FFF7D2', 0]], x, y, r * 1.7));
+    s += path(star(x, y, r * 1.5, r * 0.11, -Math.PI / 2), '#FFFFFF') + path(star(x, y, r * 0.78, r * 0.13, -Math.PI / 4), '#FFFDF0', { opacity: 0.92 }) + circ(x, y, r * 0.24, '#FFFFFF');
+    s = g(s, { 'class': 'pcs-pulse' });
+    if (hit) s += circ(x, y, hit, 'none');
+    return g(s, hit ? { 'data-art': 'glint' } : { 'data-art': 'glimmer' });
+  }
+
+  // Where the "scale" lies in a row: in the gap, leaning on the next piece (the one after the last
+  // empty place; the one before the first, when the gap runs to the row's end).
+  function scaleSpot(row) {
+    if (!row || !row.n) return null;
+    var gp = row.gap, last = gp.length ? gp[gp.length - 1] : -1;
+    if (gp.length && last + 1 < row.n) return { x: row.xs[last] + row.sp * 0.28, y: row.y, u: row.k, lean: 1 };
+    if (gp.length && gp[0] > 0) return { x: row.xs[gp[0]] - row.sp * 0.28, y: row.y, u: row.k, lean: -1 };
+    if (gp.length) return { x: row.xs[last], y: row.y, u: row.k, lean: 1, flat: true };
+    // no gap to lie in: it leans on the row's last piece, from outside
+    return { x: row.xs[row.n - 1] + row.sp * 0.72, y: row.y, u: row.k, lean: -1 };
+  }
+
+  // The pile in rows on the floor G. `first`: the pile's row number of rows[0] (the `gap` camera
+  // draws the back row alone). Returns { dug, svg, boxes } (the dug earth apart: it is not prey, and
+  // takes no evening tint). Options: lit (the first n rows glow, the front row first), dug, back,
+  // scale, glint.
+  function rowsPile(S, G, rows, seed, first) {
+    var o = S.opts, geo = rowGeo(G, rows, first), R = geo.length, lit = optInt(o.lit, 0, 0, 10), back = R ? geo[R - 1] : null;
+    var shadow = o.back === 'shadow' && !!back, out = { dug: '', svg: '', boxes: [] }, spot = null, sc = null, r;
+    if (back && !shadow) {
+      var gx = back.gap.length ? (back.xs[back.gap[0]] + back.xs[back.gap[back.gap.length - 1]]) / 2 : G.cx;
+      var kd = back.k * (G.dugK || 1.35), dugY = back.y - back.h * 0.34 - 5 * kd, behind = G.behind || 0.4;
+      // tonight the rows are laid a little forward of where it was found: behind the back row there is
+      // bare earth, the "scale" on it, and then the dug earth
+      if (o.scale === 'behind') dugY = Math.min(dugY, depthGeo(G, R + behind + 0.55).y - 4 * kd);
+      if (o.dug) out.dug = g(dugEarth(S, gx, dugY, back.sp * (G.dugW || 5), kd, seed + 31, o.dug === 'big'), { 'data-art': 'dug' });
+      if (o.scale === 'behind') {
+        var bd = depthGeo(G, R + behind);
+        spot = { x: G.cx + bd.sp * 1.7, y: bd.y, u: bd.k, lean: 1, flat: true };
+        sc = scaleSmall(S, spot);
+        out.svg += sc.svg + glintSvg(S, sc.top[0], sc.top[1], Math.max(7, bd.k * 26), 0);
+      }
+    }
+    for (r = R - 1; r >= 0; r--) {
+      var row = geo[r], mh = M * row.k;
+      if (shadow && r === R - 1) out.svg += g(shadowBand(S, G, row, seed), { 'data-art': 'band' });
+      else out.svg += g(rowSvg(S, row, r < lit, seed), { 'data-art': 'row', 'data-row': row.r });
+      if (row.n) out.boxes.unshift({ x: G.cx - row.n * row.sp / 2, y: row.y - row.h - mh, w: row.n * row.sp, h: row.h + mh });
+      // this morning: in the gap, leaning on the next piece
+      if (r === R - 1 && !shadow && o.scale !== 'behind' && (o.scale === true || o.glint === true)) {
+        spot = scaleSpot(row);
+        if (spot && o.scale === true) { sc = scaleSmall(S, spot); out.svg += sc.svg; }
+      }
+    }
+    if (spot && !shadow) {
+      var top = sc ? sc.top : [spot.x + spot.lean * spot.u * 9, spot.y - spot.u * 47];
+      // the sun has slid over the towers: a shaft of it reaches down through the brambles to the "scale"
+      if (o.glint === true) out.svg += sunShaft(S, top[0], spot.y, spot.u * 30) + glintSvg(S, top[0], top[1], Math.max(16, spot.u * 44), Math.max(G.hit || 80, spot.u * 90));
+      out.boxes.push(sc ? sc.box : { x: top[0] - 30, y: top[1] - 30, w: 60, h: 60 });
+    }
+    return out;
+  }
+
+  // ------------------------------------------------------------------ rows and gap (under the arch, from the front)
+
+  // Under the bramble arch, looking in from the open side: the back of the arch in deep cool shade,
+  // the packed-earth floor from C.floor down, the canopy overhead (its lower edge about C.canopy), a
+  // leg of brambles each side (C.legs wide), canes looping down. C.key keeps its gradients apart.
+  function insideArch(S, C) {
+    var p = S.pal, r = rng(C.seed), wet = S.tod === 'morning' || S.tod === 'day', s = '', i, x;
+    var deep = mix(p.leaf, p.shade, 0.66), mid = mix(p.leaf, p.shade, 0.42), F = C.floor, L = C.leaf || 1, top = C.canopy, lw = C.legs;
+    s += rect(-10, -10, 1620, F + 60, S.linU([[0, deep], [0.6, deep], [1, mid]], 0, 0, 0, F + 40));
+    s += leafTex(S, 0, 1600, top - 20, F, Math.round(190 / L), 30 * L, C.seed + 3, mix(p.leaf, p.shade, 0.8), 0.7);
+    s += leafTex(S, 0, 1600, top + 30, F, Math.round(64 / L), 28 * L, C.seed + 4, mix(p.leafMid, p.shade, 0.4), 0.45);
+    // the floor: packed earth, darkest at the back where the brambles hang lowest
+    s += path('M-10 ' + n(F + 10) + 'Q400 ' + n(F - 12) + ' 800 ' + n(F) + 'Q1200 ' + n(F + 10) + ' 1610 ' + n(F - 4) + 'V1010H-10Z',
+      S.lin(C.key + 'floor', [[0, mix(p.wood, p.shade, 0.52)], [0.3, mix(p.wood, p.shade, 0.3)], [1, mix(p.wood, p.sand, 0.2)]]));
+    // daylight from the open side behind us, across the floor
+    s += g(poly([[880, F - 30], [1700, F - 30], [1560, 1010], [330, 1010]], S.linU([[0, p.sun || p.glow, 0], [0.45, p.sun || p.glow, 0.17], [1, p.sun || p.glow, 0.06]], 0, F - 30, 0, 1000)), { style: 'mix-blend-mode:screen' });
+    s += path(blob(lw + 60, F + 70, 110, 15, 9, rng(C.seed + 5), 0.3, 0.3) + blob(1540 - lw, F + 58, 104, 14, 8, rng(C.seed + 6), 0.3, 0.3) +
+      blob(330, 992, 150, 20, 9, rng(C.seed + 7), 0.3, 0.3) + blob(1300, 996, 130, 18, 9, rng(C.seed + 8), 0.3, 0.3), p.moss, { opacity: 0.85 });
+    var lv = '', spots = '';
+    for (i = 0; i < 15; i++) lv += leafD(40 + r() * 1520, F + 34 + r() * (950 - F), (16 + r() * 8) * L, r() * 6.28, 6.5 * L);
+    s += path(lv, '#C98A45', { opacity: 0.72 });
+    [[0.2, 0.3, 30], [0.42, 0.72, 24], [0.66, 0.2, 34], [0.86, 0.55, 22]].forEach(function (q) {
+      spots += ell(160 + q[0] * 1280, F + 50 + q[1] * (930 - F), q[2] * 1.9, q[2] * 0.42, mix(p.rim, p.sand, 0.4), { opacity: 0.12 });
+    });
+    s += spots;
+    // the arch overhead, seen from below, and its two legs
+    var edge = [];
+    for (x = 1640; x >= -40; x -= 80) edge.push([x, top + Math.sin(x * 0.008 + 1) * 24 + (r() - 0.5) * 22]);
+    var canopy = [[-40, -40], [1640, -40]].concat(edge), foot = F + (C.foot || 90);
+    var leg = [[-40, top - 40], [lw * 0.62, top - 16], [lw, top + 80], [lw * 0.84, (top + foot) / 2 - 40], [lw * 1.04, (top + foot) / 2 + 70], [lw * 0.8, foot - 70], [lw * 0.95, foot], [-40, foot]];
+    var legR = leg.map(function (q) { return [1600 - q[0], q[1]]; }).reverse();
+    var arch = brambleMass(S, leg, lw * 0.3, (top + foot) / 2, [6, 0], C.seed + 11, wet) + brambleMass(S, legR, 1600 - lw * 0.3, (top + foot) / 2, [-6, 0], C.seed + 12, wet) +
+      brambleMass(S, canopy, 800, top - 160, [0, 8], C.seed + 13, wet);
+    // canes looping down from the canopy and over the legs, cane tips hanging into the shade
+    var vo = { stem: '', thorns: '', leaves: '', blossoms: '', berries: '' }, w = 12 * L;
+    [[-20, 250], [270, 560], [520, 860], [800, 1120], [1060, 1360], [1320, 1620]].forEach(function (c) {
+      var sag = (60 + r() * 50) * L, y0 = top - 10 + (r() - 0.5) * 30, y1 = top - 10 + (r() - 0.5) * 30;
+      vine([c[0], y0], [c[0] + 60, y0 + sag], [c[1] - 60, y1 + sag], [c[1], y1], w, r, vo);
+    });
+    vine([lw, top + 40], [lw + 40, top + 170], [lw - 50, foot - 230], [lw, foot - 110], w, r, vo);
+    vine([1600 - lw, top + 40], [1560 - lw, top + 170], [1650 - lw, foot - 230], [1600 - lw, foot - 110], w, r, vo);
+    var stemCol = mix(p.woodDark, p.leaf, 0.35), drip = '', dl = '';
+    arch += stroke(vo.stem, p.rim, 9 * L, { transform: 'translate(0 4)', opacity: 0.6 }) + stroke(vo.stem, stemCol, 11 * L) + path(vo.thorns, stemCol) +
+      path(vo.leaves, p.rim, { transform: 'translate(0 3)', opacity: 0.5 }) + path(vo.leaves, p.leafMid) +
+      path(vo.berries, '#4A2A4E') + path(vo.blossoms, '#FFF6EA', { opacity: 0.92 });
+    [[360, 96], [690, 130], [990, 90], [1250, 116]].forEach(function (c, j) {
+      var len = c[1] * L, cy = top + 24;
+      drip += 'M' + n(c[0]) + ' ' + n(cy) + 'q' + n(14 - j * 6) + ' ' + n(len * 0.5) + ' ' + n(-6 + j * 3) + ' ' + n(len);
+      dl += leafD(c[0] - 6 + j * 3, cy + len, 26 * L, 1.7, 10 * L) + leafD(c[0] + 4, cy + len * 0.55, 22 * L, j % 2 ? 0.5 : 2.6, 8 * L) + leafD(c[0], cy + len * 0.25, 20 * L, j % 2 ? 2.7 : 0.4, 7 * L);
+    });
+    arch += stroke(drip, stemCol, 5 * L) + path(dl, p.leafMid);
+    return s + g(arch, { filter: S.shadow('l') });
+  }
+
+  // `rows`: from the front, the rows running back under the brambles. Cats sit clear of the rows'
+  // ends: one at the front each side, and further back beside the second and the back row.
+  var ROWS = { cx: 800, y0: 925, k0: 0.98, yh: -190, a: 0.13, dugW: 4.5, dugK: 1.2, hit: 96, behind: 0.45, shade: 470, open: [140, 1460] };
+  function drawRows(S) {
+    var p = S.pal, o = S.opts, wet = S.tod === 'morning' || S.tod === 'day', back = '', front = '';
+    back += insideArch(S, { key: 'pilerows', seed: 601, floor: 470, canopy: 196, legs: 132, leaf: 1, foot: 190 });
+    var rp = rowsPile(S, ROWS, rowList(o) || rowList({ rows: MORNING }), 7, 0);
+    back += rp.dug + g(rp.svg, wet ? null : { filter: pileTint(S) });
+    keepBoxes(S, rp.boxes);
+    var avoid = avoidBoxes(S, 16);
+    front += g(K.tufts(S, 0, 1600, 985, 1014, 22, 619, p.grassNear, p.grassLight, 2.4) +
+      K.fernClump(S, 1670, 1044, 300, { seed: 620, count: 5, spread: 1.3, lean: -0.55, avoid: avoid }) +
+      K.fernClump(S, -70, 1044, 280, { seed: 621, count: 5, spread: 1.3, lean: 0.55, avoid: avoid }), { filter: S.shadow('m') });
+    return { back: back, over: '', front: front };
+  }
+
+  // `gap`: she has come to the back row. The row across the panel, the hole right in its middle, the
+  // earth behind it (dug: 'big' heaps it up there); the cats sit in front of the row, the middle clear.
+  var GAP = { cx: 800, y0: 612, k0: 1.3, yh: -190, a: 0.13, dugW: 4.4, dugK: 1.25, hit: 120, behind: 0.9, shade: 430, open: [100, 1500] };
+  function drawGap(S) {
+    var p = S.pal, o = S.opts, wet = S.tod === 'morning' || S.tod === 'day', back = '', front = '';
+    back += insideArch(S, { key: 'pilegap', seed: 651, floor: 430, canopy: 150, legs: 100, leaf: 1.3, foot: 230 });
+    var rows = rowList(o) || rowList({ rows: MORNING });
+    var rp = rowsPile(S, GAP, rows.slice(-1), 7, Math.max(0, rows.length - 1));
+    back += rp.dug + g(rp.svg, wet ? null : { filter: pileTint(S) });
+    keepBoxes(S, rp.boxes);
+    front += g(K.tufts(S, 0, 1600, 988, 1014, 18, 669, p.grassNear, p.grassLight, 2.4), { filter: S.shadow('m') });
+    return { back: back, over: '', front: front };
+  }
+
+  // ------------------------------------------------------------------ the "scale", close: scale, through, mirror
+
+  // The "scale" big. G = { x, y, u, lean }: its point on the earth, world units to a unit, how far it
+  // leans (degrees). `inner`: what shows in the glass, in world units, clipped to its outline (what
+  // lies behind it; the camp through it; her reflection). kind: 'clear' | 'through' | 'mirror'.
+  function scaleBig(S, G, inner, kind) {
+    var u = G.u, d = scaleD(u), t = 'translate(' + n(G.x) + ' ' + n(G.y) + ') rotate(' + n(G.lean) + ')';
+    function q(x, y) { return n(x * u) + ' ' + n(y * u); }
+    var clip = S.clip('pileglass', '<path d="' + d + '" transform="' + t + '"/>');
+    var s = ell(G.x + u * 11, G.y + u * 1.2, u * 25, u * 3.6, S.pal.shade, { opacity: 0.34 });
+    // flat: a plate of glass with a little thickness, its far edge showing through it
+    var far = path(d, 'none', { stroke: GLASS.deep, 'stroke-width': n(u * 0.9), 'stroke-linejoin': 'round', opacity: 0.6, transform: 'translate(' + n(u * 2.2) + ' ' + n(u * 1.1) + ')' });
+    // the faint green cast, deepest toward the edge, where there is most glass to look through
+    var body = path(d, GLASS.clear, { opacity: kind === 'clear' ? 0.3 : 0.08 }) +
+      path(d, S.radU([[0, GLASS.green, kind === 'clear' ? 0.05 : 0.14], [0.6, GLASS.green, kind === 'mirror' ? 0.15 : 0.24], [0.9, GLASS.green, 0.5], [1, GLASS.deep, 0.78]], 0, -31 * u, 32 * u));
+    // flat glass shines in straight bands
+    var sheen = poly([[-31 * u, -8 * u], [-18 * u, -8 * u], [10 * u, -64 * u], [-3 * u, -64 * u]], '#FFFFFF', { opacity: 0.2 }) +
+      poly([[-9 * u, -2 * u], [-5.5 * u, -2 * u], [22.5 * u, -64 * u], [19 * u, -64 * u]], '#FFFFFF', { opacity: 0.14 });
+    var inside = g((inner || '') + g(body + sheen, { transform: t }), { 'clip-path': clip });
+    // the bevel just inside the edge, the smooth green edge itself, a bright line where the sun rides the bevel
+    var edge = path(d, 'none', { stroke: '#FFFFFF', 'stroke-width': n(u * 0.42), opacity: 0.6, transform: 'translate(0 ' + n(-3.4 * u) + ') scale(0.89)' }) +
+      path(d, 'none', { stroke: GLASS.deep, 'stroke-width': n(u * 1.3), 'stroke-linejoin': 'round', opacity: 0.92 }) +
+      path(d, 'none', { stroke: GLASS.line, 'stroke-width': n(u * 0.4), 'stroke-linejoin': 'round' }) +
+      stroke('M' + q(-21.6, -41) + 'Q' + q(-21.4, -49) + ' ' + q(-13.5, -52.8), '#FFFFFF', u * 0.9, { opacity: 0.95 }) +
+      stroke('M' + q(15, -15.5) + 'L' + q(19.5, -24), '#FFFFFF', u * 0.7, { opacity: 0.7 });
+    return g(s + g(far, { transform: t }) + inside + g(edge, { transform: t }), { 'data-art': 'scale' });
+  }
+  // a point of the "scale" (its own units) in the world
+  function scaleAt(G, x, y) {
+    var a = G.lean * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a);
+    return [G.x + (x * c - y * sn) * G.u, G.y + (x * sn + y * c) * G.u];
+  }
+
+  // The earth of the gap, close: packed, crumbs of fresh earth on it, the brambles' shade behind.
+  // `hz`: where the floor meets the shade.
+  function gapEarth(S, key, hz, seed) {
+    var p = S.pal, r = rng(seed), deep = mix(p.leaf, p.shade, 0.7), s = '', a = '', b = '';
+    s += rect(-10, -10, 1620, hz + 40, S.linU([[0, deep], [1, mix(deep, p.wood, 0.3)]], 0, 0, 0, hz + 30));
+    s += leafTex(S, 0, 1600, 0, hz - 40, 46, 64, seed + 1, mix(p.leaf, p.shade, 0.84), 0.7) + leafTex(S, 0, 1600, 20, hz - 60, 16, 56, seed + 2, mix(p.leafMid, p.shade, 0.45), 0.4);
+    s += path('M-10 ' + n(hz + 12) + 'Q500 ' + n(hz - 14) + ' 900 ' + n(hz) + 'Q1300 ' + n(hz + 12) + ' 1610 ' + n(hz - 2) + 'V1010H-10Z',
+      S.lin(key + 'earth', [[0, mix(p.wood, p.shade, 0.52)], [0.35, mix(p.wood, p.shade, 0.27)], [1, mix(p.wood, p.sand, 0.22)]]));
+    for (var i = 0; i < 64; i++) {
+      var x = r() * 1600, y = hz + 24 + Math.pow(r(), 0.8) * (970 - hz), k = 0.5 + (y - hz) / (1000 - hz), bl = blob(x, y, (4 + r() * 9) * k, (2.5 + r() * 5) * k, 6, r, 0.3, 0.3);
+      if (i % 3) a += bl; else b += bl;
+    }
+    return s + path(a, mix(p.wood, p.shade, 0.5), { opacity: 0.6 }) + path(b, mix(p.wood, p.sand, 0.45), { opacity: 0.55 });
+  }
+  // The piece the "scale" leans on (the one after the gap, in the back row: the same piece, kind and
+  // fur, that the other cameras show there), big, for a close-up at G.
+  function leanedOn(S, G, rows) {
+    var R = rows.length, br = R ? rows[R - 1] : { n: 0, gap: [] }, last = br.gap.length ? br.gap[br.gap.length - 1] : 6, j = Math.min(last + 1, 9), r = Math.max(0, R - 1);
+    var sp = PLACE * G.u, x = G.x + sp * 0.72, wet = S.tod === 'morning' || S.tod === 'day';
+    return g(ell(x, G.y - 1, sp * 0.46, sp * 0.07, S.pal.shade, { opacity: 0.32 }) + rowPiece(placeKind(r, j), 7 + r * 16 + j, false, 'body', x, G.y, G.u), wet ? null : { filter: pileTint(S) });
+  }
+  // A shaft of sun coming down from the upper right onto (x, y), `w` wide there, and its pool of light on the earth.
+  function sunShaft(S, x, y, w) {
+    var c = S.pal.sun || S.pal.glow, dx = y * 0.42;
+    return g(poly([[x + dx - w * 0.3, -20], [x + dx + w * 1.5, -20], [x + w * 1.1, y + 30], [x - w * 1.2, y + 30]], S.linU([[0, c, 0], [0.5, c, 0.16], [1, c, 0.3]], 0, 0, 0, y)) +
+      ell(x, y + 6, w * 1.5, w * 0.24, S.radU([[0, c, 0.4], [1, c, 0]], x, y + 6, w * 1.5)), { style: 'mix-blend-mode:screen' });
+  }
+
+  // `scale`: close on it where it leans, in the gap: the pressed places, the piece it leans on, the
+  // dug earth behind (when dug), the sun's flash on it (glint).
+  var CLOSE = { x: 528, y: 852, u: 7.6, lean: 22 };
+  function drawScale(S) {
+    var o = S.opts, rows = rowList(o) || rowList({ rows: MORNING }), back = '', sp = PLACE * CLOSE.u, x0 = CLOSE.x - sp * 0.28;
+    back += gapEarth(S, 'pilescale', 438, 701);
+    if (o.dug) back += g(dugEarth(S, x0 - sp * 0.5, 476, 1500, 3.1, 705, o.dug === 'big'), { 'data-art': 'dug' });
+    back += placeMark(S, x0, CLOSE.y, sp) + placeMark(S, x0 - sp, CLOSE.y, sp);
+    back += leanedOn(S, CLOSE, rows);
+    if (o.glint === true) back += sunShaft(S, CLOSE.x + 60, CLOSE.y, 200);
+    back += scaleBig(S, CLOSE, '', 'clear');
+    var at = scaleAt(CLOSE, -17.5, -47), b0 = scaleAt(CLOSE, 0, -30);
+    if (o.glint === true) back += glintSvg(S, at[0], at[1], 76, 250);
+    keepBoxes(S, [{ x: b0[0] - 31 * CLOSE.u, y: b0[1] - 33 * CLOSE.u, w: 62 * CLOSE.u, h: 64 * CLOSE.u }]);
+    S.weatherClip = S.clip('pilenorain', rect(0, 0, 0, 0, '#fff'));
+    return { back: back, over: '', front: '' };
+  }
+
+  // ---- the camp through it
+
+  function dense(P, closed, step) {
+    var out = [], m = closed ? P.length : P.length - 1;
+    for (var i = 0; i < m; i++) {
+      var a = P[i], b = P[(i + 1) % P.length], dx = b[0] - a[0], dy = b[1] - a[1], k = Math.max(1, Math.ceil(Math.sqrt(dx * dx + dy * dy) / step));
+      for (var j = 0; j < k; j++) out.push([a[0] + dx * j / k, a[1] + dy * j / k]);
+    }
+    if (!closed) out.push(P[P.length - 1]);
+    return out;
+  }
+  function arc(cx, cy, rx, ry, a0, a1, k) {
+    var P = [];
+    for (var i = 0; i <= k; i++) { var a = a0 + (a1 - a0) * i / k; P.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); }
+    return P;
+  }
+  function oval(cx, cy, rx, ry) { return arc(cx, cy, rx, ry, 0, Math.PI * 2 * 23 / 24, 23); }
+  function straight(q) { return q; }
+  // Old window glass: every upright line wanders, every level line dips, and it all sits a little
+  // big. (Drawn point by point, so it is the same wobble on the iPad, in print and in Quick Look.)
+  function wobbler(cx, cy) {
+    return function (q) {
+      var x = cx + (q[0] - cx) * 1.05, y = cy + (q[1] - cy) * 1.05;
+      return [x + 22 * Math.sin(y / 46 + 0.7) + 8 * Math.sin(y / 17 + x / 120), y + 11 * Math.sin(x / 70 + 1.9) + 4 * Math.sin(x / 25 + y / 80)];
+    };
+  }
+  // The camp as she sees it with her chin on the earth: the glass towers, the hedge all round, the
+  // fountain full of rain, the Clan with their noses to the sky (everybody looks up). Every point
+  // goes through W: `straight` outside the glass, `wobbler` inside it.
+  function campView(S, W) {
+    var p = S.pal, s = '', i, hz = 520;
+    function wp(P, fill, extra) { return path(K.pts(dense(P, true, 13).map(W)) + 'Z', fill, extra); }
+    function wl(P) { return K.pts(dense(P, false, 13).map(W)); }
+    s += rect(-40, -40, 1680, hz + 80, S.lin('pilecampsky', [[0, p.sky[0]], [0.55, p.sky[2]], [1, p.sky[4] || p.sky[3]]]));
+    // the glass towers
+    var win = '', lit = '';
+    [[40, 150, 150, 0.5], [230, 110, 250, 0.68], [380, 170, 60, 0.4], [600, 120, 210, 0.62], [760, 150, 110, 0.5], [960, 110, 260, 0.7], [1110, 170, 30, 0.36], [1320, 130, 190, 0.6], [1480, 150, 90, 0.46]].forEach(function (t, ti) {
+      s += wp([[t[0], t[2]], [t[0] + t[1], t[2]], [t[0] + t[1], hz + 10], [t[0], hz + 10]], mix(p.glassTop, p.haze, t[3]));
+      lit += K.pts(dense([[t[0] + t[1] * 0.78, t[2]], [t[0] + t[1], t[2]], [t[0] + t[1], hz + 10], [t[0] + t[1] * 0.78, hz + 10]], true, 13).map(W)) + 'Z';
+      for (var y = t[2] + 30; y < hz - 10; y += 38) win += wl([[t[0] + 8, y], [t[0] + t[1] - 8, y]]);
+      if (ti % 2) win += wl([[t[0] + t[1] * 0.4, t[2] + 10], [t[0] + t[1] * 0.4, hz]]);
+    });
+    s += path(lit, p.glassEdge, { opacity: 0.35 }) + stroke(win, p.glassEdge, 3, { opacity: 0.5 });
+    // the hedge round camp
+    var hedge = [[-40, hz + 30]];
+    for (i = -40; i <= 1640; i += 14) hedge.push([i, hz - 56 - 20 * Math.abs(Math.sin(i / 47)) - 12 * Math.sin(i / 190 + 1)]);
+    hedge.push([1640, hz + 30]);
+    s += wp(hedge, p.leaf) + wp(hedge.map(function (q, j) { return j === 0 || j === hedge.length - 1 ? q : [q[0], q[1] + 26]; }), p.leafMid, { opacity: 0.7 });
+    // the ground: grass, a mossy stone path, a puddle
+    s += wp([[-40, hz], [1640, hz], [1640, 1040], [-40, 1040]], S.lin('pilecampgrass', [[0, p.grassFar], [0.3, p.grass], [1, p.grassNear]]));
+    [[760, 930, 120, 30], [840, 820, 90, 22], [900, 730, 70, 16], [950, 668, 52, 11]].forEach(function (q) { s += wp(oval(q[0], q[1], q[2], q[3]), p.stone, { opacity: 0.85 }) + wp(oval(q[0] - q[2] * 0.2, q[1] - q[3] * 0.3, q[2] * 0.6, q[3] * 0.5), p.stoneLight, { opacity: 0.6 }); });
+    s += wp(oval(330, 880, 150, 26), p.sky[1], { opacity: 0.9 }) + wp(oval(300, 874, 80, 10), '#FFFFFF', { opacity: 0.55 });
+    // the fountain, full of rain
+    var fx = 1040, fy = 610, frx = 270, fry = 46, wall = 78;
+    s += wp(arc(fx, fy, frx, fry, 0, Math.PI, 24).concat(arc(fx, fy + wall, frx, fry, Math.PI, 0, 24)), S.lin('pilecampbasin', [[0, p.stone], [1, p.stoneDark]]));
+    s += wp(oval(fx, fy, frx, fry), p.stoneLight) + wp(oval(fx, fy + 3, frx - 24, fry - 11), mix(p.water, p.sky[2], 0.5)) + wp(oval(fx - 50, fy, (frx - 24) * 0.55, (fry - 11) * 0.5), p.sky[3] || p.sky[1], { opacity: 0.6 });
+    s += stroke(wl([[fx - frx, fy + wall * 0.5], [fx - frx * 0.7, fy + wall * 0.5 + fry * 0.72], [fx, fy + wall * 0.5 + fry], [fx + frx * 0.7, fy + wall * 0.5 + fry * 0.72], [fx + frx, fy + wall * 0.5]]), p.stoneDark, 3, { opacity: 0.5 });
+    // the Clan, noses to the sky
+    function cat(x, y, h, col, dark, f) {
+      function U(P) { return P.map(function (q) { return [x + q[0] * h * f, y - q[1] * h]; }); }
+      return wp(U(oval(-0.3, 0.07, 0.24, 0.055)), dark) + wp(U(oval(0, 0.3, 0.23, 0.3)), col) + wp(U(oval(0.06, 0.2, 0.1, 0.19)), mix(col, '#FFFFFF', 0.35), { opacity: 0.6 }) +
+        wp(U([[-0.12, 0.74], [-0.2, 0.97], [0.04, 0.86]]), dark) + wp(U([[-0.02, 0.84], [-0.02, 1.06], [0.18, 0.88]]), col) +
+        wp(U(oval(0.08, 0.73, 0.185, 0.165)), col) + wp(U(oval(0.21, 0.82, 0.085, 0.065)), mix(col, '#FFFFFF', 0.4)) + wp(U(oval(0.275, 0.865, 0.022, 0.018)), '#D98A94');
+    }
+    s += cat(fx - 170, fy - 4, 150, '#C3CBD4', '#7E8A97', -1);
+    s += cat(210, 722, 150, '#4A3A36', '#2E2422', 1) + cat(1500, 750, 170, '#9EA5AD', '#636A72', -1) + cat(700, 760, 185, '#6A4B3A', '#46301F', 1);
+    s += cat(455, 820, 235, '#E8913A', '#B5602A', 1) + cat(1340, 850, 215, '#3D3844', '#211E26', -1);
+    return s;
+  }
+
+  // `through`: her chin on the earth, looking through it where it leans: the whole camp goes wavy,
+  // and a little green, inside its outline; outside it the camp is as it always is.
+  var THRU = { x: 830, y: 930, u: 15, lean: 8 };
+  function drawThrough(S) {
+    var p = S.pal, o = S.opts, back = '', c0 = scaleAt(THRU, 0, -31);
+    back += campView(S, straight);
+    // we are under the brambles: their shade round the edges, the earth she is lying on
+    var deep = mix(p.leaf, p.shade, 0.72);
+    back += rect(-10, -10, 1620, 1020, S.radU([[0, deep, 0], [0.5, deep, 0.1], [1, deep, 0.6]], c0[0], c0[1], 1050));
+    back += leafTex(S, 0, 1600, -40, 150, 34, 78, 731, mix(p.leaf, p.shade, 0.5), 0.95) + leafTex(S, 0, 1600, -30, 110, 22, 66, 732, p.leafMid, 0.8);
+    back += path('M-10 ' + n(THRU.y - 26) + 'Q500 ' + n(THRU.y - 44) + ' 900 ' + n(THRU.y - 32) + 'Q1300 ' + n(THRU.y - 22) + ' 1610 ' + n(THRU.y - 36) + 'V1010H-10Z', S.lin('pilethruearth', [[0, mix(p.wood, p.shade, 0.5)], [1, mix(p.wood, p.shade, 0.25)]]));
+    back += scaleBig(S, THRU, campView(S, wobbler(c0[0], c0[1])), 'through');
+    if (o.glint === true) { var at = scaleAt(THRU, -17.5, -47); back += glintSvg(S, at[0], at[1], 96, 300); }
+    keepBoxes(S, [{ x: c0[0] - 21 * THRU.u, y: c0[1] - 22 * THRU.u, w: 42 * THRU.u, h: 42 * THRU.u }]);
+    S.weatherClip = S.clip('pilenorain', rect(0, 0, 0, 0, '#fff'));
+    return { back: back, over: '', front: '' };
+  }
+
+  // `mirror`: she leans over it, and a tiny cat looks back, with her face (her fur, her eyes, from
+  // the player's look): the sky and the brambles in it behind her, as in the patio door every evening.
+  var MIRR = { x: 800, y: 936, u: 14.4, lean: 7 };
+  function herFace(S, cx, cy, headH) {
+    var c = null, look = S.look || {};
+    try { if (typeof art.character === 'function') c = art.character('player', { pose: 'sit', mood: 'wonder', look: look, sex: look.sex, facing: 'left' }); } catch (e) { c = null; }
+    if (!c || typeof c.svg !== 'string' || !c.headBox) {
+      // no character art: a plain cat's face, so the picture still says what it is
+      var r = headH * 0.42;
+      return g(circ(cx, cy, r, '#B5895B') + poly([[cx - r * 0.9, cy - r * 0.5], [cx - r * 0.75, cy - r * 1.5], [cx - r * 0.15, cy - r * 0.9]], '#B5895B') + poly([[cx + r * 0.9, cy - r * 0.5], [cx + r * 0.75, cy - r * 1.5], [cx + r * 0.15, cy - r * 0.9]], '#B5895B') +
+        circ(cx - r * 0.38, cy - r * 0.05, r * 0.16, '#2E2420') + circ(cx + r * 0.38, cy - r * 0.05, r * 0.16, '#2E2420'), { 'data-art': 'reflection' });
+    }
+    var hb = c.headBox, k = headH / (hb.y1 - hb.y0);
+    return '<g data-art="reflection" transform="translate(' + n(cx - (hb.x0 + hb.x1) / 2 * k) + ' ' + n(cy - (hb.y0 + hb.y1) / 2 * k) + ') scale(' + n4(k) + ')">' + c.svg + '</g>';
+  }
+  function drawMirror(S) {
+    var p = S.pal, o = S.opts, back = '', c0 = scaleAt(MIRR, 0, -31), u = MIRR.u, sp = PLACE * u;
+    back += gapEarth(S, 'pilemirror', 300, 761);
+    back += placeMark(S, MIRR.x - sp * 0.28, MIRR.y, sp);
+    // in the glass: the sky, the brambles overhead, and her own small face
+    var inner = rect(c0[0] - 30 * u, c0[1] - 34 * u, 60 * u, 68 * u, S.linU([[0, p.sky[1]], [0.6, p.sky[3] || p.sky[2]], [1, p.sky[4] || p.sky[3]]], 0, c0[1] - 30 * u, 0, c0[1] + 30 * u));
+    inner += path(blob(c0[0] + 9 * u, c0[1] - 13 * u, 9 * u, 2.6 * u, 9, rng(771), 0.25, 0.32) + blob(c0[0] - 10 * u, c0[1] + 2 * u, 7 * u, 2 * u, 8, rng(772), 0.25, 0.32), '#FFFFFF', { opacity: 0.6 });
+    inner += leafTex(S, c0[0] - 26 * u, c0[0] + 26 * u, c0[1] - 31 * u, c0[1] - 19 * u, 26, 5.4 * u, 773, mix(p.leaf, p.shade, 0.35), 0.92) + leafTex(S, c0[0] - 26 * u, c0[0] + 26 * u, c0[1] - 30 * u, c0[1] - 21 * u, 14, 4.6 * u, 774, p.leafMid, 0.85);
+    inner += herFace(S, c0[0] - 1 * u, c0[1] + 5 * u, 17 * u);
+    back += scaleBig(S, MIRR, inner, 'mirror');
+    if (o.glint === true) { var at = scaleAt(MIRR, -17.5, -47); back += glintSvg(S, at[0], at[1], 92, 300); }
+    keepBoxes(S, [{ x: c0[0] - 21 * u, y: c0[1] - 22 * u, w: 42 * u, h: 44 * u }]);
+    S.weatherClip = S.clip('pilenorain', rect(0, 0, 0, 0, '#fff'));
+    return { back: back, over: '', front: '' };
+  }
+
+  function draw(S) {
+    if (S.comp === 'low') return drawLow(S);
+    if (S.comp === 'rows') return drawRows(S);
+    if (S.comp === 'gap') return drawGap(S);
+    if (S.comp === 'scale') return drawScale(S);
+    if (S.comp === 'through') return drawThrough(S);
+    if (S.comp === 'mirror') return drawMirror(S);
+    return drawMain(S);
+  }
 
   art.defineSet('pile', {
     label: 'the prey pile in camp', tod: 'morning', todMap: { sunset: 'golden' }, draw: draw,
     cams: {
       wide: { box: [0, 0, 1600] },
       low: { box: [0, 0, 1600], comp: 'low' },
-      close: { box: [305, 470, 820], comp: 'low' }
+      close: { box: [305, 470, 820], comp: 'low' },
+      // chapter 4
+      rows: { box: [0, 0, 1600], comp: 'rows' },
+      gap: { box: [0, 0, 1600], comp: 'gap' },
+      scale: { box: [0, 0, 1600], comp: 'scale' },
+      through: { box: [0, 0, 1600], comp: 'through' },
+      mirror: { box: [0, 0, 1600], comp: 'mirror' }
     },
     anchors: {
       main: {
@@ -602,10 +1133,24 @@
       },
       low: {
         'pile-left': A(180, 946, 396), beside: A(1305, 914, 376, 'left'), 'pile-right': A(1458, 932, 396, 'left')
-      }
+      },
+      // chapter 4. rows: a cat each side at the front (the old tom sits at `beside`), and further back
+      // beside the second row (`pile-right`, `crowd-1`) and the back row (`crowd-2`, `crowd-3`)
+      rows: {
+        'pile-left': A(118, 958, 320), beside: A(1474, 954, 320, 'left'), 'pile-right': A(1424, 818, 280, 'left'),
+        'crowd-1': A(176, 818, 280), 'crowd-2': A(246, 706, 249), 'crowd-3': A(1354, 706, 249, 'left')
+      },
+      // gap: in front of the back row, the middle left clear for the hole. The cats are nearer the
+      // camera than the row, three mice tall as in `rows` (at 330 the big ginger was barely two)
+      gap: { 'pile-left': A(200, 998, 430), 'pile-right': A(1400, 998, 430, 'left'), beside: A(1160, 998, 400, 'left') },
+      // the three close-ups of the "scale": no faces in them
+      scale: {}, through: {}, mirror: {}
     },
-    opts: { pairs: 'number', lit: 'number', dug: [true, false, 'big'], vole: [true, false] },
-    defaults: { pairs: 8, lit: 0, dug: false, vole: false }
+    // `rows` lists its usual values (each a list: compare by value); the set draws any list of up to five rows
+    opts: { pairs: 'number', lit: 'number', dug: [true, false, 'big'], vole: [true, false],
+      rows: [[10, 10, 10], [10, 10, { n: 10, gap: [3, 4, 5, 6] }], [10, 10, 10, 10]],
+      back: ['none', 'shadow'], scale: [false, true, 'behind'], glint: [false, true] },
+    defaults: { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false }
   });
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;

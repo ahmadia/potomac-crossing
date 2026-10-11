@@ -10,7 +10,7 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-04):** chapters 1 and 2 are built as a static web app (`index.html`, `app/`; the
+**Status (2026-10-11):** chapters 1 to 4 are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
@@ -24,8 +24,9 @@ on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
   the real stone at the end.
 - [`docs/chapters/01-through-the-glass.md`](docs/chapters/01-through-the-glass.md): chapter 1,
   drafted as the actual game text.
-- [`docs/chapters/02-after-the-storm.md`](docs/chapters/02-after-the-storm.md): chapter 2, the
-  game text, with its notes and the open questions it raised.
+- [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
+  the Old Bridge, 04 The Glittering Scale), each with its notes, its Case File cards and the
+  questions it raised.
 - [`docs/storyboard/`](docs/storyboard/): the verbal storyboard of every frame, for an illustrator
   (generated from `app/story/`).
 - [`docs/build.md`](docs/build.md): how it is built, tested and deployed.
@@ -104,95 +105,71 @@ on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
     Counts in chapter 3 (2026-10-06).
 40. "Mistscale" stays, on screen from chapter 3 (2026-10-06).
 41. Princess Waffles keeps her name (2026-10-06).
+42. Every proposal that stood in this README is confirmed as written (2026-10-10). In short:
+    - the six further themes in `docs/world.md`; every chapter ends warm, in her nest, with a
+      curious hook; Sprinkle practices flying in chapter 9; Princess Waffles is a witness; her Tall
+      One lets her go and the door stays open; she has a pet name Waffles never stops using;
+      Glintstar gives her one moon, until the Gathering ("a moon" runs to the next full moon); her
+      pillow-cat life sets what she's good at, and her Tallwalker know-how helps the case; the
+      Clan welcomes a new name by purring it;
+    - no fish in the prey pile; Riffle's gift is a wishing stone (dark, with an unbroken white
+      band: a second real stone she could hold); the tallest tower has a red light and the littlest
+      dragonet's roar ends in a hiccup; Glintstar gives her the morning count (eight gone by chapter
+      3, twelve by chapter 4); the dug earth and the tidy stacks are clues in module-1's table; the
+      back cover no longer puts the scale and "dragon" on the first morning; the Barking Field dogs
+      may be Good Boy and Drop It in chapter 8;
+    - the 6s to 9s: chapter 5 the 9s, chapter 7 the 6s, chapter 9 the 8s, chapter 10 the 7s, with
+      their pictures (whiskers on one cheek, sunrises in a quarter-moon, a spider's legs, a cat's
+      nine lives);
+    - clue 4 tells weasel from dragon by the prints' size; Murmurpaw's Warrior Counts is a clean
+      sweep; Sprinkle's book page and the kept path's walk as built; a fact read under a long
+      prompt only counts as hard when missed.
+43. The littlest dragonet, on the tower roof, is **Squall**, not Thunder: Thunder is a Warriors
+    character (2026-10-10; amends 21).
+44. The fox is **Reynard**, not Russet: both series have a Russet (2026-10-10; amends 21).
+45. From chapter 4 she keeps a **Case File** she can open any time: a card for each clue she
+    finds, with a little picture and one line. In chapter 10 she answers Reynard by picking cards
+    (2026-10-10).
+46. **"I'll let you steer"** (Aron, 2026-10-10): from chapter 5 on, Claude decides the open
+    questions as they come up, records each choice below with its reason, and keeps building. Aron
+    can reverse any of them; a reversed choice gets a new numbered decision.
 
-## Proposed, waiting on Aron
+## Claude's calls under decision 46
 
-Chapter 1 is built on these exactly as written; confirm them or say what to change.
+Each is Aron's to reverse.
 
-- Six more themes the story already carries (`docs/world.md`, Themes): getting better with
-  practice, noticing and thinking for yourself, fairness, kindness to the small and hurt,
-  belonging and home, wonder in familiar places.
-- Every chapter ends warm, in her nest; the hook to the next chapter is curious, never scary.
-- Sprinkle practices flying in chapter 9, a twin for the Counts ("She didn't fly on her first
-  try either").
-- Princess Waffles: her old neighbor, a pillow cat nineteen floors up; zany, and a witness.
-- Her Tall One lets her go: the patio door stays open, with a dish of water on the step, and
-  she can visit. (The alternative is a secret double life: Clan cat by night, home by breakfast.)
-- She picks a pet name too (Muffin, Snickerdoodle…), and Waffles never stops using it.
-- Glintstar gives her one moon, until the Gathering, to show she belongs; the ending settles it.
-- Her pillow-cat life sets what she's good at (watching birds is noticing, climbing the curtains
-  is climbing), and her Tallwalker know-how helps the case: she knows window glass when she sees
-  it, and airplanes from the glowing box.
-- The Clan welcomes a new name by purring it.
+- **Fog is Wisp** (2026-10-10): Warriors has a cat named Fog. Wisp is in neither series and suits
+  the pale, silent sister in the reeds. Puddle, Hail and Sleet keep their names (the books have
+  only longer names such as Puddleshine and Hailstar, never those exact names). Dew, an exact
+  Warriors name, is renamed before chapter 9 names her; she is no longer "the tiniest" (Squall is
+  the littlest of the clutch).
+- **The thefts go on, four every night** (2026-10-10): chapter 5 opens on the fourth count
+  (sixteen gone), chapter 6 sets the guards, and chapter 7's sum is six nights: twenty-four gone
+  against the sixty a dragon would eat, worked with the 6s she learns that chapter. The card
+  "Four gone every night." holds throughout.
+- **Chapter 4's Squall path keeps its length** (about 22 minutes for the players who climb).
+- **Chapter 4 is built on its own notes as written** (2026-10-11; `docs/chapters/04-the-glittering-scale.md`,
+  "For Aron to confirm"): the Case File is curls of bark from the Training Tree, each marked with
+  an eye (what she saw) or an ear (what she was told); the rule of rows of ten comes before the
+  third theft and the rows find it; everyone visits Sprinkle and the roof is an optional stop;
+  Squall's tower is her old tower, climbed outside or ridden in "the little room that goes DING";
+  the fox comes to the far side of the Barking Field and the dogs see him off; she asks a fair
+  question in front of the Clan and Glintstar charges no cat by name; Squall's riddle is 7 × 5;
+  the "scale" stays where it was found until the Gathering.
 
-Raised by chapter 2 (`docs/chapters/02-after-the-storm.md`, "For Aron to confirm"); chapter 2 is
-built on the first choice in each:
+## Open questions, waiting on Aron
 
-- **No fish in the prey pile.** CrystalClan doesn't fish (only ReedClan gets its paws wet), so
-  the pile is mice and voles. Ruling 33's option offered "a few fish"; to keep them, the otters
-  trade them, and the pile scene needs a few words saying so.
-- **Riffle's gift is a wishing stone**: a dark pebble with an unbroken white band all the way
-  round. Real ones turn up free on beaches and riverbanks, so it could be a second real stone she
-  holds long before the labradorite.
-- **The tallest tower has a little red light on its roof**, and Thunder's roar ends in a hiccup:
-  that is how chapter 4 finds his roof.
-- **Glintstar gives her the morning count from now on.** Chapters 3 and 4 could open on the second
-  and third counts (eight gone, then twelve), which anchors chapter 7's "four a night for three
-  nights"; or later chapters skip the count.
-- **Two clues not yet in module-1's clue table**: freshly dug earth behind the pile (noticing only:
-  the tunnel) and the tidy stacks (a careful thief, not the weather). Add them, or cut them.
-- **Module-1's back cover** puts the scale and the word "dragon" on the first morning; the chapters
-  put them in chapter 4. Proposed: "By morning, prey is missing from the Clan's pile. Soon a
-  glittering scale lies beside it…"
-- **"One moon"**: her first night is moonless (the case), so the full-moon Gathering is about half a
-  moon away. Proposed: keep it, since in Clan talk "a moon" runs to the next full moon.
-- **Names and words that may echo the books** (all from before chapter 2; Princess Waffles stays,
-  decision 41): Thunder, chapter 4's
-  dragonet (Warriors' Thunder; Rumble or Boom?); the Training Hollow (ThunderClan's training
+Nothing here blocks the chapter being built; each chapter's own questions are in its text, under
+"For Aron to confirm".
+
+- **The Warrior Counts, for chapter 10:** whether 3 × 7 and 7 × 3 are one pair or two (55 questions
+  or 100); one sitting or a few rounds; a missed question still gets the sand but counts against
+  the 90%; and she can try again from the Training Hollow whenever she likes.
+- **Names and words that may still echo the books**: the Training Hollow (ThunderClan's training
   hollow; the Claw Tree Hollow?); chapter 1's Clan-name ideas, which make Warriors apprentice names
   (Hollypaw, Fernpaw, Stormpaw, Minnowpaw, Sedgepaw, Frostpaw) and "Moon" (Wings of Fire's
-  Moonwatcher); "Ironsnakes" (Warriors' Thundersnake; Clankers?); "leaf-drop" (Warriors'
-  leaf-fall).
-- **Dog names**: one draft named two Barking Field dogs for what their Tall Ones shout ("Good Boy",
-  "Drop It"). Chapter 2 leaves them unnamed; chapter 8 could use the names.
-
-Raised by building chapter 3 (2026-10-06); chapter 3 is built on these:
-
-- **Chapter 2's warm-up and reading time.** The rule that a fact read under a long prompt only
-  counts when missed now also reaches chapter 2's warm-up: a slow but right 3 × 1 in chapter 1 is no
-  longer its hard fact (a missed one still is). `docs/build.md` names it; the alternative keeps
-  chapter 2 exactly as shipped.
-- **Sprinkle's book page** prints three lines of its own: "A Mistscale dragonet, as big as a heron,
-  with scales the color of mist." · "{name}paw found her under the Old Bridge, with a hurt wing and
-  an empty tummy." · "She eats ten fish at a meal, and now she counts her claws by fives." The recap
-  says "Tallyheart taught {name}paw {their} third Count" (the text's "{them} {their}" reads "her
-  her") and gives her siblings a sentence of their own, "Sprinkle's six brothers and sisters are
-  somewhere along the river."
-- **The kept path's walk**: she carries the vole across camp toward the hedge (where Waffles sees
-  her), comes out through the gap into her old garden, and meets Tallyheart on the lawn, coming home
-  from the wall at sunset.
-
-Raised by decisions 34–36 (2026-10-06); chapter 3 doesn't depend on them:
-
-- **Where the 6s to 9s go.** Proposed: chapter 5 the 9s ("one less than ten", right after the
-  10s), chapter 6 the 3s, chapter 7 the 6s (double the 3s), chapter 8 the 4s, chapter 9 the 8s
-  (double the 4s), chapter 10 the 7s. By chapter 10 the only 7s fact she hasn't met is 7 × 7, so
-  the Moon Ferry Counts become the 7s plus everything.
-- **Pictures for the new Counts**, things a cat knows: 6s, the whiskers on one cheek; 7s, the
-  sunrises in a quarter-moon; 8s, a spider's legs; 9s, a cat's nine lives (the elders swear by it).
-- **The Warrior Counts, for chapter 10:** whether 3 × 7 and 7 × 3 are one pair or two (55
-  questions or 100); one sitting or a few rounds; a missed question still gets the sand but counts
-  against the 90%; and she can try again from the Training Hollow whenever she likes.
-
-Raised by chapter 3 (`docs/chapters/03-under-the-old-bridge.md`, "For Aron to confirm"); built on
-the first choice in each:
-
-- **Module-1's clue 4 tells weasel from dragon by the prints' size, not by counting toes.** Chapter 3
-  shows that a Mistscale forepaw has five claws too, so "five toes" no longer clears Sprinkle.
-  Proposed clue: the prints by the pile are tiny, smaller than a cat's; Sprinkle's are as big as a
-  heron's foot (drawn beside the drag marks from chapter 3 on). The other option: three-toed hind
-  feet, like a heron's.
-- **Murmurpaw's Warrior Counts is a clean sweep**, as you described it ("quick and sure"). An
-  alternative with one freeze she recovers from ("Forty… forty-two") would show what "nine in every
-  ten" allows; it's written out in the chapter's notes.
-- **Dew** shares Warriors' Drizzle-and-Dew pairing; worth a look before chapter 9 names her.
+  Moonwatcher); "Ironsnakes" (Warriors' Thundersnake; Clankers?); "leaf-drop" (Warriors' leaf-fall);
+  Dew (Warriors pairs Drizzle with Dew; before chapter 9 names her); Snip, one of the weasels
+  (Warriors has a Snipkit; before chapter 7 or 8 names them).
+- **A near-miss version of Murmurpaw's test** is written out in chapter 3's notes, if you ever want
+  to show what "nine in every ten" allows.

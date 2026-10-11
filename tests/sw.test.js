@@ -110,3 +110,58 @@ test('load order: art, then sets, then the chapters in number order, then the en
   assert.ok(last(/^app\/story\//) < at(/^app\/engine\.js$/));
   assert.equal(scripts[scripts.length - 1], 'app/ui.js');
 });
+
+/* Chapter 4: the app shell carries her Case File's button (hidden until she has it) and the screen it opens. */
+test('the app shell has the Case File’s curl of bark in the top bar, hidden until she has it, and the screen it opens over the page', () => {
+  assert.match(html, /<button class="iconbtn filebtn" id="fileBtn" type="button" aria-label="My Case File" title="My Case File" hidden>/);
+  assert.match(html, /<div class="cfile" id="file" hidden role="dialog" aria-modal="true" aria-label="Case File"><\/div>/);
+  // in the bar between the title and Camp, so the name keeps the left and the leaf the far right
+  const bar = html.slice(html.indexOf('<header class="bar"'), html.indexOf('</header>'));
+  const ids = [];
+  bar.replace(/ id="([A-Za-z]+)"/g, (m, id) => ids.push(id));
+  assert.deepEqual(ids, ['bar', 'backBtn', 'barTitle', 'fileBtn', 'campBtn', 'readBtn', 'textBtn', 'catsBtn', 'leaf']);
+  // never printed with her book, and still when she asks for less motion
+  assert.match(html, /\.bar,\.leaf,\.links,\.coming,\.no-print,\.sheet,\.cfile\{display:none!important\}/);
+  assert.match(html, /prefers-reduced-motion: reduce[\s\S]*\.tapspot\.flare svg\{animation:none!important/);
+});
+
+/* Chapter 4, after the real-screens review: the page's own rules and wiring that only a browser shows
+ * (measured in Safari on the mini; pinned here as text, since the suite has no DOM). */
+test('the page: 10 × 10 = 100 keeps its last zero in a zoomed Safari; one group’s number sits beside its claws; a page of choices keeps Back under them; the taps that turn a page hold the next one a moment', () => {
+  const ui = fs.readFileSync(path.join(ROOT, 'app/ui.js'), 'utf8');
+  // the question line: 14cqi, as chapters 1 to 3 have it (the same size on an iPad as before). Safari sizes a cqi
+  // font by the page zoom too (at 115% the line overflowed the lesson column): the answer's slot never shrinks under
+  // its digits, and the page fits the line to its column when it is wider, measured with the answer's digits
+  assert.match(html, /\.q\{[^}]*font-size:52px;font-size:clamp\(40px, 14cqi, 96px\);/);
+  assert.match(html, /\.q \.slot\{flex:none;min-width:1\.3em;/);
+  assert.match(ui, /function fitQ\(\) \{[\s\S]{0,700}if \(need > room && room > 0\) qline\.style\.fontSize = /);
+  assert.match(ui, /okKey\.disabled = !typed \|\| locked;\n      fitQ\(\);/, 'every time the line is drawn');
+  assert.match(ui, /relayoutFn = function \(\) \{ fitQ\(\); \};/, 'and when a font loads late or the screen turns');
+  // Squall's one raised forepaw: the 5 grows beside the lit claws, not at the top centre (his face)
+  assert.match(html, /\.skipnum\.one\{left:71%;right:0;top:24%;text-align:left\}/);
+  assert.match(ui, /class="skipnum' \+ \(v\.groups === 1 \? ' one' : ''\)/);
+  // a page of choices: Back is not sticky (it floated over the options' words on a tall page)
+  assert.match(html, /\.frame\[data-kind="choice"\] \.next-row\{position:static\}/);
+  assert.ok(html.indexOf('.frame[data-kind="choice"] .next-row{position:static}') > html.indexOf('.next-row{display:flex'), 'after the rule it overrides');
+  // the glitter Tap and the bark Taps turn the page as a skip-count's last tap does: the next page waits before a tap turns it
+  assert.equal((ui.match(/go\('frame', \{ fromSkip: true \}\)/g) || []).length, 3, 'the skip-count, the glint, the row of bark');
+  assert.match(ui, /var hold = view\.opts && view\.opts\.fromSkip \? 1100 : 280;/);
+  // the skip-count's counter carries its speaker's name on that page, and the lesson's intro is the pure helper's
+  assert.match(ui, /var tname = nameOn\(intro, teacher\);/);
+  assert.equal((ui.match(/who: teacher, name: tname/g) || []).length, 3, 'the whispered count, the plain count, the done line');
+  assert.match(ui, /var intro = lessonIntro\(balloonsOf\(f\), !!\(resume \|\| E\.keptSkip\(story, id, cat\)\)\);/);
+  // the Case File's legend shows the art's own marks (the ear her cards carry, not a warning triangle)
+  assert.match(ui, /function markSvg\(mark\) \{ return artCall\('cardMark', mark\) \|\| MARK\[mark\] \|\| ''; \}/);
+  assert.equal((ui.match(/markSvg\((big|g)\.mark\)/g) || []).length, 2);
+  assert.ok(!/MARK\[(big|g)\.mark\]/.test(ui));
+  const { load } = require('./_load.js');
+  const art = load().art;
+  ['eye', 'ear'].forEach(m => assert.match(art.cardMark(m), /^<svg [^>]*viewBox="0 0 40 28"[^>]*>.*stroke="currentColor"/, m + ': the art has the mark by itself, in the page’s colour, the size of the page’s own'));
+  // the lettering keeps a long band clear along its length, and a tail off other faces
+  assert.match(ui, /\(heads\.keep \|\| \[\]\)\.forEach\(function \(k\) \{ faceList = faceList\.concat\(keepCircles\(k, W, H\)\); \}\);/);
+  assert.equal((ui.match(/cost \+= tailOverFaces\(cx, y \+ h \/ 2, head, faces\);/g) || []).length, 1, 'a balloon with a tail of its own (a chained one draws none, and is not charged for one)');
+  assert.match(ui, /cost \+= tailOverFaces\(cx, y \+ h \/ 2, \{ x: ncx, y: ncy \}, faces\);/, 'and a chained balloon’s neck, the line it does draw');
+  // the page tells the placer which balloon is the panel's last (an off-panel voice may then sit by the bottom edge)
+  assert.match(ui, /var lastB = bi === bs\.length - 1;/);
+  assert.equal((ui.match(/index: bi, last: lastB, margin: 8/g) || []).length, 3);
+});

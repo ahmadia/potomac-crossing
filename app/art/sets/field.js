@@ -18,6 +18,27 @@
  * Far inside the fence, in every camera, a hollow log lies in the grass, its dark round opening
  * toward the path. Nobody remarks on it (the text keeps it as a quiet plant for a later chapter).
  *
+ * Chapter 4, the border (docs/build.md, "Chapter 4"): the far corner of the fence, where the mown
+ * path gives way to long golden grass. Three more cameras, each its own composition, all seen
+ * from the path with the last post standing between the Clan and the fox:
+ *   `border`      wide, both sides of the post: the fence coming up the path from the left, turning
+ *                 at the post and running away to the right; the path ending; the long grass.
+ *   `border-two`  at cat height, closer: two cats shoulder to shoulder left of the post, the fox
+ *                 beyond it.
+ *   `border-fox`  the fox chest-up, the long grass round him, the fence behind; whoever is at
+ *                 `left` or `right` is only a corner of a cat in the near edge.
+ * Their anchors: `fox` (in the long grass past the post: never on the Clan's side of it, never
+ * over a cat, never bigger than the cats beside the post), `lead` (Glintstar, in front), `left`
+ * and `right` (at her shoulders, as the panel shows them: `right` is the one between `left` and the
+ * fox, so Tallyheart at `right` has her shoulder between the fox and a cat at `left`), `back-1` to
+ * `back-4` (the cats behind them, always drawn under the three in front, in any cast order), and
+ * `dog-1` to `dog-3` behind the wire that runs away behind the fox. The chapter 2 cameras keep
+ * their own six anchors and do not see the border's; the border's do not see `path-left`,
+ * `path-right` or `field`.
+ *
+ * `foxTail: true` (the `dogs` camera): a white-tipped tail going into long golden grass at the
+ * panel's edge, on the side where no cat sits on the path; drawn under everyone.
+ *
  * Registered with PC.art.defineSet (app/art/scenes.js); painters come from PC.art.kit.
  */
 (function (root) {
@@ -435,6 +456,211 @@
     return { pushes: out, bounces: bounces };
   }
 
+  // ------------------------------------------------------------------ chapter 4: the border
+
+  var poly = K.poly;
+
+  // Long golden grass, in this light.
+  function goldCols(S, C) {
+    var p = S.pal, t = function (h) { return mix(mix(h, p.rim, 0.06), p.shade, C.dim * 0.9); };
+    return { base: t('#D8B24A'), light: t('#F3DA8A'), dark: t('#A9822F'), seed: t('#EFD998'), stub: t('#C7B36C'), ground: t('#BF9A3C') };
+  }
+
+  // A run of the fence seen at an angle. R: { near: [x, top, base], far: [x, top, base], len (its
+  // real length, in the near end's units), cell, wire, rail, post, posts: [u, …] }. at(u, v): u
+  // along it in real steps (the far half is the shorter one on the panel), v down it; [x, y, scale].
+  function runAt(R) {
+    var Hn = R.near[2] - R.near[1], rf = (R.far[2] - R.far[1]) / Hn;
+    return function (u, v) {
+      var t = u / (u + (1 - u) * rf);
+      var top = lerp(R.near[1], R.far[1], t), base = lerp(R.near[2], R.far[2], t);
+      return [lerp(R.near[0], R.far[0], t), lerp(top, base, v), lerp(1, rf, t)];
+    };
+  }
+  // its wire: every strand is straight in the fence's own plane, so straight on the panel
+  function runMeshD(R) {
+    var at = runAt(R), Hn = R.near[2] - R.near[1], cu = R.cell / R.len, du = Hn / (R.cell * 1.24) * cu, d = '';
+    function seg(u0, v0, u1, v1) {
+      if (u0 > u1) { var tu = u0, tv = v0; u0 = u1; v0 = v1; u1 = tu; v1 = tv; }
+      if (u1 <= 0 || u0 >= 1) return;
+      if (u0 < 0) { v0 += (v1 - v0) * (0 - u0) / (u1 - u0); u0 = 0; }
+      if (u1 > 1) { v1 = v0 + (v1 - v0) * (1 - u0) / (u1 - u0); u1 = 1; }
+      var a = at(u0, v0), b = at(u1, v1);
+      d += 'M' + n(a[0]) + ' ' + n(a[1]) + 'L' + n(b[0]) + ' ' + n(b[1]);
+    }
+    for (var c = -du; c <= 1 + cu; c += cu) { seg(c, 0, c + du, 1); seg(c + du, 0, c, 1); }
+    return d;
+  }
+  function fenceRun(S, C, R, key) {
+    var at = runAt(R), d = runMeshD(R), s = '', a0 = at(0, 0), a1 = at(1, 0), b0 = at(0, 1), b1 = at(1, 1), k1 = a1[2];
+    s += g(stroke(d, C.wire, R.wire * (0.55 + 0.45 * k1)) +
+      stroke(d, C.wireHi, R.wire * 0.4, { opacity: 0.6, transform: 'translate(' + n(-R.wire * 0.28) + ' ' + n(-R.wire * 0.28) + ')' }), { filter: S.shadow('s') });
+    s += stroke('M' + n(b0[0]) + ' ' + n(b0[1] - R.wire) + 'L' + n(b1[0]) + ' ' + n(b1[1] - R.wire * k1), C.metalDark, R.wire * 0.9);
+    var posts = '';
+    (R.posts || []).forEach(function (u, i) {
+      var t = at(u, 0), b = at(u, 1), w = R.post * t[2];
+      posts += poly([[t[0] - w / 2, t[1] - w * 0.5], [t[0] + w / 2, t[1] - w * 0.5], [b[0] + w / 2, b[1] + w * 0.7], [b[0] - w / 2, b[1] + w * 0.7]],
+        S.lin('fpost' + key + i, [[0, C.metalLight], [0.35, C.metal], [1, C.metalDark]], 0, 0, 1, 0));
+    });
+    var h0 = R.rail / 2, h1 = R.rail / 2 * k1;
+    var rail = poly([[a0[0], a0[1] - h0], [a1[0], a1[1] - h1], [a1[0], a1[1] + h1], [a0[0], a0[1] + h0]], S.lin('frail' + key, [[0, C.metalLight], [0.4, C.metal], [1, C.metalDark]])) +
+      stroke('M' + n(a0[0]) + ' ' + n(a0[1] - h0 * 0.5) + 'L' + n(a1[0]) + ' ' + n(a1[1] - h1 * 0.5), '#FFFFFF', Math.max(1, R.rail * 0.14), { opacity: 0.35 });
+    return s + g(posts + rail, { filter: S.shadow('m') });
+  }
+  // the line a run's foot follows on the panel: y at x
+  function footAt(R, x) { return lerp(R.near[2], R.far[2], (x - R.near[0]) / (R.far[0] - R.near[0])); }
+
+  // Short green grass along a slanted foot, in little runs.
+  function tuftsAlong(S, x0, x1, yAt, d0, d1, per, seed, size) {
+    var p = S.pal, s = '', i = 0;
+    for (var x = x0; x < x1; x += 70) {
+      var xe = Math.min(x1, x + 70), y = yAt((x + xe) / 2);
+      s += K.tufts(S, x, xe, y + d0, y + d1, per, seed + (i++) * 7, p.grassNear, p.grassLight, size);
+    }
+    return s;
+  }
+
+  // A row of long golden grass from x0 to x1, its roots on y = yAt(x): blades about h tall, a seed
+  // head on some. `low`: [[x0, x1, k], …] keeps it short where somebody sits (k of its height).
+  function grassRow(S, G, x0, x1, yAt, h, gap, seed, low) {
+    var r = rng(seed), a = '', b = '', c = '', heads = '';
+    for (var x = x0; x < x1; x += gap * (0.55 + r() * 0.9)) {
+      var k = 1;
+      (low || []).forEach(function (z) { if (x > z[0] && x < z[1]) k = Math.min(k, z[2]); });
+      var y = yAt(x) + (r() - 0.5) * h * 0.05, hh = h * k * (0.6 + r() * 0.5), lean = (r() - 0.42) * hh * 0.36, w = Math.max(1.4, h * 0.034) * (0.8 + r() * 0.5);
+      var d = K.bladeD(x, y, hh, lean, w), q = r();
+      if (q < 0.4) a += d; else if (q < 0.76) b += d; else c += d;
+      if (r() < 0.32) heads += K.leafD(x + lean, y - hh * 0.98, h * 0.17, -1.57 + lean / Math.max(1, hh) * 1.3 + (r() - 0.5) * 0.5, Math.max(1.2, h * 0.036));
+    }
+    return path(c, G.dark, { opacity: 0.92 }) + path(a, G.base) + path(b, G.light, { opacity: 0.95 }) + path(heads, G.seed);
+  }
+
+  // The last post: stouter than the others, both rails meeting in its cap.
+  function lastPost(S, C, P) {
+    var s = post(S, C, P.x, P.top, P.base, P.w) + cap(S, C, P.x, P.top, P.w);
+    return g(s, { filter: S.shadow('m'), 'data-part': 'last-post' });
+  }
+
+  // The fox's tail: an enormous brush, red-orange, its tip white (app/art/cats.js draws the fox;
+  // tests/set-field.test.js checks these still match). From its root (x, y) to its tip, `len` away
+  // toward `dir` (+1 right, -1 left) and a little up; fullest in the middle, a soft point at the end.
+  var FOX_TAIL = { base: '#e2632a', line: '#7b2d12', light: '#f6975a', tip: '#fffaf0' };
+  function foxBrush(S, C, x, y, len, dir) {
+    var p = S.pal, t = function (h) { return mix(h, p.shade, C.dim); }, r = rng(Math.round(x + y + len));
+    var A0 = [x, y], A1 = [x + dir * len * 0.3, y + len * 0.1], A2 = [x + dir * len * 0.7, y + len * 0.02], A3 = [x + dir * len, y - len * 0.3];
+    var L = [], R = [], N = 20, i;
+    function at(u) { return K.bez3(A0, A1, A2, A3, u); }
+    for (i = 0; i <= N; i++) {
+      var u = i / N, q = at(u), q2 = at(Math.min(1, u + 0.02)), q1 = at(Math.max(0, u - 0.02));
+      var dx = q2[0] - q1[0], dy = q2[1] - q1[1], l = Math.sqrt(dx * dx + dy * dy) || 1;
+      var w = i === N ? 0 : len * (0.035 + 0.17 * Math.pow(Math.sin(Math.PI * Math.pow(u, 0.86)), 0.8));
+      var jag = i === N ? 1 : (i % 2 ? 1.09 : 0.94) + (r() - 0.5) * 0.05;
+      L.push([q[0] - dy / l * w * jag, q[1] + dx / l * w * jag]);
+      R.push([q[0] + dy / l * w * jag, q[1] - dx / l * w * jag]);
+    }
+    var body = K.pts(L.concat(R.slice().reverse())) + 'Z';
+    // the white tip: its last third, the edge between the colours a little ragged
+    var k0 = Math.round(N * 0.68);
+    var tip = K.pts(L.slice(k0).concat(R.slice(k0).reverse())) + 'Z';
+    var s = path(body, t(FOX_TAIL.line), { stroke: t(FOX_TAIL.line), 'stroke-width': n(Math.max(2, len * 0.024)), 'stroke-linejoin': 'round' }) +
+      path(body, t(FOX_TAIL.base), { 'data-fox': 'tail' }) + path(tip, t(FOX_TAIL.tip), { 'data-fox': 'tip' });
+    // the ragged edge where the red meets the white, and lighter strokes of fur along it
+    var zig = '', hi = '', e0 = L[k0], e1 = R[k0];
+    for (i = 0; i <= 6; i++) { var zx = lerp(e0[0], e1[0], i / 6), zy = lerp(e0[1], e1[1], i / 6), off = (i % 2 ? 1 : -0.2) * len * 0.035; zig += (i ? 'L' : 'M') + n(zx + dir * off) + ' ' + n(zy - off * 0.3); }
+    s += path(zig + 'Z', t(FOX_TAIL.base));
+    for (i = 3; i < k0 - 2; i += 3) { var a = at(i / N), b = at((i + 1.6) / N); hi += 'M' + n(a[0]) + ' ' + n(a[1] - len * 0.03) + 'L' + n(b[0]) + ' ' + n(b[1] - len * 0.035); }
+    s += stroke(hi, t(FOX_TAIL.light), Math.max(1.5, len * 0.022), { opacity: 0.75 });
+    return s;
+  }
+
+  // `foxTail` (the dogs camera): long golden grass where the path ends at the panel's edge, and the
+  // tail going into it, on the side where no cat sits on the path. On this side of the wire, so
+  // over the dogs and under the cats.
+  function foxExit(S, C, L) {
+    var G = goldCols(S, C), right = true, on = {};
+    (S.cast || []).forEach(function (m) { if (m && typeof m.at === 'string') on[m.at] = true; });
+    if (on['path-right'] && !on['path-left']) right = false;
+    var dir = right ? 1 : -1, ex = right ? 1600 : 0, y0 = L.fence.base + 4, s = '';
+    function X(d) { return ex - dir * d; }   // d in from the panel's edge
+    function span(d0, d1) { return [Math.min(X(d0), X(d1)), Math.max(X(d0), X(d1))]; }
+    function flat(y) { return function () { return y; }; }
+    // the ground the long grass stands in: gold from the fence's foot down, ragged where the path ends
+    var gd = [[X(-40), y0 - 8], [X(196), y0 - 6], [X(232), y0 + 50], [X(206), y0 + 96], [X(250), 1020], [X(-40), 1020]];
+    s += path(K.pts(gd) + 'Z', S.linU([[0, mix(G.ground, S.pal.grass, 0.3)], [0.4, G.ground], [1, mix(G.ground, G.dark, 0.4)]], 0, y0, 0, 1000));
+    var a = span(-30, 200), b = span(-30, 214), c = span(-30, 236);
+    s += grassRow(S, G, a[0], a[1], flat(y0 + 26), 230, 9, 772);
+    // the tail, going in: its root already deep in the grass, its white tip the last of him
+    s += g(foxBrush(S, C, X(120), y0 + 86, 300, -dir), { filter: S.shadow('s'), 'data-part': 'fox-tail' });
+    // the grass he went through, closing over its root
+    s += grassRow(S, G, b[0], b[1], flat(y0 + 112), 200, 10, 773) + grassRow(S, G, c[0], c[1], flat(1014), 230, 12, 774);
+    // quick dashes where he went
+    var dz = '';
+    for (var i = 0; i < 3; i++) dz += 'M' + n(X(470 + i * 30)) + ' ' + n(y0 + 4 + i * 36) + 'h' + n(dir * (74 - i * 14));
+    s += g(stroke(dz, '#FFFFFF', 6, { opacity: 0.85 }), { 'class': 'pcs-whoosh' });
+    return g(s, { 'data-part': 'fox-exit' });
+  }
+
+  /* The border, drawn for one of its three compositions (L.border). Back to front: sky, trees and
+   * the field as ever; the fence coming up the path from the left; the verge, the path and its end;
+   * the ground the long grass stands in. Over whoever is in the field: the fence running away to
+   * the right, the last post, and the grass that grows against it. In front of everyone: the grass
+   * at the fox's feet and in the near corner, short where he sits so it never hides him. */
+  function drawBorder(S, L) {
+    var p = S.pal, C = colors(S), G = goldCols(S, C), B = L.border, back = '', over = '', front = '', i;
+    back += skyAndCity(S, C, L) + treeLine(S, L) + field(S, C, L);
+    function footL(x) { return footAt(B.left, x); }
+    function footR(x) { return footAt(B.right, x); }
+    var px = B.post.x;
+    // the fence up the path
+    back += g(fenceRun(S, C, B.left, 'bl'), { 'data-part': 'fence-left' });
+    // the verge under it, and the mown path
+    var P = B.path, vg = [[-40, footL(-40) - 4], [px, footL(px) - 4], [px + 40, P.end[0][1]], [P.end[0][0], P.end[0][1] + 4], [-40, P.top[0][1] + 4]];
+    back += path(K.pts(vg) + 'Z', S.lin('fbverge', [[0, p.grass], [1, p.grassNear]]));
+    var edge = [[-40, P.top[0][1]]].concat(P.top.slice(1)), pd = K.pts(edge);
+    for (i = 1; i < P.end.length; i++) pd += 'L' + n(P.end[i][0]) + ' ' + n(P.end[i][1]);
+    back += path(pd + 'L-40 1020Z', S.lin('fbpath', [[0, C.pathLight], [0.35, C.path], [1, mix(C.path, C.pathDark, 0.35)]]));
+    back += stroke(K.pts(edge), p.rim, 3 * P.k, { opacity: 0.55 });
+    var r = rng(P.seed), a = '', b = '', endX = function (y) {
+      for (var j = 1; j < P.end.length; j++) if (y <= P.end[j][1]) return lerp(P.end[j - 1][0], P.end[j][0], (y - P.end[j - 1][1]) / (P.end[j][1] - P.end[j - 1][1]));
+      return P.end[P.end.length - 1][0];
+    };
+    for (i = 0; i < P.grit; i++) {
+      var gy = P.top[0][1] + 50 + Math.pow(r(), 0.8) * (1000 - P.top[0][1] - 50), gx = r() * (endX(gy) - 20), gk = lerp(0.5, 1.4, (gy - P.top[0][1]) / (1000 - P.top[0][1])) * P.k;
+      if (gy < lerp(P.top[0][1], P.top[1][1], gx / P.top[1][0]) + 14) continue;
+      if (r() < 0.55) a += blob(gx, gy, 3.2 * gk, 2 * gk, 6, r, 0.3, 0.3); else b += dot(gx, gy, 1.5 * gk);
+    }
+    back += path(a, C.pathDark, { opacity: 0.45 }) + path(b, C.pathLight, { opacity: 0.9 });
+    (P.puddles || []).forEach(function (m, pi) { back += puddle(S, C, m[0], m[1], m[2], m[3], P.seed + 20 + pi * 5); });
+    back += tuftsAlong(S, -20, px - 10, footL, 2, B.verge, 5, B.seed, B.tuft);
+    // where the path gives way: the ground the long grass stands in, right of the path's end
+    var gd = 'M' + n(px - 6) + ' ' + n(footR(px) - 2) + 'L1660 ' + n(footR(1660) - 2) + 'V1020H' + n(P.end[P.end.length - 1][0]);
+    for (i = P.end.length - 1; i >= 0; i--) gd += 'L' + n(P.end[i][0]) + ' ' + n(P.end[i][1]);
+    back += path(gd + 'Z', S.linU([[0, mix(G.ground, p.grass, 0.25)], [0.3, G.ground], [1, mix(G.ground, G.dark, 0.4)]], 0, footR(px), 0, 1000), { 'data-part': 'long-grass-ground' });
+    // stubble and the first tall tufts along the path's end
+    var st = '';
+    for (i = 0; i < P.end.length - 1; i++) {
+      var e0 = P.end[i], e1 = P.end[i + 1];
+      for (var u = 0; u < 1; u += 0.2) { var sx = lerp(e0[0], e1[0], u), sy = lerp(e0[1], e1[1], u); for (var bl = 0; bl < 4; bl++) st += K.bladeD(sx - 26 + bl * 9 + r() * 6, sy + 6 + r() * 8, (16 + r() * 16) * B.grassK, (r() - 0.5) * 10, 2.4 * B.grassK); }
+    }
+    back += path(st, G.stub, { opacity: 0.9 });
+
+    // ---- over whoever is in the field
+    over += g(fenceRun(S, C, B.right, 'br'), { 'data-part': 'fence-right' });
+    over += lastPost(S, C, B.post);
+    over += tuftsAlong(S, px - 30, px + 46, function (x) { return x < px ? footL(x) : footR(x); }, 4, B.verge * 0.8, 4, B.seed + 300, B.tuft * 1.1);
+    var rows = '';
+    (B.rows || []).forEach(function (q, qi) { rows += grassRow(S, G, q[0], q[1], function (x) { return footR(x) + q[2] + (x - px) * (q[5] || 0); }, q[3] * B.grassK, q[4] * B.grassK, B.seed + 400 + qi * 13); });
+    over += g(rows, { filter: S.shadow('s'), 'data-part': 'long-grass' });
+
+    // ---- in front of everyone: grass at the fox's feet and in the near corner, never over him
+    var low = [], fa = (S.anchorMap || {}).fox;
+    if (fa && (S.cast || []).some(function (m) { return m && m.at === 'fox'; })) low.push([fa.x - fa.h * 0.8, fa.x + fa.h * 1.25, B.frontLow]);
+    var fr = '';
+    (B.front || []).forEach(function (q, qi) { fr += grassRow(S, G, q[0], q[1], function () { return q[2]; }, q[3] * B.grassK, q[4] * B.grassK, B.seed + 500 + qi * 17, q[5] ? null : low); });
+    front += g(fr, { filter: S.shadow('s'), 'data-part': 'long-grass-front' });
+    return { back: back, over: g(over, { 'data-part': 'fence' }), front: front };
+  }
+
   // ------------------------------------------------------------------ the compositions
 
   var COMPS = {
@@ -507,19 +733,101 @@
       fence: { top: -60, base: 800, cell: 104, wire: 6, posts: [190], post: 46, rail: 30, verge: 44, tufts: 130, tuft: 1.9, seed: 500 },
       path: { top: 840, k: 1.6, grit: 170, seed: 510, puddles: [[1240, 950, 150, 20]] },
       front: { tufts: [[-20, 240], [1360, 1620]], y0: 980, y1: 1010, size: 3.2 }
+    },
+    // border: the fence's far corner from the path, both sides of the last post
+    border: {
+      sky: 640, sun: [1400, 120], sunR: 400,
+      clouds: [[250, 176, 260, 70, 63], [780, 112, 170, 46, 64], [1230, 236, 210, 56, 65]],
+      plane: null,
+      towers: [{ x: -30, w: 124, top: 372, base: 592, far: 0.8 }, { x: 92, w: 88, top: 424, base: 592, far: 0.84, cap: 'slant' }, { x: 184, w: 70, top: 456, base: 592, far: 0.86, cap: 'round' }],
+      trees: { base: 604, top: 500, bump: 100, seed: 601, round: [[330, 60], [640, 50], [905, 64], [1215, 56], [1490, 66]] },
+      far: { base: 610, h: 52, cell: 12, step: 200 },
+      field: { top: 606, base: 800, tufts: 90, tuft: 0.9, seed: 610 },
+      mud: [[520, 704, 300, 34], [1270, 694, 250, 28], [200, 656, 120, 16]],
+      holes: [[770, 664, 26, 7]],
+      log: [420, 646, 124, 17],
+      puddles: [[640, 710, 80, 11], [1400, 702, 66, 9]],
+      prints: [[300, 694, 700, 712, 8, 1, 33], [1090, 704, 1500, 694, 7, 1, 35]],
+      toys: [{ kind: 'ball', x: 870, y: 722, r: 12, sunk: true }, { kind: 'frisbee', x: 1190, y: 676, rx: 28, ry: 8, bite: -0.9 }],
+      border: {
+        post: { x: 1000, top: 190, base: 806, w: 30 }, seed: 620, verge: 34, tuft: 1.1, grassK: 1, frontLow: 0.42,
+        left: { near: [1000, 198, 792], far: [-60, 304, 740], len: 1250, cell: 44, wire: 2.8, rail: 16, post: 22, posts: [0.3, 0.7] },
+        right: { near: [1000, 198, 792], far: [1660, 290, 748], len: 760, cell: 44, wire: 2.8, rail: 16, post: 22, posts: [0.56] },
+        path: { top: [[-20, 772], [962, 830]], end: [[962, 830], [1044, 872], [1104, 932], [1144, 1010]], k: 1.1, grit: 230, seed: 630, puddles: [] },
+        // rows of long grass behind the fox: [x0, x1, how far below the fence's foot, height, gap, slope]
+        rows: [[1016, 1640, 10, 52, 9], [1024, 1640, 44, 84, 11, 0.02], [1050, 1640, 84, 122, 13, 0.05]],
+        // and in front of him: [x0, x1, y, height, gap, tall even where he sits]
+        front: [[1124, 1640, 968, 96, 14], [1150, 1640, 1012, 150, 16]]
+      }
+    },
+    // border-two: closer, at cat height: shoulder to shoulder on the path, the fox past the post
+    'border-two': {
+      sky: 700, sun: [1420, 96], sunR: 380,
+      clouds: [[300, 150, 300, 80, 73], [1180, 230, 230, 60, 74]],
+      plane: null,
+      towers: [{ x: -40, w: 150, top: 400, base: 680, far: 0.8 }, { x: 110, w: 100, top: 470, base: 680, far: 0.84, cap: 'round' }],
+      trees: { base: 694, top: 560, bump: 130, seed: 641, round: [[420, 84], [760, 70], [1230, 90]] },
+      far: { base: 702, h: 70, cell: 16, step: 260 },
+      field: { top: 698, base: 840, tufts: 70, tuft: 1.2, seed: 650 },
+      mud: [[560, 772, 330, 30], [1330, 768, 260, 26]],
+      holes: [],
+      log: [330, 728, 150, 20],
+      // (no puddle in the field here: the one at [760, 780] lay exactly under Glintstar's chin whenever
+      // she faced left, and read as a blue bib; the mud patches stay)
+      puddles: [],
+      prints: [[300, 768, 700, 780, 6, 1.4, 43]],
+      toys: [{ kind: 'frisbee', x: 1220, y: 752, rx: 36, ry: 10, bite: -0.9 }],
+      border: {
+        post: { x: 1010, top: -40, base: 842, w: 44 }, seed: 660, verge: 44, tuft: 1.6, grassK: 1.6, frontLow: 0.36,
+        left: { near: [1010, -70, 826], far: [-60, 96, 778], len: 1150, cell: 70, wire: 4.2, rail: 24, post: 32, posts: [0.5] },
+        right: { near: [1010, -70, 826], far: [1660, 60, 788], len: 720, cell: 70, wire: 4.2, rail: 24, post: 32, posts: [] },
+        path: { top: [[-20, 812], [972, 866]], end: [[972, 866], [1056, 906], [1108, 960], [1130, 1010]], k: 1.6, grit: 150, seed: 670, puddles: [] },
+        rows: [[1030, 1640, 12, 60, 9], [1040, 1640, 50, 96, 11, 0.02]],
+        front: [[1130, 1640, 996, 96, 13], [1530, 1640, 1016, 170, 15, true]]
+      }
+    },
+    // border-fox: the fox chest-up among the long grass, the fence running away behind him
+    'border-fox': {
+      sky: 760, sun: [1440, 110], sunR: 400,
+      clouds: [[420, 170, 340, 90, 83], [1240, 300, 260, 70, 84]],
+      plane: null,
+      towers: [],
+      trees: { base: 760, top: 600, bump: 170, seed: 681, round: [[520, 110], [1330, 120]] },
+      far: { base: 770, h: 90, cell: 20, step: 330 },
+      field: { top: 764, base: 900, tufts: 40, tuft: 1.8, seed: 690 },
+      mud: [[1250, 840, 300, 30]],
+      holes: [],
+      log: null,
+      puddles: [],
+      prints: [],
+      toys: [],
+      border: {
+        post: { x: 96, top: -60, base: 1010, w: 70 }, seed: 700, verge: 60, tuft: 2.4, grassK: 2.6, frontLow: 0.5,
+        left: { near: [96, -200, 1000], far: [-220, -150, 980], len: 300, cell: 124, wire: 6.5, rail: 34, post: 44, posts: [] },
+        right: { near: [96, -200, 1000], far: [1700, -40, 870], len: 1500, cell: 124, wire: 6.5, rail: 34, post: 44, posts: [0.62] },
+        path: { top: [[-20, 1004], [60, 1006]], end: [[60, 1006], [80, 1012]], k: 2, grit: 0, seed: 710, puddles: [] },
+        rows: [[130, 1640, -30, 70, 7, -0.02], [130, 1640, 20, 110, 9]],
+        // (nothing in front at the left: that corner is the cats')
+        front: [[740, 1640, 1018, 50, 12]]
+      }
     }
   };
 
   function draw(S) {
     var L = COMPS[S.comp] || COMPS.main, p = S.pal, C = colors(S), back = '', over = '', front = '';
+    if (L.border) return drawBorder(S, L);
     back += skyAndCity(S, C, L);
     back += treeLine(S, L);
     back += field(S, C, L);
     back += pathway(S, C, L);
+
     // the near fence goes over everyone in the field
     var W = wirePushes(S, L.fence);
     over += nearFence(S, C, L.fence, W.pushes);
     W.bounces.forEach(function (x) { over += rattle(S, L.fence, x); });
+    // chapter 4: the fox's exit, on the path's side of the wire: over the dogs, under the cats
+    // (he is never drawn over a cat)
+    if (S.opts.foxTail === true && S.comp === 'dogs') over += foxExit(S, C, L);
     // grass in the near corners, kept off any cat sitting on the path there
     var cats = [];
     (S.cast || []).forEach(function (m) {
@@ -541,7 +849,10 @@
     cams: {
       wide: { box: [0, 0, 1600] },
       fence: { box: [0, 0, 1600], comp: 'fence' },
-      dogs: { box: [0, 0, 1600], comp: 'dogs' }
+      dogs: { box: [0, 0, 1600], comp: 'dogs' },
+      border: { box: [0, 0, 1600], comp: 'border' },
+      'border-two': { box: [0, 0, 1600], comp: 'border-two' },
+      'border-fox': { box: [0, 0, 1600], comp: 'border-fox' }
     },
     anchors: {
       main: {
@@ -558,10 +869,47 @@
         'path-left': A(330, 962, 300), 'path-right': A(720, 948, 290),
         'dog-1': A(1080, 786, 245, 'left', B), 'dog-2': A(1460, 770, 210, 'left', B), 'dog-3': A(560, 772, 175, 'right', B),
         field: A(900, 534, 110, 'left', B)
+      },
+      // chapter 4. The fox sits past the post; the three in front are drawn over the four behind
+      // them (z: 'behind') whatever the cast's order; the dogs are behind the wire that runs away.
+      // `back-4` (Murmurchime, who brought the news) looks out between Tallyheart's head and
+      // Glintstar's chest, clear of Glintstar's raised tail (at x 708 the tail ran down her face in
+      // every panel where Glintstar stands); the shaggy dog at `dog-1` is clear of the corner post
+      border: {
+        fox: A(1296, 928, 246, 'left'), lead: A(812, 934, 258), left: A(392, 916, 250), right: A(600, 958, 262),
+        'back-1': A(70, 900, 206, 'right', B), 'back-2': A(226, 872, 204, 'right', B), 'back-3': A(500, 862, 208, 'right', B), 'back-4': A(740, 868, 214, 'right', B),
+        'dog-1': A(1164, 776, 160, 'left', B), 'dog-2': A(1344, 764, 154, 'left', B), 'dog-3': A(1510, 752, 148, 'left', B)
+      },
+      'border-two': {
+        fox: A(1330, 968, 392, 'left'), lead: A(850, 952, 396), left: A(250, 986, 432), right: A(540, 992, 440),
+        // the four behind look out past the three in front: two at the left, one in each gap between heads
+        'back-1': A(40, 934, 330, 'right', B), 'back-2': A(150, 888, 280, 'right', B), 'back-3': A(408, 900, 300, 'right', B), 'back-4': A(734, 896, 300, 'right', B),
+        'dog-1': A(1150, 806, 250, 'left', B), 'dog-2': A(1340, 800, 244, 'left', B), 'dog-3': A(1516, 794, 238, 'left', B)
+      },
+      // the fox chest-up (his feet are below the panel); `left` and `right` are a corner of a cat in
+      // the near edge, drawn bigger than he is, their feet far below the panel: `right` is set for a
+      // grown cat (Tallyheart: her ears and eyes over the bottom edge), `left` for an apprentice (our
+      // cat: the corner of her face), so each one's head point is just inside the panel and her
+      // balloon has somewhere to point. `lead` is the edge of a face at the panel's left, where he is
+      // looking. The four behind are out of this camera's sight
+      'border-fox': {
+        fox: A(1150, 1182, 1100, 'left'), lead: A(-60, 1262, 1120), left: A(-30, 1530, 1120), right: A(282, 1657, 1120),
+        'dog-1': A(470, 884, 330, 'right', B), 'dog-2': A(1400, 866, 320, 'left', B), 'dog-3': A(1548, 856, 300, 'left', B)
       }
     },
-    opts: {}, defaults: {}
+    opts: { foxTail: [false, true] }, defaults: {}
   });
+
+  // for the tests: where each border composition puts the last post and the two runs of the fence
+  art.fieldInfo = function () {
+    var out = { border: {}, foxTail: FOX_TAIL };
+    Object.keys(COMPS).forEach(function (k) {
+      var B = COMPS[k].border;
+      if (B) out.border[k] = { post: { x: B.post.x, top: B.post.top, base: B.post.base, w: B.post.w }, left: { near: B.left.near.slice(), far: B.left.far.slice() },
+        right: { near: B.right.near.slice(), far: B.right.far.slice() }, pathEnd: B.path.end.map(function (q) { return q.slice(); }), log: !!COMPS[k].log };
+    });
+    return out;
+  };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

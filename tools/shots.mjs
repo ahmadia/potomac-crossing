@@ -12,13 +12,19 @@
  *                                                         blank, so use DUMP=1 there (the markup), or shoot unlocked
  *   node tools/shots.mjs OUTDIR hub book hollow nest who title    the other screens
  *   node tools/shots.mjs OUTDIR book#ch03 book#dragonets  the book, scrolled to a chapter's page or the dragonets
+ *   node tools/shots.mjs OUTDIR file file#cant-fly        her Case File open over the page she is on (CAT's `at`), or
+ *                                                         one of its cards shown large (chapter 4 on)
+ *   node tools/shots.mjs OUTDIR ch04:f052@tap@tap         open a frame, then tap its tap picture (a skip-count, a row
+ *                                                         of bark, the glint), once for each @tap
  *   node tools/shots.mjs --lock                           is the screen locked (so: a session a shot)? no Safari
+ *   node tools/shots.mjs --blank a.png b.png              is each PNG a blank screenshot (one flat colour)? no Safari
  *   SIZE=820x1180 node tools/shots.mjs …                  iPad portrait (default 1180x820, landscape)
  *   CAT='{"name":"Moon","finished":["ch01","ch02"],"at":"ch02:f090",…}' node tools/shots.mjs …
  *   EXTRA=2 node tools/shots.mjs OUTDIR who               two more cats on the device (one partway, one new)
  *   STORY=fixture node tools/shots.mjs …                  chapter 2 replaced by tests/fixtures/chapters.js's (in
  *                                                         the page only), to see chapter-2 screens before it is written;
- *                                                         STORY=fixture3 does the same for chapter 3 (both: fixture,fixture3)
+ *                                                         STORY=fixture3 does the same for chapter 3 (both: fixture,fixture3),
+ *                                                         STORY=fixture4 for chapter 4
  *   DUMP=1 node tools/shots.mjs OUTDIR …                  no screenshots: each target's screen markup with the art
  *                                                         emptied (OUTDIR/target.html), to diff ui.js's lettering and
  *                                                         layout before and after a change
@@ -37,6 +43,14 @@
  * same per sheet of four. LOCKED=1 or LOCKED=0 overrides the check. Each fresh session costs a few
  * seconds; flows and timing are checked in Node with the engine, not by tapping here.
  *
+ * A blank screenshot: when the Mac is busy (other Safari sessions just before, a sheet of four pages
+ * to paint) the picture can still come back one flat colour, black or grey. Every screenshot is read
+ * before it is kept (blankPng: its pixels, not its size): a blank one is never written or printed as
+ * a picture; it is taken again in a fresh session (TRIES in all, 3 unless TRIES says otherwise), a
+ * sheet that stays blank is taken as its single pages, and a target that never paints is named on
+ * stderr ("blank: …") and the tool exits 1. To wait for Safari yourself, ask `pgrep -x safaridriver`
+ * (never `pgrep -f`: it matches the waiting shell too).
+ *
  * Page zoom: Safari may zoom localhost pages (115% on the mini), so a 1180-wide window shows a
  * 1026-wide page. The window is resized until the page itself is SIZE in CSS pixels; when the
  * screen is too small for that (portrait at 115%), it says so and SHEET scales its panes to fit.
@@ -49,12 +63,16 @@
  * `lesson` is a lesson in progress, `{ chapter, frame, answers }`: the frame's Count started and these
  * answers given, so a shot of that frame opens on the next question (with `at` on the same frame:
  * CAT='{"at":"ch02:f028","lesson":{"chapter":"ch02","frame":"f028","answers":[20]}}' shows 8 × 2).
+ * `cards` lists the Case File cards she holds, in order (chapter 4's ids), and the flags `caseFileOpen`
+ * (her Case File's button is in the top bar), `foundSquall` and `ch4CaughtFly` go in `flags`.
  * It lives in this localhost origin's storage only (the server's port), never in a real player's
  * save. The service worker is not registered on localhost.
  */
 import { spawn, execFileSync } from 'child_process';
 import { createServer } from 'http';
+import { readFileSync } from 'fs';
 import { readFile, writeFile, mkdir } from 'fs/promises';
+import { inflateSync } from 'zlib';
 import { createRequire } from 'module';
 import { join, resolve, dirname, extname, normalize } from 'path';
 import { fileURLToPath } from 'url';
@@ -89,12 +107,75 @@ const DRY = !!process.env.DRY;   // no screenshots: print what each target's scr
 // to compare the lettering and layout ui.js draws before and after a change (cmp or diff the files)
 const DUMP = !!process.env.DUMP;
 const DUMP_JS = `var s = document.getElementById('screen').cloneNode(true);
-  Array.prototype.forEach.call(s.querySelectorAll('.art, .sface, .face, .portrait, .dn-pic'), function (a) { a.innerHTML = ''; });
-  return '<!-- ' + innerWidth + 'x' + innerHeight + ' -->\\n' + s.innerHTML.replace(/></g, '>\\n<');`;
-// STORY=fixture: chapter 2 replaced by the fixture's; STORY=fixture3: chapter 3 (both: STORY=fixture,fixture3)
+  // chapter 4: the pieces of bark keep their words (their pictures go), and her Case File, when it is open, follows the page
+  Array.prototype.forEach.call(s.querySelectorAll('.bark-pic svg'), function (a) { a.remove(); });
+  Array.prototype.forEach.call(s.querySelectorAll('.art:not(:has(.bark-row)), .sface, .face, .portrait, .dn-pic, .cn-pic, .tapicon'), function (a) { a.innerHTML = ''; });
+  var out = '<!-- ' + innerWidth + 'x' + innerHeight + ' -->\\n' + s.innerHTML.replace(/></g, '>\\n<');
+  var f = document.getElementById('file');
+  if (f && !f.hidden) {
+    f = f.cloneNode(true);
+    Array.prototype.forEach.call(f.querySelectorAll('.cf-pic, .cf-bigpic, .cf-mark'), function (a) { a.innerHTML = ''; });
+    out += '\\n<!-- her Case File, open over it -->\\n' + f.innerHTML.replace(/></g, '>\\n<');
+  }
+  return out;`;
+// STORY=fixture: chapter 2 replaced by the fixture's; STORY=fixture3: chapter 3; STORY=fixture4: chapter 4
+// (several: STORY=fixture,fixture3)
 const STORIES = String(process.env.STORY || '').split(',');
-const FX = STORIES.some(x => /^fixture3?$/.test(x)) ? require(join(ROOT, 'tests/fixtures/chapters.js'))() : null;
-const FIXTURE = FX ? Object.assign({}, STORIES.includes('fixture') ? { ch02: FX.ch02 } : {}, STORIES.includes('fixture3') ? { ch03: FX.ch03 } : {}) : null;
+const FX = STORIES.some(x => /^fixture[34]?$/.test(x)) ? require(join(ROOT, 'tests/fixtures/chapters.js'))() : null;
+const FIXTURE = FX ? Object.assign({}, STORIES.includes('fixture') ? { ch02: FX.ch02 } : {}, STORIES.includes('fixture3') ? { ch03: FX.ch03 } : {},
+  STORIES.includes('fixture4') ? { ch04: FX.ch04 } : {}) : null;
+/* Is this PNG a blank screenshot: one flat colour (the black or the grey a window that never painted
+ * comes back as), but for a sliver? The mini's black sheets are 99.97% black, with a line of small
+ * print along the bottom edge; the emptiest real screen is nowhere near. Read from the picture
+ * itself, with no dependency: the rows inflated and unfiltered (8 or 16 bits a channel, not
+ * interlaced: what Safari writes), every pixel compared with the first; blank when fewer than one
+ * pixel in 200 differs. A file that is not a PNG we can read counts as blank: there is nothing to
+ * look at. */
+function blankPng(buf) {
+  try {
+    if (!buf || buf.length < 57 || buf.readUInt32BE(0) !== 0x89504e47 || buf.readUInt32BE(4) !== 0x0d0a1a0a) return true;
+    const W0 = buf.readUInt32BE(16), H0 = buf.readUInt32BE(20), depth = buf[24], type = buf[25], lace = buf[28];
+    const chans = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[type];
+    if (!W0 || !H0 || !chans || lace || (depth !== 8 && depth !== 16)) return true;
+    const idat = [];
+    for (let o = 8; o + 12 <= buf.length;) {
+      const len = buf.readUInt32BE(o), kind = buf.toString('latin1', o + 4, o + 8);
+      if (kind === 'IDAT') idat.push(buf.subarray(o + 8, o + 8 + len));
+      if (kind === 'IEND') break;
+      o += 12 + len;
+    }
+    const raw = inflateSync(Buffer.concat(idat)), bpp = chans * depth / 8, line = W0 * bpp;
+    if (raw.length < (line + 1) * H0) return true;
+    let prev = new Uint8Array(line), cur = new Uint8Array(line), other = 0;
+    const first = new Uint8Array(bpp), most = W0 * H0 / 200;
+    for (let y = 0; y < H0; y++) {
+      const o = y * (line + 1), f = raw[o];
+      for (let x = 0; x < line; x++) {
+        const a = x >= bpp ? cur[x - bpp] : 0, b = prev[x], c = x >= bpp ? prev[x - bpp] : 0;
+        let v = raw[o + 1 + x];
+        if (f === 1) v += a; else if (f === 2) v += b; else if (f === 3) v += (a + b) >> 1;
+        else if (f === 4) { const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c); v += pa <= pb && pa <= pc ? a : pb <= pc ? b : c; }
+        cur[x] = v & 255;
+      }
+      if (y === 0) first.set(cur.subarray(0, bpp));
+      // (a couple of levels of slack: a flat colour stays flat through a colour profile)
+      for (let x = 0; x < line; x += bpp) {
+        let off = false;
+        for (let k = 0; k < bpp && !off; k++) off = Math.abs(cur[x + k] - first[k]) > 2;
+        if (off && ++other > most) return false;
+      }
+      const swap = prev; prev = cur; cur = swap;
+    }
+    return true;
+  } catch { return true; }
+}
+// `node tools/shots.mjs --blank a.png b.png`: say which of these PNGs are blank screenshots, and stop (exit 1 when any is)
+if (argv[0] === '--blank') {
+  let any = false;
+  for (const f of argv.slice(1)) { let b = true; try { b = blankPng(readFileSync(f)); } catch { b = true; } any = any || b; console.log((b ? 'blank' : 'ok') + ': ' + f); }
+  process.exit(any ? 1 : 0);
+}
+const TRIES = Math.max(1, Math.min(6, +(process.env.TRIES || 3)));
 // `node tools/shots.mjs --lock`: say which way it would shoot (and which chapters a STORY stands in), and stop (no Safari, no server)
 if (argv[0] === '--lock') {
   console.log(LOCKED ? 'locked: a fresh short session for each shot' : 'unlocked: one session for every shot');
@@ -104,11 +185,23 @@ if (argv[0] === '--lock') {
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
+/* Safari's automation session on the mini does not keep web storage: a localStorage write is gone by
+ * the next script call, and never reaches the next document. For EXTRA (more cats, read back after a
+ * reload) the page is served with its localStorage stood in for by sessionStorage, which does last
+ * the session. Only the page as this tool serves it: no file of the game is changed. */
+const LS_SHIM = `<script>(function(){var P='__ls:';function keys(){var o=[];for(var i=0;i<sessionStorage.length;i++){var k=sessionStorage.key(i);if(k.indexOf(P)===0)o.push(k.slice(P.length));}return o;}
+var shim={getItem:function(k){return sessionStorage.getItem(P+k);},setItem:function(k,v){sessionStorage.setItem(P+k,String(v));},removeItem:function(k){sessionStorage.removeItem(P+k);},
+clear:function(){keys().forEach(function(k){sessionStorage.removeItem(P+k);});},key:function(i){return keys()[i]||null;}};
+Object.defineProperty(shim,'length',{get:function(){return keys().length;}});
+try{Object.defineProperty(window,'localStorage',{configurable:true,get:function(){return shim;}});}catch(e){}})();</script>`;
 const server = createServer(async (req, res) => {
   const p = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
   const file = join(ROOT, p.endsWith('/') ? p + 'index.html' : p);
   try {
-    const body = await readFile(file);
+    let body = await readFile(file);
+    // EXTRA reloads the page to read the device's cats back from storage; the automation session's
+    // localStorage does not last that long (see LS_SHIM), so the page as served keeps it in sessionStorage
+    if (EXTRA && /[/\\]index\.html$/.test(file)) body = Buffer.from(String(body).replace('<head>', '<head>' + LS_SHIM));
     res.writeHead(200, { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(body);
   } catch { res.writeHead(404); res.end(); }
@@ -148,6 +241,7 @@ const SETUP = `
   if (o.dreams) Object.keys(o.dreams).forEach(function (k) { c.dreams[k] = o.dreams[k]; });
   (o.lessons || []).forEach(function (id) { c.lessons[id] = { set: id, mode: 'chapter', answers: 9, correct: 9, fast: 4, facts: 9, firstTry: 9, helped: 0, noHelp: true, finished: true }; });
   if (o.nest) c.nest = o.nest.slice();
+  (o.cards || []).forEach(function (id, i) { E.giveCard(c, id, 'ch04', t - 60000 * (20 - i)); });
   if (o.hollow) Object.keys(o.hollow).forEach(function (k) { c.hollow.byTable[k] = o.hollow[k]; c.hollow.rounds += o.hollow[k].rounds || 0; });
   if (o.at) { var at = String(o.at).split(':'); var r = PC.debug.goto(at[1], at[0]); if (r !== at[1]) return 'at: ' + r; }
   if (o.lesson) {
@@ -203,7 +297,8 @@ async function session(fn) {
         var E = PC.engine, n = arguments[0], first = E.firstChapter(PC.story);
         var looks = [{ sex: 'tom', fur: 'ginger', marking: 'nose-splash', eyes: 'amber' }, { sex: 'she', fur: 'silver-tabby', marking: 'none', eyes: 'blue' }, { sex: 'tom', fur: 'black', marking: 'white-chest', eyes: 'green' }];
         var names = ['Pebble', 'Fern', 'Storm'];
-        var raw = JSON.parse(localStorage.getItem(E.STORAGE_KEY));
+        // (the page's own save, PC.debug.state(): never what storage hands back, which may be nothing)
+        var raw = PC.debug.state();
         for (var i = 0; i < n && raw.cats.length < E.MAX_CATS; i++) {
           var c = E.blankCat({ now: Date.now() + i, index: raw.cats.length, look: looks[i] });
           c.name = i === n - 1 && n > 1 ? '' : names[i];
@@ -211,12 +306,16 @@ async function session(fn) {
           raw.cats.push(c);
         }
         localStorage.setItem(E.STORAGE_KEY, JSON.stringify(raw));
-        return raw.cats.length;`, [EXTRA]);
+        var back = localStorage.getItem(E.STORAGE_KEY);
+        return back ? JSON.parse(back).cats.length : 'the save did not stay in storage';`, [EXTRA]);
+      if (typeof more !== 'number') throw new Error('EXTRA: ' + more);
       // reload so the page reads the device's cats from storage
       await wd('POST', S + '/url', { url: site });
       await sleep(LOCKED ? 350 : 800);
       await run(STILL);
       if (FIXTURE) await run('var fx = arguments[0]; Object.keys(fx).forEach(function (k) { PC.story[k] = fx[k]; }); return true;', [FIXTURE]);
+      const there = await run('return PC.debug.state().cats.length;');
+      if (there !== more) throw new Error('EXTRA: the page read ' + there + ' cats back after the reload, not ' + more);
       if (!told) console.log('cats on the device: ' + more);
     }
     return await fn(S, run);
@@ -263,6 +362,7 @@ async function sheet(S, run, four) {
         var made = new w.Function(setup).apply(null, [cat, fixture]);
         if (made !== true) { out.push(targets[i] + ': setting up the test cat: ' + made); continue; }
         if (/^(hub|book|hollow|nest|who|title)$/.test(target)) PC.debug.go(target, { from: 'hub' });
+        else if (/^file(#|$)/.test(target)) { var fr = PC.debug.file(target.split('#')[1] || null); if (fr !== true) { out.push(targets[i] + ': ' + fr); continue; } }
         else { var cf = target.indexOf(':') >= 0 ? target.split(':') : ['ch01', target]; var r = PC.debug.goto(cf[1], cf[0]); if (r !== cf[1]) { out.push(targets[i] + ': ' + r); continue; } }
         out.push(true);
       } catch (e) { out.push(targets[i] + ': ' + e.message); }
@@ -274,10 +374,18 @@ async function sheet(S, run, four) {
     const clicks = await run(`
       var out = [], frames = document.querySelectorAll('iframe'), targets = arguments[0];
       for (var i = 0; i < frames.length; i++) {
-        var id = targets[i].split('@')[1];
-        if (!id) continue;
-        var b = frames[i].contentWindow.document.getElementById(id);
-        if (b) b.click(); else out.push(targets[i] + ': no #' + id);
+        var ids = targets[i].split('@').slice(1);
+        for (var k = 0; k < ids.length; k++) {
+          var id = ids[k];
+          if (id === 'tap') { var tr = frames[i].contentWindow.PC.debug.tap(); if (tr !== true) out.push(targets[i] + ': ' + tr); continue; }
+          // @keys=1,0,0: the lesson's keypad, as on a single page
+          if (/^keys=/.test(id)) {
+            id.slice(5).split(',').forEach(function (k) { var kb = frames[i].contentWindow.document.querySelector('.key[data-k="' + k + '"]'); if (kb) kb.click(); else out.push(targets[i] + ': no key ' + k); });
+            continue;
+          }
+          var b = frames[i].contentWindow.document.getElementById(id);
+          if (b) b.click(); else out.push(targets[i] + ': no #' + id);
+        }
       }
       return out;`, [four]);
     clicks.forEach((r) => console.error(r));
@@ -293,29 +401,32 @@ async function sheet(S, run, four) {
     txt.forEach((x, i) => console.log(four[i] + ': ' + x));
     return;
   }
-  const png = await wd('GET', S + '/screenshot');
+  const png = Buffer.from(await wd('GET', S + '/screenshot'), 'base64');
+  if (blankPng(png)) return 'blank';
   const file = join(outDir, 'sheet-' + four.map(t => t.replace(/[:@#]/g, '-')).join('_') + '.png');
-  await writeFile(file, Buffer.from(png, 'base64'));
+  await writeFile(file, png);
   console.log(file);
 }
 
 /* One target on its own page: open it (and tap a button on it), then shoot. */
 async function shoot(S, run, t) {
   const [target0, ...clicks] = t.split('@');
-  // book#ch03 or book#dragonets: the book, scrolled to that page
+  // book#ch03 or book#dragonets: the book, scrolled to that page; file or file#card-id: her Case File
+  // open over the page she is on, or that card shown large
   const [target, anchor] = target0.split('#');
   const screen = /^(hub|book|hollow|nest|who|title)$/.test(target);
   const [ch, fid] = target.includes(':') ? target.split(':') : ['ch01', target];
-  const ok = await run(screen
+  const ok = await run(target === 'file' ? 'if (!PC.debug.cat()) return "no cat"; return PC.debug.file(arguments[1]);' : screen
     ? 'if (!PC.debug.cat()) PC.debug.go("who"); else PC.debug.go(arguments[0], { from: "hub" });' +
       'var a = arguments[1] && document.getElementById("book-" + arguments[1]); if (arguments[1] && !a) return "no page " + arguments[1]; if (a) a.scrollIntoView({ block: "start" }); return true;'
-    : 'var r = PC.debug.goto(arguments[1], arguments[0]); return r === arguments[1] || r;', screen ? [target, anchor || null] : [ch, fid]);
+    : 'var r = PC.debug.goto(arguments[1], arguments[0]); return r === arguments[1] || r;', screen || target === 'file' ? [target, anchor || null] : [ch, fid]);
   if (ok !== true) { console.error(t + ': ' + ok); return; }
   // each @ taps a button by its id, in turn; @keys=3,4,ok presses the lesson's keypad (a wrong answer
   // shows the help: WAIT=ms waits for its count before the shot)
   for (const click of clicks) {
     await sleep(LOCKED ? 420 : 600);   // past the double-tap guard
-    const c = await run('var k = /^keys=/.test(arguments[0]) ? arguments[0].slice(5).split(",") : null;' +
+    const c = await run('if (arguments[0] === "tap") return PC.debug.tap();' +
+      'var k = /^keys=/.test(arguments[0]) ? arguments[0].slice(5).split(",") : null;' +
       'if (k) { for (var i = 0; i < k.length; i++) { var kb = document.querySelector(".key[data-k=\\"" + k[i] + "\\"]"); if (!kb) return "no key " + k[i]; kb.click(); } return true; }' +
       'var b = document.getElementById(arguments[0]); if (!b) return "no #" + arguments[0]; b.click(); return true;', [click]);
     if (c !== true) { console.error(t + ': ' + c); return; }
@@ -331,25 +442,48 @@ async function shoot(S, run, t) {
     console.log(file);
     return;
   }
-  const png = await wd('GET', S + '/screenshot');
+  const png = Buffer.from(await wd('GET', S + '/screenshot'), 'base64');
+  if (blankPng(png)) return 'blank';
   const file = join(outDir, t.replace(/[:@#]/g, '-') + '.png');
-  await writeFile(file, Buffer.from(png, 'base64'));
+  await writeFile(file, png);
   console.log(file);
 }
 
 try {
   await mkdir(outDir, { recursive: true });
   if (LOCKED) console.error('the screen is locked: a fresh short session for each ' + (SHEET ? 'sheet' : 'shot'));
+  // a blank screenshot is taken again, each time in a fresh short session of its own (TRIES in all,
+  // `done` of them made already); true when a picture was kept
+  const again = async (what, fn, done) => {
+    for (let i = done; i < TRIES; i++) {
+      console.error(what + ': a blank screenshot; taking it again in a fresh session');
+      await sleep(1200);
+      if (await session(fn) !== 'blank') return true;
+    }
+    return false;
+  };
+  const single = async (t, done) => again(t, (S, run) => shoot(S, run, t), done);
+  const lost = [];
   if (SHEET) {
-    const groups = [];
+    const groups = [], blank = [];
     for (let i = 0; i < targets.length; i += 4) groups.push(targets.slice(i, i + 4));
-    if (LOCKED) { for (const four of groups) await session((S, run) => sheet(S, run, four)); }
-    else await session(async (S, run) => { for (const four of groups) await sheet(S, run, four); });
+    if (LOCKED) { for (const four of groups) if (await session((S, run) => sheet(S, run, four)) === 'blank') blank.push(four); }
+    else await session(async (S, run) => { for (const four of groups) if (await sheet(S, run, four) === 'blank') blank.push(four); });
+    for (const four of blank) {
+      if (await again('sheet ' + four.join(' '), (S, run) => sheet(S, run, four), 1)) continue;
+      // the sheet never painted: its pages one at a time (a single page paints sooner than four)
+      console.error('sheet ' + four.join(' ') + ': still blank; taking its pages one by one');
+      for (const t of four) if (await session((S, run) => shoot(S, run, t)) === 'blank' && !(await single(t, 1))) lost.push(t);
+    }
   } else if (LOCKED) {
-    for (const t of targets) await session((S, run) => shoot(S, run, t));
+    for (const t of targets) if (await session((S, run) => shoot(S, run, t)) === 'blank' && !(await single(t, 1))) lost.push(t);
   } else {
-    await session(async (S, run) => { for (const t of targets) await shoot(S, run, t); });
+    const blank = [];
+    await session(async (S, run) => { for (const t of targets) if (await shoot(S, run, t) === 'blank') blank.push(t); });
+    for (const t of blank) if (!(await single(t, 1))) lost.push(t);
   }
+  lost.forEach((t) => console.error('blank: ' + t + ' (no picture after ' + TRIES + ' tries; nothing was written)'));
+  if (lost.length) process.exitCode = 1;
 } finally {
   driver.kill();
   server.close();

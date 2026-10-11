@@ -67,9 +67,12 @@
 <script src="../app/art/sets/field.js"></script>
 <script src="../app/art/sets/crossing.js"></script>
 <script src="../app/art/sets/riverbank.js"></script>
+<script src="../app/art/sets/roof.js"></script>
+<script src="../app/art/cards.js"></script>
 <script src="../app/story/ch01.js"></script>
 <script src="../app/story/ch02.js"></script>
 <script src="../app/story/ch03.js"></script>
+<script src="../app/story/ch04.js"></script>
 <script>
 (function () {
   'use strict';
@@ -143,7 +146,16 @@
       cats: { cast: [c('tallyheart', 'ground-left', 'lookup', 'kind'), c('player', 'ground-right', 'lookup', 'wonder', { facing: 'left' })], fx: ['night', 'stars', 'skyriver'] }
     },
     river: { crash: { opts: { splash: true }, cast: [], fx: ['night', 'rain', 'lightning'] } },
-    title: { wide: { cast: [], fx: [] } }
+    title: { wide: { cast: [], fx: [] } },
+    // chapter 4: the tallest tower's roof (app/art/sets/roof.js), the littlest dragonet by his pole
+    roof: {
+      wide: { cast: [c('squall', 'pole', 'hug', 'stern'), c('player', 'door', 'sit', 'wonder')], fx: ['day'] },
+      pole: { opts: { moth: true }, cast: [c('squall', 'pole', 'hug', 'proud')], fx: ['day'] },
+      two: { cast: [c('squall', 'pole', 'sit', 'sad'), c('player', 'beside', 'sit', 'kind', { facing: 'left' })], fx: ['day'] },
+      over: { cast: [c('squall', 'pole', 'point', 'proud'), c('player', 'beside', 'sit', 'wonder', { facing: 'left' })], fx: ['day'] },
+      sky: { opts: { plane: true }, cast: [c('squall', 'pole', 'roar', 'shout')], fx: ['day'] },
+      paw: { cast: [c('squall', 'pole', 'pawup', 'proud'), c('player', 'beside', 'sit', 'wonder', { facing: 'left' })], fx: ['day'] }
+    }
   };
   var EXTRA = [
     ['room', 'glass', { opts: { door: 'closed', reflection: true }, cast: [], fx: ['dusk'] }, 'the look chooser: reflection only'],
@@ -196,7 +208,28 @@
     ['hollow', 'tree', { opts: { marks: 10, glow: [true, true, false, true] }, cast: [], fx: ['sunset'] }, 'marks: 10: one day, ten marks (every table to ten times ten), four to a row'],
     ['garden', 'hedge', { cast: [c('tallyheart', 'hedge-gap', 'sit', 'stern', { facing: 'left' }), c('player', 'hedge-side', 'stand', 'worried', { holds: 'vole' })], fx: ['sunset'] }, 'chapter 3: hedge-side: at the hedge at sunset, a vole in your mouth'],
     ['title', 'wide', { cast: [c('tallyheart', 'wall', 'sit', 'scared', { facing: 'left', puffed: true }), c('player', 'wall-2', 'sit', 'worried')], fx: ['sunset'] }, 'chapter 3: on the wall at sunset, her fur puffed up'],
-    ['title', 'wide', { cast: [c('sprinkle', 'wall', 'sit', 'shy', { facing: 'left', holds: 'pebble' }), c('tallyheart', 'wall-2', 'sit', 'kind')], fx: ['sunset'] }, 'chapter 3: Sprinkle at a cat\u2019s anchor (her bigger box makes her bigger; her head well above Tallyheart\u2019s)']
+    ['title', 'wide', { cast: [c('sprinkle', 'wall', 'sit', 'shy', { facing: 'left', holds: 'pebble' }), c('tallyheart', 'wall-2', 'sit', 'kind')], fx: ['sunset'] }, 'chapter 3: Sprinkle at a cat\u2019s anchor (her bigger box makes her bigger; her head well above Tallyheart\u2019s)'],
+    // chapter 4: chapter 1's sets with the Case File's bark, the roof's roar, and the two new characters
+    ['den', 'inside', { opts: { weather: 'clear' }, cast: [c('snorer', 'sleeper-1', 'curl', 'sleepy'), c('player', 'nest', 'lie', 'sleepy'), c('tallyheart', 'doorway', 'peer', 'happy', { facing: 'left', wink: true })], fx: ['morning'] }, 'chapter 4: sunrise: the middle nest an empty ring of moss, the grey tom asleep, Tallyheart at the doorway (wink: true)'],
+    ['den', 'outside', { opts: { moon: true }, cast: [c('tallyheart', 'entrance-left', 'sit', 'kind'), c('player', 'entrance-right', 'sit', 'wonder', { facing: 'left' })], fx: ['dusk'] }, 'chapter 4: moon: true at dusk: the young moon, thin as a curl of bark, low over the towers (the only moon so far)'],
+    ['den', 'nest', { opts: { bark: 'auto', stone: 'nose' }, cast: [c('player', 'nest', 'pawup', 'wonder', { claws: true })], fx: ['night'] }, 'chapter 4: bark: \u2018auto\u2019 (unfilled: seven): her Case File along the mossy edge, overlapping like roof tiles; one claw scratching'],
+    ['den', 'nest', { opts: { bark: 9, stone: 'chin' }, cast: [c('player', 'nest', 'sit', 'wonder', { facing: 'left', holds: 'bark' })], fx: ['night'] }, 'chapter 4: bark: 9, facing left (the row keeps to the side away from her head); holds: \u2018bark\u2019, the wing beside the fox\u2019s FLEW'],
+    ['den', 'nest', { opts: { bark: 9, hidden: true, stone: 'nose' }, cast: [c('player', 'nest', 'loaf', 'kind')], fx: ['night'] }, 'chapter 4: hidden: true: two fewer in the row, two corners of bark showing under the moss'],
+    ['den', 'inside', { opts: { bark: 'auto', hidden: true, stone: 'nose' }, cast: [c('snorer', 'sleeper-1', 'sit', 'scared'), c('player', 'nest', 'loaf', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 4: \u201cWhat if the dragon comes here?\u201d: the grey tom wide-eyed, her bark small on her nest\u2019s edge'],
+    ['hollow', 'wide', { opts: { marks: 3 }, cast: [c('tallyheart', 'tree-far', 'situp', 'proud', { facing: 'left', size: 1.2 }), c('clancat', 'rim-1', 'situp', 'proud', { variant: 1 }), c('clancat', 'rim-2', 'situp', 'happy', { variant: 3 }),
+      c('clancat', 'rim-3', 'situp', 'neutral', { variant: 4 }), c('clancat', 'rim-4', 'situp', 'worried', { variant: 6 }), c('grizzled', 'rim-5', 'situp', 'stern'), c('player', 'sunpatch-2', 'sit', 'wonder')], fx: ['morning'] }, 'chapter 4: five rim cats sitting up (situp), ten claws each, the old tom last'],
+    ['hollow', 'wide', { opts: { marks: 3, heap: true }, cast: [c('clancat', 'rim-1', 'fall', 'laugh', { variant: 1 }), c('clancat', 'rim-2', 'tummy', 'happy', { variant: 3, facing: 'right' }), c('clancat', 'rim-3', 'flat', 'worried', { variant: 4 }),
+      c('clancat', 'rim-4', 'lie', 'sleepy', { variant: 6 }), c('grizzled', 'rim-5', 'fall', 'stern', { facing: 'right' }), c('tallyheart', 'tree-far', 'sit', 'laugh', { facing: 'left', size: 1.2 }), c('player', 'sunpatch-2', 'sit', 'laugh')], fx: ['morning', 'motion'] }, 'chapter 4: heap: true: FLUMP, all five in a heap (the rim spots close up into a pile)'],
+    ['hollow', 'tree', { opts: { marks: 4, bark: 'falling' }, cast: [], fx: ['morning'] }, 'chapter 4: marks: 4, the first three a little deeper; bark: \u2018falling\u2019, a curl of bark dropping from the new mark'],
+    ['hollow', 'lesson', { opts: { marks: 4, bark: 'falling' }, cast: [c('tallyheart', 'tree', 'stretch', 'proud'), c('player', 'sand-left', 'sit', 'wonder')], fx: ['morning'] }, 'chapter 4: the falling curl keeps clear of the cast'],
+    ['hollow', 'lesson', { opts: { marks: 4, bark: 'sand' }, cast: [c('tallyheart', 'sand-left', 'sit', 'kind'), c('player', 'sand-right', 'flat', 'sleepy', { facing: 'left' })], fx: ['day'] }, 'chapter 4: bark: \u2018sand\u2019: this morning\u2019s curl still lies in the sand (\u201cMy head is full of fox\u201d)'],
+    ['hollow', 'sand', { opts: { marks: 4, bark: 'row' }, cast: [c('tallyheart', 'sand-left', 'sit', 'kind'), c('player', 'sand-right', 'crouch', 'wonder', { facing: 'left' })], fx: ['day'] }, 'chapter 4: bark: \u2018row\u2019: her first card at the head of the row, three blank pieces to scratch'],
+    ['tower', 'up', { opts: { chime: true, light: true, roar: true }, cast: [c('waffles', 'railing', 'peer', 'shout', { facing: 'left' }), c('player', 'foot', 'lookup', 'wonder')], fx: ['day'] }, 'chapter 4: light and roar: the red light at the very top, jagged roar lines; our cat at the foot of the tower (foot)'],
+    ['tower', 'up', { opts: { chime: true, light: true, roar: true }, cast: [c('waffles', 'railing', 'peer', 'shout', { facing: 'left' }), c('player', 'corner', 'stretch', 'happy', { facing: 'left' })], fx: ['day'] }, 'chapter 4: corner: a climber on a balcony halfway up, Waffles\u2019 face turning'],
+    ['tower', 'up', { opts: { chime: true, light: true, ding: true }, cast: [c('waffles', 'railing', 'peer', 'happy', { facing: 'left' })], fx: ['day'] }, 'chapter 4: ding: a small DING! at the very top, nobody at the foot of the tower'],
+    ['title', 'wide', { cast: [c('reynard', 'wall', 'sit', 'happy', { facing: 'left' }), c('tallyheart', 'wall-2', 'sit', 'stern')], fx: ['day'] }, 'chapter 4: Reynard at a cat\u2019s anchor: about Tallyheart\u2019s size, and never bigger'],
+    ['title', 'wide', { cast: [c('squall', 'wall', 'sit', 'proud', { facing: 'left' }), c('player', 'wall-2', 'sit', 'wonder')], fx: ['day'] }, 'chapter 4: Squall at a cat\u2019s anchor: a dragon no bigger than you'],
+    ['garden', 'wide', { opts: { sparrows: 12, dish: true }, cast: [c('reynard', 'lawn', 'sit', 'proud'), c('tallyheart', 'fence-foot', 'sit', 'stern', { facing: 'left' })], fx: ['day'] }, 'chapter 4: Reynard nearer the camera than Tallyheart: still no bigger in the panel than she is']
   ];
 
   // ---- panels, rendered when they scroll into view
@@ -281,7 +314,8 @@
 
   // ---- section 2: every frame of every chapter, as the story asks for it
   // (the UI fills `marks: 'auto'` and `glow: 'auto'` from the cat; here a chapter's frames show one mark
-  // per chapter so far, chapter 2's two and chapter 3's three, the first glowing; `stone: 'auto'` by her nose)
+  // per chapter so far, chapter 2's two and chapter 3's three, the first glowing; `stone: 'auto'` by her nose;
+  // the den's `bark: 'auto'` is left as it is, which draws the seven cards every cat holds at bedtime)
   function preview(s, number) {
     if (!s || !s.opts || (s.opts.marks !== 'auto' && s.opts.glow !== 'auto' && s.opts.stone !== 'auto')) return s;
     var o = {}, k, m = Math.max(1, Math.min(10, number || 2));

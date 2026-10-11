@@ -154,8 +154,12 @@ when something is missing. Each Count has a picture every cat carries:
 | 4s | paws: four per cat |
 | 5s | claws on one forepaw |
 | 10s | claws on both forepaws |
+| 6s | whiskers on one cheek |
+| 7s | sunrises in a quarter-moon |
+| 8s | a spider's legs |
+| 9s | a cat's nine lives (the elders swear by it) |
 
-Teaching order: 1, 2, 5, 10, then 3 and 4. How module one teaches them is in
+Teaching order: 1, 2, 5, 10, 9, 3, 6, 4, 8, 7 (README decisions 36 and 42). How module one teaches them is in
 [`module-1.md`](module-1.md#tallyheart-and-the-counts).
 
 ## The series

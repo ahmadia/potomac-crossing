@@ -1521,8 +1521,11 @@ test('the teaser for chapter 4, and chapter 2’s for this one', () => {
   assert.doesNotMatch(story.teaser.lines.join(' '), /glitter|scale|shiny/i);
   const cat = E.blankCat({}); cat.name = 'Moon';
   const t = E.teaser(story, cat, PC.story);
+  const ch04 = E.chapters(PC.story).find(s => s.number === 4);
   assert.equal(t.title, 'Chapter 4: The Glittering Scale');
-  assert.deepEqual([t.built, t.next], [false, null], 'chapter 4 is coming soon');
+  assert.deepEqual([t.built, t.next], ch04 ? [true, ch04.id] : [false, null], 'chapter 4: built, or coming soon');
+  // ... and chapter 4 keeps the teaser's two promises: its title, and both forepaws
+  if (ch04) assert.equal(ch04.title, 'The Glittering Scale');
   const t2 = E.teaser(PC.story.ch02, cat, PC.story);
   assert.deepEqual([t2.title, t2.built, t2.next], ['Chapter 3: Under the Old Bridge', true, 'ch03']);
   // the hub's big button

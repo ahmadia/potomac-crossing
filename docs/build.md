@@ -625,3 +625,332 @@ Each key below is checked by `E.checkStory` and tested on the fixture chapter 3 
   and 2's storyboards are unchanged); `tools/shots.mjs` takes `STORY=fixture3` (the fixture
   chapter 3 in the page) and `DUMP=1` (each screen's markup, the art emptied, to diff the
   lettering before and after a change).
+
+## Chapter 4 (v0.4)
+
+Chapter 4, *The Glittering Scale*, is [`chapters/04-the-glittering-scale.md`](chapters/04-the-glittering-scale.md)
+(v0.4), built in `app/story/ch04.js`. **Its "Art needs" and "Build" notes are the spec** (the Case
+File's data and screen, the `file` and `scratch` frames, sticky `sets`, the Counts sets, the sets'
+options): build them as written and record each key here, briefly, as it lands. The names below are
+the ones the notes leave open, fixed so the art, the engine and the story agree.
+
+**Cast, new**: `reynard` (the fox; the text's Art needs describe him: lean, red-orange, cream chin
+and chest, four black socks, an enormous white-tipped brush, half-closed amber eyes, a closed-mouth
+smile that is always on; no teeth, ever). Poses: `sit`, `comb` (combing his tail), `chest` (a paw
+on his chest), `think` (eyes up), `lean` (leaning in to whisper), `flap` (both forepaws flapping),
+`slip` (one panel: the smile gone flat, eyes fully open, ears back), `dash` (dashing off, tail
+last). He takes every mood, drawn his way (the smile stays, except in `slip`); extra `flick: true`
+(one ear flicks). Never bigger in a panel than Tallyheart, never full-face. `squall` (the littlest
+dragonet: built like Sprinkle at a third her size, no bigger than a cat, a big head, stubby wings,
+slate with yellow flecks like sparks, fierce little brows). Poses: `hug` (sitting at the foot of
+the pole, forelegs and tail wrapped round it), `sit`, `roar` (head back, mouth a round O), `hiccup`
+(bounced, eyes crossed, one ring of mist), `halt` (one claw out), `tall` (standing as tall as he
+can), `point`, `snap` (at a moth), `pawup` (one forepaw raised, five claws out). Sprinkle gains
+`check` (looking herself over, nose to tail), `tailout` (holding out her tail) and `tailup` (her
+tail lifting from her face). Cats gain the pose `situp` (on the haunches, both forepaws raised,
+claws out) and the extras `wink: true` and `holds: 'bark'`.
+
+**Sets**: one new set, `roof` (`app/art/sets/roof.js`): cameras `wide`, `pole`, `two`, `over`,
+`sky`, `paw`; anchors `pole`, `beside`, `door` (none at the wall); options `plane: true` (an
+airplane passing well above the roof), `moth: true`, `grit: 'none' | 'paws'` (seven little forepaws
+scratched in the grit). `field` gains the **border** composition: cameras `border` (wide, both
+sides of the last fence post), `border-two` (cat height, Tallyheart's shoulder between the fox and
+our cat), `border-fox` (the fox chest-up in three-quarter view, a corner of Tallyheart in the near
+edge); anchors `fox` (in the long grass past the post), `lead` (Glintstar), `left`, `right` (at her
+shoulders), `back-1` … `back-4`; and `foxTail: true` on the `dogs` camera (a white-tipped tail
+going into the long grass). `pile` gains the cameras `rows` (from the front, the rows running
+back), `gap` (the back row's gap and the dug earth), `scale` (close on the "scale" where it
+leans), `through` (the camp seen through it, wavy and a little green) and `mirror` (her own small
+face in it, from the player's look), with the options in the text's Build notes (`rows`, `back:
+'shadow'`, `scale`, `glint`, `dug`). `tower`, `den`, `hollow`, `bridge`: the options in the Build
+notes (`light`, `roar`, `corner`, `ding`; `bark`, `hidden`, `moon`; `marks: 4`, `bark`, `heap`;
+`pawsIn: 'both'`). The hollow's `bark: 'row'` (her first card and three blank pieces) takes `cards`
+(a list of card pictures, oldest first: the row as she has scratched it by that panel) and `blank`
+(0 to 3 blank pieces after them); the vocabulary lists `cards` as `'cards'`, a third kind beside a
+list of values and `'number'`.
+
+**Cards art** (`app/art/cards.js`, new): `PC.art.card({ picture, mark, big, look }) -> svg string`
+draws one Case File card: a curl of pale papery bark flattened to a paw's size, one picture
+scratched in thin dark lines (as simple as a cave drawing), and its mark in a corner (`'eye'`: an
+almond with a slit; `'ear'`: a triangle with a notch). `picture` is a card definition's own key; the
+drawings live in `PC.art.cardPictures`. `PC.art.card({ blank: true })` is a blank curl;
+`PC.art.fileIcon()` the curl for the Case File button.
+
+**Counts art**: the 10s (each group two big forepaws side by side, five long claws each, the cat
+small behind them; `who`; lit by tens), `kind: 'grit'` (little forepaws scratched in the roof's
+grit), sand as pairs of swipes with `ground: 'grit'` too, and `skip` pictures `paws: 'own'` at
+table 10 (both forepaws together), `paws: 'promise'` (six piled forepaws, one friend's pair at a
+time) and Squall's one raised forepaw (`who: [{ who: 'squall' }]`, table 5, one group).
+
+### Engine and UI, as built (chapter 4)
+
+`E.VERSION = '0.4.0 (chapter 4, 2026-10-10)'`; the save stays version 2 and gains one optional
+field, `cards` (`E.migrate` adds an empty list). Each key below is checked by `E.checkStory` and
+tested on the fixture chapter 4 in `tests/fixtures/chapters.js` (`tests/engine.test.js`, "chapter
+4"). Chapters 1 to 3 play as they did: `tests/fixtures/ch03-golden.json` (recorded with 0.3.0 by
+`tests/fixtures/make-ch03-golden.js`) is every frame, picture, question, line and help of nine
+readings, compared whole.
+
+**For the story (`app/story/ch04.js`)**
+
+- **Sticky flags, `sets`**: a frame key, `sets: { foundSquall: true }`. Reaching the frame sets the
+  flags; nothing unsets them (Back replaces what a choice set, never these). A frame with a `when`
+  that doesn't show is never reached, so the noticing frame's `sets: { ch4CaughtFly: true }` is a
+  noticing cat's only. A choice option must not `sets` a key a frame sets (`E.checkStory` says so).
+- **The Case File, data**: the chapter carries `cards: { id: { mark: 'eye' | 'ear', line, picture?,
+  answers?, when?, link? } }` (`picture` is the art's key, the card's id unless it says), and a frame
+  gives cards with `card: 'id'` or a list of ids and `{ id, when }` entries. Reaching the frame gives
+  each once, like `gift` (`E.giveCard`; `cat.cards` is `[{ id, chapter, at }]`, in the order found)
+  and shows it under the panel: its picture, its mark and its line, no other words. A line one of
+  the frame's own balloons or captions already says is not lettered again (her first card: the
+  line is her balloon); an entry may also say `line: false`, or `mark: false` (the card without its
+  mark, before Tallyheart gives the rule). An entry with **`held: true`** is a card she already
+  holds, laid beside the new one for that one panel (the wing at bedtime: `card: ['cant-fly', { id:
+  'fox-flew', when: { specialty: 'noticing' }, held: true }]`, for the cat who reads "You hold it
+  beside the fox's FLEW"): it is shown under the panel when she holds it and never given there
+  (`E.frameCards` is what a frame shows, `E.frameGives` what it gives; a frame must still give
+  one, and a row of bark takes no `held`). A definition's `when` (`squall-shapes`: `{ foundSquall:
+  true }`) hides the card from her file while it doesn't match, except on the frame that gives it
+  and the pages she reads on from it (while that frame is behind her in this reading: the roof has
+  one page between the card and the flag, "Come down with me?"; Back past the frame hides it again).
+  `answers` (on an ear card: the ids of the cards that answer it) is stored for chapter 10.
+  **`link: { when: { ch4CaughtFly: true }, line: 'They can’t both be true.' }`** on the claim
+  (`fox-flew`, with `answers: ['cant-fly']`) is what draws the two touching once it matches; without
+  it they are never neighbours (`E.fileNeighbours`). Her first card sets the flag `caseFile: true`.
+- **`file: { next, prompt? }`**, the "Skritch" frame: reaching it sets `caseFileOpen` (the engine's
+  own flag: from here on her Case File's curl of bark is in the top bar on every frame of every
+  chapter, off the keypad screen of a lesson, and in the hub beside My nest, and in My nest). On
+  this frame the button glows, the instruction under the panel is "**Tap** your Case File. You can
+  open it any time." (`prompt` replaces it), a tap on the button (or on the curl shown in the
+  instruction; Space, Enter, →; the hidden "Open your Case File" button) opens the real screen, and
+  closing it goes on to `next`. After it, a frame that gives a card makes the button wiggle and glow
+  once (`E.fileWiggles`).
+- **`scratch`**, three forms, each `{ …, next, prompt?, label? }` (`prompt`: the instruction under
+  the panel, with a default; `label`: the hidden button's words):
+  `scratch: { cards: ['tidy', { id: 'dug-earth', when: { specialty: 'noticing' } }, 'scale'],
+  head: ['four-a-night'], next }` is the row of bark: the pieces of bark take the panel (on sand;
+  `ground: 'moss' | 'earth' | 'grit' | 'mud'` for another), `head` cards lie scratched at the head of
+  the row, the next blank curl glows, a tap scratches its picture in ("skritch"), letters its line
+  under it and gives the card (`E.scratchTap`), a tap anywhere else wiggles it, and the last tap
+  turns the page (`E.next` gives any card not yet scratched, so none is ever left behind). A piece
+  is scratched when she holds its card, so the row picks up where she left it. `scratch: { draws:
+  'four-a-night', next }` is her first tap: one curl, the tap scratches that card's picture (no
+  mark, no line, no card) and turns the page; the frame it turns to gives the card (`card: { id:
+  'four-a-night', mark: false }`, its line her balloon). In both, the bark takes the panel in play,
+  as a skip-count's picture does; the frame's `scene` is the storyboard's. `scratch: { tap: 'glint',
+  next }` is the glitter Tap, on the frame's own scene: a soft star pulses on the glint, a tap on it
+  makes it flare and turns the page, a tap anywhere else makes it twinkle (hidden button "Look at
+  the glitter."). The spot is where the art drew the glint: the pile's `<g data-art="glint">` (its
+  box is the target; the art's own star pulses, and the page makes it twinkle and flare), or any
+  element of class `pc-glint` or `pc-tap`; else the frame's `at: { x, y }` (percent of the panel);
+  else the scene's first `keep` area; else the middle of the ground, with a star of the page's own
+  there. The lettering keeps off it.
+- **An option's label for a cat it matches**: `labelWhen: [{ when: { foundSquall: true }, label: 'Go
+  up and see Squall again.' }]` beside the plain `label` (`E.optionLabel`; the first variant that
+  matches wins, and her choice is remembered with the label she read).
+- **Speakers**: the chapter's `names: { reynard: 'The fox', squall: 'The little dragon' }` label every
+  balloon of theirs without a `name` of its own, a lesson's lines included (the riddle, its help, its
+  fillers, its retry); balloons from "I'm Squall" and "You are at our border, Reynard" on carry
+  `name: 'Squall'` / `name: 'Reynard'`, and a balloon the page adds itself (a skip-count's counter,
+  "5!") takes the name its speaker's balloons carry on that frame (`PC.ui.speakers.nameOn`). A chapter without `names` calls them Reynard and Squall.
+  Read to me: Reynard slow and smooth (pitch 0.8, rate 0.82), Squall high and loud (1.7, 1.02).
+- **`book.dragonet`** takes `when` (`{ foundSquall: true }`): his page is there once it matches,
+  whichever chapter she finds him in; without `when`, once the chapter is finished, as Sprinkle's. It
+  may be a list.
+- **Skip-counts**: `paws: 'both'` (the bedtime tens: both forepaws together, the count trailing off
+  in her murmur, "10… 20… 30… 40… 50…"; hidden button "Tap your forepaws."); `paws: 'pile'` (the
+  promise: the count in her own balloon, 10, 20, 30!; "Count the next friend."); one group
+  (Squall's forepaw: `{ table: 5, groups: 1, who: [{ who: 'squall' }], label: 'Tap his forepaw.',
+  carry: false, next }`: one tap lights its five claws, a big 5 grows, the page turns); `prompt`
+  (an instruction under the panel: "**Tap** the cats, left to right."); `label` (the hidden
+  button's words; table 10 says "Count the next cat."); `carry: false` (the page it turns to
+  doesn't show the number reached: the roof's 5 stays on the roof). Things default to claw/claws on
+  the 10s.
+- **Counts sets**: `label: 'Both forepaws'` (the Hollow's button and the grown-ups' heading: "Both
+  forepaws · the 10s"), `hollowThings: 'tens'` (Tallyheart's word in the Hollow's five lines,
+  `E.hollowLines`, so the 5s and the 10s never read the same), `helpIntroNotTen` (on the 10s, an
+  answer that doesn't end in a zero: `res.notTen`), `ground: 'grit'`, and a picture `{ kind:
+  'grit' }` (`{ kind: 'mud', ground: 'grit' }` is read as the same). "Close" on the 10s is within
+  ten. The warm-up, the pile, tonight's rows and the riddle need no other key: `warmHard`, `avoid`,
+  `fillFrom`, `fillOrder`, `fillVoice`, `againIntro`, `helpCounter` are chapter 3's.
+- **Scene options from the cat**: `bark: 'auto'` (any set; the den) becomes her cards, in order: the
+  ones her Case File shows, each `{ picture, mark }` (`E.resolveScene`; never a count, which the art
+  could only fill from a standard order: the wing a page early, a dug-earth card she never
+  scratched). `hidden: true` is the art's (two of them under the moss, taken out of the row by their
+  pictures). A `cards` list (the hollow's row of bark on the sand, with `bark: 'row'`) is written as
+  a row of bark is, ids and `{ id, when }` entries: the entries that are hers become `{ picture,
+  mark }`, whether or not she holds the card yet (the picture is the story's: the row as she has
+  scratched it by that panel, so a second reading shows the same row). The story's own scene is
+  never changed.
+- **Finding him later**: `E.checkStory(story, stories)` accepts a Counts frame's set and a card that
+  another chapter defines (chapter 5 running the roof's frames), `E.cardDef` and `E.countsSet` find
+  them at play time, and a card remembers the chapter that gave it. Chapter 5 carries the same
+  `names` and the same `sets` on its last roof frame. The offer is a choice only some cats see, so a
+  frame with `when` may name an **`else`**: `{ when: { foundSquall: false }, else: 'f020', choice: {
+  … } }` shows the roar and the choice to a cat who has not found him, and turns straight to `f020`
+  for everyone else (without `else`, a frame that doesn't show still leads to its one `next`).
+- **Borrowing, the easiest first**: a set with `fillOrder: 'easiest'` and an `avoid` list never
+  lends one of its own questions back the other way round while another pair is left (lesson state
+  `own`: missed twice, the pile's 2 × 10 borrows 1 × 10 and 5 × 10 again, never 10 × 3). Chapter
+  3's two such sets have no `avoid`, so they borrow exactly as they did (Sprinkle's dinner, four
+  misses deep, still lends 5 × 2: `tests/engine.test.js`).
+
+**What the art is handed** (the page adds `look`)
+
+- `PC.art.countsPicture` for a lesson (`E.lessonPicture`): `{ table, groups, per, highlight, kind,
+  layout, thought, who, thing, things }`, and `ground` when the picture has one. On the 10s, `table:
+  10, per: 10` and `who` when the fact has it (4 × 10: the first four rim cats); 6 × 10 opens with
+  `highlight: 50`. The riddle: `kind: 'grit', ground: 'grit'`, table 5, seven groups, no `who`.
+- `PC.art.countsPicture` for a skip-count (`E.skipPicture`): `{ table, groups, per, highlight,
+  totals: true, next, who, thing, things }`. The rim: table 10, five groups, `who`. Squall's
+  forepaw: table 5, one group, `who: [{ who: 'squall' }]`. The bedtime tens (`paws: 'both'` in the
+  story): `paws: 'own', both: true, table: 10, taps, lit: 'both' | null, nextPaw: 'both' | null,
+  totals: false`. The promise (`paws: 'pile'` in the story): `paws: 'promise', table: 10, groups: 3,
+  taps, highlight` (10 a tap). The glow to tap is whatever carries class `pc-next` (several are
+  fine: a tap on any of them, or between them, counts).
+- `PC.art.sand` (`E.sandOpts`): `{ groups, per, counted, layout, ground, style }` as before, plus
+  `pair: true` with `style: 'swipe'` on the 10s (two swipes a group, `counted` going up by ten) and
+  `step` (= `per`) when a picture in rows is hopped a whole row at a time (the pile: after the
+  first hop, `counted: 10`, exactly the first row is lit). `ground` may be `'grit'`. Chapters 1 to
+  3's calls are the same objects as before.
+- `PC.art.card({ picture, mark, big, look })`, `{ blank: true }` and `PC.art.fileIcon()`, as above
+  (`mark: null` for a card shown without its mark).
+
+**The rest**
+
+- **The Case File's screen** (`E.caseFile`): "{name}paw’s Case File" over the page; her cards on
+  moss in two groups, "What I saw myself" and "What I was told (to check)", each in the order found,
+  three cards across; side by side from 960px wide, else one above the other with the claims first
+  (two across on a phone). A tap on a card shows it large with its line and what its mark means ("I
+  saw this myself." / "Somebody told me. A thing to check."); Read to me reads them. Linked cards
+  leave their groups and lie touching, over the link's line, between the two groups (one from each
+  side on a wide screen; between the claims and what she saw on a narrow one). Closing it returns
+  to the same frame; it changes nothing and logs nothing. Empty places are never shown.
+- **Grown-ups corner**: `foundSquall`, `ch4CaughtFly` and `caseFile` in words; her cards listed in
+  order, each with its mark in words, one her file doesn't show yet marked so.
+- **The Training Hollow** offers "Both forepaws · the 10s" (`ch04-tens`, the table's set with the
+  most facts), never the warm-up, the pile, tonight's rows or the riddle.
+- **The keypad** takes three digits (`PC.ui.keypad.press`: 10 × 10 is 100). The question line is
+  sized `14cqi`, as it is in chapters 1 to 3, and its answer slot never shrinks (`flex: none`).
+  Safari sizes a `cqi` font by the page zoom too: at 115% (the mini's Safari) the line came out 15%
+  wider than its column allowed and the last zero of "100" was cut off. So the page measures the
+  line each time it draws it, with the answer's digits in the slot (it does not change as she
+  types), and sets it smaller when, and only when, it is wider than its column (`fitQ` in the
+  lesson; again when a font loads late or the screen turns). At 100% zoom, which is what an iPad's
+  home-screen app has, "10 × 10 = 100" fits with 4px to spare each side and nothing is touched: the
+  questions of chapters 1 to 3 are the size they were. (A first fix made the line `12cqi` for
+  everyone, which shrank every live question by a seventh on a sideways iPad to cure a cut-off
+  that only a zoomed page has.)
+- **Lettering** (`PC.ui.layout`, all pure and tested in Node):
+  - a `keep` area more than four times as long as it is wide on the screen (a row of the pile) is
+    kept clear along its length, a row of small circles, not one circle as wide as the row
+    (`keepCircles`; chapters 1 to 3 have no such area, so nothing of theirs moves);
+  - a balloon's tail is charged for running across anybody else's face, and so is the neck that
+    joins a chained balloon to the one before it (`tailOverFaces`): the two lines the page draws. A
+    chained balloon (its speaker's second) draws no tail of its own, only the neck, and is not
+    charged for one: charged, the undrawn tail threw chapter 2's "Flat ears still count." across the
+    panel onto a rim cat, on a 220px tail, at every iPad size but one;
+  - a voice from outside the panel is placed as before, but the panel's last balloon, once it is
+    in the lower part (its tail leaves by the bottom edge), takes the lowest clear spot there, not
+    the highest (`last`): chapter 4's "GLINTSTAR!", and chapter 3's f045, which had a 235px tail.
+  - **Live frames these two rules move** (every frame of chapters 1 to 3, for two cats, dumped from
+    the real page in Safari, the live tree against this one, at 1180 × 820, 820 × 1180, 1024 × 768,
+    768 × 1024 and 390 × 844, and with Bigger text at 1180 × 820 and 820 × 1180; the frames that
+    moved, again at 1080 × 810 and 810 × 1080. Everything not named here is laid out exactly as it
+    is live, the lessons and their question line included). By the tail rule: chapter 2 **f099a** at
+    every iPad size (Tallyheart's "That'll be Coil. Nosy old thing." leaves the far left, where its
+    tail ran across our cat's face, for her own chest, under her chin); chapter 3 **f074** at every
+    size (Riffle's "I'm going to need a bigger mouth." comes back from the far right, its tail
+    across two faces, to his own side; at 820 × 1180 only for some cats); chapter 3 **f005** at 1024
+    × 768 and 1080 × 810 only (Murmurpaw's "In front of EVERYONE." leaves the top right, its tail
+    across our cat's face, for a place across our cat's chest); chapter 1 f038 at 1180 × 820 and
+    1080 × 810 (12px); chapter 3 f043, "Or eyelids.", only for a cat who took the bridge path (about
+    24px; not at 820 × 1180); chapter 3 f089b (6px: at 1024 × 768 for a tom, and with Bigger text at
+    1180 × 820); with Bigger text on an upright iPad, chapter 3 f008 (12px) and f093a (30px). By the
+    `last` rule: chapter 3 f045 at every iPad size, and the Training Hollow's reward page (its line
+    24px lower, on a shorter tail). On a phone (390 × 844): chapter 2 f025, chapter 3 f006a, f006b,
+    f009 and f093a (and f090c for some cats), the whisper on the page a chapter 3 lesson is picked
+    up from, and, for a tom, chapter 2 f020, whose two balloons leave the panel and stack under it.
+    Two of these put a balloon across a body to keep a tail off a face, and want Aron's eye: chapter
+    2 f099a, and chapter 3 f005 at 1024 × 768. On an iPad, chapter 2 f020, f098a and f025 are laid
+    out exactly as they are live again.
+- **A Counts frame with three balloons or more** (the riddle's "HALT!", "Friend!", "PROVE it!") does
+  not say them again over its first question (`PC.ui.speakers.lessonIntro`): she has just read
+  them, and the page ran taller than the screen. One or two are said again, as in chapters 1 to 3.
+- **One group's skip-count** (Squall's forepaw) grows its number beside the lit claws (`.skipnum.one`),
+  not at the top centre, where his face is. **The glitter Tap and the bark Taps** turn the page as a
+  skip-count's last tap does: the next page waits 1.1 s before a tap turns it. **A page of choices**
+  keeps Back under its options (not sticky). **The Case File's headings** and a large card's line
+  show the art's own marks (`PC.art.cardMark`).
+- **Tools**: `tools/storyboard.mjs` has words for the `roof` set and everything new, and prints the
+  cards, `card`, `sets`, `scratch`, `file`, `labelWhen` and the new skip and Counts keys where a
+  chapter uses them (chapters 1 to 3's storyboards are unchanged). `tools/shots.mjs` takes
+  `STORY=fixture4` (the fixture chapter 4 in the page), the targets `file` and `file#card-id` (the
+  Case File open, or a card shown large), `@tap` (one tap on the page's tap picture), and `cards`
+  in `CAT`. It reads every screenshot before keeping it (`blankPng`: the pixels, not the file's
+  size): a busy Mac sometimes hands back one flat colour (the mini's black sheets are 99.97% black),
+  and such a picture is taken again in a fresh session (`TRIES`, 3), a sheet that stays blank is
+  taken as its single pages, and a target that never paints is named `blank:` on stderr with exit
+  1, never printed as a picture. `--blank a.png …` checks PNGs already taken. `EXTRA` (more cats
+  for "Who's playing?") no longer reads the save back from `localStorage`, which the mini's
+  automation session loses between script calls: it takes the page's own save (`PC.debug.state()`)
+  and, for the reload, serves the page with `localStorage` stood in for by `sessionStorage` (the
+  page as the tool serves it only).
+
+**Staging, as built** (after the picture and real-screen reviews of 2026-10-10 and 2026-10-11)
+
+- **"A DRAGON."** (f040), the one panel where the fox leans in, is the two-shot (`border-two`) with
+  Glintstar, our cat and Tallyheart, never his close-up: `border-fox` with him leaning puts his
+  muzzle over Tallyheart's corner, and without her it left our cat alone with him. Every picture
+  with the fox and our cat has Tallyheart at `right`; our cat's face is `scared` twice, both times
+  beside her.
+- **Raised tails.** Tallyheart's `proud` lifts her tail, so she is `kind` beside our standing cat
+  (f054b), `stern` when she stands in the wide shot (f047), and turns left with Glintstar, `kind` or
+  `dreamy`, when the leader looks at our cat (f052, f053, f054a). The border's `back-4`
+  (Murmurchime) is at x 740, clear of Glintstar's tail; `dog-1` is clear of the corner post; the
+  `border-two` field has no puddle (it lay under Glintstar's chin).
+- **The row of bark on the sand** after the bark Tap is `bark: 'row'` with `cards`: the Tap's own
+  list and one blank piece (f064 to f065b), plus `fox-flew` (f066), plus `fox-moon` (f067, f068).
+- **The told path's branch** is in the first panel under the bridge only (f090): the frames after
+  it are shared by both paths, and a scene cannot vary by flag. (If the heap should stay: a
+  `branch: 'auto'` option filled from `ch3Told`, as `stone: 'auto'` is.)
+- **One speaker a panel under the bridge.** "The TRACKS? At NIGHT?" has a panel of its own (f109),
+  between our cat's "Squall saw two skinny shapes…" (f108) and "Raft first." (f110), all three for a
+  cat who found Squall. In our cat's panel Riffle's balloon had to read after hers, so it sat to her
+  right, across the picture from him and against Sprinkle's face, on a 429px tail under her chin:
+  his squeak read as Sprinkle's. Alone, it sits over his own head. The frames after it moved up one
+  (f110 to f123); chapter 4 was not live, so no saved place moved.
+- **The one who speaks twice sits on the right.** A speaker's second balloon follows her first,
+  below it or to its right. At the den (f113) Tallyheart sat on our cat's left, her head under her
+  first balloon, so her second ("If you ever have one for me, I'm right here.") landed 10 to 15px
+  from our cat's face and read as our cat's. She now sits at the doorway's far side
+  (`entrance-right`) and our cat at its near side (`entrance-left`), the dark opening between
+  them, and the two balloons stack over her at every screen size. The moon panel before it (f112)
+  has our cat stopped short of the doorway and Tallyheart a few steps behind (`{ x: 250, y: 884 }`),
+  so nobody changes sides between the two.
+- **Half the Clan** walks to the border (f033): the four who stand behind Glintstar there (the old
+  tom, the two apprentices, Murmurchime) come along the fence behind Tallyheart, our cat and
+  Glintstar, listed first in the cast so they are drawn behind.
+- **"With these very eyes."** (f045a) is `wonder`, the fox's eyes as open as they go with the smile
+  still on; `proud` all but shut them. The one panel with his eyes fully open is still the slip.
+- **The wing beside the fox's FLEW** (f115): for a noticing cat the fox's card lies beside the new
+  one under the panel (`held`, above), as her caption says.
+- **Bedtime.** She lies down in "skritch, skritch" (f114), so the stone is under her chin or by her
+  nose as the caption says, and sits up holding the last piece of bark in both forepaws (f115). On
+  the kept path's "You sniff your paws" the den draws a chin stone past her nose. Tonight's pile
+  (`PILE_NIGHT`) has this morning's dug earth behind the "scale".
+- **`situp`** stands the dewclaw up beside the toes (five claws a paw show; chapter 3's `pawup`
+  is unchanged). Sprinkle's `tailout` slopes the tail down to a cat's raised paw and gives the
+  held-out part plates that show. The promise picture's far otter paw is at `[572, 410, -50]`.
+- **The book's recap** departs from the text's proposed sentences in two places. A cat who both
+  caught the fox's "flew" and found Squall reads the text's two Squall sentences as one ("…found
+  Squall, the littlest dragonet, who told {them} about two skinny shapes…"), which keeps her page at
+  ten sentences and drops "who roars at airplanes and hiccups" and "A thing to check." for her. And
+  the catch reads "**Reynard** said the dragon flew" (the text had "he said": for a tom, two
+  different he's in one sentence); the text's notes carry the same wording now.
+- **Not changed, Aron's call:** f008's `Shhnk! Shhnk!` is the loud kind (big and gold, at our
+  cat's feet, across the panel from the claws that make it), as chapter 3's `Shhnk!` is. Lower
+  case would letter it small and pale, as the board asks, but in the same place: a sound effect
+  takes the freest of nine spots, the bottom right before the bottom left, so at 1180 × 820 it would
+  still lie at our cat's feet (296px wide, where it is 494px now), not by Tallyheart's paws. Putting
+  it by its maker needs a spot the frame can name, or the art's own small lettering by each paw.

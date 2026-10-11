@@ -62,7 +62,9 @@ function play(E, story, cat, script, stop) {
     const kind = E.kindOf(f);
     const t = (script.t = (script.t || 1000) + 1000);
     if (kind === 'end') return seen;
-    if (kind === 'next' || kind === 'skip') E.next(cat, story, t);
+    if (kind === 'next' || kind === 'skip' || kind === 'file') E.next(cat, story, t);
+    // chapter 4's bark Taps: a tap for every piece of bark (each gives its card), then the page turns
+    else if (kind === 'scratch') { for (let n = 0; n < 12 && E.scratchTap && E.scratchTap(cat, story, t); n++); E.next(cat, story, t); }
     else if (kind === 'look') E.confirmLook(cat, story, script.look || null, t);
     else if (kind === 'choice') E.choose(cat, story, (script.choices || {})[id] || 0, t);
     else if (kind === 'input') {

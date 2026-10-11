@@ -3,6 +3,10 @@
  * The comic page: title, "Who's playing?", the frames (panel, captions, balloons, sound effects,
  * and one interaction each), the Counts lesson with its keypad, the book page, the Training
  * Hollow, My nest, and the grown-ups corner. All state lives in PC.engine; this file draws it.
+ * Chapter 4 adds her Case File: its curl of bark in the top bar and the hub, the screen it opens
+ * over the page (her cards on moss, in two groups; a card shown large), the card a frame gives her
+ * shown under its panel, and three pages she taps: the row of bark she scratches (`scratch`), the
+ * glint at the pile (`scratch` with `tap`), and the first time she opens her file (`file`).
  *
  * Loads in Node without a DOM (it only exports the pure layout helpers there).
  */
@@ -50,11 +54,11 @@
     if (w > W - 2 * m || h > H - 2 * m) return null;
     var faces = o.faces || [], placed = o.placed || [], bodies = o.bodies || [];
     var head = o.head, prev = o.prev, step = o.step || 6;
-    var best = null, bestCost = Infinity;
+    var best = null, bestCost = Infinity, low = null, lowCost = Infinity;
     for (var y = m; y <= H - h - m; y += step) {
       for (var x = m; x <= W - w - m; x += step) {
         var r = { x: x, y: y, w: w, h: h };
-        var bad = false, i;
+        var bad = false, i, alt = null;
         for (i = 0; i < faces.length && !bad; i++) if (rectCircle(r, faces[i])) bad = true;
         for (i = 0; i < placed.length && !bad; i++) if (overlap(r, placed[i], 6)) bad = true;
         if (!bad && o.after) {
@@ -75,9 +79,18 @@
           var gx = Math.max(0, Math.max(nb.x - (x + w), x - (nb.x + nb.w))), gy = Math.max(0, Math.max(nb.y - (y + h), y - (nb.y + nb.h)));
           cost += (gx + gy) * 2.2 + Math.abs(cx - ncx) * 0.15;
           if (y + h / 2 < ncy - 4) cost += 80;
-          if (head) { var hx2 = head.x, hy2 = head.y; for (i = 0; i < placed.length; i++) if (placed[i] !== nb && segHitsRect(cx, y + h / 2, hx2, hy2, placed[i])) cost += 300; }
+          // the neck that joins it to the balloon before it is a line across the picture too: off every face
+          // (the neck is the only line a chained balloon draws: it has no tail of its own, so a face
+          // between it and its speaker costs nothing. Charged, that undrawn tail threw chapter 2's
+          // "Flat ears still count." across the panel, onto another cat)
+          cost += tailOverFaces(cx, y + h / 2, { x: ncx, y: ncy }, faces);
+          if (head) {
+            var hx2 = head.x, hy2 = head.y;
+            for (i = 0; i < placed.length; i++) if (placed[i] !== nb && segHitsRect(cx, y + h / 2, hx2, hy2, placed[i])) cost += 300;
+          }
         } else if (head) {
           for (i = 0; i < placed.length; i++) if (segHitsRect(cx, y + h / 2, head.x, head.y, placed[i])) cost += 400;
+          cost += tailOverFaces(cx, y + h / 2, head, faces);
           var top = head.y - head.r;
           var ideal = top - Math.max(18, H * 0.06);
           cost += Math.abs(cx - head.x) * 0.55;
@@ -90,6 +103,15 @@
           cost += y * 1.2 + (o.index === 0 ? x * 0.25 : 0);
           // an off-panel voice: its tail leaves through the top edge, so keep that path clear
           for (i = 0; i < placed.length; i++) if (segHitsRect(cx, y, cx + w * 0.2, -6, placed[i])) cost += 400;
+          // ... or, from the lower part of the panel, through the bottom edge (drawBalloon's rule). The
+          // panel's last balloon (`o.last`: nothing has to read after it) is weighed a second way there,
+          // `alt`: as LOW as it can go, by the edge its tail leaves through, its way down clear of the
+          // balloons already placed and of every face (see below, where the best spot is chosen)
+          if (o.last && y > H * 0.4) {
+            var exit = { x: clamp(x + w * 0.7, 10, W - 10), y: H + 6 };
+            alt = (H - y - h) * 1.2 + tailOverFaces(cx, y + h / 2, exit, faces);
+            for (i = 0; i < placed.length; i++) if (segHitsRect(cx, y + h, exit.x, exit.y, placed[i])) alt += 400;
+          }
         }
         if (prev) {
           if (y < prev.y - 4) cost += (prev.y - y) * 3 + 80;
@@ -97,9 +119,55 @@
         }
         for (i = 0; i < bodies.length; i++) cost += overlapArea(r, bodies[i]) * 0.012;
         if (cost < bestCost) { bestCost = cost; best = { x: x, y: y, w: w, h: h, cost: cost }; }
+        if (alt != null) {
+          // (the same reading-order and body terms, on the second weighing)
+          if (prev) {
+            if (y < prev.y - 4) alt += (prev.y - y) * 3 + 80;
+            if (y < prev.y + prev.h && y + h > prev.y && x < prev.x) alt += 60;
+          }
+          for (i = 0; i < bodies.length; i++) alt += overlapArea(r, bodies[i]) * 0.012;
+          if (alt < lowCost) { lowCost = alt; low = { x: x, y: y, w: w, h: h, cost: alt }; }
+        }
       }
     }
+    // An off-panel voice that lands in the lower part of the panel hangs its tail down to the bottom
+    // edge. Where it lands is decided as it always was (so nothing moves between the top and the
+    // bottom: chapter 3's sleepy voice from across camp stays under its captions); but once it is in
+    // the lower part, the panel's last balloon takes the lowest clear spot there, not the highest:
+    // as high as would fit, it hung a long tail down across the picture (chapter 4's "GLINTSTAR!",
+    // shouted from outside the pile, past our cat's face; chapter 3's f045, 235px of tail)
+    if (low && best && best.y > H * 0.4) best = low;
     return best;
+  }
+  /* A tail that would run across somebody else's face (or what the picture is about: a `keep` area's
+   * circle): a spot to avoid, as dear as a tail over another balloon. The tail is the line from the
+   * balloon's middle (x1, y1) to its speaker's head; a face counts as the square inside its circle
+   * (0.7 of its radius each way), and the speaker's own is passed over. Pure: tested in Node. */
+  function tailOverFaces(x1, y1, head, faces) {
+    var cost = 0;
+    for (var i = 0; i < (faces || []).length; i++) {
+      var fc = faces[i];
+      if (Math.abs(fc.x - head.x) < 2 && Math.abs(fc.y - head.y) < 2) continue;   // the speaker's own
+      if (segHitsRect(x1, y1, head.x, head.y, { x: fc.x - fc.r * 0.7, y: fc.y - fc.r * 0.7, w: fc.r * 1.4, h: fc.r * 1.4 })) cost += 500;
+    }
+    return cost;
+  }
+  /* What the picture is about (the art's `keep` areas, percent of the panel): the circles the
+   * lettering keeps off, in a W × H panel. An area up to four times as long as it is wide is one
+   * circle round it, as chapters 1 to 3 always had it (their longest is 3.1 to 1). A longer one (a
+   * row of the pile: chapter 4's back row is 14 to 1) is kept clear along its length, a row of small
+   * circles: as one circle it would be as wide as the row is long, cover half the panel, and push
+   * every caption and balloon out of the picture. Pure: tested in Node. */
+  function keepCircles(k, W, H) {
+    var kw = k.w * W / 100, kh = k.h * H / 100, lng = Math.max(kw, kh), thin = Math.min(kw, kh);
+    var n = thin > 0 && lng > thin * 4 ? Math.ceil(lng / thin) : 1, out = [];
+    // (the one circle, to the last bit as it always was: chapters 1 to 3 letter exactly as they did)
+    if (n === 1) return [{ x: (k.x + k.w / 2) * W / 100, y: (k.y + k.h / 2) * H / 100, r: Math.max(k.w * W, k.h * H) / 200 + 4, who: '', rr: 0 }];
+    for (var i = 0; i < n; i++) {
+      out.push({ x: k.x * W / 100 + (kw >= kh ? kw * (i + 0.5) / n : kw / 2), y: k.y * H / 100 + (kw >= kh ? kh / 2 : kh * (i + 0.5) / n),
+        r: thin * 0.71 + 4, who: '', rr: 0 });
+    }
+    return out;
   }
   /* A balloon tail: a wedge from inside the box to a tip just short of the speaker's face. */
   function tailGeom(box, tip, width) {
@@ -227,7 +295,8 @@
     return { box: best, size: size, clear: !bestHidden };
   }
   UI.layout = { findSpot: findSpot, tailGeom: tailGeom, rectCircle: rectCircle, overlap: overlap, segHitsRect: segHitsRect, castHeads: castHeads,
-    speakerSlot: speakerSlot, speakerRuns: speakerRuns, readsAfter: readsAfter, sfxFit: sfxFit, sfxPlace: sfxPlace };
+    speakerSlot: speakerSlot, speakerRuns: speakerRuns, readsAfter: readsAfter, sfxFit: sfxFit, sfxPlace: sfxPlace,
+    tailOverFaces: tailOverFaces, keepCircles: keepCircles };
 
   /* Keys that turn pages (Enter, Space, → and ←) get the guard taps have: held down, Enter's
    * auto-repeat would go title → hub → chapter 2 in one press, so a repeated Enter or Space is never
@@ -254,7 +323,10 @@
     grizzled: 'Grizzled old tom', snorer: 'Snoring apprentice', mutterer: 'Muttering apprentice', snorter: 'Snorting apprentice',
     clancat: 'A Clan cat', sparrow: 'Sparrow', moth: 'Moth',
     riffle: 'Riffle', otter: 'An otter', dog: 'A dog',
-    sprinkle: 'Sprinkle', murmurchime: '{Murmur}chime'
+    sprinkle: 'Sprinkle', murmurchime: '{Murmur}chime',
+    // chapter 4: the chapter that meets them labels each "The fox" and "The little dragon" (its
+    // `names`) until he is named on screen; from then on his balloons carry `name`
+    reynard: 'Reynard', squall: 'Squall'
   };
   // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
   var VARIANT_NAMES = {
@@ -262,10 +334,11 @@
     dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' }
   };
   var PITCH = { waffles: 1.45, tallyheart: 0.92, glintstar: 0.85, grizzled: 0.6, player: 1.2, snorer: 1.1, mutterer: 1.3, snorter: 1.15, clancat: 1.0, tallone: 1.0,
-    riffle: 1.5, otter: 1.05, dog: 0.9, sprinkle: 1.38, murmurchime: 1.3 };
+    riffle: 1.5, otter: 1.05, dog: 0.9, sprinkle: 1.38, murmurchime: 1.3, reynard: 0.8, squall: 1.7 };
   var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 } };
-  // Sprinkle is shy: a little slower than everyone else's 0.95
-  var RATE = { sprinkle: 0.86 };
+  // Sprinkle is shy: a little slower than everyone else's 0.95. Reynard is slow and smooth; Squall
+  // is high and loud (as loud as the voice goes), and in a hurry
+  var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02 };
   function pitchOf(who, variant) {
     var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
     return v || PITCH[who] || 1;
@@ -287,7 +360,21 @@
    * balloon whose speaker isn't in the picture, or is only eyes in the dark ("A small voice"), or
    * hides her face under her tail ("A muffled voice", "The tail"). */
   function faceHidden(s, member) { return !!s.name && (!member || member.pose === 'eyes' || member.pose === 'hide'); }
-  UI.speakers = { label: speakerLabel, pitch: pitchOf, rate: rateOf, faceHidden: faceHidden, NAMES: NAMES };
+  /* The name a speaker's balloons carry on a page (the latest of that speaker's that has one), for a
+   * balloon the page adds itself: a skip-count's counter under Squall's own "Squall" balloon is his
+   * too, not the chapter's "The little dragon". Undefined when none of them is named. */
+  function nameOn(balloons, who) {
+    var name;
+    (balloons || []).forEach(function (b) { if (b && b.who === who && b.name) name = b.name; });
+    return name;
+  }
+  /* The balloons a Counts frame says again over its first question: its own, unless the lesson is
+   * being picked up again (`skip`: resumed, or its balloons were just read over a kept skip picture),
+   * or the frame carries a whole conversation (three balloons or more: the riddle's "HALT!", "Friend!
+   * Sprinkle sent me.", "PROVE it!" over a three-line question made the page taller than the screen,
+   * and it opened scrolled; she has just read them on the frame itself). */
+  function lessonIntro(said, skip) { return skip || (said || []).length > 2 ? [] : said || []; }
+  UI.speakers = { label: speakerLabel, pitch: pitchOf, rate: rateOf, faceHidden: faceHidden, nameOn: nameOn, lessonIntro: lessonIntro, NAMES: NAMES };
   /* The grown-ups corner's words for the story's flags (every flag a chapter sets has words here;
    * filled with the cat's tokens, so a tom reads "his"). */
   var FLAG_WORDS = {
@@ -301,9 +388,37 @@
     ch2Path: { bridge: 'peeked under the Old Bridge, against the rule (chapter 3 remembers)', river: 'stayed by the river with Riffle and heard the tower roar (chapters 3 and 4 remember)' },
     ch2Stone: { nose: 'put Riffle’s stone by {their} nose (chapter 3 remembers)', chin: 'put Riffle’s stone under {their} chin (chapter 3 remembers)' },
     // chapter 3
-    ch3Told: { 'true': 'told Tallyheart about Sprinkle, and Tallyheart helped hide her (later chapters remember)', 'false': 'kept Sprinkle’s secret: only Riffle knows too (later chapters remember)' }
+    ch3Told: { 'true': 'told Tallyheart about Sprinkle, and Tallyheart helped hide her (later chapters remember)', 'false': 'kept Sprinkle’s secret: only Riffle knows too (later chapters remember)' },
+    // chapter 4: two flags set by reaching a frame, never by a choice, and never unset
+    foundSquall: { 'true': 'found Squall on the tower roof (later chapters remember)' },
+    ch4CaughtFly: { 'true': 'caught the fox’s “flew”: Sprinkle can’t fly (later chapters remember)' },
+    caseFile: { 'true': 'started a Case File' }
   };
   UI.flagWords = FLAG_WORDS;
+  // flags the engine keeps for itself: never listed among "what the choices say"
+  var QUIET_FLAGS = { looked: 1, caseFileOpen: 1 };
+  UI.quietFlags = QUIET_FLAGS;
+
+  /* The keypad (pure: tested in Node): what is typed after a key. Up to three digits (10 × 10 is
+   * 100); a lone 0 gives way to the next digit; Delete takes the last one. OK is the caller's. */
+  function keypadPress(typed, k) {
+    typed = String(typed == null ? '' : typed);
+    if (k === 'del') return typed.slice(0, -1);
+    if (!/^[0-9]$/.test(String(k))) return typed;
+    if (typed.length < 3) return (typed === '0' ? '' : typed) + k;
+    return typed;
+  }
+  UI.keypad = { press: keypadPress, MAX: 3 };
+
+  /* The glitter Tap (pure: tested in Node): whether a tap at (x, y) in a W × H panel lands on the
+   * spot (`spot`: percent of the panel). A generous reach, for a small finger: 11% of the panel's
+   * width, never less than 48px, and as wide as the art's own target when it draws one. */
+  function tapHit(W, H, spot, x, y, artReach) {
+    // (`artReach`: the art's own target around its glint, in percent of the width, when it is wider)
+    var dx = x - W * spot.x / 100, dy = y - H * spot.y / 100, reach = Math.max(48, W * 0.11, W * (artReach > 0 ? artReach : 0) / 100);
+    return dx * dx + dy * dy <= reach * reach;
+  }
+  UI.taps = { hit: tapHit };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
   var doc = root.document;
@@ -318,6 +433,12 @@
   var renderedAt = 0;
   var lastLayout = null;
   var reduceMotion = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // chapter 4: a lesson's keypad screen is up (the Case File's button is left off it, as Back is);
+  // the Case File open over the page; and, on the `file` frame, what the top bar's button does
+  var inLesson = false;
+  var fileState = null;
+  var fileTeach = null;
+  var frameTap = null;
 
   function $(id) { return doc.getElementById(id); }
   function esc(s) {
@@ -339,8 +460,6 @@
   var NUMW = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   function numWord(n) { return NUMW[n] || String(n); }
   function cap1(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
-  // "tails and ears", "tails, ears and claws"
-  function andList(a) { return a.length > 2 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join(' and '); }
 
   /* ---------------------------------------------------------------- art adapters */
   function artRender(scene, look) {
@@ -362,6 +481,24 @@
     try { if (PC.art && typeof PC.art[name] === 'function') { var r = PC.art[name](arg); if (r && typeof r === 'object' && r.svg) r = r.svg; if (typeof r === 'string') return r; } }
     catch (e) { if (root.console) console.warn('PC.art.' + name + ' failed', e); }
     return null;
+  }
+  /* A Case File card (PC.art.card): a curl of bark flattened to a paw's size, its picture scratched
+   * in, its mark in a corner. `o.blank`: a blank curl; `o.mark === false`: no mark yet; `o.big`: the
+   * card shown large. A plain curl stands in when the art has none. */
+  function cardSvg(c, o) {
+    o = o || {};
+    var arg = o.blank || !c ? { blank: true } : { picture: c.picture, mark: o.mark === false ? null : c.mark, big: !!o.big, look: cat && cat.look };
+    return artCall('card', arg) || cardFallback(arg);
+  }
+  function cardFallback(a) {
+    var mark = a.mark === 'ear' ? '<path d="M150 204 L163 178 L176 204 Z M163 192 L163 204" fill="none" stroke="#3b2c1c" stroke-width="3" stroke-linejoin="round"/>'
+      : a.mark === 'eye' ? '<path d="M146 194 Q163 178 180 194 Q163 210 146 194 Z" fill="none" stroke="#3b2c1c" stroke-width="3"/><path d="M163 186 V202" stroke="#3b2c1c" stroke-width="3" stroke-linecap="round"/>' : '';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240"><path d="M22 20 Q100 6 178 22 Q190 120 180 222 Q100 234 20 220 Q8 120 22 20 Z" fill="#e9dcc0" stroke="#8a7350" stroke-width="4" stroke-linejoin="round"/>' +
+      (a.blank ? '' : '<path d="M52 96 q24 -22 48 0 t48 0 M52 132 q24 -22 48 0 t48 0" fill="none" stroke="#3b2c1c" stroke-width="3.5" stroke-linecap="round"/>') + mark + '</svg>';
+  }
+  /* The curl of bark that stands for her Case File (the top bar, the hub): PC.art.fileIcon, or ours. */
+  function fileIcon() {
+    return artCall('fileIcon') || ICON.file;
   }
   /* A cat's portrait. PC.art.cat({look, pose, mood}) returns { svg: '<g>…', w, h, head } (a
    * group in a 0..w × 0..h box); a full <svg> string is accepted too. `bust` crops to the head. */
@@ -505,6 +642,8 @@
     if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { if (relayoutFn) relayoutFn(); });
     if (doc.fonts && doc.fonts.addEventListener) doc.fonts.addEventListener('loadingdone', function () { if (relayoutFn) relayoutFn(); });
     doc.addEventListener('keydown', function (e) {
+      // her Case File is open over the page: its own keys only (Escape: back to her cards, then closed)
+      if (fileState) { fileKey(e); return; }
       if (!keyHandler) return;
       // a held-down Enter, or a page key on a screen just drawn, is not a new press (UI.keys)
       if (!keyFresh(e, renderedAt, now())) { if (PAGE_KEYS[e.key] && !isTyping(e)) e.preventDefault(); return; }
@@ -531,11 +670,17 @@
       reset: function () { if (store) store.clear(); save = E.newSave(); cat = null; syncStory(); go('title'); return 'reset'; },
       check: function () {
         var out = {};
-        E.chapters(stories()).forEach(function (s) { out[s.id] = E.checkStory(s); });
+        E.chapters(stories()).forEach(function (s) { out[s.id] = E.checkStory(s, stories()); });
         return out;
       },
       layout: function () { return lastLayout; },
-      go: go
+      go: go,
+      /* Chapter 4, for tools/shots.mjs: her Case File open over the page (a card's id: that card
+       * shown large), closed again, and one tap on the page's tap picture (a skip-count, the row of
+       * bark, the glint). */
+      file: function (cardId) { if (!cat) return 'no cat'; openFile({ card: cardId || null, quiet: true }); return fileState ? true : 'not open'; },
+      closeFile: function () { closeFile(true); return true; },
+      tap: function () { if (typeof frameTap !== 'function') return 'nothing to tap here'; frameTap(); return true; }
     };
     go('title');
   }
@@ -558,6 +703,20 @@
     $('backBtn').addEventListener('click', onBack);
     $('catsBtn').addEventListener('click', function () { go('who'); });
     $('campBtn').addEventListener('click', function () { if (cat) { persist(); go('hub'); } });
+    // her Case File: its curl of bark (the art's, when it has one) opens it over the page; on the
+    // `file` frame, where she is shown how, closing it goes on with the story (fileTeach)
+    var fb = $('fileBtn');
+    if (fb) {
+      var ic = artCall('fileIcon');
+      if (ic) fb.innerHTML = ic;
+      fb.addEventListener('click', function () { if (!cat || !E.hasFile(cat)) return; if (fileTeach) fileTeach(); else openFile(); });
+    }
+    var fo = $('file');
+    if (fo) {
+      // the second tap of a double tap never lands on a card or on Close
+      fo.addEventListener('click', function (e) { if (fileState && now() - fileState.at < UI_GUARD_MS) { e.stopPropagation(); e.preventDefault(); } }, true);
+      fo.addEventListener('click', function (e) { if (e.target === fo) closeFile(); });
+    }
     $('textBtn').addEventListener('click', function () {
       save.settings.bigText = !save.settings.bigText; applySettings(); persist();
       if (relayoutFn) relayoutFn();
@@ -573,7 +732,9 @@
   function go(name, opts) {
     opts = opts || {};
     clearTimers(); stopSpeech();
+    if (fileState) closeFile(true);
     relayoutFn = null; keyHandler = null; currentSpeech = [];
+    inLesson = false; fileTeach = null; frameTap = null;
     view = { name: name, opts: opts };
     var scr = $('screen');
     scr.classList.remove('enter', 'enter-back');
@@ -596,6 +757,16 @@
     // Camp, partway through a chapter (once there is a camp: a chapter finished). Her place stays:
     // the hub's big button picks it up, a lesson in progress too
     $('campBtn').hidden = !(n === 'frame' && cat && E.hasFinished(cat));
+    // her Case File, on every frame of every chapter once she has it (from the `file` frame on);
+    // left off a lesson's keypad screen, as Back is. On the `file` frame itself it glows
+    var fb = $('fileBtn');
+    if (fb) {
+      var hasFile = n === 'frame' && !!cat && E.hasFile(cat) && !inLesson;
+      fb.hidden = !hasFile;
+      $('bar').classList.toggle('has-file', hasFile);
+      fb.classList.toggle('glow', hasFile && !!story && E.kindOf(E.currentFrame(cat, story)) === 'file');
+      if (!hasFile) fb.classList.remove('got', 'nudge');
+    }
     var t = '';
     if (n === 'title') t = '';
     else if (n === 'who') t = 'Potomac Crossing';
@@ -755,6 +926,8 @@
     var f = story.frames[id];
     var kind = E.kindOf(f);
     if (kind === 'skip') return renderSkip(f, id);
+    // the bark Taps (a row of bark, or the one curl): the pieces of bark take the panel
+    if (kind === 'scratch' && !f.scratch.tap) return renderScratch(f, id);
     var scr = $('screen');
     scr.innerHTML = frameShell(kind, id);
     var panel = $('panel');
@@ -781,10 +954,21 @@
     // a skip-count that keeps its totals (`keep`): its counting picture, every group lit and the
     // running totals under them, stays up on the pages after it, to the lesson that follows
     if (kept) { ctx.keepCaptions = true; ctx.forceStack = true; }
+    // the glitter Tap: where the glint is in the picture, and the lettering keeps off it
+    if (kind === 'scratch') {
+      ctx.tap = tapSpot(panel, heads, f.scratch);
+      heads.keep.push({ x: ctx.tap.x - 7, y: ctx.tap.y - 9, w: 14, h: 18 });
+    }
     // When everything fits in the panel, the panel gets the whole page (landscape especially):
     // try that first, and fall back to the two-column spread when text has to sit beside it.
     var frameEl = scr.querySelector('.frame');
-    var soloOk = kind === 'next' || kind === 'counts';
+    var soloOk = kind === 'next' || kind === 'counts' || kind === 'scratch' || kind === 'file';
+    // a frame that gives her a card shows it under the panel: the panel leaves it room (on a screen
+    // too short for both, the card sits in the column beside the panel)
+    if (f.card != null && E.cardsOn(f, cat, story, stories()).length) {
+      frameEl.classList.add('has-card');
+      if ((root.innerHeight || 800) < 640) soloOk = false;
+    }
     relayoutFn = function () {
       if (soloOk) {
         frameEl.classList.add('solo');
@@ -818,9 +1002,8 @@
     }).filter(function (c) { return c.x > -c.r && c.x < W + c.r && c.y > -c.r && c.y < H + c.r; });
     var bodies = faceList.map(function (c) { return { x: c.x - c.rr * 1.7, y: c.y + c.rr * 0.5, w: c.rr * 3.4, h: c.rr * 4 }; });
     // what the picture is about (the claw marks): captions, balloons and sound effects avoid it like a face
-    (heads.keep || []).forEach(function (k) {
-      faceList.push({ x: (k.x + k.w / 2) * W / 100, y: (k.y + k.h / 2) * H / 100, r: Math.max(k.w * W, k.h * H) / 200 + 4, who: '', rr: 0 });
-    });
+    // (a long band, a row of the pile, is kept clear along its length: keepCircles)
+    (heads.keep || []).forEach(function (k) { faceList = faceList.concat(keepCircles(k, W, H)); });
     var placed = [];
     var svgParts = { under: [], back: [], over: [], front: [] };
     var layout = { W: W, H: H, captions: 'column', balloons: 'none', sfx: null };
@@ -927,12 +1110,14 @@
       // reading order: each balloon goes below the one before it, or to its right; only when that is
       // impossible (a crowded panel) is it allowed elsewhere, and then only for a different speaker
       var capFirst = bi === 0 && layout.captions === 'panel' && placed.length ? capBox : null;
-      var spot = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, near: link ? link.box : null, after: prevSpot ? prevSpot.box : null, afterCap: capFirst, prev: prevSpot ? prevSpot.box : null, index: bi, margin: 8 });
-      if (!spot && capFirst) spot = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, index: bi, margin: 8 });
+      // (`last`: the panel's last balloon, with nothing to read after it: an off-panel voice may sit by the bottom edge)
+      var lastB = bi === bs.length - 1;
+      var spot = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, near: link ? link.box : null, after: prevSpot ? prevSpot.box : null, afterCap: capFirst, prev: prevSpot ? prevSpot.box : null, index: bi, last: lastB, margin: 8 });
+      if (!spot && capFirst) spot = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, index: bi, last: lastB, margin: 8 });
       if (!spot && prevSpot && !link) {
         // a crowded panel: anywhere free will do, as long as it still reads after the balloon before
         // it (at or below it, or to its right); otherwise the balloons stack under the panel, in order
-        var fb = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, prev: prevSpot.box, index: bi, margin: 8 });
+        var fb = findSpot({ W: W, H: H, w: bw, h: bhR, faces: faceList, bodies: bodies, placed: placed, head: hd, prev: prevSpot.box, index: bi, last: lastB, margin: 8 });
         if (fb && readsAfter({ x: fb.x, y: fb.y, w: bw, h: bhR }, prevSpot.box)) spot = fb;
       }
       var box = null;
@@ -1138,6 +1323,37 @@
       box.insertAdjacentHTML('afterbegin', '<p class="giftnote" role="status">' + treasureSvg(g.id) + '<span><b>' + esc(giftShort(g)) + '</b> is in your nest.</span></p>');
       if (ctx.reading) ctx.reading.push({ text: giftShort(g) + ' is in your nest.' });
     }
+    cardNote(f, id, box, ctx.reading);
+  }
+  /* A frame that gives her a card shows the card itself under the panel: its picture, its mark and
+   * its line, and no other words (a line the frame's own balloon already says is lettered once: the
+   * card is its picture alone). Once her Case File's button is there, it wiggles and glows as the
+   * card appears, so each new card is seen to go into the file she can open. A card she already
+   * holds may lie beside the new one (the story's `held: true`: the wing beside the fox's FLEW). */
+  function cardNote(f, id, box, reading, quiet) {
+    if (f.card == null) return;
+    var got = E.cardsOn(f, cat, story, stories());
+    if (!got.length) return;
+    box.insertAdjacentHTML('afterbegin', '<div class="cardnote" role="status">' + got.map(function (c) {
+      var line = fill(c.line);
+      return '<div class="cn-card' + (c.held ? ' held' : '') + (reduceMotion ? '' : ' pop') + '" role="img" aria-label="' + esc((c.held ? 'Beside it, from your Case File: ' : 'A new card for your Case File: ') + plain(line)) + '">' +
+        '<span class="cn-pic" aria-hidden="true">' + cardSvg(c, { mark: c.showMark }) + '</span>' +
+        (c.showLine ? '<span class="cn-line" aria-hidden="true">' + rich(line) + '</span>' : '') + '</div>';
+    }).join('') + '</div>');
+    got.forEach(function (c) { if (c.showLine && reading) reading.push({ text: fill(c.line) }); });
+    if (!quiet && E.fileWiggles(cat, story, id)) fileGot();
+  }
+  /* The Case File's button, once: a wiggle and a glow (a card just went in), or a nudge (she tapped
+   * somewhere else on the page that asks her to tap it). */
+  var fileGotTimer = null;
+  function fileGot(cls) {
+    var b = $('fileBtn');
+    if (!b) return;
+    cls = cls || 'got';
+    // (the button may still be hidden while the page is drawn: the wiggle starts as it appears)
+    b.classList.remove('got', 'nudge'); void b.offsetWidth; b.classList.add(cls);
+    clearTimeout(fileGotTimer);
+    fileGotTimer = setTimeout(function () { b.classList.remove('got', 'nudge'); }, reduceMotion ? 1700 : 1300);
   }
   /* "Riffle’s lucky stone" from "Riffle’s lucky stone: dark and smooth, …" */
   function giftShort(g) { return String(g.name || g.id).split(':')[0]; }
@@ -1170,7 +1386,7 @@
       var prompt = f.choice.prompt ? '<p class="prompt">' + rich(fill(f.choice.prompt)) + '</p>' : '';
       var was = E.chosen(cat, story, id), picked = was ? was.index : -1;
       box.innerHTML = prompt + '<div class="choices" role="group">' + opts.map(function (o, n) {
-        return '<button class="choice" type="button" data-i="' + o.index + '" data-n="' + (n + 1) + '"' + (o.index === picked ? ' aria-current="true"' : '') + '>' + rich(fill(o.option.label)) + '</button>';
+        return '<button class="choice" type="button" data-i="' + o.index + '" data-n="' + (n + 1) + '"' + (o.index === picked ? ' aria-current="true"' : '') + '>' + rich(fill(E.optionLabel(o.option, cat))) + '</button>';
       }).join('') + '</div><div class="next-row">' + backBottom() + '</div>';
       wireBackBottom();
       Array.prototype.forEach.call(box.querySelectorAll('.choice'), function (b) {
@@ -1186,9 +1402,11 @@
         else if (e.key === 'ArrowLeft') onBack();
       };
       if (prompt) ctx.reading.push({ text: fill(f.choice.prompt) });
-      opts.forEach(function (o) { ctx.reading.push({ text: fill(o.option.label) }); });
+      opts.forEach(function (o) { ctx.reading.push({ text: fill(E.optionLabel(o.option, cat)) }); });
       return;
     }
+    if (kind === 'file') return renderFileFrame(f, id, ctx, box, panel);
+    if (kind === 'scratch') return renderGlint(f, id, ctx, box, panel);
     if (kind === 'input') return renderInput(f, id, box);
     if (kind === 'look') return renderLook(f, id, box, ctx);
     if (kind === 'counts') {
@@ -1213,7 +1431,9 @@
    * line and no penalty, and nothing is logged. The last tap turns the page to `next`, which shows
    * the number she reached (renderFrame); a skip with a `done` line shows it instead, then Next.
    * Space, Enter or → counts the next cat too, and a hidden "Count the next cat" button does for
-   * VoiceOver. */
+   * VoiceOver. Chapter 4: both forepaws together (`paws: 'both'`), the pile of six (`paws: 'pile'`),
+   * one group (Squall's forepaw), and an instruction under the panel (`prompt`); what is drawn and
+   * said comes from the engine (E.skipPicture, E.skipWords). */
   function renderSkip(f, id) {
     var sk = f.skip, taps = 0, turning = false;
     var scr = $('screen');
@@ -1222,33 +1442,37 @@
     panel.classList.add('lesson-panel', 'tappable');
     var caps = captionsOf(f), intro = balloonsOf(f);
     // `paws: 'own'` (the bedtime hop): her own two forepaws, the glow taking turns; the number is
-    // in her own murmur unless the frame names a teacher
-    var own = sk.paws === 'own';
-    var teacher = sk.teacher || (own ? 'player' : (intro[0] && intro[0].who) || 'tallyheart');
-    var DEF_THINGS = { 2: ['ear', 'ears'], 5: ['claw', 'claws'] }[sk.table] || ['thing', 'things'];
-    var thing = sk.thing || DEF_THINGS[0], things = sk.things || DEF_THINGS[1];
-    var v0 = E.skipView(sk, 0);
-    panel.setAttribute('aria-label', own ? 'Your two forepaws on the moss. Touch the glowing one.'
-      : 'Counting picture: ' + numWord(v0.groups) + ' groups of ' + numWord(v0.table) + '. Touch the glowing one.');
+    // in her own murmur unless the frame names a teacher. The words are the engine's (E.skipWords):
+    // who keeps the count, whether it is murmured, the hidden button's and the panel's labels
+    var words = E.skipWords(sk, intro[0] && intro[0].who);
+    var own = words.whisper, teacher = words.teacher, noted = false;
+    // the count's name tag is the frame's own for that speaker ("Squall", once he has said his name)
+    var tname = nameOn(intro, teacher);
+    var hint = words.prompt ? fill(words.prompt) : '';
+    panel.setAttribute('aria-label', words.aria);
     $('colTop').innerHTML = caps.map(function (c) { return '<p class="caption">' + rich(c) + '</p>'; }).join('');
     function draw(fresh) {
       var v = E.skipView(sk, taps);
-      var po = { table: v.table, groups: v.groups, per: v.per, highlight: v.highlight, totals: true, next: !v.done, who: sk.who, thing: thing, things: things, look: cat && cat.look };
       // her own paws: each tap lights that paw's five claws again (v.lit), the other one glows next (v.nextPaw)
-      if (own) { po.paws = 'own'; po.taps = v.taps; po.lit = v.lit; po.nextPaw = v.nextPaw; po.totals = false; }
+      var po = E.skipPicture(sk, taps);
+      po.look = cat && cat.look;
       art.innerHTML = artCall('countsPicture', po) || countsFallback(v.groups, v.per, v.highlight);
       hopGroup();
-      ov.innerHTML = v.total ? '<div class="skipnum' + (fresh && !reduceMotion ? ' pop' : '') + '" aria-hidden="true">' + v.total + '</div>' : '';
+      // (one group, Squall's forepaw: the big number beside the lit claws, not at the top centre, where his face is)
+      ov.innerHTML = v.total ? '<div class="skipnum' + (v.groups === 1 ? ' one' : '') + (fresh && !reduceMotion ? ' pop' : '') + '" aria-hidden="true">' + v.total + '</div>' : '';
       var lines = intro.slice();
-      if (v.taps) lines.push(own ? { who: teacher, kind: 'whisper', html: '<span class="counter">' + esc(v.count) + '</span>' }
-        : { who: teacher, html: '<span class="counter">' + esc(v.count) + '</span>' });
-      if (v.done && sk.done) lines.push({ who: teacher, text: fill(sk.done) });
+      if (v.taps) lines.push(own ? { who: teacher, name: tname, kind: 'whisper', html: '<span class="counter">' + esc(v.count) + '</span>' }
+        : { who: teacher, name: tname, html: '<span class="counter">' + esc(v.count) + '</span>' });
+      if (v.done && sk.done) lines.push({ who: teacher, name: tname, text: fill(sk.done) });
       $('stack').innerHTML = lines.map(function (b) { return stackBalloon(b); }).join('');
       // the bottom row: Back (and Next, only after a done line); counting is done on the cats
       var showNext = v.done && !!sk.done;
-      $('interact').innerHTML = '<div class="next-row">' + backBottom() +
+      $('interact').innerHTML = (hint && !v.done ? '<p class="prompt tapline">' + rich(hint) + '</p>' : '') + '<div class="next-row">' + backBottom() +
         (showNext ? '<button class="btn go big" id="nextBtn" type="button">Next <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
-          : (v.done ? '' : '<button class="sr" id="countBtn" type="button">' + esc(own ? 'Tap your next forepaw.' : 'Count the next ' + (sk.table === 2 ? 'cat' : sk.table === 5 ? 'paw' : 'one')) + '</button>')) + '</div>';
+          : (v.done ? '' : '<button class="sr" id="countBtn" type="button">' + esc(words.label) + '</button>')) + '</div>';
+      // a card this frame gives her is shown here too, under the picture (the button wiggles once)
+      cardNote(f, id, $('interact'), null, noted);
+      noted = true;
       wireBackBottom();
       if ($('nextBtn')) $('nextBtn').addEventListener('click', advance);
       if ($('countBtn')) $('countBtn').addEventListener('click', function () { tap(); var b = $('countBtn'); if (b) b.focus({ preventScroll: true }); });
@@ -1275,8 +1499,14 @@
       if (!nx || !nx.getBoundingClientRect) return true;   // a picture with nothing to aim at: any tap counts
       var r = nx.getBoundingClientRect(), pr = panel.getBoundingClientRect();
       if (!r.width) return true;
+      // both forepaws glowing together (chapter 4) may be two glows: either one, and between them
+      var left = r.left, right = r.right;
+      Array.prototype.forEach.call(art.querySelectorAll('.pc-next'), function (g) {
+        var q = g.getBoundingClientRect();
+        if (q.width) { left = Math.min(left, q.left); right = Math.max(right, q.right); }
+      });
       var mx = r.width * 0.22;
-      return e.clientX >= r.left - mx && e.clientX <= r.right + mx && e.clientY >= pr.top && e.clientY <= pr.bottom;
+      return e.clientX >= left - mx && e.clientX <= right + mx && e.clientY >= pr.top && e.clientY <= pr.bottom;
     }
     function wiggle() {
       var g = hopGroup();
@@ -1310,6 +1540,7 @@
     });
     relayoutFn = function () { draw(false); };
     draw(false);
+    frameTap = tap;
     keyHandler = function (e) {
       if (isTyping(e)) return;
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
@@ -1318,17 +1549,16 @@
         if (E.skipView(sk, taps).done) { if (sk.done) advance(); } else tap();
       } else if (e.key === 'ArrowLeft') { e.preventDefault(); onBack(); }
     };
-    currentSpeech = caps.map(function (c) { return { text: c }; }).concat(intro.map(function (b) { return { text: b.text, who: b.who, variant: b.variant }; }));
+    currentSpeech = caps.map(function (c) { return { text: c }; }).concat(intro.map(function (b) { return { text: b.text, who: b.who, variant: b.variant }; }))
+      .concat(hint ? [{ text: hint }] : []);
     persist();
   }
   /* A page after a skip-count that keeps its totals: the count's picture, every group lit, the
    * running totals (5, 10, 15, 20, 25) under the groups. No faces to point balloons at. */
   function drawKept(panel, sk) {
     var v = E.skipView(sk, sk.groups);
-    var DEF_THINGS = { 2: ['ear', 'ears'], 5: ['claw', 'claws'] }[v.table] || ['thing', 'things'];
-    var po = { table: v.table, groups: v.groups, per: v.per, highlight: v.highlight, totals: true, next: false, who: sk.who,
-      thing: sk.thing || DEF_THINGS[0], things: sk.things || DEF_THINGS[1], look: cat && cat.look };
-    if (sk.paws === 'own') { po.paws = 'own'; po.taps = v.taps; po.lit = v.lit; po.nextPaw = null; po.totals = false; }
+    var po = E.keptPicture(sk);
+    po.look = cat && cat.look;
     panel.querySelector('.art').innerHTML = artCall('countsPicture', po) || countsFallback(v.groups, v.per, v.highlight);
     var hs = [];
     hs.keep = [];
@@ -1338,6 +1568,311 @@
     var t = e.target; if (!t) return false;
     var tag = (t.tagName || '').toLowerCase();
     return tag === 'input' || tag === 'textarea' || t.isContentEditable || e.metaKey || e.ctrlKey || e.altKey;
+  }
+
+  /* ================================================================ chapter 4: the pages she taps, and her Case File
+   * Three pages with something to tap and nothing to get wrong, each with a hidden button for
+   * VoiceOver, and Space, Enter and → doing what a tap does:
+   *   the bark Taps   `scratch: { cards | draws }` (renderScratch): blank curls of bark in a row, the
+   *                   next one glowing; a tap scratches its picture in (a small "skritch"), letters
+   *                   its line under it and gives her the card; the last tap turns the page;
+   *   the glint       `scratch: { tap: 'glint' }` (renderGlint): the scene's glint pulses; a tap on it
+   *                   makes it flare and turns the page; a tap anywhere else makes it twinkle;
+   *   her Case File   `file` (renderFileFrame): its curl of bark appears in the top bar, glowing; a
+   *                   tap on it opens the real screen, and closing it goes on with the story.
+   * The Case File itself (openFile) lies over the page: closing it returns to the same frame; it
+   * changes nothing and logs nothing. */
+  var SPARK = '<svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ts-halo" cx="50" cy="50" r="40"/>' +
+    '<path class="ts-star" d="M50 6 L58 42 L94 50 L58 58 L50 94 L42 58 L6 50 L42 42 Z"/><circle class="ts-core" cx="50" cy="50" r="7"/></svg>';
+  /* Where the glint is, in percent of the panel: where the art drew it (the pile's own star of light,
+   * `<g data-art="glint">`, whose box is a generous target; or any element of class pc-glint or
+   * pc-tap), which then pulses, twinkles and flares itself (`el`); else the frame's own `at`; else
+   * what the art says the picture is about (its first `keep` area); else the middle of the ground. */
+  function tapSpot(panel, heads, sc) {
+    var art = panel.querySelector('.art'), el = art && art.querySelector('[data-art="glint"], .pc-glint, .pc-tap');
+    if (el && el.getBoundingClientRect) {
+      var r = el.getBoundingClientRect(), pr = panel.getBoundingClientRect();
+      if (r.width && pr.width) {
+        return { x: clamp((r.left + r.width / 2 - pr.left) / pr.width * 100, 4, 96), y: clamp((r.top + r.height / 2 - pr.top) / pr.height * 100, 6, 94),
+          el: el, reach: r.width / 2 / pr.width * 100 };
+      }
+    }
+    if (sc && sc.at && typeof sc.at.x === 'number' && typeof sc.at.y === 'number') return { x: sc.at.x, y: sc.at.y };
+    var k = heads && heads.keep && heads.keep[0];
+    if (k) return { x: k.x + k.w / 2, y: k.y + k.h / 2 };
+    return { x: 50, y: 58 };
+  }
+  function renderGlint(f, id, ctx, box, panel) {
+    var sc = f.scratch, tw = E.tapWords(f), turning = false, spot = ctx.tap || { x: 50, y: 58 };
+    var hint = tw.prompt ? fill(tw.prompt) : '';
+    // the instruction sits in the bottom row, where Next would be: the page stays one panel tall
+    box.innerHTML = '<div class="next-row">' + backBottom() + (hint ? '<p class="prompt tapline">' + rich(hint) + '</p>' : '') +
+      '<button class="sr" id="tapBtn" type="button">' + esc(tw.label) + '</button></div>';
+    wireBackBottom();
+    // the art's own glint, when it drew one (it pulses already); else a star of ours on the spot
+    var el = spot.el || null;
+    if (!el) {
+      el = doc.createElement('div');
+      el.className = 'tapspot' + (sc.tap === 'glint' ? ' glint' : '');
+      el.style.left = f1(spot.x) + '%'; el.style.top = f1(spot.y) + '%';
+      el.innerHTML = SPARK;
+      panel.appendChild(el);
+    }
+    panel.classList.add('tappable');
+    function flare() {
+      if (turning || now() - renderedAt < 280) return;
+      turning = true;
+      el.classList.remove('twinkle'); el.classList.add('flare');
+      // (she is still tapping: the next page waits a moment before a tap turns it, as after a skip-count)
+      later(function () { if (E.next(cat, story, now())) { persist(); go('frame', { fromSkip: true }); } }, reduceMotion ? 380 : 700);
+    }
+    function twinkle() {
+      if (turning) return;
+      el.classList.remove('twinkle'); void el.getBoundingClientRect().width; el.classList.add('twinkle');
+    }
+    // after a twinkle the glint goes back to its soft pulse
+    el.addEventListener('animationend', function () { if (!turning) el.classList.remove('twinkle'); });
+    panel.addEventListener('click', function (e) {
+      var pr = panel.getBoundingClientRect();
+      // a click from the keyboard or VoiceOver has no place to aim
+      if (!e || e.detail === 0 || !pr.width || tapHit(pr.width, pr.height, spot, e.clientX - pr.left, e.clientY - pr.top, spot.reach)) flare(); else twinkle();
+    });
+    $('tapBtn').addEventListener('click', flare);
+    frameTap = flare;
+    keyHandler = function (e) {
+      if (isTyping(e)) return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        if (e.target && e.target.id === 'tapBtn') return;   // the button does it on its own click
+        e.preventDefault(); flare();
+      } else if (e.key === 'ArrowLeft') { e.preventDefault(); onBack(); }
+    };
+    if (hint) ctx.reading.push({ text: hint });
+  }
+
+  /* The `file` frame, chapter 4's "Skritch": her Case File's curl of bark has appeared in the top
+   * bar, glowing (updateBar). The instruction under the panel says to tap it, and that she can open
+   * it any time; the tap opens the real screen, and closing it turns the page. A tap anywhere else
+   * nudges the curl. */
+  function renderFileFrame(f, id, ctx, box, panel) {
+    var tw = E.tapWords(f), hint = tw.prompt ? fill(tw.prompt) : '';
+    var openIt = function () {
+      if (now() - renderedAt < 280 || fileState) return;
+      openFile({ onClose: function () { if (E.next(cat, story, now())) { persist(); go('frame'); } } });
+    };
+    box.innerHTML = '<div class="next-row">' + backBottom() +
+      (hint ? '<p class="prompt tapline">' + rich(hint) + ' <button class="tapicon" id="tapFile" type="button" tabindex="-1" aria-hidden="true">' + fileIcon() + '</button></p>' : '') +
+      '<button class="sr" id="openFile" type="button">' + esc(tw.label) + '</button></div>';
+    wireBackBottom();
+    $('openFile').addEventListener('click', openIt);
+    if ($('tapFile')) $('tapFile').addEventListener('click', openIt);
+    fileTeach = openIt; frameTap = openIt;
+    panel.classList.add('tappable');
+    panel.addEventListener('click', function () { fileGot('nudge'); });
+    keyHandler = function (e) {
+      if (isTyping(e)) return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        if (e.target && (e.target.id === 'openFile' || e.target.id === 'fileBtn')) return;
+        e.preventDefault(); openIt();
+      } else if (e.key === 'ArrowLeft') { e.preventDefault(); onBack(); }
+    };
+    if (hint) ctx.reading.push({ text: hint });
+  }
+
+  /* The bark Taps: the pieces of bark take the panel, on the sand (or the frame's `ground`). The row
+   * is the engine's (E.scratchPieces): a piece is scratched when she holds its card, so the row picks
+   * up where she left it; coming Back to a row all scratched, there is only Next. */
+  function renderScratch(f, id) {
+    var sc = f.scratch, tw = E.tapWords(f), turning = false, drawn = false, fresh = null, lastTap = 0;
+    var scr = $('screen');
+    scr.innerHTML = frameShell('scratch', id);
+    var panel = $('panel'), art = panel.querySelector('.art');
+    panel.classList.add('bark-panel', 'tappable', 'ground-' + (/^[a-z]+$/.test(sc.ground || '') ? sc.ground : 'sand'));
+    var caps = captionsOf(f), intro = balloonsOf(f);
+    var hint = tw.prompt ? fill(tw.prompt) : '';
+    $('colTop').innerHTML = caps.map(function (c) { return '<p class="caption">' + rich(c) + '</p>'; }).join('');
+    $('stack').innerHTML = intro.map(function (b) { return stackBalloon(b); }).join('');
+    function pieces() {
+      var ps = E.scratchPieces(f, cat, story, stories());
+      ps.forEach(function (p) { if (p.draws) p.done = drawn; });
+      return ps;
+    }
+    function nextOf(ps) {
+      for (var i = 0; i < ps.length; i++) if (!ps[i].head && !ps[i].done) return i;
+      return -1;
+    }
+    var allDone = nextOf(pieces()) < 0;   // she has been here: every piece is scratched already
+    function draw() {
+      var ps = pieces(), nx = nextOf(ps), W = panel.clientWidth || 600;
+      var fs = clamp(W * 0.026, 14.5, 21) * (save.settings.bigText ? 1.14 : 1) * (ps.length > 3 ? 0.92 : 1);
+      panel.setAttribute('aria-label', ps.length === 1 ? 'A curl of bark on the sand.' + (nx >= 0 ? ' Touch it to scratch it.' : '')
+        : cap1(numWord(ps.length)) + ' pieces of bark in a row.' + (nx >= 0 ? ' Touch the glowing one to scratch it.' : ''));
+      art.innerHTML = '<div class="bark-row n' + ps.length + '" style="font-size:' + fs.toFixed(1) + 'px">' + ps.map(function (p, i) {
+        // a card's line is lettered under it once it is scratched (the one curl of `draws` has none:
+        // the frame it turns to gives the card, and says its line)
+        var line = p.done && !p.draws && p.line ? fill(p.line) : '';
+        return '<div class="bark' + (p.done ? ' done' : '') + (i === nx ? ' next' : '') + (p.id === fresh ? ' fresh' : '') + '" data-i="' + i + '">' +
+          '<span class="bark-pic">' + (p.done ? cardSvg(p, { mark: p.draws ? false : undefined }) : cardSvg(null, { blank: true })) +
+          (p.id === fresh ? '<i class="skritch" aria-hidden="true">skritch</i>' : '') + '</span>' +
+          '<span class="bark-line">' + (line ? rich(line) : '') + '</span></div>';
+      }).join('') + '</div>';
+      var done = nx < 0;
+      $('interact').innerHTML = (hint && !done ? '<p class="prompt tapline">' + rich(hint) + '</p>' : '') + '<div class="next-row">' + backBottom() +
+        (done ? (allDone ? '<button class="btn go big" id="nextBtn" type="button">Next <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' : '')
+          : '<button class="sr" id="scratchBtn" type="button">' + esc(tw.label) + '</button>') +
+        '</div><p class="sr" role="status" id="scratchSay"></p>';
+      wireBackBottom();
+      if ($('nextBtn')) $('nextBtn').addEventListener('click', advance);
+      if ($('scratchBtn')) $('scratchBtn').addEventListener('click', function () { tap(); var b = $('scratchBtn'); if (b) b.focus({ preventScroll: true }); });
+    }
+    function advance() {
+      if (now() - renderedAt < 280) return;
+      if (E.next(cat, story, now())) { persist(); go('frame'); }
+    }
+    function tap() {
+      if (turning || now() - lastTap < 220) return;   // a double tap scratches one piece, not two
+      var ps = pieces(), nx = nextOf(ps);
+      if (nx < 0) return;
+      lastTap = now();
+      var p = ps[nx], line = '';
+      if (p.draws) drawn = true;
+      else {
+        E.scratchTap(cat, story, now());
+        persist();
+        line = p.line ? fill(p.line) : '';
+        if (E.hasFile(cat)) fileGot();   // a later chapter's row: each card is seen to go into her file
+      }
+      fresh = p.id;
+      draw();
+      fresh = null;
+      if (line) { var sayEl = $('scratchSay'); if (sayEl) sayEl.textContent = plain(line); speakItems([{ text: line, who: 'player' }]); }
+      if (nextOf(pieces()) < 0) {
+        // the last tap turns the page, once she has seen what she scratched
+        turning = true;
+        later(function () { if (E.next(cat, story, now())) { persist(); go('frame', { fromSkip: true }); } }, line ? (save.settings.readAloud ? 2400 : 1500) : 950);
+      }
+    }
+    function wiggle() {
+      var el = art.querySelector('.bark.next');
+      if (!el) return;
+      el.classList.remove('wiggle'); void el.offsetWidth; el.classList.add('wiggle');
+    }
+    panel.addEventListener('click', function (e) {
+      if (turning) return;
+      var el = art.querySelector('.bark.next');
+      if (!el) return;
+      var r = el.getBoundingClientRect();
+      // a generous target: the glowing piece and a margin around it
+      var hit = !e || e.detail === 0 || !r.width || (e.clientX >= r.left - r.width * 0.18 && e.clientX <= r.right + r.width * 0.18 && e.clientY >= r.top - r.height * 0.12 && e.clientY <= r.bottom + r.height * 0.12);
+      if (hit) tap(); else wiggle();
+    });
+    relayoutFn = function () { if (!turning) draw(); };
+    draw();
+    frameTap = tap;
+    keyHandler = function (e) {
+      if (isTyping(e)) return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        if (e.target && (e.target.id === 'scratchBtn' || e.target.id === 'nextBtn')) return;   // a button does it on its own click
+        e.preventDefault();
+        if (nextOf(pieces()) < 0) { if (allDone) advance(); } else tap();
+      } else if (e.key === 'ArrowLeft') { e.preventDefault(); onBack(); }
+    };
+    currentSpeech = caps.map(function (c) { return { text: c }; }).concat(intro.map(function (b) { return { text: b.text, who: b.who, variant: b.variant }; }))
+      .concat(hint ? [{ text: hint }] : []);
+    persist();
+  }
+
+  /* ---------------------------------------------------------------- the Case File's screen
+   * "{name}paw’s Case File", over the page: her cards on moss in two groups, side by side (one above
+   * the other on a narrow screen, the claims first), each in the order found, each card with its
+   * picture, its mark and its line; a tap on a card shows it large, with what its mark means. Two
+   * cards she has linked are drawn touching, across the groups, over the link's line. Read to me
+   * reads the lines (and, on a card shown large, its mark's meaning). */
+  var MARK = {
+    eye: '<svg viewBox="0 0 40 28" aria-hidden="true"><path d="M3 14 Q20 -4 37 14 Q20 32 3 14 Z" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round"/><path d="M20 6 V22" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/></svg>',
+    ear: '<svg viewBox="0 0 40 28" aria-hidden="true"><path d="M8 26 L20 2 L32 26 Z" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round"/><path d="M20 26 V15" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>'
+  };
+  // the mark beside a heading or a line of words: the art's own, the very strokes her cards carry
+  // (PC.art.cardMark), so the legend shows the mark she scratched; ours stands in without the art
+  function markSvg(mark) { return artCall('cardMark', mark) || MARK[mark] || ''; }
+  function openFile(o) {
+    o = o || {};
+    if (!cat || fileState) return;
+    stopSpeech();
+    fileState = { at: o.quiet ? 0 : now(), onClose: o.onClose || null, card: o.card || null, restore: doc.activeElement };
+    drawFile();
+    $('file').hidden = false;
+    doc.documentElement.classList.add('file-open');   // the page behind it stays put
+  }
+  /* Close it: back to the same frame, nothing changed (`silent`: the page is changing anyway). */
+  function closeFile(silent) {
+    var st = fileState, el = $('file');
+    if (!st) return;
+    fileState = null;
+    el.hidden = true; el.innerHTML = '';
+    doc.documentElement.classList.remove('file-open');
+    stopSpeech();
+    if (silent) return;
+    if (st.onClose) st.onClose();
+    else if (st.restore && st.restore.focus) { try { st.restore.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  function fileKey(e) {
+    if (e.key === 'Escape' || (e.key === 'ArrowLeft' && fileState.card)) {
+      e.preventDefault();
+      if (fileState.card) { fileState.card = null; drawFile(); } else closeFile();
+    }
+  }
+  function fileCard(c) {
+    var line = fill(c.line);
+    return '<button class="cf-card ' + c.mark + '" type="button" data-card="' + esc(c.id) + '" aria-label="' + esc(plain(line) + ' ' + E.markMeans(c.mark)) + '">' +
+      '<span class="cf-pic" aria-hidden="true">' + cardSvg(c) + '</span><span class="cf-line" aria-hidden="true">' + rich(line) + '</span></button>';
+  }
+  function drawFile() {
+    var el = $('file'), st = fileState, F = E.caseFile(cat, stories()), all = [], speech = [], html;
+    F.groups.forEach(function (g) { all = all.concat(g.cards); });
+    F.links.forEach(function (l) { all = all.concat(l.cards); });
+    var big = st.card ? all.filter(function (c) { return c.id === st.card; })[0] : null;
+    var close = '<button class="btn cf-close" id="fileClose" type="button">Close</button>';
+    if (st.card && !big) st.card = null;
+    if (big) {
+      var line = fill(big.line), means = E.markMeans(big.mark);
+      html = '<div class="cf-in big"><div class="cf-head"><button class="btn cf-back" id="fileBack" type="button">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg> My cards</button>' + close + '</div>' +
+        '<div class="cf-bigcard" id="fileBig"><span class="cf-bigpic" aria-hidden="true">' + cardSvg(big, { big: true }) + '</span>' +
+        '<p class="cf-bigline">' + rich(line) + '</p>' +
+        '<p class="cf-means ' + big.mark + '"><i class="cf-mark" aria-hidden="true">' + markSvg(big.mark) + '</i>' + esc(means) + '</p></div></div>';
+      speech = [{ text: line }, { text: means }];
+    } else {
+      var shown = F.groups.filter(function (g) { return g.cards.length; });
+      speech.push({ text: F.title + '.' });
+      var groups = shown.map(function (g) {
+        speech.push({ text: g.title.replace(/[()]/g, ',') + ':' });
+        g.cards.forEach(function (c) { speech.push({ text: fill(c.line) }); });
+        return '<section class="cf-group ' + g.mark + '" aria-label="' + esc(g.title) + '"><h3 class="cf-h"><i class="cf-mark" aria-hidden="true">' + markSvg(g.mark) + '</i>' + esc(g.title) + '</h3>' +
+          '<div class="cf-cards">' + g.cards.map(fileCard).join('') + '</div></section>';
+      }).join('');
+      // two cards she has linked: drawn touching, across the groups, over the link's line
+      var links = F.links.map(function (l) {
+        l.cards.forEach(function (c) { speech.push({ text: fill(c.line) }); });
+        speech.push({ text: fill(l.line) });
+        return '<section class="cf-link" aria-label="' + esc(plain(fill(l.line))) + '"><div class="cf-pair">' + l.cards.map(fileCard).join('') + '</div>' +
+          '<p class="cf-linkline">' + rich(fill(l.line)) + '</p></section>';
+      }).join('');
+      html = '<div class="cf-in"><div class="cf-head"><h2 class="cf-title' + (E.displayName(cat).length > 12 ? ' long' : '') + '" id="fileTitle">' + esc(F.title) + '</h2>' + close + '</div>' +
+        (F.count ? '<div class="cf-groups' + (shown.length < 2 ? ' one' : F.links.length ? ' linked' : '') + '">' + groups + links + '</div>'
+          : '<p class="cf-none">No cards yet.</p>') + '</div>';
+    }
+    el.innerHTML = html;
+    el.setAttribute('aria-label', F.title);
+    el.scrollTop = 0;
+    $('fileClose').addEventListener('click', function () { closeFile(); });
+    if ($('fileBack')) $('fileBack').addEventListener('click', function () { st.card = null; drawFile(); });
+    if ($('fileBig')) $('fileBig').addEventListener('click', function () { st.card = null; drawFile(); });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-card]'), function (b) {
+      b.addEventListener('click', function () { st.card = b.getAttribute('data-card'); drawFile(); });
+    });
+    var first = big ? $('fileBack') : $('fileClose');
+    if (first) { try { first.focus({ preventScroll: true }); } catch (e) {} }
+    speakItems(speech);
   }
 
   /* ---------------------------------------------------------------- inputs */
@@ -1495,7 +2030,8 @@
     }
     // a Counts frame that showed its balloons over a kept skip picture (f036 after the rim) doesn't
     // say them again over the first question: they were just read
-    var intro = resume || E.keptSkip(story, id, cat) ? [] : balloonsOf(f);
+    // (nor does a frame that carries a whole conversation: lessonIntro)
+    var intro = lessonIntro(balloonsOf(f), !!(resume || E.keptSkip(story, id, cat)));
     var finish = function (sum) { if (E.finishCounts(cat, story, sum, now())) { persist(); go('frame'); } };
     runLesson({
       def: def, state: st, intro: intro, mode: 'chapter',
@@ -1535,6 +2071,8 @@
     }
     var scr = $('screen');
     scr.innerHTML = frameShell('lesson', o.frameId || '');
+    inLesson = true;      // the keypad screen: no Case File button, as there is no Back
+    fileTeach = null; frameTap = null;
     renderedAt = now();   // a new screen: the double-tap guard in bindChrome applies
     var panel = $('panel');
     panel.classList.add('lesson-panel');
@@ -1556,6 +2094,8 @@
       '<button class="key ok" type="button" data-k="ok" aria-label="OK">OK</button>' +
       '</div><div class="gotit" id="lessonNext" hidden><button class="btn go big" id="gotIt" type="button">Got it!</button></div></div></div>';
     var qline = $('qline'), pad = $('keypad'), okKey = pad.querySelector('[data-k="ok"]');
+    // (a font that loads late, a turned screen: the question line is fitted again)
+    relayoutFn = function () { fitQ(); };
 
     // a line of kind 'caption' is narration (8 × 2's "You touch your nose to each little stack…"):
     // a caption box, as the chapter's captions are lettered in the column; the rest are balloons
@@ -1573,6 +2113,22 @@
         '<span class="slot ' + (cls || '') + (slotText ? '' : ' empty') + '">' + (slotText ? esc(slotText) : '?') + '</span>';
       qline.setAttribute('aria-label', askTxt.replace('×', 'times') + ' equals ' + (slotText || 'what?'));
       okKey.disabled = !typed || locked;
+      fitQ();
+    }
+    /* The question line is sized by the lesson column (14cqi, the page's CSS), which holds "10 × 10 =
+     * 100" with a little to spare. Safari sizes a cqi font by the page zoom too, so on a zoomed page
+     * the line can come out wider than its column (at 115% the last zero of "100" was cut off). Then,
+     * and only then, the line is set to the size that fits: measured with the answer's digits in the
+     * slot, so it does not change as she types. Unzoomed, nothing is touched. */
+    function fitQ() {
+      var slot = qline.lastElementChild, lead = qline.firstElementChild;
+      qline.style.fontSize = '';
+      if (!q || !slot || !lead || !slot.getBoundingClientRect || !qline.clientWidth) return;
+      var shown = slot.textContent, digits = Math.max(String(q.answer).length, shown.length);
+      slot.textContent = '000'.slice(0, digits) || '0';
+      var need = slot.getBoundingClientRect().right - lead.getBoundingClientRect().left, room = qline.clientWidth - 8;
+      slot.textContent = shown;
+      if (need > room && room > 0) qline.style.fontSize = (Math.floor(parseFloat(root.getComputedStyle(qline).fontSize) * room / need * 10) / 10) + 'px';
     }
     /* The picture for this question: the set's picture (cats or prey, stacks or rows, a thought
      * cloud), the fact's own on top of it. `over` redraws it another way (rightPicture). */
@@ -1586,9 +2142,10 @@
       return { kind: p.kind, layout: p.layout, thought: p.thought, groups: g, per: per, who: who };
     }
     function picture(highlight, over) {
-      var L = look(over);
-      var svg = artCall('countsPicture', { table: q.table || L.per, groups: L.groups, per: L.per, highlight: highlight || 0, kind: L.kind, layout: L.layout, thought: L.thought, who: L.who || undefined, thing: thing, things: things, look: cat && cat.look });
-      art.innerHTML = svg || countsFallback(L.groups, L.per, highlight || 0);
+      // as the engine pictures it (E.lessonPicture: the set's picture, the fact's own on top, who sits in it)
+      var po = E.lessonPicture(D, q, highlight, over);
+      po.look = cat && cat.look;
+      art.innerHTML = artCall('countsPicture', po) || countsFallback(po.groups, po.per, highlight || 0);
     }
     function fillQ(t) { return E.fill(t, cat, { a: q.a, b: q.b, answer: q.answer, groups: q.groups, per: q.per, thing: thing, things: things }); }
     function balloonLines(x) {
@@ -1650,9 +2207,8 @@
     }
     function press(k) {
       if (locked || now() < padLockedUntil) return;
-      if (k === 'del') typed = typed.slice(0, -1);
-      else if (k === 'ok') return submit();
-      else if (typed.length < 3) typed = (typed === '0' ? '' : typed) + k;
+      if (k === 'ok') return submit();
+      typed = keypadPress(typed, k);   // up to three digits: 10 × 10 is 100
       showQ(typed, '');
     }
     function submit() {
@@ -1709,11 +2265,10 @@
       say([{ who: teacher, text: intro }]);
       speakItems([{ text: intro, who: teacher }]);
       // the scratches match the picture: a picture in rows is scratched in rows (lit a column at a
-      // time, top and bottom together)
+      // time, top and bottom together; a whole row at a time when the help hops by the row: the
+      // pile's rows of ten). On the 10s the swipes come in pairs, one for each forepaw (E.sandOpts)
       var sand = function () {
-        var o = { groups: hp.groups, per: hp.per, counted: counted, layout: plan.layout || undefined, ground: plan.ground === 'sand' ? undefined : plan.ground };
-        if (plan.style) o.style = plan.style;
-        art.innerHTML = artCall('sand', o) || sandFallback(hp.groups, hp.per, counted);
+        art.innerHTML = artCall('sand', E.sandOpts(plan, counted)) || sandFallback(hp.groups, hp.per, counted);
       };
       var nums = [];
       sand();
@@ -1756,10 +2311,12 @@
     }
     function finish() {
       keyHandler = null;
+      inLesson = false;
       var sum = E.counts.summary(st);
       // recorded at the last answer; this only catches a lesson that somehow was not
       if (!o.recorded && cat.lesson && cat.lesson.state === st) { o.recorded = E.recordLesson(cat, st); persist(); }
       o.onDone(sum, o.recorded);
+      updateBar();   // the keypad screen is over: her Case File's button is back
     }
     pad.addEventListener('click', function (e) {
       var b = e.target.closest('.key'); if (!b) return;
@@ -1823,6 +2380,8 @@
       (latest ? hubBtn('book', 'Read my book', ICON.book) : '') +
       (learned.length ? hubBtn('hollow', 'The Training Hollow', ICON.tree) : '') +
       hubBtn('nest', 'My nest', ICON.nest) +
+      // her Case File, once she has it (chapter 4's "Skritch"): it opens over the hub
+      (E.hasFile(cat) ? '<button class="btn" type="button" id="hubFile"><i aria-hidden="true">' + fileIcon() + '</i>My Case File</button>' : '') +
       again +
       '</div></section>';
     Array.prototype.forEach.call(doc.querySelectorAll('[data-go]'), function (b) {
@@ -1833,6 +2392,7 @@
       });
     });
     if ($('nextChapter')) $('nextChapter').addEventListener('click', function () { readChapter(p.next, true); });
+    if ($('hubFile')) $('hubFile').addEventListener('click', function () { openFile(); });
     currentSpeech = [{ text: E.displayName(cat) + ', apprentice of CrystalClan.' }].concat(p.next ? [{ text: bigSays }] : p.soon ? [{ text: p.soon.title + ' is coming soon.' }] : []);
     keyHandler = function (e) { if (!isTyping(e) && e.key === 'Enter' && $('nextChapter') && doc.activeElement === doc.body) { e.preventDefault(); $('nextChapter').click(); } };
   }
@@ -1935,22 +2495,20 @@
       persist();
       if (rec && rec.hollow) return hollowReward(E.hollowDef(stories(), tbl), rec.hollow);
     }
-    var learned = E.learnedCounts(cat, stories());
-    var defs = learned.map(function (c) { return { table: c.table, def: E.hollowDef(stories(), c.table), glow: E.hollowTable(cat, c.table).glow }; });
+    // the Counts she can practise and Tallyheart's lines about them (E.hollowLines: each Count's own
+    // word there, "tens" for the 10s, so the 5s and the 10s never read the same)
+    var HW = E.hollowLines(cat, stories(), { reward: !!(opts && opts.reward) });
+    var defs = HW.counts;
     var scr = $('screen');
     scr.innerHTML = frameShell('hollow', 'hollow');
     var panel = $('panel');
-    var one = defs.length === 1 ? defs[0] : null;
+    var one = HW.one;
     var f = {
       scene: hollowScene('wide', [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'sunpatch', facing: 'left' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'sand-left', facing: 'right' }], ['sunset']),
       caption: ['The Training Hollow. The old tree leans over the sand like it’s listening.'],
-      say: [{ who: 'tallyheart', text: opts && opts.reward ? 'Another round? I’ve got all evening.'
-        : one ? 'Back for more ' + (one.def.things || 'tails') + '? A full round earns a treasure for your nest.'
-          : defs.length ? 'Which Count today? A full round earns a treasure for your nest.' : 'Finish a Count in your story first. Then come back and practise it.' }]
+      say: [{ who: 'tallyheart', text: HW.greet }]
     };
-    var glowing = defs.filter(function (d) { return d.glow; });
-    if (one && one.glow) f.say.push({ who: 'tallyheart', text: 'Look at your claw mark. It glows now. You know your ' + (one.def.things || 'tails') + '.' });
-    else if (glowing.length) f.say.push({ who: 'tallyheart', text: 'Look at your claw marks. Your ' + andList(glowing.map(function (d) { return d.def.things; })) + ' ' + (glowing.length === 1 ? 'mark glows' : 'marks glow') + ' now.' });
+    if (HW.glow) f.say.push({ who: 'tallyheart', text: HW.glow });
     var heads = drawArt(panel, shownFrame(f), cat.look);
     var ctx = { panel: panel, frame: f, heads: heads, caps: captionsOf(f), balloons: balloonsOf(f) };
     relayoutFn = function () { layoutText(ctx); };
@@ -1965,19 +2523,19 @@
       $('interact').innerHTML = '<div class="row end"><button class="btn" type="button" id="nestBtn">My nest</button><button class="btn go big" type="button" id="startBtn" data-t="' + one.table + '">Start a round</button></div>';
     } else {
       $('interact').innerHTML = '<div class="counts-pick" role="group" aria-label="Which Count?">' + defs.map(function (d) {
-        return '<button class="btn go big" type="button" data-t="' + d.table + '">' + (d.glow ? '<i class="glowdot" role="img" aria-label="glowing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l2.7 7.8 7.8 2.7-7.8 2.7L12 22.5l-2.7-7.8L1.5 12l7.8-2.7z"/></svg></i>' : '') + esc(E.countName(d.def, d.table)) + '</button>';
+        return '<button class="btn go big" type="button" data-t="' + d.table + '">' + (d.glow ? '<i class="glowdot" role="img" aria-label="glowing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l2.7 7.8 7.8 2.7-7.8 2.7L12 22.5l-2.7-7.8L1.5 12l7.8-2.7z"/></svg></i>' : '') + esc(d.name) + '</button>';
       }).join('') + '</div><div class="row end"><button class="btn" type="button" id="nestBtn">My nest</button></div>';
     }
     $('nestBtn').addEventListener('click', function () { go('nest', { from: 'hollow' }); });
     Array.prototype.forEach.call($('interact').querySelectorAll('[data-t]'), function (b) {
       b.addEventListener('click', function () { start(+b.getAttribute('data-t')); });
     });
-    currentSpeech = (ctx.reading || []).concat(one ? [] : defs.map(function (d) { return { text: E.countName(d.def, d.table).replace(' · ', ', ') }; }));
+    currentSpeech = (ctx.reading || []).concat(one ? [] : defs.map(function (d) { return { text: d.name.replace(' · ', ', ') }; }));
   }
   function hollowLesson(def, st, resume) {
     runLesson({
       def: def, state: st, mode: 'hollow',
-      intro: resume ? [] : [{ who: 'tallyheart', text: 'A round of ' + (def.things || 'tails') + '. Ready? Here we go.' }],
+      intro: resume ? [] : [{ who: 'tallyheart', text: E.hollowRoundLine(def) }],
       onDone: function (sum, rec) {
         // the round was counted (E.hollowFinish, once) when its last answer went in
         hollowReward(def, rec && rec.hollow ? rec.hollow : { awarded: null, glowNow: false });
@@ -2000,7 +2558,7 @@
     var ctx = { panel: panel, frame: f, heads: heads, caps: [], balloons: [{ who: 'tallyheart', text: line, kind: 'say' }] };
     relayoutFn = function () { layoutText(ctx); };
     layoutText(ctx);
-    var glowNote = many ? 'Look! Your ' + (def.things || 'tails') + ' claw mark on the tree is glowing.' : 'Look! Your claw mark on the tree is glowing.';
+    var glowNote = E.hollowGlowNote(def, many);
     $('interact').innerHTML =
       (t ? '<div class="reward' + (reduceMotion ? '' : ' pop') + '" role="status">' + treasureSvg(t.id) + '<b>' + esc(t.name) + '</b><span>for your nest</span></div>' : '') +
       (res.glowNow ? '<p class="glow-note">' + esc(glowNote) + '</p>' : '') +
@@ -2029,13 +2587,15 @@
       (g.gifts.length ? '<h2 class="h2 nest-h">From friends</h2><div class="nest-grid">' + g.gifts.map(card).join('') + '</div>' : '') +
       (g.treasures.length ? (g.gifts.length ? '<h2 class="h2 nest-h">Treasures</h2>' : '') + '<div class="nest-grid">' + g.treasures.map(card).join('') + '</div>' : '') +
       (!g.gifts.length && !g.treasures.length ? '<p class="note">Your nest is just moss and rose leaves for now. Finish a round in the Training Hollow to find a treasure.</p>' : '') +
-      '<div class="links">' + (E.learnedCounts(cat, stories()).length ? '<button class="btn go" type="button" data-go="hollow">The Training Hollow</button>' : '') + '<button class="btn" type="button" data-go="hub">Camp</button></div>' +
+      '<div class="links">' + (E.learnedCounts(cat, stories()).length ? '<button class="btn go" type="button" data-go="hollow">The Training Hollow</button>' : '') +
+      (E.hasFile(cat) ? '<button class="btn" type="button" id="nestFile">My Case File</button>' : '') + '<button class="btn" type="button" data-go="hub">Camp</button></div>' +
       '</section>';
     var panel = $('panel');
     var f = { scene: { set: 'den', cam: 'nest', cast: [{ who: 'player', pose: 'curl', mood: 'happy', at: 'nest' }], fx: ['night'] } };
     drawArt(panel, f, cat.look);
     panel.setAttribute('aria-label', 'Your nest in the apprentices’ den');
     Array.prototype.forEach.call(doc.querySelectorAll('[data-go]'), function (b) { b.addEventListener('click', function () { go(b.getAttribute('data-go'), { from: 'nest' }); }); });
+    if ($('nestFile')) $('nestFile').addEventListener('click', function () { openFile(); });
     currentSpeech = [{ text: E.displayName(cat) + '’s nest.' }]
       .concat(g.gifts.length ? [{ text: 'From friends:' }] : [])
       .concat(g.gifts.map(function (it) { return { text: it.treasure.name + ', from ' + it.treasure.from + '.' }; }))
@@ -2127,7 +2687,7 @@
     if (!cats.length) html += '<p>No cats on this device yet.</p>';
     cats.forEach(function (c) {
       var lookTxt = [lookDef('sex', c.look.sex).label, lookDef('fur', c.look.fur).label, lookDef('marking', c.look.marking).label, lookDef('eyes', c.look.eyes).label + ' eyes'].join(' · ');
-      var flags = Object.keys(c.flags || {}).filter(function (k) { return k !== 'looked'; }).map(function (k) {
+      var flags = Object.keys(c.flags || {}).filter(function (k) { return !QUIET_FLAGS[k]; }).map(function (k) {
         var w = FLAG_WORDS[k] && FLAG_WORDS[k][String(c.flags[k])];
         return '<li>' + esc(w ? E.fill(w, c) : (k + ': ' + c.flags[k])) + '</li>';
       }).join('');
@@ -2142,6 +2702,12 @@
       var dreams = chs.filter(function (s) { return c.dreams && typeof c.dreams[s.id] === 'string'; }).map(function (s) {
         return 'Ch ' + (s.number || 1) + ': ' + (c.dreams[s.id] || '(skipped)');
       }).join(' · ');
+      // her Case File: every card she has been given, in order, with its mark in words; one her file
+      // doesn't show yet (given on the roof, shown once that scene is finished) says so
+      var cardsTxt = E.cards(c, stories(), { all: true }).map(function (k) {
+        return '<li>' + esc(E.fill(k.line, c)) + ' <span class="muted">(' + (k.mark === 'ear' ? 'an ear: she was told, to check' : 'an eye: she saw it herself') +
+          (k.shown ? '' : '; given, not in her file yet') + ')</span></li>';
+      }).join('');
       var learned = E.learnedCounts(c, stories());
       var hollowTxt = c.hollow.rounds + ' round' + (c.hollow.rounds === 1 ? '' : 's') + (learned.length ? ': ' + learned.map(function (k) {
         var r = E.hollowTable(c, k.table);
@@ -2157,6 +2723,7 @@
         '<dt>Nest</dt><dd>' + esc(nestTxt || '–') + '</dd></dl>' +
         (flags ? '<h4>What the choices say</h4><ul>' + flags + '</ul>' : '') +
         (choices ? '<h4>Choices, in order</h4><ul>' + choices + '</ul>' : '') +
+        (cardsTxt ? '<h4>The Case File' + (E.hasFile(c) ? '' : ' (its button appears when she is shown how to open it)') + '</h4><ul>' + cardsTxt + '</ul>' : '') +
         '<h4>The Counts</h4>' +
         (c.counts.length ? E.factTables(c, stories()).map(function (t) {
           return '<h5>' + esc(t.name) + '</h5><div class="scroll"><table><thead><tr><th>Fact</th><th>Attempts</th><th>Right first time</th><th>Helped</th><th>Typical time</th></tr></thead><tbody>' +
@@ -2201,7 +2768,9 @@
     tree: '<svg viewBox="0 0 48 48"><path d="M22 44c2-10 0-18-6-26M24 44c1-8 6-14 14-18" stroke="#5a3a22" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="14" cy="14" r="9" fill="#5fae5a" stroke="#1b1622" stroke-width="2.5"/><circle cx="34" cy="18" r="10" fill="#6fc06a" stroke="#1b1622" stroke-width="2.5"/><path d="M20 30l2-5M23 31l2-5M26 32l2-5" stroke="#ffd23f" stroke-width="2.5" stroke-linecap="round"/></svg>',
     nest: '<svg viewBox="0 0 48 48"><ellipse cx="24" cy="32" rx="19" ry="10" fill="#8a6a3a" stroke="#1b1622" stroke-width="3"/><path d="M8 30c6 4 26 4 32 0" stroke="#5fae5a" stroke-width="4" fill="none"/><circle cx="18" cy="26" r="4" fill="#9fd3ff" stroke="#1b1622" stroke-width="2"/><path d="M28 18c4 2 6 6 4 10" stroke="#4f86d8" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
     again: '<svg viewBox="0 0 48 48"><path d="M38 24a14 14 0 1 1-5-10.7" fill="none" stroke="#1b1622" stroke-width="4" stroke-linecap="round"/><path d="M34 6v9h-9" fill="none" stroke="#1b1622" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    moon: '<svg viewBox="0 0 48 48"><path d="M30 6a18 18 0 1 0 12 30A15 15 0 0 1 30 6z" fill="#ffe8a3" stroke="#1b1622" stroke-width="3" stroke-linejoin="round"/></svg>'
+    moon: '<svg viewBox="0 0 48 48"><path d="M30 6a18 18 0 1 0 12 30A15 15 0 0 1 30 6z" fill="#ffe8a3" stroke="#1b1622" stroke-width="3" stroke-linejoin="round"/></svg>',
+    // her Case File: a curl of pale bark with a scratch on it (the art's PC.art.fileIcon, when it has one, is used instead)
+    file: '<svg viewBox="0 0 48 48"><path d="M9 8 Q24 3 39 9 Q43 24 40 40 Q24 45 8 40 Q5 24 9 8 Z" fill="#e9dcc0" stroke="#1b1622" stroke-width="3" stroke-linejoin="round"/><path d="M39 9 Q33 12 34 18 Q40 17 40 12" fill="#cdbb95" stroke="#1b1622" stroke-width="2.4" stroke-linejoin="round"/><path d="M14 20 q5 -5 10 0 t10 0 M14 29 q5 -5 10 0 t8 0" fill="none" stroke="#5a4326" stroke-width="2.6" stroke-linecap="round"/></svg>'
   };
   function treasureSvg(id) {
     var o = '<svg viewBox="0 0 100 100" aria-hidden="true"><g stroke="#1b1622" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">';

@@ -1,6 +1,6 @@
 /* Potomac Crossing · app/art/sets/bridge.js
  *
- * The set: the Old Bridge (chapters 2 and 3), the rail bridge's near (Virginia) end, by day: old stone
+ * The set: the Old Bridge (chapters 2, 3 and 4), the rail bridge's near (Virginia) end, by day: old stone
  * legs, an iron truss on top, the river brown and swirly after the storm, the reeds squashed flat.
  *
  * Five compositions in the 1600 x 1000 world, one per camera (docs/build.md, "Art vocabulary,
@@ -52,6 +52,15 @@
  * five claws lit gold and its running total, 5, 10, 15, lettered beyond them). At `sunset` and `dusk`
  * the light under the bridge changes (chapter 2 is all `day`): the low sun reaches far in as long
  * gold shafts, or dusk leaves a soft rose light by the way in, so the dark still reads.
+ *
+ * Chapter 4 (docs/build.md, "Chapter 4 (v0.4)"): `pawsIn: 'both'`, the thirty-claw promise: six forepaws
+ * piled, a friend's pair to a layer, in the text's order (Sprinkle holds out both forepaws; hers go on
+ * top; then Riffle's), fanned so all thirty claws show: three rows of ten, hers reaching in from the
+ * bottom edge as her own forepaws do. The hop lights a friend's pair at a time: `hop: true` every
+ * friend, or a count (`hop: 2`, or `lit: 2`: the first two friends in pile order; the promise Tap
+ * passes its taps), each lit pair's ten claws warm gold and its running total (10, 20, 30) lettered
+ * beside them. The pile is <g data-art="paws"> (with data-lit, the friends lit, when 'both'): the
+ * Tap's target, and what wiggles.
  *
  * The dark is mysterious and a little sad, never scary: cool blues with faint shapes of stones and
  * mud in them, soft rounded shapes, a warm rim of daylight at its edges, and gentle round eyes.
@@ -1263,6 +1272,20 @@
   // PAW_PILE: [palm x, palm y, the toes' direction in degrees, the paw's width], found by trying many
   // and keeping the one with the most room round every claw.
   var PAW_PILE = { player: [1025, 532, -36, 260], sprinkle: [660, 520, 127, 330], riffle: [815, 351, -102, 240] };
+  // Chapter 4, the thirty-claw promise (`pawsIn: 'both'`): six forepaws, bottom to top as the text has
+  // it: Sprinkle holds out both of hers, the player's go on top, then Riffle's. Every arm reaches in
+  // from the bottom edge (her own forepaws as she sees them, and her friends' beside hers), each pair
+  // set a little back from the pair below, so the three pairs' claws lie in three rows, ten to a row,
+  // none covered. [who, palm x, palm y, the toes' direction in degrees, the paw's width, the dewclaw's
+  // side]: found as PAW_PILE was, by trying many (symmetric about the pile's middle) and keeping the
+  // one with the most room round every claw, then loosened a little by hand so it is not a diagram.
+  // PAW_PILE6_AT: where each friend's running total is lettered, beside its row of claws, on no paw.
+  var PAW_PILE6 = [
+    ['sprinkle', 458, 424, -98.6, 322, -1], ['sprinkle', 922, 420, -81.4, 322, 1],
+    ['player', 470, 503, -86, 254, -1], ['player', 912, 498, -94.5, 254, 1],
+    ['riffle', 541, 700, -102.7, 234, -1], ['riffle', 840, 696, -78.3, 234, 1]
+  ];
+  var PAW_PILE6_AT = [[1300, 204], [1226, 380], [1156, 596]];
   // `hop: true` (the promise's second panel, Sprinkle hopping along by fives): every paw's five claws
   // lit warm gold, and its running total, 5, 10 and 15 in pile order (hers, Sprinkle's, Riffle's),
   // lettered just beyond its claw fan, outside the pile, where nothing covers it.
@@ -1283,49 +1306,73 @@
       return P.claws.some(function (C) { return C.some(function (q) { return Math.abs(q[0] - x) < 40 && Math.abs(q[1] - y) < 40; }) || inPoly(C, x, y); });
     });
   }
+  // The paws of a pile in drawing order (the bottom one first), each { who, x, y, a, s, dew }.
+  function pawList(both) {
+    if (both) return PAW_PILE6.map(function (q) { return { who: q[0], x: q[1], y: q[2], a: q[3], s: q[4], dew: q[5] }; });
+    return ['player', 'sprinkle', 'riffle'].map(function (k) { var q = PAW_PILE[k]; return { who: k, x: q[0], y: q[1], a: q[2], s: q[3], dew: 1 }; });
+  }
+  // How far the hop has got: `hop: true`, every friend; a count (`hop: 2`, or `lit: 2`: chapter 4's
+  // promise Tap, a friend at a tap), that many friends in pile order; anything else, nobody.
+  function hopCount(o, friends) {
+    if (o.hop === true) return friends;
+    var v = typeof o.hop === 'number' ? o.hop : typeof o.lit === 'number' ? o.lit : 0;
+    return isFinite(v) ? clamp(Math.round(v), 0, friends) : 0;
+  }
   function pawPile(S) {
-    var L = PAW_PILE, s = '', hop = S.opts.hop === true, nums = '';
-    function at(k) { return pawFrame(L[k][0], L[k][1], L[k][2] * Math.PI / 180, L[k][3]); }
-    var pile = [['player', catPaw(at('player'), L.player[3], S.look, 1)], ['sprinkle', dragonPaw(at('sprinkle'), L.sprinkle[3])], ['riffle', otterPaw(at('riffle'), L.riffle[3])]];
+    var both = S.opts.pawsIn === 'both', L = pawList(both), s = '', nums = '', friends = [], per = both ? 10 : 5;
+    L.forEach(function (q) { if (friends.indexOf(q.who) < 0) friends.push(q.who); });
+    var lit = hopCount(S.opts, friends.length);
+    var pile = L.map(function (q) {
+      var X = pawFrame(q.x, q.y, q.a * Math.PI / 180, q.s);
+      return [q.who, q.who === 'player' ? catPaw(X, q.s, S.look, q.dew) : q.who === 'sprinkle' ? dragonPaw(X, q.s) : otterPaw(X, q.s), q];
+    });
     var box = [1e9, 1e9, -1e9, -1e9];
     pile.forEach(function (pr) {
       pr[1].claws.forEach(function (C) { C.forEach(function (q) { box = [Math.min(box[0], q[0]), Math.min(box[1], q[1]), Math.max(box[2], q[0]), Math.max(box[3], q[1])]; }); });
       pr[1].shapes.forEach(function (sh) { sh[0].forEach(function (q) { box = [Math.min(box[0], q[0]), Math.min(box[1], q[1]), Math.max(box[2], q[0]), Math.max(box[3], q[1])]; }); });
     });
     var numBoxes = [];
-    pile.forEach(function (pr, pi) {
-      var P = pr[1], body = pts(P.arm) + 'Z';
-      P.shapes.forEach(function (sh) { body += pts(sh[0]) + 'Z'; });
-      if (hop) {
-        // the claws lit, each with a soft glow under it
-        var glow = '', cx = 0, cy = 0, nq = 0;
+    friends.forEach(function (who, fi) {
+      if (fi >= lit) return;
+      // this friend's claws lit, each with a soft glow under it
+      var cx = 0, cy = 0, nq = 0, px = 0, py = 0, np = 0;
+      pile.forEach(function (pr) {
+        if (pr[0] !== who) return;
+        var P = pr[1], glow = '';
         P.claws.forEach(function (C) {
           var mx = 0, my = 0;
           C.forEach(function (q) { mx += q[0] / C.length; my += q[1] / C.length; });
-          glow += circ(mx, my, Math.max(16, L[pr[0]][3] * 0.07), HOP_GOLD.glow, { opacity: 0.5 });
+          glow += circ(mx, my, Math.max(16, pr[2].s * 0.07), HOP_GOLD.glow, { opacity: 0.5 });
           cx += mx; cy += my; nq++;
         });
         P.over += glow;
         P.clawFill = HOP_GOLD.fill; P.clawLine = HOP_GOLD.line;
-        // the running total: just beyond the fan, on the first spot (nearest first, straight out from
-        // the palm first, then turning either way) where it covers no paw, claw or arm of the pile
-        cx /= nq; cy /= nq;
-        var dx = cx - L[pr[0]][0], dy = cy - L[pr[0]][1], a0 = Math.atan2(dy, dx);
-        var fs = 76, hw = fs * 0.32 * String((pi + 1) * 5).length + 8, hh = fs * 0.42 + 8, tx = null, ty = null;
-        for (var dd = 50; dd <= 420 && tx === null; dd += 15) {
-          [0, -0.45, 0.45, -0.9, 0.9, -1.35, 1.35].forEach(function (da) {
-            if (tx !== null) return;
-            var qx = cx + Math.cos(a0 + da) * dd, qy = cy + Math.sin(a0 + da) * dd;
-            if (qx - hw < 20 || qx + hw > 1580 || qy - hh < 20 || qy + hh > 980) return;
-            var probe = [];
-            for (var px = -1; px <= 1; px += 0.5) for (var py = -1; py <= 1; py += 1) probe.push([qx + px * hw, qy + py * hh]);
-            if (!probe.some(function (q) { return pileHit(pile, q[0], q[1]); })) { tx = qx; ty = qy; }
-          });
-        }
-        if (tx === null) { tx = clamp(cx + Math.cos(a0) * 90, hw + 20, 1580 - hw); ty = clamp(cy + Math.sin(a0) * 90, hh + 20, 980 - hh); }
-        nums += '<text x="' + n(tx) + '" y="' + n(ty + fs * 0.36) + '" text-anchor="middle" font-family="Andika, &quot;Comic Neue&quot;, sans-serif" font-size="' + fs + '" font-weight="700" fill="#FFF4C8" stroke="#3A2A12" stroke-width="7" stroke-linejoin="round" paint-order="stroke" data-hop="' + ((pi + 1) * 5) + '">' + ((pi + 1) * 5) + '</text>';
-        numBoxes.push({ x: tx - hw, y: ty - hh, w: hw * 2, h: hh * 2 });
+        px += pr[2].x; py += pr[2].y; np++;
+      });
+      // the running total: just beyond the fan, on the first spot (nearest first, straight out from
+      // the palm first, then turning either way) where it covers no paw, claw or arm of the pile;
+      // the six-paw pile has a place set for each, beside its row of claws
+      cx /= nq; cy /= nq; px /= np; py /= np;
+      var total = (fi + 1) * per, dx = cx - px, dy = cy - py, a0 = Math.atan2(dy, dx);
+      var fs = both ? 92 : 76, hw = fs * 0.32 * String(total).length + 8, hh = fs * 0.42 + 8, tx = null, ty = null;
+      if (both) { tx = PAW_PILE6_AT[fi][0]; ty = PAW_PILE6_AT[fi][1]; }
+      for (var dd = 50; dd <= 420 && tx === null; dd += 15) {
+        [0, -0.45, 0.45, -0.9, 0.9, -1.35, 1.35].forEach(function (da) {
+          if (tx !== null) return;
+          var qx = cx + Math.cos(a0 + da) * dd, qy = cy + Math.sin(a0 + da) * dd;
+          if (qx - hw < 20 || qx + hw > 1580 || qy - hh < 20 || qy + hh > 980) return;
+          var probe = [];
+          for (var px2 = -1; px2 <= 1; px2 += 0.5) for (var py2 = -1; py2 <= 1; py2 += 1) probe.push([qx + px2 * hw, qy + py2 * hh]);
+          if (!probe.some(function (q) { return pileHit(pile, q[0], q[1]); })) { tx = qx; ty = qy; }
+        });
       }
+      if (tx === null) { tx = clamp(cx + Math.cos(a0) * 90, hw + 20, 1580 - hw); ty = clamp(cy + Math.sin(a0) * 90, hh + 20, 980 - hh); }
+      nums += '<text x="' + n(tx) + '" y="' + n(ty + fs * 0.36) + '" text-anchor="middle" font-family="Andika, &quot;Comic Neue&quot;, sans-serif" font-size="' + fs + '" font-weight="700" fill="#FFF4C8" stroke="#3A2A12" stroke-width="7" stroke-linejoin="round" paint-order="stroke" data-hop="' + total + '">' + total + '</text>';
+      numBoxes.push({ x: tx - hw, y: ty - hh, w: hw * 2, h: hh * 2 });
+    });
+    pile.forEach(function (pr) {
+      var P = pr[1], body = pts(P.arm) + 'Z';
+      P.shapes.forEach(function (sh) { body += pts(sh[0]) + 'Z'; });
       // a soft shadow on whatever is below
       s += path(body, '#0B1020', { opacity: 0.3, transform: 'translate(9 15)' }) + pawSvg(pr[0], P);
     });
@@ -1333,6 +1380,7 @@
     // and the hop's numbers too
     (S.keep = S.keep || []).push({ x: box[0] - 12, y: box[1] - 12, w: box[2] - box[0] + 24, h: box[3] - box[1] + 24 });
     numBoxes.forEach(function (b) { S.keep.push(b); });
+    S.pawsLit = lit;
     return s + nums;
   }
 
@@ -1359,6 +1407,11 @@
     if (o.pawsIn === true) {
       back += g(pawPile(S), { 'data-art': 'paws' });
       back += rect(-10, -10, 1620, 1020, S.radU([[0, c.dark0, 0], [0.62, c.dark0, 0], [1, c.dark0, 0.55]], 800, 500, 960));
+    } else if (o.pawsIn === 'both') {
+      // chapter 4: six forepaws; the pile says how many friends are lit (the Tap reads it, or just redraws)
+      var six = pawPile(S);
+      back += g(six, { 'data-art': 'paws', 'data-lit': S.pawsLit });
+      back += rect(-10, -10, 1620, 1020, S.radU([[0, c.dark0, 0], [0.66, c.dark0, 0], [1, c.dark0, 0.5]], 800, 500, 960));
     }
     S.weatherClip = S.clip('brprain', rect(0, 0, 0, 0, '#fff'));
     return { back: back, over: '', front: front };
@@ -1404,7 +1457,7 @@
       paws: {}
     },
     opts: { train: [false, true], eyes: ['none', 'open', 'blink', 'sprinkle'], drag: [true, false], drips: [true, false],
-      pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false], hop: [false, true] },
+      pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true] },
     defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false }
   });
 

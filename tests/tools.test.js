@@ -259,3 +259,22 @@ test('shots.mjs: EXTRA never reads the save back from a storage that may have lo
   ls.removeItem('n'); assert.equal(ls.length, 1);
   ls.clear(); assert.deepEqual([ls.length, session.getItem('other')], [0, 'x'], 'clear leaves what is not the page’s');
 });
+
+test('sheet.mjs: a contact sheet’s grid fits Quick Look’s 1600 square, six 16:10 frames a sheet at two columns, and is centred for the crop', async () => {
+  const S = await import(require('node:url').pathToFileURL(path.join(__dirname, '..', 'tools', 'sheet.mjs')).href);
+  assert.equal(S.SIDE, 1600);
+  const L = S.layout(6, 2, 10 / 16);
+  assert.deepEqual([L.cols, L.rows, L.cellW, L.cellH, L.width, L.height], [2, 3, 800, 500, 1600, 1500]);
+  assert.deepEqual(L.cells[5], { x: 800, y: 1000 });
+  assert.equal(S.perSheet(2, 10 / 16), 6);
+  assert.equal(S.perSheet(3, 10 / 16), 12);
+  assert.equal(S.layout(7, 2, 10 / 16), null, 'a seventh frame does not fit: the tool asks for a second sheet');
+  assert.equal(S.layout(0, 2, 10 / 16), null);
+  assert.equal(S.layout(1, 2, 10 / 16).cols, 1, 'one picture is not given an empty column');
+  // the grid sits in the middle of the square canvas, so sips' centre crop to width x height is the sheet
+  const svg = S.sheetSvg([{ name: 'f001', data: 'AAAA' }, { name: 'a<b', data: 'BBBB' }], S.layout(2, 2, 10 / 16));
+  assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" width="1600" height="1600"/);
+  assert.ok(svg.includes('<image x="0" y="550" width="800" height="500"'), 'the first cell, centred top to bottom');
+  assert.ok(svg.includes('<image x="800" y="550"'));
+  assert.ok(svg.includes('>f001</text>') && svg.includes('>a&lt;b</text>'), 'each picture carries its name, escaped');
+});

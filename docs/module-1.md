@@ -1,6 +1,6 @@
 # Module one: *The Dragon Under the Bridge*
 
-*Solo · ten chapters of about 15–20 minutes, then the Warrior Ceremony · v0.6 · 2026-10-10*
+*Solo · ten chapters of about 15–20 minutes, then the Warrior Ceremony · v0.7 · 2026-10-12*
 *In the game the player is "you"; these notes say "she" because Lissa is the first player.*
 
 ## Changes, 2026-10-06 (Aron; README decisions 34–37)
@@ -23,6 +23,16 @@
   clue 4 is the prints' size; the two extra clues are in the clue table; the back cover is loosened.
 - **The Case File.** From chapter 4 she keeps a Case File she can open any time: a card for each
   clue she finds, a little picture and one line. In chapter 10 she answers Reynard by picking cards.
+
+## Changes, 2026-10-12 (Claude, under README decision 46; the wrap of chapters 2 to 5)
+
+- **The chapter list now agrees with the Counts table and with what shipped.** It still gave
+  chapter 5 a review, chapters 7 and 9 "the 3s again" and "the 4s again", and chapter 10 "all six":
+  those are the 9s (as built), the 6s, the 8s and the 7s.
+- **Chapter 7's sum is six nights**, twenty-four gone against a dragon's sixty (a call recorded in
+  the README): the thefts go on, four a night, through chapters 5 and 6.
+- **As built:** Squall's riddle is 7 × 5; Squall, not Dew, is the littlest; Wisp was Fog. Where the
+  story stands after each shipped chapter is in [`continuity.md`](continuity.md).
 
 ## Back cover
 
@@ -86,7 +96,8 @@ The storm scattered a clutch of seven Mistscale dragonets, all named for the wea
 is the one everybody meets. The other six hide along the river, and she finds them by playing:
 taking a path, using what she's good at, or going back to look. Each one is a single short
 scene. Each greets her with a riddle that's secretly one of the Counts she already knows
-(Squall: "Five claws on each front foot. How many claws?"), and each can help with the case.
+(Squall: "Seven dragonets hold up one forepaw each. Five claws on every forepaw. How many claws
+does Mama count?"), and each can help with the case.
 
 | Dragonet | Looks and manner | Hiding | Found by | Helps by |
 |---|---|---|---|---|
@@ -96,7 +107,7 @@ scene. Each greets her with a riddle that's secretly one of the Counts she alrea
 | **Wisp** | so pale she's nearly see-through; silent | standing still in the Roaches Run reeds, copying Patience | waiting with Patience long enough (ch. 5) | saw the fox drop something glittering in the reeds |
 | **Sleet** | silver-white, the eldest; bold and bossy | the long grass of fox country, "spying on the enemy" | following the fox trail (ch. 6) | heard Reynard talk about "the dry den" |
 | **Hail** | white with grey speckles; bouncy, full of questions | a hollow log in the Barking Field, where the dogs think she's a strange dog | taking the Barking Field route (ch. 8) | leads the dogs in circles so you can slip past |
-| **Dew** | pearly green, the tiniest; sweet and sleepy | an oak hollow in GroveClan's woods | gathering oak moss (ch. 9) | knows the moss that helps a dragon's wing |
+| **Dew** (to be renamed before chapter 9: the books have a Dew) | pearly green; sweet and sleepy | an oak hollow in GroveClan's woods | gathering oak moss (ch. 9) | knows the moss that helps a dragon's wing |
 
 Places she's been stay open between chapters, so a dragonet she missed can still be found,
 right up until the full moon. All seven get home at the end either way. The ones she found say
@@ -119,8 +130,8 @@ moonlight. If the Clans drive the dragon away, the den and the pile are his.
 3. The "scale" is smooth tower glass. Sprinkle's scales are grey and ridged.
 4. The prints by the pile are tiny: five little toes close together, smaller than a cat's.
    Sprinkle's forepaw is as big as a heron's foot, with five long claws (size, not count).
-5. **The Counts.** Four pieces go missing a night: twelve in three nights. Sprinkle eats ten
-   fish at a meal, so three nights of dragon meals would be thirty.
+5. **The Counts.** Four pieces go missing a night: twenty-four in six nights. Sprinkle eats ten
+   fish at a meal, so six nights of dragon meals would be sixty.
 
 **Red herrings:** the ReedClan patrol (seen near the border, but their own pile was raided
 too), Coil the snake (creepy, but innocent of this), and Sprinkle herself.
@@ -202,8 +213,8 @@ Her warrior name waits for a later module, and what she does this moon will be p
   gossiping ferry otters, and Patience, who talks only for fish.
 - *Paths:* which witness first; routes to the prints and the fur. The raft rides low because
   Puddle is hiding under it, and Patience's reeds hide Wisp from any cat who won't wait.
-- *Counts:* review of the 1s, 2s, 5s and 10s. Story use: paying Patience ("two fish for every
-  answer").
+- *Counts:* the 9s (a cat's nine lives: "one less than a ten"), with the 1s, 2s, 5s and 10s mixed
+  in. Story use: paying Patience ("two fish for every answer").
 
 **6. The Snake in the Stones**
 - *Story:* Coil trades a secret for being left alone: small diggers come and go under the pile.
@@ -215,10 +226,10 @@ Her warrior name waits for a later module, and what she does this moon will be p
 
 **7. The Counts Don't Lie**
 - *Story:* Prey vanishes even from a guarded pile. She works the numbers with Tallyheart:
-  four pieces a night for three nights is twelve. But Sprinkle eats ten at a meal, and three
-  nights of that would be thirty. And Sprinkle can't fly, so Reynard lied. Then she finds the tunnel.
-- *Counts:* the 3s again, mixed with earlier Counts. The Counts become evidence. ("A warrior who
-  knows her Counts can't be fooled.")
+  four pieces a night for six nights is twenty-four. But Sprinkle eats ten at a meal, and six
+  nights of that would be sixty. And Sprinkle can't fly, so Reynard lied. Then she finds the tunnel.
+- *Counts:* the 6s (whiskers on one cheek: double the 3s), mixed with earlier Counts. The Counts
+  become evidence. ("A warrior who knows her Counts can't be fooled.")
 
 **8. The Night Trail**
 - *Story:* Through the tunnel, or around the Barking Field (sneak, climb, or distract the
@@ -235,7 +246,7 @@ Her warrior name waits for a later module, and what she does this moon will be p
   river mint from the Holt, dew from the glass towers. Then she lays out her case file for the
   Gathering.
 - *Paths:* gathering the oak moss finds Dew, who knows the moss that helps a dragon's wing.
-- *Counts:* the 4s again, mixed. Story use: remedy doses ("four drops a day for five days").
+- *Counts:* the 8s (a spider's legs: double the 4s), mixed. Story use: remedy doses.
 
 **10. The Gathering**
 - *Story:* On the Moon Ferry upriver, Tallyheart runs the Counts with her to steady her nerves.
@@ -249,14 +260,14 @@ Her warrior name waits for a later module, and what she does this moon will be p
   Glintstar honors her in front of every Clan: her moon is over, and she belongs to CrystalClan.
   She's still Minnowpaw, and Tallyheart tells her the warrior name is coming, with this moon in it.
   *(2026-10-06: the Warrior Counts open here, and passing them opens the Warrior Ceremony chapter.)*
-- *Counts:* the Moon Ferry Counts: all six, mixed, with Clanmates cheering from the raft. Help
-  is always there, and it can't be failed.
+- *Counts:* the 7s (only 7 × 7 is new), then the Moon Ferry Counts: every table, mixed, with
+  Clanmates cheering from the raft. Help is always there, and it can't be failed.
 - *Hook:* a badger's track in the mud upriver.
 
 ## Tallyheart and the Counts
 
-**The goal:** the 1s, 2s, 5s and 10s, then the 3s and 4s, as solid as possible through lots
-of exposure, in about 10–20% of her play time.
+**The goal:** every table to 10 × 10 (the 1s, 2s, 5s and 10s first, then the 9s, 3s, 6s, 4s, 8s
+and 7s), as solid as possible through lots of exposure, in about 10–20% of her play time.
 
 | Chapter | New Count | Practice and story use |
 |---|---|---|

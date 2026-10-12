@@ -30,6 +30,11 @@ on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
 - [`docs/storyboard/`](docs/storyboard/): the verbal storyboard of every frame, for an illustrator
   (generated from `app/story/`).
 - [`docs/build.md`](docs/build.md): how it is built, tested and deployed.
+- [`docs/continuity.md`](docs/continuity.md): where the story stands after the last shipped
+  chapter (what happened, the flags, the cards, the names), for whoever writes the next one.
+- [`docs/production.md`](docs/production.md): how a chapter gets made, what the first five cost,
+  and the plan for chapters 6 to 10. The workflow scripts it refers to are in
+  [`dev/workflows/`](dev/workflows/).
 
 ## Decisions (Aron, 2026-10-03)
 

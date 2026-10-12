@@ -4,6 +4,11 @@ Orientation for Claude Code in this repository.
 
 Potomac Crossing is a story game Aron is designing for Lissa (8) and her friends. Read
 `README.md` first (decisions and open proposals), then `docs/world.md` and `docs/module-1.md`.
+**Before building a chapter, read `docs/production.md`**: what chapters 2 to 5 cost, what went
+wrong, and the leaner plan for chapters 6 to 10 (a budget per chapter, a lesson kit instead of new
+engine keys, the story split from its spec, `docs/continuity.md` instead of five chapters of notes,
+one workflow per phase). The proven workflow scripts and the standing note every subagent prompt
+needs are in `dev/workflows/`.
 
 - **Where it lives.** Development happens on the Mac mini, in `~/potomac-crossing` (since
   2026-10-04). GitHub `ahmadia/potomac-crossing` is the shared remote, and GitHub Pages serves
@@ -28,6 +33,10 @@ Potomac Crossing is a story game Aron is designing for Lissa (8) and her friends
   `dev/gallery.html` shows all the art.
 - **Decisions are Aron's.** Add new ones to the README's list with a date. A proposal moves
   to Decisions only when Aron confirms it.
+  Since 2026-10-10 (decision 46, "I'll let you steer") the open questions are Claude's to call:
+  decide, record the call and its reason under "Claude's calls under decision 46" in the README,
+  and keep building. Ask only for what cannot be undone once the kids have seen it and is too big
+  to guess (the Warrior Counts' format is the next such).
 - **Our own world.** Never use names from Wings of Fire or Warriors: tribes, Clans,
   characters, places, or their coined words (Twoleg, kittypet, StarClan, fresh-kill,
   Thunderpath). Shared conventions are fine: -paw apprentice names, -star leaders,
@@ -41,6 +50,13 @@ Potomac Crossing is a story game Aron is designing for Lissa (8) and her friends
 
 ## Working notes (learned building chapter 1)
 
+- **Subagents can see the user's chat.** Twice a workflow agent took a chat message for its task
+  (it refused to work; it answered a status question instead of fixing). Every subagent prompt
+  starts with the standing note in `dev/workflows/README.md`.
+- **The mini is silent and its screen stays locked** (Aron, 2026-10-12 and 2026-10-04). Output is
+  muted; never unmute it, never play sound, never ask for the screen to be unlocked.
+  `tools/shots.mjs` is silent by construction and handles the lock.
+- **Contact sheets**: `node tools/sheet.mjs OUT-%.png a.png b.png …` (six frames a sheet).
 - **Visual checks from a session on the mini.** `node tools/frames.mjs ch02 OUTDIR [frames]`
   renders frames' art (no lettering) to PNG through Quick Look; `--scene '<json>'` renders one
   scene. `node tools/shots.mjs OUTDIR f077 ch02:f010 hub book` screenshots the real game in Safari

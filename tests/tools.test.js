@@ -43,6 +43,28 @@ test('shots.mjs: the fixture chapter 4 it stands in is sound, and has every scre
   for (const want of ['PC.debug.file(', 'PC.debug.tap()', 'E.giveCard(c, id', "target === 'file'"]) assert.ok(src.includes(want), want);
 });
 
+test('shots.mjs: STORY=fixture5 stands the fixture chapter 5 in (the river’s screens before chapter 5’s story is written), alone or with the others', () => {
+  const run = (story) => spawnSync(process.execPath, [SHOTS, '--lock'], { encoding: 'utf8', env: Object.assign({}, process.env, { LOCKED: '1', STORY: story }) });
+  assert.match(run('fixture5').stdout, /stories from tests\/fixtures\/chapters\.js: ch05$/m);
+  assert.match(run('fixture4,fixture5').stdout, /: ch04, ch05$/m);
+  assert.match(run('fixture,fixture3,fixture4,fixture5').stdout, /: ch02, ch03, ch04, ch05$/m);
+  assert.doesNotMatch(run('fixture6').stdout, /stories from/, 'no such fixture: the real chapters');
+});
+
+test('shots.mjs: the fixture chapter 5 it stands in is sound beside the real chapters 1 to 4, and has every screen the tool is asked for (a thing she taps, the questions she taps out, the tuck, her paws aboard, the claws in the log, the mud count, the nines, the cards that touch)', () => {
+  const { load } = require('./_load.js');
+  const PC = load(), E = PC.engine, fx = require('./fixtures/chapters.js')().ch05;
+  const real = ['ch01', 'ch02', 'ch03', 'ch04'].map(k => PC.story[k]);
+  assert.deepEqual(E.checkStory(fx, real.concat([fx])), []);
+  const kinds = Object.values(fx.frames).map(f => E.kindOf(f) + (f.scratch ? ':' + E.tapWords(f).kind + (f.scratch.miss ? '+miss' : '') : '') +
+    (f.skip ? ':' + (f.skip.tuck ? 'tuck' : f.skip.paws || 'cats') : '') + (f.card ? '+card' : ''));
+  for (const want of ['scratch:tap+miss', 'scratch:tap+miss+card', 'ask', 'skip:tuck', 'skip:board', 'skip:log', 'skip:mud', 'skip:both', 'skip:cats', 'counts', 'choice', 'input', 'next+card', 'end']) assert.ok(kinds.includes(want), want + ' in ' + Array.from(new Set(kinds)).join(' '));
+  // a Count for each picture the river brings, and the cards that touch other cards
+  for (const want of ['ch05-pile', 'ch05-tens', 'ch05-nines', 'ch05-otter', 'ch05-bill', 'ch05-catch', 'ch05-puddle', 'ch05-wisp']) assert.ok(fx.counts[want], want);
+  assert.ok(Object.values(fx.cards).filter(c => c.link && c.link.with).length >= 4);
+  assert.equal(fx.book.dragonet.length, 2);
+});
+
 test('shots.mjs --blank: a screenshot that is one flat colour but for a sliver is blank (never kept as a picture); a real page is not (no Safari needed)', () => {
   const fs = require('node:fs'), os = require('node:os'), zlib = require('node:zlib');
   // a small PNG writer: 8-bit RGBA, each row filtered `filter` (0 none, 1 sub, 2 up), from a pixel function
@@ -89,6 +111,133 @@ test('shots.mjs --blank: a screenshot that is one flat colour but for a sliver i
   assert.match(src, /still blank; taking its pages one by one/);
   assert.match(src, /console\.error\('blank: ' \+ t \+ ' \(no picture after ' \+ TRIES \+ ' tries; nothing was written\)'\)/);
   assert.match(src, /if \(lost\.length\) process\.exitCode = 1;/);
+});
+
+test('shots.mjs is silent by construction: every page it serves has speech and audio switched off before the game’s first script; Read to me stays off, a tap on its button is refused before Safari starts, and READ=1 switches it on in a page that still says nothing (no Safari needed)', async () => {
+  const fs = require('node:fs'), vm = require('node:vm');
+  const src = fs.readFileSync(SHOTS, 'utf8');
+  const run = (args, env) => spawnSync(process.execPath, [SHOTS].concat(args), { encoding: 'utf8', env: Object.assign({}, process.env, { LOCKED: '1', READ: '' }, env || {}) });
+
+  // 1. the page as served: the silencing script is the first thing in its head, before every script of the game
+  const page = run(['--page']);
+  assert.equal(page.status, 0, page.stderr);
+  const html = page.stdout, index = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const head = html.indexOf('<head>') + '<head>'.length;
+  assert.ok(html.startsWith('<script>(function(w){var said=w.__shotsSaid=[];', head), 'first in the head');
+  const end = html.indexOf('</script>', head) + '</script>'.length, shim = html.slice(head + '<script>'.length, end - '</script>'.length);
+  assert.equal(html.slice(0, head) + html.slice(end), index, 'the game’s own page, and nothing else added');
+  assert.ok(/<script\b[^>]*\bsrc=/.test(html.slice(end)) && !/<script\b/.test(html.slice(0, head)), 'every script of the game comes after it');
+  // the server puts it in every HTML file it serves, and a page with no <head> gets it at its very top
+  assert.match(src, /if \(extname\(file\) === '\.html'\) body = Buffer\.from\(silenced\(String\(body\)\)\);/);
+  const silenced = new Function('SILENT', 'return ' + /function silenced\(html\) \{[\s\S]*?\n\}/.exec(src)[0])('<S>');
+  assert.deepEqual([silenced('<html><head><title>x</title></head></html>'), silenced('<html><HEAD lang="en"><b>'), silenced('<p>bare</p>')],
+    ['<html><head><S><title>x</title></head></html>', '<html><HEAD lang="en"><S><b>', '<S><p>bare</p>']);
+
+  // 2. the stand-in, run in a page that has a real synthesizer: nothing reaches it, by any name
+  const calls = [];
+  class SpeechSynthesis { speak(u) { calls.push('speak ' + (u && u.text)); } cancel() { calls.push('cancel'); } pause() { calls.push('pause'); } resume() { calls.push('resume'); } getVoices() { return [{ name: 'Samantha', lang: 'en-US' }]; } }
+  class HTMLMediaElement { play() { calls.push('play'); return Promise.resolve(); } pause() { calls.push('media pause'); } }
+  const real = new SpeechSynthesis(), listeners = {};
+  const win = { SpeechSynthesis, HTMLMediaElement, AudioContext: function () { calls.push('AudioContext'); }, webkitAudioContext: function () { calls.push('webkitAudioContext'); },
+    Audio: function () { calls.push('Audio'); }, document: { createElement: () => new HTMLMediaElement() }, addEventListener: (k, fn) => { listeners[k] = fn; }, setTimeout, Promise };
+  Object.defineProperty(win, 'speechSynthesis', { configurable: true, get: () => real });
+  win.window = win;
+  vm.runInNewContext(shim, win);
+  assert.equal(win.__shotsSilent, true);
+  const synth = win.speechSynthesis;
+  assert.notEqual(synth, real, 'the page’s synthesizer is the stand-in');
+  assert.ok('speechSynthesis' in win, 'still there for the page to find: the Read to me button shows as on an iPad');
+  // as app/ui.js speaks: cancel, an utterance for each line, speak, and the last one's end
+  const said = [];
+  const done = new Promise((resolve) => {
+    synth.cancel();
+    ['Hello, Moonpaw.', 'Nine. Eighteen.'].forEach((t, i) => {
+      const u = new win.SpeechSynthesisUtterance(t);
+      u.rate = 0.95; u.pitch = 1.1; u.lang = 'en-US';
+      synth.speak(u);
+      said.push(u);
+      if (i === 1) u.onend = resolve;
+    });
+  });
+  await done;   // a page that waits for the end of a line goes on
+  assert.deepEqual(Array.from(win.__shotsSaid), ['Hello, Moonpaw.', 'Nine. Eighteen.'], 'what would have been read is noted');
+  assert.deepEqual(Array.from(synth.getVoices()), []);
+  synth.pause(); synth.resume(); synth.cancel();
+  // …and the real one is mute by every route a page has to it
+  real.speak({ text: 'direct' }); real.cancel(); real.pause(); real.resume();
+  SpeechSynthesis.prototype.speak.call(real, { text: 'by the prototype' });
+  new SpeechSynthesis().speak({ text: 'a new one' });
+  try { win.speechSynthesis = real; } catch (e) { /* strict pages throw; either way it does not come back */ }
+  assert.equal(win.speechSynthesis, synth, 'the stand-in cannot be put aside');
+  win.speechSynthesis.speak({ text: 'after' });
+  // media: play() starts nothing, a playing element is stopped, there is no audio context to make
+  const el = new HTMLMediaElement();
+  await el.play();
+  assert.equal(el.muted, true);
+  const a2 = new win.Audio('x.mp3'); await a2.play();
+  const playing = { muted: false, pause() { calls.push('stopped'); } };
+  listeners.play({ target: playing });
+  assert.deepEqual([playing.muted, win.AudioContext, win.webkitAudioContext], [true, undefined, undefined]);
+  assert.deepEqual(calls, ['stopped'], 'no call ever reached a real synthesizer, a player or an audio context');
+  // the game has no other way to make a sound than the ones the stand-in covers
+  const game = index + ['app/ui.js', 'app/engine.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+  const used = Array.from(new Set(game.match(/\b(speechSynthesis|SpeechSynthesisUtterance|AudioContext|webkitAudioContext|new Audio|HTMLMediaElement)\b|<(audio|video)\b|\.play\(\)/g) || []));
+  assert.ok(used.includes('speechSynthesis'), 'Read to me speaks through speechSynthesis');
+  used.forEach(u => assert.ok(shim.includes(u.replace(/^new /, '').replace(/^<(audio|video)$/, 'HTMLMediaElement').replace('.play()', 'HTMLMediaElement')), 'the stand-in covers ' + u));
+
+  // 3. Read to me stays off: a tap on its button is refused before any server or Safari is started
+  const tap = run([path.join(require('node:os').tmpdir(), 'pc-shots-never'), 'hub', 'ch05:f010@nextBtn@readBtn']);
+  assert.deepEqual([tap.status, tap.stdout], [1, '']);
+  assert.match(tap.stderr, /^@readBtn: Read to me stays off in this tool/);
+  assert.ok(src.indexOf("includes('readBtn')") < src.indexOf('createServer(') && src.indexOf("includes('readBtn')") < src.indexOf("spawn('safaridriver'"), 'refused before the server and the driver exist');
+  // the tool says which way it runs
+  assert.match(run(['--lock']).stdout, /^silent: speech and audio are switched off in every page before the game boots; Read to me is off$/m);
+  assert.match(run(['--lock'], { READ: '1' }).stdout, /Read to me is on \(READ=1\), and still says nothing$/m);
+  assert.match(run(['--lock'], { READ: 'yes' }).stdout, /Read to me is off$/m, 'only READ=1 opts in');
+
+  // 4. the check every page gets once its test cat is set up (and every pane of a sheet, and the page after EXTRA's reload)
+  const QUIET = /const QUIET = `([\s\S]*?)`;/.exec(src)[1];
+  const pageWith = (readAloud, o) => {
+    const st = { settings: { readAloud } }, w = Object.assign({ __shotsSilent: true, __shotsSaid: [] }, o || {});
+    const btn = { clicks: 0, click() { this.clicks++; st.settings.readAloud = !st.settings.readAloud; } };
+    // (run as the tool runs it: its `arguments[0]` is the caller's READ)
+    const res = new Function('window', 'document', 'PC', 'want', 'return (function () { ' + QUIET + ' }).call(null, want);');
+    return (want) => [res.call(null, w, { getElementById: (id) => (id === 'readBtn' ? (o && o.noBtn ? null : btn) : null) }, { debug: { state: () => JSON.parse(JSON.stringify(st)) } }, want), st.settings.readAloud, btn.clicks];
+  };
+  assert.deepEqual(pageWith(false)(), [true, false, 0], 'off, as a new device is: nothing to do');
+  assert.deepEqual(pageWith(true)(), [true, false, 1], 'a save that had it on: switched off');
+  assert.deepEqual(pageWith(false)(true), [true, true, 1], 'READ=1: on');
+  assert.deepEqual(pageWith(true)(true), [true, true, 0]);
+  assert.equal(pageWith(false, { __shotsSilent: undefined })()[0], 'this page was not silenced before the game booted');
+  assert.equal(pageWith(true, { noBtn: true })()[0], 'Read to me is on and would not change');
+  // QUIET's own `arguments[0]` is the caller's READ: the page's setup hands it on, in a single page, in a pane, after a reload
+  assert.match(src, /return \(function \(\) \{ ` \+ QUIET \+ ` \}\)\.call\(null, arguments\[2\]\);`;/);
+  assert.match(src, /await run\(SETUP, \[CAT, FIXTURE, READ\]\)/);
+  assert.match(src, /new w\.Function\(setup\)\.apply\(null, \[cat, fixture, read\]\)/);
+  assert.match(src, /const quiet = await run\(QUIET, \[READ\]\);/);
+  // and the tool itself runs nothing that sounds
+  // (the only programs it starts are Safari's driver and the lock check: no `say`, no `afplay`, no volume)
+  const started = Array.from(src.matchAll(/\b(?:spawn|spawnSync|exec|execSync|execFile|execFileSync)\(\s*(['"`])([^'"`]*)\1/g), m => m[2]);
+  assert.deepEqual(started.sort(), ['ioreg', 'safaridriver']);
+  assert.doesNotMatch(src, /\\x07|\\u0007|\\a\b/, 'no bell');
+});
+
+test('shots.mjs DRY=1 prints what Read to me would say on each screen from the page’s own list, with Read to me off: PC.debug.speech hands the lines over and says nothing (no Safari needed)', () => {
+  const fs = require('node:fs');
+  const src = fs.readFileSync(SHOTS, 'utf8'), ui = fs.readFileSync(path.join(ROOT, 'app/ui.js'), 'utf8');
+  // the page: the list it keeps for Read to me, as text; the hook reads no setting and calls nothing that speaks
+  const hook = /\n      speech: function \(\) \{ return ([^\n]*) \},\n/.exec(ui);
+  assert.ok(hook, 'PC.debug.speech');
+  assert.match(hook[1], /^\(currentSpeech \|\| \[\]\)\.map\(/);
+  assert.doesNotMatch(hook[1], /speechSynthesis|speakItems|Utterance|readAloud/);
+  // the same words speakItems would hand the synthesizer (emphasis marks off, × said as "times")
+  assert.ok(ui.includes("var txt = plain(String(it.text || '').replace(/<[^>]+>/g, ' ')).trim();"), 'speakItems’ own line');
+  assert.ok(hook[1].includes("plain(String((it && it.text) || '').replace(/<[^>]+>/g, ' ')).trim()"), 'and the hook’s, the same');
+  // the tool: a DRY run prints it for every target, whether or not READ=1 was asked for
+  const dry = /if \(DRY\) \{\n    console\.log\(t \+ ': '[^\n]*\n([\s\S]*?)\n    return;\n  \}/.exec(src);
+  assert.ok(dry, 'the single-target DRY branch');
+  assert.match(dry[1], /const lines = await run\('return PC\.debug && PC\.debug\.speech \? PC\.debug\.speech\(\) : null;'\);\n    if \(lines\) console\.log\(t \+ ' \(Read to me would say; it is off\): ' \+ lines\.join\(' \| '\)\);/);
+  assert.ok(dry[1].indexOf('PC.debug.speech') < dry[1].indexOf('if (READ)'), 'before, and not under, the READ=1 line');
 });
 
 test('shots.mjs: EXTRA never reads the save back from a storage that may have lost it: the page’s own save, and a stand-in that lasts the reload', () => {

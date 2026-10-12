@@ -440,11 +440,22 @@
   // `true`, and a juggling otter's `pebbles: 4 | 5`; chapter 4's `wink: true` (Tallyheart at the
   // doorway), `holds: 'bark'` (a Case File card in a paw) and Reynard's `flick: true` (one ear
   // flicks)). `purr` and `lift` are the scene's own (fxPurr, liftPlan), not the drawing's.
-  var CAST_EXTRAS = ['flatEars', 'holds', 'holdAt', 'tear', 'mist', 'claws', 'puffed', 'squeeze', 'moss', 'pebbles', 'wink', 'flick'];
+  // Chapter 5 names four more: `tuck: true` (a cat sitting up with one claw curled back in: nine out,
+  // "one less than ten"), `asleep: true` (sitting up, eyes shut), `snail: true | 'in'` (a snail halfway
+  // up the old tom's ear; its horns in once his nose is tapped) and `holds: 'pole'` (Riffle's). And
+  // from chapter 5 on a cast member's every other key goes to the drawing too, whatever it is called:
+  // the painters (cats.js) and the scenes are built side by side, and an extra the painter learns
+  // must not be lost on the way for want of its name here. What stays the scene's is CAST_OWN: who
+  // she is, where and how big (`at`, `size`), which way she faces (the drawing gets it as `facing`,
+  // placeChar), and `purr` and `lift`. The named extras are copied first, in this order, as they
+  // always were, so chapters 1 to 4 hand the painter exactly the options they did.
+  var CAST_EXTRAS = ['flatEars', 'holds', 'holdAt', 'tear', 'mist', 'claws', 'puffed', 'squeeze', 'moss', 'pebbles', 'wink', 'flick', 'tuck', 'asleep', 'snail'];
+  var CAST_OWN = { who: 1, at: 1, pose: 1, mood: 1, variant: 1, facing: 1, size: 1, purr: 1, lift: 1, look: 1, sex: 1, taken: 1 };
   function charOpts(S, who, m) {
     var o = { pose: (m && m.pose) || defaultPose(who), mood: (m && m.mood) || 'neutral' };
     if (m && m.variant != null) o.variant = m.variant;
     if (m) CAST_EXTRAS.forEach(function (k) { if (m[k] != null) o[k] = m[k]; });
+    if (m) for (var x in m) if (Object.prototype.hasOwnProperty.call(m, x) && !CAST_OWN[x] && o[x] === undefined && m[x] != null) o[x] = m[x];
     if (who === 'player') {
       o.look = S.look || {};
       if (o.look.sex) o.sex = o.look.sex;
@@ -2074,6 +2085,39 @@
       g(circ(0, 0, r * 0.98, '#FFF3D2', { opacity: 0.07 }) + path(d, '#FFF3D2'), { transform: 'translate(' + n(x) + ' ' + n(y) + ') rotate(' + n(tilt || 0) + ')' }), { 'data-prop': 'thin-moon' });
   }
 
+  // The moon is the Gathering's clock: new on her first night, a sliver on the fourth evening
+  // (thinMoon, above: `moon: true`), and fatter every evening until it is full. From chapter 5 a frame
+  // gives its age in evenings (`moon: 5`), and the drawing follows: the lit limb on the side the sun
+  // went down, and a terminator that is an ellipse `t` of the radius across (0.8 for the sliver, 0 at
+  // the half moon, below 0 when it bulges the other way). (x, y) its middle, r its radius, `tilt`
+  // degrees as thinMoon's.
+  function moonT(age) { return clamp(0.8 - 0.18 * (age - 4), -1, 0.9); }
+  function waxingMoon(S, x, y, r, tilt, age) {
+    var t = moonT(age), d = 'M0 ' + n(-r) + 'A' + n(r) + ' ' + n(r) + ' 0 0 1 0 ' + n(r) + 'A' + n(Math.abs(t) * r) + ' ' + n(r) + ' 0 0 ' + (t >= 0 ? 0 : 1) + ' 0 ' + n(-r) + 'Z';
+    var lit = clamp(0.2 + 0.03 * (age - 4), 0.2, 0.36);
+    return g(circ(x, y, r * 2.6, S.radU([[0, '#FFF6DE', lit], [1, '#FFF6DE', 0]], x, y, r * 2.6)) +
+      g(circ(0, 0, r * 0.98, '#FFF3D2', { opacity: 0.07 }) + path(d, '#FFF3D2'), { transform: 'translate(' + n(x) + ' ' + n(y) + ') rotate(' + n(tilt || 0) + ')' }), { 'data-prop': 'waxing-moon', 'data-age': n(age) });
+  }
+  // Over the den at dusk: each evening it stands a little higher over the towers and a little
+  // further from where the sun went down, and is a little bigger. The fifth evening's (chapter 5:
+  // "a crescent a little fatter than last night's", plain to see over Tallyheart) is the first.
+  // (It is in the picture and no longer in the words, so the lettering keeps off it.)
+  function denMoon(S, age) {
+    var e = clamp(age - 4, 0, 10), x = Math.max(1330, 1496 - 22 * e), y = Math.max(72, 132 - 16 * e), r = Math.min(56, 40 + 5 * e);
+    (S.keep = S.keep || []).push({ x: x - r - 8, y: y - r - 8, w: 2 * r + 16, h: 2 * r + 16 });
+    return waxingMoon(S, x, y, r, Math.max(8, 38 - 3 * e), age);
+  }
+
+  // The same moon from inside the den, through the doorway: in the arch's patch of sky, above the
+  // bushes and above the head of a cat sitting in the doorway, whole in the `inside` and `doorway`
+  // cameras (the nest close-up looks the other way).
+  var DOOR_MOON = { x: 1452, y: 556 };
+  function doorMoon(S, age) {
+    var e = clamp(age - 4, 0, 10), r = Math.min(40, 26 + 4 * e);
+    (S.keep = S.keep || []).push({ x: DOOR_MOON.x - r - 6, y: DOOR_MOON.y - r - 6, w: 2 * r + 12, h: 2 * r + 12 });
+    return waxingMoon(S, DOOR_MOON.x, DOOR_MOON.y, r, Math.max(8, 38 - 3 * e), age);
+  }
+
   function drawDenOutside(S) {
     var p = S.pal, back = '', r = rng(171), storm = S.opts.weather === 'storm', cloudy = S.opts.weather === 'cloudy', rc = roseCols(S);
     // the rosebush fills the middle of the sky, so the Sky River runs across the top, above it
@@ -2083,6 +2127,8 @@
     if (S.opts.moon && S.tod === 'night' && !cloudy) back += moon(S, 1330, 150, 44);
     // chapter 4, the fourth evening: asked for at dusk (or sunset), the moon is the young one, thin
     // and low over the towers at the right (the only moon so far; by night it is the crescent above)
+    // chapter 5 on: a number is the moon's age in evenings (5: a crescent a little fatter than that)
+    else if (typeof S.opts.moon === 'number' && S.opts.moon > 0 && (S.tod === 'dusk' || S.tod === 'sunset') && !cloudy) back += denMoon(S, S.opts.moon);
     else if (S.opts.moon && (S.tod === 'dusk' || S.tod === 'sunset') && !cloudy) back += thinMoon(S, 1496, 132, 40, 38);
     back += towers(S, [
       { x: 20, w: 170, top: 240, base: 700, far: 0.5 }, { x: 210, w: 120, top: 330, base: 700, far: 0.6, cap: 'slant' },
@@ -2173,9 +2219,13 @@
   // cat who has not been up the tower must not find his clue on her nest's edge; a list says which)
   var BARK_EXTRA = [[2, { picture: 'dug-earth', mark: 'eye' }], [6, { picture: 'squall-shapes', mark: 'ear' }]];
   var BARK_SECRET = { 'sprinkle-scales': 1, 'cant-fly': 1 }, BARK_MAX = 24;
+  // the most pieces one row holds (chapter 4's fullest); how much higher the course behind it stands (denBark)
+  var BARK_ROW = 9, BARK_LIFT = 15;
   function barkRow(S) {
     var b = S.opts.bark, list;
-    if (Array.isArray(b)) list = b.slice(0, BARK_MAX).map(function (c) { return c && typeof c === 'object' ? c : c ? { picture: String(c) } : null; });
+    // (a list is her whole file, however long: the two under the moss are found in all of it, and
+    // when it outgrows the rim, below, it is the oldest pieces that are left out, never today's)
+    if (Array.isArray(b)) list = b.map(function (c) { return c && typeof c === 'object' ? c : c ? { picture: String(c) } : null; });
     else {
       var count = b === 'auto' || b === true ? BARK_ORDER.length : clamp(Math.round(+b || 0), 0, BARK_MAX);
       list = BARK_ORDER.slice(0, Math.min(count, BARK_ORDER.length));
@@ -2190,6 +2240,7 @@
       while (hid < 2 && list.length) { list.pop(); hid++; }
       hid = 2;   // the corners show whatever the row holds: she has put two under
     }
+    if (list.length > BARK_MAX) list = list.slice(list.length - BARK_MAX);
     return { row: list, hid: hid };
   }
   function denBark(S, x, y, k) {
@@ -2208,8 +2259,25 @@
     // two hidden, their corners take its inner end
     var T = (R.hid ? 86 : 112) * k, nRow = R.row.length, step = nRow > 1 ? Math.min(15 * k, (T - cw) / (nRow - 1)) : 0, len = nRow ? cw + (nRow - 1) * step : 0, t0 = (T - len) / 2;
     function at(t) { return x + d * (118 * k - t); }
-    var x0 = 1e9, x1 = -1e9, top = 1e9;
-    for (var i = 0; i < nRow; i++) {
+    var x0 = 1e9, x1 = -1e9, top = 1e9, i, total = nRow;
+    // Chapter 5: a bigger file. One row holds nine pieces as chapter 4 stood them (its fullest row);
+    // from the tenth the bark stands two deep, like two courses of roof tiles: the older half behind,
+    // a little higher on the rim's inner lip and half a step along, their tops showing over the newer
+    // half, which stands in front where the one row stood. Neither course is ever closer set than
+    // chapter 4's row of nine until the file passes eighteen.
+    if (nRow > BARK_ROW) {
+      var nBack = Math.floor(nRow / 2), nFront = nRow - nBack;
+      var bStep = nBack > 1 ? Math.min(15 * k, (T - cw) / (nBack - 1)) : 0;
+      step = nFront > 1 ? Math.min(15 * k, (T - cw) / (nFront - 1)) : 0; len = cw + (nFront - 1) * step; t0 = (T - len) / 2;
+      var bLen = cw + (nBack - 1) * bStep, b0 = (T - bLen) / 2 - (nBack === nFront ? bStep / 2 : 0);
+      for (i = 0; i < nBack; i++) {
+        var bx = at(b0 + cw / 2 + i * bStep), by = rim(bx) + 2 * k - BARK_LIFT * k;
+        cards += barkAt(R.row[i], bx, by, cw, d * 8 + (r() - 0.5) * 5, 0);
+        x0 = Math.min(x0, bx - cw * 0.75); x1 = Math.max(x1, bx + cw * 0.75); top = Math.min(top, by - ch);
+      }
+      R.row = R.row.slice(nBack); nRow = nFront;
+    }
+    for (i = 0; i < nRow; i++) {
       var cx = at(t0 + cw / 2 + i * step), cy = rim(cx) + 2 * k;
       cards += barkAt(R.row[i], cx, cy, cw, d * 8 + (r() - 0.5) * 5, 0);
       tuck(cx - d * cw * 0.2 + (r() - 0.5) * 6 * k, cy + (r() - 0.3) * 4 * k, (6.5 + r() * 4.5) * k);
@@ -2227,7 +2295,7 @@
     }
     (S.keep = S.keep || []).push({ x: x0, y: top, w: x1 - x0, h: y + ry - top });
     var moss = mix(p.moss, '#FFFFFF', 0.06);
-    return g(g(cards, { filter: castTint(S) || null }) + path(tucks, moss) + path(lights, mix(moss, '#FFFFFF', 0.16), { opacity: 0.55 }), { 'data-prop': 'nest-bark', 'data-count': nRow });
+    return g(g(cards, { filter: castTint(S) || null }) + path(tucks, moss) + path(lights, mix(moss, '#FFFFFF', 0.16), { opacity: 0.55 }), { 'data-prop': 'nest-bark', 'data-count': total });
   }
 
   function drawDenInside(S) {
@@ -2235,6 +2303,9 @@
     var day = !!p.day;
     // outside, through the doorway
     var out = sky(S, 1180, 380, 420, 560, { seed: 192, starCount: 70, boltX: 0.5, boltH: 0.6, cloudy: cloudy });
+    // chapter 5: the moon by its age (`moon: 5`), at dusk, hangs in the doorway's patch of sky too, over
+    // whoever sits in the doorway (chapter 4's `moon: true` is seen from outside only, as it was)
+    if (typeof S.opts.moon === 'number' && S.opts.moon > 0 && (S.tod === 'dusk' || S.tod === 'sunset') && !cloudy) out += doorMoon(S, S.opts.moon);
     out += path(mound(1150, 1650, 760, 640, 8, rng(193), 0.3, 0.3, 0.3), p.leaf) + rect(1180, 740, 420, 200, S.lin('doorground', [[0, p.grassFar], [1, p.grassNear]]));
     out += tufts(S, 1200, 1600, 760, 900, 30, 194, p.grassNear, p.grassLight, 1);
     if (storm) out += path(blob(1400, 860, 120, 12, 8, rng(195), 0.2, 0.3), '#3A4A60', { opacity: 0.7 });
@@ -2778,6 +2849,8 @@
       // picture, blinking), roar (jagged sound lines in the sky on both sides of the roof) and ding (a
       // small DING! lettered at the very top, beside the light: the little room has arrived); the roar
       // and the DING show the light too, unless light is false
+      // chapter 5 asks nothing new: the offer is this camera with light and roar, our cat at `foot`
+      // and nobody at the railing; "Not today" is chapter 4's own panel, Waffles at her railing
       opts: { chime: [true, false], light: [false, true], roar: [false, true], ding: [false, true] }, defaults: {}
     },
     garden: {
@@ -2847,6 +2920,9 @@
       // pictures, oldest first: the row as she has scratched it by this panel; the page hands over
       // { picture, mark } for the entries that are this cat's, E.resolveScene) and blank (so many
       // blank pieces after them)
+      // chapter 5 asks nothing new here: marks: 5 (the fifth under the first three, beside the fourth;
+      // no bark falls that day), and the rim's five and Tallyheart sitting up with `tuck: true`, a
+      // cast extra the painter draws (one claw curled back in: nine out)
       opts: { marks: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'auto'], glow: [true, false, 'auto'], depth: [0, 1, 2, 'auto'],
         bark: [false, 'falling', 'sand', 'row'], cards: 'cards', blank: [0, 1, 2, 3], heap: [false, true] }, defaults: { marks: 0 }
     },
@@ -2869,7 +2945,11 @@
       // her own cards, the UI's to fill with the list of them; denBark), and
       // hidden (the two about Sprinkle under the moss: two fewer in the row, two corners showing);
       // moon: true at dusk, from outside, is the young moon, thin and low
-      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
+      // chapter 5: moon: 5 at dusk, the fifth evening's moon, a crescent a little fatter than
+      // chapter 4's and a little higher (a number is the moon's age in evenings; later chapters add
+      // theirs), from outside over the towers and from inside in the doorway's sky; and a bigger
+      // file: from the tenth piece her bark stands two deep along the nest's edge (denBark)
+      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
         bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true] }, defaults: { weather: 'clear' }
     },
     sky: {
@@ -2991,10 +3071,46 @@
     return out;
   }
 
+  // Chapter 5's three new characters, at any anchor. They too are drawn in the cats' units, and the
+  // scenes hold each to the size the text gives it, whatever its box says:
+  //   Patience, the great blue heron, stands taller than Tallyheart sits: about Sprinkle's height
+  //     (who is "about a heron's size"), never a bird a cat could look down on, never a giant;
+  //   Puddle is "about Sprinkle's size": his head (often all of him that is out of the water) is the
+  //     size of hers;
+  //   Wisp is "slighter": her head a little smaller than Sprinkle's, never bigger.
+  // Each is measured once, in one pose of its own, against the other's sitting drawing, and every
+  // pose is scaled alike, so none changes size from one panel to the next. A drawing already inside
+  // its band is left exactly as drawn (the painter's size stands); one outside it is brought to the
+  // band's nearer edge. A `size` on the cast member multiplies on top, as it does for a cat. A set
+  // that lays its own props round one of them (the marsh: the reeds over Wisp, the cloud over
+  // Patience) reads the rule from art.sizeBands, below, so the two never disagree.
+  //   by 'tall': the top of the head to the feet; by 'head': the head box, width and height averaged.
+  var SIZE_BAND = {
+    patience: { ref: 'tallyheart', pose: 'stand', by: 'tall', min: 1.4, max: 2.6 },
+    puddle: { ref: 'sprinkle', pose: 'head', by: 'head', min: 0.88, max: 1.12 },
+    wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 }
+  };
+  function measure(S, who, pose, by) {
+    var memo = S.measured || (S.measured = {}), key = who + ':' + pose + ':' + by;
+    if (memo[key] == null) {
+      var ch = getChar(who, charOpts(S, who, { pose: pose, mood: 'neutral' }));
+      var hb = ch.headBox || { x0: ch.head.x - ch.w * 0.2, y0: Math.max(0, ch.head.y - ch.h * 0.18), x1: ch.head.x + ch.w * 0.2, y1: ch.head.y + ch.h * 0.18 };
+      memo[key] = Math.max(1, by === 'head' ? ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2 : ch.h - hb.y0);
+    }
+    return memo[key];
+  }
+  function sizeBand(S, who, s) {
+    var b = SIZE_BAND[who];
+    if (!b) return s;
+    var ratio = measure(S, who, b.pose, b.by) / measure(S, b.ref, 'sit', b.by);
+    return s * clamp(ratio, b.min, b.max) / ratio;
+  }
+
   // How a cast member stands at spot `a`: who, drawing options, scale, facing and feet (world units).
   function castPlan(S, m, a, R) {
     var who = m.who || 'clancat', co = charOpts(S, who, m);
     var s = sizeCap(S, who, m, a, R, a.h / R * (m.size > 0 ? +m.size : 1)), face = m.facing || a.face || 'right', ay = a.y;
+    if (SIZE_BAND[who]) s = sizeBand(S, who, s);
     if (who === 'moth' && !a.elev) ay = a.y - a.h * 0.55;
     if (who === 'tallone' && S.box) {
       var th = getChar(who, co).h;
@@ -3037,10 +3153,18 @@
   // Bigger than a cat (Sprinkle, heron-sized): drawn in the cats' units like everyone (cats.js gives
   // her a box bigger than a cat's, so a cat's anchor fits her), her face's r from her head box as the
   // otters' and dogs' are, and her shadow under her body rather than her whole box.
-  var BIG = { sprinkle: 1 };
+  // (chapter 5: Patience, taller than any cat, and Sprinkle's brother and sister, built as she is)
+  var BIG = { sprinkle: 1, patience: 1, puddle: 1, wisp: 1 };
   // Whose box is mostly tail or wings, so the shadow lies under the body as drawn, not the whole box:
   // Sprinkle, and chapter 4's fox (his brush) and littlest dragonet (his stubby wings and tail).
   var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1 };
+  // Chapter 5's three have a shadow of that kind too, but only on ground that can take one: none at
+  // an anchor a set marks `air: true` (a spot in the water, where the set draws its own rings), and
+  // never under Puddle in the river, which is every pose the chapter gives him (a foot through the
+  // logs, his head, a log, a nose, a forepaw, two nostrils): a dark shape in the water under him is
+  // the one thing the open river must never show. Sitting (his page in her book, a later chapter on
+  // dry land), he has the shadow his sisters have.
+  var SHADOW_5 = { patience: 1, wisp: 1, puddle: 1 }, IN_WATER = { puddle: { foot: 1, head: 1, log: 1, sink: 1, pawup: 1, nostrils: 1 } };
   // A face's size, for balloon tails and for keeping the lettering off it: its radius in percent of
   // the panel width (a head's `r`). A cat's is a fifth of its 200 box (chapter 1's measure, which the
   // UI used to estimate from the markup); anything else with a head box (Riffle, the otters, the
@@ -3059,7 +3183,7 @@
     var world = null, hb = ch.headBox;
     // the fox and the littlest dragonet are lettered like everyone with a face: should cats.js
     // report no head box for one of them, the size comes from the box castBoxes estimates
-    if (!hb && SIZE_CAP[who] && ch.head) hb = { x0: ch.head.x - ch.w * 0.2, y0: ch.head.y - ch.h * 0.18, x1: ch.head.x + ch.w * 0.2, y1: ch.head.y + ch.h * 0.18 };
+    if (!hb && (SIZE_CAP[who] || SIZE_BAND[who]) && ch.head) hb = { x0: ch.head.x - ch.w * 0.2, y0: ch.head.y - ch.h * 0.18, x1: ch.head.x + ch.w * 0.2, y1: ch.head.y + ch.h * 0.18 };
     if (CAT_IDS[who]) world = 0.2 * ch.h * s;
     else if (hb && faceShare()) world = faceShare() * ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2 * s;
     return world != null && world > 0 && isFinite(world) ? world / S.box.w * 100 : null;
@@ -3103,7 +3227,11 @@
       // would otherwise float over it
       var seated = pl.lift > 0 && pl.lift >= S.camDef.lift.seat, restY = seated ? Math.min(ay, bx.body[3]) : ay;
       if (seated) piece += g(seat(S, bx.body, restY - 6, a.y), tint ? { filter: tint } : null);
-      if (OWN_SHADOW[who]) {
+      if (IN_WATER[who] && IN_WATER[who][co.pose]) {
+        // (in the water: nothing dark is ever drawn under him)
+      } else if (SHADOW_5[who]) {
+        if (!a.air) piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
+      } else if (OWN_SHADOW[who]) {
         // bigger than a cat, and her box is mostly neck, wings and tail: the shadow lies under her
         // body as drawn (none when only her eyes show in the dark)
         if (co.pose !== 'eyes') piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
@@ -3582,6 +3710,8 @@
     // barkCurl(S, x, y, k, rot) (a curl off the tree) and barkAt(card, x, y, w, rot, flat) (a piece pressed flat: a
     // Case File card as cards.js draws it; card: { picture, mark }, a picture's key, or null for blank)
     redLight: redLight, thinMoon: thinMoon, barkCurl: barkCurl, barkAt: barkAt,
+    // chapter 5: waxingMoon(S, x, y, r, tilt, age) (the moon `age` evenings old: 4 is thinMoon's sliver, 5 a little fatter)
+    waxingMoon: waxingMoon,
     anchor: A
   };
 
@@ -3594,6 +3724,10 @@
     return { label: set.label, cams: cams, anchors: JSON.parse(JSON.stringify(set.anchors)), defaults: JSON.parse(JSON.stringify(set.defaults)) };
   };
   art.world = { w: WORLD_W, h: WORLD_H };
+  // The sizes the scenes hold a newcomer to (SIZE_BAND, above): { who: { ref, pose, by, min, max } },
+  // a copy. measure(who, pose, by) / measure(ref, 'sit', by) is brought inside [min, max]; by 'tall'
+  // is the drawing's h minus its head box's y0, by 'head' its head box's width and height averaged.
+  art.sizeBands = JSON.parse(JSON.stringify(SIZE_BAND));
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

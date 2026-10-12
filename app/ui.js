@@ -7,6 +7,13 @@
  * over the page (her cards on moss, in two groups; a card shown large), the card a frame gives her
  * shown under its panel, and three pages she taps: the row of bark she scratches (`scratch`), the
  * glint at the pile (`scratch` with `tap`), and the first time she opens her file (`file`).
+ * Chapter 5 adds the page of questions she taps out of an otter (`ask`), the skip-count's new forms
+ * (the tuck, her paws aboard, nine claws in a log on the frame's own scene, the mud count), a soft
+ * glow of the page's own on anything a frame asks her to tap (`scratch` with `tap`: a nose, a tuft
+ * of fur, a patch of mud) with a small answer to a tap anywhere else, the nines in a lesson (the hop
+ * and the tuck as a question is asked, the help in two phases, two answers scratched in the sand),
+ * a lesson nobody speaks in (captions), cards lying three in a row in her Case File, and a dragonet
+ * drawn in its own pose in her book.
  *
  * Loads in Node without a DOM (it only exports the pure layout helpers there).
  */
@@ -271,10 +278,27 @@
    * spot would sit under a caption or a balloon does the lettering shrink (down to half, never below
    * 18px unless it was smaller to start with), and then on until a spot is clear of faces too, if
    * one is (chapter 3's train runs along the top, clear of the cats' faces). Returns
-   * { box: {x, y, w, h}, size, clear } (clear: no caption or balloon over it). */
-  function sfxPlace(text, W, H, faces, placed) {
+   * { box: {x, y, w, h}, size, clear } (clear: no caption or balloon over it).
+   * Chapter 5: a frame may say where its sound goes (`sfxAt: [x, y]`, the middle of the lettering in
+   * hundredths of the panel: the Roar, "lettered across the whole sky", under the airplane). `at` is
+   * that: the lettering goes there at its fitted size, kept inside the panel, and smaller (the same
+   * steps, down to half) only while a caption or a balloon would hide it; if one still would at
+   * half size, it is placed as any other. Faces and the kept areas do not move it: the frame chose
+   * the spot with the picture in front of it. */
+  function sfxPlace(text, W, H, faces, placed, at) {
     var fit = sfxFit(text, W), size0 = fit.size, estW0 = fit.estW, estH0 = fit.estH;
     var best = null, bestScore = Infinity, bestHidden = true, size = size0;
+    if (Array.isArray(at) && at.length === 2 && isFinite(+at[0]) && isFinite(+at[1])) {
+      var fixed = null;
+      [1, 0.85, 0.72, 0.6, 0.5].some(function (sk) {
+        var s2 = sk === 1 ? size0 : Math.max(Math.min(18, size0), size0 * sk), eW = estW0 * s2 / size0, eH = estH0 * s2 / size0;
+        var r = { x: clamp(W * +at[0] / 100 - eW / 2, W * 0.02, Math.max(W * 0.02, W * 0.98 - eW)), y: clamp(H * +at[1] / 100 - eH / 2, H * 0.02, Math.max(H * 0.02, H * 0.98 - eH)), w: eW, h: eH };
+        if ((placed || []).some(function (b) { return overlapArea(r, b) > 0; })) return false;
+        fixed = { box: r, size: s2, clear: true };
+        return true;
+      });
+      if (fixed) return fixed;
+    }
     [1, 0.85, 0.72, 0.6, 0.5].some(function (sk) {
       var s2 = sk === 1 ? size0 : Math.max(Math.min(18, size0), size0 * sk), eW = estW0 * s2 / size0, eH = estH0 * s2 / size0;
       var spots = [
@@ -326,7 +350,10 @@
     sprinkle: 'Sprinkle', murmurchime: '{Murmur}chime',
     // chapter 4: the chapter that meets them labels each "The fox" and "The little dragon" (its
     // `names`) until he is named on screen; from then on his balloons carry `name`
-    reynard: 'Reynard', squall: 'Squall'
+    reynard: 'Reynard', squall: 'Squall',
+    // chapter 5: the heron is Patience from her first balloon (Riffle has named her); Puddle is "The
+    // big-footed dragon" (the chapter's `names`) until "I'm Puddle"; Wisp never speaks on screen
+    patience: 'Patience', puddle: 'Puddle', wisp: 'Wisp'
   };
   // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
   var VARIANT_NAMES = {
@@ -334,11 +361,13 @@
     dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' }
   };
   var PITCH = { waffles: 1.45, tallyheart: 0.92, glintstar: 0.85, grizzled: 0.6, player: 1.2, snorer: 1.1, mutterer: 1.3, snorter: 1.15, clancat: 1.0, tallone: 1.0,
-    riffle: 1.5, otter: 1.05, dog: 0.9, sprinkle: 1.38, murmurchime: 1.3, reynard: 0.8, squall: 1.7 };
+    riffle: 1.5, otter: 1.05, dog: 0.9, sprinkle: 1.38, murmurchime: 1.3, reynard: 0.8, squall: 1.7,
+    patience: 0.7, puddle: 1.32, wisp: 1.25 };
   var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 } };
   // Sprinkle is shy: a little slower than everyone else's 0.95. Reynard is slow and smooth; Squall
-  // is high and loud (as loud as the voice goes), and in a hurry
-  var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02 };
+  // is high and loud (as loud as the voice goes), and in a hurry. Chapter 5: Patience is low and
+  // slow; Puddle is bright and quick, a little out of breath
+  var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02, patience: 0.8, puddle: 1.05 };
   function pitchOf(who, variant) {
     var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
     return v || PITCH[who] || 1;
@@ -372,7 +401,9 @@
    * being picked up again (`skip`: resumed, or its balloons were just read over a kept skip picture),
    * or the frame carries a whole conversation (three balloons or more: the riddle's "HALT!", "Friend!
    * Sprinkle sent me.", "PROVE it!" over a three-line question made the page taller than the screen,
-   * and it opened scrolled; she has just read them on the frame itself). */
+   * and it opened scrolled; she has just read them on the frame itself). Chapter 5: nor does a frame
+   * that says so (`counts: { intro: false }`, passed in as `skip`: the tens warm-up, whose first
+   * question may be her hardest ten and is timed on itself). */
   function lessonIntro(said, skip) { return skip || (said || []).length > 2 ? [] : said || []; }
   UI.speakers = { label: speakerLabel, pitch: pitchOf, rate: rateOf, faceHidden: faceHidden, nameOn: nameOn, lessonIntro: lessonIntro, NAMES: NAMES };
   /* The grown-ups corner's words for the story's flags (every flag a chapter sets has words here;
@@ -392,7 +423,12 @@
     // chapter 4: two flags set by reaching a frame, never by a choice, and never unset
     foundSquall: { 'true': 'found Squall on the tower roof (later chapters remember)' },
     ch4CaughtFly: { 'true': 'caught the fox’s “flew”: Sprinkle can’t fly (later chapters remember)' },
-    caseFile: { 'true': 'started a Case File' }
+    caseFile: { 'true': 'started a Case File' },
+    // chapter 5: the witness she asked first, and three flags set by finishing a scene, never unset
+    ch5First: { otters: 'asked the ferry otters first', heron: 'asked the heron first' },
+    ch5Roof: { 'true': 'met Squall in chapter 5: the roof, offered again ({their} book says so on chapter 5’s page)' },
+    foundPuddle: { 'true': 'found Puddle under the ferry raft (later chapters remember)' },
+    foundWisp: { 'true': 'found Wisp in the heron’s reeds (later chapters remember)' }
   };
   UI.flagWords = FLAG_WORDS;
   // flags the engine keeps for itself: never listed among "what the choices say"
@@ -418,7 +454,37 @@
     var dx = x - W * spot.x / 100, dy = y - H * spot.y / 100, reach = Math.max(48, W * 0.11, W * (artReach > 0 ? artReach : 0) / 100);
     return dx * dx + dy * dy <= reach * reach;
   }
-  UI.taps = { hit: tapHit };
+  /* Chapter 5, the one-tap frames (`scratch: { tap: 'nose' }`): which of a picture's marked elements
+   * a tap is for. `marks` are the picture's candidates in document order, each { tap, art, cls }:
+   * its `data-tap`, its `data-art`, its class names. The one named for the tap wins (`data-tap`, a
+   * class `pc-tap-NAME`, or `data-art`), so a picture with two (the marsh's mud and Riffle's pole)
+   * gives each frame its own; else the first glint or `pc-tap`. Returns its index, or -1. */
+  function tapPick(marks, name) {
+    var i, m, list = marks || [];
+    for (i = 0; i < list.length; i++) {
+      m = list[i] || {};
+      if (name && (m.tap === name || m.art === name || (' ' + (m.cls || '') + ' ').indexOf(' pc-tap-' + name + ' ') >= 0)) return i;
+    }
+    for (i = 0; i < list.length; i++) {
+      m = list[i] || {};
+      // (an element named for another tap is not this one's)
+      if (m.tap && m.tap !== name) continue;
+      if (m.art === 'glint' || /(^| )(pc-glint|pc-tap)( |$)/.test(m.cls || '')) return i;
+    }
+    return -1;
+  }
+  /* The glow the page draws on such a target: as wide as the thing itself and a little more, never
+   * smaller than a fingertip nor wider than a quarter of the panel (percent of the panel's width). */
+  function tapGlow(reach) { return clamp((reach > 0 ? reach : 0) * 2.5, 9, 26); }
+  /* Chapter 5, two answers scratched in the sand: whether the art's picture is of these numbers (its
+   * aria-label names each of them, as whole numbers). An art that doesn't know `answers` draws a
+   * scratch or two: the page then draws the numbers itself. */
+  function namesAnswers(svg, answers) {
+    var m = /aria-label="([^"]*)"/.exec(String(svg || ''));
+    if (!m || !(answers || []).length) return false;
+    return answers.every(function (n) { return new RegExp('(^|[^0-9])' + n + '([^0-9]|$)').test(m[1]); });
+  }
+  UI.taps = { hit: tapHit, pick: tapPick, glow: tapGlow, namesAnswers: namesAnswers };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
   var doc = root.document;
@@ -674,6 +740,10 @@
         return out;
       },
       layout: function () { return lastLayout; },
+      /* What Read to me would say on this screen, line by line, as it would be handed to the
+       * synthesizer. Nothing is said, and the setting is not read: tools/shots.mjs prints it
+       * (DRY=1) on a Mac that makes no sound. */
+      speech: function () { return (currentSpeech || []).map(function (it) { return plain(String((it && it.text) || '').replace(/<[^>]+>/g, ' ')).trim(); }).filter(Boolean); },
       go: go,
       /* Chapter 4, for tools/shots.mjs: her Case File open over the page (a card's id: that card
        * shown large), closed again, and one tap on the page's tap picture (a skip-count, the row of
@@ -926,6 +996,8 @@
     var f = story.frames[id];
     var kind = E.kindOf(f);
     if (kind === 'skip') return renderSkip(f, id);
+    // chapter 5: the questions she taps out of somebody: the scene is drawn again at every tap
+    if (kind === 'ask') return renderAsk(f, id);
     // the bark Taps (a row of bark, or the one curl): the pieces of bark take the panel
     if (kind === 'scratch' && !f.scratch.tap) return renderScratch(f, id);
     var scr = $('screen');
@@ -936,7 +1008,10 @@
     // a kept counting picture sits on the lesson's sand, as on the skip page and in the lesson
     if (kept) panel.classList.add('lesson-panel');
     var caps = captionsOf(f), balloons = balloonsOf(f);
-    panel.setAttribute('aria-label', caps.length ? plain(caps.join(' ')) : (balloons.length ? 'A comic panel' : 'A comic panel'));
+    // the captions as they are heard: with the frame's sound in words after the caption that runs on
+    // into it (`sfxRead`, E.captionsRead); the lettering on the page is `caps`, unchanged
+    var capsRead = E.captionsRead(f, cat).map(fill).filter(Boolean);
+    panel.setAttribute('aria-label', capsRead.length ? plain(capsRead.join(' ')) : (balloons.length ? 'A comic panel' : 'A comic panel'));
 
     // counts: resume a lesson in progress straight away (this chapter's, at this frame; one that
     // waited in the chapter's place while a Hollow round had the slot comes back here too)
@@ -947,13 +1022,14 @@
 
     // on a frame that asks something, the captions are the question: they stay in the text column,
     // right above the answers, so the prompt is always read before the options
-    var ctx = { panel: panel, frame: f, heads: heads, caps: caps, balloons: balloons, keepCaptions: kind === 'choice' || kind === 'input' || kind === 'look' || kind === 'end' };
+    var ctx = { panel: panel, frame: f, heads: heads, caps: caps, capsRead: capsRead, balloons: balloons, keepCaptions: kind === 'choice' || kind === 'input' || kind === 'look' || kind === 'end' };
     // the page a skip-count turns to shows the number the count reached, big, over the picture
     var into = E.skipInto(story, id, cat);
-    if (into) { var sv = E.skipView(into, 0); ctx.bigNum = String(sv.groups * sv.table); }
+    if (into) ctx.bigNum = String(E.skipReached(into));
     // a skip-count that keeps its totals (`keep`): its counting picture, every group lit and the
     // running totals under them, stays up on the pages after it, to the lesson that follows
-    if (kept) { ctx.keepCaptions = true; ctx.forceStack = true; }
+    // (chapter 5's tuck keeps no totals under its cats: the number it reached stays over them, 45)
+    if (kept) { ctx.keepCaptions = true; ctx.forceStack = true; if (kept.skip.tuck) ctx.bigNum = String(E.skipReached(kept.skip)); }
     // the glitter Tap: where the glint is in the picture, and the lettering keeps off it
     if (kind === 'scratch') {
       ctx.tap = tapSpot(panel, heads, f.scratch);
@@ -1010,6 +1086,9 @@
 
     // 1. captions: overlay in the corners when they are few and short
     var caps = ctx.caps || [];
+    // what Read to me says for them: the same lines, and a frame's sound in words where a caption
+    // runs on into it (`sfxRead`: the frame's own page gives `capsRead`, E.captionsRead)
+    var heard = ctx.capsRead || caps;
     var capEls = [], capBox = null;
     if (!ctx.keepCaptions && caps.length && caps.length <= 2 && W >= 460 && caps.every(function (c) { return c.length <= 95; })) {
       // the first caption opens the panel, so it only goes at the top; the second may close it, unless
@@ -1052,7 +1131,7 @@
           return { x: x0, y: y0, w: Math.max(u.x + u.w, r.x + r.w) - x0, h: Math.max(u.y + u.h, r.y + r.h) - y0 };
         }, null);
         layout.captions = 'panel';
-        caps.forEach(function (c) { reading.push({ text: c }); });
+        heard.forEach(function (c) { reading.push({ text: c }); });
       } else {
         capEls.forEach(function (el) { el.remove(); });
       }
@@ -1062,7 +1141,7 @@
         if (ctx.frame.end && /^(the )?end of chapter/i.test(c)) return '<p class="endcap">' + rich(c) + '</p>';
         return '<p class="caption">' + rich(c) + '</p>';
       }).join('');
-      caps.forEach(function (c) { reading.push({ text: c }); });
+      heard.forEach(function (c) { reading.push({ text: c }); });
     }
 
     // 2. balloons
@@ -1276,7 +1355,8 @@
     var hash = 0; for (var i = 0; i < (frame && frame.sfx || '').length; i++) hash = (hash * 31 + frame.sfx.charCodeAt(i)) | 0;
     var rot = ((hash & 1) ? 7 : -8) * (quiet ? 0.5 : 1);
     // sized to fit the panel, and smaller still rather than cover a balloon (sfxPlace)
-    var pl = sfxPlace(text, W, H, faces, placed), best = pl.box, size = pl.size, estW = best.w, estH = best.h;
+    // (a frame's own `sfxAt` first: the Roar goes in the sky the frame names)
+    var pl = sfxPlace(text, W, H, faces, placed, frame && frame.sfxAt), best = pl.box, size = pl.size, estW = best.w, estH = best.h;
     var cx = best.x + estW / 2, cy = best.y + estH * 0.82;
     var sw = quiet ? Math.max(3, size * 0.14) : Math.max(4, size * 0.12);
     var t = '<text x="' + f1(cx) + '" y="' + f1(cy) + '" text-anchor="middle" font-size="' + f1(size) + '"' + (quiet ? ' letter-spacing="1"' : '');
@@ -1435,11 +1515,16 @@
    * one group (Squall's forepaw), and an instruction under the panel (`prompt`); what is drawn and
    * said comes from the engine (E.skipPicture, E.skipWords). */
   function renderSkip(f, id) {
-    var sk = f.skip, taps = 0, turning = false;
+    // chapter 5: the skip as this cat meets it (the mud count: a forepaw for everyone she has found)
+    var sk = E.skipFor(f.skip, cat), taps = 0, turning = false;
     var scr = $('screen');
     scr.innerHTML = frameShell('skip', id);
     var panel = $('panel'), art = panel.querySelector('.art'), ov = panel.querySelector('.ov');
-    panel.classList.add('lesson-panel', 'tappable');
+    // chapter 5, nine claws in the log (`paws: 'log'`): no counting picture. The frame's own scene
+    // stays up and is drawn again at every tap (E.skipScene: a claw dug in, the skymonster growing)
+    var onScene = E.skipOnScene(sk) && !!f.scene, lastStep = -1;
+    if (onScene) panel.classList.add('tappable');
+    else panel.classList.add('lesson-panel', 'tappable');
     var caps = captionsOf(f), intro = balloonsOf(f);
     // `paws: 'own'` (the bedtime hop): her own two forepaws, the glow taking turns; the number is
     // in her own murmur unless the frame names a teacher. The words are the engine's (E.skipWords):
@@ -1453,16 +1538,31 @@
     $('colTop').innerHTML = caps.map(function (c) { return '<p class="caption">' + rich(c) + '</p>'; }).join('');
     function draw(fresh) {
       var v = E.skipView(sk, taps);
-      // her own paws: each tap lights that paw's five claws again (v.lit), the other one glows next (v.nextPaw)
-      var po = E.skipPicture(sk, taps);
-      po.look = cat && cat.look;
-      art.innerHTML = artCall('countsPicture', po) || countsFallback(v.groups, v.per, v.highlight);
-      hopGroup();
-      // (one group, Squall's forepaw: the big number beside the lit claws, not at the top centre, where his face is)
-      ov.innerHTML = v.total ? '<div class="skipnum' + (v.groups === 1 ? ' one' : '') + (fresh && !reduceMotion ? ' pop' : '') + '" aria-hidden="true">' + v.total + '</div>' : '';
+      if (onScene) {
+        var sc = E.skipScene(E.resolveScene(f.scene, cat, stories()), sk, taps, f.sfx ? fill(f.sfx) : '');
+        drawArt(panel, { scene: sc.scene }, cat.look);
+        // the step's lettering (the roar: rrr… RRR…), a little larger at each step, along the top
+        ov.innerHTML = sc.sfx ? '<div class="skipsfx s' + Math.max(1, Math.min(3, sc.step + 1)) + (fresh && sc.step !== lastStep && !reduceMotion ? ' pop' : '') + '" aria-hidden="true">' + esc(sc.sfx) + '</div>' : '';
+        lastStep = sc.step;
+      } else {
+        // her own paws: each tap lights that paw's five claws again (v.lit), the other one glows next (v.nextPaw)
+        var po = E.skipPicture(sk, taps);
+        po.look = cat && cat.look;
+        art.innerHTML = artCall('countsPicture', po) || countsFallback(v.groups, v.per, v.highlight);
+        hopGroup();
+        // (one group, Squall's forepaw: the big number beside the lit claws, not at the top centre, where his face is)
+        // (chapter 5's tuck: the number is there from the start, 50, and steps back a claw a tap)
+        // (her paws aboard and the mud count: no big number, E.skipWords' `noNumber`)
+        ov.innerHTML = v.total && !words.noNumber ? '<div class="skipnum' + (v.groups === 1 ? ' one' : '') + (fresh && !reduceMotion ? ' pop' : '') + '" aria-hidden="true">' + v.total + '</div>' : '';
+      }
       var lines = intro.slice();
-      if (v.taps) lines.push(own ? { who: teacher, name: tname, kind: 'whisper', html: '<span class="counter">' + esc(v.count) + '</span>' }
-        : { who: teacher, name: tname, html: '<span class="counter">' + esc(v.count) + '</span>' });
+      // the count: in the counter's balloon (murmured on her own paws at bedtime; a thought, with nine
+      // claws in a log; in words when Tallyheart counts her paws aboard: "One. Two.")
+      if (v.taps) {
+        var counter = { who: teacher, name: tname, html: '<span class="counter' + (words.words ? ' words' : '') + '">' + esc(v.count) + '</span>' };
+        if (own) counter.kind = 'whisper'; else if (words.think) counter.kind = 'think';
+        lines.push(counter);
+      }
       if (v.done && sk.done) lines.push({ who: teacher, name: tname, text: fill(sk.done) });
       $('stack').innerHTML = lines.map(function (b) { return stackBalloon(b); }).join('');
       // the bottom row: Back (and Next, only after a done line); counting is done on the cats
@@ -1495,6 +1595,7 @@
     }
     function onTarget(e) {
       if (!e || e.detail === 0) return true;   // a click from the keyboard or VoiceOver: no place to aim
+      if (onScene || E.skipView(sk, taps).anywhere) return true;   // nine claws in the log: a tap anywhere digs the next
       var nx = art.querySelector('.pc-next');
       if (!nx || !nx.getBoundingClientRect) return true;   // a picture with nothing to aim at: any tap counts
       var r = nx.getBoundingClientRect(), pr = panel.getBoundingClientRect();
@@ -1521,7 +1622,7 @@
       taps++;
       lastTap = now();
       var v = draw(true);
-      speakItems([{ text: String(v.total), who: teacher }].concat(v.done && sk.done ? [{ text: fill(sk.done), who: teacher }] : []));
+      speakItems([{ text: v.say || String(v.total), who: teacher }].concat(v.done && sk.done ? [{ text: fill(sk.done), who: teacher }] : []));
       if (v.done && sk.done) { var nb = $('nextBtn'); if (nb) nb.focus({ preventScroll: true }); }
       else if (v.done) {
         // the last hop turns the page: the next frame shows the number she just reached
@@ -1564,6 +1665,115 @@
     hs.keep = [];
     return hs;
   }
+  /* ---------------------------------------------------------------- chapter 5: the questions she taps out
+   * `ask: { who, to, pairs: [[question, answer], …], next }` (Riffle's seven questions for the heron):
+   * the frame's own scene, the asker glowing softly. A tap on him letters his next question in his
+   * balloon and her answer in hers, and the scene is drawn again with one more owed (E.askScene: a
+   * pair of fish in the thought cloud over the heron). The pairs before stay under the panel, small,
+   * so all of them can be read back and the newest is always the big one. A tap anywhere else makes
+   * him hop; Space, Enter and → ask the next; a hidden button does it for VoiceOver. No number is
+   * shown and nothing is logged. After the last pair the frame shows Next. */
+  var HALO = '<svg viewBox="0 0 100 100" aria-hidden="true"><circle class="th-glow" cx="50" cy="50" r="46"/><circle class="th-ring" cx="50" cy="50" r="40"/></svg>';
+  function renderAsk(f, id) {
+    var ak = f.ask, taps = 0, lastTap = 0, spot = null, halo = null;
+    var scr = $('screen');
+    scr.innerHTML = frameShell('ask', id);
+    var panel = $('panel');
+    panel.classList.add('tappable');
+    var caps = captionsOf(f), intro = balloonsOf(f), words = E.askWords(ak);
+    var hint = words.prompt ? fill(words.prompt) : '';
+    var base = E.resolveScene(f.scene, cat, stories());
+    var ctx = null;
+    function draw(fresh) {
+      var v = E.askView(ak, taps), scene = E.askScene(base, ak, taps);
+      var heads = drawArt(panel, { scene: scene }, cat.look);
+      // the newest question and its answer, each with a tail to its speaker; before the first tap, the frame's own balloons
+      var bs = v.pair ? [{ who: v.who, text: fill(v.pair[0]), kind: 'say' }, { who: v.to, text: fill(v.pair[1]), kind: 'say' }] : intro;
+      // where the asker is: the art's own mark when the scene carries one, else his head
+      var artEl = panel.querySelector('.art .pc-next, .art .pc-tap'), pr = panel.getBoundingClientRect(), h = headFor(heads, v.who, 0);
+      spot = null;
+      if (artEl && artEl.getBoundingClientRect && pr.width) {
+        var r = artEl.getBoundingClientRect();
+        if (r.width) spot = { x: (r.left + r.width / 2 - pr.left) / pr.width * 100, y: (r.top + r.height / 2 - pr.top) / pr.height * 100, reach: Math.max(r.width, r.height) / 2 / pr.width * 100, art: true };
+      }
+      if (!spot && h) spot = { x: h.x, y: h.y + h.r * 0.9, reach: h.r * 2.1 };
+      if (!spot) spot = { x: 50, y: 60, reach: 12 };
+      if (!v.done) heads.keep.push({ x: spot.x - 5, y: spot.y - 6, w: 10, h: 12 });
+      ctx = { panel: panel, frame: { scene: scene, sfx: f.sfx || '', sfxAt: f.sfxAt }, heads: heads, caps: caps, balloons: bs };
+      layoutText(ctx);
+      // the soft glow on him, the page's own (it hops when she taps somewhere else), until he has asked them all
+      var old = panel.querySelector('.tapspot'); if (old) old.remove();
+      halo = null;
+      if (!v.done && !spot.art) {
+        halo = doc.createElement('div');
+        halo.className = 'tapspot soft';
+        halo.style.left = f1(spot.x) + '%'; halo.style.top = f1(spot.y) + '%'; halo.style.width = f1(tapGlow(spot.reach)) + '%';
+        halo.innerHTML = HALO;
+        panel.insertBefore(halo, panel.querySelector('.ov'));
+      }
+      panel.setAttribute('aria-label', (caps.length ? plain(caps.join(' ')) + ' ' : '') + (v.done ? '' : 'Touch ' + speakerName({ who: v.who }) + ' to hear the next question.'));
+      // under the panel: what was asked before, small, oldest first; the instruction; Back, and Next at the end
+      var before = v.before.map(function (p) { return '<li><q>' + rich(fill(p[0])) + '</q> <q class="a">' + rich(fill(p[1])) + '</q></li>'; }).join('');
+      $('interact').innerHTML = (before ? '<ol class="asked" aria-label="Asked already">' + before + '</ol>' : '') +
+        (hint && !v.done ? '<p class="prompt tapline">' + rich(hint) + '</p>' : '') + '<div class="next-row">' + backBottom() +
+        (v.done ? '<button class="btn go big" id="nextBtn" type="button">Next <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
+          : '<button class="sr" id="askBtn" type="button">' + esc(words.label) + '</button>') + '</div>';
+      wireBackBottom();
+      if ($('nextBtn')) $('nextBtn').addEventListener('click', advance);
+      if ($('askBtn')) $('askBtn').addEventListener('click', function () { tap(); var b = $('askBtn'); if (b) b.focus({ preventScroll: true }); });
+      return v;
+    }
+    function tap() {
+      if (now() - lastTap < 260) return;   // a double tap asks one question, not two
+      if (E.askView(ak, taps).done) return;
+      taps++;
+      lastTap = now();
+      var v = draw(true);
+      speakItems([{ text: fill(v.pair[0]), who: v.who }, { text: fill(v.pair[1]), who: v.to }]);
+      if (v.done) { var nb = $('nextBtn'); if (nb) nb.focus({ preventScroll: true }); }
+    }
+    function hop() {
+      if (halo) { halo.classList.remove('hop'); void halo.offsetWidth; halo.classList.add('hop'); return; }
+      // the art's own glow (a cast member with `glow: true`): the glow and the one it is behind wiggle
+      // together, as the glowing cat of a skip-count does when she taps somewhere else
+      var nx = panel.querySelector('.art .pc-next');
+      if (!nx || !nx.parentNode) return;
+      var g = nx.parentNode;
+      if (!(g.getAttribute && g.getAttribute('class') === 'pc-hop')) {
+        var w = doc.createElementNS('http://www.w3.org/2000/svg', 'g'), cell = nx.nextElementSibling;
+        w.setAttribute('class', 'pc-hop');
+        g.insertBefore(w, nx);
+        w.appendChild(nx);
+        if (cell && /^g$/i.test(cell.tagName)) w.appendChild(cell);
+        g = w;
+      }
+      g.classList.remove('wiggle'); void g.getBoundingClientRect(); g.classList.add('wiggle');
+    }
+    function advance() {
+      // the tap that asked the last question never also turns the page
+      if (now() - renderedAt < 280 || now() - lastTap < 600) return;
+      if (E.next(cat, story, now())) { persist(); go('frame'); }
+    }
+    panel.addEventListener('click', function (e) {
+      if (E.askView(ak, taps).done || now() - renderedAt < 280) return;
+      var pr = panel.getBoundingClientRect();
+      // a click from the keyboard or VoiceOver has no place to aim
+      if (!e || e.detail === 0 || !pr.width || !spot || tapHit(pr.width, pr.height, spot, e.clientX - pr.left, e.clientY - pr.top, spot.reach)) tap(); else hop();
+    });
+    relayoutFn = function () { draw(false); };
+    draw(false);
+    frameTap = tap;
+    keyHandler = function (e) {
+      if (isTyping(e)) return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        if (e.target && (e.target.id === 'askBtn' || e.target.id === 'nextBtn')) return;   // a button does it on its own click
+        e.preventDefault();
+        if (E.askView(ak, taps).done) advance(); else tap();
+      } else if (e.key === 'ArrowLeft') { e.preventDefault(); onBack(); }
+    };
+    currentSpeech = (ctx.reading || []).concat(hint ? [{ text: hint }] : []);
+    persist();
+  }
   function isTyping(e) {
     var t = e.target; if (!t) return false;
     var tag = (t.tagName || '').toLowerCase();
@@ -1589,18 +1799,31 @@
    * pc-tap), which then pulses, twinkles and flares itself (`el`); else the frame's own `at`; else
    * what the art says the picture is about (its first `keep` area); else the middle of the ground. */
   function tapSpot(panel, heads, sc) {
-    var art = panel.querySelector('.art'), el = art && art.querySelector('[data-art="glint"], .pc-glint, .pc-tap');
+    // chapter 5: a picture may mark more than one thing to tap (the marsh's mud, and Riffle's pole):
+    // the one named for this frame's tap (tapPick: `data-tap`, `pc-tap-NAME`, `data-art`), else the first
+    var art = panel.querySelector('.art'), name = sc && sc.tap;
+    var els = art ? Array.prototype.slice.call(art.querySelectorAll('[data-art="glint"], .pc-glint, .pc-tap, [data-tap]')) : [];
+    var at = tapPick(els.map(function (e) { return { tap: e.getAttribute('data-tap'), art: e.getAttribute('data-art'), cls: e.getAttribute('class') }; }), name);
+    var el = at >= 0 ? els[at] : null;
     if (el && el.getBoundingClientRect) {
       var r = el.getBoundingClientRect(), pr = panel.getBoundingClientRect();
       if (r.width && pr.width) {
-        return { x: clamp((r.left + r.width / 2 - pr.left) / pr.width * 100, 4, 96), y: clamp((r.top + r.height / 2 - pr.top) / pr.height * 100, 6, 94),
+        var spot = { x: clamp((r.left + r.width / 2 - pr.left) / pr.width * 100, 4, 96), y: clamp((r.top + r.height / 2 - pr.top) / pr.height * 100, 6, 94),
           el: el, reach: r.width / 2 / pr.width * 100 };
+        // the art's own glint pulses, twinkles and flares itself; anything else it marks (a nose, a
+        // tuft of fur, a patch of mud) gets the page's own soft glow, as big as the thing
+        if (!(el.getAttribute('data-art') === 'glint' || /(^| )pc-glint( |$)/.test(el.getAttribute('class') || ''))) {
+          spot.soft = true;
+          spot.reach = Math.max(r.width, r.height) / 2 / pr.width * 100;
+        }
+        return spot;
       }
     }
-    if (sc && sc.at && typeof sc.at.x === 'number' && typeof sc.at.y === 'number') return { x: sc.at.x, y: sc.at.y };
+    var soft = !!name && name !== 'glint';
+    if (sc && sc.at && typeof sc.at.x === 'number' && typeof sc.at.y === 'number') return { x: sc.at.x, y: sc.at.y, soft: soft };
     var k = heads && heads.keep && heads.keep[0];
-    if (k) return { x: k.x + k.w / 2, y: k.y + k.h / 2 };
-    return { x: 50, y: 58 };
+    if (k) return { x: k.x + k.w / 2, y: k.y + k.h / 2, soft: soft };
+    return { x: 50, y: 58, soft: soft };
   }
   function renderGlint(f, id, ctx, box, panel) {
     var sc = f.scratch, tw = E.tapWords(f), turning = false, spot = ctx.tap || { x: 50, y: 58 };
@@ -1611,27 +1834,45 @@
     wireBackBottom();
     // the art's own glint, when it drew one (it pulses already); else a star of ours on the spot
     var el = spot.el || null;
-    if (!el) {
-      el = doc.createElement('div');
-      el.className = 'tapspot' + (sc.tap === 'glint' ? ' glint' : '');
-      el.style.left = f1(spot.x) + '%'; el.style.top = f1(spot.y) + '%';
-      el.innerHTML = SPARK;
-      panel.appendChild(el);
+    // chapter 5: anything else to tap glows softly with the page's own glow, on the thing itself
+    var marks = el ? [el] : [], artBox = panel.querySelector('.art');
+    if (!el || spot.soft) {
+      var own = doc.createElement('div');
+      own.className = 'tapspot' + (spot.soft ? ' soft' : sc.tap === 'glint' ? ' glint' : '');
+      own.style.left = f1(spot.x) + '%'; own.style.top = f1(spot.y) + '%';
+      if (spot.soft) own.style.width = f1(tapGlow(spot.reach)) + '%';
+      own.innerHTML = spot.soft ? HALO : SPARK;
+      panel.appendChild(own);
+      marks.push(own);
+      if (!el) el = own;
     }
     panel.classList.add('tappable');
     function flare() {
       if (turning || now() - renderedAt < 280) return;
       turning = true;
-      el.classList.remove('twinkle'); el.classList.add('flare');
+      marks.forEach(function (m) { m.classList.remove('twinkle'); m.classList.add('flare'); });
+      if (artBox) artBox.classList.add('tap-hit');   // (the art may answer too: whiskers that jump, a snail's horns going in)
       // (she is still tapping: the next page waits a moment before a tap turns it, as after a skip-count)
       later(function () { if (E.next(cat, story, now())) { persist(); go('frame', { fromSkip: true }); } }, reduceMotion ? 380 : 700);
     }
     function twinkle() {
       if (turning) return;
-      el.classList.remove('twinkle'); void el.getBoundingClientRect().width; el.classList.add('twinkle');
+      marks.forEach(function (m) { m.classList.remove('twinkle'); void m.getBoundingClientRect().width; m.classList.add('twinkle'); });
+      // chapter 5: the small answer to a tap anywhere else ("snnnrrk…"), lettered small by the spot
+      if (tw.miss) {
+        var was = panel.querySelector('.tapmiss'); if (was) was.remove();
+        var w = doc.createElement('div');
+        w.className = 'tapmiss';
+        w.setAttribute('aria-hidden', 'true');
+        w.textContent = fill(tw.miss);
+        w.style.left = f1(clamp(spot.x, 14, 86)) + '%'; w.style.top = f1(clamp(spot.y - 15, 5, 88)) + '%';
+        panel.appendChild(w);
+        setTimeout(function () { if (w.parentNode) w.remove(); }, reduceMotion ? 1500 : 1300);
+      }
+      if (artBox) { artBox.classList.remove('tap-miss'); void artBox.offsetWidth; artBox.classList.add('tap-miss'); }
     }
     // after a twinkle the glint goes back to its soft pulse
-    el.addEventListener('animationend', function () { if (!turning) el.classList.remove('twinkle'); });
+    marks.forEach(function (m) { m.addEventListener('animationend', function () { if (!turning) m.classList.remove('twinkle'); }); });
     panel.addEventListener('click', function (e) {
       var pr = panel.getBoundingClientRect();
       // a click from the keyboard or VoiceOver has no place to aim
@@ -1851,14 +2092,22 @@
           '<div class="cf-cards">' + g.cards.map(fileCard).join('') + '</div></section>';
       }).join('');
       // two cards she has linked: drawn touching, across the groups, over the link's line
+      // (chapter 5: three in a row when one card touches two, a line for each join, the first under
+      // the left pair and the second under the right; and several such lots, side by side where there is room)
       var links = F.links.map(function (l) {
+        var joins = l.lines || [l.line];
         l.cards.forEach(function (c) { speech.push({ text: fill(c.line) }); });
-        speech.push({ text: fill(l.line) });
+        joins.forEach(function (t) { speech.push({ text: fill(t) }); });
+        if (joins.length > 1) {
+          return '<section class="cf-link row" aria-label="' + esc(plain(joins.map(fill).join(' '))) + '"><div class="cf-pair n' + l.cards.length + '">' + l.cards.map(fileCard).join('') + '</div>' +
+            joins.map(function (t, i) { return '<p class="cf-linkline j' + i + '">' + rich(fill(t)) + '</p>'; }).join('') + '</section>';
+        }
         return '<section class="cf-link" aria-label="' + esc(plain(fill(l.line))) + '"><div class="cf-pair">' + l.cards.map(fileCard).join('') + '</div>' +
           '<p class="cf-linkline">' + rich(fill(l.line)) + '</p></section>';
-      }).join('');
+      });
+      links = links.length > 1 ? '<div class="cf-links">' + links.join('') + '</div>' : links.join('');
       html = '<div class="cf-in"><div class="cf-head"><h2 class="cf-title' + (E.displayName(cat).length > 12 ? ' long' : '') + '" id="fileTitle">' + esc(F.title) + '</h2>' + close + '</div>' +
-        (F.count ? '<div class="cf-groups' + (shown.length < 2 ? ' one' : F.links.length ? ' linked' : '') + '">' + groups + links + '</div>'
+        (F.count ? '<div class="cf-groups' + (shown.length < 2 ? ' one' : F.links.length ? ' linked' : '') + (F.links.length > 1 ? ' many' : '') + '">' + groups + links + '</div>'
           : '<p class="cf-none">No cards yet.</p>') + '</div>';
     }
     el.innerHTML = html;
@@ -2031,7 +2280,9 @@
     // a Counts frame that showed its balloons over a kept skip picture (f036 after the rim) doesn't
     // say them again over the first question: they were just read
     // (nor does a frame that carries a whole conversation: lessonIntro)
-    var intro = lessonIntro(balloonsOf(f), !!(resume || E.keptSkip(story, id, cat)));
+    // (chapter 5: nor one that says so, `counts: { intro: false }`: the tens warm-up, whose first
+    // question may be her hardest ten: it appears with the engine's own words alone, and is timed on itself)
+    var intro = lessonIntro(balloonsOf(f), !!(resume || f.counts.intro === false || E.keptSkip(story, id, cat)));
     var finish = function (sum) { if (E.finishCounts(cat, story, sum, now())) { persist(); go('frame'); } };
     runLesson({
       def: def, state: st, intro: intro, mode: 'chapter',
@@ -2099,9 +2350,10 @@
 
     // a line of kind 'caption' is narration (8 × 2's "You touch your nose to each little stack…"):
     // a caption box, as the chapter's captions are lettered in the column; the rest are balloons
+    // (chapter 5: so is every line of a set nobody speaks in, `teacher: 'caption'`: Wisp's riddle)
     function say(lines, extraClass) {
       stack.innerHTML = lines.map(function (l) {
-        if (l.kind === 'caption') return '<p class="caption">' + rich(l.text) + '</p>';
+        if (l.kind === 'caption' || l.who === 'caption') return '<p class="caption">' + rich(l.text) + '</p>';
         return stackBalloon({ who: l.who || teacher, text: l.text, html: l.html, kind: l.kind, name: l.name, variant: l.variant }, extraClass);
       }).join('');
     }
@@ -2143,9 +2395,19 @@
     }
     function picture(highlight, over) {
       // as the engine pictures it (E.lessonPicture: the set's picture, the fact's own on top, who sits in it)
-      var po = E.lessonPicture(D, q, highlight, over);
+      paint(E.lessonPicture(D, q, highlight, over));
+    }
+    function paint(po) {
       po.look = cat && cat.look;
-      art.innerHTML = artCall('countsPicture', po) || countsFallback(po.groups, po.per, highlight || 0);
+      art.innerHTML = artCall('countsPicture', po) || countsFallback(po.groups, po.per, po.highlight || 0);
+    }
+    /* Chapter 5, `shows` (res.shows): her answers scratched in the sand, with the line that talks
+     * about them (18 and 36: "Three and six make nine. One and eight make nine."). The art's picture
+     * when it has one of these very numbers; else the page's own. */
+    function answersPicture(shows, plan) {
+      var o = E.answersOpts(plan, shows), svg = artCall('sand', o);
+      if (!namesAnswers(svg, o.answers)) svg = artCall('countsPicture', Object.assign({ kind: 'answers' }, o));
+      art.innerHTML = namesAnswers(svg, o.answers) ? svg : answersFallback(o.answers);
     }
     function fillQ(t) { return E.fill(t, cat, { a: q.a, b: q.b, answer: q.answer, groups: q.groups, per: q.per, thing: thing, things: things }); }
     function balloonLines(x) {
@@ -2167,6 +2429,20 @@
     }
     /* `light`: the picture lights a group at a time as it is asked (the pile's stacks as she noses
      * them, the check's top row then its bottom row), with no number; she can answer at any time. */
+    /* Chapter 5, `light: 'tuck'` (the 9s): the two steps without a word. The picture has opened with
+     * all ten claws lit on every cat (the hop); one curls in on each (the tuck); then the claws go
+     * unlit, nine out and one tucked, and the clock starts again from there. */
+    function playTuck(forQ, steps) {
+      var k = 0;
+      var step = function () {
+        if (q !== forQ || locked) return;
+        paint(steps[k].picture);
+        k++;
+        if (k < steps.length) later(step, steps[k].wait);
+        else restartClock(forQ);
+      };
+      if (steps.length) later(step, steps[0].wait);
+    }
     function lightUp(forQ) {
       var L = look(), k = 0, base = q.lit || 0;
       var stepMs = q.light === 'rows' ? 1000 : 560;
@@ -2188,7 +2464,9 @@
       pad.classList.remove('locked', 'away'); $('lessonNext').hidden = true;
       $('gotIt').textContent = 'Got it!';
       // `lit`: what glows as it is asked (2 × 6: the first five cats' ears, ten, to hop on from)
-      picture(q.lit || 0);
+      // (chapter 5's nines open on the hop: all ten claws lit on every cat; then playTuck)
+      var tuck = q.light === 'tuck' ? E.lightSteps(D, q) : null;
+      if (tuck) paint(tuck.open); else picture(q.lit || 0);
       var lines = [];
       if (first && o.intro && o.intro.length) lines = o.intro.slice();
       lines = lines.concat(promptLines());
@@ -2201,7 +2479,8 @@
       if (vh && kb > vh) root.scrollBy(0, kb - vh + 8);
       t0 = performance.now();
       var asked = q;
-      if (q.light) lightUp(asked);
+      if (tuck) playTuck(asked, tuck);
+      else if (q.light) lightUp(asked);
       speakItems(lines.map(function (l) { return { text: l.text, who: l.who, variant: l.variant }; }).concat([{ text: E.counts.ask(def, q) }]),
         function () { restartClock(asked); });
     }
@@ -2227,6 +2506,7 @@
         showQ(typed, 'right');
         // five pairs of ears sliding into two rows of five: the picture regroups, all lit
         if (res.rightPicture) { var R = look(res.rightPicture); picture(R.groups * R.per, res.rightPicture); }
+        else if (res.shows) answersPicture(res.shows, null);   // chapter 5: her two answers in the sand, under the line about them
         else picture(q.groups * q.per);
         if (res.balloons && res.balloons.length) {
           // the question's own lines go on with the story: she reads them, then taps on
@@ -2258,23 +2538,33 @@
       // (the teacher, or the player: under the bridge she hops and Sprinkle swipes), the ground (the
       // lesson set's: sand, the earth by the doorway and the pile, the mud), and swipes on the 5s
       var plan = E.helpPlan(def, D, q, res);
-      var hp = res.help, total = plan.total, counted = 0, startedAt = now(), ticking = false;
+      var hp = res.help, startedAt = now(), ticking = false;
       var step = plan.step, counter = plan.counter;
+      // chapter 5: the count step by step is the engine's (E.helpSteps: the 9s hop by tens, then rub a
+      // line out of every pair and step back by ones); `says`: who says the first line when it is
+      // not the teacher (Patience's one line in a set nobody else speaks in)
+      var steps = E.helpSteps(plan), at = 0, cur = { counted: 0 }, opener = plan.says || teacher;
       pad.classList.add('away');
       var intro = fill(plan.intro);
-      say([{ who: teacher, text: intro }]);
-      speakItems([{ text: intro, who: teacher }]);
+      say([{ who: opener, text: intro }]);
+      speakItems([{ text: intro, who: opener }]);
       // the scratches match the picture: a picture in rows is scratched in rows (lit a column at a
       // time, top and bottom together; a whole row at a time when the help hops by the row: the
       // pile's rows of ten). On the 10s the swipes come in pairs, one for each forepaw (E.sandOpts)
+      // (chapter 5, `help: 'picture'`: nothing is scratched; the set's own picture lights a group at a
+      // time: Puddle's bump stars a log at a time, Wisp's herons one by one)
       var sand = function () {
-        art.innerHTML = artCall('sand', E.sandOpts(plan, counted)) || sandFallback(hp.groups, hp.per, counted);
+        if (plan.picture) return picture(cur.counted);
+        art.innerHTML = artCall('sand', E.sandOpts(plan, cur.counted, cur.rubbed)) || sandFallback(hp.groups, plan.tuck ? 10 : hp.per, cur.counted);
       };
       var nums = [];
       sand();
       var finishHelp = function () {
         panel.removeEventListener('click', tapCount);
-        counted = total; sand();
+        if (steps.length) cur = steps[steps.length - 1];
+        at = steps.length;
+        // (chapter 5: a fact that `shows` her answers ends its help on them, under its own miss line)
+        if (res.shows) answersPicture(res.shows, plan); else sand();
         nums = plan.nums.slice();
         var line = fill(res.line);
         say([{ who: counter, html: '<span class="counter">' + nums.join(' · ') + '</span>' }].concat(line ? [{ who: teacher, text: line }] : []));
@@ -2288,23 +2578,23 @@
       // too: the scratches light without animating). Tapping the picture counts along, one step
       // per tap; it never jumps to the answer.
       var tick = function () {
-        if (counted >= total) return;
-        counted = Math.min(total, counted + step);
-        nums.push(counted);
+        if (at >= steps.length) return;
+        cur = steps[at++];
+        nums.push(cur.n);
         sand();
         var lastSb = stack.lastElementChild && stack.lastElementChild.querySelector('.sb');
         if (lastSb) lastSb.innerHTML = '<span class="who">' + esc(speakerName({ who: counter })) + '</span><span class="counter">' + nums.join(' · ') + '</span>';
-        if (save.settings.readAloud) speakItems([{ text: String(counted), who: counter }]);
-        if (counted >= total) later(finishHelp, 700);
+        if (save.settings.readAloud) speakItems([{ text: String(cur.n), who: counter }]);
+        if (at >= steps.length) later(finishHelp, 700);
         else later(tick, (reduceMotion ? 700 : 620) * (step > 1 ? 1.25 : 1));
       };
       var tapCount = function () {
-        if (!ticking || counted >= total || now() - startedAt < 350) return;
+        if (!ticking || at >= steps.length || now() - startedAt < 350) return;
         clearTimers(); tick();
       };
       panel.addEventListener('click', tapCount);
       later(function () {
-        say([{ who: teacher, text: intro }, { who: counter, text: '…' }]);
+        say([{ who: opener, text: intro }, { who: counter, text: '…' }]);
         ticking = true;
         tick();
       }, 900);
@@ -2339,6 +2629,18 @@
       s += '<ellipse cx="' + x + '" cy="' + y + '" rx="48" ry="34" fill="#c98a4a" stroke="#1b1622" stroke-width="4"/><circle cx="' + (x + 40) + '" cy="' + (y - 30) + '" r="26" fill="#c98a4a" stroke="#1b1622" stroke-width="4"/>';
       for (var t = 0; t < per; t++) { var lit = k++ < hi; s += '<path d="M' + (x - 44) + ' ' + (y + 6 - t * 10) + ' q-40 -10 -30 -60" fill="none" stroke="' + (lit ? '#ffd23f' : '#c98a4a') + '" stroke-width="12" stroke-linecap="round"/>'; }
     }
+    return s + '</svg>';
+  }
+  /* Her answers scratched in the sand, the page's own drawing (used until the art has one: namesAnswers). */
+  function answersFallback(answers) {
+    var n = Math.max(1, answers.length), W = 800, H = 500, s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Scratched in the sand: ' + esc(answers.join(' and ')) + '">' +
+      '<rect width="' + W + '" height="' + H + '" fill="#e8cf98"/><ellipse cx="400" cy="250" rx="372" ry="212" fill="#efd6a2" stroke="#cfae72" stroke-width="4"/>';
+    answers.forEach(function (a, i) {
+      var x = W * (i + 0.5) / n, rot = i % 2 ? 3 : -4;
+      var t = '<text x="' + f1(x) + '" y="318" text-anchor="middle" font-size="' + (n > 2 ? 150 : 200) + '" font-weight="700" style="font-family:Andika, ui-rounded, system-ui, sans-serif" transform="rotate(' + rot + ' ' + f1(x) + ' 250)"';
+      s += t + ' fill="none" stroke="#fbecc8" stroke-width="18" stroke-linejoin="round" dx="4" dy="5">' + esc(a) + '</text>' +
+        t + ' fill="#9c7440" stroke="#7d5a2e" stroke-width="5" stroke-linejoin="round">' + esc(a) + '</text>';
+    });
     return s + '</svg>';
   }
   function sandFallback(groups, per, counted) {
@@ -2451,7 +2753,7 @@
   function dragonetPages(dn) {
     if (!dn || !dn.found.length) return '';
     var found = dn.found.map(function (d) {
-      return '<div class="dragonet"><div class="dn-pic" aria-hidden="true">' + dragonetArt(d.id, false, 0) + '</div>' +
+      return '<div class="dragonet"><div class="dn-pic" aria-hidden="true">' + dragonetArt(d.id, false, 0, d.pose) + '</div>' +
         '<div class="dn-text"><h3>' + esc(d.name) + '</h3>' + d.lines.map(function (l) { return '<p>' + rich(l) + '</p>'; }).join('') +
         '<div class="dn-draw" aria-hidden="true">Draw ' + esc(d.name) + ' here</div></div></div>';
     }).join('');
@@ -2462,11 +2764,12 @@
       (sil ? '<div class="dn-find" aria-hidden="true">' + sil + '</div><p class="dn-more">' + esc(more) + '</p>' : '') + '</section>';
   }
   /* A dragonet, sitting: the art's (PC.art.character), or a plain shape until the art has her; as
-   * a silhouette, every other one facing the other way. */
-  function dragonetArt(id, silhouette, i) {
+   * a silhouette, every other one facing the other way. Chapter 5: `pose`, the dragonet's own on its
+   * page (`book.dragonet`'s: Puddle's head out of the water, Wisp on one leg), when sitting is not its way. */
+  function dragonetArt(id, silhouette, i, pose) {
     try {
       if (PC.art && typeof PC.art.character === 'function' && PC.art.vocab && PC.art.vocab.cast && PC.art.vocab.cast.indexOf(id) >= 0) {
-        var out = wrapChar(PC.art.character(id, { pose: 'sit', mood: silhouette ? 'neutral' : 'happy', facing: i % 2 ? 'left' : 'right' }), false);
+        var out = wrapChar(PC.art.character(id, { pose: pose || 'sit', mood: silhouette ? 'neutral' : 'happy', facing: i % 2 ? 'left' : 'right' }), false);
         if (out) return out;
       }
     } catch (e) { if (root.console) console.warn('PC.art.character failed', e); }

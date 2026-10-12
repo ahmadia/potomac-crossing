@@ -1,6 +1,6 @@
 /* Potomac Crossing · app/art/sets/bridge.js
  *
- * The set: the Old Bridge (chapters 2, 3 and 4), the rail bridge's near (Virginia) end, by day: old stone
+ * The set: the Old Bridge (chapters 2 to 5), the rail bridge's near (Virginia) end, by day: old stone
  * legs, an iron truss on top, the river brown and swirly after the storm, the reeds squashed flat.
  *
  * Five compositions in the 1600 x 1000 world, one per camera (docs/build.md, "Art vocabulary,
@@ -61,6 +61,19 @@
  * passes its taps), each lit pair's ten claws warm gold and its running total (10, 20, 30) lettered
  * beside them. The pile is <g data-art="paws"> (with data-lit, the friends lit, when 'both'): the
  * Tap's target, and what wiggles.
+ *
+ * Chapter 5 (docs/chapters/05-riffles-river.md, "Art needs" and "Build"): the Old Bridge at sunset.
+ *   `bank` gains the anchor `water`: swimming in the river just off the bank, where the reeds part
+ *   (Riffle, swimming alongside as she walks home). The brown river closes over whoever is there, with
+ *   rings round them, and any reed that stands in front of them is drawn in front; he is drawn before
+ *   everyone on the bank, whatever the cast's order. `fx: ['sunset']`
+ *   lights the bank as it lights the dark, the sun low behind the truss (going behind the far shore at
+ *   dusk); chapters 2 to 4 only ever came to the bank by day, under a high sun.
+ *   `mudPaws: 6 | 7` (on `back`): little forepaws drawn in the mud with one claw, a palm and five claw
+ *   marks each, on the floor in front of Sprinkle's spot: chapter 3's six drawn again (two rows of
+ *   three), and with 7 her own beside them, nearest her (four above three, as the mud count's picture
+ *   lays them). <g data-art="mud-paws">, each paw <g data-paw="mud"> with five data-claw="mud"; in
+ *   `keep`. They are drawings: nothing lights here (the count's own picture does that).
  *
  * The dark is mysterious and a little sad, never scary: cool blues with faint shapes of stones and
  * mud in them, soft rounded shapes, a warm rim of daylight at its edges, and gentle round eyes.
@@ -468,10 +481,41 @@
     return out + g(stroke(sp, '#FFFFFF', 4, { opacity: 0.6 }), { 'class': 'pcs-whoosh' });
   }
 
+  // Chapter 5: the river closing over whoever swims at `a` (the bank's `water`): the same water (its
+  // drawing, clipped to a patch with a wavy top edge) laid back over their lower part, rings and a
+  // little foam at the waterline, and then the reeds that stand between them and us, drawn again in
+  // front. An otter swimming or floating already shows only what is above the water, so only its
+  // bottom edge goes under; anyone else sits deeper.
+  // (z: 'behind': the swimmer and the water over him are drawn before everyone on the bank, whatever
+  // the cast's order, so his river never lies over a cat standing in front of it)
+  var BANK_WATER = A(936, 832, 232, 'left', { z: 'behind' });
+  function swimCover(S, c, a, water, reeds, m) {
+    var pose = (m && m.pose) || '', low = pose === 'swim' || pose === 'float' || pose === 'dive';
+    var h = a.h * (m && m.size > 0 ? +m.size : 1), top = low ? a.y - h * 0.06 : a.y - h * 0.3, bot = a.y + h * 0.2, x0 = a.x - h * 0.66, x1 = a.x + h * 0.66;
+    var d = 'M' + n(x0) + ' ' + n(bot) + 'Q' + n(x0 + h * 0.06) + ' ' + n(top + h * 0.05) + ' ' + n(x0 + h * 0.24) + ' ' + n(top + h * 0.02);
+    for (var i = 0; i < 4; i++) {
+      var xa = x0 + h * 0.24 + i * h * 0.21;
+      d += 'Q' + n(xa + h * 0.05) + ' ' + n(top - h * 0.02) + ' ' + n(xa + h * 0.105) + ' ' + n(top) + 'T' + n(xa + h * 0.21) + ' ' + n(top + (i === 3 ? h * 0.02 : 0));
+    }
+    d += 'Q' + n(x1 - h * 0.06) + ' ' + n(top + h * 0.05) + ' ' + n(x1) + ' ' + n(bot) + 'Z';
+    // (the patch stops at the bank's edge: the river never lies over the mud)
+    var wet = [];
+    for (var x = -30; x <= 1640; x += 40) wet.push([x, yOn(EDGE, x) + 2]);
+    var s = g(g(water, { 'clip-path': S.clip('brswim', path(d, '#fff')) }), { 'clip-path': S.clip('brswimedge', path(pts([[-30, 560]].concat(wet, [[1640, 560]])) + 'Z', '#fff')) });
+    s += stroke('M' + n(a.x - h * 0.36) + ' ' + n(top + h * 0.006) + 'Q' + n(a.x) + ' ' + n(top - h * 0.03) + ' ' + n(a.x + h * 0.36) + ' ' + n(top + h * 0.006), c.foam, Math.max(2, h * 0.014), { opacity: 0.85 });
+    [[0.56, 0.07, 0, 0.75], [0.82, 0.11, 0.03, 0.5], [1.08, 0.15, 0.07, 0.3]].forEach(function (q) {
+      var rx = h * 0.62 * q[0], ry = h * 0.62 * q[1], cy = top + h * 0.02 + h * 0.62 * q[2];
+      s += stroke('M' + n(a.x - rx) + ' ' + n(cy) + 'A' + n(rx) + ' ' + n(ry) + ' 0 0 0 ' + n(a.x + rx) + ' ' + n(cy), c.foam, Math.max(1.4, h * 0.011), { opacity: q[3], 'stroke-dasharray': n(rx * 0.9) + ' ' + n(rx * 0.25) });
+    });
+    return g(s + g(reeds, { 'clip-path': S.clip('brswimreeds', rect(a.x - h * 0.8, a.y - h * 0.7, h * 1.6, h * 1.05, '#fff')) }), { 'data-art': 'swim' });
+  }
+
   function drawBank(S) {
     var p = S.pal, o = S.opts, c = cols(S), back = '', over = '', front = '', r = rng(401), i, x, y;
     // sky, soft clouds blowing away after the storm, an airplane drifting down toward the river
-    back += K.sky(S, 0, 0, 1600, 640, { sun: [1430, 130], sunR: 460 });
+    // (chapter 5: at sunset the sun has come down behind the truss; at dusk it is going behind the far shore)
+    var eve = evening(S);
+    back += K.sky(S, 0, 0, 1600, 640, eve ? { sun: [1296, eve === 'dusk' ? 552 : 414], sunR: 520 } : { sun: [1430, 130], sunR: 460 });
     var cl = blob(1130, 250, 130, 34, 10, rng(402), 0.25, 0.32) + blob(1220, 236, 90, 30, 9, rng(403), 0.25, 0.32) + blob(760, 120, 100, 26, 9, rng(404), 0.25, 0.32) + blob(820, 112, 70, 24, 9, rng(405), 0.25, 0.32);
     back += path(cl, mix(p.sky[1], '#FFFFFF', 0.4), { transform: 'translate(0 6)', opacity: 0.7 }) + path(cl, '#FFFFFF', { opacity: 0.8 });
     back += K.plane(S, 960, 196, 0.9, 'left');
@@ -480,7 +524,8 @@
     back += path(mound(380, 1720, 602, 556, 14, rng(406), 0.3, 0.3, 0.3), shore);
     back += path('M1372 600L1379 452L1386 440L1393 452L1400 600Z', mix(p.haze, p.stoneDark, 0.3)) + rect(1388, 452, 5, 148, mix(p.haze, '#FFFFFF', 0.4), { opacity: 0.7 });
     // the river
-    back += riverWater(S, c, 0, 598, 1600, 1000, { key: 'bank', lines: 54, swirls: 20, debris: 8 });
+    var water = riverWater(S, c, 0, 598, 1600, 1000, { key: 'bank', lines: 54, swirls: 20, debris: 8 });
+    back += water;
     // the far legs, far to near, with the river and the far shore showing between them
     for (i = 4; i >= 1; i--) back += bankLeg(S, c, LEGS[i], i);
     // the dark space under the near end
@@ -546,7 +591,12 @@
       y = yOn(EDGE, x) + 4 + r() * 24;
       spots.push([x, y, (60 + r() * 60) * clamp((y - 640) / 240, 0.5, 1.2)]);
     }
-    back += g(reedBed(S, c, spots, { seed: 415, lean: 0.25 }), { filter: S.shadow('s') });
+    var reeds = reedBed(S, c, spots, { seed: 415, lean: 0.25 });
+    back += g(reeds, { filter: S.shadow('s') });
+    // chapter 5: whoever swims alongside (`water`) sits in the river, beyond the reeds
+    var swimmer = null;
+    for (i = 0; i < (S.cast || []).length; i++) if (S.cast[i] && S.cast[i].at === 'water') { swimmer = S.cast[i]; break; }
+    if (swimmer) S.covers.water = swimCover(S, c, BANK_WATER, water, reeds, swimmer);
     // Riffle's rock at the shadow's edge
     over += g(rock(S, c, 492, 780, 124, 64, 416, { shadeLeft: 0.35 }), { filter: S.shadow('s') });
     // reeds in front of a cat among the reeds
@@ -877,6 +927,8 @@
       back += g(path(bands, S.linU([[0, ec, 0.46 * eo], [0.6, ec, 0.2 * eo], [1, ec, 0.03]], 0, 0, 1500, 0)), { 'clip-path': S.clip('brbfloor', path(fd, '#fff')), style: 'mix-blend-mode:screen' });
       back += stroke(pts([[-10, 128], [1610, 92]]), ec, 5, { opacity: 0.45 * eo });
     }
+    // chapter 5: the little forepaws she has drawn in the mud, in front of her spot
+    back += mudPaws(S, c, o.mudPaws);
     // the eyes (or only the dark), with their shine in a little puddle below
     if (o.eyes === 'open' || o.eyes === 'blink') {
       back += eyePair(S, c, 1040, 446, 44, 176, o.eyes);
@@ -909,6 +961,58 @@
     front += g(path(blob(1560, 1010, 180, 54, 10, rng(705), 0.25, 0.3), mix(c.dark1, c.mudDk, 0.3)), { filter: S.shadow('m') });
     S.weatherClip = S.clip('brbrain', rect(0, 0, 0, 0, '#fff'));
     return { back: back, over: '', front: front };
+  }
+
+  // ------------------------------------------------------------------ chapter 5: the forepaws in the mud
+
+  // `mudPaws`: little forepaws drawn in the mud with one long claw (as chapter 3's Counts picture drew
+  // six, `kind: 'mud'`, and the roof's grit has seven): a palm and five claw marks each, on the floor
+  // of the `back` composition in front of Sprinkle's spot, clear of the drag marks, of her own big
+  // prints beside them and of everyone's feet. Seven places, four above three, the way the mud count's
+  // picture lays seven; the first (top left, nearest her claw) is her own, drawn last: with 6 it is
+  // still bare mud. MUD_PAWS: [cx, cy, k, squash (the floor seen from cat height)].
+  var MUD_PAWS = [1120, 934, 0.72, 0.5], MUD_GAP = 118, MUD_ROWS = [-50, 50];
+  function mudPawCount(v) { var k = v === true ? 7 : Math.round(+v); return isFinite(k) ? clamp(k, 0, 7) : 0; }
+  function mudPaws(S, c, v) {
+    var count = mudPawCount(v);
+    if (!count) return '';
+    var G = MUD_PAWS, cx = G[0], cy = G[1], k = G[2], sq = G[3], r = rng(9500), all = '', tagged = '';
+    var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    function W(px, py) {
+      var q = [cx + px * k, cy + py * k * sq];
+      x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]);
+      return q;
+    }
+    function d2(list) { return pts(list.map(function (q) { return W(q[0], q[1]); })); }
+    for (var i = 0; i < 7; i++) {
+      var row = i < 4 ? 0 : 1, col = row ? i - 4 : i, cnt = row ? 3 : 4;
+      var ox = (col - (cnt - 1) / 2) * MUD_GAP + (r() - 0.5) * 8, oy = MUD_ROWS[row] + (r() - 0.5) * 6, tilt = (r() - 0.5) * 0.22, claws = '', pawD = '', wob = [r(), r(), r(), r(), r()];
+      // (every place draws its numbers, so the six are the same six with or without the seventh)
+      if (i < 7 - count) continue;
+      var rot = function (px, py) { return [ox + px * Math.cos(tilt) - py * Math.sin(tilt), oy + px * Math.sin(tilt) + py * Math.cos(tilt)]; };
+      var palm = [];
+      for (var a = 0; a < 16; a++) { var t = Math.PI * 2 * a / 16; palm.push(rot(Math.cos(t) * 27, 6 + Math.sin(t) * 22)); }
+      var pd = d2(palm) + 'Z';
+      pawD += pd;
+      for (var j = 0; j < 5; j++) {
+        var an = (-146 + 112 * j / 4) * Math.PI / 180, cd = d2([rot(Math.cos(an) * 36, 2 + Math.sin(an) * 34), rot(Math.cos(an) * 60 + (wob[j] - 0.5) * 3, 2 + Math.sin(an) * 58)]);
+        pawD += cd;
+        claws += '<path d="' + cd + '" data-claw="mud"/>';
+      }
+      all += pawD;
+      tagged += '<g data-paw="mud"' + (i === 0 ? ' data-own="sprinkle"' : '') + '><path d="' + pd + '"/>' + claws + '</g>';
+    }
+    var lw = Math.max(2.2, 6.4 * k * Math.sqrt(sq + 0.2));
+    // the mud she smoothed to draw on, a little paler and wetter than the floor; then each line a dark
+    // groove in it, its far lip catching what light there is
+    var mcx = (x0 + x1) / 2, mcy = (y0 + y1) / 2, mud = mix(c.dark3, '#96836A', 0.4);
+    var s = path(blob(mcx, mcy + 2, (x1 - x0) / 2 + 36, (y1 - y0) / 2 + 17, 16, rng(9501), 0.16, 0.2), mix(c.dark1, c.mudDk, 0.3), { opacity: 0.5, transform: 'translate(0 4)' }) +
+      path(blob(mcx, mcy, (x1 - x0) / 2 + 34, (y1 - y0) / 2 + 15, 16, rng(9501), 0.16, 0.2), mud, { opacity: 0.62 }) +
+      stroke('M' + n(mcx - (x1 - x0) * 0.36) + ' ' + n(y0 - 7) + 'q' + n((x1 - x0) * 0.18) + ' -5 ' + n((x1 - x0) * 0.4) + ' -1', mix(c.dark4, '#D9CFB8', 0.4), 2.5, { opacity: 0.4 }) +
+      stroke(all, mix(c.dark4, '#D9CFB8', 0.5), lw * 0.5, { opacity: 0.85, transform: 'translate(' + n(lw * 0.3) + ' ' + n(lw * 0.36) + ')' }) +
+      g(tagged, { fill: 'none', stroke: mix(c.dark0, '#0A0F1C', 0.45), 'stroke-width': n(lw), 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+    (S.keep = S.keep || []).push({ x: x0 - lw * 2, y: y0 - lw * 2, w: x1 - x0 + lw * 4, h: y1 - y0 + lw * 4 });
+    return g(s, { 'data-art': 'mud-paws', 'data-count': count });
   }
 
   // ------------------------------------------------------------------ chapter 3: the pebble, the prints, the branch, evening light
@@ -1440,7 +1544,9 @@
       // the riverbank; `rock` and `edge` also show here, small, at the dark's mouth
       main: {
         'bank-left': A(300, 930, 285), 'bank-right': A(1250, 936, 285, 'left'), reeds: A(1000, 880, 240, 'left'),
-        rock: A(492, 722, 140, 'right', { elev: true }), edge: A(330, 772, 176, 'left')
+        rock: A(492, 722, 140, 'right', { elev: true }), edge: A(330, 772, 176, 'left'),
+        // chapter 5: swimming alongside, in the river where the reeds part
+        water: BANK_WATER
       },
       // `sun-edge`: in the sun just out of the shadow, beside `sun` (a cat there and Tallyheart at
       // `sun` sit side by side: f097a, f100a, f101a); its height is the depth there
@@ -1457,8 +1563,10 @@
       paws: {}
     },
     opts: { train: [false, true], eyes: ['none', 'open', 'blink', 'sprinkle'], drag: [true, false], drips: [true, false],
-      pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true] },
-    defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false }
+      pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true],
+      // chapter 5: the little forepaws drawn in the mud (`back`)
+      mudPaws: [0, 6, 7] },
+    defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0 }
   });
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;

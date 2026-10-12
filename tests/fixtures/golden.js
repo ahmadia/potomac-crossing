@@ -22,7 +22,8 @@
  * `compact(run)` boils a run down to short hashes beside the readable essentials (which question,
  * which line), so a recording of three chapters stays small and a difference still names its place.
  * A script's `wrongBy` is how far off a wrong answer is (1 unless it says: 5 lands on a multiple of
- * five). The walker also turns chapter 4's pages (a `scratch` frame tap by tap, a `file` frame).
+ * five). The walker also turns chapter 4's pages (a `scratch` frame tap by tap, a `file` frame) and
+ * chapter 5's (`ask`: the questions she taps out).
  * Not a test file (node --test only runs *.test.js).
  */
 'use strict';
@@ -106,7 +107,7 @@ function walk(E, list, script, ui) {
       frames.push(id);
       if (ui.frame) ((out.shown = out.shown || {})[story.id] = out.shown[story.id] || []).push(ui.frame(story, id, cat, list));
       if (kind === 'end') break;
-      if (kind === 'next' || kind === 'skip' || kind === 'file') E.next(cat, story, t);
+      if (kind === 'next' || kind === 'skip' || kind === 'file' || kind === 'ask') E.next(cat, story, t);
       else if (kind === 'scratch') { for (let n = 0; n < 12 && E.scratchTap && E.scratchTap(cat, story, t); n++); E.next(cat, story, t); }
       else if (kind === 'look') E.confirmLook(cat, story, script.look || { sex: 'she', fur: 'calico', marking: 'white-paws', eyes: 'odd' }, t);
       else if (kind === 'choice') {

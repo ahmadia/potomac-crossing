@@ -954,3 +954,301 @@ readings, compared whole.
   takes the freest of nine spots, the bottom right before the bottom left, so at 1180 × 820 it would
   still lie at our cat's feet (296px wide, where it is 494px now), not by Tallyheart's paws. Putting
   it by its maker needs a spot the frame can name, or the art's own small lettering by each paw.
+
+## Chapter 5 (v0.4)
+
+Chapter 5, *Riffle’s River*, is [`chapters/05-riffles-river.md`](chapters/05-riffles-river.md)
+(v0.4), built in `app/story/ch05.js`. **Its "Art needs" and "Build" notes are the spec, names
+included**: the two new sets `openriver` (`app/art/sets/openriver.js`) and `marsh`
+(`app/art/sets/marsh.js`) with the cameras, anchors and options the notes list; the new cast
+`patience`, `puddle` and `wisp` with their poses; the Counts art for the 9s (one claw tucked), the
+fish, the logs and the herons; the new Case File cards (their pictures go in `app/art/cards.js`);
+and every engine key the Build notes add. Build them as written and record each key here, briefly,
+as it lands.
+
+### Engine and UI, as built (chapter 5)
+
+`E.VERSION = '0.5.0 (chapter 5, 2026-10-11)'`; the save stays version 2 and nothing new is stored
+(the new flags are sticky flags like `foundSquall`). Each key below is checked by `E.checkStory`
+and tested on the fixture chapter 5 in `tests/fixtures/chapters.js` (`tests/engine.test.js`,
+"chapter 5": it plays beside the real chapters 1 to 4; **its frames are the formats to copy**).
+Chapters 1 to 4 play as they did: `tests/fixtures/ch04-golden.json` (recorded with 0.4.0 by
+`tests/fixtures/make-ch04-golden.js`) is every frame, picture, question, line, help, card and book
+page of ten readings, compared whole; chapter 2's and chapter 3's recordings still pass.
+`E.checkStory(story)` alone cannot see another chapter's cards, sets or flags: check chapter 5
+with the others, `E.checkStory(story, stories)`.
+
+**For the story (`app/story/ch05.js`)**
+
+- **A thing she taps, `scratch: { tap: NAME, prompt, label, miss?, next }`**: chapter 4's glint Tap
+  with any name (`'nose'`, `'earth'`, `'fur'`, `'mud'`, `'pole'`). The target is the art's mark in
+  the scene (below); the page puts a soft glow on it. A tap on it flares and turns the page; a tap
+  anywhere else wobbles the glow and letters **`miss`** small beside it for a moment (`'snnnrrk…'`):
+  nothing is logged, nothing can be got wrong. `E.tapWords(f).miss`.
+- **`ask: { who, to, pairs: [[question, answer], …], next, prompt?, label?, opt? }`**, a new frame
+  kind (`E.KINDS` gains `'ask'`): Riffle's seven questions. The frame's own scene stays up; a tap on
+  the asker letters his next question in his balloon and the answer in `to`'s, and the scene is
+  drawn again with its option `owed` (or the one `opt` names) one higher. The pairs before stay
+  under the panel, small. A tap elsewhere makes him hop; after the last pair, Next. Before the
+  first tap the frame's own `say` shows. `E.askView`, `E.askScene`, `E.askWords`.
+- **The skip-count's new forms** (`skip`; each is tapped through, logs nothing):
+  - **`tuck: true`** (`table: 9, groups: 5, who: […]`): the cats sit with all ten claws lit and a
+    big 50; each tap curls one claw in on the glowing cat and steps the number back by one (49, 48
+    … 45). No number is ever under a cat. `keep: true` keeps the picture (nine out, one tucked, 45)
+    on the pages after it, as chapter 4's `keep` does.
+  - **`paws: 'board'`** (`table: 1, groups: 4, teacher`): her four paws onto the raft, counted in
+    words in the teacher's balloon ("One.", "Two."), no big number over the picture. Give it
+    `carry: false`.
+  - **`paws: 'log'`** (`table: 1, groups: 9, teacher: 'player'`, on a frame with a `scene`): no
+    counting picture. The scene stays up and is drawn again at every tap with **`claws: taps`** in
+    its options; the count is her own thought; a tap anywhere counts. **`steps: [{ from: 1, opts: {
+    plane: 'far' }, sfx: 'rrr…' }, { from: 4, opts: { plane: 'near' }, sfx: 'RRRrrr…' }, { from: 7,
+    opts: { plane: 'over' }, sfx: 'RRRRRR…' }]`**: from tap `from` on, those options are laid over
+    the scene's and `sfx` is lettered along the top, a size larger at each step (`E.skipScene`).
+  - **`paws: 'mud'`** (`table: 5`, **no `groups`**, `who: [{ who: 'sprinkle' }, { who: 'squall',
+    when: { foundSquall: true } }, …]`): a forepaw for everyone she has found. `who` entries may
+    carry a **`when`**; with no `groups` the count is as long as the entries that match her
+    (`E.skipFor(skip, cat)`; at least one entry must be unconditional). Each lit forepaw has its
+    number under it and the count is in the teacher's balloon; no big number. The page it turns to
+    shows the number she reached, big over its picture (10, 15 or 20: `E.skipReached`).
+  - **`paws: 'both'` at `table: 9`**: the bedtime nines, chapter 4's bedtime tens with one claw
+    tucked: 9, 18, 27, 36, 45 in her own murmur.
+  - One group with `who: [{ who: 'puddle' }]` or `'wisp'`: chapter 4's raised forepaw, theirs.
+- **Counts frames**: `counts: { set, next, intro: false }` says none of the frame's lines is said
+  again over the first question (the 10s warm-up straight after a Tap). A frame may run another
+  chapter's set (`set: 'ch04-riddle'`, the roof offered again).
+- **Counts sets, new keys**:
+  - **`light: 'tuck'` on the set** (the nines): every question it asks first and every retry opens
+    with all ten claws lit on every cat, curls one in on each, then goes unlit (nine out, one
+    tucked) and she types, without a word (`E.lightSteps`, `E.LIGHT_MS.hop`/`.tuck`). A set-level
+    `light` may also be `'groups'` or `'rows'`; a fact's own `light` wins; a filler shows the still
+    picture.
+  - **The nines' help**: a set at `table: 9` gets the lesson done slowly: the sand swiped twice for
+    every cat and hopped by tens, then one line rubbed out for every cat, stepping back by ones (10
+    · 20 · 30 · 40 · 39 · 38 · 37 · 36). Three more openings, set-level lines like `helpIntro`:
+    `helpIntroTens` (she typed the tens), `helpIntroOneTuck` (the tens less one, for two cats or
+    more), `helpIntroNotNine` (her two numbers don't make nine; only once the lesson has shown her
+    that they should, or in the Hollow), checked in that order after `helpIntroNotFive`/`NotTen`.
+  - **A fact's own `miss` and `missLast`** lines (beside `right`/`rightAgain`), and **`shows: {
+    kind: 'answers', of: [[2, 9]], also: 'One and eight make nine. ' }`**: with that fact's right
+    line and its miss line the page draws her answers scratched in the sand: this fact's, and each
+    of `of` she has answered right with no ask of it still ahead. **`{also}`** in those lines is the
+    `also` words when every one of `of` is there, else nothing.
+  - **`fillOrder: 'easiest'` with no `fillFrom`**: the lesson's own gaps are filled with the easiest
+    of her right answers in it, not the latest.
+  - **`fillPicture: 'borrower'`** (beside `fillVoice: 'borrower'`): a borrowed pair is drawn and
+    worded as the borrowing set's own question (the otter's fish, not chapter 2's ears).
+  - **`ground: 'log'`**: the help is scratched on a log of the raft. **`help: 'picture'`**: no
+    scratching, the set's own picture lit a group at a time (Puddle's bumps, Wisp's herons).
+    **`helpCounter: 'you'`** as before.
+  - **`teacher: 'caption'`**: a silent set (Wisp's): every line the engine words is lettered as a
+    caption; **`helpSays: 'patience'`** is who says the help's opening line.
+  - **`warmHard.avoid`**: the hard pick's own avoid list, read in place of the set's.
+  - Pictures: `kind: 'fish'` with `layout: 'pairs', thought: true` or `layout: 'strings'`; `kind:
+    'bumps'`; `kind: 'herons'`. `thing`/`things` default to `life`/`lives` at table 9.
+  - The Training Hollow has five Counts now: the first set a chapter gives a table is that table's
+    Count, so `ch05-nines` (`table: 9`, `label: 'Nine lives'` for its button, `hollowThings:
+    'nines'` for Tallyheart's word) is the 9s', and the pile, the warm-up, the fish and the riddles
+    (tables 10, 2, 5 and 1, taught in earlier chapters) change nothing there. A round is the still
+    picture and her sand: no hop and tuck, no log, no captions.
+- **Case File**: **`link: { with: ['fox-moon'], line, when? }`** on a card: it and each partner she
+  holds are drawn touching from the moment she holds both (any cards, an ear beside an ear;
+  `answers` stays chapter 10's). A card two links name lies between its partners: three in a row,
+  a line under each join (`E.caseFile(…).links`: `{ cards, line }`, or `{ cards: [a, b, c], line,
+  lines }`). A frame may give another chapter's card (`card: 'squall-shapes'` on the roof).
+- **The book**: `book.dragonet` may be a list, each with its own `when` and **`pose`** (how the art
+  draws it on its page: `'head'`, `'blink'`; `'sit'` when it names none).
+- **Flags the Grown-ups corner has words for**: `ch5First` (`'otters'`, `'heron'`), `ch5Roof`,
+  `foundPuddle`, `foundWisp`. **Speakers**: `patience`, `puddle`, `wisp` have names and voices
+  (Wisp never speaks; the chapter's `names: { puddle: 'The big-footed dragon' }` labels him until a
+  line carries `name: 'Puddle'`, as chapter 4 did for Squall).
+- **Chapter 4's recap for a cat who climbs today**: `app/story/ch04.js`'s book lines keyed on
+  `foundSquall` must not say she met him in chapter 4 when `ch5Roof` is true (the fixture chapter 4
+  has the three `when`s: `{ foundSquall: true, ch5Roof: false }`, `{ foundSquall: false }`, `{
+  ch5Roof: true }`).
+
+**For the art: what it is handed** (the page adds `look` to every `countsPicture` call, as before)
+
+- **The 9s**: `countsPicture({ table: 9, per: 9, groups, highlight, who?, thing, things })` is the
+  still picture (nine out, one tucked on every cat). A question with `light: 'tuck'` is three
+  calls: `{ highlight: groups × 10, tuck: 0, tucked: 0 }` (the hop), `{ highlight: groups × 9, tuck:
+  groups, tucked: groups }` (the tuck), then `{ highlight: 0 }`. `tuck` is the art's key (how many
+  cats, from the first, have curled a claw in); `tucked` says the same.
+- **The tuck Tap**: `{ table: 9, per: 9, groups: 5, who, tuck: true, taps, tucked: taps, highlight:
+  50 − taps, totals: false, next: taps < 5, thing: 'claw', things: 'claws' }`; kept pages: `taps: 5,
+  highlight: 45, next: false`.
+- **The bedtime nines**: `{ paws: 'own', both: true, table: 9, per: 9, groups: 5, taps, highlight:
+  taps × 9, lit, nextPaw, totals: false }`.
+- **The nines' help**: `PC.art.sand({ groups, per: 10, counted, style: 'swipe', pair: true })` for
+  the hops (`counted` 10, 20 …), then the same with `counted: groups × 10` and **`rubbed`** 1 …
+  `groups`.
+- **Her answers in the sand**: `PC.art.sand({ answers: [18, 36] })`; when that picture's
+  `aria-label` does not name each number the page tries `countsPicture({ kind: 'answers', answers
+  })`, and draws the numbers itself if neither does.
+- **Fish, bumps, herons**: `countsPicture({ kind: 'fish', layout: 'pairs', thought: true, table: 2,
+  per: 2, groups, highlight })`, `{ kind: 'fish', layout: 'strings', table: 5, per: 5, … }`, `{ kind:
+  'bumps', table: 10, per: 10, … }`, `{ kind: 'herons', table: 1, per: 1, … }`. A help on the log:
+  `PC.art.sand({ groups, per, counted, ground: 'log' })` (`style: 'swipe'` on the fives).
+- **Paws aboard**: `countsPicture({ paws: 'board', table: 1, per: 1, groups: 4, taps, highlight:
+  taps, totals: false, next })`. **The mud count**: `{ paws: 'mud', kind: 'mud', table: 5, per: 5,
+  groups: (hers, 2 to 4), of: 7, who, highlight: taps × 5, totals: true, next }`.
+- **Claws in the log**: no counting picture; the frame's scene with `claws: taps` (0 to 9) and the
+  step's options (`plane`).
+- **The questions she taps out**: the frame's scene with `owed` = its own + taps. The page puts its
+  own soft glow on the asker's head unless the scene carries an element of class `pc-next` (a cast
+  entry with `glow: true`) or `pc-tap`; then that is the target, and it wiggles on a miss.
+- **One-tap frames**: the target is the scene's element named for the tap (`data-tap="NAME"`, class
+  `pc-tap-NAME` or `data-art="NAME"`), else its first glint or `pc-tap` (`PC.ui.taps.pick`). An
+  element that is also `data-art="glint"` pulses, twinkles and flares itself as chapter 4's glint
+  does; any other gets the page's soft glow, as big as the thing. The page adds class `tap-hit` or
+  `tap-miss` to `.art` at a tap, for an art that wants to answer.
+- **The book**: `PC.art.character(id, { pose, mood: 'happy', facing })` with the dragonet's `pose`.
+
+**The page and the tools**
+
+- `index.html`: CSS only (the soft glow `.tapspot.soft`, the small answer `.tapmiss`, the roar
+  `.skipsfx.s1`–`.s3`, the asked list `.asked`, the Case File's `.cf-links` and three in a row
+  `.cf-pair.n3`, the count in words `.counter.words`; still under reduced motion). One print rule
+  changes for every chapter: the book's dragonets page may break between two dragonets (it never
+  did with two, which fit a sheet; with three or four it must).
+- `tools/storyboard.mjs` prints every key above in words, has words for `openriver` and `marsh`
+  and everything new, and `--check-words` now also checks the cast extras the art names
+  (`PC.art.vocab.extras`). Chapters 1 to 3's storyboards regenerate byte for byte; chapter 4's
+  changes only where its book recap gained the `ch5Roof` conditions (a cat who climbs the roof in
+  chapter 5 found Squall there, so chapter 4's page still says he is roaring up there).
+- `tools/shots.mjs`: `STORY=fixture5` stands the fixture chapter 5 in.
+  **It is silent by construction** (the mini makes no sound): every HTML page it serves has speech
+  and audio switched off before the game's first script (`window.speechSynthesis` a stand-in that
+  says nothing and notes what would have been read; the real synthesizer's methods emptied; no
+  media element plays, no audio context is made), "Read to me" stays off (checked in the page after
+  the test cat is set up), a `@readBtn` tap is refused before Safari starts, and `READ=1` is the one
+  opt-in: the setting on, in a page that still says nothing. `--page` prints the page as served.
+  `DRY=1` prints, for each target, the lines Read to me would say there, in order, with Read to me
+  off: the page's own list (`PC.debug.speech()`, which says nothing).
+  `tests/tools.test.js` holds it to this.
+
+### As built, after review (chapter 5, 2026-10-12)
+
+What the review of the built chapter changed. Each is tested where it lives.
+
+**The engine and the page**
+
+- **A count she never reads hands no number on.** `E.skipInto` and `E.keptSkip` pass over a skip
+  frame whose `when` does not match the cat: the page turn past chapter 5's mud count (f148, f149:
+  only for a cat who met a dragonet today) lands on f150, and a cat who found nobody used to read
+  f150 under a big 5 or 10. With no cat they answer for the story as written, as the storyboard asks.
+- **`sfxAt: [x, y]`** on a frame with an `sfx`: where its sound effect is lettered, the middle of
+  the lettering in hundredths of the panel (`PC.ui.layout.sfxPlace(text, W, H, faces, placed, at)`:
+  there at its fitted size, inside the panel; smaller, by the usual steps, only while a caption or a
+  balloon would hide it; placed as any other sound when it cannot be clear). Faces and kept areas do
+  not move it: the frame chose the spot. Chapter 5's Roar (f050, in the sky under the airplane) and
+  the small "blub…" on the way home (f131a, on the water above the bubbles). `E.checkStory` checks
+  its shape; the storyboard says where.
+- **`sfxRead: 'words'`** on a frame with an `sfx`: the sound in words, for Read to me only. Read to
+  me reads captions, then balloons; a sound effect is lettering and is never read (nobody can say
+  "SNNNRRRK."), so a caption that runs on into its sound was heard as a sentence nobody finished.
+  `E.captionsRead(frame, cat)` is the captions as they are heard: `E.captions`, with the words said
+  right after the first caption she sees that does not end a sentence (`E.endsSentence`: no full
+  stop, question mark, exclamation mark or trailing dots at its end), or after the last caption when
+  every one does, and before the balloons. The page reads that list and gives the panel its label
+  from it; what is lettered is `E.captions`, unchanged, and a frame without the key is heard exactly
+  as before (every frame of chapters 1 to 4). Chapter 5 has three: the tower (f021, "From the
+  tallest tower:" "a roar, and a tiny hiccup."), the otters' applause (f053, "On the rocks, otter
+  tails go" "Slap! Slap! Slap!", then Riffle's shout) and the pinecone (f163, "Then, a little
+  later:" "a long, long snore."). `E.checkStory` checks its shape (a non-empty string, on a frame
+  with an `sfx`, never on a skip, an ask or a scratch frame, whose pages read their captions
+  themselves); the storyboard prints it beside the sound effect; `tests/story-ch05.test.js` fails
+  when a chapter 5 caption runs on into a sound with no words for the listener.
+- **Every retry in a set with a `light` plays it**, the retry of a missed filler of the set's own
+  included (the nines' hop and tuck); a filler itself still shows the still picture, a borrowed
+  pair is another set's picture, and the Hollow plays neither.
+- **`E.openChapter` arrives.** When a parked page no longer shows and she lands on the next that
+  does, that page gives its card and sets its flags, as a page turn to it would.
+- **Counts frames**: `intro: false` on the bill too (`ch05-bill`, f095): Patience asks it in two
+  balloons and a caption of her own, and with the frame's line said again a phone hid the top row of
+  the nine pairs.
+- The Grown-ups corner's words for `ch5Roof` are filled for a tom ("his book").
+
+**The art**
+
+- **Cats, `reach: true` on `crouch`** (an extra, not a pose: the cats still have fifteen):
+  crouched at an edge, the near forepaw held out and down over it, touching nothing. That paw hangs
+  below the line of her other feet, so the fit rests it on the bottom of her box and lifts the rest
+  of her; the result carries `reach: { x, y, r, edge }` (the paw, and the line of the edge), and the
+  set that places her puts that line on the edge.
+- **The marsh**: anchor **`raft-edge`** (the `mud` camera only; `air` and `elev`): the front lip of
+  the raft's near log, where our cat crouches to hold a paw over a print. The line of tiny prints is
+  laid so that one lies right under the paw (`prints.under`; `PC.art.marshInfo().mud.printUnder`,
+  `.lip`), half the paw's size, and the set draws her shadow on the log and the paw's small one on
+  the mud. **The pale reed** while she is still a reed has a sheaf of plumes across her face and long
+  leaves across her body, and is thinner still (`marshInfo.reedThin`); knees, flinch and blink are
+  as solid as she ever is. **The frogs** are drawn before the cast (never on a diving otter's head
+  or our cat's ear), and three frog pads moved off the heads and the dive spot. **The pole**, when
+  it is neither planted, held nor climbed, lies along the raft's near log at their feet, in the
+  colours of the one Riffle holds (it used to vanish while his paws were busy).
+- **`fish: 'spare'` on `openriver` and `crossing`**: the reed string with its two spare fish lying
+  on the raft's logs, for the way home (the open views, `edge` and `beside`; the Crossing's main
+  composition and `board`, at `raft-3`). The string is `PC.art.prey.string({ count, len })`
+  (app/art/sets/pile.js), the pile set's fish on a reed loop. Chapters 2 to 4 never ask for it: their
+  pictures are as they were.
+- **The open river**: looking straight up (`sky`), the airliner's lowest point is above both heads
+  with sky between; over the raft it crosses to the right of the tallest tower, whose roof and red
+  light stay clear; in `beside` the lying pole is on the near log, at their feet; in `edge` Riffle's
+  seat is clear of the lashing.
+- **The open river's water is the Crossing's blue** (2026-10-12; README, "Claude's calls under
+  decision 46"). It was drawn green-brown, as the text's note then asked, and read as a lawn the
+  raft sat on, one page after the same river was blue at the Crossing. The set's own table,
+  `PC.art.openriverInfo.water` (`day`, `morning`, `golden`; each `hi`, `far`, `mid`, `near`, `low`,
+  `sheen`, `line`, `glint`, `under`), now holds: by day `#E6F4F7` at the far waterline, `#B4D9EC`
+  (the sky's colour), `#74B2D4` (the Crossing's blue, brighter), `#58A2BE` and `#4E97B1` at our feet
+  (a touch greener and deeper); `morning` is a paler day; `late` (the `golden` light) puts the sky's
+  gold on the far water (`#FFEFC6`, `#EBD6C6`) and an evening blue under the raft (`#A9A9CC`,
+  `#7E97C4`, `#6F8ABC`), the hue of the Crossing's own late water. The brown `silt` streaks are
+  `sheen` now: long pale streaks of sky. Two things were redrawn so they still read on blue: by day
+  the far end of each tower's reflection is a shade deeper than the glass (blue glass on blue water
+  was lost), and the river laid back over the raft's near log is the river's own drawing again,
+  clipped to a level patch (`or-lap`), where it was a patch of the bare fill (which showed as a box
+  wherever the sun's path or a streak ran under it). The rule the tests hold (`tests/set-openriver.test.js`): by
+  day the blue leads the red in every colour of the river and in every stop a camera draws; the late
+  water is warmer, stop by stop, and from the middle to our feet the blue still leads; and nothing
+  on it is ever dark in any light (the old note's intent, measured as before: no colour under 110 of
+  255). The small pictures on the raft keep a copy of the day water in `app/art/cats.js` (`RIVER`:
+  Puddle's forepaw Tap and the claws-in-the-log picture; `UNDER_WATER`: the raft from underneath),
+  and a test holds the two files together. The Crossing, the marsh (still green water: it is a
+  marsh, and never shows the river) and every panel of chapters 1 to 4 are as they were.
+- **Wisp's `flinch`** has its eyes squeezed shut (her open gold eyes are `blink`'s). **The herons'
+  picture** draws seven as four above three, as her claw draws them in the mud. **The paws-aboard
+  picture's** water is the Crossing's deep strip, the colour of the pages before and after it.
+
+**The story (`app/story/ch05.js`, 186 frames)**
+
+- **The gulp is two frames with opposite `when`s** (f116, f117), as the gap's and the prints' are: a
+  cat who found Wisp sees her swallow her half (Wisp's `gulp`); everyone else's panel has nothing in
+  the reeds. Every frame after it moved up by one (the slip is f121, the Old Bridge f140, the end
+  f171).
+- **The roof is in this chapter's own hour**: `roof()` gives chapter 4's roof frames `fx: ['day']`
+  (she climbs between the lesson and the Crossing) and the two boards that named the afternoon say
+  "day"; chapter 4's own frames are untouched.
+- **The prints stay** in the marsh mud from the frame where Patience points at them to the end of
+  the marsh, on every camera that shows the mud. **On the way home** every river and Crossing scene
+  has `fish: 'spare'`.
+- **One panel that is not in the text**: f131a, the raft gliding home after "Under the raft" with
+  two nostrils and a "blub…" between its logs (the Build note wants `bubbles: true` on the frame
+  after each copy of that scene, and the text's next screen on this path has no raft).
+- **Riffle asks "What did I miss?" wide-eyed** (f115, `wonder`): the `laugh` face has its eyes
+  screwed shut and tears flying, and at panel size he looked upset before anything funny was said.
+- Staging: the first two panels are mirrored (the sleeper alone at the left, so the snore is
+  lettered over him); Riffle is in every panel that shows his seat (her whisper at the raft, the
+  otters' thought and sniff panels); in "Under the raft" the order is Riffle, our cat, Puddle in all
+  eight panels; the water worry's cat sits in the middle of the raft; Riffle yells SKYMONSTER with
+  both paws up (pointing down is for his slip); she is in every marsh picture, at `raft-edge` for
+  the prints; the telling at the den is in the wide view.
+- The book's recap names the cat, or Puddle, where a tom's "he" or "him" would have meant two
+  animals. A cat who knows Puddle and picks "Not now. He's being a log." does not read "Only blue
+  sky." No board puts the fox in an inset outside the old otter's telling and Wisp's drawing.
+- **A caption that can be lettered on the panel is 95 characters at most.** Longer, it goes beside
+  the panel and the picture shrinks, so the shining river (f046) and the windows (f051b) are two
+  boxes each, the words unchanged, and their boards say "Two captions". Two stay long: the end
+  page's (an end page letters beside the panel by design) and the fox in the mud (f111a: the
+  drawing is kept clear and two heads have the top, so no second box fits on the panel however
+  the words are cut; one box, in the column, with its card).

@@ -505,6 +505,54 @@ html.file-open,html.file-open body{overflow:hidden}
   .bark-row.n1 .bark{flex-basis:52%}
 }
 
+/* ---------- chapter 5: the things she taps, the questions she taps out, the roar that grows ---------- */
+/* the page's own soft glow on a thing a frame asks her to tap (the old tom's nose, a tuft of fur, a
+   patch of mud, an otter bursting with questions): it pulses softly; a tap on it makes it flare, a tap
+   anywhere else gets a small answer (a wobble, and a word lettered small beside it: "snnnrrk…") */
+.tapspot.soft svg{animation:softglow 1.7s ease-in-out infinite}
+.th-glow{fill:rgba(255,236,150,.3)}
+.th-ring{fill:none;stroke:#fff3c2;stroke-width:4;stroke-dasharray:10 8;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(255,214,70,.95))}
+@keyframes softglow{0%,100%{transform:scale(.86);opacity:.62}50%{transform:scale(1.04);opacity:1}}
+.tapspot.soft.twinkle svg{animation:softno .5s ease-in-out 1}
+@keyframes softno{0%,100%{transform:scale(.9) rotate(0)}25%{transform:scale(1) rotate(-12deg)}55%{transform:scale(1) rotate(10deg)}80%{transform:scale(.95) rotate(-5deg)}}
+.tapspot.soft.flare svg{animation:softyes .7s ease-out 1 forwards}
+@keyframes softyes{0%{transform:scale(1);opacity:1}60%{transform:scale(2.2);opacity:.9}100%{transform:scale(3);opacity:0}}
+.tapspot.soft.hop{animation:spothop .5s ease-out 1}
+@keyframes spothop{0%,100%{transform:translate(-50%,-50%)}35%{transform:translate(-50%,-80%)}65%{transform:translate(-50%,-46%)}}
+.tapmiss{position:absolute;transform:translate(-50%,-50%) rotate(-5deg);font-family:var(--shout);font-size:clamp(16px, 2.4vw, 30px);letter-spacing:.05em;line-height:1;white-space:nowrap;color:#fff6dc;
+  text-shadow:2px 2px 0 var(--ink),-1.5px -1.5px 0 var(--ink),1.5px -1.5px 0 var(--ink),-1.5px 1.5px 0 var(--ink);pointer-events:none;z-index:2;animation:tapmiss 1.3s ease-out both}
+@keyframes tapmiss{0%{opacity:0;transform:translate(-50%,-30%) rotate(-5deg) scale(.5)}18%{opacity:1;transform:translate(-50%,-50%) rotate(-5deg) scale(1.1)}75%{opacity:1;transform:translate(-50%,-56%) rotate(-5deg) scale(1)}100%{opacity:0;transform:translate(-46%,-68%) rotate(-3deg) scale(1)}}
+/* nine claws in the log: the frame's own scene stays up, and the roar is lettered along its top, a
+   little larger at each step (rrr… RRR…) */
+.skipsfx{position:absolute;left:3%;right:3%;top:3%;text-align:center;font-family:var(--shout);letter-spacing:.07em;line-height:1;white-space:nowrap;color:var(--gold);
+  text-shadow:3px 3px 0 var(--ink),-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink);pointer-events:none}
+.skipsfx.s1{font-size:clamp(18px, 3vw, 44px);color:#fff6dc;opacity:.92}
+.skipsfx.s2{font-size:clamp(26px, 4.6vw, 68px)}
+.skipsfx.s3{font-size:clamp(36px, 6.4vw, 96px)}
+.skipsfx.pop{transform-origin:50% 40%}
+/* her paws counted aboard in words ("One. Two."), not digits */
+.counter.words{font-family:var(--comic);font-size:1.12em;letter-spacing:0}
+/* the questions she has tapped out already, small, under the panel: all of them can be read back */
+.asked{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:.8em;font-weight:700;line-height:1.25;color:var(--text-dim)}
+.asked li{display:flex;flex-wrap:wrap;gap:0 .5em;align-items:baseline}
+.asked q{quotes:"“" "”" "‘" "’"}
+.asked q.a{color:var(--caption)}
+/* her Case File: several lots of linked cards, side by side where there is room; three in a row
+   when one card touches two, a line for each join (the first under the left pair and kept to that
+   side, the second under the right and kept to that one, a little apart: two thoughts, not one) */
+.cf-links{grid-area:link;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:12px 22px;align-self:center;min-width:0}
+.cf-links .cf-link{grid-area:auto;flex:0 1 360px;align-self:auto}
+.cf-links .cf-link.row{flex-basis:520px}
+.cf-pair.n3 .cf-card{width:min(32%, 165px)}
+.cf-pair.n3 .cf-card:nth-child(2) .cf-pic{transform:rotate(1.5deg) translateY(4px)}
+.cf-link.row .cf-linkline{align-self:stretch;font-size:1.25em;text-wrap:balance}
+.cf-link.row .cf-linkline.j0{text-align:left;padding-left:4%;padding-right:24%}
+.cf-link.row .cf-linkline.j1{text-align:right;padding-left:24%;padding-right:4%;margin-top:7px}
+@media (min-width: 960px){
+  .cf-groups.linked.many{grid-template-columns:minmax(0,2.5fr) minmax(340px,2.7fr) minmax(0,2fr)}
+  .cf-groups.linked.many .cf-group.eye .cf-cards{grid-template-columns:repeat(2, minmax(0, 1fr))}
+}
+
 /* ---------- grown-ups ---------- */
 .leaf{position:relative;width:36px;height:36px;border-radius:50%;flex:none;opacity:.4;
   display:grid;place-items:center;color:var(--leaf);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -606,6 +654,11 @@ html.file-open,html.file-open body{overflow:hidden}
   .art [data-art="glint"].twinkle{animation:none!important;transform:rotate(45deg) scale(1.2)}
   .bark.wiggle .bark-pic{filter:drop-shadow(0 0 20px rgba(255,236,150,1)) drop-shadow(4px 5px 0 rgba(70,48,22,.38))}
   .skritch{animation:none!important;opacity:1}
+  /* chapter 5: the soft glow brightens on a tap and ripples on a miss; the small word stays a moment */
+  .tapspot.soft.flare svg{transform:scale(1.5)}
+  .tapspot.soft.twinkle svg{transform:scale(1.1)}
+  .tapspot.soft.hop{animation:none!important}
+  .tapmiss{animation:none!important;opacity:1}
 }
 
 /* ---------- print: the book page only ---------- */
@@ -628,6 +681,9 @@ html.file-open,html.file-open body{overflow:hidden}
   .book .sig{margin-top:2mm}
   .book .dn-pic,.book .dragonet.sil .dn-pic svg{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .book .dn-draw{min-height:70mm}
+  /* chapter 5: with three dragonets or four the page runs on to a second sheet, between two of them */
+  .book .bookpage.dragonets{break-inside:auto}
+  .book .dragonet{break-inside:avoid}
 }
 </style>
 </head>
@@ -671,11 +727,14 @@ html.file-open,html.file-open body{overflow:hidden}
 <script src="app/art/sets/crossing.js"></script>
 <script src="app/art/sets/riverbank.js"></script>
 <script src="app/art/sets/roof.js"></script>
+<script src="app/art/sets/openriver.js"></script>
+<script src="app/art/sets/marsh.js"></script>
 <script src="app/art/cards.js"></script>
 <script src="app/story/ch01.js"></script>
 <script src="app/story/ch02.js"></script>
 <script src="app/story/ch03.js"></script>
 <script src="app/story/ch04.js"></script>
+<script src="app/story/ch05.js"></script>
 <script src="app/engine.js"></script>
 <script src="app/ui.js"></script>
 <script>

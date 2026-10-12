@@ -1,6 +1,6 @@
 /* Potomac Crossing · app/art/sets/crossing.js
  *
- * The set: the Crossing at Gravelly Point (chapter 2), by day. A rocky point right beside the
+ * The set: the Crossing at Gravelly Point (chapters 2 and 5), by day. A rocky point right beside the
  * airport, where the river opens out wide and shining and the airplanes come in very low on
  * their way down to land. The otters' raft of logs, tied with vines, floats at the water's edge;
  * the DC shore lies low and hazy across the river (the Needle, a dome, the Old Bridge far off).
@@ -16,6 +16,34 @@
  *            (swimming: the river laps over whoever is there, so they sit low in the water)
  *   options  plane: 'none' | 'high' | 'low' (default high), pebbles: true (the heap of pebbles;
  *            it is also drawn whenever someone stands at `pebbles`, which is "by the heap")
+ *
+ * Chapter 5 (docs/chapters/05-riffles-river.md, "Art needs" and "Build"): the Crossing again, with a
+ * raft to board. Chapter 2's four cameras and nine anchors are as they were.
+ *   camera   board   close at the water's edge, at cat height (its own composition): the point's last
+ *                    ledge of rock at the left, the raft's near end at the right, riding low, and a
+ *                    strip of deep water between them, the mooring vine across it: our cat's four
+ *                    paws at the rocks' edge and the first log (the paws-aboard Tap's panel).
+ *                    Anchors there: `shore` (at the ledge's edge, about to step), `raft-1` (aboard, on
+ *                    the first log), `raft-2`, `raft-3` (along the raft: Riffle and his pole),
+ *                    `rock-right` (on the ledge behind `shore`: near enough to lean to her ear),
+ *                    `rock-left` (a rock further back), `rock-high` (the tall rock, top left:
+ *                    Tallyheart), `water` (swimming, in front of the raft). No `pebbles` there.
+ *   options  tuft: true   a tuft of thin brown fur caught in the raft's mooring vine (main composition
+ *                    and `board`; made for the `raft` camera). The vine is drawn over the cast, pulled
+ *                    taut between the stake and the raft, the tuft hanging from it:
+ *                    <g class="pc-tap" data-art="tuft">, the fur Tap's target (the page draws the
+ *                    glow), and in `keep`. Somebody small; nothing of the animal is ever drawn.
+ *            late: true   late light, the last gold of the afternoon, for the way home: the golden
+ *                    palette and a low sun over the far shore, whatever daylight the frame names
+ *                    (dusk and night stay themselves, and `fx: ['sunset']` keeps its own colours).
+ *            fish: 'spare'   the way home: the marsh's fourth string, a reed loop with its two spare
+ *                    fish, lying on the raft's logs at `raft-3` (so nobody is cast there with it):
+ *                    the main composition and `board`. The fish are PC.art.prey's, on its string
+ *                    (app/art/sets/pile.js). 'none' (default).
+ *   The sun comes down with the day: low over the far shore in late light and at sunset, going
+ *   behind it at dusk (chapter 2 only ever came here by day, under a high sun).
+ *   The pole twice his size is Riffle's own (`holds: 'pole'`, drawn with him by cats.js); Tallyheart
+ *   sits on `rock-high` as any cat does.
  *
  * Registered with PC.art.defineSet (app/art/scenes.js); painters come from PC.art.kit.
  */
@@ -373,12 +401,13 @@
   function drawMain(S) {
     var p = S.pal, o = S.opts, back = '', front = '', plane = o.plane || 'high';
     var cast = S.cast || [];
-    back += K.sky(S, 0, 0, 1600, SHORE + 12, { sun: [1330, 150], sunR: 430 });
+    var late = lowSun(S);
+    back += K.sky(S, 0, 0, 1600, SHORE + 12, late ? { sun: [1300, late], sunR: 560 } : { sun: [1330, 150], sunR: 430 });
     back += puffs(S, [[170, 250, 230, 34, 511], [930, 96, 260, 38, 512], [1480, 400, 150, 22, 513]]);
     if (plane === 'high') back += highPlanes(S, [[250, 120, 0.85], [640, 196, 1.5], [1100, 296, 2.5]]);
     back += farShore(S, SHORE, 1, 820, 1090, 420);
     back += airport(S, 1190, SHORE + 10, 1);
-    var R = river(S, SHORE - 2, 1330, 1, 521);
+    var R = river(S, SHORE - 2, late ? 1300 : 1330, 1, 521);
     back += R.svg;
     if (plane === 'low') back += driftRight(planeShadow(S, 760, 664, 760));
     // the land: Gravelly Point's grass at the back, gravel and rocks running out to the point
@@ -412,6 +441,7 @@
     }), { filter: S.shadow('m') });
     // the raft, tied to the point with a vine
     back += g(raft(S, 1050, 1584, 760, 852, 1, 561), { filter: S.shadow('m') });
+    back += spareFish(S, 1452, 796, MAIN['raft-3'].h);
     back += ripples(S, 1060, 882, 120, 0.5) + ripples(S, 1570, 882, 120, 0.5);
     // rocks in the water off the point
     back += g(rock(S, [[1040, 974], [1050, 944], [1090, 932], [1134, 946], [1142, 974]], { seed: 557 }), { filter: S.shadow('s') });
@@ -425,7 +455,8 @@
     var stake = '';
     stake += rect(984, 790, 14, 66, p.woodDark, { rx: 5 }) + rect(984, 790, 5, 66, p.woodLight, { opacity: 0.6, rx: 2 });
     var vine = mix(p.leaf, p.woodDark, 0.25);
-    stake += stroke('M992 804Q1020 826 1056 812', vine, 7) + path(leafD(1016, 818, 18, 0.8, 7) + leafD(994, 800, 16, -2.2, 6), p.leafMid);
+    // (chapter 5, `tuft`: the mooring vine is pulled taut and drawn over the cast, below)
+    if (o.tuft !== true) stake += stroke('M992 804Q1020 826 1056 812', vine, 7) + path(leafD(1016, 818, 18, 0.8, 7) + leafD(994, 800, 16, -2.2, 6), p.leafMid);
     back += g(stake, { filter: S.shadow('s') });
     back += g(rock(S, [[858, 948], [862, 884], [900, 852], [982, 846], [1034, 868], [1048, 916], [1012, 952]], {
       seed: 554, face: [944, 862, 74, 12], cracks: 'M920 900Q930 920 924 940', moss: [[1000, 930, 24]]
@@ -443,6 +474,8 @@
     // foreground grass at the bottom-left corner
     front += g(K.tufts(S, -10, 120, 990, 1012, 12, 581, p.grassNear, p.grassLight, 2.2), { filter: S.shadow('s') });
     if (plane === 'low') back += driftRight(airliner(S, 770, 196, 1.04, { rot: 5, span: 0.62 }));
+    // chapter 5: the raft's vine, lifted, and the tuft of fur caught in it
+    if (o.tuft === true) front += mooring(S, TUFT.main);
     return { back: back, over: '', front: front };
   }
 
@@ -450,7 +483,7 @@
 
   function drawLow(S) {
     var o = S.opts, back = '', plane = o.plane || 'high', cast = S.cast || [], i;
-    back += K.sky(S, 0, 0, 1600, 800, { sun: [1450, 120], sunR: 560 });
+    back += K.sky(S, 0, 0, 1600, 800, lowSun(S) ? { sun: [1450, lowSun(S) + 116], sunR: 640 } : { sun: [1450, 120], sunR: 560 });
     back += puffs(S, [[260, 680, 220, 30, 611], [1180, 610, 180, 26, 612], [760, 730, 140, 18, 613]]);
     if (plane === 'high') back += highPlanes(S, [[420, 380, 1.4], [820, 250, 2.6], [1240, 120, 4.2]]);
     else if (plane === 'none') back += puffs(S, [[600, 220, 300, 44, 614], [1250, 330, 200, 30, 615]]);
@@ -476,7 +509,108 @@
     return { back: back, over: '', front: '' };
   }
 
-  function draw(S) { return S.comp === 'low' ? drawLow(S) : drawMain(S); }
+  // ------------------------------------------------------------------ chapter 5: late light, the tuft, the paws aboard
+
+  // `late: true`: the last gold of the afternoon. The set takes the golden palette in place of the
+  // frame's daylight (before anything is drawn, so the cast's tint and every shadow follow it).
+  function lateLight(S) { if (S.opts.late === true && S.pal && S.pal.day) { S.tod = 'golden'; S.pal = K.PAL.golden; } }
+  function isLate(S) { return S.opts.late === true && S.tod === 'golden'; }
+  // The sun has come down toward the far shore: in late light and at a frame's own sunset it stands
+  // low over it; at dusk it is going behind it. Returns its height in the main composition (0 by
+  // day: the high sun of chapter 2).
+  function lowSun(S) { return isLate(S) || S.tod === 'sunset' ? 404 : S.tod === 'dusk' ? 520 : 0; }
+
+  // `fish: 'spare'` (the way home): the string of two spare fish (PC.art.prey.string), laid on the
+  // logs with its loop at (x, y), the fish lying along the log toward +x; h: a sitting cat's height there.
+  function spareFish(S, x, y, h) {
+    if (S.opts.fish !== 'spare' || !art.prey || typeof art.prey.string !== 'function') return '';
+    return g('<g transform="translate(' + n(x) + ' ' + n(y) + ') rotate(-84)">' + art.prey.string({ count: 2, len: h * 0.19 }) + '</g>', { filter: S.shadow('s'), 'data-part': 'spare-fish' });
+  }
+
+  // The raft's mooring vine with a tuft of thin brown fur caught in it. T = { a: the stake's end, b:
+  // the raft's end, lift, at: 0..1 along it, r: the tuft's size }. The vine is pulled taut, a little
+  // up in the middle (somebody has just lifted it), and the tuft hangs from it: fine strands fanned
+  // from where the vine pinches them. Thin brown fur: not a cat's, not an otter's, not a fox's, and
+  // nobody is drawn to say whose. The tuft is the fur Tap's target (class pc-tap) and in keep.
+  var TUFT = { main: { a: [991, 800], b: [1066, 794], lift: 16, at: 0.52, r: 34 }, board: { a: [655, 790], b: [848, 812], lift: 34, at: 0.5, r: 52 } };
+  var FUR = { base: '#8A5B38', light: '#C99C6E', dark: '#5B3A22' };
+  // where the tuft is pinched: on the vine, `at` of the way along it
+  function tuftAt(T) {
+    var q = K.bez2(T.a, [(T.a[0] + T.b[0]) / 2, (T.a[1] + T.b[1]) / 2 - T.lift], T.b, T.at);
+    return [q[0], q[1] + Math.max(5, T.r * 0.2) * 0.3];
+  }
+  function mooring(S, T) {
+    var p = S.pal, vine = mix(p.leaf, p.woodDark, 0.25), a = T.a, b = T.b, r = T.r, rr = rng(871);
+    var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2 - T.lift, w = Math.max(5, r * 0.2);
+    var d = 'M' + n(a[0]) + ' ' + n(a[1]) + 'Q' + n(mx) + ' ' + n(my) + ' ' + n(b[0]) + ' ' + n(b[1]);
+    var q = tuftAt(T), tx = q[0], ty = q[1];
+    var s = stroke(d, vine, w) + stroke(d, p.leafLight, w * 0.3, { opacity: 0.55, transform: 'translate(-1 -1)' }) +
+      path(leafD(K.bez2(a, [mx, my], b, 0.2)[0], K.bez2(a, [mx, my], b, 0.2)[1], r * 0.62, -2.1, r * 0.22) + leafD(K.bez2(a, [mx, my], b, 0.84)[0], K.bez2(a, [mx, my], b, 0.84)[1], r * 0.56, -0.7, r * 0.2), p.leafMid);
+    // the tuft: fine strands hanging and fanning from the pinch, pale tips over a soft dark heart, a wisp or two astray
+    var dk = '', md = '', lt = '', k = dark(S) ? 0.45 : 0, cols = [mix(FUR.dark, p.shade, k), mix(FUR.base, p.shade, k), mix(FUR.light, p.shade, k)];
+    for (var i = 0; i < 26; i++) {
+      var f = (i / 25 - 0.5) * 2.1 + (rr() - 0.5) * 0.2, len = r * (0.62 + rr() * 0.62) * (1 - Math.abs(f) * 0.2), curl = (rr() - 0.5) * r * 0.42;
+      var ex = tx + Math.sin(f) * len + curl * 0.5, ey = ty + Math.cos(f) * len * 0.96;
+      var st = 'M' + n(tx + Math.sin(f) * r * 0.1) + ' ' + n(ty + r * 0.04) + 'Q' + n(tx + Math.sin(f) * len * 0.5 + curl) + ' ' + n(ty + Math.cos(f) * len * 0.52) + ' ' + n(ex) + ' ' + n(ey);
+      if (i % 3 === 0) dk += st; else if (i % 3 === 1) md += st; else lt += st;
+    }
+    var tuft = path(blob(tx, ty + r * 0.34, r * 0.5, r * 0.4, 9, rr, 0.25, 0.3), cols[1], { opacity: 0.6 }) +
+      stroke(dk, cols[0], Math.max(1.2, r * 0.06)) + stroke(md, cols[1], Math.max(1.2, r * 0.066)) + stroke(lt, cols[2], Math.max(1, r * 0.05)) +
+      ell(tx, ty - w * 0.1, w * 0.62, w * 0.5, vine);
+    (S.keep = S.keep || []).push({ x: tx - r * 1.15, y: ty - r * 0.4, w: r * 2.3, h: r * 1.8 });
+    return g(s, { 'data-art': 'mooring' }) + g(tuft, { 'class': 'pc-tap', 'data-art': 'tuft' });
+  }
+
+  // BOARD: close at the water's edge, at cat height. The point's last ledge of rock at the left, the
+  // raft's near end at the right, its deck a little lower than the ledge ("The raft sits low"), and
+  // between them a strip of the river, deeper green for being deep. Everything a cat steps across is
+  // in the panel: the ledge's edge, the gap, the first log.
+  var BSHORE = 404;                 // the far shore's water line here: about a cat's eye level
+  var BRAFT = [832, 1780, 812, 948, 2.4];
+  function drawBoard(S) {
+    var p = S.pal, o = S.opts, back = '', front = '', plane = o.plane || 'high', cast = S.cast || [], late = lowSun(S), i;
+    back += K.sky(S, 0, 0, 1600, BSHORE + 12, late ? { sun: [1250, late - 104], sunR: 540 } : { sun: [1300, 104], sunR: 420 });
+    back += puffs(S, [[250, 190, 210, 30, 711], [900, 84, 240, 34, 712], [1500, 270, 140, 20, 713]]);
+    if (plane === 'high') back += highPlanes(S, [[330, 84, 0.9], [760, 150, 1.6], [1180, 232, 2.6]]);
+    back += farShore(S, BSHORE, 0.9, 650, 950, 320);
+    back += airport(S, 1280, BSHORE + 8, 0.85);
+    var R = river(S, BSHORE - 2, late ? 1250 : 1300, 1.3, 721);
+    back += R.svg;
+    if (plane === 'low') back += driftRight(planeShadow(S, 820, 540, 900));
+    // the deep water between the ledge and the raft: the same river, darker and greener for being deep
+    var deepC = mix(mix(p.water, '#1E5548', 0.45), p.shade, 0.3);
+    back += path('M690 850Q760 800 900 812L960 1010H650Z', S.linU([[0, deepC, 0], [0.22, deepC, 0.62], [1, deepC, 0.86]], 0, 806, 0, 1000));
+    // the tall rock (rock-high), a rock beside it (rock-left), and the ledge: the tip of the point
+    back += g(rock(S, [[-60, 900], [-52, 650], [-2, 562], [92, 522], [206, 518], [276, 558], [306, 650], [316, 900]], {
+      seed: 731, face: [142, 532, 104, 13], cracks: 'M30 640Q54 700 40 780M236 610Q222 670 250 750', moss: [[230, 840, 40], [10, 770, 22]]
+    }), { filter: S.shadow('m') });
+    back += g(rock(S, [[286, 890], [294, 794], [340, 760], [430, 752], [500, 772], [522, 890]], { seed: 732, face: [412, 766, 84, 11], moss: [[330, 860, 24]] }), { filter: S.shadow('s') });
+    back += g(rock(S, [[-60, 1060], [-60, 862], [70, 844], [340, 834], [560, 838], [668, 852], [712, 886], [722, 952], [704, 1060]], {
+      seed: 733, face: [372, 858, 330, 20], cracks: 'M96 930Q130 970 116 1020M430 920Q452 960 436 1010M610 906L632 980', moss: [[662, 946, 30], [250, 1000, 36]]
+    }), { filter: S.shadow('m') });
+    // the stake the raft is tied to, at the ledge's edge
+    var stake = rect(640, 762, 18, 92, p.woodDark, { rx: 6 }) + rect(640, 762, 6, 92, p.woodLight, { opacity: 0.6, rx: 3 });
+    var vine = mix(p.leaf, p.woodDark, 0.25);
+    stake += stroke('M644 790q10 5 18 -1M643 803q10 5 18 -1', vine, 6);
+    back += g(stake, { filter: S.shadow('s') });
+    // the raft, riding low; the river lapping at the ledge and at the raft's end
+    back += g(raft(S, BRAFT[0], BRAFT[1], BRAFT[2], BRAFT[3], BRAFT[4], 741), { filter: S.shadow('m') });
+    back += spareFish(S, 1478, 846, BOARD['raft-3'].h);
+    back += stroke('M716 890Q730 930 722 978', '#FFFFFF', 4, { opacity: 0.6 }) + stroke('M742 872q22 -8 46 0M756 930q20 -7 42 0M748 984q22 -8 48 0', '#FFFFFF', 3, { opacity: 0.4 });
+    // the mooring vine: slack across the gap, or (tuft) pulled taut with the tuft in it, over the cast
+    if (o.tuft === true) front += mooring(S, TUFT.board);
+    else back += g(stroke('M655 792Q742 856 846 812', vine, 9) + path(leafD(712, 834, 26, 0.7, 10) + leafD(664, 798, 22, -2.2, 8) + leafD(800, 832, 22, 2.6, 8), p.leafMid), { filter: S.shadow('s') });
+    var atWater = null;
+    for (i = 0; i < cast.length; i++) if (cast[i].at === 'water') { atWater = cast[i]; break; }
+    if (atWater) S.covers.water = swimCover(S, BOARD.water, R.svg, atWater, 975);
+    if (plane === 'low') back += driftRight(airliner(S, 800, 170, 1.1, { rot: 5, span: 0.5 }));
+    return { back: back, over: '', front: front };
+  }
+
+  function draw(S) {
+    lateLight(S);
+    return S.comp === 'low' ? drawLow(S) : S.comp === 'board' ? drawBoard(S) : drawMain(S);
+  }
 
   // ------------------------------------------------------------------ the set
 
@@ -493,18 +627,35 @@
     water: A(1440, 968, 210, 'left')
   };
 
+  // chapter 5: at the water's edge. The ledge and the raft's near end are side by side, so a cat is
+  // the same size on either; a rock further back and the tall rock are at the left; the swimmer is
+  // in front of the raft.
+  var BOARD = {
+    'rock-left': A(412, 768, 330), 'rock-right': A(292, 862, 420), 'rock-high': A(146, 534, 290, 'right', { elev: true }),
+    shore: A(556, 864, 430), 'raft-1': A(1000, 892, 430), 'raft-2': A(1268, 886, 404, 'left'), 'raft-3': A(1452, 882, 384, 'left'),
+    water: A(1160, 996, 280, 'left')
+  };
+
   art.defineSet('crossing', {
     label: 'the Crossing at Gravelly Point', tod: 'day', draw: draw,
     cams: {
       wide: { box: [0, 0, 1600] },
       low: { box: [0, 0, 1600], comp: 'low' },
       rocks: { box: [60, 387, 980] },
-      raft: { box: [800, 500, 800] }
+      raft: { box: [800, 500, 800] },
+      // chapter 5
+      board: { box: [0, 0, 1600], comp: 'board' }
     },
-    anchors: { main: MAIN, low: LOW },
-    opts: { plane: ['none', 'high', 'low'], pebbles: [true, false] },
+    anchors: { main: MAIN, low: LOW, board: BOARD },
+    opts: { plane: ['none', 'high', 'low'], pebbles: [true, false], tuft: [false, true], late: [false, true], fish: ['none', 'spare'] },
     defaults: { plane: 'high' }
   });
+
+  // for the tests and the gallery: where chapter 5's things are (world units)
+  art.crossingInfo = function () {
+    function tuft(T) { var q = tuftAt(T); return { x: q[0], y: q[1], r: T.r, stake: T.a.slice(), raft: T.b.slice() }; }
+    return { board: { horizon: BSHORE, ledge: 722, raft: { x0: BRAFT[0], top: BRAFT[2], bottom: BRAFT[3] } }, tuft: { main: tuft(TUFT.main), board: tuft(TUFT.board) } };
+  };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

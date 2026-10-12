@@ -16,7 +16,18 @@
  * page shown `when` she has found it, the 10s (the zero rule, swipes in pairs, a row at a time, the
  * roof's grit), the skip-counts on both forepaws and on the pile of six, and the pictures and words
  * the page is given (E.lessonPicture, E.sandOpts, E.skipPicture, E.skipWords, E.hollowLines), so Node
- * can test them (docs/build.md, "Chapter 4 (v0.4)").
+ * can test them (docs/build.md, "Chapter 4 (v0.4)"). Chapter 5 adds the 9s (one claw tucked: the hop
+ * and the tuck as a question is asked, `light: 'tuck'`; a help in two phases; four openings for the
+ * four likeliest slips; two answers scratched in the sand, `shows`), sets that are not Tallyheart's
+ * (a silent one lettered in captions, `teacher: 'caption'`; a help that lights the set's own picture,
+ * `help: 'picture'`; borrowed questions drawn as the borrower's, `fillPicture`; the raft's log for a
+ * ground), a lesson that fills its own gaps with the easiest of her right answers, a warm-up whose
+ * hard pick has an `avoid` list of its own, a Counts frame that says none of its lines again
+ * (`intro: false`), the skip-count's new forms (the tuck, her four paws aboard, nine claws in a log
+ * with the scene redrawn as she taps, a forepaw in the mud for everyone found, the bedtime nines), a
+ * page of questions she taps out of an otter (`ask`), cards that name the cards they touch
+ * (`link.with`) and so lie three in a row, and a dragonet's own pose in her book (docs/build.md,
+ * "Chapter 5 (v0.4)").
  *
  * Functions that change a cat change the object they are given (and return it or a result).
  * Nothing here reads the clock on its own: callers pass `now` (ms since epoch) where it matters,
@@ -28,7 +39,7 @@
   var PC = root.PC || (root.PC = {});
   var E = {};
 
-  E.VERSION = '0.4.0 (chapter 4, 2026-10-10)';
+  E.VERSION = '0.5.0 (chapter 5, 2026-10-11)';
   E.STORAGE_KEY = 'potomac-crossing.v1';   // the key stays: renaming it would strand every save
   E.SAVE_VERSION = 2;
   E.MAX_CATS = 4;
@@ -691,6 +702,27 @@
       return null;
     }).filter(function (c) { return c; });
   };
+  /* A frame's captions as Read to me says them (raw text, tokens unfilled): E.captions, and the
+   * frame's `sfxRead` when it has one. A sound effect is lettering and is never read aloud (nobody
+   * can say “SNNNRRRK.”), so a caption that runs on into its sound (“On the rocks, otter tails go”,
+   * “Then, a little later:”) was heard as a sentence nobody finished. `sfxRead` is the sound in
+   * words, for the listener only (“a long, long snore.”); nothing on the page changes. It is said right
+   * after the first caption she sees that does not end a sentence (the one that runs on into the
+   * sound), or after the last caption when every one does, and before the balloons. */
+  E.captionsRead = function (frame, cat) {
+    var caps = E.captions(frame, cat);
+    var heard = frame && typeof frame.sfxRead === 'string' ? frame.sfxRead : '';
+    if (!heard.trim()) return caps;
+    var at = caps.length - 1;
+    for (var i = 0; i < caps.length; i++) if (!E.endsSentence(caps[i])) { at = i; break; }
+    return caps.slice(0, at + 1).concat([heard], caps.slice(at + 1));
+  };
+  /* Does this line end a sentence (a full stop, a question or exclamation mark, or dots trailing
+   * off, with any closing quote, bracket or emphasis mark after it)? A caption that ends on a colon,
+   * a comma or a bare word runs on into what comes next. */
+  E.endsSentence = function (text) {
+    return /[.!?…][\s*”’"')\]]*$/.test(String(text == null ? '' : text));
+  };
   /* A frame's balloons as she sees them: [{ who, text, kind, … }]. `nth` is the speaker's place
    * among all of that speaker's balloons (hidden ones included), so a balloon keeps its cast
    * member however many before it are hidden. */
@@ -742,7 +774,12 @@
    * this reading: the roof's two last pages; Back past it hides it again). `answers` (on a claim, an
    * ear card: the ids of the cards that answer it) is for chapter 10 and only stored now; with
    * `link: { when, line }` the claim and the answers she holds are drawn touching once `when` matches
-   * (`{ ch4CaughtFly: true }`: "They can’t both be true."), and kept apart until then. */
+   * (`{ ch4CaughtFly: true }`: "They can’t both be true."), and kept apart until then.
+   * Chapter 5: a link may name its partners itself, `link: { with: ['fox-moon'], line: 'One of them is
+   * wrong.' }` (any cards, an ear beside an ear, an eye beside an eye; `answers` stays chapter 10's):
+   * the card and each partner she holds are drawn touching from the moment she holds both (a `when`
+   * may still hold it back). A card two links name (`squall-shapes`, touched by the heron's two
+   * shapes and by a climber's prints) lies between them: three in a row, a line for each join. */
   function cardEntries(x) {
     return asList(x).map(function (c) { return typeof c === 'string' ? { id: c } : c; })
       .filter(function (c) { return isObj(c) && typeof c.id === 'string' && c.id; });
@@ -868,13 +905,44 @@
   E.caseFile = function (cat, stories) {
     var cards = E.cards(cat, stories), by = {}, inLink = {}, links = [];
     cards.forEach(function (c) { by[c.id] = c; });
+    // the link a card lies in, and whether it is at one of its ends (a row can only grow at its ends)
+    function rowOf(id) { for (var i = 0; i < links.length; i++) if (links[i].cards.some(function (k) { return k.id === id; })) return links[i]; return null; }
+    function atEnd(L, id) { return L.cards[0].id === id ? 'first' : L.cards[L.cards.length - 1].id === id ? 'last' : null; }
+    function lines(L) { return L.lines || [L.line]; }
+    // chapter 5, `link.with`: `c` and its partner `p` lie touching, over `line`. Neither in a row yet:
+    // a new row, the partner first. One of them at the end of a row: the other joins it there (the
+    // row is then three long, with a line for each join). Otherwise they cannot touch, and stay put.
+    function touch(p, c, line) {
+      var P = rowOf(p.id), C = rowOf(c.id), e;
+      if (!P && !C) { links.push({ cards: [p, c], line: line }); }
+      else if (P && !C) {
+        e = atEnd(P, p.id);
+        if (!e) return;
+        var lp = lines(P);
+        if (e === 'last') { P.cards.push(c); P.lines = lp.concat([line]); } else { P.cards.unshift(c); P.lines = [line].concat(lp); }
+        P.line = P.lines[0];
+      } else if (C && !P) {
+        e = atEnd(C, c.id);
+        if (!e) return;
+        var lc = lines(C);
+        if (e === 'last') { C.cards.push(p); C.lines = lc.concat([line]); } else { C.cards.unshift(p); C.lines = [line].concat(lc); }
+        C.line = C.lines[0];
+      } else return;   // both in rows already (the same one, or two): left as they lie
+      inLink[p.id] = true; inLink[c.id] = true;
+    }
     cards.forEach(function (c) {
-      if (!c.link || inLink[c.id] || !E.matches(c.link.when, cat)) return;
+      if (!c.link || !E.matches(c.link.when, cat)) return;
+      var line = typeof c.link.line === 'string' && c.link.line ? c.link.line : 'They can’t both be true.';
+      if (Array.isArray(c.link.with)) {
+        c.link.with.forEach(function (id) { var p = by[id]; if (p && p.id !== c.id) touch(p, c, line); });
+        return;
+      }
+      if (inLink[c.id]) return;
       var ans = c.answers.map(function (id) { return by[id]; }).filter(function (a) { return a && a.id !== c.id && !inLink[a.id]; });
       if (!ans.length) return;
       inLink[c.id] = true;
       ans.forEach(function (a) { inLink[a.id] = true; });
-      links.push({ cards: ans.concat([c]), line: typeof c.link.line === 'string' && c.link.line ? c.link.line : 'They can’t both be true.' });
+      links.push({ cards: ans.concat([c]), line: line });
     });
     return {
       title: E.fill('{name}paw’s Case File', cat),
@@ -890,11 +958,12 @@
    * left: the card that ends a row of it and the claim that starts the same row of the other group),
    * or, one group above the other with the claims first, the last row of claims over the first row
    * of what she saw (the same column, or the last claim and the first thing she saw: one after the
-   * other as she reads). Two cards in one link touch. */
+   * other as she reads). Two cards in one link touch; in a row of three (chapter 5: a link with a
+   * line for each join), the two that lie side by side. */
   E.fileNeighbours = function (file, a, b) {
     function where(id) {
       var i, k;
-      for (i = 0; i < file.links.length; i++) for (k = 0; k < file.links[i].cards.length; k++) if (file.links[i].cards[k].id === id) return { link: i };
+      for (i = 0; i < file.links.length; i++) for (k = 0; k < file.links[i].cards.length; k++) if (file.links[i].cards[k].id === id) return { link: i, at: k, row: !!file.links[i].lines };
       for (i = 0; i < file.groups.length; i++) for (k = 0; k < file.groups[i].cards.length; k++) {
         if (file.groups[i].cards[k].id === id) return { g: i, i: k, n: file.groups[i].cards.length, mark: file.groups[i].mark };
       }
@@ -902,7 +971,7 @@
     }
     var A = where(a), B = where(b);
     if (!A || !B || a === b) return false;
-    if (A.link != null || B.link != null) return A.link != null && A.link === B.link;
+    if (A.link != null || B.link != null) return A.link != null && A.link === B.link && (!A.row || Math.abs(A.at - B.at) === 1);
     return ['wide', 'narrow'].some(function (lay) {
       var cols = E.FILE_COLS[lay], row = function (p) { return Math.floor(p.i / cols); }, col = function (p) { return p.i % cols; };
       if (A.g === B.g) { var d = Math.abs(A.i - B.i); return (d === 1 && row(A) === row(B)) || d === cols; }
@@ -957,11 +1026,47 @@
     var kind = sc.tap ? 'tap' : sc.draws && !cardEntries(sc.cards).length ? 'draws' : 'cards';
     var dp = kind === 'tap' ? (sc.tap === 'glint' ? '**Tap** the glitter.' : '') : kind === 'draws' ? '**Tap** the bark to scratch it.' : '**Tap** each piece of bark to scratch it.';
     var dl = kind === 'tap' ? (sc.tap === 'glint' ? 'Look at the glitter.' : 'Tap it.') : kind === 'draws' ? 'Scratch the bark' : 'Scratch the next piece of bark';
-    return { kind: kind, prompt: typeof sc.prompt === 'string' ? sc.prompt : dp, label: typeof sc.label === 'string' && sc.label ? sc.label : dl };
+    var w = { kind: kind, prompt: typeof sc.prompt === 'string' ? sc.prompt : dp, label: typeof sc.label === 'string' && sc.label ? sc.label : dl };
+    // chapter 5: `miss`, the small answer to a tap anywhere else, lettered small by the spot ("snnrrk…")
+    if (kind === 'tap' && typeof sc.miss === 'string' && sc.miss) w.miss = sc.miss;
+    return w;
+  };
+
+  /* `ask` (chapter 5: Riffle's seven questions), a Tap that counts nothing: `ask: { who: 'riffle', to:
+   * 'patience', pairs: [[question, answer], …], next, prompt?, label? }`. The asker glows softly on the
+   * frame's own scene. A tap on him letters his next question in his balloon and her answer in hers,
+   * and adds one to the scene's `owed` (the marsh: a pair of fish in the thought cloud over the heron;
+   * `opt` names another option); the pairs before it stay under the panel, small, so all of them can
+   * be read back. A tap anywhere else makes him hop. After the last pair the frame shows Next. No
+   * number is shown and nothing is logged.
+   * E.askView(ask, taps) is the page after that many taps: { taps, total, done, who, to, pair: the
+   * newest [question, answer] or null, before: the pairs before it, owed }. */
+  function askPairs(ask) {
+    return asList(ask && ask.pairs).filter(function (p) { return Array.isArray(p) && typeof p[0] === 'string' && typeof p[1] === 'string'; });
+  }
+  E.askView = function (ask, taps) {
+    ask = ask || {};
+    var pairs = askPairs(ask), n = Math.max(0, Math.min(pairs.length, num(taps, 0) | 0));
+    return { taps: n, total: pairs.length, done: n >= pairs.length, who: ask.who || 'riffle', to: ask.to || '',
+      pair: n ? pairs[n - 1].slice(0, 2) : null, before: pairs.slice(0, Math.max(0, n - 1)).map(function (p) { return p.slice(0, 2); }), owed: n };
+  };
+  /* The frame's scene after that many taps: its own, with `owed` (or the option `ask.opt` names) set
+   * to its own number plus the taps. The story's scene is never changed. */
+  E.askScene = function (scene, ask, taps) {
+    if (!scene) return scene;
+    var s = clone(scene), k = typeof (ask && ask.opt) === 'string' && ask.opt ? ask.opt : 'owed';
+    if (!isObj(s.opts)) s.opts = {};
+    s.opts[k] = num(s.opts[k], 0) + E.askView(ask, taps).taps;
+    return s;
+  };
+  E.askWords = function (ask) {
+    ask = ask || {};
+    return { prompt: typeof ask.prompt === 'string' ? ask.prompt : '**Tap** to ask the next question.',
+      label: typeof ask.label === 'string' && ask.label ? ask.label : 'Ask the next question.' };
   };
 
   /* ------------------------------------------------------------ flow */
-  E.KINDS = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'end'];
+  E.KINDS = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'ask', 'end'];
   E.kindOf = function (frame) {
     if (!frame) return null;
     if (frame.end) return 'end';
@@ -972,6 +1077,7 @@
     if (frame.skip) return 'skip';
     if (frame.scratch) return 'scratch';
     if (frame.file) return 'file';
+    if (frame.ask) return 'ask';
     if (frame.next) return 'next';
     return 'end';
   };
@@ -1085,6 +1191,8 @@
     // a parked page that no longer shows (f081 after chapter 2 is read again on the other path)
     // lands as a page turn would: on the first frame after it that shows
     cat.frame = E.landing(cat, story, P.frame);
+    // (a page she has never been on: it gives its card and sets its flags as a page turn would)
+    if (cat.frame !== P.frame) arrive(cat, story, cat.frame, now);
     cat.history = Array.isArray(P.history) ? P.history : [];
     if (P.lesson) {
       if (isObj(cat.lesson) && !busy(cat.lesson)) E.settleLesson(cat);
@@ -1184,7 +1292,7 @@
   };
   E.next = function (cat, story, now) {
     var f = E.currentFrame(cat, story);
-    var to = f && (f.next || (f.look && f.look.next) || (f.skip && f.skip.next) || (f.scratch && f.scratch.next) || (f.file && f.file.next));
+    var to = f && (f.next || (f.look && f.look.next) || (f.skip && f.skip.next) || (f.scratch && f.scratch.next) || (f.file && f.file.next) || (f.ask && f.ask.next));
     // a row of bark turns its page on the last tap; however the page turns, no card is left behind
     if (f && f.scratch) for (var guard = 0; guard < 24 && E.scratchTap(cat, story, now); guard++);
     return E.go(cat, story, E.landing(cat, story, to), now);
@@ -1264,6 +1372,7 @@
     if (k === 'skip') return [frame.skip.next];
     if (k === 'scratch') return [frame.scratch.next];
     if (k === 'file') return [frame.file.next];
+    if (k === 'ask') return [frame.ask.next];
     return [];
   };
 
@@ -1277,7 +1386,37 @@
    * (Squall's raised forepaw: one tap, its five claws, a big 5), `prompt` (an instruction under the
    * panel: "**Tap** the cats, left to right."), `label` (the hidden button's words for VoiceOver)
    * and `carry: false` (the page it turns to doesn't show the number reached: the roof's 5 stays on
-   * the roof). */
+   * the roof).
+   * Chapter 5: `tuck: true` (the 9s: every cat's ten claws lit and the number at groups × 10; each
+   * tap curls one claw in on the glowing cat and steps the number back by one, 49, 48 … 45; no
+   * number under any cat, ever); `paws: 'board'` (her four paws set down on the raft one at a time,
+   * counted in words: "One.", "Two."); `paws: 'log'` (nine claws dug into a log, the count in her own
+   * thought, a tap anywhere counts, and no counting picture: the frame's scene stays up and is drawn
+   * again at each tap, E.skipScene, with `steps`: [{ from: 4, opts: { plane: 'near' }, sfx: 'RRR…' }]);
+   * `paws: 'mud'` (seven forepaws in the mud, one lit for each of `who`); `paws: 'both'` at table 9
+   * (the bedtime nines); and `who` entries with a `when`, with no `groups`: the count is as long as
+   * the entries that match her (E.skipFor, which every caller with a cat goes through first). */
+  var COUNT_WORDS = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+  /* The skip-count as this cat meets it: `who` without the entries whose `when` doesn't match her,
+   * and, when the story gives no `groups`, one group for each that is left (Sprinkle's forepaw and
+   * one for every dragonet she has met: two to four). A skip with neither is handed back as it is. */
+  E.skipFor = function (skip, cat) {
+    if (!isObj(skip)) return skip;
+    var who = Array.isArray(skip.who) ? skip.who : null;
+    var cond = !!who && who.some(function (w) { return isObj(w) && w.when != null; });
+    if (!cond && skip.groups != null) return skip;
+    var out = Object.assign({}, skip);
+    if (cond) {
+      out.who = who.filter(function (w) { return !isObj(w) || E.matches(w.when, cat); }).map(function (w) {
+        if (!isObj(w) || w.when == null) return w;
+        var c = {};
+        Object.keys(w).forEach(function (k) { if (k !== 'when') c[k] = w[k]; });
+        return c;
+      });
+    }
+    if (skip.groups == null) out.groups = Math.max(1, (out.who || []).length);
+    return out;
+  };
   E.skipView = function (skip, taps) {
     skip = skip || {};
     var table = Math.max(1, num(skip.table, 2) | 0), groups = Math.max(1, num(skip.groups, 5) | 0);
@@ -1285,6 +1424,14 @@
     var totals = [];
     for (var i = 1; i <= n; i++) totals.push(i * table);
     var done = n >= groups;
+    // the tuck: the count runs backwards from groups × 10, a claw a tap (the art is told how many
+    // cats have tucked; `highlight` is the claws still out and lit)
+    if (skip.tuck) {
+      var start = groups * 10, back = [];
+      for (var b = 1; b <= n; b++) back.push(start - b);
+      return { table: table, groups: groups, per: table, taps: n, highlight: start - n, total: start - n, totals: back, done: done,
+        count: !n ? '' : back.join('… ') + (done ? '!' : '…'), tuck: true, start: start, tucked: n };
+    }
     var v = {
       table: table, groups: groups, per: table, taps: n, highlight: n * table,
       total: n * table, totals: totals, done: done,
@@ -1306,22 +1453,63 @@
       v.nextPaw = done ? null : 'both';
     }
     if (skip.paws === 'pile') v.paws = 'pile';
+    // chapter 5: her four paws onto the raft, counted in words by whoever keeps the count ("One.
+    // Two."; `say`: the newest); nine claws into the log (`anywhere`: any tap counts); the mud count
+    if (skip.paws === 'board') {
+      v.paws = 'board';
+      v.count = totals.map(function (t) { return (COUNT_WORDS[t] || String(t)) + '.'; }).join(' ');
+      v.say = n ? (COUNT_WORDS[n * table] || String(n * table)) + '.' : '';
+    }
+    if (skip.paws === 'log') { v.paws = 'log'; v.anywhere = true; }
+    if (skip.paws === 'mud') v.paws = 'mud';
     return v;
   };
+  /* A skip-count that keeps the frame's own scene on screen (`paws: 'log'`): the scene after that
+   * many taps, with the options of the step reached laid over its own (`steps`: [{ from, opts, sfx }],
+   * `from` the tap a step starts at) and `claws`, the taps so far. `sfx` is that step's lettering
+   * (the roar, growing), else the frame's own. The story's scene is never changed.
+   * Returns { scene, sfx, step } (step: the index of the step reached, -1 before the first). */
+  E.skipScene = function (scene, skip, taps, sfx) {
+    skip = skip || {};
+    var v = E.skipView(skip, taps), steps = asList(skip.steps).filter(isObj), at = -1;
+    steps.forEach(function (st, i) { if (v.taps >= Math.max(1, num(st.from, 1) | 0)) at = i; });
+    var s = scene ? clone(scene) : null;
+    if (s) {
+      if (!isObj(s.opts)) s.opts = {};
+      for (var i = 0; i <= at; i++) if (isObj(steps[i].opts)) Object.assign(s.opts, steps[i].opts);
+      s.opts.claws = v.taps;
+    }
+    var word = sfx || '';
+    for (var k = 0; k <= at; k++) if (typeof steps[k].sfx === 'string') word = steps[k].sfx;
+    return { scene: s, sfx: word, step: at };
+  };
+  /* Whether a skip-count shows the frame's scene, redrawn as she taps, and not a counting picture. */
+  E.skipOnScene = function (skip) { return !!skip && skip.paws === 'log'; };
   /* The skip-count's picture, as PC.art.countsPicture takes it (the page adds her `look`), after
    * that many taps: the groups, what is lit, the running totals under them, the next group glowing.
    * Her own forepaws (`paws: 'own'`) take `taps`, `lit` and `nextPaw` and no totals; both together
    * (`paws: 'both'`) are the art's `paws: 'own'` at table 10, with `both: true`; the promise
    * (`paws: 'pile'`) is the art's `paws: 'promise'`, a friend's pair lit by each tap. */
-  var SKIP_THINGS = { 2: ['ear', 'ears'], 5: ['claw', 'claws'], 10: ['claw', 'claws'] };
+  var SKIP_THINGS = { 2: ['ear', 'ears'], 5: ['claw', 'claws'], 9: ['claw', 'claws'], 10: ['claw', 'claws'] };
   function skipThings(skip, table) {
-    var d = SKIP_THINGS[table] || ['thing', 'things'];
+    var d = skip.paws === 'board' ? ['paw', 'paws'] : skip.paws === 'log' ? ['claw', 'claws'] : SKIP_THINGS[table] || ['thing', 'things'];
     return [skip.thing || d[0], skip.things || d[1]];
   }
   function skipPaws(skip, po, v) {
     if (skip.paws === 'own') { po.paws = 'own'; po.taps = v.taps; po.lit = v.lit; po.nextPaw = v.nextPaw; po.totals = false; }
     else if (skip.paws === 'both') { po.paws = 'own'; po.both = true; po.taps = v.taps; po.lit = v.lit; po.nextPaw = v.nextPaw; po.totals = false; }
     else if (skip.paws === 'pile') { po.paws = 'promise'; po.taps = v.taps; }
+    // chapter 5: her four paws (no totals: Tallyheart counts them aloud); nine claws in a log (the
+    // scene is the picture: this one is only for a frame with no scene); seven forepaws in the mud,
+    // drawn as chapter 3's six were, the first `groups` of them hers to light
+    else if (skip.paws === 'board') { po.paws = 'board'; po.taps = v.taps; po.totals = false; }
+    else if (skip.paws === 'log') { po.paws = 'log'; po.taps = v.taps; po.totals = false; }
+    else if (skip.paws === 'mud') { po.paws = 'mud'; po.kind = 'mud'; po.of = Math.max(E.DRAGONETS, v.groups); }
+    // the tuck: how many cats have curled a claw in (`tuck: true` is the art's word for this picture:
+    // every claw still out is lit, the next cat glows; `taps` and `tucked` both say how many); no
+    // number under any cat (a row of totals would read 9, 18, 27, 36, 45, the lesson's own answers,
+    // before its first question)
+    if (v.tuck) { po.tuck = true; po.taps = v.tucked; po.tucked = v.tucked; po.totals = false; }
     return po;
   }
   E.skipPicture = function (skip, taps) {
@@ -1329,7 +1517,8 @@
     var v = E.skipView(skip, taps), t = skipThings(skip, skip.table);
     return skipPaws(skip, { table: v.table, groups: v.groups, per: v.per, highlight: v.highlight, totals: true, next: !v.done, who: skip.who, thing: t[0], things: t[1] }, v);
   };
-  /* The same picture on the pages a skip-count's totals stay on (`keep`): every group lit, nothing glowing. */
+  /* The same picture on the pages a skip-count's totals stay on (`keep`): every group lit, nothing glowing.
+   * (The tuck: nine claws lit and one dark on every cat, and still no number under any of them.) */
   E.keptPicture = function (skip) {
     skip = skip || {};
     var v = E.skipView(skip, skip.groups), t = skipThings(skip, v.table);
@@ -1342,22 +1531,34 @@
    * is murmured, what is counted, the hidden button for VoiceOver and the panel's label. */
   E.skipWords = function (skip, first) {
     skip = skip || {};
-    var paws = skip.paws, mine = paws === 'own' || paws === 'both' || paws === 'pile';
+    var paws = skip.paws, mine = paws === 'own' || paws === 'both' || paws === 'pile' || paws === 'log';
     var v0 = E.skipView(skip, 0), t = skipThings(skip, skip.table);
-    return {
+    var w = {
       teacher: skip.teacher || (mine ? 'player' : first || 'tallyheart'),
       whisper: paws === 'own' || paws === 'both',
       thing: t[0], things: t[1],
       label: typeof skip.label === 'string' && skip.label ? skip.label
+        : skip.tuck ? 'Tuck in the next cat’s claw.' : paws === 'board' ? 'Put the next paw on the raft.' : paws === 'log' ? 'Dig in the next claw.' : paws === 'mud' ? 'Count the next forepaw.'
         : paws === 'own' ? 'Tap your next forepaw.' : paws === 'both' ? 'Tap your forepaws.' : paws === 'pile' ? 'Count the next friend.'
           : skip.table === 10 ? 'Count the next cat.' : 'Count the next ' + (skip.table === 2 ? 'cat' : skip.table === 5 ? 'paw' : 'one'),
-      aria: paws === 'own' ? 'Your two forepaws on the moss. Touch the glowing one.'
+      aria: skip.tuck ? cap1(E.numWord(v0.groups)) + ' cats sitting up, ten claws out on each. Touch the glowing cat to tuck one claw in.'
+        : paws === 'board' ? 'Your ' + E.numWord(v0.groups) + ' paws at the raft’s edge. Touch the glowing one.'
+        : paws === 'log' ? 'Your two forepaws on a log. Touch anywhere to dig in the next claw.'
+        : paws === 'mud' ? cap1(E.numWord(Math.max(E.DRAGONETS, v0.groups))) + ' forepaws in the mud. Touch the glowing one.'
+        : paws === 'own' ? 'Your two forepaws on the moss. Touch the glowing one.'
         : paws === 'both' ? 'Your two forepaws on the moss. Touch them.'
           : paws === 'pile' ? cap1(E.numWord(v0.groups * 2)) + ' forepaws in a pile. Touch the glowing pair.'
             : v0.groups === 1 ? 'Counting picture: one group of ' + E.numWord(v0.table) + '. Touch it.'
               : 'Counting picture: ' + E.numWord(v0.groups) + ' groups of ' + E.numWord(v0.table) + '. Touch the glowing one.',
       prompt: typeof skip.prompt === 'string' ? skip.prompt : ''
     };
+    // chapter 5: the count in her own thought (the log), or said in words (her paws aboard)
+    if (paws === 'log') w.think = true;
+    if (paws === 'board') w.words = true;
+    // (no big number over these pictures: Tallyheart says her paws aboard, and the mud's forepaws
+    // carry their own 5, 10, 15 under them, where the big one would sit on the next to light)
+    if (paws === 'board' || paws === 'mud') w.noNumber = true;
+    return w;
   };
   /* `keep: true` on a skip: the running totals stay. The page it turns to, the plain pages after
    * that, and the first Counts frame they reach (until its lesson starts) show the skip's counting
@@ -1367,9 +1568,10 @@
     var F = (story && story.frames) || {};
     for (var id in F) {
       if (!own(F, id) || !F[id] || !F[id].skip || !F[id].skip.keep) continue;
+      if (cat && !E.shows(F[id], cat)) continue;   // a count she never reads keeps no picture for her
       var at = cat ? E.landing(cat, story, F[id].skip.next) : F[id].skip.next;
       for (var guard = 0; guard < 32 && at && F[at]; guard++) {
-        if (at === frameId) return { id: id, skip: F[id].skip };
+        if (at === frameId) return { id: id, skip: cat ? E.skipFor(F[id].skip, cat) : F[id].skip };
         var k = E.kindOf(F[at]);
         if (k !== 'next') break;
         at = cat ? E.landing(cat, story, F[at].next) : F[at].next;
@@ -1378,15 +1580,21 @@
     return null;
   };
   /* The skip-count a page comes straight after (it shows the number reached, big), or null. A skip
-   * with `carry: false` keeps its number to itself. */
+   * with `carry: false` keeps its number to itself, and so does one this cat never reads: a skip
+   * frame whose `when` does not match her hands no number on, though the page turn past it lands on
+   * the same page (chapter 5's mud count, f148: a cat who met no dragonet today reads the page after
+   * it with no number over it). */
   E.skipInto = function (story, frameId, cat) {
     var F = (story && story.frames) || {};
     for (var id in F) {
       if (!own(F, id) || !F[id] || !F[id].skip || F[id].skip.carry === false) continue;
-      if ((cat ? E.landing(cat, story, F[id].skip.next) : F[id].skip.next) === frameId) return F[id].skip;
+      if (cat && !E.shows(F[id], cat)) continue;
+      if ((cat ? E.landing(cat, story, F[id].skip.next) : F[id].skip.next) === frameId) return cat ? E.skipFor(F[id].skip, cat) : F[id].skip;
     }
     return null;
   };
+  /* The number that page shows: what the count reached (the tuck: where it stopped, 45). */
+  E.skipReached = function (skip) { var v = E.skipView(skip, 1e9); return v.tuck ? v.total : v.groups * v.table; };
 
   /* ------------------------------------------------------------ scene options from the cat
    * On the `hollow` set, `marks: 'auto'` is one mark per Count she has finished a chapter lesson
@@ -1449,7 +1657,16 @@
    * praise (E.questionDef). With too few fillers the retry comes back as late as it can. Nothing
    * ever blocks: every answer moves the lesson forward.
    * A fact is [a, b] or { a, b, table?, groups?, per?, picture?, who?, lit?, light?, prompt?,
-   * retryPrompt?, right?, rightAgain?, rightPicture?, check?, hard? }. */
+   * retryPrompt?, right?, rightAgain?, rightPicture?, check?, hard? }.
+   * Chapter 5: a set may carry `light` itself (`light: 'tuck'` on the nines: every first ask and every
+   * retry gets it, a fact's own wins, a filler never does); `fillOrder: 'easiest'` with no `fillFrom`
+   * fills a lesson's own gaps with the easiest of her right answers, not the latest (state.easiest);
+   * a fact may carry its own `miss` and `missLast` lines, and `shows: { kind: 'answers', of: [[2, 9]],
+   * also: 'One and eight make nine. ' }`: with its `right` line and with its miss line the page draws
+   * her answers scratched in the sand, this fact's and each of `of` she has answered right with no
+   * ask of it still ahead (res.shows), and `{also}` in those lines is the `also` words when every one
+   * of `of` is there, else nothing. state.shown is set from then on (the nines' digits line waits
+   * for it: res.notNine). */
   function factKey(a, b) { return a + 'x' + b; }
   function pairKey(a, b) { return Math.min(a, b) + 'x' + Math.max(a, b); }   // 9×1 and 1×9 are one fact
   function groupsFor(a, b, table) {
@@ -1462,9 +1679,10 @@
    * many things glow as it is asked (2 × 6: the first five cats' ten ears); `light: 'groups'`
    * lights the picture a group at a time as it is asked, with no number (the pile's stacks, or the
    * check's two rows); `check: true` goes on its log entry (E.hardFacts skips a right one). */
-  var FACT_KEYS = ['table', 'groups', 'per', 'picture', 'who', 'lit', 'light', 'check', 'prompt', 'retryPrompt', 'right', 'rightAgain', 'rightPicture'];
+  var FACT_KEYS = ['table', 'groups', 'per', 'picture', 'who', 'lit', 'light', 'check', 'prompt', 'retryPrompt', 'right', 'rightAgain', 'rightPicture', 'miss', 'missLast', 'shows'];
   // a retry is pictured the same and asked plainly, unless the fact keeps a prompt for it (retryPrompt)
-  var RETRY_KEYS = ['table', 'groups', 'per', 'picture', 'who', 'lit', 'light', 'check', 'rightPicture'];
+  var RETRY_KEYS = ['table', 'groups', 'per', 'picture', 'who', 'lit', 'light', 'check', 'rightPicture', 'miss', 'missLast', 'shows'];
+  var LIGHTS = ['groups', 'rows', 'tuck'];
   function normFact(f) {
     if (Array.isArray(f)) return { a: +f[0], b: +f[1], retry: false };
     var item = { a: +f.a, b: +f.b, retry: false };
@@ -1498,6 +1716,10 @@
     // it never lends one of its own questions back, the other way round, while another pair is left
     // (the pile's 3 × 10 and 2 × 10 never come back as 10 × 3 and 10 × 2)
     if (Array.isArray(opts.own) && opts.own.length) st.own = opts.own.slice();
+    // chapter 5: a set's own `light` goes on every question it asks first (a fact's own wins; a retry
+    // keeps it, a filler has none); and a lesson that fills its own gaps with the easiest
+    if (LIGHTS.indexOf(def.light) >= 0) st.queue.forEach(function (it) { if (it.light == null) it.light = def.light; });
+    if (def.fillOrder === 'easiest' && !def.fillFrom) st.easiest = true;
     return st;
   };
   C.done = function (st) { return !st || st.pos >= st.queue.length; };
@@ -1520,7 +1742,7 @@
       picture: q.picture || null,
       who: Array.isArray(q.who) ? q.who : null,
       lit: Math.max(0, num(q.lit, 0) | 0),
-      light: q.light === 'groups' || q.light === 'rows' ? q.light : null,
+      light: LIGHTS.indexOf(q.light) >= 0 ? q.light : null,
       // a retry is asked plainly ("Here's that one again." and the generic question) unless the
       // fact keeps a prompt for it (2 × 6's hop on from ten, the check's "Two rows of eight.")
       prompt: first ? (q.prompt != null ? q.prompt : null) : (q.retry && q.retryPrompt != null ? q.retryPrompt : null),
@@ -1541,16 +1763,23 @@
     var miss = pairKey(q.a, q.b), out = [], taken = {}, asked = {}, avoided = {};
     taken[miss] = true;
     for (var k = st.pos + 1; k < st.queue.length; k++) taken[pairKey(st.queue[k].a, st.queue[k].b)] = true;
-    st.log.forEach(function (e) { asked[pairKey(e.a, e.b)] = true; });
+    // (chapter 5, a lesson that fills its own gaps with the easiest: every candidate is a pair it has
+    // asked, so "fresh" there is a pair not yet used to fill a gap: after a second miss she gets the
+    // next two easy ones, 3 × 9 and 4 × 9, not 9 × 1 and 2 × 9 again)
+    st.log.forEach(function (e) { if (!st.easiest || e.filler) asked[pairKey(e.a, e.b)] = true; });
     (st.asked || []).forEach(function (key) { asked[key] = true; });
     (st.avoid || []).forEach(function (key) { avoided[key] = true; });
     (st.own || []).forEach(function (key) { avoided[key] = true; });
-    var cands = [];
+    var cands = [], rights = [];
     (st.pool || []).forEach(function (p) { cands.push({ a: p.a, b: p.b, table: p.table, from: p.from }); });
     for (var i = st.log.length - 1; i >= 0; i--) {
       var e = st.log[i];
-      if (e.correct) cands.push({ a: e.a, b: e.b, table: e.table });
+      if (e.correct) rights.push({ a: e.a, b: e.b, table: e.table, i: rights.length });
     }
+    // chapter 5 (state.easiest): the easiest of her right answers first, not the latest (a missed
+    // 9 × 9, the last and hardest, is followed by 9 × 1 and 2 × 9, never 7 × 9 and 5 × 9)
+    if (st.easiest) rights.sort(function (x, y) { return x.a * x.b - y.a * y.b || x.i - y.i; });
+    rights.forEach(function (r) { cands.push({ a: r.a, b: r.b, table: r.table }); });
     for (var j = 0; j <= st.pos && j < st.queue.length; j++) {
       var it = st.queue[j];
       if (!it.retry && !it.filler) cands.push({ a: it.a, b: it.b, table: it.table });
@@ -1583,6 +1812,23 @@
     if (q.from) r.from = q.from;
     return r;
   }
+  /* Chapter 5, `shows: { kind: 'answers', of, also }`: her answers scratched in the sand as this fact
+   * is answered: each pair of `of` she has answered right in this lesson with no ask of it still ahead
+   * (a retry of 2 × 9 still to come keeps eighteen off the sand), then this fact's own. `all`: every
+   * one of `of` is there (so the fact's lines may say the `also` words about them). */
+  function shownAnswers(st, q) {
+    var mine = pairKey(q.a, q.b), ahead = {}, right = {}, out = [], all = true;
+    for (var k = st.pos + 1; k < st.queue.length; k++) ahead[pairKey(st.queue[k].a, st.queue[k].b)] = true;
+    st.log.forEach(function (e) { if (e.correct) right[pairKey(e.a, e.b)] = true; });
+    asList(q.shows.of).forEach(function (f) {
+      var p = factPair(f), key = pairKey(p[0], p[1]);
+      if (!(p[0] >= 0 && p[1] >= 0) || key === mine) return;
+      if (right[key] && !ahead[key]) out.push(p[0] * p[1]); else all = false;
+    });
+    out.push(q.a * q.b);
+    return { answers: out, all: all };
+  }
+  function digitSum(n) { var t = 0; String(Math.abs(n | 0)).split('').forEach(function (d) { t += +d; }); return t; }
   /* Lines tied to one question, as balloons: a string is the teacher's. */
   function balloonList(x) {
     return asList(x).map(function (b) { return typeof b === 'string' ? { text: b } : b; }).filter(function (b) { return b && b.text; });
@@ -1609,6 +1855,10 @@
     if (q.table && q.table !== st.table) entry.table = q.table;   // a fact from another Count (mixed lessons)
     // "after a miss" lines are true only once a miss has happened in this lesson
     var missedBefore = !!st.missed || st.log.some(function (e) { return !e.correct; });
+    // chapter 5: whether the lesson had shown her answers in the sand before this one (the nines'
+    // digits line waits for it), and what this fact shows with its right line or its miss line
+    var shownBefore = !!st.shown;
+    var shows = isObj(q.shows) && (!correct || !q.retry) ? shownAnswers(st, q) : null;
     st.log.push(entry);
     var res = { correct: correct, right: right, fast: correct && ms < E.FAST_MS, entry: entry, requeued: false, line: '', lineKind: '' };
     var L = st.lines || (st.lines = { praise: 0, fast: 0, again: 0, fastLast: false });
@@ -1665,6 +1915,15 @@
       // and on the 10s, one that doesn't end in a zero (13 for 3 × 10, 34 for 10 × 3) gets the zero
       // rule first (a set's helpIntroNotTen)
       if (qq.table === 10 && given != null && given % 10 !== 0) res.notTen = true;
+      // chapter 5, the 9s (one claw tucked in): she typed the tens (the hop without the tuck: 40 for
+      // 4 × 9), she tucked one claw only (39; two cats or more), or her answer's two numbers don't make
+      // nine (never on 9 × 1, and only once the lesson has shown her that they should: state.shown;
+      // in the Training Hollow, always). The set's helpIntroTens, helpIntroOneTuck, helpIntroNotNine.
+      if (qq.table === 9 && qq.per === 9 && given != null) {
+        if (given === qq.groups * 10) res.tens = true;
+        if (qq.groups >= 2 && given === qq.groups * 10 - 1) res.oneTuck = true;
+        if (right !== 9 && digitSum(given) !== 9 && (st.mode === 'hollow' || shownBefore)) res.notNine = true;
+      }
       if (qq.table && qq.table !== 1) res.help.table = qq.table;
       if (qq.step !== 1) res.help.step = qq.step;
       var key = factKey(q.a, q.b);
@@ -1675,13 +1934,28 @@
         var left = st.queue.length - (st.pos + 1);
         if (left < E.REQUEUE_GAP) st.queue.push.apply(st.queue, fillers(st, q, E.REQUEUE_GAP - left));
         var at = Math.min(st.pos + 1 + E.REQUEUE_GAP, st.queue.length);
-        st.queue.splice(at, 0, retryOf(q));
+        var back = retryOf(q);
+        // chapter 5: every retry in a lesson whose set has a `light` plays it (the nines' hop and
+        // tuck), the retry of a missed filler of its own too: a filler itself shows the still
+        // picture, but she has just watched the two steps in the sand. Not a borrowed pair (another
+        // set's picture), and never in the Hollow (its definition has no `light`).
+        if (back.light == null && !q.from && LIGHTS.indexOf(def.light) >= 0) back.light = def.light;
+        st.queue.splice(at, 0, back);
         res.requeued = true;
       }
-      // "we'll come back to that one" only when it really comes back
-      res.line = res.requeued ? pick(def.miss || 'There. We\'ll come back to that one.', 0)
-        : pick(def.missLast || 'There. Now you’ve seen it counted.', 0);
+      // "we'll come back to that one" only when it really comes back (chapter 5: a fact may have
+      // miss lines of its own, 4 × 9's "Thirty-six. Now look. …")
+      res.line = res.requeued ? pick(q.miss != null ? q.miss : (def.miss || 'There. We\'ll come back to that one.'), 0)
+        : pick(q.missLast != null ? q.missLast : (def.missLast || 'There. Now you’ve seen it counted.'), 0);
       res.line = fillFact(res.line, q);
+    }
+    if (isObj(q.shows)) {
+      // `{also}` in this fact's lines: the words about the other answers, when they are all in the sand
+      var also = shows && shows.all && typeof q.shows.also === 'string' ? q.shows.also : '';
+      var put = function (t) { return String(t == null ? '' : t).replace(/\{also\}/g, also).replace(/ {2,}/g, ' ').replace(/^ +| +$/g, ''); };
+      if (res.balloons) res.balloons.forEach(function (b) { b.text = put(b.text); });
+      res.line = put(res.line);
+      if (shows) { res.shows = { kind: 'answers', answers: shows.answers }; st.shown = true; }
     }
     st.pos++;
     res.done = C.done(st);
@@ -1733,7 +2007,9 @@
     var facts = (def.facts || []).slice();
     var w = def.warmHard;
     if (!isObj(w) || !facts.length) return facts;
-    var avoid = pairSet(def.avoid);
+    // chapter 5: the hard pick may have an `avoid` list of its own (`warmHard.avoid`), read in place
+    // of the set's (which then only governs the questions it borrows: 4 × 10 may be the hard pick)
+    var avoid = pairSet(w.avoid != null ? w.avoid : def.avoid);
     var all = E.hardFacts(cat, w.table || def.table || 1, stories);
     var hard = all.filter(function (f) { return !avoid[pairKey(f[0], f[1])]; })[0];
     if (!hard) return facts;
@@ -1837,7 +2113,9 @@
    * own. The UI asks with it and passes it to E.counts.answer.
    * A borrowing set with `fillVoice: 'borrower'` (Sprinkle's two under the bridge) keeps its own
    * voice: a borrowed question takes only the lending set's picture (VOICE_PICTURE) and everything
-   * said (teacher, praise, fast, again, miss, the help's lines and who counts) is the borrower's. */
+   * said (teacher, praise, fast, again, miss, the help's lines and who counts) is the borrower's.
+   * Chapter 5, `fillPicture: 'borrower'` beside it: a borrowed pair takes nothing from its lender but
+   * the pair. It is drawn and worded as the borrowing set's own ("One answer. How many fish?"). */
   var VOICE_PICTURE = ['table', 'thing', 'things', 'unit', 'units', 'picture', 'who'];
   E.questionDef = function (def, q, story, stories) {
     if (!q || !q.from || (def && def.id === q.from)) return def;
@@ -1845,7 +2123,7 @@
     if (!lend) return def;
     if (def && def.fillVoice === 'borrower') {
       var out = Object.assign({}, def, { id: q.from, voice: def.id });
-      VOICE_PICTURE.forEach(function (k) { if (lend[k] != null) out[k] = lend[k]; else delete out[k]; });
+      if (def.fillPicture !== 'borrower') VOICE_PICTURE.forEach(function (k) { if (lend[k] != null) out[k] = lend[k]; else delete out[k]; });
       ['firstPrompt', 'prompt', 'facts', 'warmHard'].forEach(function (k) { delete out[k]; });
       return out;
     }
@@ -1875,6 +2153,15 @@
     return cap1(E.numWord(q.groups)) + ' ' + (q.groups === 1 ? unit : units) + '. How many ' + things + '?';
   };
   E.teacherOf = function (def, D) { return (D && D.teacher) || (def && def.teacher) || 'tallyheart'; };
+  /* Chapter 5: a silent set (`teacher: 'caption'`, Wisp's riddle) has nobody to say its lines: every
+   * line the engine words itself is lettered as a caption. E.spoken(who, text) is such a line as the
+   * page takes it: a balloon of `who`'s, or a caption. */
+  E.spoken = function (who, text, kind) {
+    if (who === 'caption') return { text: text, kind: 'caption' };
+    var l = { who: who, text: text };
+    if (kind) l.kind = kind;
+    return l;
+  };
   /* What is said before she answers: the question's own prompt (a line, or balloons from anyone),
    * else the set's firstPrompt (its first question), its prompt, or the generic question. A retry:
    * the set's `againIntro` ("Here’s that one again.") and the generic question, or the prompt the fact
@@ -1882,35 +2169,40 @@
    * its own lesson's generic question. */
   E.promptLines = function (def, D, q) {
     def = def || {}; D = D || def;
-    var teacher = E.teacherOf(def, D);
+    var teacher = E.teacherOf(def, D), silent = teacher === 'caption';
+    var by = function (text) { return silent ? { text: text, kind: 'caption' } : { who: teacher, text: text }; };
+    // an opening line and the question after it: one balloon; in a silent set, a caption each
+    var two = function (lead, question) { return silent ? [by(lead), by(question)] : [by(lead + ' ' + question)]; };
     var lines = function (x) {
       return asList(x).map(function (b) { return typeof b === 'string' ? { text: b } : b; }).filter(function (b) { return b && b.text; })
-        .map(function (b) { return b.kind === 'caption' ? { text: fillQ(b.text, D, q), kind: 'caption' } : { who: b.who || teacher, text: fillQ(b.text, D, q), kind: b.kind }; });
+        .map(function (b) { return b.kind === 'caption' || (silent && !b.who) ? { text: fillQ(b.text, D, q), kind: 'caption' } : { who: b.who || teacher, text: fillQ(b.text, D, q), kind: b.kind }; });
     };
     if (q.retry) {
       // a borrowed question coming back under the bridge isn't "my dinner again": it opens as it did,
       // in the borrower's words ("Count another one with me.")
       var lentBack = q.from && def.fillVoice === 'borrower' && def.id !== q.from && def.fillIntro;
       var again = lentBack ? def.fillIntro : (D.againIntro || 'Here’s that one again.');
-      if (typeof q.prompt === 'string') return [{ who: teacher, text: again + ' ' + fillQ(q.prompt, D, q) }];
-      if (q.prompt != null) return [{ who: teacher, text: again }].concat(lines(q.prompt));
-      return [{ who: teacher, text: again + ' ' + E.genericQuestion(D, q) }];
+      if (typeof q.prompt === 'string') return two(again, fillQ(q.prompt, D, q));
+      if (q.prompt != null) return [by(again)].concat(lines(q.prompt));
+      return two(again, E.genericQuestion(D, q));
     }
-    if (q.filler && q.from && def.fillIntro) return [{ who: teacher, text: def.fillIntro + ' ' + E.genericQuestion(D, q) }];
+    if (q.filler && q.from && def.fillIntro) return two(def.fillIntro, E.genericQuestion(D, q));
     if (q.prompt != null) {
-      if (typeof q.prompt === 'string') return [{ who: teacher, text: fillQ(q.prompt, D, q) }];
+      if (typeof q.prompt === 'string') return [by(fillQ(q.prompt, D, q))];
       return lines(q.prompt);
     }
-    if (D.firstPrompt && q.number === 1) return [{ who: teacher, text: fillQ(D.firstPrompt, D, q) }];
-    if (D.prompt) return [{ who: teacher, text: fillQ(D.prompt, D, q) }];
-    return [{ who: teacher, text: E.genericQuestion(D, q) }];
+    if (D.firstPrompt && q.number === 1) return [by(fillQ(D.firstPrompt, D, q))];
+    if (D.prompt) return [by(fillQ(D.prompt, D, q))];
+    return [by(E.genericQuestion(D, q))];
   };
   /* Where the help is scratched: the lesson set's `ground` ('sand', 'earth', 'mud', and chapter 4's
    * 'grit', the tower roof); else, for a borrowed question, earth when the borrowing set's own picture
    * is prey (the pile scratches a borrowed ears question in the earth beside it), else sand; for its
    * own question, earth for prey, mud for a picture drawn in the mud, grit for one scratched in the
-   * grit (`kind: 'grit'`, or a picture's own `ground`), else sand. The Training Hollow is always sand. */
-  E.GROUNDS = ['sand', 'earth', 'mud', 'grit'];
+   * grit (`kind: 'grit'`, or a picture's own `ground`), else sand. The Training Hollow is always sand.
+   * Chapter 5: 'log' (a log of the otters' raft: out on the river there is no sand, and the marsh's
+   * mud is ReedClan's). */
+  E.GROUNDS = ['sand', 'earth', 'mud', 'grit', 'log'];
   E.helpGround = function (def, D, q) {
     def = def || {};
     if (E.GROUNDS.indexOf(def.ground) >= 0) return def.ground;
@@ -1927,7 +2219,18 @@
    * Chapter 4, the 10s: an answer that doesn't end in a zero opens with the set's `helpIntroNotTen`;
    * the swipes come in pairs, two for every cat, once for each forepaw (`pair: true`, hopped by tens);
    * and a picture in rows of ten is scratched ten marks a row and lit a whole row at a time
-   * (`byRow: true`: the help hops by the row, 10 · 20 · 30). Both keys are there only when true. */
+   * (`byRow: true`: the help hops by the row, 10 · 20 · 30). Both keys are there only when true.
+   * Chapter 5, the 9s: three more openings, checked in this order after those two: the set's
+   * `helpIntroTens` (she typed the tens), `helpIntroOneTuck` (she tucked one claw only),
+   * `helpIntroNotNine` (her answer's two numbers don't make nine, once she has been shown that they
+   * should); "close" is within nine. The help itself is the lesson done slowly, in two phases
+   * (`tuck: true`): Tallyheart swipes the sand twice for every cat and hops the pairs by tens, then
+   * rubs out one line for every cat and steps back by ones, so `nums` reads 10 · 20 · 30 · 40 · 39 ·
+   * 38 · 37 · 36 and `hops` is how many of them are hops (E.helpSteps has each step's scratches).
+   * A set's `helpSays` is who says the opening line when it is not the teacher (`says`: Patience's
+   * one line in Wisp's silent set); `help: 'picture'` lights the set's own picture a group at a time
+   * and scratches nothing (`picture: true`, no ground: Puddle's bumps, Wisp's herons). Each of these
+   * keys is there only when it applies, so chapters 1 to 4's plans are what they were. */
   E.helpPlan = function (def, D, q, res) {
     def = def || {}; D = D || def;
     var hp = res.help || {}, step = hp.step || 1, total = hp.groups * hp.per;
@@ -1935,31 +2238,67 @@
     var helpIntro = D.helpIntro || 'Let’s scratch it out together.';
     var intro = res.notFive && D.helpIntroNotFive ? D.helpIntroNotFive
       : res.notTen && D.helpIntroNotTen ? D.helpIntroNotTen
-        : res.near ? helpIntro : (D.helpIntroFar || helpIntro.replace(/^Close\.\s*/, ''));
+        : res.tens && D.helpIntroTens ? D.helpIntroTens
+          : res.oneTuck && D.helpIntroOneTuck ? D.helpIntroOneTuck
+            : res.notNine && D.helpIntroNotNine ? D.helpIntroNotNine
+              : res.near ? helpIntro : (D.helpIntroFar || helpIntro.replace(/^Close\.\s*/, ''));
     var nums = [];
     for (var i = step; i <= total; i += step) nums.push(i);
     if (nums[nums.length - 1] !== total) nums.push(total);
     var pic = pictureOf(D, q || {}), table = hp.table || (q && q.table), rows = pic.layout === 'rows';
-    var pair = table === 10 && hp.per === 10 && !rows;
+    var own = D.help === 'picture';
+    var pair = table === 10 && hp.per === 10 && !rows && !own;
+    // the 9s: hop the pairs by tens, then rub one line out of each and step back by ones
+    var tuck = table === 9 && hp.per === 9 && !rows && !own;
+    if (tuck) {
+      nums = [];
+      for (var h = 1; h <= hp.groups; h++) nums.push(h * 10);
+      for (var b = 1; b <= hp.groups; b++) nums.push(hp.groups * 10 - b);
+    }
     var plan = {
-      intro: intro, teacher: teacher, counter: D.helpCounter === 'you' ? 'player' : teacher,
-      ground: E.helpGround(def, D, q), style: (table === 5 && hp.per === 5) || pair ? 'swipe' : null,
+      // (a set nobody speaks in has nobody to keep the count but her)
+      intro: intro, teacher: teacher, counter: D.helpCounter === 'you' || teacher === 'caption' ? 'player' : teacher,
+      ground: own ? null : E.helpGround(def, D, q), style: !own && ((table === 5 && hp.per === 5) || pair || tuck) ? 'swipe' : null,
       layout: rows ? 'rows' : null,
-      step: step, total: total, nums: nums, groups: hp.groups, per: hp.per, answer: hp.answer, line: res.line || ''
+      step: tuck ? 10 : step, total: total, nums: nums, groups: hp.groups, per: hp.per, answer: hp.answer, line: res.line || ''
     };
-    if (pair) plan.pair = true;
+    if (pair || tuck) plan.pair = true;
+    if (tuck) { plan.tuck = true; plan.hops = hp.groups; }
     if (rows && step > 1 && step === hp.per) plan.byRow = true;
+    if (own) plan.picture = true;
+    if (typeof D.helpSays === 'string' && D.helpSays) plan.says = D.helpSays;
     return plan;
+  };
+  /* The help, step by step, as the page counts it out: [{ n, counted, rubbed? }]: the number said at
+   * each step and the scratches lit then (E.sandOpts(plan, counted, rubbed)). Chapters 1 to 4: one
+   * step for each number of `nums`, that many lit. The 9s: the hops (10, 20 … lit), then, with every
+   * swipe lit, one line rubbed out of a pair at each step back (`rubbed`: 1, 2 …). */
+  E.helpSteps = function (plan) {
+    plan = plan || {};
+    return asList(plan.nums).map(function (n, i) {
+      if (!plan.tuck || i < plan.hops) return { n: n, counted: n };
+      return { n: n, counted: plan.hops * 10, rubbed: i - plan.hops + 1 };
+    });
   };
   /* The scratches as PC.art.sand takes them, with `counted` of them lit: the plan's groups, ground
    * and style; swipes in pairs for the 10s (`pair`); and `step` when the help hops a whole row at a
    * time (the pile's rows of ten: after the first hop exactly the first row's ten marks are lit). */
-  E.sandOpts = function (plan, counted) {
+  E.sandOpts = function (plan, counted, rubbed) {
     plan = plan || {};
     var o = { groups: plan.groups, per: plan.per, counted: counted, layout: plan.layout || undefined, ground: plan.ground === 'sand' ? undefined : plan.ground };
     if (plan.style) o.style = plan.style;
     if (plan.pair) o.pair = true;
     if (plan.byRow) o.step = plan.step;
+    // chapter 5, the 9s: ten lines a cat (two swipes of five), and `rubbed` of the pairs, from the
+    // left, with one line rubbed out (the nine left in such a pair stay lit)
+    if (plan.tuck) { o.per = 10; if (rubbed > 0) o.rubbed = rubbed; }
+    return o;
+  };
+  /* Chapter 5: her answers scratched in the sand (a fact's `shows`, res.shows), as PC.art.sand takes
+   * them: { answers: [18, 36] }, on the lesson's ground when it is not sand. */
+  E.answersOpts = function (plan, shows) {
+    var o = { answers: asList(shows && shows.answers).slice() };
+    if (plan && plan.ground && plan.ground !== 'sand') o.ground = plan.ground;
     return o;
   };
   /* A question's picture as PC.art.countsPicture takes it (the page adds her `look`): the set's
@@ -1968,7 +2307,7 @@
    * a right answer (`rightPicture`: in rows unless it says otherwise). Chapter 4: forepaws scratched
    * in the roof's grit are `kind: 'grit'` (a picture written `{ kind: 'mud', ground: 'grit' }` is the
    * same), and a picture's `ground` goes to the art with it. */
-  E.lessonPicture = function (D, q, highlight, over) {
+  E.lessonPicture = function (D, q, highlight, over, more) {
     D = D || {}; q = q || {};
     var p = Object.assign({}, D.picture || {}, q.picture || {}, over ? Object.assign({ layout: 'rows' }, over.picture || {}) : {});
     var g = over && typeof over.groups === 'number' ? over.groups : q.groups;
@@ -1978,7 +2317,30 @@
       who: who || undefined, thing: D.thing || 'tail', things: D.things || 'tails' };
     if (p.kind === 'grit' || (p.kind === 'mud' && p.ground === 'grit')) { o.kind = 'grit'; o.ground = 'grit'; }
     else if (p.ground != null) o.ground = p.ground;
+    // chapter 5: `more` goes to the art with it (the 9s' `tuck`: how many cats have curled a claw in)
+    if (isObj(more)) Object.keys(more).forEach(function (k) { o[k] = more[k]; });
     return o;
+  };
+  /* A question that lights its picture as it is asked (`light`), step by step, as the page plays it:
+   * [{ picture, wait }] (`wait`: ms after the step before, the first after the question appears), the
+   * clock starting again at the last. 'groups' and 'rows' light a group, or a row, at a time, with no
+   * number (chapters 2 to 4). Chapter 5's 'tuck' is the 9s' two steps without a word: the picture
+   * opens with all ten claws lit on every cat (`open`: the hop), one curls in on each (the tuck),
+   * and then the claws go unlit, nine out and one tucked, and she types. */
+  E.LIGHT_MS = { first: 700, groups: 560, rows: 1000, hop: 1300, tuck: 1300 };
+  E.lightSteps = function (D, q) {
+    q = q || {};
+    var out = [], g = q.groups, per = q.per, base = q.lit || 0;
+    if (q.light === 'tuck') {
+      // (`tuck` is the art's key: how many cats, from the first, have curled a claw in; `tucked` says the same)
+      out.open = E.lessonPicture(D, q, g * 10, null, { tuck: 0, tucked: 0 });
+      out.push({ picture: E.lessonPicture(D, q, g * per, null, { tuck: g, tucked: g }), wait: E.LIGHT_MS.hop });
+      out.push({ picture: E.lessonPicture(D, q, 0), wait: E.LIGHT_MS.tuck });
+      return out;
+    }
+    if (q.light !== 'groups' && q.light !== 'rows') return out;
+    for (var k = 1; k <= g; k++) out.push({ picture: E.lessonPicture(D, q, Math.max(base, k * per)), wait: k === 1 ? E.LIGHT_MS.first : E.LIGHT_MS[q.light] });
+    return out;
   };
 
   /* A finished lesson goes on the cat the moment its last answer is in, not after the praise
@@ -2102,7 +2464,9 @@
    * it (`book.dragonet: { id, name, lines }`, Sprinkle in chapter 3), in chapter order; the rest of the
    * clutch (E.DRAGONETS in all) are silhouettes, still to find. Null until she has found one.
    * A dragonet with a `when` is one she may not find (Squall, chapter 4: `{ foundSquall: true }`): his
-   * page is there once it matches, whichever chapter she found him in, and not before. */
+   * page is there once it matches, whichever chapter she found him in, and not before. A chapter
+   * may find several (chapter 5: a list, Puddle's page and Wisp's, each with its `when`), and a page
+   * may say the `pose` its dragonet is drawn in. */
   E.dragonets = function (cat, stories) {
     var found = [], seen = {};
     E.chapters(stories).forEach(function (s) {
@@ -2110,7 +2474,11 @@
         if (!isObj(d) || !d.id || seen[d.id]) return;
         if (d.when != null ? !E.matches(d.when, cat) : !E.isFinished(cat, s.id)) return;
         seen[d.id] = true;
-        found.push({ id: d.id, name: E.fill(d.name || d.id, cat), lines: asList(d.lines).map(function (l) { return E.fill(l, cat); }), chapter: s.id });
+        var page = { id: d.id, name: E.fill(d.name || d.id, cat), lines: asList(d.lines).map(function (l) { return E.fill(l, cat); }), chapter: s.id };
+        // chapter 5: how the art draws it on its page, when sitting is not its way (Puddle's head
+        // out of the water, Wisp on one leg)
+        if (typeof d.pose === 'string' && d.pose) page.pose = d.pose;
+        found.push(page);
       });
     });
     return found.length ? { found: found, toFind: Math.max(0, E.DRAGONETS - found.length) } : null;
@@ -2120,7 +2488,7 @@
    * One claw mark per Count: once a chapter lesson of a Count is finished, the Hollow offers it,
    * a round of its ten facts at a time. Each Count keeps its own rounds and glow; every full round
    * (of any Count) earns the next treasure. */
-  var COUNT_THINGS = { 1: ['tail', 'tails'], 2: ['ear', 'ears'], 3: ['cat', 'cats'], 4: ['paw', 'paws'], 5: ['claw', 'claws'], 10: ['claw', 'claws'] };
+  var COUNT_THINGS = { 1: ['tail', 'tails'], 2: ['ear', 'ears'], 3: ['cat', 'cats'], 4: ['paw', 'paws'], 5: ['claw', 'claws'], 9: ['life', 'lives'], 10: ['claw', 'claws'] };
   function setTable(def) {
     if (!def) return null;
     if (def.table) return def.table;
@@ -2217,6 +2585,9 @@
     delete def.warmHard; delete def.fillFrom; delete def.facts;
     // the Hollow is Tallyheart's sand: nothing borrowed, nothing scratched anywhere else
     delete def.fillIntro; delete def.fillOrder; delete def.fillVoice; delete def.avoid; delete def.ground;
+    // chapter 5: nor does the picture play the hop and the tuck there (the still picture: she knows
+    // the two steps by now), and a round is Tallyheart's, in balloons, on her sand
+    delete def.light; delete def.fillPicture; delete def.help; delete def.helpSays;
     return def;
   };
   /* The facts of a table that were hard last time: the most recent first ask of each (not a retry,
@@ -2238,9 +2609,11 @@
     if (!def) return null;
     var out = { own: {}, open: {} }, facts = def.facts || [];
     facts.forEach(function (f) { if (isObj(f) && f.prompt != null) out.own[factKey(+f.a, +f.b)] = true; });
+    // (chapter 5: a Counts frame with `intro: false` says none of its lines over the first question,
+    // so that question is timed on itself, like any other)
     var balloons = Object.keys(story.frames || {}).some(function (id) {
       var f = story.frames[id];
-      return f && f.counts && f.counts.set === setId && asList(f.say).length > 0;
+      return f && f.counts && f.counts.set === setId && f.counts.intro !== false && asList(f.say).length > 0;
     });
     if (facts.length && (def.firstPrompt || balloons)) {
       var p = factPair(facts[0]);
@@ -2362,12 +2735,30 @@
     }
     Object.keys(story.frames).forEach(function (id) {
       var f = story.frames[id];
-      var kinds = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'end'].filter(function (k) { return f[k]; });
-      if (kinds.length !== 1) errs.push(id + ': needs exactly one of next/choice/input/look/counts/skip/scratch/file/end, has ' + (kinds.join(',') || 'none'));
+      var kinds = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'ask', 'end'].filter(function (k) { return f[k]; });
+      if (kinds.length !== 1) errs.push(id + ': needs exactly one of next/choice/input/look/counts/skip/scratch/file/ask/end, has ' + (kinds.join(',') || 'none'));
       E.exits(f).forEach(function (to) { if (!story.frames[to]) errs.push(id + ' -> missing ' + to); });
       if (f.counts && !hasSet(f.counts.set)) errs.push(id + ': unknown counts set ' + f.counts.set);
-      if (f.skip && !(num(f.skip.table, 0) >= 1 && num(f.skip.groups, 0) >= 1)) errs.push(id + ': skip needs a table and groups');
+      if (f.counts && f.counts.intro != null && typeof f.counts.intro !== 'boolean') errs.push(id + ': counts intro is false (none of the frame’s lines is said again over the first question)');
+      // chapter 5: a skip may count its `who` (entries with a `when`, and no `groups`: a forepaw for
+      // everyone she has found); somebody must always be there to count
+      var skWho = f.skip && Array.isArray(f.skip.who) ? f.skip.who : [];
+      var skCond = skWho.some(function (w) { return isObj(w) && w.when != null; });
+      if (f.skip && !(num(f.skip.table, 0) >= 1 && (num(f.skip.groups, 0) >= 1 || (f.skip.groups == null && skWho.length)))) errs.push(id + ': skip needs a table and groups');
+      if (f.skip && (skCond || f.skip.groups == null) && skWho.length && !skWho.some(function (w) { return !isObj(w) || w.when == null; })) errs.push(id + ': skip who can never be empty: one entry has no when');
+      skWho.forEach(function (w, i) { if (isObj(w)) checkWhen(id + ' skip who ' + i, w.when); });
       if (f.gift && !E.gift(f.gift)) errs.push(id + ': unknown gift ' + f.gift);
+      // chapter 5: a frame may say where its sound effect is lettered (`sfxAt: [x, y]`, the middle of
+      // the lettering in hundredths of the panel); only on a frame that has one
+      if (f.sfxAt != null && !(Array.isArray(f.sfxAt) && f.sfxAt.length === 2 && f.sfxAt.every(function (v) { return typeof v === 'number' && v >= 0 && v <= 100; }) && typeof f.sfx === 'string' && f.sfx)) {
+        errs.push(id + ': sfxAt is [x, y], each 0 to 100 (the middle of the lettering, in hundredths of the panel), on a frame with an sfx');
+      }
+      // and what Read to me says for it (`sfxRead`, the sound in words: E.captionsRead): only on a
+      // frame that has one, and never on a page that letters its own sounds as she taps (a skip, a
+      // page of questions, a row of bark), which reads its captions without it
+      if (f.sfxRead != null && !(typeof f.sfxRead === 'string' && f.sfxRead.trim() && typeof f.sfx === 'string' && f.sfx && !f.skip && !f.ask && !f.scratch)) {
+        errs.push(id + ': sfxRead is the sound in words for Read to me, on a frame with an sfx (not a skip, an ask or a scratch frame)');
+      }
       asList(f.caption).forEach(function (c, i) {
         if (isObj(c)) { if (typeof c.text !== 'string') errs.push(id + ': caption ' + i + ' has no text'); checkWhen(id + ' caption ' + i, c.when); }
         else if (typeof c !== 'string') errs.push(id + ': caption ' + i + ' must be a string or { when, text }');
@@ -2407,7 +2798,23 @@
           if (sc.draws != null && (typeof sc.draws !== 'string' || !hasCard(sc.draws))) errs.push(id + ': scratch draws names no card: ' + sc.draws);
           if (sc.tap != null && (typeof sc.tap !== 'string' || !sc.tap)) errs.push(id + ': scratch tap names what is tapped, like "glint"');
           if (sc.at != null && !(isObj(sc.at) && num(sc.at.x, -1) >= 0 && num(sc.at.y, -1) >= 0)) errs.push(id + ': scratch at is { x, y } in percent of the panel');
-          ['prompt', 'label', 'ground'].forEach(function (k) { if (sc[k] != null && typeof sc[k] !== 'string') errs.push(id + ': scratch ' + k + ' is a line'); });
+          ['prompt', 'label', 'ground', 'miss'].forEach(function (k) { if (sc[k] != null && typeof sc[k] !== 'string') errs.push(id + ': scratch ' + k + ' is a line'); });
+          if (sc.miss != null && sc.tap == null) errs.push(id + ': scratch miss (the small answer to a tap anywhere else) goes with tap');
+        }
+      }
+      // chapter 5: the questions she taps out of somebody (`ask`)
+      if (f.ask) {
+        var ak = f.ask;
+        if (!isObj(ak)) errs.push(id + ': ask is { who, to, pairs: [[question, answer], …], next }');
+        else {
+          if (typeof ak.who !== 'string' || !ak.who) errs.push(id + ': ask who is the one who asks, like "riffle"');
+          if (typeof ak.to !== 'string' || !ak.to) errs.push(id + ': ask to is the one who answers, like "patience"');
+          if (!(Array.isArray(ak.pairs) && ak.pairs.length && ak.pairs.every(function (pr) { return Array.isArray(pr) && pr.length === 2 && typeof pr[0] === 'string' && pr[0].trim() && typeof pr[1] === 'string' && pr[1].trim(); }))) {
+            errs.push(id + ': ask pairs is a list of [question, answer]');
+          }
+          ['prompt', 'label', 'opt'].forEach(function (k) { if (ak[k] != null && typeof ak[k] !== 'string') errs.push(id + ': ask ' + k + ' is a line'); });
+          var cast = (f.scene && f.scene.cast) || [];
+          [ak.who, ak.to].forEach(function (w) { if (typeof w === 'string' && w && f.scene && !cast.some(function (c) { return c && c.who === w; })) errs.push(id + ': ask: ' + w + ' is not in the frame’s cast'); });
         }
       }
       if (f.file && f.file !== true && !(isObj(f.file) && (f.file.prompt == null || typeof f.file.prompt === 'string'))) errs.push(id + ': file is { next, prompt? }');
@@ -2422,14 +2829,25 @@
         if (f.when == null) errs.push(id + ': else goes with a when (where the page turns when the frame does not show)');
         if (typeof f.else !== 'string' || !story.frames[f.else]) errs.push(id + ' -> missing ' + f.else + ' (else)');
       }
-      if (f.skip && f.skip.paws != null && ['own', 'both', 'pile'].indexOf(f.skip.paws) < 0) errs.push(id + ': skip paws is "own", "both" or "pile"');
+      if (f.skip && f.skip.paws != null && ['own', 'both', 'pile', 'board', 'log', 'mud'].indexOf(f.skip.paws) < 0) errs.push(id + ': skip paws is "own", "both", "pile", "board", "log" or "mud"');
+      if (f.skip && f.skip.tuck != null && typeof f.skip.tuck !== 'boolean') errs.push(id + ': skip tuck is true or false');
+      if (f.skip && f.skip.steps != null) {
+        if (!(Array.isArray(f.skip.steps) && f.skip.steps.every(function (st) { return isObj(st) && num(st.from, 0) >= 1 && (st.opts == null || isObj(st.opts)) && (st.sfx == null || typeof st.sfx === 'string'); }))) {
+          errs.push(id + ': skip steps is a list of { from, opts, sfx }: the tap a step starts at, the scene options from then on, its lettering');
+        }
+        if (!E.skipOnScene(f.skip)) errs.push(id + ': skip steps redraw the frame’s scene: only a skip that keeps its scene up has them (paws: "log")');
+      }
+      if (f.skip && E.skipOnScene(f.skip) && !f.scene) errs.push(id + ': this skip-count is tapped on the frame’s own scene: it needs one');
       if (f.skip && f.skip.keep != null && typeof f.skip.keep !== 'boolean') errs.push(id + ': skip keep is true or false');
       if (f.skip && f.skip.carry != null && typeof f.skip.carry !== 'boolean') errs.push(id + ': skip carry is true or false');
       if (f.skip) ['prompt', 'label'].forEach(function (k) { if (f.skip[k] != null && typeof f.skip[k] !== 'string') errs.push(id + ': skip ' + k + ' is a line'); });
     });
     asList(story.book && story.book.dragonet).forEach(function (dn) {
       if (!(isObj(dn) && typeof dn.id === 'string' && dn.id && typeof dn.name === 'string' && dn.name)) errs.push('book.dragonet needs an id and a name');
-      else checkWhen('book.dragonet ' + dn.id, dn.when);
+      else {
+        checkWhen('book.dragonet ' + dn.id, dn.when);
+        if (dn.pose != null && (typeof dn.pose !== 'string' || !dn.pose)) errs.push('book.dragonet ' + dn.id + ': pose is one of its poses, like "head"');
+      }
     });
     // her Case File's cards
     if (story.cards != null && !isObj(story.cards)) errs.push('cards is an object: { id: { mark, line, picture } }');
@@ -2445,7 +2863,12 @@
       if (c.link != null) {
         if (!isObj(c.link) || (c.link.line != null && typeof c.link.line !== 'string')) errs.push('card ' + cid + ': link is { when, line }');
         else checkWhen('card ' + cid + ' link', c.link.when);
-        if (!(Array.isArray(c.answers) && c.answers.length)) errs.push('card ' + cid + ': link needs answers (the cards it is drawn touching)');
+        // chapter 5: a link may name its partners itself (`with`), any cards, hers or another chapter's
+        var lw = isObj(c.link) ? c.link.with : null;
+        if (lw != null) {
+          if (!(Array.isArray(lw) && lw.length && lw.every(function (a) { return typeof a === 'string' && a; }))) errs.push('card ' + cid + ': link with is a list of card ids');
+          else lw.forEach(function (a) { if (a === cid) errs.push('card ' + cid + ': link with names the card itself'); else if (!hasCard(a)) errs.push('card ' + cid + ': link with names an unknown card ' + a); });
+        } else if (!(Array.isArray(c.answers) && c.answers.length)) errs.push('card ' + cid + ': link needs answers (the cards it is drawn touching), or with');
       }
     });
     if (story.names != null && !(isObj(story.names) && Object.keys(story.names).every(function (k) { return typeof story.names[k] === 'string' && story.names[k]; }))) {
@@ -2457,16 +2880,25 @@
       if (d.fillIntro != null && typeof d.fillIntro !== 'string') errs.push('counts ' + sid + ': fillIntro must be a line');
       if (d.fillIntro != null && !d.fillFrom) errs.push('counts ' + sid + ': fillIntro without fillFrom');
       // chapter 3's keys
-      if (d.ground != null && E.GROUNDS.indexOf(d.ground) < 0) errs.push('counts ' + sid + ': ground is "sand", "earth", "mud" or "grit"');
+      if (d.ground != null && E.GROUNDS.indexOf(d.ground) < 0) errs.push('counts ' + sid + ': ground is "sand", "earth", "mud", "grit" or "log"');
       if (d.fillOrder != null && d.fillOrder !== 'easiest') errs.push('counts ' + sid + ': fillOrder is "easiest"');
       if (d.fillVoice != null && d.fillVoice !== 'borrower') errs.push('counts ' + sid + ': fillVoice is "borrower"');
-      if ((d.fillOrder != null || d.fillVoice != null) && !d.fillFrom) errs.push('counts ' + sid + ': fillOrder and fillVoice need fillFrom');
+      // (chapter 5: fillOrder may stand without fillFrom: the lesson's own gaps, filled with the easiest)
+      if (d.fillVoice != null && !d.fillFrom) errs.push('counts ' + sid + ': fillVoice needs fillFrom');
+      if (d.fillPicture != null && d.fillPicture !== 'borrower') errs.push('counts ' + sid + ': fillPicture is "borrower"');
+      if (d.fillPicture != null && d.fillVoice !== 'borrower') errs.push('counts ' + sid + ': fillPicture goes with fillVoice: "borrower" (a borrowed pair asked and drawn as this set’s own)');
       if (d.helpCounter != null && d.helpCounter !== 'you') errs.push('counts ' + sid + ': helpCounter is "you"');
-      // chapter 4 adds the zero rule's line, the Hollow's button (`label`) and Tallyheart's word there (`hollowThings`)
-      ['againIntro', 'helpIntroNotFive', 'helpIntroNotTen', 'helpIntro', 'helpIntroFar', 'label', 'hollowThings'].forEach(function (k) {
+      if (d.help != null && d.help !== 'picture') errs.push('counts ' + sid + ': help is "picture" (the help lights the set’s own picture, and scratches nothing)');
+      if (d.light != null && LIGHTS.indexOf(d.light) < 0) errs.push('counts ' + sid + ': light is "groups", "rows" or "tuck"');
+      // chapter 4 adds the zero rule's line, the Hollow's button (`label`) and Tallyheart's word there (`hollowThings`);
+      // chapter 5 the 9s' three openings and who says a help's first line when the teacher doesn't
+      ['againIntro', 'helpIntroNotFive', 'helpIntroNotTen', 'helpIntro', 'helpIntroFar', 'label', 'hollowThings', 'helpIntroTens', 'helpIntroOneTuck', 'helpIntroNotNine', 'helpSays'].forEach(function (k) {
         if (d[k] != null && (typeof d[k] !== 'string' || !d[k].trim())) errs.push('counts ' + sid + ': ' + k + ' is a line');
       });
-      if (isObj(d.picture) && d.picture.ground != null && E.GROUNDS.indexOf(d.picture.ground) < 0) errs.push('counts ' + sid + ': picture ground is "sand", "earth", "mud" or "grit"');
+      if (isObj(d.picture) && d.picture.ground != null && E.GROUNDS.indexOf(d.picture.ground) < 0) errs.push('counts ' + sid + ': picture ground is "sand", "earth", "mud", "grit" or "log"');
+      if (isObj(d.warmHard) && d.warmHard.avoid != null && !(Array.isArray(d.warmHard.avoid) && d.warmHard.avoid.every(function (f) { var p = factPair(f); return p[0] >= 0 && p[1] >= 0; }))) {
+        errs.push('counts ' + sid + ': warmHard avoid is a list of facts, like [[5, 10], [3, 10]]');
+      }
       if (d.done != null && typeof d.done !== 'string') errs.push('counts ' + sid + ': done is a line, \'\' or null');
       if (d.avoid != null && !(Array.isArray(d.avoid) && d.avoid.every(function (f) { var p = factPair(f); return p[0] >= 0 && p[1] >= 0; }))) errs.push('counts ' + sid + ': avoid is a list of facts, like [[9, 2], [7, 2]]');
       if (isObj(d.warmHard) && d.warmHard.alt != null) {
@@ -2477,7 +2909,16 @@
         var a = Array.isArray(f) ? f[0] : f && f.a, b = Array.isArray(f) ? f[1] : f && f.b;
         if (!(a >= 0 && b >= 0)) errs.push('counts ' + sid + ': fact ' + i + ' needs a and b');
         if (!isObj(f)) return;
-        if (f.light != null && f.light !== 'groups' && f.light !== 'rows') errs.push('counts ' + sid + ': fact ' + i + ': light is "groups" or "rows"');
+        if (f.light != null && LIGHTS.indexOf(f.light) < 0) errs.push('counts ' + sid + ': fact ' + i + ': light is "groups", "rows" or "tuck"');
+        ['miss', 'missLast'].forEach(function (k) { if (f[k] != null && (typeof f[k] !== 'string' || !f[k].trim())) errs.push('counts ' + sid + ': fact ' + i + ': ' + k + ' is a line'); });
+        if (f.shows != null) {
+          var sh = f.shows;
+          if (!isObj(sh) || sh.kind !== 'answers') errs.push('counts ' + sid + ': fact ' + i + ': shows is { kind: "answers", of, also }');
+          else {
+            if (sh.of != null && !(Array.isArray(sh.of) && sh.of.every(function (x) { var p = factPair(x); return p[0] >= 0 && p[1] >= 0; }))) errs.push('counts ' + sid + ': fact ' + i + ': shows of is a list of facts, like [[2, 9]]');
+            if (sh.also != null && typeof sh.also !== 'string') errs.push('counts ' + sid + ': fact ' + i + ': shows also is the words for {also}');
+          }
+        }
         if (f.lit != null && !(num(f.lit, -1) >= 0)) errs.push('counts ' + sid + ': fact ' + i + ': lit is a number of things');
         if (f.who != null && !Array.isArray(f.who)) errs.push('counts ' + sid + ': fact ' + i + ': who is a list, left to right');
         if (f.retryPrompt === true && f.prompt == null) errs.push('counts ' + sid + ': fact ' + i + ': retryPrompt: true keeps a prompt it does not have');

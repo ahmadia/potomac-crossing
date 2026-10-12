@@ -1,9 +1,11 @@
-// The Case File's cards (app/art/cards.js; docs/build.md, "Chapter 4", Cards art): node --test tests/cards.test.js
+// The Case File's cards (app/art/cards.js; docs/build.md, "Chapter 4", Cards art, and "Chapter 5"):
+// node --test tests/cards.test.js
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const { ROOT, scripts, load } = require('./_load.js');
 const PC = load();
@@ -16,6 +18,20 @@ const CARDS = [
   ['fox-moon', 'ear'], ['squall-shapes', 'ear'], ['sprinkle-scales', 'eye'], ['cant-fly', 'eye']
 ];
 const IDS = CARDS.map((c) => c[0]);
+
+// Every card chapter 5 can give, from its text's notes ("The Case File"), in its order: ten, and
+// nine of them new (`squall-shapes` is chapter 4's own drawing, for a cat who goes up the tower
+// this chapter).
+const CARDS5 = [
+  ['prints-pile', 'eye'], ['squall-shapes', 'ear'], ['puddle-paws', 'ear'], ['otter-fox', 'ear'], ['fur', 'eye'],
+  ['heron-no-moon', 'ear'], ['heron-shapes', 'ear'], ['prints-marsh', 'eye'], ['prints-tracks', 'eye'], ['wisp-fox', 'ear']
+];
+const NEW5 = CARDS5.filter((c) => !IDS.includes(c[0]));
+const IDS5 = NEW5.map((c) => c[0]);
+// every drawing there is, with its card's mark
+const ALL = CARDS.concat(NEW5);
+const ALL_IDS = ALL.map((c) => c[0]);
+const MARK = Object.fromEntries(ALL);
 
 // ---------------------------------------------------------------- helpers
 
@@ -184,8 +200,9 @@ test('one drawing for every card chapter 4 defines: the nine in the text\'s tabl
     assert.equal(typeof p.draw, 'function', id + ' draws');
     assert.ok(typeof p.label === 'string' && p.label.length > 8, id + ' says what it is, for a reader who cannot see it');
   });
-  // and no drawing nobody asked for: each is one of the nine, or a later chapter's card uses it
-  const used = new Set(IDS);
+  // and no drawing nobody asked for: each is one of these nine or of chapter 5's nine (below), or
+  // a later chapter's card uses it
+  const used = new Set(ALL_IDS);
   Object.keys(PC.story || {}).forEach((ch) => {
     const defs = (PC.story[ch] && PC.story[ch].cards) || {};
     Object.keys(defs).forEach((id) => used.add(defs[id] && typeof defs[id].picture === 'string' && defs[id].picture ? defs[id].picture : id));
@@ -213,11 +230,20 @@ test('every card a chapter defines, once a story carries them, has a drawing and
   // chapter 4's are the nine of the text's table, with its marks
   const four = PC.story.ch04 && PC.story.ch04.cards;
   if (four) assert.deepEqual(Object.keys(four).sort().map((id) => [id, four[id].mark]), CARDS.slice().sort((a, b) => (a[0] < b[0] ? -1 : 1)), 'chapter 4 defines the nine');
+  // chapter 5's, once its frames are written, are the ten of its table: its own nine, each drawn
+  // under its own id, and chapter 4's `squall-shapes` (its own again, or left to chapter 4's)
+  const five = PC.story.ch05 && PC.story.ch05.cards;
+  if (five && Object.keys(five).length) {
+    const mine = Object.keys(five).filter((id) => id !== 'squall-shapes').sort();
+    assert.deepEqual(mine.map((id) => [id, five[id].mark]), NEW5.slice().sort((a, b) => (a[0] < b[0] ? -1 : 1)), 'chapter 5 defines the nine new ones, with the table\'s marks');
+    mine.forEach((id) => assert.ok(!five[id].picture || five[id].picture === id, 'chapter 5 card ' + id + ' is drawn under its own id'));
+    if (five['squall-shapes']) assert.equal(five['squall-shapes'].mark, 'ear');
+  }
 });
 
 test('every card, small and large, with either mark or none, is one well-formed svg in the same 200 x 240 box', () => {
   const seen = new Set();
-  IDS.forEach((id) => {
+  ALL_IDS.forEach((id) => {
     [undefined, 'eye', 'ear'].forEach((mark) => {
       [false, true].forEach((big) => {
         const label = id + ' ' + (mark || 'no mark') + (big ? ' big' : '');
@@ -233,7 +259,8 @@ test('every card, small and large, with either mark or none, is one well-formed 
       });
     });
   });
-  assert.equal(seen.size, IDS.length * 3 * 2, 'no two of them are the same drawing');
+  assert.equal(ALL_IDS.length, 18, 'chapter 4\'s nine and chapter 5\'s nine');
+  assert.equal(seen.size, ALL_IDS.length * 3 * 2, 'no two of them are the same drawing');
 });
 
 test('cardGroup is the same drawing without the outer svg, for a set that lays cards in a scene', () => {
@@ -255,7 +282,7 @@ test('a blank curl has nothing scratched on it, whatever else is passed, and eve
   assert.equal(art.card({}), blank);
   assert.equal(art.card(null), blank);
   assert.ok(/blank piece of bark/i.test(blank), 'and says so');
-  IDS.forEach((id) => {
+  ALL_IDS.forEach((id) => {
     assert.equal(group(art.card({ picture: id, mark: 'eye' }), 'pcc-bark'), group(blank, 'pcc-bark'), id + ' is scratched on the same curl');
   });
   const bigBlank = art.card({ blank: true, big: true });
@@ -346,7 +373,7 @@ test('the bark the cats hold and the bark the scenes lay down are this bark: the
 // ---------------------------------------------------------------- the pictures
 
 test('every picture is scratched lines and nothing else: nothing filled, round ends, one dark colour', () => {
-  IDS.forEach((id) => {
+  ALL_IDS.forEach((id) => {
     [false, true].forEach((big) => {
       const svg = art.card({ picture: id, mark: 'eye', big: big });
       ['pcc-pic', 'pcc-mark'].forEach((cls) => {
@@ -361,7 +388,7 @@ test('every picture is scratched lines and nothing else: nothing filled, round e
 });
 
 test('every picture keeps inside the bark, above the curl, and out of the mark\'s corner', () => {
-  IDS.forEach((id) => {
+  ALL_IDS.forEach((id) => {
     const pic = group(art.card({ picture: id, big: true }), 'pcc-pic');
     const pts = points(pic);
     assert.ok(pts.length > 6, id + ' has a drawing');
@@ -375,7 +402,7 @@ test('every picture keeps inside the bark, above the curl, and out of the mark\'
 
 test('small cards are drawn in heavier lines than large ones, and large ones add the lip of the scratch and the small touches', () => {
   const width = (g) => Number(/<g stroke="#3A281E" stroke-width="([\d.]+)"/.exec(g)[1]);
-  IDS.forEach((id) => {
+  ALL_IDS.forEach((id) => {
     const small = group(art.card({ picture: id }), 'pcc-pic'), big = group(art.card({ picture: id, big: true }), 'pcc-pic');
     assert.ok(width(small) >= 4 && width(small) <= 5, id + ': a small card reads in a row (' + width(small) + ' of 200)');
     assert.ok(width(big) >= 2 && width(big) <= 3, id + ': large, the lines are thin (' + width(big) + ' of 200)');
@@ -385,7 +412,8 @@ test('small cards are drawn in heavier lines than large ones, and large ones add
     const bp = points(big.slice(big.lastIndexOf('<g stroke="#3A281E"'))), sp = points(small);
     assert.ok(bp.length >= sp.length, id + ': nothing is lost large');
   });
-  ['fox-flew', 'fox-moon', 'cant-fly', 'tidy', 'four-a-night'].forEach((id) => {
+  ['fox-flew', 'fox-moon', 'cant-fly', 'tidy', 'four-a-night',
+    'prints-pile', 'puddle-paws', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'wisp-fox'].forEach((id) => {
     const small = group(art.card({ picture: id }), 'pcc-pic'), big = group(art.card({ picture: id, big: true }), 'pcc-pic');
     assert.ok(points(big.slice(big.lastIndexOf('<g stroke="#3A281E"'))).length > points(small).length, id + ': a small touch more, large');
   });
@@ -393,7 +421,7 @@ test('small cards are drawn in heavier lines than large ones, and large ones add
 
 test('her look changes nothing on a card', () => {
   const looks = [{ fur: 'black', marking: 'white-paws', eyes: 'green', sex: 'she' }, { fur: 'calico', marking: 'none', eyes: 'odd', sex: 'tom' }, {}, null];
-  IDS.concat([undefined]).forEach((id) => {
+  ALL_IDS.concat([undefined]).forEach((id) => {
     [false, true].forEach((big) => {
       const plain = art.card({ picture: id, mark: 'eye', big: big });
       looks.forEach((look) => assert.equal(art.card({ picture: id, mark: 'eye', big: big, look: look }), plain, String(id) + ' with a look'));
@@ -523,6 +551,503 @@ test('"freshly dug earth": a heap with crumbs, above and behind a row of mice', 
   assert.ok(crumbs.length >= 8, 'crumbly');
   const top = Math.min(...mice.map((b) => b.y0));
   crumbs.forEach((p) => assert.ok(p[1] < top, 'the earth is behind the row (above it on the bark)'));
+});
+
+// ---------------------------------------------------------------- chapter 4's cards, as chapter 4 shipped them
+
+test('chapter 4\'s nine cards, the blank curl, the two marks and the button are byte for byte what chapter 4 shipped', () => {
+  // the first twelve hex digits of the SHA-256 of each drawing's markup: [small, large], each card with
+  // its own mark. A change here is a change to a card a cat already holds: make it on purpose, and say so.
+  // (Chapter 5's nine are not listed yet: add them here, the same way, once chapter 5 is live.)
+  const SHIPPED = {
+    'four-a-night': ['fc1da48a297e', '19c8ef864f2a'], tidy: ['4fc7163d65d7', '5493205ca21d'], 'dug-earth': ['b37003d84269', 'e7f5243b929a'],
+    scale: ['569ea3564557', '58716d875e70'], 'fox-flew': ['810d99a4ee30', '6a2f4f89571c'], 'fox-moon': ['a9ab094f52aa', 'e5915254cb31'],
+    'squall-shapes': ['e18205cd4ef5', 'd61262de545c'], 'sprinkle-scales': ['643843d96cb3', '4a9fe66b4600'], 'cant-fly': ['d009a0f4a91a', '8fc93f1dd92f']
+  };
+  const sum = (s) => crypto.createHash('sha256').update(s).digest('hex').slice(0, 12);
+  assert.deepEqual(Object.keys(SHIPPED), IDS, 'the nine');
+  CARDS.forEach(([id, mark]) => {
+    assert.deepEqual([sum(art.card({ picture: id, mark: mark })), sum(art.card({ picture: id, mark: mark, big: true }))], SHIPPED[id], id + ' is the card chapter 4 gave her');
+  });
+  assert.deepEqual([sum(art.card({ blank: true })), sum(art.card({ blank: true, big: true }))], ['69ac05683f3c', '40e9377a3dd0'], 'the blank curl');
+  assert.deepEqual([sum(art.cardMark('eye')), sum(art.cardMark('ear'))], ['966d8d51ecf0', '6be968c46aa9'], 'the two marks by themselves');
+  assert.equal(sum(art.fileIcon()), '57c599728011', 'the Case File button');
+});
+
+// ---------------------------------------------------------------- chapter 5's pictures
+
+// The dark strokes of a card's picture, in the order they were scratched: [{ d, t, sw }] (sw: the
+// stroke's own width when it has one; large, the pale lip under the strokes is left out).
+function ink(id, big) {
+  const g = group(art.card({ picture: id, big: !!big }), 'pcc-pic');
+  assert.ok(g, id + ' has a picture');
+  const dark = g.slice(g.lastIndexOf('<g stroke="#3A281E"'));
+  return [...dark.matchAll(/<path d="([^"]+)"(?: transform="([^"]+)")?(?: stroke-width="([\d.]+)")?\/>/g)].map((m) => ({ d: m[1], t: m[2] || '', sw: m[3] ? Number(m[3]) : null }));
+}
+// A stroke's points where they lie on the card (its transform applied): `hull`, its ends and
+// control points; `along`, points on the line itself.
+function place(p, pts) {
+  const M = matrix(p.t);
+  return pts.map((q) => [M[0] * q[0] + M[2] * q[1] + M[4], M[1] * q[0] + M[3] * q[1] + M[5]]);
+}
+const hull = (p) => place(p, pathPoints(p.d));
+const along = (p) => place(p, curvePoints(p.d));
+function box(pts) {
+  const b = bounds(pts);
+  return { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, w: b.x1 - b.x0, h: b.y1 - b.y0, cx: (b.x0 + b.x1) / 2, cy: (b.y0 + b.y1) / 2 };
+}
+const subpaths = (d) => d.match(/M[^M]+/g) || [];
+const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+const NUM = '-?[\\d.]+';
+const PECKS = new RegExp('^(?:M' + NUM + ' ' + NUM + 'h\\.1)+$');
+const SHORTS = new RegExp('^(?:M' + NUM + ' ' + NUM + 'L' + NUM + ' ' + NUM + ')+$');
+const LEVELS = /^(?:M[\d.]+ [\d.]+H[\d.]+)+$/;
+const closed = (paths) => paths.reduce((n, p) => n + (p.d.match(/Z/g) || []).length, 0);
+// Strokes of one weight scratched one after another share a path: each line of it by itself.
+const pieces = (paths) => paths.flatMap((p) => subpaths(p.d).map((d) => ({ d: d, t: p.t, sw: p.sw })));
+const foxOf = (paths) => paths.filter((p) => /^translate\([\d.]+ [\d.]+\) scale\(1\)$/.test(p.t));
+const moved = (paths) => paths.filter((p) => /^translate\([\d.]+ [\d.]+\)$/.test(p.t));
+
+// The tiny prints on a card: one stroke of short pads, and after it the pecks, five to a pad. Each
+// print: where its pad is, its five toes, the way it walks (from the pad to the middle of its toes),
+// and how far it is across the toes. padWidth and toeWidth: how heavy the two are drawn.
+function printsOn(id, big) {
+  const paths = ink(id, big);
+  const base = Number(/<g stroke="#3A281E" stroke-width="([\d.]+)"/.exec(group(art.card({ picture: id, big: !!big }), 'pcc-pic'))[1]);
+  const at = paths.findIndex((p, i) => SHORTS.test(p.d) && paths[i + 1] && new RegExp('^(?:M' + NUM + ' ' + NUM + 'h\\.1){5}').test(paths[i + 1].d));
+  assert.ok(at >= 0, id + ' has prints on it');
+  const pads = subpaths(paths[at].d).map((s) => { const q = pathPoints(s); return [(q[0][0] + q[1][0]) / 2, (q[0][1] + q[1][1]) / 2]; });
+  const pecked = subpaths(paths[at + 1].d).slice(0, 5 * pads.length);
+  assert.ok(pecked.length === 5 * pads.length && pecked.every((s) => PECKS.test(s)), id + ': five toes to a pad');
+  const toes = pecked.map((s) => pathPoints(s)[0]);
+  const list = pads.map((pad, i) => {
+    const t = toes.slice(5 * i, 5 * i + 5);
+    const mid = [t.reduce((a, q) => a + q[0], 0) / 5, t.reduce((a, q) => a + q[1], 0) / 5], far = dist(pad, mid);
+    return { pad: pad, toes: t, way: [(mid[0] - pad[0]) / far, (mid[1] - pad[1]) / far], across: dist(t[0], t[4]) };
+  });
+  return { list: list, padWidth: paths[at].sw || base, toeWidth: paths[at + 1].sw || base, toes: pecked.join('') };
+}
+
+test('one drawing for every card chapter 5 can give: the ten in its text\'s table, nine of them new', () => {
+  // the text's own table (docs/chapters/05, "Every card this chapter can give"): id, mark, picture, line
+  const md = fs.readFileSync(path.join(ROOT, 'docs/chapters/05-riffles-river.md'), 'utf8');
+  const rows = md.split('\n').map((l) => /^\s*\|\s*`([a-z0-9-]+)`\s*\|\s*(eye|ear)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/.exec(l)).filter(Boolean);
+  assert.deepEqual(rows.map((m) => [m[1], m[2]]), CARDS5, 'this test\'s list is the text\'s list, in its order, with its marks');
+  assert.equal(IDS5.length, 9, 'nine new');
+  assert.ok(/chapter 4/.test(rows.find((m) => m[1] === 'squall-shapes')[3]), 'and Squall\'s is chapter 4\'s drawing');
+  // what each drawing says it is, for a reader who cannot see it, and the words of the table's
+  // picture that it keeps
+  const SAYS = {
+    'prints-pile': ['a small crumbly heap of earth with three tiny prints in it', ['small crumbly heap', 'three tiny prints in it']],
+    'puddle-paws': ['two little paws lifting a mouse off a heap of mice, under a zigzag of lightning', ['two little paws lifting a mouse off a heap', 'under a zigzag of lightning']],
+    'otter-fox': ['a fox’s head beside an otter’s ear', ['a fox’s head beside an otter’s ear']],
+    fur: ['a tuft of fur caught on a twist of vine', ['a tuft of fur caught on a twist of vine']],
+    'heron-no-moon': ['a heron’s head under a dark sky: clouds, and no moon', ['a heron’s head under a dark sky: clouds', 'no moon']],
+    'heron-shapes': ['a heron’s head, and under it two small low shapes, each with something in its mouth', ['a heron’s head, and under it two small low shapes, each with something in its mouth']],
+    'prints-marsh': ['a line of tiny prints, and her own paw held over one, twice its size', ['a line of tiny prints, and her own paw held over one, twice its size']],
+    'prints-tracks': ['a line of tiny prints running off to the two lines of a track', ['a line of tiny prints running off to', 'lines']],
+    'wisp-fox': ['a fox’s head, a small shining thing falling from its mouth, and a ring of ripples', ['a fox', 'falling from its mouth', 'a ring of ripples']]
+  };
+  assert.deepEqual(Object.keys(SAYS), IDS5);
+  IDS5.forEach((id) => {
+    const p = art.cardPictures[id], picture = rows.find((m) => m[1] === id)[3];
+    assert.ok(p && typeof p.draw === 'function', 'a drawing for ' + id);
+    assert.equal(p.label, SAYS[id][0], id + ' says what it is');
+    SAYS[id][1].forEach((words) => {
+      assert.ok(picture.includes(words), id + ': the text\'s picture has "' + words + '" (' + picture + ')');
+      assert.ok(p.label.includes(words), id + ': and so has the drawing\'s label');
+    });
+    assert.equal(art.card({ picture: id, mark: MARK[id] }).match(/aria-label="([^"]+)"/)[1], 'A piece of bark: ' + p.label + '; in its corner, ' + (MARK[id] === 'eye' ? 'an eye' : 'an ear'));
+  });
+  // nothing a card says gives away what nobody in the story has said yet
+  ALL_IDS.forEach((id) => assert.ok(!/weasel|stoat|tunnel|glass|thief|snip|snatch/i.test(art.cardPictures[id].label), id + ' names no culprit'));
+});
+
+test('a tiny print is a pad and five little toes close together, and it walks the way its toes point', () => {
+  ['prints-pile', 'prints-marsh', 'prints-tracks'].forEach((id) => {
+    const small = printsOn(id), large = printsOn(id, true);
+    assert.ok(small.list.length >= 3, id + ': a line of them');
+    assert.deepEqual(large.list.map((p) => p.pad), small.list.map((p) => p.pad), id + ': the same prints in the same places, small and large');
+    assert.deepEqual(large.list.map((p) => p.toes), small.list.map((p) => p.toes));
+    assert.ok(small.padWidth > small.toeWidth * 1.6 && large.padWidth > large.toeWidth * 1.6, id + ': the pad is the heavy part');
+    small.list.forEach((p, i) => {
+      const ahead = p.toes.map((t) => (t[0] - p.pad[0]) * p.way[0] + (t[1] - p.pad[1]) * p.way[1]);
+      const side = p.toes.map((t) => (t[0] - p.pad[0]) * -p.way[1] + (t[1] - p.pad[1]) * p.way[0]);
+      ahead.forEach((a) => assert.ok(a > 1, id + ' print ' + i + ': every toe is ahead of the pad'));
+      assert.ok(ahead[2] > ahead[1] && ahead[1] > ahead[0] && ahead[2] > ahead[3] && ahead[3] > ahead[4], id + ' print ' + i + ': the toes in an arc, the middle one furthest');
+      for (let k = 1; k < 5; k++) {
+        assert.ok(side[k] > side[k - 1], id + ' print ' + i + ': the toes in order across it');
+        assert.ok(dist(p.toes[k], p.toes[k - 1]) < 0.4 * p.across, id + ' print ' + i + ': close together');
+      }
+      assert.ok(Math.abs(side[0] + side[4]) < 0.3 && Math.abs(side[2]) < 0.3, id + ' print ' + i + ': even on both sides of the pad');
+      assert.ok(Math.max(...ahead) < p.across, id + ' print ' + i + ': a short, wide print');
+      // small, the toes run into one beaded line (nobody counts them): there is less bark between two
+      // than a toe is wide; large, each stands by itself
+      const step = Math.min(...p.toes.slice(1).map((t, k) => dist(t, p.toes[k])));
+      assert.ok(step - small.toeWidth < 0.62 * small.toeWidth, id + ' print ' + i + ': small, the toes run together (' + r1(step - small.toeWidth) + ' between, ' + small.toeWidth + ' wide)');
+      if (id !== 'prints-tracks') assert.ok(step - large.toeWidth > 0.62 * large.toeWidth, id + ' print ' + i + ': large, there is bark between them (' + r1(step - large.toeWidth) + ' between, ' + large.toeWidth + ' wide)');
+    });
+  });
+});
+
+test('the prints behind the pile and the prints at the marsh are sized one way ("half the size of yours", twice); from the top of the pole they are smaller', () => {
+  // (a print's points are set down to a tenth, so a turned one measures a hair differently)
+  const size = (id) => { const s = printsOn(id).list.map((p) => p.across); assert.ok(Math.max(...s) - Math.min(...s) < 0.3, id + ': every print on a card is one size'); return s[0]; };
+  assert.ok(Math.abs(size('prints-pile') - size('prints-marsh')) < 0.3, 'the two cards the file lays touching: ' + r1(size('prints-pile')) + ' and ' + r1(size('prints-marsh')));
+  assert.ok(size('prints-tracks') < size('prints-marsh') * 0.75, 'and smaller from up the pole');
+  assert.ok(size('prints-marsh') < 24, 'tiny: under an eighth of the bark across');
+});
+
+test('"Tiny prints in the dug earth": her dug-earth heap again, half as big again, three prints going up it, and no row of mice', () => {
+  const paths = ink('prints-pile'), heap = paths[0], was = ink('dug-earth').find((p) => /^M52 147C/.test(p.d));
+  assert.ok(was, 'chapter 4\'s heap');
+  assert.ok(!/Z/.test(heap.d), 'an open heap');
+  // the same outline: each point in the same place across and up its own box
+  const norm = (p) => { const q = hull(p), b = box(q); return q.map((v) => [(v[0] - b.x0) / b.w, (v[1] - b.y0) / b.h]); };
+  const a = norm(heap), b = norm(was);
+  assert.equal(a.length, b.length);
+  a.forEach((v, i) => assert.ok(Math.abs(v[0] - b[i][0]) < 0.004 && Math.abs(v[1] - b[i][1]) < 0.004, 'point ' + i + ' of the heap is the dug-earth heap\'s'));
+  assert.equal(r1(box(hull(heap)).w / box(hull(was)).w), 1.5, 'half as big again');
+  assert.equal(closed(paths), 0, 'and no mice on this one: nothing closed');
+  // three prints, walking one way, up and across the heap, every bit of them inside it
+  const prints = printsOn('prints-pile').list, line = along(heap), feet = box(line);
+  assert.equal(prints.length, 3, 'three prints');
+  const under = (x) => line.filter((q) => Math.abs(q[0] - x) < 6).reduce((y, q) => Math.min(y, q[1]), 1e9);   // the heap's outline over x
+  prints.forEach((p, i) => {
+    assert.ok(Math.abs(p.way[0] - prints[0].way[0]) < 0.01 && Math.abs(p.way[1] - prints[0].way[1]) < 0.01, 'all three walk one way');
+    assert.ok(p.way[0] > 0.5 && p.way[1] < -0.2, 'up the heap and across it');
+    p.toes.concat([p.pad]).forEach((q) => {
+      assert.ok(q[0] > feet.x0 + 20 && q[0] < feet.x1 - 20 && q[1] < feet.y1 - 6, 'print ' + i + ' is on the heap');
+      assert.ok(q[1] - under(q[0]) > 8, 'print ' + i + ' is inside its outline (' + r1(q[1] - under(q[0])) + ' under it)');
+    });
+    if (i) assert.ok(p.pad[0] > prints[i - 1].pad[0] + 18 && p.pad[1] < prints[i - 1].pad[1], 'print ' + i + ' is the next step up');
+  });
+  // crumbly: loose crumbs round it, none where it could be taken for a toe
+  const toes = printsOn('prints-pile').toes;
+  const crumbs = paths.filter((p) => PECKS.test(p.d) && p.d !== toes).flatMap((p) => subpaths(p.d).map((s) => pathPoints(s)[0]));
+  assert.ok(crumbs.length >= 6, 'crumbs');
+  crumbs.forEach((q) => {
+    assert.ok(q[1] < under(q[0]) - 4, 'a crumb lies outside the heap: ' + q);
+    prints.forEach((p) => assert.ok(dist(q, p.pad) > 20, 'and well clear of the prints'));
+  });
+  const pecks = (big) => ink('prints-pile', big).filter((p) => PECKS.test(p.d)).reduce((n, p) => n + subpaths(p.d).length, 0);
+  assert.equal(pecks(false), 15 + crumbs.length, 'fifteen toes and the crumbs');
+  assert.ok(pecks(true) > pecks(false), 'large, a few crumbs more');
+});
+
+test('"Much smaller than a cat\'s": a line of five tiny prints across the mud, and her own paw held to one, twice its size: a paw, never a print of hers', () => {
+  const paths = ink('prints-marsh'), found = printsOn('prints-marsh'), prints = found.list;
+  assert.equal(prints.length, 5, 'five prints');
+  prints.forEach((p) => assert.ok(p.way[0] > 0.99, 'all walking the same way, across the bark'));
+  const xs = prints.map((p) => p.pad[0]), ys = prints.map((p) => p.pad[1]);
+  const steps = xs.slice(1).map((x, i) => r1(x - xs[i]));
+  assert.equal(new Set(steps).size, 1, 'evenly spaced: ' + steps.join(', '));
+  assert.ok(xs[0] < 45 && xs[4] > 155, 'right across the bark');
+  assert.equal(new Set(ys.map(r1)).size, 2, 'left feet and right feet');
+  assert.ok(Math.max(...ys) - Math.min(...ys) <= 10 && ys[0] === ys[2] && ys[1] === ys[3], 'in one line, a step to each side');
+  // her paw: one open outline that comes up from the foot of the picture (her own leg, from the raft)
+  const legs = paths.filter((p) => /^M[\d.]+ 204C/.test(p.d) && / 204$/.test(p.d));
+  assert.equal(legs.length, 1, 'one paw');
+  const paw = legs[0], line = along(paw), pb = box(line);
+  assert.ok(!/Z/.test(paw.d), 'open at the foot of the picture: a leg, not a mark in the mud');
+  assert.ok(pb.h > 70, 'her leg comes all the way up from the raft');
+  // four toes: four rises along its top, with a line between each pair
+  const top = line.filter((q) => q[1] < pb.y0 + 16);
+  let rises = 0;
+  for (let i = 1; i < top.length - 1; i++) if (top[i][1] < top[i - 1][1] && top[i][1] <= top[i + 1][1]) rises++;
+  assert.equal(rises, 4, 'four toes');
+  const between = paths.find((p) => /^(?:M[\d.]+ [\d.]+V[\d.]+){3}$/.test(p.d));
+  assert.ok(between, 'and the three lines between them');
+  // held over one print: the middle one is right over her toes, and close
+  const mid = prints[2], low = Math.max(...mid.toes.concat([mid.pad]).map((q) => q[1]));
+  assert.ok(Math.abs(mid.pad[0] + 0.5 * (mid.toes[2][0] - mid.pad[0]) - pb.cx) < 4, 'the middle print is over the middle of her paw');
+  assert.ok(pb.y0 - low > 4 && pb.y0 - low < 18, 'just clear of her toes (' + r1(pb.y0 - low) + ')');
+  // twice its size, as they are drawn at the size of a paw: line to line
+  const pawWide = pb.w + 4.3, printWide = mid.across + found.toeWidth;
+  assert.ok(pawWide / printWide > 1.8 && pawWide / printWide < 2.3, 'her paw is twice as wide as a print (' + r1(pawWide / printWide) + ')');
+  // never a cat's print in ReedClan's mud: nothing pecked or padded inside her paw, and no print as big as it
+  prints.forEach((p) => p.toes.concat([p.pad]).forEach((q) => assert.ok(!(q[0] > pb.x0 - 2 && q[0] < pb.x1 + 2 && q[1] > pb.y0 - 2), 'no print under her paw')));
+  assert.equal(paths.filter((p) => PECKS.test(p.d)).length, 1, 'and the only pecks on the bark are the tiny prints\' toes');
+});
+
+test('"toward the train tracks": Squall\'s own track, and six tiny prints running straight at it where his card has the two shapes', () => {
+  const paths = ink('prints-tracks'), squall = ink('squall-shapes');
+  assert.deepEqual(paths.slice(0, 2), squall.slice(0, 2), 'the rails and the ties of Squall\'s card, in the same place at the same slant');
+  assert.deepEqual(ink('prints-tracks', true).slice(0, 2), ink('squall-shapes', true).slice(0, 2), 'large too');
+  assert.equal(paths.length, 4, 'and nothing else but the prints: no shapes, nobody');
+  const prints = printsOn('prints-tracks').list;
+  assert.equal(prints.length, 6, 'six prints');
+  // in the track's own frame the rails lie level at -8 and 8, and her side of them is below
+  const M = matrix(paths[0].t), det = M[0] * M[3] - M[1] * M[2];
+  const back = (q) => [(M[3] * (q[0] - M[4]) - M[2] * (q[1] - M[5])) / det, (M[0] * (q[1] - M[5]) - M[1] * (q[0] - M[4])) / det];
+  const own = prints.map((p) => ({ pad: back(p.pad), toes: p.toes.map(back) }));
+  own.forEach((p, i) => {
+    assert.ok(Math.abs(p.pad[0]) < 8, 'print ' + i + ' is in the line');
+    p.toes.forEach((t) => assert.ok(t[1] < p.pad[1], 'print ' + i + ' points at the track'));
+    assert.ok(Math.min(...p.toes.map((t) => t[1])) > 8 + 4, 'print ' + i + ' is on her side of the rails');
+    if (i) {
+      assert.equal(r1(p.pad[1] - own[i - 1].pad[1]), r1(own[1].pad[1] - own[0].pad[1]), 'even steps');
+      assert.ok(p.pad[0] * own[i - 1].pad[0] < 0, 'left foot, right foot');
+    }
+  });
+  assert.ok(Math.min(...own[0].toes.map((t) => t[1])) < 8 + 16, 'the first of them is nearly at the rail: they run off to it');
+  assert.ok(own[5].pad[1] > 100, 'and the line is a long one');
+  // where Squall's two shapes are, on his card: the two cards touch in the file ("Both lead toward the tracks.")
+  const shapes = box(squall.slice(2).flatMap((p) => along(p))), trail = box(prints.flatMap((p) => p.toes.concat([p.pad])));
+  assert.ok(trail.cx > shapes.x0 && trail.cx < shapes.x1 && trail.cy > shapes.y0 && trail.cy < shapes.y1, 'the prints lie where the shapes went');
+});
+
+test('"clever little paws": two paws and nothing of whose, lifting the top mouse off a heap of five, under one zigzag of lightning', () => {
+  const paths = ink('puddle-paws'), all = paths.map((p) => p.d).join(' ');
+  // six mice: a heap of three and two, and the one that was on top, held up over it
+  const mice = (all.match(/M[\d.]+ [\d.]+C[^MZ]+Z/g) || []).map((m) => box(curvePoints(m)));
+  assert.equal(mice.length, 6, 'six mice');
+  assert.equal(closed(paths), 6, 'and nothing else closed');
+  const rows = [...new Set(mice.map((m) => r1(m.y1)))].sort((a, b) => b - a).map((y) => mice.filter((m) => r1(m.y1) === y));
+  assert.deepEqual(rows.map((r) => r.length), [3, 2, 1], 'three, two on them, and one in the air');
+  const heap = box(rows[0].concat(rows[1]).flatMap((m) => [[m.x0, m.y0], [m.x1, m.y1]])), up = rows[2][0];
+  assert.ok(Math.abs(up.cx - heap.cx) < 3, 'the lifted one is right over the heap');
+  assert.ok(heap.y0 - up.y1 > 12, 'and clear of it (' + r1(heap.y0 - up.y1) + ')');
+  assert.ok(up.w > rows[0][0].w, 'it is the one to look at: drawn a little bigger');
+  // two paws: open outlines, one each side of that mouse, at its height, round ends toward it
+  const bits = pieces(paths);
+  const paws = bits.filter((p) => new RegExp('^M' + NUM + ' ' + NUM + 'L' + NUM + ' ' + NUM + 'C[-\\d. ]+C[-\\d. ]+L' + NUM + ' ' + NUM + '$').test(p.d));
+  assert.equal(paws.length, 2, 'two paws');
+  const pb = paws.map((p) => box(along(p))).sort((a, b) => a.cx - b.cx);
+  assert.ok(pb[0].x1 < up.cx && pb[1].x0 > up.cx, 'one on each side of the mouse');
+  pb.forEach((b) => {
+    assert.ok(b.y0 < up.y1 && b.y1 > up.y0 - 12, 'at its height');
+    assert.ok(Math.max(b.w, b.h) < 40 && Math.min(b.w, b.h) < up.w, 'little paws: smaller than the mouse they lift');
+  });
+  assert.ok(Math.abs((up.cx - pb[0].cx) - (pb[1].cx - up.cx)) < 3, 'a matching pair');
+  assert.ok(up.x0 - pb[0].x1 < 4 && pb[1].x0 - up.x1 < 4, 'holding it');
+  // nothing of whose: each paw ends in a bare wrist (the two ends of its outline), and nothing joins it there
+  paws.forEach((p, i) => {
+    const q = hull(p), wrist = [q[0], q[q.length - 1]];
+    assert.ok(dist(wrist[0], wrist[1]) > 8 && dist(wrist[0], wrist[1]) < 20, 'paw ' + i + ' has a wrist');
+    bits.filter((o) => o !== p).forEach((o) => along(o).forEach((v) => wrist.forEach((w) => assert.ok(dist(v, w) > 8, 'nothing is joined to paw ' + i + ': no leg, no body'))));
+    const far = wrist.map((w) => Math.abs(w[0] - up.cx));
+    assert.ok(Math.min(...far) > Math.abs(box(along(p)).cx - up.cx), 'paw ' + i + ' reaches in toward the mouse from outside');
+  });
+  // the storm night: one zigzag, down the bark from its top
+  const bolts = bits.filter((p) => /^M[\d.]+ [\d.]+L[\d.]+ [\d.]+H[\d.]+L[\d.]+ [\d.]+$/.test(p.d));
+  assert.equal(bolts.length, 1, 'one zigzag');
+  const z = pathPoints(bolts[0].d);
+  assert.ok(z[0][1] < 66 && z[3][1] > z[0][1] + 60, 'from the top of the bark, a long way down');
+  assert.ok(z[1][0] < z[0][0] && z[2][0] > z[1][0] && z[3][0] < z[2][0] && z[1][1] === z[2][1], 'left, right, left');
+  assert.ok(z[3][1] < heap.y0, 'over the heap');
+  assert.ok(Math.min(...z.map((q) => q[0])) > pb[1].x1, 'and clear of the paws');
+  assert.ok(bolts[0].sw === null, 'in the heaviest line on the bark: FLASH');
+});
+
+test('every fox on a card is the one fox: the same head, side on, on the two chapter 4 gave her and the two she gets today', () => {
+  ['fox-moon', 'otter-fox', 'wisp-fox'].forEach((id) => {
+    [false, true].forEach((big) => {
+      const strip = (list) => list.map((p) => [p.d, p.sw]);
+      assert.deepEqual(strip(foxOf(ink(id, big))), strip(foxOf(ink('fox-flew', big))), id + (big ? ', large' : '') + ': the fox of "the fox says it FLEW"');
+    });
+    assert.ok(foxOf(ink(id)).length >= 2);
+    assert.equal(new Set(foxOf(ink(id)).map((p) => p.t)).size, 1, id + ': one fox, in one place');
+  });
+});
+
+test('"the fox told him": the fox\'s nose at the old otter\'s ear, and the otter looking the other way', () => {
+  const paths = ink('otter-fox'), fox = foxOf(paths), otter = moved(paths);
+  assert.equal(fox.length + otter.length, paths.length, 'a fox and an otter, and nothing else');
+  assert.equal(new Set(otter.map((p) => p.t)).size, 1, 'one otter');
+  const nose = hull(fox.find((p) => PECKS.test(p.d)))[0];
+  const lines = pieces(otter), head = box(along(lines[0])), ear = box(along(lines[1]));
+  assert.ok(!/Z/.test(lines[0].d) && head.h > 55 && head.w > 55, 'his head and his thick neck, open at the foot');
+  // a small round ear, on the back of his head, and it is the nearest thing to the fox's nose
+  assert.ok(ear.w > 12 && ear.w < 30 && Math.abs(ear.w - ear.h) < 6, 'a small round ear: ' + r1(ear.w) + ' by ' + r1(ear.h));
+  assert.ok(ear.x0 <= head.x0 + 2 && ear.cx < head.cx - 18, 'on the back of his head');
+  assert.ok(nose[1] > ear.y0 && nose[1] < ear.y1, 'the fox\'s nose is level with it');
+  assert.ok(ear.x0 - nose[0] > 8 && ear.x0 - nose[0] < 24, 'and close to it (' + r1(ear.x0 - nose[0]) + ')');
+  otter.forEach((p) => along(p).forEach((q) => assert.ok(dist(q, nose) >= dist([ear.x0, nose[1]], nose) - 1, 'nothing of the otter is nearer the fox than his ear')));
+  // the otter faces away: his own nose and his whiskers are at the far side
+  const pecks = otter.filter((p) => PECKS.test(p.d)).sort((a, b) => b.sw - a.sw).map((p) => hull(p)[0]);
+  assert.equal(pecks.length, 2, 'a nose and an eye');
+  assert.ok(pecks[0][0] > ear.x1 + 30 && pecks[1][0] > ear.x1 + 15, 'his face is turned away from the fox');
+  const whiskers = otter.find((p) => /^(?:M[\d.]+ [\d.]+Q[\d. ]+){3}$/.test(p.d));
+  assert.ok(whiskers && box(along(whiskers)).x1 > pecks[0][0] + 3, 'long whiskers, past his nose');
+  // the fox is the taller of the two, leaning to him
+  assert.ok(box(fox.flatMap((p) => along(p))).y0 < head.y0, 'the fox\'s ears stand over the otter');
+  // large, he is told something: two small curves between the nose and the ear
+  const told = ink('otter-fox', true).filter((p) => !p.t && /^(?:M[\d.]+ [\d.]+Q[\d. ]+){2}$/.test(p.d));
+  assert.equal(told.length, 1);
+  along(told[0]).forEach((q) => assert.ok(q[0] > nose[0] + 3 && q[0] < ear.x0 + 1, 'between the two of them'));
+});
+
+test('"Thin brown fur": one vine with a twist in it and two leaves, and a tuft of thin hairs caught in the twist', () => {
+  const paths = ink('fur'), vine = paths[0], line = along(vine), vb = box(line);
+  assert.ok(vine.sw === null && !/Z/.test(vine.d), 'the vine: one open line, the heaviest');
+  assert.ok(vb.w >= 140, 'right across the bark');
+  // a twist: the line turns back on itself and crosses over
+  const backs = line.filter((q, i) => i && q[0] < line[i - 1][0]);
+  assert.ok(backs.length >= 3, 'the vine turns back on itself');
+  const twist = box(backs);
+  assert.ok(twist.w < 30 && twist.cx > vb.x0 + 50 && twist.cx < vb.x1 - 50, 'one small twist, in the middle');
+  // two leaves, each growing from the vine
+  const leaves = paths.filter((p) => /Z/.test(p.d)).flatMap((p) => subpaths(p.d));
+  assert.equal(leaves.length, 2, 'two leaves');
+  leaves.forEach((l) => {
+    const pts = curvePoints(l);
+    assert.ok(Math.min(...pts.map((q) => Math.min(...line.map((v) => dist(q, v))))) < 4, 'a leaf grows from the vine');
+    assert.ok(Math.min(...pts.map((q) => dist(q, [twist.cx, twist.cy]))) > 25, 'away from the twist');
+  });
+  // the tuft: thin hairs, all caught at one place in the twist, hanging and spreading
+  const hairsOf = (list) => list.filter((p) => p.sw !== null && /^(?:M[\d.]+ [\d.]+C[\d. ]+)+$/.test(p.d) && !/Z/.test(p.d)).flatMap((p) => subpaths(p.d).map((s) => ({ pts: curvePoints(s), sw: p.sw })));
+  const hairs = hairsOf(paths);
+  assert.ok(hairs.length >= 7, 'a tuft of hairs (' + hairs.length + ')');
+  hairs.forEach((h) => assert.ok(h.sw < 4.3 * 0.75, 'thin fur'));
+  const roots = box(hairs.map((h) => h.pts[0])), tips = box(hairs.map((h) => h.pts[h.pts.length - 1]));
+  assert.ok(roots.w < 9 && roots.h < 6, 'caught at one place');
+  assert.ok(roots.cx > twist.x0 - 2 && roots.cx < twist.x1 + 2 && roots.cy > twist.y0 && roots.cy < twist.y1 + 2, 'in the twist');
+  hairs.forEach((h) => assert.ok(h.pts[h.pts.length - 1][1] > h.pts[0][1] + 18, 'every hair hangs'));
+  assert.ok(tips.w > 40, 'and the tuft spreads (' + r1(tips.w) + ')');
+  assert.ok(new Set(hairs.map((h) => r1(dist(h.pts[0], h.pts[h.pts.length - 1])))).size >= 5, 'ragged: no two hairs much the same');
+  assert.ok(hairsOf(ink('fur', true)).length >= hairs.length + 4, 'large, more hairs in it');
+});
+
+test('Patience\'s two cards share one heron, side on: a long bill, one round eye, and the stripe that runs back into a plume', () => {
+  const sky = moved(ink('heron-no-moon')), mud = moved(ink('heron-shapes'));
+  const strip = (list) => list.map((p) => [p.d, p.sw]);
+  assert.deepEqual(strip(sky), strip(mud), 'the same heron on both');
+  assert.deepEqual(strip(moved(ink('heron-no-moon', true))), strip(moved(ink('heron-shapes', true))), 'large too');
+  assert.notEqual(sky[0].t, mud[0].t, 'low under the sky on one, high over the shapes on the other');
+  assert.ok(matrix(sky[0].t)[5] > matrix(mud[0].t)[5] + 40);
+  assert.ok(moved(ink('heron-no-moon', true)).length > sky.length, 'large: her shut bill, a second plume');
+  // in her own box: the head, then the bill out to a point at the right
+  const own = pieces(sky).map((p) => ({ d: p.d, sw: p.sw, pts: curvePoints(p.d) }));
+  const head = own[0], hb = box(head.pts), tip = head.pts.reduce((a, q) => (q[0] > a[0] ? q : a));
+  assert.ok(/L[\d.]+ [\d.]+L[\d.]+ [\d.]+/.test(head.d), 'two straight edges meet at the tip of her bill');
+  const eyes = own.filter((p) => PECKS.test(p.d));
+  assert.equal(eyes.length, 1, 'one eye, to the viewer');
+  const eye = eyes[0].pts[0];
+  assert.ok(tip[0] - eye[0] > 55, 'a long bill (' + r1(tip[0] - eye[0]) + ' from her eye)');
+  assert.ok(Math.abs(tip[1] - eye[1]) < 10, 'held level');
+  assert.ok(hb.w > 2.2 * (eye[0] - hb.x0), 'most of her head is bill');
+  // the neck goes down and back from the head, two lines, and stops: a head and no more
+  const neck = own[1], nb = box(neck.pts);
+  assert.ok(nb.y1 > eye[1] + 40 && nb.x0 < eye[0] - 30, 'her neck curves down and back');
+  assert.ok(!own.some((p) => /Z/.test(p.d)), 'nothing closed: no body');
+  // the stripe starts over her eye and runs back past her head as a plume
+  const stripe = own.find((p) => p !== head && p !== neck && !PECKS.test(p.d));
+  assert.ok(dist(stripe.pts[0], eye) < 9 && stripe.pts[0][1] < eye[1], 'the stripe starts just over her eye');
+  const end = stripe.pts[stripe.pts.length - 1];
+  assert.ok(end[0] < Math.min(...head.pts.map((q) => q[0])) - 15 && end[1] > eye[1] + 10, 'and trails off behind her head');
+  assert.ok(box(own.flatMap((p) => p.pts)).w >= 110, 'she is as wide as the bark allows');
+});
+
+test('"NO moon": clouds where the fox\'s card has its moon, a sky scratched dark, nothing round in it and nothing coming down', () => {
+  [false, true].forEach((big) => {
+    const paths = ink('heron-no-moon', big), heron = moved(paths), sky = paths.filter((p) => !heron.includes(p));
+    const clouds = sky.filter((p) => /Z/.test(p.d)), dark = sky.filter((p) => !clouds.includes(p));
+    // clouds: closed, flat-footed, scalloped on top
+    const each = clouds.flatMap((p) => subpaths(p.d));
+    assert.equal(each.length, 2, 'two clouds');
+    const boxes = each.map((d) => box(curvePoints(d)));
+    each.forEach((d, i) => {
+      const pts = pathPoints(d);
+      assert.equal(pts[0][1], pts[pts.length - 1][1], 'a flat foot');
+      assert.equal(r1(boxes[i].y1), pts[0][1], 'and nothing of the cloud below it');
+      assert.equal((d.match(/C/g) || []).length, 4, 'four soft bumps');
+      assert.ok(boxes[i].w > 2 * boxes[i].h, 'wide and low');
+    });
+    // everything else in the sky is a level scratch: dark, and not rain
+    assert.ok(dark.length >= 1 && dark.every((p) => LEVELS.test(p.d)), 'nothing in the sky but clouds and level scratches: no rain lines');
+    const lines = dark.flatMap((p) => subpaths(p.d).map((d) => pathPoints(d)));
+    assert.ok(lines.length >= 5, 'scratched dark (' + lines.length + ' lines)');
+    assert.ok(lines.reduce((n, l) => n + l[1][0] - l[0][0], 0) > 300, 'most of the way across, over and over');
+    lines.forEach((l) => each.forEach((d) => curvePoints(d).forEach((q) => {
+      assert.ok(!(q[0] > l[0][0] - 3 && q[0] < l[1][0] + 3 && Math.abs(q[1] - l[0][1]) < 3), 'the dark stops at a cloud: the clouds are pale');
+    })));
+    // no moon: nothing round, nothing closed but the clouds, and a cloud lies where the fox's moon is
+    paths.forEach((p) => assert.ok(!/[aA]/.test(p.d), 'no arc anywhere: nothing round'));
+    assert.equal(closed(paths), 2, 'nothing closed but the two clouds');
+    const moon = /<path d="M(\d+) (\d+)a(\d+) \3 0 1 0 (\d+) 0/.exec(group(art.card({ picture: 'fox-moon' }), 'pcc-pic'));
+    const centre = [Number(moon[1]) + Number(moon[3]), Number(moon[2])];
+    assert.deepEqual(centre, [140, 94], 'the fox\'s moon');
+    assert.ok(boxes.some((b) => centre[0] > b.x0 + 8 && centre[0] < b.x1 - 8 && centre[1] > b.y0 && centre[1] < b.y1), 'a cloud is where the fox\'s card has its moon');
+    // and all of it over her head
+    const top = box(heron.flatMap((p) => along(p))).y0;
+    sky.forEach((p) => hull(p).forEach((q) => assert.ok(q[1] < top - 4, 'the sky is over her head')));
+    assert.ok(box(sky.flatMap((p) => hull(p))).w > 140, 'right across the bark');
+  });
+});
+
+test('"two small shapes": under the heron, two long low outlines, each with one small thing at its front end, on her mud; Squall\'s kind of shape, and smaller', () => {
+  const paths = ink('heron-shapes'), heron = moved(paths), rest = paths.filter((p) => !heron.includes(p));
+  const shapes = rest.filter((p) => /rotate\(90\)$/.test(p.t));
+  assert.equal(shapes.length, 2, 'two shapes');
+  assert.equal(shapes[0].d, shapes[1].d, 'the same outline twice');
+  assert.equal(closed(shapes), 2);
+  const sb = shapes.map((p) => box(along(p)));
+  sb.forEach((b) => assert.ok(b.w > 3 * b.h && b.h < 16, 'long and low: ' + r1(b.w) + ' by ' + r1(b.h)));
+  // Squall's shapes are the same kind of outline (nothing with ears, tails or feet), and these are the smaller
+  const his = ink('squall-shapes').find((p) => (p.d.match(/Z/g) || []).length === 2), one = subpaths(his.d).filter((d) => /Z/.test(d))[0];
+  const hb = box(curvePoints(one));
+  assert.equal((shapes[0].d.match(/C/g) || []).length, (one.match(/C/g) || []).length, 'drawn the way Squall\'s are');
+  sb.forEach((b) => assert.ok(b.w < hb.h - 8, 'small shapes: shorter than his (' + r1(b.w) + ' to ' + r1(hb.h) + ')'));
+  // each carries something: one small closed thing at its front end, level with it
+  const things = rest.filter((p) => !p.t && /Z/.test(p.d)).flatMap((p) => subpaths(p.d)).map((d) => box(curvePoints(d)));
+  assert.equal(things.length, 2, 'two somethings');
+  assert.equal(closed(paths), 4, 'and nothing else closed: two shapes, two somethings');
+  sb.forEach((b, i) => {
+    const mine = things.filter((t) => Math.abs(t.cy - b.cy) < 3 && t.x0 > b.x1 - 3 && t.x0 < b.x1 + 4);
+    assert.equal(mine.length, 1, 'shape ' + i + ' has one thing at its front end');
+    assert.ok(mine[0].w < 14 && mine[0].h < 14 && mine[0].w < b.w / 3, 'a small thing');
+  });
+  // both going the same way, one after the other, not side by side (each carries its own)
+  assert.ok(Math.abs(sb[0].cy - sb[1].cy) > 20 && Math.abs(sb[0].cx - sb[1].cx) > 30, 'one behind the other');
+  // her mud: a level line under each
+  const mud = rest.filter((p) => LEVELS.test(p.d)).flatMap((p) => subpaths(p.d).map((d) => pathPoints(d)));
+  assert.equal(mud.length, 2, 'two lines of mud');
+  sb.forEach((b, i) => assert.equal(mud.filter((l) => l[0][1] > b.y1 && l[0][1] < b.y1 + 12 && l[0][0] < b.x0 && l[1][0] > b.x1).length, 1, 'shape ' + i + ' is on the mud'));
+  assert.equal(rest.length, 2 + 1 + 1, 'and that is all: the shapes, the somethings, the mud');
+  // under the heron
+  const low = box(heron.flatMap((p) => along(p))).y1;
+  sb.concat(things).forEach((b) => assert.ok(b.y0 > low + 4, 'under her head'));
+});
+
+test('"Wisp drew a fox": the fox, a small "scale" with shine lines under his nose, and a ring of ripples under that', () => {
+  const paths = ink('wisp-fox'), fox = foxOf(paths), rest = paths.filter((p) => !fox.includes(p));
+  const nose = hull(fox.find((p) => PECKS.test(p.d)))[0], fb = box(fox.flatMap((p) => along(p)));
+  // the small thing: the outline of her "scale" card, a third of the size
+  const bits = pieces(rest), thing = bits.find((p) => /Z/.test(p.d) && !/a/.test(p.d)), tb = box(along(thing));
+  const scale = ink('scale')[0], cb = box(along(scale));
+  assert.equal((thing.d.match(/[A-Z]/g) || []).join(''), (scale.d.match(/[A-Z]/g) || []).join(''), 'drawn stroke for stroke as the scale is');
+  assert.ok(Math.abs(tb.w / tb.h - cb.w / cb.h) < 0.02, 'the same shape');
+  assert.ok(tb.w / cb.w > 0.25 && tb.w / cb.w < 0.36, 'small (' + r1(tb.w) + ' across to the scale\'s ' + r1(cb.w) + ')');
+  assert.ok(thing.sw === null, 'in a full line: it is the thing to see');
+  // falling from his mouth: under his nose, below his chin
+  assert.ok(Math.abs(tb.cx - nose[0]) < 12, 'under his nose');
+  assert.ok(tb.y0 > nose[1] + 12 && tb.y0 > fb.y1 - 6, 'below his head');
+  // with shine lines: short rays, each pointing away from it
+  const rays = bits.filter((p) => SHORTS.test(p.d)).map((p) => pathPoints(p.d));
+  assert.ok(rays.length >= 4, 'shine lines');
+  rays.forEach((r) => {
+    const near = dist(r[0], [tb.cx, tb.cy]), far = dist(r[1], [tb.cx, tb.cy]);
+    assert.ok(far > near + 6 && near > tb.w / 2 && near < tb.w * 1.3, 'a ray stands off it and points away');
+  });
+  assert.ok(rays.some((r) => r[0][0] < tb.cx) && rays.some((r) => r[0][0] > tb.cx), 'on both sides');
+  // a ring of ripples: flat ovals about one middle, under the thing, the lowest things on the bark
+  const rings = bits.map((p) => new RegExp('^M(' + NUM + ') (' + NUM + ')a(' + NUM + ') (' + NUM + ') 0 1 0 ' + NUM + ' 0a\\3 \\4 0 1 0 ' + NUM + ' 0Z$').exec(p.d)).filter(Boolean)
+    .map((m) => ({ cx: Number(m[1]) + Number(m[3]), cy: Number(m[2]), rx: Number(m[3]), ry: Number(m[4]) }));
+  assert.equal(rings.length, 2, 'two rings');
+  rings.forEach((r) => {
+    assert.ok(r.ry < r.rx / 3, 'flat: seen from the bank');
+    assert.equal(r.cx, rings[0].cx);
+    assert.equal(r.cy, rings[0].cy);
+    assert.ok(Math.abs(r.cx - tb.cx) < 6, 'under the thing');
+    assert.ok(r.cy - r.ry > tb.y1 + 6, 'well below it: it has not landed');
+  });
+  assert.ok(rings[0].rx > 2 * rings[1].rx || rings[1].rx > 2 * rings[0].rx, 'one inside the other');
+  assert.ok(Math.max(...rings.map((r) => r.rx)) * 2 > fb.w, 'spreading wider than the fox\'s head');
+  assert.equal(bits.length, 1 + rays.length + 2, 'and that is all she drew: the thing, its shine, two rings');
+  // top to bottom: the fox, the thing, the ripples
+  assert.ok(fb.cy < tb.cy && tb.cy < rings[0].cy);
+  assert.equal(closed(rest), 3, 'no reeds, nobody else');
 });
 
 // ---------------------------------------------------------------- pictures nobody has drawn, and new ones

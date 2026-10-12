@@ -15,16 +15,28 @@
  *   node tools/shots.mjs OUTDIR file file#cant-fly        her Case File open over the page she is on (CAT's `at`), or
  *                                                         one of its cards shown large (chapter 4 on)
  *   node tools/shots.mjs OUTDIR ch04:f052@tap@tap         open a frame, then tap its tap picture (a skip-count, a row
- *                                                         of bark, the glint), once for each @tap
+ *                                                         of bark, the glint; chapter 5: a one-tap frame's nose or
+ *                                                         tuft of fur, the page of questions), once for each @tap
  *   node tools/shots.mjs --lock                           is the screen locked (so: a session a shot)? no Safari
  *   node tools/shots.mjs --blank a.png b.png              is each PNG a blank screenshot (one flat colour)? no Safari
+ *   node tools/shots.mjs --page                           the game's page as this tool serves it to Safari (the
+ *                                                         silencing script first in its head); no Safari
+ *   READ=1 node tools/shots.mjs OUTDIR hub ch05:f010      "Read to me" switched on in the page (its button pressed, the
+ *                                                         waits a page keeps for a line being read): it still says
+ *                                                         nothing (below); with DRY=1 each target also prints what
+ *                                                         would have been read
+ *   DRY=1 node tools/shots.mjs OUTDIR ch05:f053           no screenshots: each target's words as the page shows
+ *                                                         them, and the lines Read to me would say there, in order
+ *                                                         (PC.debug.speech: the page's own list; Read to me stays
+ *                                                         off and nothing is said)
  *   SIZE=820x1180 node tools/shots.mjs …                  iPad portrait (default 1180x820, landscape)
  *   CAT='{"name":"Moon","finished":["ch01","ch02"],"at":"ch02:f090",…}' node tools/shots.mjs …
  *   EXTRA=2 node tools/shots.mjs OUTDIR who               two more cats on the device (one partway, one new)
  *   STORY=fixture node tools/shots.mjs …                  chapter 2 replaced by tests/fixtures/chapters.js's (in
  *                                                         the page only), to see chapter-2 screens before it is written;
  *                                                         STORY=fixture3 does the same for chapter 3 (both: fixture,fixture3),
- *                                                         STORY=fixture4 for chapter 4
+ *                                                         STORY=fixture4 for chapter 4, STORY=fixture5 for chapter 5
+ *                                                         (several: STORY=fixture4,fixture5)
  *   DUMP=1 node tools/shots.mjs OUTDIR …                  no screenshots: each target's screen markup with the art
  *                                                         emptied (OUTDIR/target.html), to diff ui.js's lettering and
  *                                                         layout before and after a change
@@ -33,6 +45,26 @@
  *                                                         targets make more sheets. The panes are fitted to the
  *                                                         page as measured (a scroll bar or page zoom included),
  *                                                         so the right-hand column is never cut off
+ *
+ * SILENT BY CONSTRUCTION. The Mac this runs on makes no sound (Aron's rule: the mini once read a
+ * chapter aloud to an empty room). Nothing this tool opens can speak or play anything, whatever the
+ * page, the save or the caller does:
+ *   - Every HTML page it serves has SILENT put first in its <head>, so it runs before any script of
+ *     the game: `window.speechSynthesis` becomes a stand-in whose speak() says nothing (it notes the
+ *     words in `window.__shotsSaid` and ends the utterance at once, so a page that waits for a line to
+ *     be read goes on), the real synthesizer's own speak/cancel/pause/resume are emptied too (on the
+ *     object and on its prototype, so it is mute by whatever name a page reaches it),
+ *     `SpeechSynthesisUtterance` is a plain object, a media element never plays, and there is no
+ *     audio context to make. The panes of a SHEET are the same served page, so they are silent too.
+ *   - "Read to me" stays off: the test cat's device is new (settings as E.newSave gives them), the
+ *     tool checks the page after setting it up (QUIET: silenced before it booted, the setting off,
+ *     else the run stops), and a target that would tap the button (`@readBtn`) is refused before
+ *     Safari is started. READ=1 is the one opt-in: it switches the setting on, for a look at the
+ *     pressed button or the page's reading waits, and the stand-in above still says nothing.
+ *   - The tool itself runs nothing that sounds (no `say`, no `afplay`, no bell) and never touches the
+ *     system volume. What Read to me would say is checked in Node, with the engine, or read off the
+ *     page with DRY=1 (the list the page keeps for it, with Read to me off).
+ * tests/tools.test.js holds it to this: the served page, the stand-in, the refusal, the check.
  *
  * A locked screen (the mini's stays locked, by Aron's choice: never ask to unlock it): Safari's
  * automation window is then hidden (document.visibilityState "hidden") and paints only for the
@@ -63,8 +95,9 @@
  * `lesson` is a lesson in progress, `{ chapter, frame, answers }`: the frame's Count started and these
  * answers given, so a shot of that frame opens on the next question (with `at` on the same frame:
  * CAT='{"at":"ch02:f028","lesson":{"chapter":"ch02","frame":"f028","answers":[20]}}' shows 8 × 2).
- * `cards` lists the Case File cards she holds, in order (chapter 4's ids), and the flags `caseFileOpen`
- * (her Case File's button is in the top bar), `foundSquall` and `ch4CaughtFly` go in `flags`.
+ * `cards` lists the Case File cards she holds, in order (any chapter's ids), and the flags `caseFileOpen`
+ * (her Case File's button is in the top bar), `foundSquall` and `ch4CaughtFly` go in `flags`, as do
+ * chapter 5's (`ch5First`, `ch5Roof`, `foundPuddle`, `foundWisp`).
  * It lives in this localhost origin's storage only (the server's port), never in a real player's
  * save. The service worker is not registered on localhost.
  */
@@ -96,13 +129,20 @@ const CAT = Object.assign({
 }, process.env.CAT ? JSON.parse(process.env.CAT) : {});
 const EXTRA = Math.max(0, Math.min(3, +(process.env.EXTRA || 0)));
 const SHEET = !!process.env.SHEET;
+// READ=1: "Read to me" on in the page (it still says nothing: SILENT). Without it the setting stays
+// off, and a target that would tap its button is refused here, before a server or Safari is started.
+const READ = process.env.READ === '1';
+if (!READ && !/^--/.test(argv[0]) && targets.some(t => t.split('@').slice(1).includes('readBtn'))) {
+  console.error('@readBtn: Read to me stays off in this tool (it runs on a Mac that makes no sound). READ=1 switches it on in the page, and the page still says nothing.');
+  process.exit(1);
+}
 // the screen's lock, from the window server (LOCKED=1 / LOCKED=0 to say so yourself)
 function screenLocked() {
   try { return /"CGSSessionScreenIsLocked"=Yes/.test(execFileSync('ioreg', ['-n', 'Root', '-d1'], { encoding: 'utf8' })); } catch { return false; }
 }
 const LOCKED = process.env.LOCKED != null && process.env.LOCKED !== '' ? process.env.LOCKED === '1' : screenLocked();
 
-const DRY = !!process.env.DRY;   // no screenshots: print what each target's screen says (free to run, nothing to look at)
+const DRY = !!process.env.DRY;   // no screenshots: print what each target's screen says, and what Read to me would say there (free to run, nothing to look at, nothing said)
 // DUMP=1: no screenshots: save each target's screen markup with the art emptied (OUTDIR/target.html),
 // to compare the lettering and layout ui.js draws before and after a change (cmp or diff the files)
 const DUMP = !!process.env.DUMP;
@@ -118,12 +158,12 @@ const DUMP_JS = `var s = document.getElementById('screen').cloneNode(true);
     out += '\\n<!-- her Case File, open over it -->\\n' + f.innerHTML.replace(/></g, '>\\n<');
   }
   return out;`;
-// STORY=fixture: chapter 2 replaced by the fixture's; STORY=fixture3: chapter 3; STORY=fixture4: chapter 4
-// (several: STORY=fixture,fixture3)
+// STORY=fixture: chapter 2 replaced by the fixture's; STORY=fixture3: chapter 3; STORY=fixture4: chapter 4;
+// STORY=fixture5: chapter 5 (several: STORY=fixture,fixture3)
 const STORIES = String(process.env.STORY || '').split(',');
-const FX = STORIES.some(x => /^fixture[34]?$/.test(x)) ? require(join(ROOT, 'tests/fixtures/chapters.js'))() : null;
+const FX = STORIES.some(x => /^fixture[345]?$/.test(x)) ? require(join(ROOT, 'tests/fixtures/chapters.js'))() : null;
 const FIXTURE = FX ? Object.assign({}, STORIES.includes('fixture') ? { ch02: FX.ch02 } : {}, STORIES.includes('fixture3') ? { ch03: FX.ch03 } : {},
-  STORIES.includes('fixture4') ? { ch04: FX.ch04 } : {}) : null;
+  STORIES.includes('fixture4') ? { ch04: FX.ch04 } : {}, STORIES.includes('fixture5') ? { ch05: FX.ch05 } : {}) : null;
 /* Is this PNG a blank screenshot: one flat colour (the black or the grey a window that never painted
  * comes back as), but for a sliver? The mini's black sheets are 99.97% black, with a line of small
  * print along the bottom edge; the emptiest real screen is nowhere near. Read from the picture
@@ -179,6 +219,7 @@ const TRIES = Math.max(1, Math.min(6, +(process.env.TRIES || 3)));
 // `node tools/shots.mjs --lock`: say which way it would shoot (and which chapters a STORY stands in), and stop (no Safari, no server)
 if (argv[0] === '--lock') {
   console.log(LOCKED ? 'locked: a fresh short session for each shot' : 'unlocked: one session for every shot');
+  console.log('silent: speech and audio are switched off in every page before the game boots; Read to me is ' + (READ ? 'on (READ=1), and still says nothing' : 'off'));
   if (FIXTURE) console.log('stories from tests/fixtures/chapters.js: ' + Object.keys(FIXTURE).join(', '));
   process.exit(0);
 }
@@ -194,6 +235,38 @@ var shim={getItem:function(k){return sessionStorage.getItem(P+k);},setItem:funct
 clear:function(){keys().forEach(function(k){sessionStorage.removeItem(P+k);});},key:function(i){return keys()[i]||null;}};
 Object.defineProperty(shim,'length',{get:function(){return keys().length;}});
 try{Object.defineProperty(window,'localStorage',{configurable:true,get:function(){return shim;}});}catch(e){}})();</script>`;
+/* No sound, whatever the page does (the header's SILENT BY CONSTRUCTION): put first in the <head> of
+ * every HTML page this tool serves, so it has run before the game's first script. */
+const SILENT = `<script>(function(w){var said=w.__shotsSaid=[];function noop(){}
+function quiet(u){said.push(String(u&&u.text!=null?u.text:''));setTimeout(function(){try{if(u&&typeof u.onstart==='function')u.onstart({type:'start',utterance:u});if(u&&typeof u.onend==='function')u.onend({type:'end',utterance:u});}catch(e){}},0);}
+var mute={speaking:false,pending:false,paused:false,onvoiceschanged:null,speak:quiet,cancel:noop,pause:noop,resume:noop,getVoices:function(){return [];},addEventListener:noop,removeEventListener:noop,dispatchEvent:function(){return false;}};
+var names=['speak','cancel','pause','resume'];
+try{var real=w.speechSynthesis;if(real&&real!==mute)names.forEach(function(k){try{real[k]=k==='speak'?quiet:noop;}catch(e){}});}catch(e){}
+try{var proto=w.SpeechSynthesis&&w.SpeechSynthesis.prototype;if(proto)names.forEach(function(k){try{proto[k]=k==='speak'?quiet:noop;}catch(e){}});}catch(e){}
+try{Object.defineProperty(w,'speechSynthesis',{configurable:false,enumerable:true,get:function(){return mute;},set:noop});}catch(e){try{w.speechSynthesis=mute;}catch(e2){}}
+w.SpeechSynthesisUtterance=function(text){this.text=text==null?'':String(text);this.lang='';this.voice=null;this.volume=1;this.rate=1;this.pitch=1;this.onstart=null;this.onend=null;this.onerror=null;};
+try{if(w.HTMLMediaElement&&w.HTMLMediaElement.prototype)w.HTMLMediaElement.prototype.play=function(){try{this.muted=true;}catch(e){}return Promise.resolve();};}catch(e){}
+try{if(w.addEventListener)w.addEventListener('play',function(e){try{e.target.muted=true;e.target.pause();}catch(x){}},true);}catch(e){}
+try{w.Audio=function(){var a=w.document.createElement('audio');a.muted=true;return a;};}catch(e){}
+['AudioContext','webkitAudioContext'].forEach(function(k){try{Object.defineProperty(w,k,{configurable:false,get:function(){return undefined;},set:noop});}catch(e){try{w[k]=undefined;}catch(e2){}}});
+w.__shotsSilent=true;})(window);</script>`;
+/* The page as this tool serves it: SILENT first in its head, whatever the file (a page with no
+ * <head> gets it at its very top: silent comes before tidy). */
+function silenced(html) {
+  return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (m) => m + SILENT) : SILENT + html;
+}
+/* Runs in the page, after the test cat is set up (and in every pane of a sheet): the page was silenced
+ * before the game booted, and "Read to me" is as the caller asked: off, unless READ=1 (arguments[0]).
+ * Its button is the page's own way to change the setting. Returns true, or what is wrong. */
+const QUIET = `var want = !!arguments[0], rb = document.getElementById('readBtn');
+  if (window.__shotsSilent !== true || !Array.isArray(window.__shotsSaid)) return 'this page was not silenced before the game booted';
+  if (PC.debug.state().settings.readAloud !== want && rb) rb.click();
+  return PC.debug.state().settings.readAloud === want ? true : 'Read to me is ' + (want ? 'off' : 'on') + ' and would not change';`;
+// `node tools/shots.mjs --page`: the game's page as it is served (no Safari, no server), and stop
+if (argv[0] === '--page') {
+  process.stdout.write(silenced(readFileSync(join(ROOT, 'index.html'), 'utf8')));
+  process.exit(0);
+}
 const server = createServer(async (req, res) => {
   const p = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
   const file = join(ROOT, p.endsWith('/') ? p + 'index.html' : p);
@@ -202,6 +275,8 @@ const server = createServer(async (req, res) => {
     // EXTRA reloads the page to read the device's cats back from storage; the automation session's
     // localStorage does not last that long (see LS_SHIM), so the page as served keeps it in sessionStorage
     if (EXTRA && /[/\\]index\.html$/.test(file)) body = Buffer.from(String(body).replace('<head>', '<head>' + LS_SHIM));
+    // every HTML page: no sound, from before its first script (SILENT)
+    if (extname(file) === '.html') body = Buffer.from(silenced(String(body)));
     res.writeHead(200, { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(body);
   } catch { res.writeHead(404); res.end(); }
@@ -257,7 +332,7 @@ const SETUP = `
     });
   }
   PC.debug.save();
-  return true;`;
+  return (function () { ` + QUIET + ` }).call(null, arguments[2]);`;
 
 /* One WebDriver session: wait for another agent's to end (only one runs at a time), size the window
  * so the page is W × H CSS px whatever Safari's page zoom (`fit` remembers the window that did it, so
@@ -289,7 +364,7 @@ async function session(fn) {
     if (!fit) fit = await wd('GET', S + '/window/rect');
     if ((Math.abs(VW - W) > 1 || Math.abs(VH - H) > 1) && !told) { told = true; console.error('note: the page is ' + VW + 'x' + VH + ' CSS px, not ' + W + 'x' + H + ' (Safari’s page zoom on a small screen)'); }
     await run(STILL);
-    const ok0 = await run(SETUP, [CAT, FIXTURE]);
+    const ok0 = await run(SETUP, [CAT, FIXTURE, READ]);
     if (ok0 !== true) throw new Error('setting up the test cat: ' + ok0);
     if (EXTRA) {
       // more cats for "Who's playing?": added beside the test cat, which stays current
@@ -316,6 +391,9 @@ async function session(fn) {
       if (FIXTURE) await run('var fx = arguments[0]; Object.keys(fx).forEach(function (k) { PC.story[k] = fx[k]; }); return true;', [FIXTURE]);
       const there = await run('return PC.debug.state().cats.length;');
       if (there !== more) throw new Error('EXTRA: the page read ' + there + ' cats back after the reload, not ' + more);
+      // the reloaded page is silenced and set as the first was
+      const quiet = await run(QUIET, [READ]);
+      if (quiet !== true) throw new Error('EXTRA: ' + quiet);
       if (!told) console.log('cats on the device: ' + more);
     }
     return await fn(S, run);
@@ -353,13 +431,13 @@ async function sheet(S, run, four) {
   }
   const res = await run(`
     var out = [], frames = document.querySelectorAll('iframe'), targets = arguments[0], still = arguments[1], fixture = arguments[2];
-    var setup = arguments[3], cat = arguments[4];
+    var setup = arguments[3], cat = arguments[4], read = arguments[5];
     for (var i = 0; i < frames.length; i++) {
       var w = frames[i].contentWindow, PC = w.PC, t = targets[i].split('@'), target = t[0];
       try {
         w.eval(still);
         // the test cat, set up in the pane's own window (its PC, its storage), as SETUP does a page
-        var made = new w.Function(setup).apply(null, [cat, fixture]);
+        var made = new w.Function(setup).apply(null, [cat, fixture, read]);
         if (made !== true) { out.push(targets[i] + ': setting up the test cat: ' + made); continue; }
         if (/^(hub|book|hollow|nest|who|title)$/.test(target)) PC.debug.go(target, { from: 'hub' });
         else if (/^file(#|$)/.test(target)) { var fr = PC.debug.file(target.split('#')[1] || null); if (fr !== true) { out.push(targets[i] + ': ' + fr); continue; } }
@@ -367,7 +445,7 @@ async function sheet(S, run, four) {
         out.push(true);
       } catch (e) { out.push(targets[i] + ': ' + e.message); }
     }
-    return out;`, [four, '(function(){' + STILL.replace(/return true;$/, '') + '})()', FIXTURE, SETUP, CAT]);
+    return out;`, [four, '(function(){' + STILL.replace(/return true;$/, '') + '})()', FIXTURE, SETUP, CAT, READ]);
   res.forEach((r) => { if (r !== true) console.error(r); });
   if (four.some(t => t.includes('@'))) {
     await sleep(450);   // past each page's double-tap guard
@@ -432,7 +510,16 @@ async function shoot(S, run, t) {
     if (c !== true) { console.error(t + ': ' + c); return; }
   }
   await sleep((LOCKED ? 450 : 900) + (+process.env.WAIT || 0));   // fonts and layout (and, unlocked, the entrance animation)
-  if (DRY) { console.log(t + ': ' + await run('return document.getElementById("screen").innerText.replace(/\\s+/g, " ").slice(0, 300);')); return; }
+  if (DRY) {
+    console.log(t + ': ' + await run('return document.getElementById("screen").innerText.replace(/\\s+/g, " ").slice(0, 300);'));
+    // what Read to me would say on this screen, in order: the page's own list, read without switching
+    // Read to me on (PC.debug.speech; nothing is said)
+    const lines = await run('return PC.debug && PC.debug.speech ? PC.debug.speech() : null;');
+    if (lines) console.log(t + ' (Read to me would say; it is off): ' + lines.join(' | '));
+    // READ=1: what Read to me would have read on this screen (the stand-in's notes; nothing was said)
+    if (READ) console.log(t + ' (read to me, unspoken): ' + (await run('return (window.__shotsSaid || []).slice(-40);')).join(' | '));
+    return;
+  }
   if (DUMP) {
     // the page's own markup, the lettering laid out over the panel included, with the art's drawings
     // (the panel, the speakers' faces, the portraits) emptied: what ui.js put on the screen

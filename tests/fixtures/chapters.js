@@ -13,6 +13,7 @@
  *       (not built).
  * ch03: chapter 3's contract (docs/build.md, "Chapter 3 (v0.4)"), below.
  * ch04: chapter 4's contract (docs/build.md, "Chapter 4 (v0.4)"), below: the Case File and the 10s.
+ * ch05: chapter 5's contract (docs/build.md, "Chapter 5 (v0.4)"), below: the 9s, the river and the marsh.
  * Not a test file (node --test only runs *.test.js).
  */
 'use strict';
@@ -148,7 +149,8 @@ function chapters() {
 
   const ch03 = chapter3();
   const ch04 = chapter4();
-  return { ch01, ch02, ch03, ch04 };
+  const ch05 = chapter5();
+  return { ch01, ch02, ch03, ch04, ch05 };
 }
 
 /* ch03: chapter 3's engine contract (docs/chapters/03-under-the-old-bridge.md, "Build"; docs/build.md,
@@ -547,8 +549,10 @@ function chapter4() {
         { text: 'On {name}paw’s third morning, the pile lay in rows of ten, and a gap showed in a heartbeat.' },
         { text: '{name}paw started a Case File: a piece of bark for every clue.' },
         { when: { ch4CaughtFly: true }, text: '{They} caught one hole in the fox’s story: Reynard said the dragon flew, and Sprinkle can’t fly.' },
-        { when: { foundSquall: true }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who roars at airplanes and hiccups.' },
-        { when: { foundSquall: false }, text: 'On the roof of {their} old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.' }
+        // (chapter 5's Build, "The book": a cat who went up in chapter 5 found him there, not here)
+        { when: { foundSquall: true, ch5Roof: false }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who roars at airplanes and hiccups.' },
+        { when: { foundSquall: false }, text: 'On the roof of {their} old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.' },
+        { when: { ch5Roof: true }, text: 'On the roof of {their} old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.' }
       ],
       noDream: '{name}paw’s dream that night is not in the Case File.',
       dragonet: { id: 'squall', name: 'Squall', when: { foundSquall: true }, lines: ['The littlest of the clutch, slate grey with yellow flecks like sparks, and the loudest.', '{name}paw found him on the roof of the tallest tower.'] }
@@ -557,6 +561,521 @@ function chapter4() {
   };
 }
 
+/* ch05: chapter 5's engine contract (docs/chapters/05-riffles-river.md, "Build"; docs/build.md,
+ * "Chapter 5 (v0.4)"), with the text's own words, and its whole shape, so every path can be walked:
+ * the old tom's nose (a one-tap frame with its small answer), the pile's one question on a Counts
+ * frame that carries four balloons, the gap as two frames (a noticing cat taps the dug earth and
+ * holds `prints-pile`), the tens warm-up with the hard pick first and `intro: false`, the tuck (a
+ * skip-count that runs backwards and keeps its picture with no totals), the nines (the hop and the
+ * tuck as each is asked, the four help openings, two answers in the sand, its own easiest fillers),
+ * the roof offered again (chapter 4's frames, run here; `ch5Roof`), Waffles' "AGAIN?", the Crossing,
+ * her four paws aboard, nine claws in the log with the scene redrawn as she taps, the light choices,
+ * the shivering raft, "Under the raft" in its two places (Puddle's riddle on his own logs; the sticky
+ * `foundPuddle`), the witness choice (`ch5First`), "What the otters heard" in its two places (a tuft
+ * of fur to tap), the marsh (Riffle's seven questions, the fish Counts in his voice on a log, the
+ * cloud that grows, a climber's pole), the three waits and their three ways out, Wisp's silent riddle
+ * (`foundWisp`), the catch, the slip, the news under the bridge, the mud count (a forepaw for
+ * everyone found), the den, the bedtime nines, the dream and the end; her book with two dragonet
+ * pages, and a teaser. It runs chapter 4's roof (`ch04-riddle`, `squall-shapes`), borrows from
+ * `ch04-tens`, `ch03-claws`, `ch02-ears` and `ch01-tails`, and touches `fox-moon`: pass chapters 1
+ * to 4 (the real ones, or the fixtures) beside it. */
+function chapter5() {
+  const RIM = [{ who: 'clancat', variant: 1 }, { who: 'murmurchime' }, { who: 'clancat', variant: 3 }, { who: 'clancat', variant: 4 }, { who: 'grizzled' }];
+  const NONE = { ch5Roof: false, foundPuddle: false, foundWisp: false }, ANY = { not: NONE };
+  const ROWS = [10, 10, 10, { n: 10, gap: [3, 4, 5, 6] }];
+  const pile = (cam, opts, cast) => ({ set: 'pile', cam, opts: Object.assign({ rows: ROWS, scale: 'behind' }, opts || {}), cast: cast || [], fx: ['morning'] });
+  const hollow = (cam, cast, opts) => ({ set: 'hollow', cam, opts: Object.assign({ marks: 'auto', glow: 'auto' }, opts || {}), cast: cast || [], fx: ['day'] });
+  const rim = (tuck) => RIM.map((c, i) => Object.assign({ pose: 'situp', mood: 'happy', at: 'rim-' + (i + 1), facing: 'right' }, c, tuck ? { tuck: true } : {}));
+  const crossing = (cam, cast, opts, late) => ({ set: 'crossing', cam, opts: Object.assign({ plane: 'none' }, opts || {}), cast: cast || [], fx: [late ? 'sunset' : 'day'] });
+  const river = (cam, cast, opts) => ({ set: 'openriver', cam, opts: Object.assign({ plane: 'none' }, opts || {}), cast: cast || [], fx: ['day'] });
+  const marsh = (cam, cast, opts) => ({ set: 'marsh', cam, opts: opts || {}, cast: cast || [], fx: ['day'] });
+  const bridge = (cam, cast, opts) => ({ set: 'bridge', cam, opts: opts || {}, cast: cast || [], fx: ['sunset'] });
+  const den = (cam, cast, opts, fx) => ({ set: 'den', cam, opts: Object.assign({ weather: 'clear', stone: 'auto', bark: 'auto', hidden: true }, opts || {}), cast: cast || [], fx: [fx || 'night'] });
+  const me = (pose, at, more) => Object.assign({ who: 'player', pose: pose || 'sit', mood: 'happy', at: at }, more || {});
+  const riffle = (pose, at, more) => Object.assign({ who: 'riffle', pose: pose || 'sit', mood: 'happy', at: at }, more || {});
+  const patience = (pose) => ({ who: 'patience', pose: pose || 'stand', mood: 'neutral', at: 'shallows', facing: 'left' });
+  const TENS_HELP = 'Close. Let’s scratch it out together: two swipes for every cat, five lines a swipe.';
+  const ROW_HELP = 'Let’s scratch it out: ten marks for every row.';
+  const ROW_ZERO = 'Remember: counting by tens, every number ends in a zero. Let’s scratch it out: ten marks for every row.';
+  const NINES_HELP = 'Close. Let’s scratch it out together: hop by tens, then tuck one in for every cat.';
+  // the three fish sets are Riffle's, whole: every word after a miss on the river is his or her own
+  const FISH = { teacher: 'riffle', fillVoice: 'borrower', fillPicture: 'borrower', fillOrder: 'easiest', fillIntro: 'An easy one!', againIntro: 'The fish again!',
+    miss: 'Phew. That one again in a minute.', missLast: 'There. Now we’ve counted it.', again: ['You GOT it!'], helpCounter: 'you', ground: 'log', ask: '{a} × {b}', praise: [], done: null };
+
+  const frames = {};
+  /* ---- the morning: the pile */
+  Object.assign(frames, {
+    p01: { scene: pile('rows', { back: 'shadow' }, [{ who: 'grizzled', pose: 'sit', mood: 'sleepy', at: 'beside', asleep: true, snail: true }, me('stand', 'pile-right', { facing: 'left' })]),
+      caption: ['At sunrise, the old tom sits by the prey pile, as straight as a post. He’s guarding.', 'He’s guarding with his eyes shut. A snail is halfway up his ear.'], sfx: 'SNNNRRRK.',
+      scratch: { tap: 'nose', prompt: '**Tap** his nose to wake him up.', label: 'Wake him up.', miss: 'snnnrrk…', next: 'p02' } },
+    p02: { scene: pile('rows', { back: 'shadow' }, [{ who: 'grizzled', pose: 'sit', mood: 'scared', at: 'beside', snail: 'in' }, { who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'pile-right', facing: 'left' }, me('sit', 'pile-left')]),
+      say: [{ who: 'grizzled', text: 'WHO GOES THERE? Oh. The counting cat. I was resting my eyes.' }, { who: 'tallyheart', text: 'All night?' }, { who: 'grizzled', text: 'They were VERY tired.' }, { who: 'player', text: 'You have a snail.' }],
+      counts: { set: 'ch05-pile', next: 'p03n' } },
+    // the gap is two frames, since a frame has one interaction: a noticing cat taps the dug earth
+    p03n: { when: { specialty: 'noticing' }, else: 'p03', scene: pile('gap', { dug: 'big' }, [me('stand', 'pile-left')]),
+      caption: ['Then the back row. Right in the middle: four empty spaces. Again.', 'You didn’t count that. You just saw it.'],
+      scratch: { tap: 'earth', prompt: '**Tap** the freshly dug earth behind the gap.', label: 'Look at the dug earth.', miss: 'rustle…', next: 'p04' } },
+    p03: { when: { not: { specialty: 'noticing' } }, scene: pile('gap', { dug: 'big' }, [me('stand', 'pile-left')]),
+      caption: ['Then the back row. Right in the middle: four empty spaces. Again.', 'You didn’t count that. You just saw it.'], next: 'p05' },
+    p04: { when: { specialty: 'noticing' }, scene: pile('gap', { dug: 'big', prints: true }), card: 'prints-pile', caption: ['Tiny prints. Each is half the size of yours.'], next: 'p05' },
+    p05: { scene: pile('gap', { dug: 'big', swept: true }, [{ who: 'grizzled', pose: 'walk', mood: 'shout', at: 'beside' }, { who: 'tallyheart', pose: 'sit', mood: 'solemn', at: 'pile-right', facing: 'left' }]),
+      caption: ['The old tom stomps around the pile to look.', { when: { specialty: 'noticing' }, text: 'His tail sweeps the prints away. Nothing left to show anyone. But you saw them.' }],
+      say: [{ who: 'grizzled', text: 'The BACK row? AGAIN?' }, { who: 'tallyheart', text: 'Why is it always the back?' }], next: 'p06' },
+    p06: { scene: pile('wide', {}, [{ who: 'glintstar', pose: 'sit', mood: 'stern', at: 'fountain-edge' }, { who: 'snorter', pose: 'sit', mood: 'proud', at: 'crowd-1' }]),
+      say: [{ who: 'glintstar', text: 'Four more. Sixteen pieces in four nights.' }, { who: 'snorter', text: 'That dragon is getting FAT.' }], next: 'p07' },
+    p07: { caption: [{ when: { ch3Told: true }, text: 'Tallyheart’s whiskers twitch. You both know a dragon who hasn’t taken one mouse.' },
+      { when: { ch3Told: false }, text: 'You know a dragon who hasn’t taken one mouse. You don’t say a word.' }], next: 'p08' },
+    p08: { say: [{ who: 'glintstar', text: 'Tallyheart. By tomorrow night, I want proper guards.' }, { who: 'grizzled', text: 'Tonight, I’m sitting on a pinecone.' }], next: 'h01' }
+  });
+  /* ---- the Training Hollow: tens first, then the nines */
+  Object.assign(frames, {
+    h01: { scene: hollow('wide', rim(false).concat([{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'tree-far', facing: 'left' }, me('sit', 'sand-left')]), { marks: 4 }),
+      caption: ['In the Training Hollow, five cats sit up on the rim, claws out.'], say: [{ who: 'tallyheart', text: 'Tens first, to wake up your whiskers.' }],
+      counts: { set: 'ch05-tens', intro: false, next: 'h02' } },
+    h02: { say: [{ who: 'tallyheart', text: 'Hold on to that fifty. Today’s Count is the nines.' }], next: 'h03' },
+    h03: { scene: hollow('lesson', [{ who: 'tallyheart', pose: 'situp', mood: 'kind', at: 'sand-right', facing: 'left' }, me('sit', 'sand-left')], { marks: 4 }),
+      caption: ['Tallyheart holds out both forepaws.'], sfx: 'Shhnk! Shhnk!',
+      say: [{ who: 'tallyheart', text: 'Ten front claws. And every cat has nine lives.' }, { who: 'grizzled', text: 'The elders swear by it. I’m an elder. I swear by it.' }], next: 'h04' },
+    h04: { scene: hollow('lesson', [{ who: 'tallyheart', pose: 'situp', mood: 'kind', at: 'sand-right', facing: 'left', tuck: true }, me('situp', 'sand-left', { tuck: true })], { marks: 4 }),
+      caption: ['Tallyheart curls one claw back in.'],
+      say: [{ who: 'tallyheart', text: 'The elders count their lives on their claws. Nine claws out. One tucked in.' }, { who: 'player', text: 'What’s the tucked one for?' }, { who: 'grizzled', text: 'Hanging on to the other nine.' }], next: 'h05' },
+    h05: { scene: hollow('wide', rim(false), { marks: 4 }),
+      say: [{ who: 'tallyheart', text: 'So a nine is one less than a ten. One claw tucked in. Touch each cat, and tuck one in.' }],
+      skip: { table: 9, groups: 5, tuck: true, who: RIM, thing: 'claw', things: 'claws', keep: true, prompt: '**Tap** the cats, left to right.', next: 'h06' } },
+    h06: { scene: hollow('wide', rim(true), { marks: 4 }),
+      say: [{ who: 'tallyheart', text: 'FORTY-FIVE! Five cats, nine lives each.' }, { who: 'tallyheart', text: 'Five tens make fifty. Tuck five in: forty-five. Five times nine makes forty-five.' }],
+      counts: { set: 'ch05-nines', next: 'h07' } },
+    h07: { scene: hollow('tree', []), caption: ['Tallyheart stretches up the leaning tree. A fifth claw mark.'], sfx: 'SKRITCH!',
+      say: [{ who: 'tallyheart', text: 'Nine lives. That’s your fifth Count. And the trickiest one so far.' },
+        { who: 'player', text: 'It’s only tens. With a claw tucked in.', when: { lessonClean: 'ch05-nines' } },
+        { who: 'player', text: 'It’s tens. With a claw tucked in.', when: { not: { lessonClean: 'ch05-nines' } } },
+        { who: 'tallyheart', text: 'That’s all a nine is.', when: { not: { lessonClean: 'ch05-nines' } } }], next: 'h08' },
+    h08: { say: [{ who: 'tallyheart', text: 'Now go and ask your river. And stay on the otters’ raft. The marsh mud belongs to ReedClan.' }], next: 't01' }
+  });
+  /* ---- the roof, offered again: one frame, for a cat who has not met Squall, or met him here on an
+   * earlier reading; chapter 4's roof frames, run here, their last one setting `ch5Roof` too */
+  const roof = chapter4().frames;
+  ['r01', 'r02', 'r03', 'r04', 'r05', 'r06'].forEach(id => { frames[id] = JSON.parse(JSON.stringify(roof[id])); });
+  frames.r06.sets = { foundSquall: true, ch5Roof: true };
+  frames.r06.skip.next = 'c01';
+  Object.assign(frames, {
+    t01: { when: { not: { foundSquall: true, ch5Roof: false } }, else: 'c01',
+      scene: { set: 'tower', cam: 'up', opts: { light: true, roar: true }, cast: [me('lookup', 'foot')], fx: ['day'] },
+      caption: [{ when: { foundSquall: false }, text: 'Sprinkle’s littlest brother is still up there.' },
+        { when: { foundSquall: false, specialty: 'climbing' }, text: 'Balcony, balcony, balcony, roof. You could still climb that.' }],
+      sfx: 'RAWWWRRR… hic!',
+      choice: { options: [
+        { label: 'Go up and find him. The river can wait a little.', labelWhen: [{ when: { ch5Roof: true }, label: 'Go up and see Squall again.' }], next: 'r01' },
+        { label: 'Not today. Riffle is waiting.', labelWhen: [{ when: { ch5Roof: true }, label: 'Not today. He’s guarding.' }], next: 'n01' }
+      ] } },
+    n01: { scene: { set: 'tower', cam: 'balcony', opts: {}, cast: [{ who: 'waffles', pose: 'peer', mood: 'shout', at: 'railing' }], fx: ['day'] },
+      say: [{ who: 'waffles', text: 'AGAIN, {petname}?', kind: 'shout' }], sfx: 'RAWWWRRR… hic!', next: 'c01' }
+  });
+  /* ---- the Crossing, and the Roar */
+  Object.assign(frames, {
+    c01: { scene: crossing('wide', [riffle('hug', 'raft-1', { holds: 'pole' }), { who: 'otter', variant: 1, pose: 'stand', mood: 'stern', at: 'rock-left' }, me('sit', 'shore')]),
+      caption: ['At the Crossing, Riffle stands on the ferry raft, hugging a pole twice his size.'],
+      say: [{ who: 'riffle', text: 'My RAFT!' }, { who: 'otter', text: 'MY raft. You hold the pole.' }], next: 'c02' },
+    c02: { when: { ch5Roof: true }, say: [{ who: 'player', text: 'I found Squall! Sprinkle’s littlest brother! He sees two skinny shapes go to the tracks. Every night.', kind: 'whisper' },
+      { who: 'riffle', text: 'The TRACKS? At NIGHT? Raft first.' }], next: 'c03' },
+    c03: { scene: crossing('rocks', [{ who: 'otter', variant: 1, pose: 'stand', mood: 'stern', at: 'rock-left' }, me('sit', 'rock-right', { facing: 'left' })]),
+      say: [{ who: 'otter', text: 'Every apprentice sits on my raft while a skymonster goes over. That’s the Roar. It’s the courage test.' }, { who: 'otter', text: 'Three rules: sit. Stay. No jumping in.' }],
+      choice: { options: [{ label: '“What if I move?”', sets: {}, next: 'c04' }, { label: '“What if I sneeze?”', sets: {}, next: 'c04' }] } },
+    c04: { say: [{ who: 'otter', text: 'Then you sit through it again tomorrow. Like Riffle. Eleven times.' }, { who: 'riffle', text: 'TEN!', kind: 'shout' }], next: 'c05' },
+    c05: { scene: crossing('rocks', [{ who: 'tallyheart', pose: 'sit', mood: 'proud', at: 'rock-high', facing: 'left' }, me('sit', 'rock-right', { facing: 'left' })]),
+      caption: ['And on the rocks sits Tallyheart.'], say: [{ who: 'tallyheart', text: 'A mentor never misses a first Roar.' }], next: 'c06' },
+    c06: { scene: crossing('board', [], {}),
+      caption: ['The raft sits low. And the water under it is wide, and deep.', { when: { worry: 'water' }, text: 'Your paws won’t move.' },
+        { when: { specialty: 'swimming', not: { worry: 'water' } }, text: 'Your first paw goes in the river, to say hello.' },
+        { when: { worry: 'water' }, text: 'That’s what she promised, on your very first night.' }],
+      say: [{ who: 'tallyheart', text: 'One paw at a time. I’ll count.' }],
+      skip: { table: 1, groups: 4, paws: 'board', teacher: 'tallyheart', carry: false, prompt: '**Tap** each paw onto the raft.', next: 'c07' } },
+    c07: { say: [{ who: 'tallyheart', text: 'Four paws aboard. All there.' }, { who: 'tallyheart', text: 'Find me something truer than a fox’s story. For her.', kind: 'whisper', when: { ch3Told: true } }], next: 'c08' },
+    c08: { when: { worry: 'water' }, caption: [{ when: { specialty: 'swimming' }, text: 'It isn’t one bit like a dripping tap.' }],
+      say: [{ who: 'riffle', text: 'And if you fall in, I’ll have you out before your tail gets wet. Otter’s honor.' }], next: 'o01' },
+    o01: { scene: river('wide', [me('sit', 'raft-1'), riffle('stand', 'pole')]), caption: ['Riffle pushes off, and the whole river shines. The glass towers stand on their heads in the water.'], next: 'o02' },
+    o02: { scene: river('light', [], { plane: 'far' }), caption: ['Far down the river, a light. It grows. And grows.', 'It comes out very small.'],
+      say: [{ who: 'riffle', text: 'SKYMONSTER!', kind: 'shout' }, { who: 'player', text: 'Airplane.' }], next: 'o03' },
+    o03: { scene: river('log', [], { plane: 'none' }),
+      say: [{ who: 'riffle', text: 'Sit STILL! I’m not allowed to hold your paw. But I’m right here.' }, { who: 'tallyheart', text: 'Nine claws in the log, {name}paw! One tucked for luck!' }],
+      skip: { table: 1, groups: 9, paws: 'log', teacher: 'player', carry: false, prompt: '**Tap** to dig in your claws.',
+        steps: [{ from: 1, opts: { plane: 'far' }, sfx: 'rrr…' }, { from: 4, opts: { plane: 'near' }, sfx: 'RRRrrr…' }, { from: 7, opts: { plane: 'over' }, sfx: 'RRRRRR…' }], next: 'o04' } },
+    o04: { scene: river('sky', [], { plane: 'over' }), sfx: 'ROOOOOAAAAARRRRR!',
+      caption: ['It sweeps right over you. The logs buzz. Your teeth buzz. Even your whiskers buzz.', { when: { worry: 'small' }, text: 'You’re the smallest thing on the whole wide river. You sit still anyway.' }],
+      choice: { options: [{ label: 'Shut your eyes and count.', sets: {}, next: 'o05a' }, { label: 'Keep your eyes open and look up.', sets: {}, next: 'o05b' }] } },
+    o05a: { say: [{ who: 'player', text: 'Ten. Twenty. Thirty. FORTY—' }], next: 'o06' },
+    o05b: { scene: river('sky', [], { plane: 'over', face: true }), caption: ['Little round windows, all in a row. At one, a small face is pressed to the glass. You know that feeling.'], next: 'o06' },
+    o06: { scene: river('raft', [me('sit', 'raft-1', { mood: 'scared', squeeze: true }), riffle('sit', 'raft-2')], { plane: 'gone' }),
+      caption: [{ when: { specialty: 'sneaking' }, text: 'You’ve held still for socks. You can hold still for this.' }, 'You don’t move. Not an ear. Not one of nine claws.', 'Then it’s gone.'], next: 'o07' },
+    o07: { scene: river('rocks', [riffle('scramble', 'raft-2')], { plane: 'gone' }), caption: ['On the rocks, otter tails go'], sfx: 'Slap! Slap! Slap!', say: [{ who: 'riffle', text: 'YOU DID IT!', kind: 'shout' }], next: 'o08' },
+    o08: { scene: river('rocks', [{ who: 'tallyheart', pose: 'walk', mood: 'proud', at: 'far-rocks', facing: 'left' }], { plane: 'gone' }),
+      caption: ['She turns for home.', { when: { specialty: 'friends' }, text: 'The old otter nods at you, once. You know a friend’s nod when you see one.' },
+        { when: { worry: 'water' }, text: 'You look down. Still deep. You look at your paws. Still here.' }],
+      say: [{ who: 'tallyheart', text: 'Not one claw! I counted!' }], next: 'o09' },
+    o09: { scene: river('raft', [me('sit', 'raft-1'), riffle('whistle', 'raft-2')], { shiver: true }), caption: ['The river goes quiet. But the raft is still shivering. And still sitting too low.'], next: 'o10' },
+    o10: { scene: river('raft', [me('sit', 'raft-1'), riffle('whistle', 'raft-2')], { shiver: true }), caption: ['It isn’t you. It isn’t Riffle. He’s whistling, and looking very hard at the sky.'],
+      choice: { options: [
+        { label: 'Lean over, and look under the raft.', labelWhen: [{ when: { foundPuddle: true }, label: 'Lean over, and say hello to Puddle.' }], next: 'ua1' },
+        { label: 'Look up. Is another one coming?', labelWhen: [{ when: { foundPuddle: true }, label: 'Not now. He’s being a log.' }], next: 'o11' }
+      ] } },
+    o11: { caption: ['Only blue sky.'], say: [{ who: 'riffle', text: 'Rafts shiver. Ticklish logs. VERY ticklish.' }], next: 'w01' },
+    w01: { scene: river('raft', [me('sit', 'raft-1'), riffle('stand', 'pole')], { bubbles: true }),
+      say: [{ who: 'riffle', text: 'So who’s first? Otters HEAR everything. Patience the heron SEES everything.' }],
+      choice: { options: [{ label: 'The ferry otters!', sets: { ch5First: 'otters' }, next: 'ha1' }, { label: 'Patience the heron!', sets: { ch5First: 'heron' }, next: 'm01' }] } }
+  });
+  /* ---- "Under the raft", written once and read in one of two places (after the Roar, or on the way
+   * home after Riffle's slip, in late light): one Counts set, one card, the same sticky flag */
+  function underRaft(p, next, late) {
+    const sc = (cam, cast, opts) => river(cam, cast, Object.assign(late ? { late: true } : {}, opts || {}));
+    const pud = (pose, mood) => ({ who: 'puddle', pose: pose, mood: mood || 'happy', at: 'beside' });
+    const out = {};
+    out[p + '1'] = { scene: sc('edge', [], { foot: true }),
+      caption: ['You lean over the edge.', { when: { worry: 'water' }, text: 'The deep water is right under your nose. You look anyway.' }, 'Between two logs, a foot pokes up: blue-grey, and much too big. It wiggles.'], next: p + '2' };
+    out[p + '2'] = { scene: sc('beside', [pud('head', 'worried')]), caption: ['Up pops a head.'], sfx: 'SPLOOSH!',
+      say: [{ who: 'puddle', text: 'I’m not here. I’m a log.' }, { who: 'player', text: 'Logs don’t have feet.' }, { who: 'puddle', text: 'This one’s got four.' }], next: p + '3' };
+    out[p + '3'] = { scene: sc('beside', [pud('head', 'wonder')]), caption: ['He sinks, blub, and pops up again.'],
+      say: [{ who: 'player', text: 'Sprinkle sent me.' }, { who: 'puddle', text: 'SPRINKLE? Mama’s rule: strangers get a riddle!' }], counts: { set: 'ch05-puddle', next: p + '4' } };
+    out[p + '4'] = { scene: sc('beside', [pud('head', 'happy'), riffle('hush', 'raft-2')]),
+      say: [{ who: 'puddle', name: 'Puddle', text: 'I’m Puddle. The otters said: be a log. Till everybody stops shouting DRAGON. Logs get LOTS of fish.' }, { who: 'riffle', text: 'Granny only told me LAST NIGHT. I nearly popped!' }], next: p + '5' };
+    out[p + '5'] = { scene: sc('beside', [pud('head', 'wonder')]),
+      say: [{ who: 'puddle', name: 'Puddle', text: 'The storm rolled me right over a garden first. FLASH! A heap of mice. And something with clever little paws, picking them up. Very tidy.' }], next: p + '6' };
+    out[p + '6'] = { scene: sc('beside', [pud('head', 'happy')]), card: 'puddle-paws',
+      say: [{ who: 'player', text: 'Our PILE!' }, { who: 'puddle', name: 'Puddle', text: 'I said EEK. Then the river said SPLOOSH.' }], next: p + '7' };
+    out[p + '7'] = { scene: sc('beside', [pud('pawup', 'happy')]), sets: { foundPuddle: true }, caption: ['He holds up a forepaw, and starts to sink.'],
+      say: [{ who: 'puddle', name: 'Puddle', text: 'Mama says: stay where you land. So tell Sprinkle: five!' }],
+      skip: { table: 5, groups: 1, who: [{ who: 'puddle' }], thing: 'claw', things: 'claws', label: 'Tap his forepaw.', prompt: '**Tap** his forepaw.', carry: false, next: next } };
+    return out;
+  }
+  Object.assign(frames, underRaft('ua', 'w01', false), underRaft('ub', 'hb1', true));
+  /* ---- "What the otters heard", written once and read in one of two places: at the rocks right
+   * after the Roar (she chose the otters), or at the Crossing on the way home (she chose the heron).
+   * Tallyheart is in none of its frames: she went home after the Roar. */
+  function otters(p, next, late, when, orElse) {
+    const sc = (cam, cast, opts) => crossing(cam, cast, opts, late);
+    const old = { who: 'otter', variant: 1, pose: 'stand', mood: 'solemn', at: 'rock-left' }, gossip = { who: 'otter', variant: 2, pose: 'sit', mood: 'happy', at: 'rock-right', facing: 'left' };
+    const out = {};
+    out[p + '1'] = Object.assign(when ? { when: when, else: orElse } : {}, { scene: sc('rocks', [gossip, old, me('sit', 'raft-1'), riffle('sit', 'raft-2')]),
+      caption: [{ when: { ch5First: 'otters' }, text: 'Riffle pushes the raft back to the rocks.' }, { when: { ch5First: 'heron' }, text: 'At last, the Crossing again.' }],
+      say: [{ who: 'player', text: 'What did you hear about the storm night?' }, { who: 'otter', text: 'A dragon as big as a bridge!' }],
+      choice: { options: [{ label: '“Who told you that?”', sets: {}, next: p + '2a' }, { label: '“Did any of you SEE it?”', sets: {}, next: p + '2b' }] } });
+    out[p + '2a'] = { scene: sc('rocks', [gossip]), say: [{ who: 'otter', text: 'A duck. A very honest duck.' }], next: p + '3' };
+    out[p + '2b'] = { scene: sc('rocks', [gossip]), say: [{ who: 'otter', text: 'Well… no. A duck told me.' }], next: p + '3' };
+    out[p + '3'] = { scene: sc('rocks', [old, me('sit', 'raft-1')]), card: 'otter-fox',
+      say: [{ who: 'player', text: 'No bark for ducks.' }, { who: 'otter', text: 'The FOX told me himself. Twice. The dragon’s claws were full of mice. And off it flew.' }], next: p + '4' };
+    out[p + '4'] = { when: { ch4CaughtFly: true }, caption: ['Flew. Again. You know a dragon who can’t.'], next: p + '5' };
+    out[p + '5'] = { scene: sc('raft', [old], { tuft: true }), caption: ['He lifts the raft’s vine. Caught in it: a tuft of thin brown fur.'], say: [{ who: 'otter', text: 'And somebody’s been on my rocks in the dark.' }], next: p + '6' };
+    out[p + '6'] = { scene: sc('raft', [old, riffle('sit', 'raft-2')], { tuft: true }),
+      say: [{ who: 'riffle', text: 'Whose is it?' }, { who: 'otter', text: 'Not a dragon’s. Dragons don’t HAVE fur. …Probably.' }],
+      scratch: { tap: 'fur', prompt: '**Tap** the fur to sniff it.', label: 'Sniff the fur.', miss: 'flutter…', next: p + '7' } };
+    out[p + '7'] = { scene: sc('raft', [me('sniff', 'raft-1')], { tuft: true }), card: 'fur',
+      caption: ['Somebody small.', { when: { ch5First: 'heron' }, text: 'Tiny prints there. Thin fur here. The same somebody?' }], next: next };
+    return out;
+  }
+  Object.assign(frames, otters('ha', 'm01', false), otters('hb', 'b01', true, { ch5First: 'heron' }, 'b01'));
+  /* ---- the marsh: everything happens from the raft */
+  const onRaft = [me('sit', 'raft-1'), riffle('sit', 'raft-2')];
+  Object.assign(frames, {
+    m01: { scene: marsh('far', [{ who: 'clancat', variant: 2, pose: 'sit', at: 'log-1' }, { who: 'clancat', variant: 5, pose: 'sit', at: 'log-2' }, { who: 'clancat', variant: 6, pose: 'sit', at: 'log-3' }]),
+      caption: ['The river slides into a wide, still marsh. In here, even the water whispers.', 'Far across it, three cats sit on a log. They don’t wave.'],
+      say: [{ who: 'riffle', text: 'ReedClan. They always come in threes.', kind: 'whisper' }], next: 'm02' },
+    m02: { scene: marsh('heron', [patience()].concat(onRaft), { dragonfly: 'beak' }), caption: ['In the shallows stands a tall grey-blue bird, on one leg. A dragonfly is asleep on her beak.'], next: 'm03' },
+    m03: { scene: marsh('wide', [patience()].concat(onRaft), { dragonfly: 'beak' }),
+      say: [{ who: 'riffle', text: 'That’s Patience. Two fish for every answer. Before the storm, it was ONE. Nobody knows why.', kind: 'whisper' }], next: 'm04' },
+    m04: { scene: marsh('wide', [patience(), me('sit', 'raft-1'), riffle('hop', 'raft-2', { mood: 'wonder', glow: true })], { dragonfly: 'beak', owed: 0 }), caption: ['Riffle is bursting with questions.'],
+      ask: { who: 'riffle', to: 'patience', prompt: '**Tap** Riffle to let one out.', next: 'm05', pairs: [
+        ['Do you sleep standing up?', 'Yes.'], ['Is that leg tired?', 'No.'], ['Is that a dragonfly?', 'Yes.'], ['Do you see EVERYTHING?', 'Yes.'], ['Even at night?', 'Yes.'], ['Do you like otters?', 'Yes.'], ['Am I your favorite?', 'No.']] } },
+    m05: { scene: marsh('wide', [patience('eye')].concat(onRaft), { dragonfly: 'beak', owed: 7 }),
+      say: [{ who: 'patience', text: 'Seven answers.' }, { who: 'patience', text: 'Two fish for every answer.' }], counts: { set: 'ch05-otter', next: 'm06' } },
+    m06: { scene: marsh('wide', [patience('feather')].concat(onRaft), { dragonfly: 'beak', owed: 7 }),
+      caption: [{ when: { specialty: 'friends' }, text: 'One grey feather lifts. For Patience, that’s a grin.' }],
+      say: [{ who: 'riffle', text: 'I was only saying HELLO!' }, { who: 'patience', text: 'You did not say hello. Hello is free.' }, { who: 'player', text: 'Hello, Patience.', when: { specialty: 'friends' } }], next: 'm07' },
+    m07: { scene: marsh('heron', [patience('shut')].concat(onRaft), { dragonfly: 'beak', owed: 8 }), card: 'heron-no-moon', caption: ['The fox said the moon came out. So you check.'],
+      say: [{ who: 'player', text: 'Was the moon out on the storm night?' }, { who: 'patience', text: 'No. The fish come up for the moon. That night, I went hungry.' }], next: 'm08' },
+    m08: { scene: marsh('heron', [patience()].concat(onRaft), { dragonfly: 'beak', owed: 8 }), caption: [{ when: { worry: 'talk' }, text: 'You have a hundred questions. At two fish each, you pick one more.' }],
+      choice: { options: [{ label: '“Who took our prey?”', sets: {}, next: 'm09a' }, { label: '“What did you SEE on the storm night?”', sets: {}, next: 'm09b' }] } },
+    m09a: { scene: marsh('heron', [patience()].concat(onRaft), { dragonfly: 'beak', owed: 8 }), caption: ['So you ask what she SAW on the storm night.'],
+      say: [{ who: 'patience', text: 'I do not guess. Guessing is for otters. That one is free.' }], next: 'm10' },
+    m09b: { scene: marsh('heron', [patience('eye')].concat(onRaft), { dragonfly: 'beak', owed: 8 }), caption: ['One yellow eye turns to you.'], say: [{ who: 'patience', text: 'A good question.' }], next: 'm10' },
+    m10: { scene: marsh('heron', [patience('eye')].concat(onRaft), { dragonfly: 'beak', owed: 9 }), card: 'heron-shapes',
+      say: [{ who: 'patience', text: 'When the rain stopped: two small shapes, crossing my mud. Each one carrying something. I do not guess what.' }], next: 'm11' },
+    m11: { when: { foundSquall: true }, say: [{ who: 'player', text: 'Just what Squall saw!', kind: 'whisper' }, { who: 'riffle', text: 'He saw them. She saw them. Same two shapes!', kind: 'whisper' }], next: 'm12' },
+    m12: { scene: marsh('wide', [patience('point')].concat(onRaft), { dragonfly: 'beak', owed: 9, prints: true, tap: 'mud' }),
+      say: [{ who: 'patience', text: 'They come back every night. They do not wipe their feet. That is not an answer. It is a complaint.' }],
+      scratch: { tap: 'mud', prompt: '**Tap** the mud to look closer.', label: 'Look at the mud.', miss: 'ripple…', next: 'm13c' } },
+    // the prints are two frames, as the gap is: for a climber a one-tap frame on the pole; both give the card
+    m13c: { when: { specialty: 'climbing' }, else: 'm13', scene: marsh('mud', [riffle('stand', 'raft-2', { holds: 'pole' })], { prints: true, tap: 'pole' }), card: 'prints-marsh',
+      caption: ['Tiny prints, in a line across the mud.', 'You hold your paw over one. It’s half the size of yours.'],
+      scratch: { tap: 'pole', prompt: '**Tap** Riffle’s pole to run up it.', label: 'Run up the pole.', miss: 'wobble…', next: 'm14' } },
+    m13: { when: { not: { specialty: 'climbing' } }, scene: marsh('mud', [], { prints: true }), card: 'prints-marsh',
+      caption: ['Tiny prints, in a line across the mud.', 'You hold your paw over one. It’s half the size of yours.'], next: 'm15' },
+    m14: { when: { specialty: 'climbing' }, scene: marsh('pole', [me('peer', 'pole-top')], { prints: true }), card: 'prints-tracks',
+      caption: ['From the top, you see where the prints go: off toward the train tracks.'], next: 'm15' },
+    // a frame only some cats read: a noticing cat, a cat who asked the otters first
+    m15: { when: { not: { ch5First: 'heron', not: { specialty: 'noticing' } } },
+      caption: [{ when: { specialty: 'noticing' }, text: 'The same tiny prints as behind the pile!' }, { when: { ch5First: 'otters' }, text: 'Thin fur there. Tiny prints here. The same somebody?' }], next: 'm16' },
+    m16: { scene: marsh('wide', [patience('eye')].concat(onRaft), { dragonfly: 'beak', owed: 9 }), say: [{ who: 'patience', text: 'Seven answers for the otter. Two for the cat.' }], counts: { set: 'ch05-bill', next: 'm17' } },
+    m17: { scene: marsh('wide', [patience(), me('sit', 'raft-1'), riffle('dive', 'raft-2')], { dragonfly: 'beak', pole: 'planted' }), sfx: 'SPLOOSH!', caption: ['He’s already diving.'],
+      say: [{ who: 'player', text: 'Nine twos. Or two nines. Same eighteen!' }, { who: 'riffle', text: 'Back in eighteen fish!' }], next: 'm18' },
+    m18: { scene: marsh('wide', [patience(), me('sit', 'raft-1')], { dragonfly: 'beak', pole: 'planted' }),
+      caption: ['His pole stands in the mud, holding the raft still.', { when: { worry: 'water' }, text: 'Beside the mud, you can see the bottom. You look at it a lot.' }],
+      choice: { options: [{ label: 'Sit still and watch the reeds, like Patience.', next: 'k01' }, { label: 'Count the fish for Riffle, out loud.', next: 'q01' }] } },
+    q01: { scene: marsh('reeds', [patience('shut'), me('sit', 'raft-1', { mood: 'shout' })], { pole: 'planted', frogs: 'jump', pale: 'flinch' }),
+      caption: ['Every frog jumps in. Patience shuts both eyes. One reed flinches.'], say: [{ who: 'player', text: 'ONE! TWO!', kind: 'shout' }], next: 'f01' },
+    k01: { scene: marsh('reeds', [patience(), me('loaf', 'raft-1')], { pole: 'planted', dragonfly: 'beak', pale: 'reed' }), caption: ['Nothing happens. Now and then, a wet head pops up with a fish.'], next: 'k02' },
+    k02: { scene: marsh('reeds', [patience(), me('loaf', 'raft-1')], { pole: 'planted', dragonfly: 'nose', pale: 'reed' }),
+      caption: ['Then the dragonfly leaves Patience’s beak, and lands on your nose. You sat still through the Roar. You can sit still for a dragonfly.', { when: { specialty: 'sneaking' }, text: 'Sock-hunting, all over again.' }],
+      choice: { options: [{ label: 'Keep still.', next: 'k03' }, { label: 'Enough! Count fish for Riffle.', next: 'q02' }] } },
+    q02: { scene: marsh('reeds', [patience(), me('sit', 'raft-1', { mood: 'shout' })], { pole: 'planted', frogs: 'jump', dragonfly: 'none' }), caption: ['The dragonfly leaves. So do the frogs.'], say: [{ who: 'player', text: 'THREE!', kind: 'shout' }], next: 'f01' },
+    k03: { scene: marsh('reeds', [patience(), me('loaf', 'raft-1')], { pole: 'planted', dragonfly: 'nose', pale: 'knees' }), caption: ['Still nothing. But one reed is paler than the others. And reeds don’t have knees.'],
+      choice: { options: [{ label: 'Keep very, very still.', next: 'k04' }, { label: 'Enough! Count fish for Riffle.', next: 'q03' }] } },
+    q03: { scene: marsh('reeds', [patience(), me('sit', 'raft-1', { mood: 'shout' })], { pole: 'planted', frogs: 'jump', pale: 'reed' }), caption: ['When you look back, every reed looks the same.'], say: [{ who: 'player', text: 'FIVE!', kind: 'shout' }], next: 'f01' },
+    k04: { scene: marsh('reeds', [patience(), me('loaf', 'raft-1')], { pole: 'planted', dragonfly: 'nose', pale: 'blink' }), caption: ['The pale reed blinks.', 'It isn’t a reed. It’s a dragonet, pale as mist, standing on one leg.'], next: 'k05' },
+    k05: { scene: marsh('wisp', [{ who: 'wisp', pose: 'shh', mood: 'shy', at: 'reed' }, patience()], { pole: 'planted' }),
+      caption: ['She lays one claw across her snout.', 'Then, slowly, one pale claw draws in the mud.'],
+      say: [{ who: 'patience', text: 'She believes she is a heron. I have not corrected her.' }, { who: 'player', text: 'Sprinkle sent me.', kind: 'whisper' }], counts: { set: 'ch05-wisp', next: 'k06' } },
+    k06: { scene: marsh('wisp', [{ who: 'wisp', pose: 'nod', mood: 'shy', at: 'reed' }, patience()], { pole: 'planted' }),
+      say: [{ who: 'patience', text: 'She fell into my reeds in the storm. She told me her name: Wisp. Not a word since. She stands well.' }], next: 'k07' },
+    k07: { when: { foundPuddle: true }, scene: marsh('wisp', [{ who: 'wisp', pose: 'shh', mood: 'shy', at: 'reed' }, { who: 'puddle', pose: 'nostrils', mood: 'happy', at: 'raft-2' }], { pole: 'planted', snout: true }),
+      caption: ['A blue-grey snout pokes up between the logs.', 'Wisp lays one claw across her snout.'],
+      say: [{ who: 'puddle', name: 'Puddle', text: 'WISP?' }, { who: 'puddle', name: 'Puddle', text: 'I’m a LOG.', kind: 'whisper' }], next: 'k08' },
+    k08: { caption: ['So THAT’s why it’s two.'], say: [{ who: 'patience', text: 'Two fish for every answer. One for me. One for her.' }], next: 'k09' },
+    k09: { scene: marsh('draw', [{ who: 'wisp', pose: 'draw', mood: 'shy', at: 'reed' }], { pole: 'planted', drawing: 'fox' }), card: 'wisp-fox',
+      caption: ['She draws again. A fox. Something small falling from its mouth, with shine lines. A ring of ripples.'], say: [{ who: 'player', text: 'Have you seen anything strange, Wisp?' }], next: 'k10' },
+    k10: { scene: marsh('wisp', [{ who: 'wisp', pose: 'pawup', mood: 'shy', at: 'reed' }], { pole: 'planted' }), sets: { foundWisp: true },
+      caption: ['Where it fell, there’s only deep green water now.', 'Then Wisp holds up one forepaw. You can nearly see the reeds through it.'],
+      skip: { table: 5, groups: 1, who: [{ who: 'wisp' }], thing: 'claw', things: 'claws', label: 'Tap her forepaw.', prompt: '**Tap** her forepaw.', carry: false, next: 'f01' } },
+    f01: { scene: marsh('wide', [patience(), me('sit', 'raft-1'), riffle('scramble', 'raft-2')], { fish: 'strings', pole: 'planted' }), sfx: 'SPLOOSH!',
+      caption: ['Riffle heaves four strings of fish onto the raft, puffing.', { when: { worry: 'shiny' }, text: 'They flash like silver. You try very hard not to stare.' },
+        { when: { specialty: 'swimming', not: { worry: 'water' } }, text: 'You hook the last string aboard. A wet paw! You don’t mind one bit.' }],
+      say: [{ who: 'riffle', text: 'What did I miss?' }, { who: 'player', text: 'A reed with knees.', when: { foundWisp: true } }, { who: 'player', text: 'Frogs.', when: { foundWisp: false } }],
+      counts: { set: 'ch05-catch', next: 'f02' } },
+    f02: { scene: marsh('wide', [patience('gulp')].concat(onRaft), { fish: 'spare', frogs: 'sit' }), sfx: 'Gulp. Gulp. Gulp.',
+      caption: [{ when: { foundWisp: false }, text: 'Down go the fish.' }, { when: { foundWisp: true }, text: 'Down go the fish. One for Patience. One for Wisp.' }],
+      say: [{ who: 'patience', text: 'I am full. You dive well, otter.' }], next: 'f03' },
+    f03: { scene: marsh('heron', [patience('eye'), me('sit', 'raft-1'), riffle('groan', 'raft-2')], { fish: 'spare' }),
+      say: [{ who: 'patience', text: 'One more answer. Free. Ask the one who never shuts his eyes.' }, { who: 'riffle', text: 'Snakes don’t have eyelids. She means COIL. That nosy old thing trades secrets like pebbles.' }], next: 's01' },
+    // the slip: only for a cat who has not found Puddle
+    s01: { when: { foundPuddle: false }, else: 'hb1', scene: river('raft', [me('sit', 'raft-1'), riffle('stand', 'pole', { holds: 'pole' })], { late: true }),
+      say: [{ who: 'riffle', text: 'Heavy today. It’s because of Pud— PUDDLES. Raft puddles. Not a name.' }],
+      choice: { options: [{ label: '“Riffle. What’s under the raft?”', next: 's02' }, { label: '“Puddles. Fine.”', next: 's03' }] } },
+    s02: { scene: river('raft', [riffle('point', 'pole')], { late: true }), say: [{ who: 'riffle', text: 'I promised Granny I wouldn’t TELL. I’m only POINTING.' }], next: 'ub1' },
+    s03: { scene: river('raft', [riffle('stand', 'pole')], { late: true, bubbles: true }), caption: ['Under the logs, something goes blub.'], say: [{ who: 'riffle', text: 'Best friend an otter ever had.' }], next: 'hb1' }
+  });
+  /* ---- the Old Bridge, the den, bedtime */
+  Object.assign(frames, {
+    b01: { scene: bridge('bank', [me('walk', 'bank-left'), riffle('swim', 'bank-right')]), caption: ['At the rocks, Riffle ties up the raft, and swims beside you up the river.', 'You purr at him the whole way.'],
+      say: [{ who: 'riffle', text: 'Worth it.' }], next: 'b02' },
+    b02: { scene: bridge('back', [], { eyes: 'sprinkle' }),
+      caption: [{ when: { ch3Told: true }, text: 'Under the Old Bridge, two big eyes shine. They peek over Tallyheart’s branch.' },
+        { when: { ch3Told: false }, text: 'At the Old Bridge, you check the bank first. No ginger ears. Under the bridge, two big eyes shine.' }],
+      say: [{ who: 'sprinkle', text: 'Tell me EVERYTHING.' }], next: 'b03' },
+    // the news: a line for each dragonet met today, or "anyone new" (with "And Squall." exactly when she met him in chapter 4)
+    b03: { scene: bridge('back', [{ who: 'sprinkle', pose: 'sit', mood: 'wonder', at: 'dragon' }, me('sit', 'beside')]),
+      say: [{ who: 'player', text: 'I didn’t find anyone new today.', when: NONE },
+        { who: 'sprinkle', text: 'You will. You found me.', when: Object.assign({ foundSquall: false }, NONE) },
+        { who: 'sprinkle', text: 'You will. You found me. And Squall.', when: Object.assign({ foundSquall: true }, NONE) },
+        { who: 'player', text: 'I found your littlest brother. He says: five.', when: { ch5Roof: true } },
+        { who: 'player', text: 'Puddle is under the otters’ raft. He says: five. Then he sank.', when: { foundPuddle: true } },
+        { who: 'sprinkle', text: 'He does that.', when: { foundPuddle: true } },
+        { who: 'player', text: 'Wisp is in the reeds, being a heron. She held up five.', when: { foundWisp: true } },
+        { who: 'sprinkle', text: 'My pale sister is the best at hiding. You have to wait till she blinks.', when: NONE }], next: 'b04' },
+    // the mud count: a forepaw for Sprinkle and for every dragonet she has ever met; only when she met one today
+    b04: { when: ANY, scene: bridge('back', [{ who: 'sprinkle', pose: 'draw', mood: 'happy', at: 'dragon' }, me('sit', 'beside')], { mudPaws: 7 }),
+      caption: ['Sprinkle has drawn her six little forepaws in the mud again. Now she draws one more.'], say: [{ who: 'sprinkle', text: 'Mine.' }],
+      skip: { table: 5, paws: 'mud', teacher: 'sprinkle', thing: 'claw', things: 'claws', prompt: '**Tap** a forepaw for everyone you’ve found.',
+        who: [{ who: 'sprinkle' }, { who: 'squall', when: { foundSquall: true } }, { who: 'puddle', when: { foundPuddle: true } }, { who: 'wisp', when: { foundWisp: true } }], next: 'b05' } },
+    b05: { when: ANY, scene: bridge('back', [{ who: 'sprinkle', pose: 'sit', mood: 'happy', at: 'dragon' }, me('sit', 'beside')], { mudPaws: 7 }),
+      say: [{ who: 'sprinkle', text: 'Mama’s count is coming back.', kind: 'whisper' },
+        { who: 'sprinkle', text: 'But my pale sister is the best at hiding. You have to wait till she blinks.', when: { foundWisp: false } }], next: 'b06' },
+    b06: { scene: bridge('back', [{ who: 'sprinkle', pose: 'check', mood: 'wonder', at: 'dragon' }, me('sit', 'beside')]), caption: ['Sprinkle looks down at her own enormous feet.'],
+      say: [{ who: 'player', text: 'Somebody small crosses the marsh every night. With prints half the size of mine.' }, { who: 'sprinkle', text: 'Then they’re VERY small.' }], next: 'd01' },
+    d01: { scene: den('outside', [{ who: 'tallyheart', pose: 'sit', mood: 'proud', at: 'entrance-right', facing: 'left' }, me('sit', 'entrance-left')], { moon: true }, 'dusk'), caption: ['At the den, Tallyheart is waiting.'],
+      say: [{ who: 'tallyheart', text: 'Every warrior in this Clan has sat where you sat today. Glintstar. {Murmur}chime. Me.' }],
+      choice: { options: [{ label: '“Did you jump in?”', sets: {}, next: 'd02' }, { label: '“Were you scared?”', sets: {}, next: 'd02' }] } },
+    d02: { caption: ['She touches her nose to your ear.'], say: [{ who: 'tallyheart', text: 'I counted. Very loudly.' }, { who: 'tallyheart', text: 'And now you’ve sat there too.' }], next: 'd03' },
+    d03: { when: { worry: 'water' }, say: [{ who: 'tallyheart', text: 'And the deep water?' }, { who: 'player', text: 'Still deep. I looked right at it.' }], next: 'd04' },
+    // the telling: every cat reads it, with a pair of balloons more for a noticing cat and another for a climber
+    d04: { caption: ['You tell her about the duck, the fur, the prints, and the two small shapes.'],
+      say: [{ who: 'player', text: 'And the same tiny prints were behind OUR pile. Till a tail swept them.', when: { specialty: 'noticing' } }, { who: 'tallyheart', text: 'A thing to check.', when: { specialty: 'noticing' } },
+        { who: 'player', text: 'And the prints run off toward the train tracks.', when: { specialty: 'climbing' } }, { who: 'tallyheart', text: 'A thing to check.', when: { specialty: 'climbing' } }], next: 'd05' },
+    d05: { say: [{ who: 'player', text: 'And the fox says moon. The heron says no moon.' }, { who: 'tallyheart', text: 'Two stories. One sky. So who’s wrong?' }],
+      choice: { options: [{ label: '“The fox!”', sets: {}, next: 'd06a' }, { label: '“I don’t know yet.”', sets: {}, next: 'd06b' }] } },
+    d06a: { say: [{ who: 'tallyheart', text: 'Maybe. But a counting cat says: not yet.' }], next: 'd07' },
+    d06b: { say: [{ who: 'tallyheart', text: 'Good. That’s the hardest thing to say.' }], next: 'd07' },
+    d07: { caption: [{ when: { specialty: 'noticing' }, text: 'Waffles was up ALL night. With her nerves.' }],
+      say: [{ who: 'tallyheart', text: 'One hole in his story for certain. Maybe two.', kind: 'whisper', when: { ch4CaughtFly: true, ch3Told: true } },
+        { who: 'tallyheart', text: 'Then find me somebody else who was awake when the rain stopped.' }], next: 'd08' },
+    d08: { when: ANY, caption: [{ when: { ch3Told: true }, text: 'Then you whisper the rest.' }, { when: { ch3Told: false }, text: 'You don’t tell her the rest. Your secret is getting bigger.' }],
+      say: [{ who: 'tallyheart', text: 'That is a LOT of dragon. And a lot to check. Together.', when: { ch3Told: true } }], next: 'd09' },
+    d09: { scene: den('nest', [me('lie', 'nest', { mood: 'sleepy' })]), sfx: 'SNNNRRRK.',
+      caption: ['In your nest: skritch, skritch. Today’s bark goes along the mossy edge.', { when: { ch2Stone: 'nose' }, text: 'Riffle’s stone is by your nose.' }, { when: { ch2Stone: 'chin' }, text: 'Riffle’s stone is under your chin.' },
+        'From the prey pile comes a small “Ow.” Then, a little later:'], next: 'd10' },
+    d10: { scene: den('inside', [me('lie', 'nest', { mood: 'sleepy' }), { who: 'snorer', pose: 'lie', mood: 'sleepy', at: 'sleeper-1' }]),
+      say: [{ who: 'snorer', text: '{name}paw? Did you really sit through the Roar?', kind: 'whisper' }, { who: 'player', text: 'Not one claw moved.' }, { who: 'snorer', text: '…Do the paw thing.' }], next: 'd11' },
+    d11: { scene: den('nest', [me('lie', 'nest', { mood: 'sleepy' })]), say: [{ who: 'player', text: 'Nine. Eighteen. Twenty-seven…', kind: 'whisper' }],
+      skip: { table: 9, groups: 5, thing: 'claw', things: 'claws', paws: 'both', prompt: '**Tap** your forepaws.', next: 'd12' } },
+    d12: { caption: ['By forty-five, he’s snoring too.', { when: { foundSquall: false }, text: '…hic! Sprinkle’s littlest brother is still up there.' }], say: [{ who: 'snorer', text: 'That’s a NEW paw thing.' }], next: 'd13' },
+    d13: { scene: { set: 'sky', cam: 'up', cast: [], fx: ['night', 'skyriver'] }, caption: ['Tomorrow: Coil. What does a nosy old snake want for a secret? You hope it isn’t fish.', 'Over the rosebush, the Sky River shines, and you fall asleep.'], next: 'd14' },
+    d14: { caption: ['What did {name}paw dream about, the night {they} sat through the Roar?'], input: { kind: 'dream', next: 'd15' } },
+    d15: { caption: ['End of Chapter Five.'], end: true }
+  });
+
+  return {
+    id: 'ch05', number: 5, title: 'Riffle’s River', start: 'p01',
+    names: { squall: 'The little dragon', puddle: 'The big-footed dragon' },
+    cards: {
+      'prints-pile': { mark: 'eye', line: 'Tiny prints in the dug earth behind the pile.' },
+      'puddle-paws': { mark: 'ear', line: 'Puddle says clever little paws picked up mice on the storm night.', when: { foundPuddle: true } },
+      'otter-fox': { mark: 'ear', line: 'The old otter says the fox told him the dragon story.' },
+      fur: { mark: 'eye', line: 'Thin brown fur at the Crossing. Not cat. Not otter. Not fox.' },
+      // four pairs lie touching, and none is a claim with its answer: a link names its partners itself
+      'heron-no-moon': { mark: 'ear', line: 'Patience says there was NO moon on the storm night.', link: { with: ['fox-moon'], line: 'One of them is wrong.' } },
+      'heron-shapes': { mark: 'ear', line: 'Patience says two small shapes crossed her mud, carrying something.', link: { with: ['squall-shapes'], line: 'Two saw them. The same two shapes?' } },
+      'prints-marsh': { mark: 'eye', line: 'Tiny prints in the marsh mud. Much smaller than a cat’s.', link: { with: ['prints-pile'], line: 'The same prints.' } },
+      'prints-tracks': { mark: 'eye', line: 'The tiny prints run toward the train tracks.', link: { with: ['squall-shapes'], line: 'Both lead toward the tracks.' } },
+      'wisp-fox': { mark: 'ear', line: 'Wisp drew a fox dropping something glittering in the reeds.', when: { foundWisp: true } }
+    },
+    frames: frames,
+    counts: {
+      'ch05-pile': {
+        table: 10, thing: 'piece', things: 'pieces', unit: 'row', units: 'rows', teacher: 'tallyheart',
+        picture: { kind: 'prey', layout: 'rows' },
+        facts: [{ a: 3, b: 10, light: 'rows', check: true,
+          prompt: [{ kind: 'caption', text: 'You walk along the rows. One full row. Two. Three. How many pieces in three rows of ten?' }], retryPrompt: 'Three rows of ten. How many pieces?' }],
+        ask: '{a} × {b}', praise: [], ground: 'earth',
+        helpIntro: ROW_HELP, helpIntroNotTen: ROW_ZERO,
+        fillFrom: 'ch04-tens', fillOrder: 'easiest', avoid: [[5, 10], [4, 10]], fillIntro: 'One from yesterday.',
+        miss: 'There. We’ll come back to that one.', missLast: 'There. Now you’ve seen it counted.', again: ['There it is. You remembered that one.'],
+        done: null
+      },
+      'ch05-tens': {
+        table: 10, thing: 'front claw', things: 'front claws', unit: 'cat', units: 'cats', teacher: 'tallyheart',
+        facts: [[10, 7], { a: 5, b: 10, who: RIM, prompt: ['Five cats, ten front claws each. How many front claws?'], retryPrompt: true, right: ['Fifty!'], rightAgain: true }],
+        // the hard slot is the first question here, and its `avoid` is its own: 4 × 10 may be the hard pick, never a borrowed one
+        warmHard: { table: 10, at: 0, avoid: [[5, 10], [3, 10]] },
+        avoid: [[5, 10], [3, 10], [4, 10]],
+        fillFrom: 'ch04-tens', fillOrder: 'easiest', fillIntro: 'One from yesterday.',
+        ask: '{a} × {b}',
+        praise: ['Yes! Ten front claws on every cat.', 'Hopping by tens, like a real hunter.', 'Tens are friendly, aren’t they?', 'Hop, hop, hop!', 'You hopped it!'],
+        fast: ['You didn’t even have to hop that time.', 'Quick as a pounce!', 'You knew that one before I finished asking.'],
+        fastAfterMiss: ['Ha! You didn’t even look at the scratches that time.'],
+        helpIntro: TENS_HELP, helpIntroFar: TENS_HELP.replace(/^Close\. /, ''),
+        helpIntroNotTen: 'Remember: hopping by tens, every number ends in a zero. Let’s scratch it out together.',
+        miss: 'There. We’ll come back to that one.', missLast: 'There. Now you’ve seen it counted.',
+        remembered: 'Yesterday, {a} × {b} made you stop and think. Not today!',
+        rememberedSlow: '{a} × {b} again, and you got it. It’s getting easier.',
+        done: null
+      },
+      'ch05-nines': {
+        table: 9, thing: 'life', things: 'lives', unit: 'cat', units: 'cats', teacher: 'tallyheart',
+        label: 'Nine lives', hollowThings: 'nines',
+        // the hop and the tuck, on every first ask and every retry; its own gaps filled with the easiest
+        light: 'tuck', fillOrder: 'easiest',
+        facts: [
+          { a: 2, b: 9, who: RIM.slice(0, 2), right: ['Eighteen! Hop, then tuck.'], rightAgain: ['Eighteen! One and eight. There’s your nine.'] },
+          { a: 9, b: 10, prompt: 'Ten cats. Ten tens make a hundred. Now tuck ten in.', retryPrompt: true, right: ['Ninety! Yesterday it was nine cats, ten claws each. Same ninety!'], rightAgain: true },
+          { a: 4, b: 9, prompt: 'Four cats. Hop by tens. Then tuck four in.', retryPrompt: true,
+            right: ['Thirty-six! Now look. Three and six make nine. {also}Every nines answer hides a nine!'],
+            rightAgain: ['Thirty-six! Three and six. There’s your nine.'],
+            miss: 'Thirty-six. Now look. Three and six make nine. {also}Every nines answer hides a nine! We’ll come back to that one.',
+            missLast: 'Thirty-six. Now look. Three and six make nine. {also}Every nines answer hides a nine!',
+            shows: { kind: 'answers', of: [[2, 9]], also: 'One and eight make nine. ' } },
+          [9, 1],
+          { a: 9, b: 6, prompt: 'Six cats. Six tens make sixty. Now tuck six in.', retryPrompt: true, right: ['Fifty-four! Five and four. There’s your nine.'], rightAgain: true },
+          [3, 9], [9, 8], [5, 9], [7, 9],
+          { a: 9, b: 9, right: [{ who: 'tallyheart', text: 'EIGHTY-ONE!' }, { who: 'murmurchime', text: 'Not mice.' }], rightAgain: true }
+        ],
+        firstPrompt: 'Two cats. Hop by tens: twenty. Now tuck two in. How many lives?',
+        ask: '{a} × {b}',
+        praise: ['Yes! Nine lives on every cat.', 'Tens, with a claw tucked in. That’s all a nine is.', 'You tucked it!', 'Hop, hop, tuck!', 'Hop, then tuck!'],
+        fast: ['You didn’t even have to hop that time.', 'Quick as a pounce!', 'You knew that one before I finished asking.'],
+        fastAfterMiss: ['Ha! You didn’t even look at the scratches that time.'],
+        helpIntro: NINES_HELP, helpIntroFar: NINES_HELP.replace(/^Close\. /, ''),
+        helpIntroTens: 'That’s the hop! Now the tuck: one claw in for every cat.',
+        helpIntroOneTuck: 'So close! You tucked ONE claw. Tuck one in for every cat.',
+        helpIntroNotNine: 'Remember: the two numbers in a nines answer make nine. Let’s scratch it out together.',
+        miss: 'There. We’ll come back to that one.', missLast: 'There. Now you’ve seen it counted.',
+        remembered: 'Last time, {a} × {b} made you stop and think. Not today!',
+        done: 'That’s the nines.'
+      },
+      'ch05-otter': Object.assign({}, FISH, {
+        table: 2, thing: 'fish', things: 'fish', unit: 'answer', units: 'answers',
+        picture: { kind: 'fish', layout: 'pairs', thought: true },
+        facts: [{ a: 7, b: 2, prompt: [{ who: 'riffle', text: 'How many fish is THAT?' }], retryPrompt: 'Seven answers, two fish for every answer. How many fish?',
+          right: [{ who: 'riffle', text: 'FOURTEEN?' }, { who: 'riffle', text: 'For YES and NO?' }], rightAgain: true }],
+        helpIntro: 'Scratch it on the log! Two for every answer.', fillFrom: 'ch02-ears'
+      }),
+      'ch05-bill': Object.assign({}, FISH, {
+        table: 2, thing: 'fish', things: 'fish', unit: 'answer', units: 'answers',
+        picture: { kind: 'fish', layout: 'pairs', thought: true },
+        facts: [{ a: 9, b: 2, prompt: [{ who: 'patience', text: 'Nine answers.' }, { who: 'patience', text: 'Two fish for every answer.' }, { kind: 'caption', text: 'How many fish?' }],
+          retryPrompt: 'Nine answers, two fish for every answer. How many fish?',
+          right: [{ who: 'patience', text: 'Eighteen.' }, { who: 'patience', text: 'Before sunset.' }], rightAgain: true }],
+        helpIntro: 'Scratch it on the log! Two for every answer.', fillFrom: 'ch02-ears', avoid: [[7, 2]]
+      }),
+      'ch05-catch': Object.assign({}, FISH, {
+        table: 5, thing: 'fish', things: 'fish', unit: 'string', units: 'strings',
+        picture: { kind: 'fish', layout: 'strings' }, light: 'groups',
+        facts: [{ a: 4, b: 5, prompt: [{ kind: 'caption', text: 'Four strings, five fish on every string. How many fish?' }], retryPrompt: true,
+          right: [{ who: 'riffle', text: 'TWENTY!' }, { who: 'player', text: 'Eighteen for Patience. Two to spare.' }], rightAgain: true }],
+        helpIntro: 'Scratch it on the log! Five for every string.', fillFrom: 'ch03-claws', avoid: [[5, 5]]
+      }),
+      'ch05-puddle': {
+        table: 10, thing: 'bump', things: 'bumps', unit: 'log', units: 'logs', teacher: 'puddle',
+        picture: { kind: 'bumps' },
+        facts: [{ a: 4, b: 10, prompt: 'Four logs in this raft. I’ve bumped my head ten times on every one. How many bumps?', retryPrompt: 'Four logs, ten bumps on every one. How many bumps?',
+          right: [{ who: 'puddle', text: 'FORTY!' }, { who: 'puddle', text: 'No wonder it hurts.' }], rightAgain: true }],
+        // the help lights his own bump stars a log at a time, and she hops; nothing is scratched under a raft
+        help: 'picture', helpCounter: 'you', helpIntro: 'Count my bumps! You hop!',
+        fillFrom: 'ch04-tens', fillOrder: 'easiest', fillVoice: 'borrower', fillPicture: 'borrower', avoid: [[4, 10], [5, 10]], fillIntro: 'Do another one!',
+        againIntro: 'My bumps again!',
+        ask: '{a} × {b}',
+        praise: ['YES!', 'You’re GOOD at bumps!'], again: ['You DID it!'],
+        miss: 'There! Let’s do that one again.', missLast: 'There! All my bumps, counted.',
+        done: null
+      },
+      'ch05-wisp': {
+        // a silent set: nobody speaks in it but Patience, once; every other line is a caption
+        table: 1, thing: 'leg in the water', things: 'legs in the water', unit: 'heron', units: 'herons', teacher: 'caption',
+        picture: { kind: 'herons' },
+        facts: [{ a: 7, b: 1, prompt: [{ kind: 'caption', text: 'Seven herons, each standing on one leg. How many legs in the water?' }], retryPrompt: true,
+          right: [{ kind: 'caption', text: 'She nods. Once.' }], rightAgain: true }],
+        help: 'picture', helpCounter: 'you', helpSays: 'patience', helpIntro: 'Look again. One leg each.',
+        fillFrom: 'ch01-tails', fillOrder: 'easiest', fillVoice: 'borrower', fillPicture: 'borrower', avoid: [[1, 1], [4, 1]], fillIntro: 'She draws another one.',
+        againIntro: 'She taps the seven herons again.',
+        ask: '{a} × {b}',
+        praise: [], again: ['She nods.'],
+        miss: 'She points at them again.', missLast: 'She counts them with you, one by one.',
+        done: null
+      }
+    },
+    book: {
+      title: '{name}paw’s First Moon',
+      recap: [
+        { text: 'On {name}paw’s fourth morning, the old tom was guarding the pile with his eyes shut and a snail on his ear, and four more pieces were gone: sixteen in four nights.' },
+        { text: 'Tallyheart taught {name}paw {their} fifth Count, nine lives: a ten with one claw tucked in.' },
+        { when: { ch5Roof: true }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who told {them} about two skinny shapes that go to the tracks every night.' },
+        { text: '{name}paw sat through the Roar, the apprentices’ courage test, on the otters’ raft, and did not move one of nine claws. Tallyheart counted.' },
+        { when: { foundPuddle: true }, text: 'Under the raft {they} found Puddle, who has four big feet and says he is a log. Puddle saw clever little paws picking up mice on the storm night.' },
+        { text: 'The old ferry otter said the fox had told him the dragon story, twice, and showed {name}paw a tuft of thin brown fur.' },
+        { text: 'Patience the heron said there was no moon on the storm night, and that two small shapes crossed her mud. There were tiny prints in it. It cost eighteen fish.' },
+        { when: { foundWisp: true }, text: '{name}paw sat still until a pale reed blinked. It was Wisp, who stands on one leg like a heron, and drew a fox dropping something glittering in the reeds.' },
+        { when: ANY, text: 'Under the Old Bridge, Sprinkle lit a forepaw for everyone found so far. Mama’s count is coming back.' },
+        { text: 'That night, Tallyheart said every warrior has sat through the Roar. She counted through hers, very loudly.' }
+      ],
+      noDream: '{name}paw’s dream that night floated off down the river.',
+      dragonet: [
+        { id: 'puddle', name: 'Puddle', when: { foundPuddle: true }, pose: 'head',
+          lines: ['Blue-grey, with feet much too big for him. He says he is a log.', '{name}paw found him under the otters’ ferry raft. Mama says: stay where you land.', 'He says five, and then he sinks. He always pops up again. Five more claws, counted.'] },
+        { id: 'wisp', name: 'Wisp', when: { foundWisp: true }, pose: 'blink',
+          lines: ['So pale you can nearly see the reeds through her. She thinks she is a heron.', '{name}paw found her in Patience’s reeds, by keeping very, very still.', 'She stands on one leg, and draws what she has seen. Five more claws, counted.'] }
+      ]
+    },
+    teaser: { title: 'Chapter 6: The Snake in the Stones', lines: ['Tomorrow, you ask a nosy old snake what a secret costs.', 'And Tallyheart counts out guards for the pile.'] }
+  };
+}
+
 chapters.chapter3 = chapter3;
 chapters.chapter4 = chapter4;
+chapters.chapter5 = chapter5;
 module.exports = chapters;

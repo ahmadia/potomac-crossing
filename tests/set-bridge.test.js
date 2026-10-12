@@ -92,7 +92,8 @@ test('bridge: the build.md row and the set agree (every name in the row exists)'
 
 test('bridge: defaults are day, no train, no eyes, drag marks and drips on; chapter 3\'s props off', () => {
   const info = art.sceneInfo('bridge');
-  assert.deepEqual(info.defaults, { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false });
+  // (chapter 5's `mudPaws` is off too: 0)
+  assert.deepEqual(info.defaults, { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0 });
   const plain = render('back', {}).svg, none = render('back', { eyes: 'none', drag: true, drips: true, train: false }).svg;
   assert.equal(strip(plain).length, strip(none).length, 'an empty opts is the defaults');
 });
@@ -730,4 +731,271 @@ test('bridge (chapter 4): whatever chapter 4 puts under the bridge renders, and 
     if (sc.opts && sc.opts.pawsIn) assert.equal(sc.opts.pawsIn, 'both', fid + ': the thirty-claw promise is six forepaws (three friends, ten claws each)');
     if (sc.opts && sc.opts.pawsIn) assert.equal(sc.cam, 'paws', fid + ': pawsIn belongs to the paws camera');
   }
+});
+
+// ================================================================ chapter 5 (docs/chapters/05-riffles-river.md, "Art needs",
+// "Places from before", and "Build", "Sets and options"): the Old Bridge at sunset. `bank` with Riffle
+// swimming alongside (the anchor `water`); `back` with the seven little forepaws in the mud (`mudPaws`).
+
+const TEXT5 = path.join(ROOT, 'docs/chapters/05-riffles-river.md');
+const same5 = (a, b) => strip(a) === strip(b);   // (assert.ok on this: a failed assert.equal would print both pictures)
+const sha12 = (x) => crypto.createHash('sha1').update(x).digest('hex').slice(0, 12);
+// The box of everything a piece of markup draws, in world units: path data (absolute and relative
+// commands, control points counted), ellipses, circles and rects; transforms are not applied.
+function pathBox(d, box) {
+  const toks = d.match(/[a-zA-Z]|-?\d*\.?\d+(?:e-?\d+)?/g) || [];
+  let i = 0, x = 0, y = 0, sx = 0, sy = 0, cmd = '';
+  const num = () => +toks[i++];
+  const see = (px, py) => { box.x0 = Math.min(box.x0, px); box.x1 = Math.max(box.x1, px); box.y0 = Math.min(box.y0, py); box.y1 = Math.max(box.y1, py); };
+  while (i < toks.length) {
+    if (/[a-zA-Z]/.test(toks[i])) cmd = toks[i++];
+    const rel = cmd === cmd.toLowerCase(), c = cmd.toUpperCase();
+    if (c === 'Z') { x = sx; y = sy; continue; }
+    if (c === 'H') { x = rel ? x + num() : num(); see(x, y); continue; }
+    if (c === 'V') { y = rel ? y + num() : num(); see(x, y); continue; }
+    if (c === 'A') { i += 5; const ax = num(), ay = num(); x = rel ? x + ax : ax; y = rel ? y + ay : ay; see(x, y); continue; }
+    const pairs = c === 'C' ? 3 : c === 'Q' || c === 'S' ? 2 : 1;
+    let nx = x, ny = y;
+    for (let k = 0; k < pairs; k++) { const px = num(), py = num(); nx = rel ? x + px : px; ny = rel ? y + py : py; see(nx, ny); }
+    x = nx; y = ny;
+    if (c === 'M') { sx = x; sy = y; cmd = rel ? 'l' : 'L'; }
+  }
+  return box;
+}
+function boxOf(markup) {
+  const box = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  for (const m of markup.match(/ d="[^"]+"/g) || []) pathBox(m.slice(4, -1), box);
+  return Object.assign(box, { w: box.x1 - box.x0, h: box.y1 - box.y0, cx: (box.x0 + box.x1) / 2, cy: (box.y0 + box.y1) / 2 });
+}
+// the markup of the one <g data-art="name" …>…</g> (nesting counted), or ''
+function groupNamed(svg, name) {
+  const start = svg.indexOf('<g data-art="' + name + '"');
+  if (start < 0) return '';
+  const re = /<g\b[^>]*>|<\/g>/g;
+  re.lastIndex = start;
+  let depth = 0, m;
+  while ((m = re.exec(svg))) { if (m[0] === '</g>') { if (--depth === 0) return svg.slice(start, re.lastIndex); } else depth++; }
+  return '';
+}
+const mudPawsOf = (svg) => (groupNamed(svg, 'mud-paws').match(/<g data-paw="mud"[^>]*>.*?<\/g>/g) || []).map((p) => Object.assign(boxOf(p), { own: /data-own="sprinkle"/.test(p), claws: count(p, /data-claw="mud"/g) }));
+const hit = (a, b, pad) => a.x0 < b.x1 + pad && a.x1 > b.x0 - pad && a.y0 < b.y1 + pad && a.y1 > b.y0 - pad;
+
+test('bridge (chapter 5): chapters 2 to 4 keep their bridge: every picture they draw here, with nobody in it, to the byte', () => {
+  // sha1 of the markup (ids stripped) and the keep list, recorded from the chapter 4 build; one for each
+  // different scene (camera, options, light), under the first frame that uses it
+  const GOLD = {
+    'ch02:f046': '6444cdd7333c', 'ch02:f048': '5d67e345371b', 'ch02:f050': 'a5ddc91c442e', 'ch02:f087a': 'bf241abce0fb',
+    'ch02:f088a': 'bf241abce0fb', 'ch02:f090a': '8696f13a3304', 'ch02:f091a': '1f2b856dbfec', 'ch02:f092a': '06deb02cbdbe',
+    'ch03:f042': 'd360a673df09', 'ch03:f043': '31e73fe59018', 'ch03:f044a': '67045f8acec9', 'ch03:f051': '99eddc8778ff', 'ch03:f052': '0ecc67e629dc',
+    'ch03:f053': '0c2a38c617f1', 'ch03:f066': '7b2923884eab', 'ch03:f083': '7a3409903ae8', 'ch03:f084': 'e0c6b839938d', 'ch03:f085': 'f16049e22677',
+    'ch03:f086': 'c5c9e851c058', 'ch03:f095a': 'd8dba5ac712d', 'ch03:f099b': 'b443b8839c49', 'ch04:f090': '31a0a0b276d8',
+    'ch04:f103': '642cb145a442', 'ch04:f104': '25b4beb4c109'
+  };
+  for (const [key, want] of Object.entries(GOLD)) {
+    const [id, fid] = key.split(':'), sc = PC.story[id].frames[fid].scene;
+    assert.equal(sc.set, 'bridge', key);
+    const fx = (sc.fx || []).filter((f) => ['morning', 'day', 'sunset', 'dusk', 'night'].includes(f));
+    const r = art.render({ set: sc.set, cam: sc.cam, opts: sc.opts, cast: [], fx }, { look: LOOK });
+    assert.equal(sha12(strip(r.svg) + JSON.stringify(r.keep)), want, key + ' (' + sc.cam + ' ' + JSON.stringify(sc.opts || {}) + '): drawn as it was');
+  }
+  // none of their frames asks for anything of chapter 5's, and none draws it; nobody of theirs is in the river
+  let n = 0;
+  for (const id of ['ch02', 'ch03', 'ch04']) for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+    const sc = f.scene;
+    if (!sc || sc.set !== 'bridge') continue;
+    n++;
+    assert.ok(!(sc.opts && 'mudPaws' in sc.opts), id + ' ' + fid + ': no mudPaws');
+    assert.ok(!(sc.cast || []).some((m) => m.at === 'water'), id + ' ' + fid + ': nobody at `water`');
+    const svg = art.render(sc, { look: LOOK }).svg;
+    assert.ok(!/data-art="(mud-paws|swim)"|data-paw="mud"/.test(svg), id + ' ' + fid + ': no forepaws in the mud, no swimmer\'s water');
+  }
+  assert.ok(n >= 100, 'chapters 2 to 4 visit the bridge: ' + n);
+  // `mudPaws` off is nothing at all, on every camera; and the spots they stand on have not moved
+  for (const cam of CAMS) for (const off of [0, false, null, 'none']) assert.ok(same5(render(cam, { mudPaws: off, prints: true }).svg, render(cam, { prints: true }).svg), cam + ': mudPaws ' + JSON.stringify(off));
+  const A = art.sceneInfo('bridge').anchors;
+  assert.deepEqual([A.main['bank-left'], A.main['bank-right'], A.main.reeds, A.main.edge, A.back.dragon, A.back.beside, A.back['back-left'], A.back['back-right'], A.back.near, A.under.mud].map((a) => [a.x, a.y, a.h]),
+    [[300, 930, 285], [1250, 936, 285], [1000, 880, 240], [330, 772, 176], [1040, 820, 260], [1150, 850, 290], [560, 900, 340], [1430, 885, 325], [360, 1000, 440], [640, 900, 320]]);
+});
+
+test('bridge (chapter 5): the text\'s notes name what the set has: `bank` with Riffle swimming alongside, `back` at sunset, `mudPaws: 7`', () => {
+  const md = fs.readFileSync(TEXT5, 'utf8').replace(/\s+/g, ' ');
+  // (the names the notes fix, short enough to survive an editor's round on the words around them)
+  for (const want of ['on `back`, `mudPaws: 7`', 'the Old Bridge `bank` (Riffle swimming alongside)', '`back` at sunset', 'seven little forepaws']) assert.ok(md.includes(want), 'the notes say: ' + want);
+  const v = art.vocab.sets.bridge, info = art.sceneInfo('bridge');
+  assert.deepEqual(v.opts.mudPaws, [0, 6, 7]);
+  assert.equal(info.defaults.mudPaws, 0);
+  assert.deepEqual(v.cams, CAMS, 'no new camera: the bank and the back are chapter 2\'s and 3\'s');
+  // `water`: on the bank's composition only (the other cameras cannot see the river she walks beside)
+  assert.ok(v.anchors.includes('water'));
+  for (const comp of Object.keys(info.anchors)) assert.equal(!!info.anchors[comp].water, comp === 'main', comp + ': water');
+  assert.deepEqual(render('mouth', {}, [{ who: 'riffle', at: 'water', pose: 'swim' }]).heads, [null], 'out of sight from the mouth');
+});
+
+test('bridge (chapter 5): `water`: Riffle swims alongside, in the river just off the bank where the reeds part; the river closes over him, never over the mud', () => {
+  const A = art.sceneInfo('bridge').anchors.main, a = A.water;
+  // beyond the bank's edge, further off than the reeds, nearer than the dark's mouth: sized by the bank's own depth
+  assert.ok(a.y < A.reeds.y - 30 && a.y > A.edge.y + 30, 'in the river: ' + a.y);
+  assert.ok(a.h < A.reeds.h && a.h > A.edge.h, 'further off than the reeds, nearer than the shadow\'s edge: ' + a.h);
+  const perY = (A['bank-left'].h - A.edge.h) / (A['bank-left'].y - A.edge.y), want = A.edge.h + perY * (a.y - A.edge.y);
+  assert.ok(Math.abs(a.h - want) / want < 0.12, 'on the bank\'s own depth line: ' + a.h + ' vs ' + want.toFixed(0));
+  // alongside: left of the cat walking the bank at `bank-right`, ahead of her (they are going upriver, toward the bridge)
+  assert.ok(a.x < A['bank-right'].x - 200 && a.x > 700, 'beside her, a little ahead: ' + a.x);
+  assert.equal(a.face, 'left', 'heading upriver, toward the bridge');
+  // where the reeds part (the gap where something came up out of the river): a clear view of him
+  assert.ok(Math.abs(a.x - 925) < 60, 'in the gap in the reeds');
+  const cast = [{ who: 'riffle', at: 'water', pose: 'swim', mood: 'happy', facing: 'left' }, { who: 'player', at: 'bank-right', pose: 'walk', mood: 'happy', facing: 'left' }];
+  for (const fx of [['sunset'], ['day'], ['dusk'], ['night'], art.vocab.fx.slice()]) {
+    const r = render('bank', {}, cast, fx);
+    checkRender(r, cast, 'bank, swimming alongside, ' + fx.join('+'));
+    assert.ok(r.heads[0] && r.heads[1], 'both in sight');
+    // his head is out on the river: above the walker's feet, left of her, in the middle band of the panel
+    assert.ok(r.heads[0].x < r.heads[1].x - 8 && r.heads[0].y > 55 && r.heads[0].y < 90, 'out on the river beside her: ' + JSON.stringify(r.heads));
+  }
+  // the river closes over him: the same water, clipped to a patch at his waterline, drawn after him, with rings
+  const svg = render('bank', {}, cast, ['sunset']).svg, dry = render('bank', {}, [cast[1]], ['sunset']).svg;
+  const cover = groupNamed(svg, 'swim');
+  assert.ok(cover && !groupNamed(dry, 'swim'), 'the swimmer\'s water, only when somebody swims');
+  assert.ok(svg.includes('-c-brswim"') && svg.includes('-c-brswimedge"') && !dry.includes('-c-brswim'), 'its clips');
+  const riffleAt = svg.indexOf('translate(' + a.x + ' ' + a.y + ') scale(');
+  assert.ok(riffleAt > 0 && riffleAt < svg.indexOf('<g data-art="swim"'), 'drawn after him: he is in the water, not on it');
+  assert.ok(count(cover, /stroke-dasharray/g) >= 3, 'rings round him');
+  // never over the mud: the patch is clipped to the river side of the bank's edge (the edge clip runs along the bank)
+  const edge = new RegExp('<clipPath id="[^"]*-c-brswimedge"><path d="([^"]+)"').exec(svg)[1], eb = boxOf(' d="' + edge + '"');
+  assert.ok(eb.x0 <= 0 && eb.x1 >= 1600 && eb.y1 > 860 && eb.y1 < 900 && eb.y0 < 600, 'the river\'s side of the bank: ' + JSON.stringify(eb));
+  const patch = boxOf(' d="' + new RegExp('<clipPath id="[^"]*-c-brswim"><path d="([^"]+)"').exec(svg)[1] + '"');
+  assert.ok(patch.y0 > a.y - a.h * 0.12 && patch.y0 < a.y, 'an otter swimming shows all of himself above the water: only his bottom edge goes under');
+  // anyone else sits deeper (a custom pose, a cat): never dry on the surface
+  const deep = boxOf(' d="' + new RegExp('<clipPath id="[^"]*-c-brswim"><path d="([^"]+)"').exec(render('bank', {}, [{ who: 'otter', variant: 2, at: 'water', pose: 'stand' }], ['day']).svg)[1] + '"');
+  assert.ok(deep.y0 < patch.y0 - a.h * 0.15, 'standing in the river, the water comes higher');
+  // he and his water are drawn before everyone on the bank, whatever the cast's order (z: 'behind'): his river
+  // never lies over a cat who stands between him and us
+  assert.equal(a.z, 'behind');
+  for (const order of [[0, 1], [1, 0]]) {
+    const both = [{ who: 'riffle', at: 'water', pose: 'swim' }, { who: 'player', at: 'reeds', pose: 'sit' }], c2 = order.map((i) => both[i]);
+    const sv = render('bank', {}, c2, ['sunset']).svg, cat = sv.indexOf('translate(' + A.reeds.x + ' ' + A.reeds.y + ') scale(');
+    assert.ok(sv.indexOf('<g data-art="swim"') > 0 && sv.indexOf('<g data-art="swim"') < cat, 'the swimmer and his water, then the cat in the reeds (cast order ' + order + ')');
+  }
+  // the reeds that stand between him and us are drawn again in front of him (with the drag marks off, the reeds do not part)
+  assert.ok(cover.includes('-c-brswimreeds)'), 'reeds in front');
+  for (const drag of [true, false]) checkRender(render('bank', { drag }, cast, ['sunset']), cast, 'bank drag ' + drag);
+  // every otter pose there renders; the same picture every time; nobody in the water changes nothing else
+  for (const pose of art.vocab.otherPoses.riffle) checkRender(render('bank', {}, [{ who: 'riffle', at: 'water', pose }], ['sunset']), [1], 'water ' + pose);
+  assert.ok(same5(render('bank', {}, cast, ['sunset']).svg, render('bank', {}, cast, ['sunset']).svg), 'deterministic');
+});
+
+test('bridge (chapter 5): the bank at sunset: the sunset sky over the river, the dark under the near end still dark, everyone on the bank in sight', () => {
+  const pal = art.kit.PAL, cast = [{ who: 'player', at: 'bank-left', pose: 'sit', mood: 'wonder' }, { who: 'riffle', at: 'water', pose: 'swim' }, { who: 'tallyheart', at: 'bank-right', pose: 'sit' }];
+  const sun = render('bank', {}, cast, ['sunset']), day = render('bank', {}, cast, ['day']);
+  checkRender(sun, cast, 'bank at sunset');
+  assert.ok(sun.svg.includes(pal.sunset.sky[0]) && !sun.svg.includes(pal.day.sky[0]), 'the sunset sky');
+  assert.ok(day.svg.includes(pal.day.sky[0]), 'by day unless the frame says');
+  assert.deepEqual(sun.heads, day.heads, 'nobody moves with the light');
+  sun.heads.forEach((h) => assert.ok(h));
+  // the same bank: nothing added or taken away by the light
+  const shapes = (svg) => count(svg, /<(path|rect|ellipse|circle)\b/g);
+  assert.equal(shapes(render('bank', {}, [], ['sunset']).svg), shapes(render('bank', {}, [], ['day']).svg));
+  // the sun has come down: behind the truss at sunset, going behind the far shore at dusk; by day (and at night,
+  // when there is none) the bank is as chapters 2 to 4 drew it
+  const sunAt = (fx) => { const m = /<circle cx="([\d.]+)" cy="([\d.]+)" r="[\d.]+" fill="url/.exec(render('bank', {}, [], fx).svg); return m ? [+m[1], +m[2]] : null; };
+  assert.deepEqual(sunAt(['day']), [1430, 130], 'the high sun by day');
+  const set = sunAt(['sunset']), dusk = sunAt(['dusk']);
+  assert.ok(set[1] > 360 && set[1] < 470 && set[0] > 1000 && set[0] < 1500, 'at sunset the sun is behind the iron truss: ' + set);
+  assert.ok(dusk[1] > set[1] + 100 && dusk[1] < 600, 'at dusk it is going behind the far shore: ' + dusk);
+});
+
+test('bridge (chapter 5): mudPaws: little forepaws drawn in the mud in front of Sprinkle\'s spot: chapter 3\'s six again, and with 7 her own; a palm and five claw marks each', () => {
+  const A = art.sceneInfo('bridge').anchors.back;
+  const seven = render('back', { mudPaws: 7, prints: true }, [], ['sunset']), six = render('back', { mudPaws: 6, prints: true }, [], ['sunset']);
+  const P7 = mudPawsOf(seven.svg), P6 = mudPawsOf(six.svg);
+  assert.equal(P7.length, 7, 'seven little forepaws');
+  assert.equal(P6.length, 6, 'six, before she adds her own');
+  assert.ok(/<g data-art="mud-paws" data-count="7">/.test(seven.svg) && /<g data-art="mud-paws" data-count="6">/.test(six.svg));
+  for (const p of P7.concat(P6)) assert.equal(p.claws, 5, 'five claw marks a forepaw');
+  // four above three, as the mud count's own picture lays seven (chapter 3's mud picture, two rows)
+  const rows = (P) => { const mid = (Math.min(...P.map((p) => p.cy)) + Math.max(...P.map((p) => p.cy))) / 2; return [P.filter((p) => p.cy < mid).sort((a, b) => a.cx - b.cx), P.filter((p) => p.cy >= mid).sort((a, b) => a.cx - b.cx)]; };
+  const [top, bot] = rows(P7);
+  assert.deepEqual([top.length, bot.length], [4, 3], 'four above three');
+  for (let i = 1; i < top.length; i++) assert.ok(top[i].x0 > top[i - 1].x1 - 2, 'side by side, none on another');
+  for (let i = 1; i < bot.length; i++) assert.ok(bot[i].x0 > bot[i - 1].x1 - 2);
+  assert.ok(Math.min(...bot.map((p) => p.y0)) > Math.max(...top.map((p) => p.y1)) - 6, 'the rows apart');
+  // the six are the same six, with or without the seventh; the seventh is her own: the first, top left, nearest her claw
+  const own = P7.filter((p) => p.own);
+  assert.equal(own.length, 1, 'one is her own');
+  assert.ok(own[0] === P7.find((p) => p.cx === top[0].cx), 'the first of the top row');
+  assert.equal(P6.filter((p) => p.own).length, 0, 'not there yet with six');
+  const rest = P7.filter((p) => !p.own);
+  rest.forEach((p, i) => assert.ok(Math.abs(p.cx - P6[i].cx) < 0.01 && Math.abs(p.cy - P6[i].cy) < 0.01, 'the same six: ' + i));
+  assert.ok(own[0].cx < Math.min(...rest.map((p) => p.cx)), 'the new one is the one nearest Sprinkle (she sits at the left of them, facing in)');
+  // little: each much smaller than one of her own big prints beside the drag marks ("her own enormous feet")
+  const prints = groupsOf(seven.svg, 'print').map((g) => boxOf(g)), big = Math.max(...prints.map((b) => Math.max(b.w, b.h)));
+  for (const p of P7) assert.ok(p.w < big * 0.8 && p.w > 50 && p.w < 110, 'a little forepaw, big enough to see: ' + p.w.toFixed(0) + ' (her print: ' + big.toFixed(0) + ')');
+  // on the floor in front of her spot: below her feet and the feet of whoever sits beside her, inside the panel
+  const all = boxOf(groupNamed(seven.svg, 'mud-paws').replace(/<path d="[^"]+" fill="#[0-9a-f]+"[^>]*\/>/g, ''));
+  const box = { x0: Math.min(...P7.map((p) => p.x0)), x1: Math.max(...P7.map((p) => p.x1)), y0: Math.min(...P7.map((p) => p.y0)), y1: Math.max(...P7.map((p) => p.y1)) };
+  assert.ok(box.y0 > A.dragon.y + 40 && box.y0 > A.beside.y + 20 && box.y1 < 985, 'in front of her and of the cat at her side: ' + JSON.stringify(box));
+  assert.ok(box.x0 > A.dragon.x - 140 && box.x1 < A['back-right'].x - A['back-right'].h * 0.36, 'under her nose, clear of whoever sits at the right: ' + JSON.stringify(box));
+  assert.ok(box.x0 > A['back-left'].x + A['back-left'].h * 0.5, 'clear of whoever sits at the left');
+  assert.ok(all.x0 > 0, 'whole');
+  // clear of the drag marks' trough and of every one of her own prints
+  for (const b of prints) for (const p of P7) assert.ok(!hit(p, b, 4), 'no little forepaw lies on one of her prints: ' + JSON.stringify([p, b]));
+  // what the panel is about: one keep box round them all
+  const k = seven.keep.find((q) => q.x * 16 < box.x0 && (q.x + q.w) * 16 > box.x1 && q.y * 10 < box.y0 && (q.y + q.h) * 10 > box.y1);
+  assert.ok(k && k.w * 16 < (box.x1 - box.x0) + 60, 'kept clear of the lettering, snugly: ' + JSON.stringify(seven.keep));
+  // drawn on the floor, under everyone: a cat at `beside` and Sprinkle at `dragon` come after them in the panel
+  const withCast = render('back', { mudPaws: 7, prints: true }, [{ who: 'sprinkle', at: 'dragon', pose: 'draw' }, { who: 'player', at: 'beside', pose: 'sit' }], ['sunset']).svg;
+  assert.ok(withCast.indexOf('data-art="mud-paws"') < withCast.indexOf('translate(' + A.dragon.x + ' ' + A.dragon.y + ') scale('), 'the drawing is on the floor');
+  // grooves in the mud: dark lines with a pale lip, never lit, never filled (the count's own picture does the lighting)
+  const g7 = groupNamed(seven.svg, 'mud-paws');
+  assert.ok(/fill="none" stroke="#[0-9a-f]{6}" stroke-width="[\d.]+" stroke-linecap="round"/.test(g7), 'drawn in lines');
+  assert.ok(!/pcs-pulse|#ffb21f|#ffe36e|#FFE07A/i.test(g7), 'nothing lights here');
+});
+
+test('bridge (chapter 5): mudPaws is the back camera\'s; odd values never throw; every light renders', () => {
+  for (const cam of ['bank', 'mouth', 'under', 'paws']) {
+    assert.equal(mudPawsOf(render(cam, { mudPaws: 7 }).svg).length, 0, cam + ': no forepaws in the mud there');
+    assert.ok(same5(render(cam, { mudPaws: 7 }).svg, render(cam, {}).svg), cam + ': nothing changes');
+  }
+  for (const [v, want] of [[7, 7], [6, 6], [0, 0], [true, 7], [false, 0], [3, 3], [99, 7], [-2, 0], ['7', 7], ['lots', 0], [null, 0], [6.4, 6]]) {
+    const r = render('back', { mudPaws: v });
+    checkRender(r, [], 'mudPaws ' + JSON.stringify(v));
+    assert.equal(mudPawsOf(r.svg).length, want, 'mudPaws: ' + JSON.stringify(v));
+  }
+  // with every other prop of the back, in every light, with a full cast
+  const cast = [{ who: 'sprinkle', at: 'dragon', pose: 'sit' }, { who: 'player', at: 'beside' }, { who: 'riffle', at: 'back-left' }, { who: 'tallyheart', at: 'back-right' }, { who: 'clancat', at: 'near' }];
+  for (const opts of [{ mudPaws: 7 }, { mudPaws: 7, prints: true, branch: true }, { mudPaws: 6, eyes: 'sprinkle' }, { mudPaws: 7, train: true, drag: false, drips: false }]) {
+    for (const fx of [['day'], ['sunset'], ['dusk'], ['night'], art.vocab.fx.slice()]) checkRender(render('back', opts, cast, fx), cast, 'back ' + JSON.stringify(opts) + ' ' + fx.join('+'));
+  }
+  // the same drawing in every light (the lines take the light; the forepaws do not move)
+  const at = (fx) => mudPawsOf(render('back', { mudPaws: 7 }, [], fx).svg).map((p) => [Math.round(p.cx), Math.round(p.cy)]);
+  assert.deepEqual(at(['sunset']), at(['day']));
+  assert.deepEqual(at(['dusk']), at(['day']));
+  assert.ok(same5(render('back', { mudPaws: 7 }, [], ['sunset']).svg, render('back', { mudPaws: 7 }, [], ['sunset']).svg), 'deterministic');
+  // Sprinkle's eyes over the branch, her forepaws in the mud, her prints: the sunset panels of the chapter
+  for (const [opts, who] of [[{ eyes: 'sprinkle', prints: true }, []], [{ eyes: 'sprinkle', branch: true, prints: true }, []],
+    [{ prints: true, mudPaws: 7 }, [{ who: 'sprinkle', at: 'dragon', pose: 'draw' }, { who: 'player', at: 'beside', pose: 'sit' }]],
+    [{ prints: true, mudPaws: 7, branch: true }, [{ who: 'sprinkle', at: 'dragon', pose: 'sit' }, { who: 'player', at: 'back-left', pose: 'sit' }, { who: 'riffle', at: 'near', pose: 'sit' }]]]) {
+    const r = render('back', opts, who, ['sunset']);
+    checkRender(r, who, 'back at sunset ' + JSON.stringify(opts));
+    r.heads.forEach((h, i) => assert.ok(h, who[i].who + ' in sight'));
+    assert.ok(count(r.svg, /mix-blend-mode:screen/g) >= 2, 'the evening light reaches in');
+  }
+});
+
+test('bridge (chapter 5): whatever chapter 5 puts at the Old Bridge renders, with the vocabulary; only an otter is ever in the water (once the chapter is written)', (t) => {
+  const ch = PC.story && PC.story.ch05;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.scene.set === 'bridge' && f.board !== 'STUB.') : [];
+  if (!frames.length) { t.diagnostic('chapter 5 has no frames at the Old Bridge yet'); return; }
+  const v = art.vocab.sets.bridge;
+  let mud = 0;
+  for (const [id, f] of frames) {
+    const sc = f.scene;
+    assert.ok(v.cams.includes(sc.cam), id + ': camera ' + sc.cam);
+    for (const [k, val] of Object.entries(sc.opts || {})) assert.ok(Array.isArray(v.opts[k]) && v.opts[k].includes(val), id + ': ' + k + '=' + JSON.stringify(val));
+    const r = art.render(sc, { look: LOOK });
+    checkRender(r, sc.cast || [], 'ch05 ' + id);
+    (sc.cast || []).forEach((m, i) => { if (typeof m.at === 'string') assert.ok(r.heads[i], id + ': ' + m.who + ' at ' + m.at + ' is in sight of the ' + sc.cam + ' camera'); });
+    for (const m of sc.cast || []) if (m.at === 'water') assert.ok(m.who === 'riffle' || m.who === 'otter', id + ': only an otter swims');
+    if (sc.opts && sc.opts.mudPaws) { mud++; assert.equal(sc.cam, 'back', id + ': the forepaws in the mud are the back camera\'s'); }
+  }
+  t.diagnostic(frames.length + ' frames at the Old Bridge, ' + mud + ' with the forepaws in the mud');
 });

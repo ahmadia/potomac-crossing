@@ -782,6 +782,113 @@ test('a sound effect shrinks only to clear a caption or a balloon, never for a f
   });
 });
 
+test('a frame may say where its sound effect goes (`sfxAt`, chapter 5’s Roar across the sky): there at full size, whatever faces are near; smaller only to clear a caption or a balloon; and placed as any other when it cannot be clear; E.checkStory holds its shape', () => {
+  require('../app/ui.js');
+  const L = PC.ui.layout, roar = 'ROOOOOAAAAARRRRR!', W = 1027, H = 639, fit = L.sfxFit(roar, W);
+  const mid = b => [Math.round((b.x + b.w / 2) / W * 100), Math.round((b.y + b.h / 2) / H * 100)];
+  // the Roar's panel: two heads low on the raft, the tower's red light kept at the top; with no `at`
+  // it lands at the bottom, over the pair on the logs
+  const faces = [{ x: 430, y: 430, r: 60 }, { x: 560, y: 430, r: 60 }, { x: 342, y: 15, r: 30 }];
+  const plain = L.sfxPlace(roar, W, H, faces, []);
+  assert.ok(plain.box.y > H / 2, 'unplaced, it goes low: ' + JSON.stringify(plain.box));
+  const sky = L.sfxPlace(roar, W, H, faces, [], [66, 33]);
+  assert.deepEqual([mid(sky.box), sky.size, sky.clear], [[66, 33], fit.size, true], 'its middle where the frame says, at its fitted size');
+  assert.deepEqual([Math.round(sky.box.w), Math.round(sky.box.h)], [Math.round(fit.estW), Math.round(fit.estH)]);
+  // a face under the spot does not move it: the frame chose the place with the picture in front of it
+  assert.deepEqual(mid(L.sfxPlace(roar, W, H, [{ x: W * 0.66, y: H * 0.33, r: 80 }], [], [66, 33]).box), [66, 33]);
+  // it stays inside the panel
+  const corner = L.sfxPlace(roar, W, H, [], [], [98, 1]).box;
+  assert.ok(corner.x + corner.w <= W * 0.98 + 1e-6 && corner.y >= H * 0.02 - 1e-6 && corner.x >= 0, JSON.stringify(corner));
+  // a caption over the spot: smaller, still there, until it is clear
+  const cap = { x: W * 0.66 - 30, y: H * 0.33 - fit.estH / 2 - 50, w: 300, h: 56 };
+  const under = L.sfxPlace(roar, W, H, faces, [cap], [66, 33]);
+  assert.ok(under.clear && under.size < fit.size && under.size >= fit.size * 0.5 && !L.overlap(under.box, cap), JSON.stringify(under));
+  assert.deepEqual(mid(under.box), [66, 33]);
+  // a balloon it can never clear: placed as any other sound, by the usual search
+  const wall = { x: W * 0.3, y: H * 0.1, w: W * 0.7, h: H * 0.5 };
+  assert.deepEqual(L.sfxPlace(roar, W, H, faces, [wall], [66, 33]), L.sfxPlace(roar, W, H, faces, [wall]));
+  // anything that is not a pair of numbers is no spot at all
+  [null, undefined, [], [66], [66, 'x'], '66,33', [66, 33, 1]].forEach(bad => assert.deepEqual(L.sfxPlace(roar, W, H, faces, [], bad), plain, JSON.stringify(bad)));
+  // the story check
+  const ok = { id: 'sx', number: 1, start: 'a', frames: { a: { sfx: 'ROAR!', sfxAt: [66, 33], caption: ['It goes over.'], next: 'b' }, b: { end: true } } };
+  assert.deepEqual(E.checkStory(ok), []);
+  [[66], [66, 133], ['66', 33], 'sky', [66, 33, 2]].forEach(bad => {
+    const s = clone(ok); s.frames.a.sfxAt = bad;
+    assert.match(E.checkStory(s).join('\n'), /a: sfxAt is \[x, y\], each 0 to 100/, JSON.stringify(bad));
+  });
+  const silent = clone(ok); delete silent.frames.a.sfx;
+  assert.match(E.checkStory(silent).join('\n'), /a: sfxAt is .* on a frame with an sfx/);
+});
+
+test('a frame may give Read to me its sound in words (`sfxRead`): said right after the caption that runs on into the sound, never lettered; frames without it are read as they always were; E.checkStory holds its shape', () => {
+  // a sound effect is lettering and is never read aloud: a caption that runs on into one was heard
+  // as a sentence nobody finished (“On the rocks, otter tails go” … “YOU DID IT!”)
+  const ends = ['Riffle turns a somersault.', 'You did it!', 'Was that a hiccup?', 'all four paws at once, in…', 'comes a small “Ow.”', 'It is *huge.*', '(She nods.)', 'He said ‘no.’'];
+  const runsOn = ['On the rocks, otter tails go', 'From the tallest tower:', 'Then, a little later:', 'One, two, three,', 'and then {name}', ''];
+  ends.forEach(t => assert.equal(E.endsSentence(t), true, t));
+  runsOn.forEach(t => assert.equal(E.endsSentence(t), false, t));
+  assert.equal(E.endsSentence(null), false);
+
+  const cat = { flags: { foundSquall: false } }, met = { flags: { foundSquall: true } };
+  // after the caption it finishes, when that is the last one
+  const slap = { caption: ['Riffle turns a somersault.', 'On the rocks, otter tails go'], sfx: 'Slap! Slap! Slap!', sfxRead: 'Slap! Slap! Slap!', say: [{ who: 'riffle', text: 'YOU DID IT!' }] };
+  assert.deepEqual(E.captionsRead(slap, cat), ['Riffle turns a somersault.', 'On the rocks, otter tails go', 'Slap! Slap! Slap!']);
+  // after the caption it finishes, when more captions follow (whichever of them she sees)
+  const roar = { caption: ['From the tallest tower:', { when: { foundSquall: false }, text: 'He is still up there.' }], sfx: 'RAWWWRRR… hic!', sfxRead: 'a roar, and a tiny hiccup.' };
+  assert.deepEqual(E.captionsRead(roar, cat), ['From the tallest tower:', 'a roar, and a tiny hiccup.', 'He is still up there.']);
+  assert.deepEqual(E.captionsRead(roar, met), ['From the tallest tower:', 'a roar, and a tiny hiccup.']);
+  // the first caption that runs on, when two do
+  assert.deepEqual(E.captionsRead({ caption: ['Then:', 'and then:'], sfx: 'BONK!', sfxRead: 'a bonk.' }, cat), ['Then:', 'a bonk.', 'and then:']);
+  // every caption ends its sentence: after the last, before the balloons
+  assert.deepEqual(E.captionsRead({ caption: ['It goes over.', 'The logs buzz.'], sfx: 'ROAR!', sfxRead: 'a roar.' }, cat), ['It goes over.', 'The logs buzz.', 'a roar.']);
+  // a panel that is only a sound
+  assert.deepEqual(E.captionsRead({ sfx: 'blub…', sfxRead: 'a bubble.' }, cat), ['a bubble.']);
+  // a caption she does not see is not the one it follows
+  assert.deepEqual(E.captionsRead({ caption: [{ when: { foundSquall: true }, text: 'Far above:' }, 'The sky is blue.'], sfx: 'hic!', sfxRead: 'a hiccup.' }, cat), ['The sky is blue.', 'a hiccup.']);
+  // tokens are left for the page to fill, as E.captions leaves them
+  assert.deepEqual(E.captionsRead({ caption: ['{name}paw hears:'], sfx: 'BOOM!', sfxRead: 'a boom, {name}paw.' }, cat), ['{name}paw hears:', 'a boom, {name}paw.']);
+  // no `sfxRead` (or nothing in it): exactly E.captions, so every page of chapters 1 to 4 is heard as it was
+  [{}, { sfxRead: '' }, { sfxRead: '   ' }, { sfxRead: null }, { sfxRead: 7 }].forEach(x => {
+    const f = Object.assign({ caption: ['From far off:', 'A crash.'], sfx: 'CRASH!' }, x);
+    assert.deepEqual(E.captionsRead(f, cat), E.captions(f, cat), JSON.stringify(x));
+  });
+  assert.deepEqual(E.captionsRead(null, cat), []);
+  let live = 0;
+  const real = require('./_load.js').load().story;
+  [real.ch01, real.ch02, real.ch03, real.ch04].forEach(st => Object.keys(st.frames).forEach(id => {
+    const f = st.frames[id];
+    assert.equal(f.sfxRead, undefined, st.id + ' ' + id + ': the live chapters have no sfxRead');
+    [{ flags: {} }, { flags: { foundSquall: true, ch3Told: true, specialty: 'swimming' } }, { flags: { foundSquall: false, ch3Told: false, specialty: 'climbing' } }]
+      .forEach(c => assert.deepEqual(E.captionsRead(f, c), E.captions(f, c), st.id + ' ' + id));
+    live++;
+  }));
+  assert.ok(live >= 480, 'every frame of chapters 1 to 4: ' + live);
+
+  // the story check: words, on a frame with a sound, and not on a page that letters its own sounds
+  const ok = { id: 'sr', number: 1, start: 'a', frames: { a: { sfx: 'SNNNRRRK.', sfxRead: 'a long snore.', caption: ['Then, a little later:'], next: 'b' }, b: { end: true } } };
+  assert.deepEqual(E.checkStory(ok), []);
+  ['', '   ', 7, ['a snore.'], true, {}].forEach(bad => {
+    const st = clone(ok); st.frames.a.sfxRead = bad;
+    assert.match(E.checkStory(st).join('\n'), /a: sfxRead is the sound in words for Read to me/, JSON.stringify(bad));
+  });
+  const silent = clone(ok); delete silent.frames.a.sfx;
+  assert.match(E.checkStory(silent).join('\n'), /a: sfxRead is .* on a frame with an sfx/);
+  const skip = clone(ok); delete skip.frames.a.next; skip.frames.a.skip = { table: 2, groups: 3, next: 'b' };
+  assert.match(E.checkStory(skip).join('\n'), /a: sfxRead is .*not a skip, an ask or a scratch frame/);
+
+  // the page (app/ui.js needs a DOM for its lettering, so its source is read): the frame's own page
+  // hands the captions as heard to the lettering, which reads them and letters the captions as written
+  const ui = require('fs').readFileSync(require('path').join(__dirname, '..', 'app', 'ui.js'), 'utf8');
+  assert.match(ui, /var capsRead = E\.captionsRead\(f, cat\)\.map\(fill\)\.filter\(Boolean\);/);
+  assert.match(ui, /panel\.setAttribute\('aria-label', capsRead\.length \? plain\(capsRead\.join\(' '\)\)/, 'the panel’s label is the whole sentence too');
+  assert.match(ui, /caps: caps, capsRead: capsRead,/);
+  assert.match(ui, /var heard = ctx\.capsRead \|\| caps;/);
+  assert.equal((ui.match(/heard\.forEach\(function \(c\) \{ reading\.push\(\{ text: c \}\); \}\);/g) || []).length, 2, 'in the panel and beside it');
+  assert.equal((ui.match(/caps\.forEach\(function \(c\) \{ reading\.push/g) || []).length, 0, 'the captions are never read any other way on a frame’s page');
+  // the lettering never shows the words: nothing on the page draws `sfxRead`
+  assert.equal((ui.match(/\.sfxRead|\[['"]sfxRead/g) || []).length, 0, 'the page never reads the key itself: only E.captionsRead does');
+});
+
 test('the grown-ups corner has words for every flag a chapter sets, and fits a tom (PC.ui.flagWords)', () => {
   require('../app/ui.js');
   const W = PC.ui.flagWords, S = realStories();
@@ -795,7 +902,10 @@ test('the grown-ups corner has words for every flag a chapter sets, and fits a t
   assert.ok(W.ch2Stone && W.ch2Stone.nose && W.ch2Stone.chin, 'Riffle’s stone, read by chapter 3');
   const tom = E.blankCat({}); tom.look.sex = 'tom';
   assert.equal(E.fill(W.ch2Stone.chin, tom), 'put Riffle’s stone under his chin (chapter 3 remembers)');
-  Object.values(W).forEach(v => Object.values(v).forEach(w => assert.doesNotMatch(E.fill(w, tom), /\bjust her\b|\bher (nose|chin)\b/, w)));
+  Object.values(W).forEach(v => Object.values(v).forEach(w => assert.doesNotMatch(E.fill(w, tom), /\bjust her\b|\bher (nose|chin|book)\b/, w)));
+  // chapter 5's roof: his book, for a tom
+  assert.equal(E.fill(W.ch5Roof.true, tom), 'met Squall in chapter 5: the roof, offered again (his book says so on chapter 5’s page)');
+  assert.match(E.fill(W.ch5Roof.true, E.blankCat({})), /\(her book says so/);
   assert.match(W.ch2Path.river, /chapters 3 and 4 remember/, 'chapter 3 reads the river path too');
   // a voice behind her tail keeps its face to itself, as a voice in the dark does
   assert.equal(PC.ui.speakers.faceHidden({ who: 'sprinkle', name: 'A muffled voice' }, { who: 'sprinkle', pose: 'hide' }), true);
@@ -1019,9 +1129,9 @@ function finishedCat(stories, over) {
   return cat;
 }
 
-test('version 0.4.0 and the save, still version 2 (chapter 4 adds one optional field: her Case File’s cards)', () => {
-  assert.equal(E.VERSION, '0.4.0 (chapter 4, 2026-10-10)');
-  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version');
+test('version 0.5.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapter 5 adds none)', () => {
+  assert.equal(E.VERSION, '0.5.0 (chapter 5, 2026-10-11)');
+  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapter 5 stores nothing new');
   assert.equal(E.STORAGE_KEY, 'potomac-crossing.v1');
   assert.deepEqual(E.newSave(), { version: 2, cats: [], current: null, settings: { readAloud: false, bigText: false } });
   const c = E.blankCat({ now: 5, id: 'x' });
@@ -1742,7 +1852,7 @@ test('counts: a fact’s picture keys (who, lit, light) reach the question, and 
   bad.counts['ch02-ears'].facts[0] = { a: 3, b: 2, retryPrompt: true, rightAgain: true };
   bad.counts['ch02-ears'].fillIntro = 'One from yesterday.';
   const errs = E.checkStory(bad).join('\n');
-  for (const want of [/light is "groups" or "rows"/, /lit is a number/, /who is a list/, /retryPrompt: true keeps a prompt/, /rightAgain: true keeps right lines/, /fillIntro without fillFrom/]) assert.match(errs, want);
+  for (const want of [/light is "groups", "rows" or "tuck"/, /lit is a number/, /who is a list/, /retryPrompt: true keeps a prompt/, /rightAgain: true keeps right lines/, /fillIntro without fillFrom/]) assert.match(errs, want);
   // a fact without retryPrompt is asked plainly again (10 × 2's balloons are for the first ask)
   const p = E.counts.start(story.counts['ch02-pile'], { set: 'ch02-pile', facts: [story.counts['ch02-pile'].facts[0], [3, 2], [4, 2]] });
   E.counts.answer(p, {}, 19, 1, 1); E.counts.answer(p, {}, 6, 1, 2); E.counts.answer(p, {}, 8, 1, 3);
@@ -1911,7 +2021,8 @@ test('every chapter in app/story plays to an end through the engine (all right, 
   assert.ok(list.length >= 1);
   assert.deepEqual(list.map(s => s.number), list.map((s, i) => i + 1), 'chapters are numbered 1, 2, 3…');
   list.forEach(story => {
-    assert.deepEqual(E.checkStory(story), [], story.id);
+    // (given the other chapters: chapter 5 runs chapter 4's roof, its riddle and its card)
+    assert.deepEqual(E.checkStory(story, list), [], story.id);
     for (const wrong of [false, true]) {
       const cat = E.blankCat({ now: 1 });
       list.filter(s => s.number < story.number).forEach(s => { cat.finished[s.id] = 1; });
@@ -2780,6 +2891,28 @@ test('frame-level when: a frame that doesn’t match is passed over, forward and
   parked.flags.ch2Path = 'river';
   E.go(parked, ch03, 'd14', 7); E.startChapter(parked, ch02, 8);
   assert.equal(E.openChapter(parked, ch03, 9).frame, 'd14', 'a page that still shows is where she left it');
+  // chapter 5: the page she lands on then is one she has never been on, so she arrives there as a
+  // page turn would: its card goes in her file and its flags are set (she left chapter 5 on the
+  // pile's gap, read chapter 1 again as a noticing cat, and came back to the prints)
+  const pa = { id: 'pa', number: 1, start: 'a1', cards: { tiny: { mark: 'eye', line: 'Tiny prints.' } }, frames: {
+    a1: { say: [{ who: 'player', text: 'Hm.' }], next: 'a2' },
+    a2: { when: { not: { specialty: 'noticing' } }, caption: ['A gap.'], next: 'a3' },
+    a3: { when: { specialty: 'noticing' }, card: 'tiny', sets: { sawPrints: true }, caption: ['Tiny prints.'], next: 'a4' },
+    a4: { end: true } } };
+  const pb = { id: 'pb', number: 2, start: 'b1', frames: { b1: { caption: ['Elsewhere.'], next: 'b2' }, b2: { end: true } } };
+  assert.deepEqual(E.checkStory(pa, [pa, pb]), []);
+  const lander = E.blankCat({ now: 1 }); lander.flags.specialty = 'climbing';
+  E.startChapter(lander, pa, 2); E.next(lander, pa, 3);
+  assert.equal(lander.frame, 'a2');
+  E.startChapter(lander, pb, 4);
+  lander.flags.specialty = 'noticing';
+  assert.deepEqual([E.hasCard(lander, 'tiny'), lander.flags.sawPrints], [false, undefined]);
+  assert.equal(E.openChapter(lander, pa, 5).frame, 'a3', 'the page after the one that no longer shows');
+  assert.deepEqual([E.hasCard(lander, 'tiny'), lander.flags.sawPrints, lander.cards.length], [true, true, 1], 'she arrived there: its card, its flag');
+  // a page that still shows is only reopened: nothing is given twice, and a parked page is never arrived on again
+  E.startChapter(lander, pb, 6);
+  assert.equal(E.openChapter(lander, pa, 7).frame, 'a3');
+  assert.equal(lander.cards.length, 1);
   // E.landing follows the chain; the storyboard and the UI ask it where a page turn lands
   const c = E.blankCat({}); c.flags.ch2Path = 'bridge';
   assert.equal(E.landing(c, ch03, 'd14'), 'd15');
@@ -3149,7 +3282,7 @@ test('the skip-count on the 5s keeps its totals for the pattern line; the bedtim
   assert.deepEqual(cat.counts, []);
   const bad = clone(ch03);
   bad.frames.d16.skip.paws = 'all four'; bad.frames.d07.skip.keep = 'yes';
-  assert.match(E.checkStory(bad).join('\n'), /skip paws is "own", "both" or "pile"[\s\S]*skip keep is true or false|skip keep is true or false[\s\S]*skip paws is "own", "both" or "pile"/);
+  assert.match(E.checkStory(bad).join('\n'), /skip paws is "own", "both", "pile", "board", "log" or "mud"[\s\S]*skip keep is true or false|skip keep is true or false[\s\S]*skip paws is "own", "both", "pile", "board", "log" or "mud"/);
 });
 
 test('the Training Hollow offers “Claws · the 5s” beside the 1s and 2s (never the warm-up, the pile or Sprinkle’s sets), and the tree has room for ten marks', () => {
@@ -4016,8 +4149,8 @@ test('the bark Taps (`scratch`): two pieces of bark, three for a noticing cat, h
     /g10: scratch at is \{ x, y \} in percent of the panel/]) assert.match(errs, want);
   // a frame is one kind of page: never a scratch and a Next beside it
   const two = clone(ch04); two.frames.g21.next = 'g22';
-  assert.match(E.checkStory(two, list).join('\n'), /g21: needs exactly one of next\/choice\/input\/look\/counts\/skip\/scratch\/file\/end, has next,scratch/);
-  assert.deepEqual(E.KINDS, ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'end']);
+  assert.match(E.checkStory(two, list).join('\n'), /g21: needs exactly one of next\/choice\/input\/look\/counts\/skip\/scratch\/file\/ask\/end, has next,scratch/);
+  assert.deepEqual(E.KINDS, ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'ask', 'end'], 'chapter 5 adds `ask`');
 });
 
 test('the glitter Tap: the plainest scratch frame, nothing scratched; the page turns on a tap on the glint and on nothing else (PC.ui.taps.hit)', () => {
@@ -4414,7 +4547,7 @@ test('the Training Hollow offers “Both forepaws · the 10s” (the tens lesson
   const bad = clone(ch04); bad.counts['ch04-tens'].label = ['Both forepaws']; bad.counts['ch04-tens'].hollowThings = ''; bad.counts['ch04-tens'].helpIntroNotTen = 10;
   bad.counts['ch04-riddle'].ground = 'roof'; bad.counts['ch04-riddle'].picture = { kind: 'mud', ground: 'gravel' };
   const errs = E.checkStory(bad, list).join('\n');
-  for (const want of [/ch04-tens: label is a line/, /ch04-tens: hollowThings is a line/, /ch04-tens: helpIntroNotTen is a line/, /ch04-riddle: ground is "sand", "earth", "mud" or "grit"/, /ch04-riddle: picture ground is/]) assert.match(errs, want);
+  for (const want of [/ch04-tens: label is a line/, /ch04-tens: hollowThings is a line/, /ch04-tens: helpIntroNotTen is a line/, /ch04-riddle: ground is "sand", "earth", "mud", "grit" or "log"/, /ch04-riddle: picture ground is/]) assert.match(errs, want);
 });
 
 test('chapter 4’s skip-counts: the rim by tens keeps its totals; the promise reaches 30 on its third tap, in her own balloon; the bedtime tens are both forepaws together, trailing off; Squall’s forepaw is one tap, and its 5 stays on the roof; nothing is logged', () => {
@@ -4462,7 +4595,7 @@ test('chapter 4’s skip-counts: the rim by tens keeps its totals; the promise r
     ['Tap your next forepaw.', 'Count the next cat', 'Count the next paw']);
   const bad = clone(ch04); bad.frames.b05.skip.paws = 'heap'; bad.frames.r06.skip.carry = 'no'; bad.frames.g04.skip.prompt = ['Tap']; bad.frames.h03.skip.label = 5;
   const errs = E.checkStory(bad, st4.list).join('\n');
-  for (const want of [/b05: skip paws is "own", "both" or "pile"/, /r06: skip carry is true or false/, /g04: skip prompt is a line/, /h03: skip label is a line/]) assert.match(errs, want);
+  for (const want of [/b05: skip paws is "own", "both", "pile", "board", "log" or "mud"/, /r06: skip carry is true or false/, /g04: skip prompt is a line/, /h03: skip label is a line/]) assert.match(errs, want);
 });
 
 test('scene options from the cat: `bark: "auto"` is her own cards, the ones her Case File shows, in its order (never a count the art would have to guess cards for); a `cards` list is the row as the story lays it, without the entries that are not hers', () => {
@@ -4563,4 +4696,1295 @@ test('the grown-ups corner: words for the flags a frame sets (found Squall, caug
   while (cat.frame !== 'g27') assert.ok(E.back(cat, ch04));
   assert.deepEqual(E.cards(cat, st4.list, { all: true }).filter(c => !c.shown).map(c => c.id), ['squall-shapes']);
   assert.ok(!E.cards(cat, st4.list).some(c => c.id === 'squall-shapes'));
+});
+
+/* ================================================================ chapter 5 (docs/build.md, "Chapter 5 (v0.4)")
+ * First, the proof that chapters 1 to 4 play exactly as they did: ten whole readings, recorded with
+ * the engine chapter 4 shipped with (tests/fixtures/make-ch04-golden.js), compared digest by digest.
+ * Then chapter 5's contract, on the fixture chapter 5 (tests/fixtures/chapters.js) beside the real
+ * chapters 1 to 4. */
+const { runs4: golden4Runs, compact4: golden4Compact, SCRIPTS4 } = require('./fixtures/make-ch04-golden.js');
+const GOLDEN4 = require('./fixtures/ch04-golden.json');
+
+test('chapters 1 to 4 play exactly as they did before chapter 5’s engine: every frame and what it shows (its card, her Case File, the pages she taps), every skip-count tap by tap, every question, picture, line and help, the Hollow, the book and the cat (tests/fixtures/ch04-golden.json)', () => {
+  const S = realStories();
+  assert.equal(GOLDEN4.engine, '0.4.0 (chapter 4, 2026-10-10)', 'recorded with the engine chapter 4 shipped with');
+  assert.equal(GOLDEN4.runs.length, SCRIPTS4.length);
+  const got = golden4Runs(E, [S.ch01, S.ch02, S.ch03, S.ch04]);
+  got.forEach((r, i) => {
+    const now = golden4Compact(r.run), then = GOLDEN4.runs[i].run, name = GOLDEN4.runs[i].name;
+    assert.equal(r.name, name);
+    assert.deepEqual(now.frames, then.frames, name + ': the same frames, in the same order');
+    Object.keys(then.shown).forEach(ch => {
+      const a = now.shown[ch].split(' '), b = then.shown[ch].split(' ');
+      b.forEach((h, n) => assert.equal(a[n], h, name + ': what ' + ch + ' ' + then.frames[ch][n] + ' shows (its scene, captions, balloons, options, its card, her Case File, its skip-count tap by tap, the page she taps)'));
+    });
+    assert.deepEqual(Object.keys(now.lessons), Object.keys(then.lessons), name + ': the same lessons');
+    Object.keys(then.lessons).forEach(l => assert.deepEqual(now.lessons[l], then.lessons[l], name + ': ' + l + ', question by question (its picture, its words, its result, its whole help)'));
+    assert.deepEqual(now.hollow, then.hollow, name + ': the Training Hollow, its rounds and its lines');
+    assert.deepEqual([now.book, now.cat, now.status, now.extra, now.flags], [then.book, then.cat, then.status, then.extra, then.flags], name + ': her book, the cat at the end, the status, her cards and her file, the flags');
+  });
+  // the readings cover what chapter 4 can make of a cat: every specialty, both ways at the tower, the eye and the ear
+  const flags = got.map(r => r.run.cat.flags);
+  assert.deepEqual([...new Set(flags.map(f => f.specialty))].sort(), ['climbing', 'friends', 'noticing', 'sneaking', 'swimming']);
+  assert.deepEqual([...new Set(flags.map(f => [f.ch3Told, !!f.foundSquall, !!f.ch4CaughtFly].join('/')))].sort(),
+    ['false/false/false', 'false/true/false', 'false/true/true', 'true/false/false', 'true/false/true', 'true/true/false', 'true/true/true']);
+  assert.ok(got.every(r => !Object.keys(r.run.cat.flags).some(k => /^ch5|foundPuddle|foundWisp/.test(k))), 'nothing of chapter 5 in a chapter-4 reading');
+});
+
+/* The fixture chapter 5 beside the real chapters 1 to 4 (it runs chapter 4's roof, borrows the 10s, the
+ * 5s, the 2s and the 1s, and lays a card beside chapter 4's `fox-moon`). */
+function story5() {
+  const S = realStories(), fx = fixtures();
+  return { ch01: S.ch01, ch02: S.ch02, ch03: S.ch03, ch04: S.ch04, ch05: fx.ch05, list: [S.ch01, S.ch02, S.ch03, S.ch04, fx.ch05] };
+}
+/* A cat who has read chapters 1 to 4: `flags` on top of a sneaking, talkative cat who went under the
+ * bridge and told; her Case File as chapter 4 left it (the dug earth and the fox's FLEW caught for a
+ * noticing cat, Squall's card for one who found him); `tens`/`tensMs`: her answers and times in
+ * chapter 4's tens lesson, by fact. */
+function cat5(st5, flags, tens, tensMs) {
+  const cat = E.blankCat({ now: 1, id: 'c5' });
+  cat.name = 'Moon'; cat.petname = 'Muffin';
+  cat.finished = { ch01: 1, ch02: 2, ch03: 3, ch04: 4 };
+  Object.assign(cat.flags, { specialty: 'sneaking', worry: 'talk', ch2Path: 'bridge', ch2Stone: 'nose', ch3Told: true, caseFile: true, caseFileOpen: true });
+  if (flags && flags.specialty === 'noticing') cat.flags.ch4CaughtFly = true;
+  Object.assign(cat.flags, flags || {});
+  ['ch01-tails', 'ch02-ears', 'ch03-claws'].forEach(id => { cat.lessons[id] = { finished: true, noHelp: true }; });
+  ['four-a-night', 'tidy'].concat(cat.flags.specialty === 'noticing' ? ['dug-earth'] : [], ['scale', 'fox-flew', 'fox-moon'], cat.flags.foundSquall ? ['squall-shapes'] : [], ['sprinkle-scales', 'cant-fly'])
+    .forEach((id, i) => E.giveCard(cat, id, 'ch04', 100 + i));
+  const { def, state } = E.chapterLesson(cat, st5.ch04, 'ch04-tens', 1, st5.list), seen = {};
+  while (!E.counts.done(state)) {
+    const q = E.counts.question(state), k = q.a + 'x' + q.b, i = seen[k] = (seen[k] || 0) + 1;
+    const a = tens && tens[k] && tens[k][i - 1] != null ? tens[k][i - 1] : q.answer;
+    E.logAnswer(cat, E.counts.answer(state, E.questionDef(def, q, st5.ch04, st5.list), a, tensMs && tensMs[k] != null ? tensMs[k] : 2000, 1).entry);
+  }
+  cat.lessons['ch04-tens'] = E.counts.summary(state);
+  return cat;
+}
+/* A lesson's rows, answer by answer, as the page asks it (as lesson4): its words with their speakers'
+ * labels (a caption has none), its picture, the steps its picture plays as it is asked, its result,
+ * and after a miss the whole help. */
+function lesson5(cat, st5, def, st, answers, ms) {
+  const { ch05, list } = st5, seen = {}, out = [];
+  while (!E.counts.done(st)) {
+    const q = E.counts.question(st), k = q.a + 'x' + q.b;
+    const i = seen[k] = (seen[k] || 0) + 1;
+    const a = answers && answers[k] && answers[k][i - 1] != null ? answers[k][i - 1] : q.answer;
+    const t = ms && ms[k] != null ? ms[k] : (ms && ms.all) || 2000;
+    const D = E.questionDef(def, q, ch05, list);
+    const prompt = E.promptLines(def, D, q).map(l => Object.assign({}, l, { label: l.who ? label4({ who: l.who }, cat, ch05) : null, text: E.fill(l.text, cat) }));
+    const picture = E.lessonPicture(D, q, q.lit || 0), light = E.lightSteps(D, q);
+    const r = E.counts.answer(st, D, a, t, 1);
+    E.logAnswer(cat, r.entry);
+    const row = { k: (q.filler ? 'F:' : q.retry ? 'R:' : '') + k + (r.correct ? '' : '✗'), q, D, prompt, picture, light, line: E.fill(r.line, cat), kind: r.lineKind,
+      balloons: (r.balloons || []).map(b => Object.assign({}, b, { text: E.fill(b.text, cat) })), res: r, teacher: E.teacherOf(def, D), shows: r.shows ? r.shows.answers : null };
+    if (!r.correct) { row.help = E.helpPlan(def, D, q, r); row.steps = E.helpSteps(row.help); }
+    out.push(row);
+    if (r.done) E.recordLesson(cat, st);
+    else cat.lesson = { mode: 'chapter', frame: cat.frame, chapter: ch05.id, state: st };
+  }
+  return out;
+}
+function play5(cat, st5, setId, answers, ms) {
+  const { def, state } = E.chapterLesson(cat, st5.ch05, setId, 1, st5.list);
+  return lesson5(cat, st5, def, state, answers, ms);
+}
+/* Read the fixture chapter 5 from where she is to its end (or to `stop`, before acting on it): what
+ * every frame shows her. `choices: { o10: 1 }` picks an option (the first unless it says); `answers`:
+ * wrong answers by fact, for every lesson on the way. A skip-count, a one-tap frame and the page of
+ * questions are tapped through. */
+function read5(cat, st5, o) {
+  const { ch05, list } = st5, rows = [];
+  o = o || {};
+  let t = o.t || 1000;
+  for (let guard = 0; guard < 400; guard++) {
+    const id = E.frameId(cat, ch05), f = ch05.frames[id], kind = E.kindOf(f);
+    const row = { id, kind, f, caps: E.captions(f, cat).map(c => E.fill(c, cat)),
+      // (a speaker's coat and name come from the cast, as on the page: the nth balloon from a who is the nth of them)
+      say: E.balloons(f, cat).map(b => {
+        const mine = ((f.scene && f.scene.cast) || []).filter(c => c && c.who === b.who), m = mine[b.nth] || mine[0];
+        return { who: b.who, label: label4(Object.assign({}, b, { variant: m && m.variant }), cat, ch05), text: E.fill(b.text, cat), kind: b.kind };
+      }),
+      cards: E.cardsOn(f, cat, ch05, list), file: E.cards(cat, list).map(c => c.id), counts: cat.counts.length, sfx: f.sfx || '',
+      scene: f.scene ? E.resolveScene(f.scene, cat, list) : null };
+    rows.push(row);
+    if ((o.stop && id === o.stop) || kind === 'end') break;
+    t += 10;
+    if (kind === 'skip') { row.skip = E.skipFor(f.skip, cat); assert.ok(E.next(cat, ch05, t), id); }
+    else if (kind === 'ask') { row.asked = []; for (let n = 1; n <= E.askView(f.ask, 99).total; n++) row.asked.push(E.askView(f.ask, n).pair); assert.ok(E.next(cat, ch05, t), id); }
+    else if (kind === 'next' || kind === 'file') assert.ok(E.next(cat, ch05, t), id);
+    else if (kind === 'scratch') { row.tap = E.tapWords(f); for (let c; (c = E.scratchTap(cat, ch05, t));) assert.fail('no row of bark in chapter 5: ' + c); assert.ok(E.next(cat, ch05, t), id); }
+    else if (kind === 'choice') {
+      const opts = E.options(f, cat);
+      row.options = opts.map(x => E.fill(E.optionLabel(x.option, cat), cat));
+      row.picked = (o.choices && o.choices[id]) || 0;
+      assert.ok(E.choose(cat, ch05, opts[row.picked].index, t), id);
+    } else if (kind === 'input') assert.ok(E.submitInput(cat, ch05, o.dream || '', t), id);
+    else if (kind === 'counts') {
+      const r = E.chapterLesson(cat, ch05, f.counts.set, t, list);
+      E.beginLesson(cat, ch05, id, r.state);
+      row.lesson = lesson5(cat, st5, r.def, r.state, o.answers, o.ms);
+      assert.ok(E.finishCounts(cat, ch05, cat.lessons[f.counts.set], t), id);
+    } else assert.fail('a frame of kind ' + kind + ' at ' + id);
+  }
+  return rows;
+}
+/* Everything a reading put on screen, as text (as words4). */
+function words5(rows) {
+  const out = [];
+  rows.forEach(r => {
+    out.push(...r.caps, ...r.say.map(b => b.label + ': ' + b.text), ...(r.options || []), ...r.cards.map(c => c.line), r.sfx);
+    (r.asked || []).forEach(p => out.push(...p));
+    (r.lesson || []).forEach(l => out.push(...l.prompt.map(p => (p.label || '') + ': ' + p.text), l.line, ...l.balloons.map(b => b.text), l.help ? l.help.intro : ''));
+  });
+  return out.join('\n');
+}
+const start5 = (cat, st5) => { E.startChapter(cat, st5.ch05, 500); return cat; };
+const frame5 = (rows, id) => rows.find(r => r.id === id);
+const ids5 = rows => rows.map(r => r.id);
+/* The choices of a reading, by what she does: the roof (`up`), the witness (`first`: 'otters' |
+ * 'heron'), the raft after the Roar (`lean`), Riffle's slip (`ask`), and how far she waits in the
+ * reeds (`wait`: 0 yells at once, 1 after the dragonfly, 2 at the knees, 3 waits for the blink). */
+function choices5(c) {
+  return { t01: c.up ? 0 : 1, o10: c.lean ? 0 : 1, w01: c.first === 'heron' ? 1 : 0, s01: c.ask ? 0 : 1, m18: c.wait >= 1 ? 0 : 1, k02: c.wait >= 2 ? 0 : 1, k03: c.wait >= 3 ? 0 : 1 };
+}
+
+test('chapter 5 (the fixture) is sound, and every combination of told or kept, the specialty, the worry, Squall met before or not, the roof, the witness first, the two raft choices and the four ways through the reeds reaches the end with no frame that shows nothing; both orders give the same cards; “What the otters heard” is read exactly once, and Tallyheart is in none of its frames', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  assert.deepEqual(E.checkStory(ch05, list), []);
+  const lengths = new Set(), cardCounts = new Set();
+  // forty cats (told or kept, five specialties, four worries) and thirty-six routes (Squall met before,
+  // or the roof today, or not; the raft three ways; the reeds four): every cat walks a third of the
+  // routes and every route is walked by a third of the cats, each in both orders
+  const CATS = [], ROUTES = [];
+  for (const ch3Told of [true, false]) for (const specialty of ['noticing', 'sneaking', 'climbing', 'swimming', 'friends']) for (const worry of ['small', 'water', 'talk', 'shiny']) CATS.push({ ch3Told, specialty, worry });
+  for (const squall of ['met', 'up', 'no']) for (const raft of ['lean', 'ask', 'fine']) for (const wait of [0, 1, 2, 3]) ROUTES.push({ met: squall === 'met', up: squall === 'up', raft, wait });
+  let walks = 0;
+  CATS.forEach((who, ci) => ROUTES.forEach((route, ri) => {
+    if ((ci + ri) % 3) return;
+    const { ch3Told, specialty, worry } = who, { met, up, raft, wait } = route, byOrder = {};
+    for (const first of ['otters', 'heron']) {
+      const c = { ch3Told, specialty, worry, met, up, lean: raft === 'lean', ask: raft === 'ask', wait, first }, name = JSON.stringify(c);
+      const cat = start5(cat5(st5, Object.assign({ ch3Told, specialty, worry }, met ? { foundSquall: true } : {})), st5);
+      const before = cat.cards.length, rows = read5(cat, st5, { choices: choices5(c) });
+      walks++;
+      assert.equal(rows[rows.length - 1].id, 'd15', name);
+      assert.ok(E.isFinished(cat, 'ch05'), name);
+      // (a page of choices shows its options: her one more question for the heron has a screen of its own)
+      rows.forEach(r => assert.ok(r.caps.length || r.say.length || r.lesson || r.options || ['input', 'end'].includes(r.kind), name + ': ' + r.id + ' shows nothing'));
+      // the flags are what she did, and nothing else
+      assert.deepEqual([!!cat.flags.ch5Roof, !!cat.flags.foundSquall, !!cat.flags.foundPuddle, !!cat.flags.foundWisp, cat.flags.ch5First], [up, met || up, raft !== 'fine', wait === 3, first], name);
+      // "What the otters heard": exactly once, and never with Tallyheart
+      const heard = rows.filter(r => /^h[ab]1$/.test(r.id));
+      assert.deepEqual(heard.map(r => r.id), [first === 'otters' ? 'ha1' : 'hb1'], name);
+      rows.filter(r => /^h[ab]\d/.test(r.id)).forEach(r => assert.ok(!r.say.some(b => b.who === 'tallyheart') && !((r.scene && r.scene.cast) || []).some(m => m.who === 'tallyheart'), name + ': Tallyheart at ' + r.id));
+      // her new cards: five, a sixth for a noticing cat or a climber, and one for each dragonet met today
+      const fresh = cat.cards.slice(before).map(k => k.id);
+      assert.equal(fresh.length, 5 + (specialty === 'noticing' || specialty === 'climbing' ? 1 : 0) + (up ? 1 : 0) + (raft !== 'fine' ? 1 : 0) + (wait === 3 ? 1 : 0), name + ': ' + fresh);
+      byOrder[first] = fresh.slice().sort();
+      // every lesson on her way is finished: the six every cat counts, and a riddle for each dragonet
+      const done = Object.keys(cat.lessons).filter(k => /^ch05/.test(k)).sort();
+      assert.deepEqual(done, ['ch05-bill', 'ch05-catch', 'ch05-nines', 'ch05-otter', 'ch05-pile', 'ch05-tens'].concat(raft !== 'fine' ? ['ch05-puddle'] : [], wait === 3 ? ['ch05-wisp'] : []).sort(), name);
+      assert.equal(!!cat.lessons['ch04-riddle'], up, name);
+      lengths.add(rows.length); cardCounts.add(fresh.length);
+    }
+    assert.deepEqual(byOrder.otters, byOrder.heron, 'the same cards in both orders');
+  }));
+  assert.deepEqual([CATS.length, ROUTES.length, walks], [40, 36, 960]);
+  assert.deepEqual([...cardCounts].sort(), [5, 6, 7, 8, 9]);
+  assert.ok(lengths.size >= 12, 'the paths differ in length: ' + [...lengths].sort((a, b) => a - b));
+  // the hub: after chapter 4, chapter 5 is the big button; afterwards chapter 6 is coming soon
+  assert.equal(E.progress(cat5(st5), list).next.id, 'ch05');
+  const done = start5(cat5(st5), st5); read5(done, st5);
+  const p = E.progress(done, list);
+  assert.deepEqual([p.next, p.soon && p.soon.title, p.latest.id, E.status(done, list)], [null, 'Chapter 6: The Snake in the Stones', 'ch05', 'Chapter 5 finished']);
+});
+
+test('the roof, offered again: the offer shows to a cat who has not met Squall and, with chapter 4’s labels, to one who met him in this chapter; never to one who met him in chapter 4 only, and never straight after the roof; “Not today” leads to Waffles’ “AGAIN, {petname}?” and then to the Crossing', () => {
+  const st5 = story5(), { ch05, list } = st5, t01 = ch05.frames.t01;
+  // the frame's `when`: not (foundSquall and no ch5Roof); `false` reads as unset
+  const not = t01.when;
+  assert.deepEqual(not, { not: { foundSquall: true, ch5Roof: false } });
+  assert.deepEqual([{}, { foundSquall: true }, { foundSquall: true, ch5Roof: true }, { ch5Roof: true }].map(flags => E.shows(t01, { flags })), [true, false, true, true]);
+  assert.equal(t01.else, 'c01');
+  // a cat who has not met him: the roar, "still up there", and chapter 4's choice, worded for today
+  const fresh = start5(cat5(st5), st5), a = read5(fresh, st5, { stop: 't01' });
+  const offer = read5(fresh, st5, { stop: 'c01', choices: { t01: 1 } });
+  assert.deepEqual(ids5(offer), ['t01', 'n01', 'c01']);
+  assert.deepEqual([offer[0].sfx, offer[0].caps, offer[0].options], ['RAWWWRRR… hic!', ['Sprinkle’s littlest brother is still up there.'], ['Go up and find him. The river can wait a little.', 'Not today. Riffle is waiting.']]);
+  assert.deepEqual(offer[1].say, [{ who: 'waffles', label: 'Princess Waffles', text: 'AGAIN, Muffin?', kind: 'shout' }]);
+  assert.ok(!fresh.flags.foundSquall && !fresh.flags.ch5Roof && a.length);
+  // a climber reads her own line there too
+  const climber = start5(cat5(st5, { specialty: 'climbing' }), st5);
+  assert.deepEqual(frame5(read5(climber, st5, { stop: 't01' }), 't01').caps, ['Sprinkle’s littlest brother is still up there.', 'Balcony, balcony, balcony, roof. You could still climb that.']);
+  // going up runs chapter 4's roof (a climber climbs, everyone else rides the little room), sets both flags
+  // on its last frame, and goes to the Crossing: the offer is not read again
+  const up = start5(cat5(st5), st5), roof = read5(up, st5, { stop: 'c02' });
+  assert.deepEqual(ids5(roof).slice(ids5(roof).indexOf('t01')), ['t01', 'r01', 'r02', 'r03', 'r04', 'r05', 'r06', 'c01', 'c02']);
+  assert.deepEqual([up.flags.foundSquall, up.flags.ch5Roof], [true, true]);
+  assert.deepEqual(frame5(roof, 'r03').lesson.map(r => r.k), ['7x5'], 'chapter 4’s riddle, as built there');
+  assert.equal(frame5(roof, 'r03').lesson[0].prompt[0].label, 'The little dragon', 'chapter 5 carries the same `names`');
+  assert.ok(E.hasCard(up, 'squall-shapes') && up.cards.find(c => c.id === 'squall-shapes').chapter === 'ch05', 'chapter 4’s card, given here');
+  assert.deepEqual(ids5(read5(start5(cat5(st5, { specialty: 'climbing' }), st5), st5, { stop: 'r03' })).slice(-3), ['t01', 'r02', 'r03'], 'a climber takes the outside');
+  // Back from the roof before its last frame, then "Not today": no flag, and the card is out of her file
+  const half = start5(cat5(st5), st5);
+  read5(half, st5, { stop: 'r05' });
+  assert.ok(E.cards(half, list).some(c => c.id === 'squall-shapes'), 'on the roof, the card is going into her file');
+  while (half.frame !== 't01') assert.ok(E.back(half, ch05));
+  read5(half, st5, { choices: { t01: 1 } });
+  assert.ok(!half.flags.foundSquall && !half.flags.ch5Roof && !E.cards(half, list).some(c => c.id === 'squall-shapes'));
+  assert.ok(!E.dragonets(half, list).found.some(d => d.id === 'squall'), 'and no page for him in her book');
+  // a cat who met him in chapter 4 reads no screen here: from "ask your river" straight to the Crossing
+  const met = start5(cat5(st5, { foundSquall: true }), st5), straight = ids5(read5(met, st5, { stop: 'c03' }));
+  assert.deepEqual(straight.slice(-3), ['h08', 'c01', 'c03'], 'no offer, and no "I found Squall!" (she told Riffle yesterday)');
+  // a second reading by a cat who met him here: the roar and the choice, with the labels of a cat who knows him
+  E.startChapter(up, ch05, 9000);
+  const again = read5(up, st5, { stop: 'c03', choices: { t01: 1 }, t: 9000 }), o2 = frame5(again, 't01');
+  assert.deepEqual([o2.caps, o2.options, o2.sfx], [[], ['Go up and see Squall again.', 'Not today. He’s guarding.'], 'RAWWWRRR… hic!']);
+  assert.deepEqual(ids5(again).slice(-5), ['t01', 'n01', 'c01', 'c02', 'c03'], 'either pick is followed by "I found Squall!": it reads the flag');
+  assert.equal(frame5(again, 'c02').say[0].text, 'I found Squall! Sprinkle’s littlest brother! He sees two skinny shapes go to the tracks. Every night.');
+});
+
+test('“found today”: none is three flags all unset, any is `not` over the three (E.matches reads false as unset); the news under the bridge shows exactly the lines for the dragonets met today, or “anyone new”, with “And Squall.” exactly when she met him in chapter 4; the pale-sister line shows once to a cat without foundWisp and never to one with it; no den line about dragonets without a find today', () => {
+  const st5 = story5(), { ch05 } = st5;
+  const NONE = { ch5Roof: false, foundPuddle: false, foundWisp: false }, ANY = { not: NONE };
+  [[{}, true], [{ foundSquall: true }, true], [{ ch5Roof: true, foundSquall: true }, false], [{ foundPuddle: true }, false], [{ foundWisp: true }, false], [{ foundPuddle: true, foundWisp: true, ch5Roof: true }, false]]
+    .forEach(([flags, none]) => assert.deepEqual([E.matches(NONE, { flags }), E.matches(ANY, { flags })], [none, !none], JSON.stringify(flags)));
+  assert.deepEqual([ch05.frames.b04.when, ch05.frames.b05.when, ch05.frames.d08.when], [ANY, ANY, ANY]);
+  const PALE = /pale sister is the best at hiding/;
+  const news = (c, flags) => {
+    const cat = start5(cat5(st5, flags), st5), rows = read5(cat, st5, { choices: choices5(c) });
+    return { cat, rows, b03: frame5(rows, 'b03').say.map(b => b.label + ': ' + b.text), ids: ids5(rows), words: words5(rows) };
+  };
+  // nobody today, and nobody ever: "You will. You found me."; the hint on the news frame; no mud count, no den line
+  let r = news({ up: false, lean: false, ask: false, wait: 0, first: 'otters' });
+  assert.deepEqual(r.b03, ['Moonpaw: I didn’t find anyone new today.', 'Sprinkle: You will. You found me.', 'Sprinkle: My pale sister is the best at hiding. You have to wait till she blinks.']);
+  assert.ok(!r.ids.includes('b04') && !r.ids.includes('b05') && !r.ids.includes('d08'));
+  assert.equal(r.words.match(new RegExp(PALE.source, 'g')).length, 1);
+  assert.match(frame5(r.rows, 'd12').caps.join(' '), /Sprinkle’s littlest brother is still up there/, 'bedtime’s hiccup, for a cat who has still not met him');
+  // nobody today, but Squall in chapter 4: "And Squall."; still no count, no den line (a cat who met him yesterday has no news)
+  r = news({ up: false, lean: false, ask: false, wait: 1, first: 'heron' }, { foundSquall: true });
+  assert.deepEqual(r.b03, ['Moonpaw: I didn’t find anyone new today.', 'Sprinkle: You will. You found me. And Squall.', 'Sprinkle: My pale sister is the best at hiding. You have to wait till she blinks.']);
+  assert.ok(!r.ids.includes('b04') && !r.ids.includes('d08'));
+  assert.doesNotMatch(frame5(r.rows, 'd12').caps.join(' '), /still up there/);
+  // the roof today: her brother's five; the hint after the mud count, never on the news frame
+  r = news({ up: true, lean: false, ask: false, wait: 2, first: 'otters' });
+  assert.deepEqual(r.b03, ['Moonpaw: I found your littlest brother. He says: five.']);
+  assert.deepEqual(frame5(r.rows, 'b05').say.map(b => b.text), ['Mama’s count is coming back.', 'But my pale sister is the best at hiding. You have to wait till she blinks.']);
+  assert.equal(r.words.match(new RegExp(PALE.source, 'g')).length, 1);
+  assert.deepEqual(frame5(r.rows, 'd08').caps.concat(frame5(r.rows, 'd08').say.map(b => b.text)), ['Then you whisper the rest.', 'That is a LOT of dragon. And a lot to check. Together.']);
+  // Puddle today (asked on the way home), by a cat who kept the secret and met Squall in chapter 4
+  r = news({ up: false, lean: false, ask: true, wait: 0, first: 'heron' }, { foundSquall: true, ch3Told: false });
+  assert.deepEqual(r.b03, ['Moonpaw: Puddle is under the otters’ raft. He says: five. Then he sank.', 'Sprinkle: He does that.']);
+  assert.deepEqual([frame5(r.rows, 'd08').caps, frame5(r.rows, 'd08').say], [['You don’t tell her the rest. Your secret is getting bigger.'], []]);
+  assert.equal(r.words.match(new RegExp(PALE.source, 'g')).length, 1, 'after the mud count');
+  // all three today: a line each, in the day's order, and no hint at all (she has met the pale sister)
+  r = news({ up: true, lean: true, ask: false, wait: 3, first: 'otters' });
+  assert.deepEqual(r.b03, ['Moonpaw: I found your littlest brother. He says: five.', 'Moonpaw: Puddle is under the otters’ raft. He says: five. Then he sank.', 'Sprinkle: He does that.', 'Moonpaw: Wisp is in the reeds, being a heron. She held up five.']);
+  assert.doesNotMatch(r.words, PALE);
+  assert.deepEqual(frame5(r.rows, 'b05').say.map(b => b.text), ['Mama’s count is coming back.']);
+  // Wisp alone
+  r = news({ up: false, lean: false, ask: false, wait: 3, first: 'heron' });
+  assert.deepEqual(r.b03, ['Moonpaw: Wisp is in the reeds, being a heron. She held up five.']);
+  assert.doesNotMatch(r.words, PALE);
+});
+
+test('the mud count: a forepaw for Sprinkle and for every dragonet she has ever met, so two, three or four taps, ending on 10, 15 or 20; the page it turns to shows that number, never 25; seven forepaws are drawn and the rest stay dark; a skip’s `who` can never be empty (E.skipFor)', () => {
+  const st5 = story5(), { ch05, list } = st5, raw = ch05.frames.b04.skip;
+  assert.equal(raw.groups, undefined, 'the story gives no groups: the count is as long as the cats it is for');
+  const cases = [[{ ch5Roof: true, foundSquall: true }, ['sprinkle', 'squall'], 10], [{ foundPuddle: true }, ['sprinkle', 'puddle'], 10], [{ foundWisp: true }, ['sprinkle', 'wisp'], 10],
+    [{ foundSquall: true, foundPuddle: true }, ['sprinkle', 'squall', 'puddle'], 15], [{ foundSquall: true, foundWisp: true, foundPuddle: true, ch5Roof: true }, ['sprinkle', 'squall', 'puddle', 'wisp'], 20]];
+  cases.forEach(([flags, who, total]) => {
+    const cat = { flags }, sk = E.skipFor(raw, cat), n = who.length;
+    assert.deepEqual([sk.who, sk.groups], [who.map(w => ({ who: w })), n], JSON.stringify(flags));
+    assert.equal(raw.who.length, 4, 'the story’s own skip is never changed');
+    // tap by tap: five claw marks a tap, the number in Sprinkle's balloon growing by five
+    const counts = [];
+    for (let t = 0; t <= n; t++) counts.push(E.skipView(sk, t).count);
+    assert.deepEqual(counts, ['', '5…', '5… 10…', '5… 10… 15…', '5… 10… 15… 20…'].slice(0, n).concat([[5, 10, 15, 20].slice(0, n).join('… ') + '!']));
+    assert.deepEqual([E.skipView(sk, n).done, E.skipView(sk, n).total, E.skipView(sk, n + 3).total, E.skipReached(sk)], [true, total, total, total]);
+    // the picture: chapter 3's forepaws in the mud, seven of them; the first n hers to light, a glow on the next
+    const p1 = E.skipPicture(sk, 1), last = E.skipPicture(sk, n);
+    assert.deepEqual(p1, { table: 5, groups: n, per: 5, highlight: 5, totals: true, next: true, who: who.map(w => ({ who: w })), thing: 'claw', things: 'claws', paws: 'mud', kind: 'mud', of: 7 });
+    assert.deepEqual([last.highlight, last.next, last.groups, last.of], [total, false, n, 7], 'seven are drawn, the first n hers to light; the rest stay dark, and nothing glows once her count is in');
+    assert.equal(E.skipWords(sk, 'sprinkle').teacher, 'sprinkle');
+  });
+  const w = E.skipWords(E.skipFor(raw, {}), 'sprinkle');
+  assert.deepEqual([w.label, w.aria, w.prompt, w.thing], ['Count the next forepaw.', 'Seven forepaws in the mud. Touch the glowing one.', '**Tap** a forepaw for everyone you’ve found.', 'claw']);
+  assert.equal(w.noNumber, true, 'no big number over the mud: each forepaw has its own 5, 10, 15 under it, and the big one would sit on the next to light');
+  // the page it turns to: the number she reached, for this cat (E.skipInto resolves the skip for her)
+  const one = { flags: { foundPuddle: true } }, three = { flags: { foundSquall: true, foundPuddle: true, foundWisp: true } };
+  assert.deepEqual([E.skipReached(E.skipInto(ch05, 'b05', one)), E.skipReached(E.skipInto(ch05, 'b05', three))], [10, 20], 'never the 25 of five taps');
+  assert.equal(E.skipInto(ch05, 'b06', one), null);
+  // a cat who met nobody today never reads the count (b04 and b05 are not hers): the page turn past
+  // them lands on b06, and a count she never made hands no number on (it showed a big 5, or a 10)
+  [{ flags: {} }, { flags: { foundSquall: true } }, { flags: { foundSquall: true, ch5Roof: false, foundPuddle: false, foundWisp: false } }].forEach(nobody => {
+    assert.deepEqual([E.shows(ch05.frames.b04, nobody), E.landing(nobody, ch05, 'b04'), E.landing(nobody, ch05, ch05.frames.b04.skip.next)], [false, 'b06', 'b06'], JSON.stringify(nobody.flags));
+    assert.equal(E.skipInto(ch05, 'b06', nobody), null, 'no number over the page after a count she never read');
+    assert.equal(E.skipInto(ch05, 'b05', nobody), null);
+  });
+  // (with no cat, as the storyboard asks, the skip itself: the page it names)
+  assert.equal(E.skipInto(ch05, 'b05'), raw);
+  // the same for a count that keeps its picture (`keep`): a kept skip she never reads keeps nothing for her
+  const kept = { id: 'k', frames: { k1: { when: { foundWisp: true }, skip: { table: 5, groups: 2, keep: true, next: 'k2' } }, k2: { say: [{ who: 'player', text: 'Ten.' }], next: 'k3' }, k3: { end: true } } };
+  assert.equal(E.keptSkip(kept, 'k2', { flags: { foundWisp: true } }).id, 'k1');
+  assert.equal(E.keptSkip(kept, 'k2', { flags: {} }), null);
+  assert.equal(E.skipInto(kept, 'k2', { flags: {} }), null);
+  assert.equal(E.keptSkip(kept, 'k2').id, 'k1', 'with no cat, the story as written');
+  // in a reading: no cat who found nobody today reaches it, and it logs nothing
+  const cat = start5(cat5(st5), st5), rows = read5(cat, st5, { choices: choices5({ up: false, lean: true, ask: false, wait: 3, first: 'otters' }) });
+  const b04 = frame5(rows, 'b04');
+  assert.deepEqual([b04.skip.groups, b04.skip.who.map(x => x.who), frame5(rows, 'b05').counts - b04.counts], [3, ['sprinkle', 'puddle', 'wisp'], 0]);
+  // chapters 2 to 4's skips are handed back as they are (the very object)
+  [st5.ch02, st5.ch03, st5.ch04].forEach(s => Object.values(s.frames).filter(f => f.skip).forEach(f => assert.equal(E.skipFor(f.skip, cat), f.skip)));
+  // E.checkStory: somebody is always there to count; a skip without groups needs its who
+  const bad = clone(ch05);
+  bad.frames.b04.skip.who.forEach(x => { x.when = { foundSquall: true }; });
+  assert.match(E.checkStory(bad, list).join('\n'), /b04: skip who can never be empty: one entry has no when/);
+  const bad2 = clone(ch05); delete bad2.frames.b04.skip.who;
+  assert.match(E.checkStory(bad2, list).join('\n'), /b04: skip needs a table and groups/);
+  const bad3 = clone(ch05); bad3.frames.b04.skip.who[1].when = 'squall';
+  assert.match(E.checkStory(bad3, list).join('\n'), /b04 skip who 1: when must be an object/);
+});
+
+test('Puddle: found after the Roar, she never reads the slip; one who did not reads it exactly once; Back from any frame of “Under the raft” before its last, then “Look up” and later “Puddles. Fine.”, leaves no foundPuddle, no page and no puddle-paws card, and nothing afterwards says “Puddle”; a second reading has its own labels', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  const read = (c, flags) => { const cat = start5(cat5(st5, flags), st5); return { cat, rows: read5(cat, st5, { choices: choices5(c) }) }; };
+  // found after the Roar: the same scene, its riddle, its card, the flag on its last frame; no slip later
+  const a = read({ up: false, lean: true, ask: false, wait: 0, first: 'otters' });
+  assert.deepEqual(ids5(a.rows).filter(id => /^u[ab]|^s0|^o1[01]|^w01/.test(id)), ['o10', 'ua1', 'ua2', 'ua3', 'ua4', 'ua5', 'ua6', 'ua7', 'w01']);
+  assert.deepEqual([a.cat.flags.foundPuddle, E.hasCard(a.cat, 'puddle-paws'), !!a.cat.lessons['ch05-puddle']], [true, true, true]);
+  assert.deepEqual(ch05.frames.ua7.sets, { foundPuddle: true });
+  assert.deepEqual(ch05.frames.ub7.sets, ch05.frames.ua7.sets, 'both copies set the same flag, on their last frame');
+  assert.ok(Object.keys(ch05.frames).filter(id => /^u[ab][1-6]$/.test(id)).every(id => !ch05.frames[id].sets), 'never the foot, never a choice');
+  assert.equal(ch05.frames.w01.scene.opts.bubbles, true, 'the frame after it: he is seen to be up again');
+  // not found after the Roar: the slip, exactly once; asking him runs the same scene in late light
+  const b = read({ up: false, lean: false, ask: true, wait: 0, first: 'otters' });
+  assert.deepEqual(ids5(b.rows).filter(id => /^u[ab]|^s0|^o1[01]/.test(id)), ['o10', 'o11', 's01', 's02', 'ub1', 'ub2', 'ub3', 'ub4', 'ub5', 'ub6', 'ub7']);
+  assert.deepEqual(frame5(b.rows, 's02').say.map(x => x.text), ['I promised Granny I wouldn’t TELL. I’m only POINTING.']);
+  assert.ok(Object.keys(ch05.frames).filter(id => /^ub\d$/.test(id)).every(id => ch05.frames[id].scene.opts.late === true) && !ch05.frames.ua2.scene.opts.late);
+  assert.deepEqual(frame5(b.rows, 'ub3').lesson.map(r => r.k), ['4x10'], 'one Counts set for both copies');
+  assert.ok(b.cat.flags.foundPuddle && E.hasCard(b.cat, 'puddle-paws'));
+  // letting him keep his secret: nothing, answered kindly
+  const c = read({ up: false, lean: false, ask: false, wait: 0, first: 'heron' });
+  assert.deepEqual(ids5(c.rows).filter(id => /^u[ab]|^s0/.test(id)), ['s01', 's03']);
+  assert.deepEqual(frame5(c.rows, 's03').say.map(x => x.text).concat(frame5(c.rows, 's03').caps), ['Best friend an otter ever had.', 'Under the logs, something goes blub.']);
+  assert.ok(!c.cat.flags.foundPuddle && !E.hasCard(c.cat, 'puddle-paws'));
+  assert.doesNotMatch(words5(c.rows), /\bPuddle\b/, 'his name is never on screen for her: the word she reads is “puddles”');
+  assert.match(words5(c.rows), /It’s because of Pud— PUDDLES\. Raft puddles\. Not a name\./);
+  // Back from any frame of the scene before its last, then "Look up", and later "Puddles. Fine."
+  ['ua1', 'ua2', 'ua3', 'ua4', 'ua5', 'ua6'].forEach(stop => {
+    const cat = start5(cat5(st5), st5);
+    read5(cat, st5, { choices: choices5({ lean: true, first: 'otters' }), stop });
+    if (stop === 'ua6') assert.ok(E.cards(cat, list).some(k => k.id === 'puddle-paws') && !cat.flags.foundPuddle, 'on the frame that gives the card, it is going into her file');
+    while (cat.frame !== 'o10') assert.ok(E.back(cat, ch05), stop);
+    const rest = read5(cat, st5, { choices: choices5({ lean: false, ask: false, wait: 0, first: 'otters' }) });
+    assert.ok(!cat.flags.foundPuddle, stop);
+    assert.ok(!E.cards(cat, list).some(k => k.id === 'puddle-paws'), stop + ': no card in her file (held, it is shown only with the flag)');
+    assert.ok(!(E.dragonets(cat, list).found.some(d => d.id === 'puddle')), stop + ': no page in her book');
+    assert.doesNotMatch(words5(rest), /\bPuddle\b/, stop + ': nothing afterwards says his name');
+    assert.ok(!E.buildFullBook(cat, list).pages.some(pg => /Puddle/.test(pg.recap.join(' '))), stop);
+  });
+  // sticky: Back after the last frame keeps him, and a second reading reads the flag, with its own labels
+  const d = start5(cat5(st5), st5);
+  read5(d, st5, { choices: choices5({ lean: true, first: 'otters' }), stop: 'w01' });
+  assert.ok(E.back(d, ch05) && E.back(d, ch05) && d.flags.foundPuddle);
+  read5(d, st5, { choices: choices5({ lean: true, first: 'otters', wait: 0 }) });
+  E.startChapter(d, ch05, 9000);
+  const second = read5(d, st5, { choices: choices5({ lean: false, ask: false, wait: 0, first: 'heron' }), t: 9000 });
+  assert.deepEqual(frame5(second, 'o10').options, ['Lean over, and say hello to Puddle.', 'Not now. He’s being a log.']);
+  assert.ok(!ids5(second).includes('s01'), 'a cat who has found him never reads the slip');
+  assert.deepEqual(frame5(second, 'b03').say.map(x => x.text), ['Puddle is under the otters’ raft. He says: five. Then he sank.', 'He does that.'], 'the lines under the bridge read the flag, not this reading’s choices');
+  assert.equal(d.cards.filter(k => k.id === 'puddle-paws').length, 1);
+});
+
+test('Wisp: three choices to keep still, and stopping at any of them gives no flag and no card; the loud way out of the first has a tell; she has no balloon anywhere, and her name is on screen only for a cat who waited; a cat who found Puddle and then finds her reads the frame where his snout comes up, and no other cat does', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  const read = (c, flags) => { const cat = start5(cat5(st5, flags), st5); return { cat, rows: read5(cat, st5, { choices: choices5(c) }) }; };
+  // no frame has a balloon of hers, in any reading or in the story at all; both lines about her are Patience's
+  Object.entries(ch05.frames).forEach(([id, f]) => assert.ok(!(f.say || []).some(b => b.who === 'wisp'), id));
+  Object.values(ch05.counts).forEach(d => assert.ok(d.teacher !== 'wisp' && !JSON.stringify(d).includes('"who":"wisp"')));
+  assert.deepEqual([ch05.frames.k05.say[0].who, ch05.frames.k06.say[0].who], ['patience', 'patience']);
+  const out = [['q01', 'ONE! TWO!'], ['q02', 'THREE!'], ['q03', 'FIVE!']];
+  [0, 1, 2].forEach(wait => {
+    const r = read({ lean: false, ask: false, wait, first: 'heron' }), ids = ids5(r.rows);
+    assert.deepEqual(ids.filter(id => /^[kq]\d/.test(id)), [['q01'], ['k01', 'k02', 'q02'], ['k01', 'k02', 'k03', 'q03']][wait]);
+    assert.equal(frame5(r.rows, out[wait][0]).say[0].text, out[wait][1], 'each a small joke of its own');
+    assert.equal(ids[ids.indexOf(out[wait][0]) + 1], 'f01', 'then straight on to the catch');
+    assert.ok(!r.cat.flags.foundWisp && !E.hasCard(r.cat, 'wisp-fox') && !r.cat.lessons['ch05-wisp']);
+    assert.doesNotMatch(words5(r.rows), /Wisp/, 'her name is nowhere');
+    assert.equal(frame5(r.rows, 'f01').say[1].text, 'Frogs.');
+    assert.deepEqual(frame5(r.rows, 'f02').caps, ['Down go the fish.']);
+  });
+  assert.match(frame5(read({ wait: 0, first: 'heron' }).rows, 'q01').caps[0], /One reed flinches\.$/);
+  assert.equal(ch05.frames.q01.scene.opts.pale, 'flinch');
+  // found: three waits, the blink, her riddle, her card, the flag on the last frame (the forepaw Tap)
+  const w = read({ lean: false, ask: false, wait: 3, first: 'heron' });
+  assert.deepEqual(ids5(w.rows).filter(id => /^[kq]\d/.test(id)), ['k01', 'k02', 'k03', 'k04', 'k05', 'k06', 'k08', 'k09', 'k10']);
+  assert.deepEqual([ch05.frames.k10.sets, w.cat.flags.foundWisp, E.hasCard(w.cat, 'wisp-fox')], [{ foundWisp: true }, true, true]);
+  assert.deepEqual(frame5(w.rows, 'k10').skip, { table: 5, groups: 1, who: [{ who: 'wisp' }], thing: 'claw', things: 'claws', label: 'Tap her forepaw.', prompt: '**Tap** her forepaw.', carry: false, next: 'f01' });
+  assert.equal(frame5(w.rows, 'f01').say[1].text, 'A reed with knees.');
+  assert.deepEqual(frame5(w.rows, 'f02').caps, ['Down go the fish. One for Patience. One for Wisp.'], 'she gets her half exactly when found');
+  assert.deepEqual([ch05.frames.f02.scene.opts.fish, ch05.frames.f02.scene.opts.frogs], ['spare', 'sit']);
+  // Back before the last frame, then "Enough!": no flag, no card in her file, her name nowhere afterwards
+  const half = start5(cat5(st5), st5);
+  read5(half, st5, { choices: choices5({ lean: false, wait: 3, first: 'heron' }), stop: 'k09' });
+  assert.ok(E.cards(half, list).some(k => k.id === 'wisp-fox'), 'on the frame that gives it');
+  while (half.frame !== 'k03') assert.ok(E.back(half, ch05));
+  const rest = read5(half, st5, { choices: choices5({ lean: false, ask: false, wait: 2, first: 'heron' }) });
+  assert.ok(!half.flags.foundWisp && !E.cards(half, list).some(k => k.id === 'wisp-fox'));
+  assert.doesNotMatch(words5(rest), /Wisp/);
+  // Puddle's snout in the reeds: only for a cat who found him after the Roar and then waits
+  assert.deepEqual(ch05.frames.k07.when, { foundPuddle: true });
+  const both = read({ lean: true, wait: 3, first: 'otters' }), k07 = frame5(both.rows, 'k07');
+  assert.deepEqual(k07.say, [{ who: 'puddle', label: 'Puddle', text: 'WISP?', kind: undefined }, { who: 'puddle', label: 'Puddle', text: 'I’m a LOG.', kind: 'whisper' }]);
+  assert.ok(!ids5(w.rows).includes('k07'));
+  assert.ok(!ids5(read({ lean: false, ask: true, wait: 3, first: 'otters' }).rows).includes('k07'), 'found on the way home, the raft has left the marsh');
+  // from the frame where Riffle dives to the one where he heaves the fish aboard, his pole holds the raft
+  ['m17', 'm18', 'q01', 'q02', 'q03', 'k01', 'k02', 'k03', 'k04', 'k05', 'k06', 'k07', 'k09', 'k10', 'f01'].forEach(id => assert.equal(ch05.frames[id].scene.opts.pole, 'planted', id));
+  assert.equal(frame5(both.rows, 'm17').say[1].text, 'Back in eighteen fish!');
+});
+
+test('the Roar: the old otter names it where he gives the rules (“the Roar”, “courage test”); no frame before that has the capitalised word in a caption or a balloon; Tallyheart’s first frame at the Crossing comes after it; the test cannot be failed; from the frame where she turns for home to the Old Bridge no balloon is hers', () => {
+  const st5 = story5(), { ch05 } = st5;
+  const cat = start5(cat5(st5, { worry: 'water', specialty: 'swimming' }), st5), rows = read5(cat, st5, { choices: choices5({ up: true, lean: true, wait: 3, first: 'heron' }) });
+  const ids = ids5(rows), rules = ids.indexOf('c03'), text = r => r.caps.concat(r.say.map(b => b.text)).join(' ');
+  assert.match(text(rows[rules]), /That’s the Roar\. It’s the courage test\./);
+  rows.slice(0, rules).forEach(r => assert.doesNotMatch(text(r), /\bRoar\b/, r.id + ': the word is not on screen before the otter who runs it says it (Squall’s is a roar, small)'));
+  const firstAtCrossing = rows.findIndex((r, i) => i > ids.indexOf('c01') - 1 && r.say.some(b => b.who === 'tallyheart'));
+  assert.ok(firstAtCrossing > rules && rows[firstAtCrossing].id === 'c05');
+  assert.deepEqual(rows[rules].options, ['“What if I move?”', '“What if I sneeze?”']);
+  assert.deepEqual(ch05.frames.c03.choice.options.map(o => [o.sets, o.next]), [[{}, 'c04'], [{}, 'c04']], 'a light choice: one answer does for both');
+  assert.match(frame5(rows, 'c04').say[0].text, /^Then you sit through it again tomorrow\./);
+  // she turns for home at o08; after it, to the Old Bridge, no balloon is hers: a Counts frame's lines,
+  // fillers, help and retries included (every answer missed once, so each of them comes round)
+  const cat2 = start5(cat5(st5), st5);
+  const all = read5(cat2, st5, { choices: choices5({ up: false, lean: true, wait: 3, first: 'otters' }), answers: { '4x10': [44], '7x2': [15], '9x2': [20], '7x1': [14], '4x5': [25] } });
+  const from = ids5(all).indexOf('o08') + 1, to = ids5(all).indexOf('b01');
+  assert.ok(from > 0 && to > from);
+  all.slice(from, to).forEach(r => {
+    assert.ok(!r.say.some(b => b.who === 'tallyheart'), r.id);
+    (r.lesson || []).forEach(l => {
+      assert.ok(l.teacher !== 'tallyheart' && !l.prompt.some(p => p.who === 'tallyheart') && !l.balloons.some(b => b.who === 'tallyheart'), r.id + ' ' + l.k);
+      if (l.help) assert.ok(l.help.teacher !== 'tallyheart' && l.help.counter !== 'tallyheart' && l.help.says !== 'tallyheart', r.id + ' ' + l.k + ': its help');
+    });
+  });
+  assert.deepEqual(all.slice(from, to).filter(r => r.lesson).map(r => r.id), ['ua3', 'm05', 'm16', 'k05', 'f01'], 'five Counts moments out on the water');
+  // and nobody on the raft or in the marsh says "lives"
+  assert.doesNotMatch(words5(all.slice(ids5(all).indexOf('o01'), to)), /\blives?\b/i);
+});
+
+test('lines for some cats only: the water worry’s places, a swimmer’s two, the sneaking cat’s socks on every path, a noticing cat’s Tap at the gap and what follows from it, a climber’s Tap on the pole, “Flew. Again.” for a cat who caught it, and “One hole in his story for certain” only when she also told', () => {
+  const st5 = story5(), { ch05 } = st5;
+  const read = (flags, c) => { const cat = start5(cat5(st5, flags), st5); const rows = read5(cat, st5, { choices: choices5(Object.assign({ up: false, lean: true, wait: 0, first: 'otters' }, c)) }); return { cat, rows, w: words5(rows), ids: ids5(rows) }; };
+  const WATER = ['Your paws won’t move.', 'That’s what she promised, on your very first night.', 'And if you fall in, I’ll have you out before your tail gets wet. Otter’s honor.', 'You look down. Still deep. You look at your paws. Still here.',
+    'The deep water is right under your nose. You look anyway.', 'Beside the mud, you can see the bottom. You look at it a lot.', 'And the deep water?', 'Still deep. I looked right at it.'];
+  const wet = read({ worry: 'water' }), dry = read({ worry: 'small' });
+  WATER.forEach(line => { assert.ok(wet.w.includes(line), line); assert.ok(!dry.w.includes(line), 'not for a cat without the worry: ' + line); });
+  assert.ok(wet.ids.includes('c08') && wet.ids.includes('d03') && !dry.ids.includes('c08') && !dry.ids.includes('d03'));
+  assert.ok(dry.w.includes('You’re the smallest thing on the whole wide river. You sit still anyway.') && !wet.w.includes('smallest thing'));
+  // a swimmer: exactly one of her two lines at the raft, and her line at the catch only without the water worry
+  const HELLO = 'Your first paw goes in the river, to say hello.', TAP = 'It isn’t one bit like a dripping tap.', HOOK = 'You hook the last string aboard. A wet paw! You don’t mind one bit.';
+  const swim = read({ specialty: 'swimming', worry: 'talk' }), swimWet = read({ specialty: 'swimming', worry: 'water' });
+  assert.deepEqual([swim.w.includes(HELLO), swim.w.includes(TAP), swim.w.includes(HOOK)], [true, false, true]);
+  assert.deepEqual([swimWet.w.includes(HELLO), swimWet.w.includes(TAP), swimWet.w.includes(HOOK)], [false, true, false]);
+  assert.ok(!dry.w.includes(HELLO) && !dry.w.includes(HOOK) && !wet.w.includes(TAP));
+  assert.ok(swim.w.includes('You have a hundred questions. At two fish each, you pick one more.') && !wet.w.includes('a hundred questions'));
+  assert.ok(read({ worry: 'shiny' }).w.includes('They flash like silver. You try very hard not to stare.') && !dry.w.includes('flash like silver'));
+  // sneaking: on every path, in the Roar itself; and once more if she waits
+  [0, 3].forEach(wait => {
+    const s = read({ specialty: 'sneaking' }, { wait });
+    assert.ok(s.w.includes('You’ve held still for socks. You can hold still for this.'), 'wait ' + wait);
+    assert.equal(s.w.includes('Sock-hunting, all over again.'), wait === 3);
+  });
+  assert.ok(!read({ specialty: 'friends' }).w.includes('socks'));
+  const pal = read({ specialty: 'friends' });
+  ['The old otter nods at you, once. You know a friend’s nod when you see one.', 'Hello, Patience.', 'One grey feather lifts. For Patience, that’s a grin.'].forEach(l => { assert.ok(pal.w.includes(l)); assert.ok(!dry.w.includes(l)); });
+  // noticing: only she has the Tap at the gap, holds `prints-pile`, reads the sweep and the match, and says her line at the den
+  const sharp = read({ specialty: 'noticing' }), plain = read({ specialty: 'sneaking' });
+  assert.deepEqual(sharp.ids.slice(1, 6), ['p02', 'p03n', 'p04', 'p05', 'p06']);
+  assert.deepEqual(plain.ids.slice(1, 5), ['p02', 'p03', 'p05', 'p06']);
+  assert.deepEqual([frame5(sharp.rows, 'p03n').kind, frame5(sharp.rows, 'p03n').tap, frame5(plain.rows, 'p03').kind],
+    ['scratch', { kind: 'tap', prompt: '**Tap** the freshly dug earth behind the gap.', label: 'Look at the dug earth.', miss: 'rustle…' }, 'next']);
+  assert.deepEqual(frame5(sharp.rows, 'p03n').caps, frame5(plain.rows, 'p03').caps, 'everyone reads the same screen; she has the Tap');
+  assert.deepEqual(frame5(sharp.rows, 'p04').cards.map(c => [c.id, c.mark, c.showLine]), [['prints-pile', 'eye', true]], 'an eye card comes straight after a Tap');
+  assert.ok(E.hasCard(sharp.cat, 'prints-pile') && !E.hasCard(plain.cat, 'prints-pile'));
+  ['His tail sweeps the prints away. Nothing left to show anyone. But you saw them.', 'The same tiny prints as behind the pile!', 'And the same tiny prints were behind OUR pile. Till a tail swept them.', 'Waffles was up ALL night. With her nerves.']
+    .forEach(l => { assert.ok(sharp.w.includes(l), l); assert.ok(!plain.w.includes(l), l); });
+  // both lines that size the prints say "half the size of yours"
+  assert.match(frame5(sharp.rows, 'p04').caps[0], /half the size of yours\.$/);
+  assert.match(frame5(sharp.rows, 'm13').caps[1], /half the size of yours\.$/);
+  // "Flew. Again.": only with ch4CaughtFly; "One hole in his story for certain": only when she also told
+  assert.ok(sharp.ids.includes('ha4') && sharp.w.includes('Flew. Again. You know a dragon who can’t.') && !plain.ids.includes('ha4'));
+  assert.ok(sharp.w.includes('One hole in his story for certain. Maybe two.'));
+  const kept = read({ specialty: 'noticing', ch3Told: false });
+  assert.ok(kept.ids.includes('ha4') && !kept.w.includes('One hole in his story'));
+  assert.ok(!plain.w.includes('One hole in his story'));
+  // climbing: only she has the Tap on the pole, holds `prints-tracks`, and says her line at the den
+  const climb = read({ specialty: 'climbing' });
+  assert.deepEqual(climb.ids.slice(climb.ids.indexOf('m12'), climb.ids.indexOf('m16') + 1), ['m12', 'm13c', 'm14', 'm15', 'm16'], '(she asked the otters first, so the fur is set beside the prints)');
+  assert.deepEqual(plain.ids.slice(plain.ids.indexOf('m12'), plain.ids.indexOf('m16') + 1), ['m12', 'm13', 'm15', 'm16']);
+  assert.deepEqual([frame5(climb.rows, 'm13c').tap.label, frame5(climb.rows, 'm13c').cards.map(c => c.id), frame5(climb.rows, 'm14').cards.map(c => c.id), frame5(plain.rows, 'm13').cards.map(c => c.id)],
+    ['Run up the pole.', ['prints-marsh'], ['prints-tracks'], ['prints-marsh']]);
+  assert.ok(E.hasCard(climb.cat, 'prints-tracks') && !E.hasCard(plain.cat, 'prints-tracks') && !E.hasCard(sharp.cat, 'prints-tracks'));
+  ['From the top, you see where the prints go: off toward the train tracks.', 'And the prints run off toward the train tracks.'].forEach(l => { assert.ok(climb.w.includes(l)); assert.ok(!plain.w.includes(l)); });
+  // the frame after the prints is read by a noticing cat, or one who asked the otters first; nobody else
+  const heron = read({ specialty: 'sneaking' }, { first: 'heron' });
+  assert.ok(!heron.ids.includes('m15') && heron.w.includes('Tiny prints there. Thin fur here. The same somebody?') && !heron.w.includes('Thin fur there.'));
+  assert.deepEqual(frame5(read({ specialty: 'noticing' }, { first: 'heron' }).rows, 'm15').caps, ['The same tiny prints as behind the pile!']);
+  assert.deepEqual(frame5(sharp.rows, 'm15').caps, ['The same tiny prints as behind the pile!', 'Thin fur there. Tiny prints here. The same somebody?']);
+  // the telling at the den is read by every cat, with a second pair of balloons only for a noticing cat or a climber
+  assert.deepEqual([frame5(plain.rows, 'd04').say.length, frame5(sharp.rows, 'd04').say.length, frame5(climb.rows, 'd04').say.length], [0, 2, 2]);
+  [plain, sharp, climb].forEach(r => assert.match(frame5(r.rows, 'd04').caps[0], /the two small shapes\.$/));
+  // her feet are never on the marsh: in every marsh picture she is on the raft (or up its pole)
+  Object.entries(ch05.frames).filter(([, f]) => f.scene && f.scene.set === 'marsh').forEach(([id, f]) => f.scene.cast.filter(m => m.who === 'player').forEach(m => assert.ok(['raft-1', 'raft-2', 'pole-top'].includes(m.at), id + ': ' + m.at)));
+  // heard, never seen; nothing solved; no card and no frame with the words the notes rule out
+  const everything = JSON.stringify([ch05.frames, ch05.cards, ch05.counts, ch05.book]);
+  ['weasel', 'tunnel', 'goose', 'gets bigger', 'himself told him', 'soggy', 'needle', 'Snip', 'Snatch'].forEach(w => assert.ok(!new RegExp(w, 'i').test(everything), w));
+});
+
+test('her Case File in chapter 5: nine new cards, none over twelve words; a link may name its partners (`link.with`); `fox-moon` and `heron-no-moon` lie touching from the marsh on, `squall-shapes` and `heron-shapes` whenever she holds both, `prints-pile` and `prints-marsh` for a noticing cat, and a climber who has met Squall has three in a row; `fox-moon` has no answers yet; chapter 4’s link is as it was', () => {
+  const st5 = story5(), { ch05, ch04, list } = st5;
+  assert.deepEqual(Object.keys(ch05.cards), ['prints-pile', 'puddle-paws', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'prints-tracks', 'wisp-fox']);
+  Object.entries(ch05.cards).forEach(([id, c]) => assert.ok(c.line.split(/\s+/).length <= 12, id + ': ' + c.line.split(/\s+/).length + ' words'));
+  assert.deepEqual(Object.entries(ch05.cards).map(([id, c]) => c.mark === 'eye' ? id : null).filter(Boolean), ['prints-pile', 'fur', 'prints-marsh', 'prints-tracks'], 'the eyes: every one something she tapped');
+  assert.equal(ch05.cards['otter-fox'].line, 'The old otter says the fox told him the dragon story.');
+  assert.deepEqual([ch05.cards['puddle-paws'].when, ch05.cards['wisp-fox'].when], [{ foundPuddle: true }, { foundWisp: true }]);
+  assert.ok(!('answers' in ch04.cards['fox-moon']), 'the claim is not answered yet: Tallyheart says "not yet"');
+  Object.values(ch05.cards).forEach(c => assert.ok(!('answers' in c), 'this chapter adds no answers (chapter 10’s)'));
+  const read = (flags, c, stop) => { const cat = start5(cat5(st5, flags), st5); const rows = read5(cat, st5, { choices: choices5(Object.assign({ up: false, lean: false, ask: false, wait: 0, first: 'otters' }, c)), stop }); return { cat, rows }; };
+  const links = cat => E.caseFile(cat, list).links.map(l => [l.cards.map(c => c.id).join(' + '), (l.lines || [l.line]).join(' | ')]);
+  const near = (cat, a, b) => E.fileNeighbours(E.caseFile(cat, list), a, b);
+  // before the marsh nothing new touches; from the frame that gives the heron's card on, the two moons do
+  const early = read({}, {}, 'm07');
+  assert.ok(E.hasCard(early.cat, 'heron-no-moon') && near(early.cat, 'fox-moon', 'heron-no-moon'));
+  assert.deepEqual(links(early.cat), [['fox-moon + heron-no-moon', 'One of them is wrong.']]);
+  assert.ok(!near(read({}, {}, 'm06').cat, 'fox-moon', 'heron-no-moon'), 'not before she holds both');
+  const plain = read({});
+  assert.deepEqual(links(plain.cat), [['fox-moon + heron-no-moon', 'One of them is wrong.']]);
+  assert.deepEqual(E.caseFile(plain.cat, list).groups.map(g => [g.mark, g.cards.map(c => c.id)]),
+    [['eye', ['four-a-night', 'tidy', 'scale', 'sprinkle-scales', 'cant-fly', 'fur', 'prints-marsh']], ['ear', ['fox-flew', 'otter-fox', 'heron-shapes']]], 'the linked cards leave their groups');
+  // two ears that agree: a cat who has met Squall (in chapter 4, or this morning)
+  const met = read({ foundSquall: true });
+  assert.deepEqual(links(met.cat), [['fox-moon + heron-no-moon', 'One of them is wrong.'], ['squall-shapes + heron-shapes', 'Two saw them. The same two shapes?']]);
+  assert.ok(near(met.cat, 'squall-shapes', 'heron-shapes') && !near(plain.cat, 'squall-shapes', 'heron-shapes'));
+  assert.ok(near(read({}, { up: true }).cat, 'squall-shapes', 'heron-shapes'));
+  // a noticing cat: the same prints, two eyes she compared herself; and chapter 4's link beside them, as it was
+  const sharp = read({ specialty: 'noticing' });
+  assert.deepEqual(links(sharp.cat), [['cant-fly + fox-flew', 'They can’t both be true.'], ['fox-moon + heron-no-moon', 'One of them is wrong.'], ['prints-pile + prints-marsh', 'The same prints.']]);
+  assert.ok(near(sharp.cat, 'prints-pile', 'prints-marsh') && near(sharp.cat, 'cant-fly', 'fox-flew') && !near(sharp.cat, 'fox-flew', 'fox-moon'));
+  E.caseFile(sharp.cat, list).links.forEach(l => assert.deepEqual(Object.keys(l), ['cards', 'line'], 'a pair is { cards, line }, as chapter 4 made it'));
+  // a climber who has met Squall: his card lies between the heron's two shapes and her own sight from the pole
+  const climb = read({ specialty: 'climbing', foundSquall: true });
+  assert.deepEqual(links(climb.cat), [['fox-moon + heron-no-moon', 'One of them is wrong.'], ['prints-tracks + squall-shapes + heron-shapes', 'Both lead toward the tracks. | Two saw them. The same two shapes?']]);
+  assert.ok(near(climb.cat, 'prints-tracks', 'squall-shapes') && near(climb.cat, 'squall-shapes', 'heron-shapes') && !near(climb.cat, 'prints-tracks', 'heron-shapes'), 'the two that lie side by side touch');
+  const row = E.caseFile(climb.cat, list).links[1];
+  assert.deepEqual([row.line, row.lines.length, row.cards.length], ['Both lead toward the tracks.', 2, 3]);
+  // a climber who has not met him holds the card with nothing to lay it beside
+  const alone = read({ specialty: 'climbing' });
+  assert.ok(E.hasCard(alone.cat, 'prints-tracks') && links(alone.cat).length === 1 && !near(alone.cat, 'prints-tracks', 'squall-shapes'));
+  // every card in a link is counted once, and none is lost
+  [plain, met, sharp, climb].forEach(r => {
+    const F = E.caseFile(r.cat, list), all = F.groups.reduce((a, g) => a.concat(g.cards), []).concat(F.links.reduce((a, l) => a.concat(l.cards), [])).map(c => c.id);
+    assert.deepEqual(all.slice().sort(), E.cards(r.cat, list).map(c => c.id).sort());
+    assert.equal(new Set(all).size, all.length);
+  });
+  // a card hidden by its `when` is never laid beside anything
+  const half = read({}, { lean: true }, 'ua6');
+  assert.ok(E.cards(half.cat, list).some(c => c.id === 'puddle-paws'));
+  // E.checkStory: `with` is a list of known cards (hers or another chapter's), never the card itself; a link needs answers or with
+  const bad = clone(ch05);
+  bad.cards['heron-no-moon'].link.with = ['no-such-card']; bad.cards['prints-marsh'].link.with = ['prints-marsh']; bad.cards['prints-tracks'].link = { line: 'x' }; bad.cards.fur.link = { with: 'fox-moon' };
+  const errs = E.checkStory(bad, list).join('\n');
+  for (const want of [/card heron-no-moon: link with names an unknown card no-such-card/, /card prints-marsh: link with names the card itself/, /card prints-tracks: link needs answers \(the cards it is drawn touching\), or with/, /card fur: link with is a list of card ids/]) assert.match(errs, want);
+  assert.match(E.checkStory(ch05).join('\n'), /card heron-no-moon: link with names an unknown card fox-moon/, 'alone, it cannot know chapter 4’s card');
+});
+
+test('Riffle’s seven questions (`ask`): a Tap that counts nothing; seven questions and seven answers in order, a pair of fish owed for each, the pairs before kept to read back; nothing is logged; the frame after it asks 7 × 2; the cloud holds eight pairs after “No.” and nine after the two shapes, and the same number before and after each free line', () => {
+  const st5 = story5(), { ch05, list } = st5, f = ch05.frames.m04, ak = f.ask;
+  assert.deepEqual([E.kindOf(f), E.exits(f)], ['ask', ['m05']]);
+  const Q = ['Do you sleep standing up?', 'Is that leg tired?', 'Is that a dragonfly?', 'Do you see EVERYTHING?', 'Even at night?', 'Do you like otters?', 'Am I your favorite?'], A = ['Yes.', 'No.', 'Yes.', 'Yes.', 'Yes.', 'Yes.', 'No.'];
+  assert.deepEqual(E.askView(ak, 0), { taps: 0, total: 7, done: false, who: 'riffle', to: 'patience', pair: null, before: [], owed: 0 });
+  for (let n = 1; n <= 7; n++) {
+    const v = E.askView(ak, n);
+    assert.deepEqual([v.pair, v.before.length, v.owed, v.done], [[Q[n - 1], A[n - 1]], n - 1, n, n === 7]);
+    assert.deepEqual(v.before, Q.slice(0, n - 1).map((q, i) => [q, A[i]]), 'the pairs before, oldest first');
+    // the scene, drawn again: one more pair of fish in the thought cloud over the heron, and nothing else changed
+    const sc = E.askScene(f.scene, ak, n);
+    assert.equal(sc.opts.owed, n);
+    assert.deepEqual(Object.assign({}, sc.opts, { owed: 0 }), f.scene.opts);
+    assert.deepEqual(sc.cast, f.scene.cast);
+  }
+  assert.equal(f.scene.opts.owed, 0, 'the story’s own scene is never changed');
+  assert.deepEqual(E.askView(ak, 99).taps, 7);
+  assert.deepEqual(E.askWords(ak), { prompt: '**Tap** Riffle to let one out.', label: 'Ask the next question.' });
+  assert.deepEqual(E.askWords({}), { prompt: '**Tap** to ask the next question.', label: 'Ask the next question.' });
+  assert.equal(E.askScene({ set: 'x' }, { opt: 'asked', pairs: [['a', 'b']] }, 1).opts.asked, 1, '`opt` names another option');
+  // in a reading: an interaction like Next; it logs nothing and sets nothing; then 7 × 2 on the same cloud
+  const cat = start5(cat5(st5), st5), rows = read5(cat, st5, { choices: choices5({ up: false, lean: false, ask: false, wait: 0, first: 'heron' }) });
+  const m04 = frame5(rows, 'm04'), m05 = frame5(rows, 'm05');
+  assert.deepEqual(m04.asked, Q.map((q, i) => [q, A[i]]));
+  assert.equal(m05.counts - m04.counts, 0, 'nothing logged');
+  assert.deepEqual(m05.lesson.map(r => [r.k, r.q.answer]), [['7x2', 14]]);
+  assert.deepEqual(m05.lesson[0].picture, { table: 2, groups: 7, per: 2, highlight: 0, kind: 'fish', layout: 'pairs', thought: true, who: undefined, thing: 'fish', things: 'fish' }, 'Patience’s thought cloud: seven pairs, none lit');
+  assert.deepEqual(m05.say.map(b => b.label + ': ' + b.text), ['Patience: Seven answers.', 'Patience: Two fish for every answer.'], 'two balloons of its own: its page has something to read');
+  // the cloud through her own two questions: 7, 7 (hello is free), 8 with "No.", 8, 8 or 8 (that one is free), 9 with the two shapes, then 9
+  const owed = id => ch05.frames[id].scene.opts.owed;
+  assert.deepEqual(['m05', 'm06', 'm07', 'm08', 'm09a', 'm09b', 'm10', 'm12', 'm16'].map(owed), [7, 7, 8, 8, 8, 8, 9, 9, 9]);
+  assert.match(frame5(rows, 'm07').say[1].text, /^No\./);
+  assert.deepEqual(frame5(rows, 'm16').lesson.map(r => [r.k, r.q.answer, r.picture.groups]), [['9x2', 18, 9]], 'the bill: the nine pairs she watched land');
+  // E.checkStory
+  const bad = clone(ch05);
+  bad.frames.m04.ask.pairs = [['Only a question']]; bad.frames.m04.ask.who = 'coil'; bad.frames.m03.ask = { who: 'riffle', to: 'patience', pairs: [['a', 'b']], next: 'm04' };
+  const errs = E.checkStory(bad, list).join('\n');
+  for (const want of [/m04: ask pairs is a list of \[question, answer\]/, /m04: ask: coil is not in the frame’s cast/, /m03: needs exactly one of next\/choice\/input\/look\/counts\/skip\/scratch\/file\/ask\/end, has next,ask/]) assert.match(errs, want);
+  // chapters 1 to 4 have no such frame
+  [st5.ch01, st5.ch02, st5.ch03, st5.ch04].forEach(s => assert.ok(!Object.values(s.frames).some(fr => fr.ask)));
+});
+
+test('her book: Puddle’s page and Wisp’s, each only once found and each in its own pose; a cat who went up in chapter 5 reads “still roaring” on chapter 4’s page and “found Squall” only on chapter 5’s; one who found him in chapter 4 reads it there, and nothing about the roof on chapter 5’s', () => {
+  const st5 = story5(), fx = fixtures(), list = [st5.ch01, st5.ch02, st5.ch03, fx.ch04, st5.ch05], ch05 = st5.ch05;
+  const read = (flags, c) => { const cat = start5(cat5(st5, flags), st5); read5(cat, st5, { choices: choices5(Object.assign({ up: false, lean: false, ask: false, wait: 0, first: 'otters' }, c)) }); return cat; };
+  const page = (cat, id) => E.buildFullBook(cat, list).pages.find(p => p.id === id).recap.join(' ');
+  // the roof today: chapter 4's page (the fixture's, with the edit chapter 5's Build asks of it) and chapter 5's
+  const today = read({}, { up: true });
+  assert.match(page(today, 'ch04'), /Sprinkle’s littlest brother is still roaring, and hiccuping\./);
+  assert.doesNotMatch(page(today, 'ch04'), /found Squall/);
+  assert.match(page(today, 'ch05'), /On the roof of her old tower, she found Squall, the littlest dragonet, who told her about two skinny shapes/);
+  const before = read({ foundSquall: true });
+  assert.match(page(before, 'ch04'), /she found Squall, the littlest dragonet, who roars at airplanes and hiccups\./);
+  assert.doesNotMatch(page(before, 'ch04'), /still roaring/);
+  assert.doesNotMatch(page(before, 'ch05'), /Squall|roof/);
+  const never = read({});
+  assert.match(page(never, 'ch04'), /still roaring/);
+  assert.doesNotMatch(page(never, 'ch05'), /Squall|Puddle|Wisp|forepaw for everyone/);
+  assert.equal(page(never, 'ch05').split('. ').length > 6, true);
+  // Squall's own page stays on foundSquall, whichever chapter she found him in; Puddle's and Wisp's on theirs
+  const D = cat => (E.dragonets(cat, list) || { found: [] }).found.map(d => d.id + (d.pose ? ':' + d.pose : ''));
+  assert.deepEqual([D(never), D(before), D(today)], [['sprinkle'], ['sprinkle', 'squall'], ['sprinkle', 'squall']]);
+  const all = read({}, { up: true, lean: true, wait: 3 });
+  assert.deepEqual(D(all), ['sprinkle', 'squall', 'puddle:head', 'wisp:blink'], 'in chapter order; each new page says the pose its dragonet is drawn in');
+  assert.equal(E.dragonets(all, list).toFind, 3);
+  const pud = E.dragonets(all, list).found[2];
+  assert.deepEqual([pud.name, pud.chapter, pud.lines.length, pud.lines[1]], ['Puddle', 'ch05', 3, 'Moonpaw found him under the otters’ ferry raft. Mama says: stay where you land.']);
+  assert.ok(!('pose' in E.dragonets(all, list).found[0]), 'Sprinkle sits, as she did');
+  assert.match(page(all, 'ch05'), /Under the raft she found Puddle.*sat still until a pale reed blinked\. It was Wisp.*Sprinkle lit a forepaw for everyone found so far\./);
+  assert.deepEqual(D(read({}, { ask: true })), ['sprinkle', 'puddle:head']);
+  assert.deepEqual(D(read({}, { wait: 3 })), ['sprinkle', 'wisp:blink']);
+  // a tom's page reads "his" and "he"; no dream typed: the chapter's own line
+  const tom = cat5(st5); tom.look.sex = 'tom'; start5(tom, st5); read5(tom, st5, { choices: choices5({ up: true, lean: true, wait: 0, first: 'heron' }) });
+  assert.match(page(tom, 'ch05'), /On the roof of his old tower, he found Squall.*Under the raft he found Puddle/);
+  assert.equal(E.buildFullBook(tom, list).pages.find(p => p.id === 'ch05').dream, 'Moonpaw’s dream that night floated off down the river.');
+  assert.deepEqual(E.buildFullBook(tom, list).teaser, { title: 'Chapter 6: The Snake in the Stones', lines: ['Tomorrow, you ask a nosy old snake what a secret costs.', 'And Tallyheart counts out guards for the pile.'], built: false, next: null });
+  // E.checkStory: a pose is a word
+  const bad = clone(ch05); bad.book.dragonet[0].pose = 7;
+  assert.match(E.checkStory(bad, st5.list).join('\n'), /book\.dragonet puddle: pose is one of its poses/);
+});
+
+test('the tuck (a skip-count that runs backwards): fifty claws lit and a big 50; each tap curls one claw in on the next cat and steps the number back, 49, 48, 47, 46, and the fifth turns the page on 45; no number under any cat, tapped or kept, and never 18, 27 or 36; the kept picture stays up to the lesson', () => {
+  const st5 = story5(), { ch05, list } = st5, f = ch05.frames.h05, sk = f.skip;
+  assert.deepEqual([sk.table, sk.groups, sk.tuck, sk.keep, sk.thing, sk.things], [9, 5, true, true, 'claw', 'claws']);
+  assert.deepEqual(sk.who.map(c => c.who), ['clancat', 'murmurchime', 'clancat', 'clancat', 'grizzled'], 'this chapter’s rim: the new warrior second, the old tom last');
+  const views = [0, 1, 2, 3, 4, 5].map(n => E.skipView(sk, n));
+  assert.deepEqual(views.map(v => v.total), [50, 49, 48, 47, 46, 45]);
+  assert.deepEqual(views.map(v => v.count), ['', '49…', '49… 48…', '49… 48… 47…', '49… 48… 47… 46…', '49… 48… 47… 46… 45!']);
+  assert.deepEqual(views.map(v => [v.tucked, v.highlight, v.done]), [[0, 50, false], [1, 49, false], [2, 48, false], [3, 47, false], [4, 46, false], [5, 45, true]]);
+  assert.deepEqual(E.skipView(sk, 9).total, 45, 'never past the last cat');
+  // the picture: the 9s' cats, `tucked` of them with a claw curled in, the claws still out all lit, the next cat glowing
+  views.forEach((v, n) => {
+    const p = E.skipPicture(sk, n);
+    assert.deepEqual(p, { table: 9, groups: 5, per: 9, highlight: 50 - n, totals: false, next: n < 5, who: sk.who, thing: 'claw', things: 'claws', tuck: true, taps: n, tucked: n });
+    assert.doesNotMatch(JSON.stringify(v.totals), /\b(9|18|27|36)\b/, 'no running total of nines anywhere');
+  });
+  assert.deepEqual(E.keptPicture(sk), { table: 9, groups: 5, per: 9, highlight: 45, totals: false, next: false, who: sk.who, thing: 'claw', things: 'claws', tuck: true, taps: 5, tucked: 5 });
+  // chapters 3 and 4's kept pictures keep their totals, as they did
+  assert.equal(E.keptPicture(st5.ch04.frames.f011.skip).totals, true);
+  // the page it turns to is the Counts frame: the kept picture, 45 over it, until the lesson starts
+  const cat = start5(cat5(st5), st5);
+  read5(cat, st5, { stop: 'h06' });
+  const kept = E.keptSkip(ch05, 'h06', cat);
+  assert.deepEqual([kept.id, kept.skip.tuck, E.skipReached(kept.skip), E.skipReached(E.skipInto(ch05, 'h06', cat))], ['h05', true, 45, 45]);
+  assert.equal(E.keptSkip(ch05, 'h07', cat), null, 'not past the lesson');
+  assert.equal(cat.counts.length, cat5(st5).counts.length + 3, 'the Tap logs nothing: only the pile’s answer and the warm-up’s two are new');
+  // its words: Tallyheart keeps the count (she speaks first on the frame); the hidden button; the instruction
+  const w = E.skipWords(sk, 'tallyheart');
+  assert.deepEqual([w.teacher, w.whisper, w.thing, w.things, w.label, w.prompt], ['tallyheart', false, 'claw', 'claws', 'Tuck in the next cat’s claw.', '**Tap** the cats, left to right.']);
+  assert.equal(w.aria, 'Five cats sitting up, ten claws out on each. Touch the glowing cat to tuck one claw in.');
+  assert.equal(E.skipWords({ table: 9, groups: 5 }, null).thing, 'claw', 'a table-9 skip says claws without being told');
+  const bad = clone(ch05); bad.frames.h05.skip.tuck = 'yes';
+  assert.match(E.checkStory(bad, list).join('\n'), /h05: skip tuck is true or false/);
+});
+
+test('the nines (`ch05-nines`): ten facts in the text’s order, no answer the one before plus or minus nine; every first ask and every retry plays the hop and the tuck and ends unlit, a filler and a Hollow round play neither; the words of each question; its praise, in order, names no total', () => {
+  const st5 = story5(), { ch05, list } = st5, def = ch05.counts['ch05-nines'];
+  const rows = play5(cat5(st5), st5, 'ch05-nines');
+  assert.deepEqual(rows.map(r => r.k), ['2x9', '9x10', '4x9', '9x1', '9x6', '3x9', '9x8', '5x9', '7x9', '9x9']);
+  const answers = rows.map(r => r.q.answer);
+  assert.deepEqual(answers, [18, 90, 36, 9, 54, 27, 72, 45, 63, 81]);
+  answers.forEach((a, i) => { if (i) assert.notEqual(Math.abs(a - answers[i - 1]), 9, 'no two consecutive answers differ by nine'); });
+  assert.deepEqual(rows.map(r => r.q.groups).slice().sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'every number of cats from one to ten, once');
+  rows.forEach(r => assert.deepEqual([r.q.per, r.q.table, r.q.light], [9, 9, 'tuck'], r.k));
+  // the picture as asked: the hop (ten claws lit on every cat, none tucked), the tuck (one curls in on each: nine lit), then unlit
+  rows.forEach(r => {
+    const g = r.q.groups, base = { table: 9, groups: g, per: 9, kind: undefined, layout: undefined, thought: undefined, who: r.k === '2x9' ? def.facts[0].who : undefined, thing: 'life', things: 'lives' };
+    assert.deepEqual(r.light.open, Object.assign({}, base, { highlight: g * 10, tuck: 0, tucked: 0 }), r.k + ': opens on the hop');
+    assert.deepEqual(r.light.map(s => s.picture), [Object.assign({}, base, { highlight: g * 9, tuck: g, tucked: g }), Object.assign({}, base, { highlight: 0 })], r.k + ': the tuck, then unlit');
+    assert.ok(r.light.every(s => s.wait > 500), 'each step can be seen');
+    assert.deepEqual(r.picture, Object.assign({}, base, { highlight: 0 }), 'the still picture: nine out and one tucked (the art’s own default)');
+  });
+  // the words: the opener's hop and tuck spoken; ninety, four cats and six cats in words of their own; the rest ask for lives
+  const ask = k => rows.find(r => r.k === k).prompt.map(p => p.label + ': ' + p.text).join(' | ');
+  assert.equal(ask('2x9'), 'Tallyheart: Two cats. Hop by tens: twenty. Now tuck two in. How many lives?');
+  assert.equal(ask('9x10'), 'Tallyheart: Ten cats. Ten tens make a hundred. Now tuck ten in.');
+  assert.equal(ask('4x9'), 'Tallyheart: Four cats. Hop by tens. Then tuck four in.');
+  assert.doesNotMatch(ask('4x9'), /forty|thirty|36|40/i, 'the steps named, and no number given');
+  assert.equal(ask('9x6'), 'Tallyheart: Six cats. Six tens make sixty. Now tuck six in.');
+  assert.deepEqual(['9x1', '3x9', '9x8', '5x9', '7x9', '9x9'].map(ask), ['One cat', 'Three cats', 'Eight cats', 'Five cats', 'Seven cats', 'Nine cats'].map(c => 'Tallyheart: ' + c + '. How many lives?'));
+  // after a right answer: the lines the text gives five of them, praise dealt in order for the rest
+  const said = k => { const r = rows.find(x => x.k === k); return r.balloons.length ? r.balloons.map(b => (b.who ? b.who + ': ' : '') + b.text).join(' | ') : r.line; };
+  assert.equal(said('2x9'), 'Eighteen! Hop, then tuck.');
+  assert.equal(said('9x10'), 'Ninety! Yesterday it was nine cats, ten claws each. Same ninety!');
+  assert.equal(said('4x9'), 'Thirty-six! Now look. Three and six make nine. One and eight make nine. Every nines answer hides a nine!');
+  assert.equal(said('9x6'), 'Fifty-four! Five and four. There’s your nine.');
+  assert.equal(said('9x9'), 'tallyheart: EIGHTY-ONE! | murmurchime: Not mice.');
+  const slow = play5(cat5(st5), st5, 'ch05-nines', null, { all: 5000 });
+  assert.deepEqual(['9x1', '3x9', '9x8', '5x9', '7x9'].map(k => slow.find(r => r.k === k).line), def.praise, 'the praise, dealt in order');
+  assert.equal(def.praise[def.praise.length - 1], 'Hop, then tuck!', 'the opener’s own line comes last');
+  assert.equal(def.praise[0], 'Yes! Nine lives on every cat.');
+  [].concat(def.praise, def.fast, def.fastAfterMiss, def.again || []).forEach(l => assert.doesNotMatch(l, /\d|eighteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred/i, 'no line names a total: ' + l));
+  assert.equal(rows.find(r => r.k === '9x1').line, 'You didn’t even have to hop that time.', 'a quick answer');
+  // a filler shows the still picture (she has got it right already); so does every question of a Hollow round
+  const missLast = play5(cat5(st5), st5, 'ch05-nines', { '9x9': [80] });
+  assert.deepEqual(missLast.slice(-4).map(r => [r.k, r.q.light, r.light.length]), [['9x9✗', 'tuck', 2], ['F:9x1', null, 0], ['F:2x9', null, 0], ['R:9x9', 'tuck', 2]]);
+  // …and every retry plays them, the retry of a missed filler too (a filler itself never does)
+  const missFill = play5(cat5(st5), st5, 'ch05-nines', { '9x9': [80], '9x1': [null, 10] });
+  assert.deepEqual(missFill.slice(-5).map(r => [r.k, r.q.light, r.light.length]), [['9x9✗', 'tuck', 2], ['F:9x1✗', null, 0], ['F:2x9', null, 0], ['R:9x9', 'tuck', 2], ['R:9x1', 'tuck', 2]]);
+  // (a borrowed pair is another set's picture: its retry plays nothing of the borrower's: Riffle's catch lights by strings)
+  const lent = play5(cat5(st5), st5, 'ch05-catch', { '4x5': [19] }).find(r => /^F:/.test(r.k));
+  assert.ok(lent && lent.q.from, 'the catch borrows');
+  const lentKey = lent.q.a + 'x' + lent.q.b, wrong = {}; wrong['4x5'] = [19]; wrong[lentKey] = [1];
+  const lentRows = play5(cat5(st5), st5, 'ch05-catch', wrong), lentRetry = lentRows.find(r => r.k === 'R:' + lentKey);
+  assert.ok(lentRows.some(r => r.k === 'F:' + lentKey + '✗') && lentRetry, lentRows.map(r => r.k).join(' '));
+  assert.deepEqual([lentRetry.q.light, lentRetry.light.length, lentRows.find(r => r.k === 'R:4x5').q.light], [null, 0, 'groups']);
+  const cat = cat5(st5); cat.lessons['ch05-nines'] = { finished: true, noHelp: true };
+  const H = E.hollowStart(cat, list, 1, 9);
+  assert.ok(!('light' in H.def) && H.state.queue.every(q => !q.light) && !H.state.easiest);
+  for (let q; (q = E.counts.question(H.state));) { assert.deepEqual([q.light, E.lightSteps(H.def, q).length], [null, 0]); E.counts.answer(H.state, H.def, q.answer, 2000, 1); }
+  // a fact's own `light` wins over the set's; chapters 2 to 4's lights are as they were
+  const mixed = E.counts.start({ table: 9, light: 'tuck', facts: [[2, 9], { a: 3, b: 9, light: 'groups' }] }, {});
+  assert.deepEqual(mixed.queue.map(q => q.light), ['tuck', 'groups']);
+  assert.deepEqual(E.lightSteps({}, { groups: 3, per: 2, table: 2, light: 'groups', lit: 0 }).map(s => [s.picture.highlight, s.wait]), [[2, 700], [4, 560], [6, 560]]);
+  assert.deepEqual(E.lightSteps({}, { groups: 2, per: 10, table: 10, light: 'rows', lit: 0 }).map(s => [s.picture.highlight, s.wait]), [[10, 700], [20, 1000]]);
+  assert.deepEqual(E.lightSteps({}, { groups: 2, per: 10, table: 10, light: null }).length, 0);
+});
+
+test('the nines’ help: Tallyheart swipes twice for every cat and hops by tens, then rubs one line out of every pair and steps back by ones; four openings for the four likeliest slips, checked in order; the digits line waits until the lesson has shown her that nines answers hide a nine', () => {
+  const st5 = story5(), { ch05, list } = st5, def = ch05.counts['ch05-nines'];
+  const HOP = 'That’s the hop! Now the tuck: one claw in for every cat.', ONE = 'So close! You tucked ONE claw. Tuck one in for every cat.';
+  const NINE = 'Remember: the two numbers in a nines answer make nine. Let’s scratch it out together.', CLOSE = 'Close. Let’s scratch it out together: hop by tens, then tuck one in for every cat.', FAR = CLOSE.replace('Close. ', '');
+  const miss = (answers) => play5(cat5(st5), st5, 'ch05-nines', answers);
+  const first = (rows, k) => rows.find(r => r.k === k + '✗'), again = (rows, k) => rows.find(r => r.k === 'R:' + k + '✗');
+  // 4 × 9: the whole help
+  const four = first(miss({ '4x9': [40] }), '4x9').help;
+  assert.deepEqual([four.intro, four.teacher, four.counter, four.ground, four.style, four.pair, four.tuck, four.hops], [HOP, 'tallyheart', 'tallyheart', 'sand', 'swipe', true, true, 4]);
+  assert.deepEqual(four.nums, [10, 20, 30, 40, 39, 38, 37, 36], 'the strip: 10 · 20 · 30 · 40, then 39 · 38 · 37 · 36');
+  assert.deepEqual([four.groups, four.per, four.total, four.answer, four.step], [4, 9, 36, 36, 10]);
+  const steps = E.helpSteps(four);
+  assert.deepEqual(steps, [{ n: 10, counted: 10 }, { n: 20, counted: 20 }, { n: 30, counted: 30 }, { n: 40, counted: 40 }, { n: 39, counted: 40, rubbed: 1 }, { n: 38, counted: 40, rubbed: 2 }, { n: 37, counted: 40, rubbed: 3 }, { n: 36, counted: 40, rubbed: 4 }]);
+  assert.deepEqual(E.sandOpts(four, 0), { groups: 4, per: 10, counted: 0, layout: undefined, ground: undefined, style: 'swipe', pair: true }, 'pairs of swipes, a pair to a cat, as the tens were scratched');
+  assert.deepEqual(E.sandOpts(four, 20), { groups: 4, per: 10, counted: 20, layout: undefined, ground: undefined, style: 'swipe', pair: true });
+  assert.deepEqual(E.sandOpts(four, 40, 3), { groups: 4, per: 10, counted: 40, layout: undefined, ground: undefined, style: 'swipe', pair: true, rubbed: 3 }, 'three pairs with a line rubbed out');
+  // the four openings on 4 × 9 (its own line has not shown yet on a first ask, so 35 opens with "Close.")
+  assert.equal(first(miss({ '4x9': [39] }), '4x9').help.intro, ONE);
+  assert.equal(first(miss({ '4x9': [35] }), '4x9').help.intro, CLOSE);
+  assert.equal(first(miss({ '4x9': [52] }), '4x9').help.intro, FAR, 'far off, and the digits line is not hers yet');
+  // 9 × 6, the fifth fact: the 4 × 9 line has always shown by then
+  assert.deepEqual([60, 59, 45, 52].map(a => first(miss({ '9x6': [a] }), '9x6').help.intro), [HOP, ONE, CLOSE, NINE]);
+  assert.equal(first(miss({ '4x9': [35], '9x6': [52] }), '9x6').help.intro, NINE, 'shown by its miss line just as well');
+  // 9 × 10, the second question: 80 is ten off (no "Close."), and no digits line before 4 × 9; on its retry, after it, the digits line
+  const ninety = miss({ '9x10': [80, 80] });
+  assert.deepEqual([first(ninety, '9x10').help.intro, again(ninety, '9x10').help.intro], [FAR, NINE]);
+  assert.deepEqual(ninety.map(r => r.k).slice(0, 5), ['2x9', '9x10✗', '4x9', '9x1', 'R:9x10✗']);
+  assert.equal(first(miss({ '9x10': [100] }), '9x10').help.intro, HOP);
+  // 2 × 9, the opener: 19 is the one-tuck slip; 17 is "Close." at first and the digits line on its retry
+  assert.equal(first(miss({ '2x9': [19] }), '2x9').help.intro, ONE);
+  const two = miss({ '2x9': [17, 17] });
+  assert.deepEqual([first(two, '2x9').help.intro, again(two, '2x9').help.intro], [CLOSE, NINE]);
+  assert.equal(first(miss({ '2x9': [20] }), '2x9').help.intro, HOP);
+  // 9 × 1 has one cat and one number: 10 is the hop, and nothing else is special about it
+  const one = miss({ '9x1': [10] }), oneB = miss({ '9x1': [8] });
+  assert.deepEqual([first(one, '9x1').help.intro, first(one, '9x1').help.nums, first(oneB, '9x1').help.intro], [HOP, [10, 9], CLOSE]);
+  assert.ok(!first(oneB, '9x1').res.notNine && !first(oneB, '9x1').res.oneTuck);
+  // the flags, as the engine reports them (independent; the plan takes the first that has a line)
+  const r60 = first(miss({ '9x6': [60] }), '9x6').res, r59 = first(miss({ '9x6': [59] }), '9x6').res, r52 = first(miss({ '9x6': [52] }), '9x6').res;
+  assert.deepEqual([[r60.tens, r60.oneTuck, r60.notNine], [r59.tens, r59.oneTuck, r59.notNine], [r52.tens, r52.oneTuck, r52.notNine, r52.near]], [[true, undefined, true], [undefined, true, true], [undefined, undefined, true, true]]);
+  // 9 × 9 and 9 × 10 at their biggest: eighteen and twenty swipes, then nine or ten rubbed out
+  const big = first(miss({ '9x9': [80] }), '9x9').help;
+  assert.deepEqual([big.nums.length, big.nums[8], big.nums[9], big.nums[17], E.helpSteps(big)[17]], [18, 90, 89, 81, { n: 81, counted: 90, rubbed: 9 }]);
+  assert.deepEqual(E.sandOpts(big, 90, 9).groups, 9);
+  // in the Training Hollow the digits line may open the help from the first question; the help is the same two steps
+  const cat = cat5(st5); cat.lessons['ch05-nines'] = { finished: true, noHelp: true };
+  const H = E.hollowStart(cat, list, 1, 9), q0 = E.counts.question(H.state);
+  const wrong = q0.answer === 9 ? 10 : q0.answer + (q0.answer % 10 === 9 ? 2 : 1);
+  const res = E.counts.answer(H.state, H.def, wrong, 2000, 1), plan = E.helpPlan(H.def, H.def, q0, res);
+  if (q0.answer !== 9 && wrong !== q0.groups * 10 && wrong !== q0.groups * 10 - 1) assert.equal(plan.intro, NINE, 'a first question in the Hollow: ' + q0.a + ' × ' + q0.b + ' answered ' + wrong);
+  assert.ok(plan.tuck && plan.ground === 'sand');
+  // every Hollow round's first miss: checked for all ten facts, one round each way
+  [[3, 9, 28], [9, 3, 28], [7, 9, 64], [9, 8, 71]].forEach(([a, b, given]) => {
+    const st = E.counts.start(H.def, { facts: [[a, b]], mode: 'hollow', set: 'hollow-9s' }), q = E.counts.question(st);
+    assert.equal(E.helpPlan(H.def, H.def, q, E.counts.answer(st, H.def, given, 2000, 1)).intro, NINE, a + ' × ' + b + ' answered ' + given);
+  });
+  // chapters 1 to 4: no plan carries a key of chapter 5's
+  const tens = E.counts.start(st5.ch04.counts['ch04-tens'], {}), tq = E.counts.question(tens), tp = E.helpPlan(st5.ch04.counts['ch04-tens'], null, tq, E.counts.answer(tens, st5.ch04.counts['ch04-tens'], 41, 2000, 1));
+  assert.deepEqual(Object.keys(tp).sort(), ['answer', 'counter', 'ground', 'groups', 'intro', 'layout', 'line', 'nums', 'pair', 'per', 'step', 'style', 'teacher', 'total']);
+  assert.deepEqual(E.helpSteps(tp), [10, 20, 30, 40].map(n => ({ n, counted: n })));
+});
+
+test('two answers in the sand (`shows`): with 4 × 9’s line, right or missed, 18 and 36 and never 90; with 2 × 9 missed, 36 alone, the line without “One and eight”, and nothing shows or says eighteen before its retry but its own help; a right retry finds the nine in her own eighteen; a missed 4 × 9 ends its help on the idea, the third time too', () => {
+  const st5 = story5(), { ch05, list } = st5, def = ch05.counts['ch05-nines'], fact = def.facts[2];
+  assert.deepEqual(fact.shows, { kind: 'answers', of: [[2, 9]], also: 'One and eight make nine. ' });
+  const miss = (answers) => play5(cat5(st5), st5, 'ch05-nines', answers);
+  // right the first time, 2 × 9 right before it: both answers, the whole line
+  const clean = miss(null), r36 = clean.find(r => r.k === '4x9');
+  assert.deepEqual([r36.shows, r36.res.shows], [[18, 36], { kind: 'answers', answers: [18, 36] }]);
+  assert.equal(r36.balloons[0].text, 'Thirty-six! Now look. Three and six make nine. One and eight make nine. Every nines answer hides a nine!');
+  assert.ok(!r36.shows.includes(90), 'ninety is hers to find');
+  assert.ok(clean.every(r => r.k === '4x9' || r.shows === null), 'no other answer shows them');
+  assert.deepEqual(E.answersOpts(null, r36.res.shows), { answers: [18, 36] });
+  assert.deepEqual(E.answersOpts({ ground: 'earth' }, { answers: [36] }), { answers: [36], ground: 'earth' });
+  // 4 × 9 missed, 2 × 9 right: the help ends on the same idea, over the same two answers, and it comes back
+  const m = miss({ '4x9': [40] }), mm = m.find(r => r.k === '4x9✗'), back = m.find(r => r.k === 'R:4x9');
+  assert.equal(mm.line, 'Thirty-six. Now look. Three and six make nine. One and eight make nine. Every nines answer hides a nine! We’ll come back to that one.');
+  assert.deepEqual([mm.shows, mm.res.requeued, mm.help.line], [[18, 36], true, mm.res.line]);
+  assert.deepEqual([back.balloons.map(b => b.text), back.shows], [['Thirty-six! Three and six. There’s your nine.'], null], 'right on its retry: the short form, and the cats again');
+  assert.equal(back.prompt[0].text, 'Here’s that one again. Four cats. Hop by tens. Then tuck four in.');
+  // missed three times: the idea each time; "We'll come back" only while it does
+  const thrice = miss({ '4x9': [40, 39, 35] }), all3 = thrice.filter(r => /4x9✗/.test(r.k));
+  assert.deepEqual(all3.map(r => [r.res.requeued, /Every nines answer hides a nine!/.test(r.line), /come back/.test(r.line), r.shows]), [[true, true, true, [18, 36]], [true, true, true, [18, 36]], [false, true, false, [18, 36]]]);
+  assert.equal(all3[2].line, 'Thirty-six. Now look. Three and six make nine. One and eight make nine. Every nines answer hides a nine!');
+  // 2 × 9 missed: its retry is the very next question after 4 × 9, so eighteen is neither scratched nor said
+  [null, [40]].forEach(four => {
+    const rows = miss(Object.assign({ '2x9': [17] }, four ? { '4x9': four } : {})), i4 = rows.findIndex(r => /^4x9/.test(r.k)), r4 = rows[i4], retry = rows[i4 + 1];
+    assert.equal(retry.k, 'R:2x9');
+    assert.deepEqual(r4.shows, [36], '36 alone');
+    const line = four ? r4.line : r4.balloons[0].text;
+    assert.equal(line, four ? 'Thirty-six. Now look. Three and six make nine. Every nines answer hides a nine! We’ll come back to that one.' : 'Thirty-six! Now look. Three and six make nine. Every nines answer hides a nine!');
+    // from the frame's first question to that retry, eighteen is on screen only in 2 × 9's own help
+    rows.slice(0, i4 + 1).forEach((r, i) => {
+      const shownOrSaid = r.prompt.map(p => p.text).concat(r.line, r.balloons.map(b => b.text), r.shows || []).join(' ');
+      assert.doesNotMatch(shownOrSaid, /eighteen|\b18\b|One and eight/i, r.k);
+      if (r.help && i > 0) assert.ok(!r.help.nums.slice(-1).includes(18), r.k);
+    });
+    assert.deepEqual(rows[0].help.nums, [10, 20, 19, 18], 'its own help counts it out');
+    assert.deepEqual(retry.balloons.map(b => b.text), ['Eighteen! One and eight. There’s your nine.'], 'she finds the nine in her own answer');
+    assert.equal(retry.prompt[0].text, 'Here’s that one again. Two cats. How many lives?');
+  });
+  // 2 × 9 missed, then right, then 4 × 9 missed a second time: by now eighteen is hers, and it is scratched
+  const late = miss({ '2x9': [17], '4x9': [40, 40] }).filter(r => /4x9✗/.test(r.k));
+  assert.deepEqual(late.map(r => r.shows), [[36], [18, 36]]);
+  assert.match(late[1].line, /One and eight make nine\./);
+  // "with no ask of it still to come": a lesson that asks the pair again later (9 × 2, the same fact turned round)
+  // keeps eighteen off the sand though she has just answered 2 × 9 right, and its line says nothing of one and eight
+  const twice = clone(ch05);
+  twice.counts['ch05-nines'].facts = [[2, 9], twice.counts['ch05-nines'].facts[2], [9, 2]];
+  const list2 = list.slice(0, 4).concat([twice]);
+  assert.deepEqual(E.checkStory(twice, list2), []);
+  const L2 = E.chapterLesson(cat5(st5), twice, 'ch05-nines', 1, list2), seen2 = [];
+  while (!E.counts.done(L2.state)) { const q2 = E.counts.question(L2.state), r2 = E.counts.answer(L2.state, L2.def, q2.answer, 2000, 1); seen2.push([q2.a + 'x' + q2.b, r2.shows ? r2.shows.answers : null, r2.balloons ? r2.balloons[0].text : null]); }
+  assert.deepEqual(seen2, [['2x9', null, null], ['4x9', [36], 'Thirty-six! Now look. Three and six make nine. Every nines answer hides a nine!'], ['9x2', null, null]]);
+  // the lesson state remembers that the idea has been shown (saved mid-lesson, it still does)
+  const cat = cat5(st5), L = E.chapterLesson(cat, ch05, 'ch05-nines', 1, list);
+  ['18', '90'].forEach(a => E.counts.answer(L.state, L.def, a, 2000, 1));
+  assert.ok(!L.state.shown && L.state.easiest === true);
+  E.counts.answer(L.state, L.def, 36, 2000, 1);
+  assert.equal(L.state.shown, true);
+  const saved = JSON.parse(JSON.stringify({ mode: 'chapter', frame: 'h06', chapter: 'ch05', state: L.state }));
+  assert.ok(E.okLesson(saved));
+  E.counts.answer(saved.state, L.def, 9, 2000, 1);   // 9 × 1
+  assert.equal(E.helpPlan(L.def, L.def, E.counts.question(saved.state), E.counts.answer(saved.state, L.def, 52, 2000, 1)).intro, 'Remember: the two numbers in a nines answer make nine. Let’s scratch it out together.');
+  // E.checkStory: the shape of `shows`, and a fact's own miss lines
+  const bad = clone(ch05), bf = bad.counts['ch05-nines'].facts;
+  bf[2].shows = { kind: 'numbers' }; bf[4].shows = { kind: 'answers', of: 'two nines' }; bf[1].miss = 7; bf[0].light = 'hop'; bad.counts['ch05-nines'].light = 'both';
+  const errs = E.checkStory(bad, list).join('\n');
+  for (const want of [/ch05-nines: fact 2: shows is \{ kind: "answers", of, also \}/, /ch05-nines: fact 4: shows of is a list of facts/, /ch05-nines: fact 1: miss is a line/, /ch05-nines: fact 0: light is "groups", "rows" or "tuck"/, /counts ch05-nines: light is "groups", "rows" or "tuck"/]) assert.match(errs, want);
+});
+
+test('the nines fill their own gaps with the easiest of her right answers (`fillOrder: "easiest"` with no fillFrom): a missed 9 × 9 is followed by 9 × 1 and 2 × 9, a missed 7 × 9 by 9 × 9 and then 9 × 1; chapters 1 to 4’s lessons fill theirs with the latest, as they did', () => {
+  const st5 = story5(), { ch05, list } = st5, def = ch05.counts['ch05-nines'];
+  assert.deepEqual([def.fillOrder, def.fillFrom], ['easiest', undefined]);
+  assert.deepEqual(E.checkStory(ch05, list), [], 'fillOrder may stand without fillFrom');
+  const seq = answers => play5(cat5(st5), st5, 'ch05-nines', answers).map(r => r.k);
+  assert.deepEqual(seq({ '9x9': [80] }).slice(-4), ['9x9✗', 'F:9x1', 'F:2x9', 'R:9x9']);
+  assert.deepEqual(seq({ '7x9': [62] }).slice(-4), ['7x9✗', '9x9', 'F:9x1', 'R:7x9']);
+  // when she missed the two easiest themselves, the next easiest she has got right
+  assert.deepEqual(seq({ '9x9': [80], '9x1': [8, 8, 8], '2x9': [17, 17, 17] }).slice(-4), ['9x9✗', 'F:3x9', 'F:4x9', 'R:9x9']);
+  // missed twice at the very end: the next two easy ones, not the same two again
+  assert.deepEqual(seq({ '9x9': [80, 80] }).slice(-7), ['9x9✗', 'F:9x1', 'F:2x9', 'R:9x9✗', 'F:3x9', 'F:4x9', 'R:9x9']);
+  // chapter 4's tens lesson, the same miss: the latest right answers, as it shipped
+  const tens = st5.ch04.counts['ch04-tens'], st = E.counts.start(Object.assign({ id: 'ch04-tens' }, tens), { set: 'ch04-tens' }), out = [];
+  for (let q; (q = E.counts.question(st));) { const wrong = q.a === 10 && q.b === 10 && !q.retry; out.push((q.filler ? 'F:' : q.retry ? 'R:' : '') + q.a + 'x' + q.b); E.counts.answer(st, tens, wrong ? 90 : q.answer, 2000, 1); }
+  assert.deepEqual(out.slice(-4), ['10x10', 'F:7x10', 'F:10x9', 'R:10x10']);
+  assert.ok(!st.easiest);
+  // a set that borrows keeps the rule it had: `easiest` there sorts the pool it borrows, not its own
+  assert.ok(!E.chapterLesson(cat5(st5), ch05, 'ch05-pile', 1, list).state.easiest);
+});
+
+test('the tens warm-up (`ch05-tens`): two questions; the hard pick sits first and may be 4 × 10 but never 3 × 10 or 5 × 10 (`warmHard.avoid`); 5 × 10 is written last, in Tallyheart’s words, with the five rim cats; what it borrows is never 4 × 10 or 5 × 10; none of the frame’s lines is said over its first question, so a hard pick answered quickly earns “Not today!”', () => {
+  const st5 = story5(), { ch05, list } = st5, def = ch05.counts['ch05-tens'], f = ch05.frames.h01;
+  assert.deepEqual([def.warmHard, def.avoid], [{ table: 10, at: 0, avoid: [[5, 10], [3, 10]] }, [[5, 10], [3, 10], [4, 10]]]);
+  const facts = cat => E.lessonFacts(cat, Object.assign({ id: 'ch05-tens' }, def), list).map(x => (Array.isArray(x) ? x.join('x') : x.a + 'x' + x.b + (x.hard ? ' hard' : '')));
+  // nothing was hard yesterday: 10 × 7, then 5 × 10
+  assert.deepEqual(facts(cat5(st5)), ['10x7', '5x10']);
+  // one hard ten: it takes the first question, as it was last asked
+  assert.deepEqual(facts(cat5(st5, {}, { '10x9': [80] })), ['10x9 hard', '5x10']);
+  assert.deepEqual(facts(cat5(st5, {}, null, { '10x8': 7000 })), ['10x8 hard', '5x10'], 'right but slow counts too');
+  // 4 × 10 may be the hard pick (her own teacher asks it in the morning, before Puddle's riddle)
+  assert.deepEqual(facts(cat5(st5, {}, { '4x10': [44] })), ['4x10 hard', '5x10'], 'for a cat whose only hard ten that is');
+  // never 5 × 10 (asked anyway) nor 3 × 10 (the pile's): with only those hard, nothing is
+  assert.deepEqual(facts(cat5(st5, {}, { '5x10': [5], '10x3': [13] })), ['10x7', '5x10']);
+  assert.deepEqual(facts(cat5(st5, {}, { '5x10': [5], '10x3': [13], '10x8': [81] })), ['10x8 hard', '5x10']);
+  // chapters 3 and 4's warm-ups read the set's own avoid, as they did
+  assert.equal(st5.ch04.counts['ch04-claws'].warmHard.avoid, undefined);
+  // the lesson: the engine words the first question itself; the second is Tallyheart's, with the rim cats
+  const cat = cat5(st5, {}, { '10x9': [80] }), rows = play5(cat, st5, 'ch05-tens', null, { '10x9': 2500 });
+  assert.deepEqual(rows.map(r => [r.k, r.prompt.map(p => p.text).join(' ')]), [['10x9', 'Nine cats. How many front claws?'], ['5x10', 'Five cats, ten front claws each. How many front claws?']]);
+  assert.deepEqual([rows[0].kind, rows[0].line], ['remembered', 'Yesterday, 10 × 9 made you stop and think. Not today!']);
+  assert.deepEqual(rows[1].balloons.map(b => b.text), ['Fifty!']);
+  assert.deepEqual(rows[1].picture.who.map(c => c.who), ['clancat', 'murmurchime', 'clancat', 'clancat', 'grizzled']);
+  assert.deepEqual(E.hardFacts(cat, 10, list), [], 'and it is no longer hard');
+  // right but slow: "again, and you got it", and it stays hard
+  const slow = cat5(st5, {}, { '10x9': [80] }), srow = play5(slow, st5, 'ch05-tens', null, { '10x9': 9000 })[0];
+  assert.deepEqual([srow.kind, srow.line], ['rememberedSlow', '10 × 9 again, and you got it. It’s getting easier.']);
+  assert.deepEqual(E.hardFacts(slow, 10, list), [[10, 9]]);
+  // the Counts frame says none of its own lines again over that question (`intro: false`), so its clock is the fact's
+  require('../app/ui.js');
+  assert.equal(f.counts.intro, false);
+  assert.deepEqual(PC.ui.speakers.lessonIntro([{ who: 'tallyheart', text: 'Tens first, to wake up your whiskers.' }], f.counts.intro === false), []);
+  assert.equal(PC.ui.speakers.lessonIntro([{ who: 'tallyheart', text: 'x' }], false).length, 1, 'a frame that does not say so still says its one or two balloons again');
+  assert.equal(E.readFirst({ set: 'ch05-tens', a: 10, b: 7 }, list, null, true), false, 'the opener is timed on itself');
+  assert.equal(E.readFirst({ set: 'ch05-tens', a: 5, b: 10 }, list, null, false), true, '5 × 10 is read under its own prompt');
+  // a plain 10 × 7 answered slowly this morning is hard for tomorrow; the same under a frame that said its lines would not be
+  const fresh = cat5(st5); play5(fresh, st5, 'ch05-tens', null, { '10x7': 9000 });
+  assert.deepEqual(E.hardFacts(fresh, 10, list), [[10, 7]]);
+  const said = clone(ch05); delete said.frames.h01.counts.intro;
+  const fresh2 = cat5(st5), list2 = [st5.ch01, st5.ch02, st5.ch03, st5.ch04, said];
+  const L2 = E.chapterLesson(fresh2, said, 'ch05-tens', 1, list2);
+  for (let q; (q = E.counts.question(L2.state));) E.logAnswer(fresh2, E.counts.answer(L2.state, L2.def, q.answer, 9000, 1).entry);
+  assert.deepEqual(E.hardFacts(fresh2, 10, list2), [], 'read under a balloon, a slow right answer says nothing');
+  // a miss borrows the easiest of yesterday's tens, after "One from yesterday.": 1 × 10 and 10 × 2; never 4 × 10 or 5 × 10
+  const missed = play5(cat5(st5), st5, 'ch05-tens', { '10x7': [71, 71], '5x10': [5, 5] });
+  assert.deepEqual(missed.map(r => r.k), ['10x7✗', '5x10✗', 'F:1x10', 'R:10x7✗', 'R:5x10✗', 'F:10x2', 'R:10x7', 'R:5x10']);
+  missed.filter(r => r.q.filler).forEach(r => { assert.match(r.prompt[0].text, /^One from yesterday\. /); assert.ok(!['4x10', '10x4', '5x10', '10x5'].includes(r.q.a + 'x' + r.q.b), r.k); });
+  assert.equal(missed.find(r => r.k === 'R:5x10✗').prompt.map(p => p.text).join(' '), 'Here’s that one again. Five cats, ten front claws each. How many front claws?');
+  assert.doesNotMatch(JSON.stringify(def), /last one|\blast\b/i, 'nobody says "last"');
+  const bad = clone(ch05); bad.counts['ch05-tens'].warmHard.avoid = 'the pile'; bad.frames.h01.counts.intro = 'no';
+  assert.match(E.checkStory(bad, list).join('\n'), /h01: counts intro is false[\s\S]*counts ch05-tens: warmHard avoid is a list of facts/);
+});
+
+test('the pile’s one question (`ch05-pile`): three rows of ten, lit a row at a time, read under its caption; the frame’s four balloons are its own page’s; a miss is scratched in the earth a row at a time and borrows two of the easiest tens from yesterday, never 4 × 10 or 5 × 10', () => {
+  const st5 = story5(), { ch05, list } = st5, f = ch05.frames.p02;
+  assert.equal(f.say.length, 4, 'four balloons: the Counts frame’s own page has something to read');
+  require('../app/ui.js');
+  assert.deepEqual(PC.ui.speakers.lessonIntro(f.say, false), [], 'a whole conversation is not said again over the question');
+  assert.equal(f.scene.opts.back, 'shadow', 'the back row is a dark band until the next screen');
+  const clean = play5(cat5(st5), st5, 'ch05-pile');
+  assert.deepEqual(clean.map(r => [r.k, r.q.answer, r.q.light, r.line, r.balloons.length]), [['3x10', 30, 'rows', '', 0]], 'no right line: the next screen is her answer’s reward');
+  assert.deepEqual(clean[0].prompt, [{ text: 'You walk along the rows. One full row. Two. Three. How many pieces in three rows of ten?', kind: 'caption', label: null }]);
+  assert.deepEqual(clean[0].picture, { table: 10, groups: 3, per: 10, highlight: 0, kind: 'prey', layout: 'rows', thought: undefined, who: undefined, thing: 'piece', things: 'pieces' });
+  assert.deepEqual(clean[0].light.map(s => s.picture.highlight), [10, 20, 30]);
+  const cat = cat5(st5), rows = play5(cat, st5, 'ch05-pile', { '3x10': [13] }), h = rows[0].help;
+  assert.deepEqual(rows.map(r => r.k), ['3x10✗', 'F:1x10', 'F:10x2', 'R:3x10']);
+  assert.deepEqual([h.intro, h.ground, h.layout, h.byRow, h.nums, h.teacher], ['Remember: counting by tens, every number ends in a zero. Let’s scratch it out: ten marks for every row.', 'earth', 'rows', true, [10, 20, 30], 'tallyheart']);
+  assert.deepEqual(rows.slice(1, 3).map(r => r.prompt[0].text), ['One from yesterday. One cat. How many front claws?', 'One from yesterday. Two cats. How many front claws?'], 'asked as Tallyheart asked them yesterday: she is there');
+  assert.equal(rows[3].prompt[0].text, 'Here’s that one again. Three rows of ten. How many pieces?');
+  assert.deepEqual(E.hardFacts(cat5(st5), 10, list), [], 'a right first ask read under a prompt says nothing about speed');
+  const twice = play5(cat5(st5), st5, 'ch05-pile', { '3x10': [13, 40] }).map(r => r.k);
+  assert.deepEqual(twice, ['3x10✗', 'F:1x10', 'F:10x2', 'R:3x10✗', 'F:1x10', 'F:10x2', 'R:3x10'], 'with its two fresh pairs used, the easy ones again: never 4 × 10, Puddle’s riddle, nor 5 × 10');
+});
+
+test('the river’s Counts are Riffle’s, whole: the fish answers are 14, 18 and 20; a miss is scratched on a log of the raft, she counts, and the questions in between are fish too (“An easy one! One answer. How many fish?”); no line of Patience’s follows a miss, none of his says “first”, and none is one of the engine’s own sentences', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  const DEFAULTS = ['Here’s that one again.', 'There. We\'ll come back to that one.', 'There. We’ll come back to that one.', 'There. Now you’ve seen it counted.', 'There it is. You remembered that one.', 'Yes! That one came back, and you knew it.', 'Let’s scratch it out together.', 'Yes!', 'Good work.'];
+  const said = rows => rows.reduce((a, r) => a.concat(r.prompt.map(p => p.text), r.line, r.balloons.map(b => b.text), r.help ? [r.help.intro, r.help.line] : []), []).filter(Boolean);
+  const clean = ['ch05-otter', 'ch05-bill', 'ch05-catch'].map(id => play5(cat5(st5), st5, id));
+  assert.deepEqual(clean.map(rows => rows.map(r => [r.k, r.q.answer])), [[['7x2', 14]], [['9x2', 18]], [['4x5', 20]]]);
+  // Riffle's fish: his wail over the frame's two balloons; right: he falls over backwards
+  assert.deepEqual(clean[0][0].prompt.map(p => p.label + ': ' + p.text), ['Riffle: How many fish is THAT?']);
+  assert.deepEqual(clean[0][0].balloons.map(b => b.who + ': ' + b.text), ['riffle: FOURTEEN?', 'riffle: For YES and NO?']);
+  assert.deepEqual(clean[1][0].prompt.map(p => (p.label || 'caption') + ': ' + p.text), ['Patience: Nine answers.', 'Patience: Two fish for every answer.', 'caption: How many fish?']);
+  assert.deepEqual(clean[1][0].balloons.map(b => b.who + ': ' + b.text), ['patience: Eighteen.', 'patience: Before sunset.']);
+  assert.deepEqual(clean[1][0].picture, { table: 2, groups: 9, per: 2, highlight: 0, kind: 'fish', layout: 'pairs', thought: true, who: undefined, thing: 'fish', things: 'fish' });
+  assert.deepEqual(clean[2][0].prompt, [{ text: 'Four strings, five fish on every string. How many fish?', kind: 'caption', label: null }]);
+  assert.deepEqual(clean[2][0].balloons.map(b => b.who + ': ' + b.text), ['riffle: TWENTY!', 'player: Eighteen for Patience. Two to spare.']);
+  assert.deepEqual([clean[2][0].q.light, clean[2][0].light.map(s => s.picture.highlight), clean[2][0].picture.layout], ['groups', [5, 10, 15, 20], 'strings'], 'four strings, lit a string at a time (the set’s own `light`)');
+  // a miss, and a second miss, in each
+  const cases = [['ch05-otter', '7x2', [15, 13], ['7x2✗', 'F:2x1', 'F:2x2', 'R:7x2✗', 'F:3x2', 'F:4x2', 'R:7x2'], 'Scratch it on the log! Two for every answer.', 'answer', 2],
+    ['ch05-bill', '9x2', [20, 16], ['9x2✗', 'F:2x1', 'F:2x2', 'R:9x2✗', 'F:3x2', 'F:4x2', 'R:9x2'], 'Scratch it on the log! Two for every answer.', 'answer', 2],
+    ['ch05-catch', '4x5', [25, 16], ['4x5✗', 'F:1x5', 'F:5x2', 'R:4x5✗', 'F:5x3', 'F:1x5', 'R:4x5'], 'Scratch it on the log! Five for every string.', 'string', 5]];
+  cases.forEach(([id, k, wrong, seq, intro, unit, per]) => {
+    const rows = play5(cat5(st5), st5, id, { [k]: wrong }), def = ch05.counts[id];
+    assert.deepEqual(rows.map(r => r.k), seq, id);
+    rows.forEach(r => {
+      assert.equal(r.teacher, 'riffle', id + ' ' + r.k);
+      // a borrowed pair takes nothing from its lender but the pair: this set's picture, this set's words
+      assert.deepEqual([r.picture.kind, r.picture.layout, r.picture.thing, r.picture.per, r.picture.table], [def.picture.kind, def.picture.layout, 'fish', per, def.table], id + ' ' + r.k);
+      if (r.q.filler) {
+        assert.match(r.prompt[0].text, new RegExp('^An easy one! (One|Two|Three|Four) ' + unit + 's?\\. How many fish\\?$'), id + ' ' + r.k);
+        assert.deepEqual([r.prompt.length, r.prompt[0].label, r.line, r.q.light], [1, 'Riffle', '', null], 'no praise at the marsh, and nothing lights by itself');
+        assert.ok(r.q.groups <= (id === 'ch05-catch' ? 3 : 4), 'never more strings than he caught: ' + r.k);
+      }
+      if (r.help) {
+        assert.deepEqual([r.help.intro, r.help.teacher, r.help.counter, r.help.ground, r.help.line], [intro, 'riffle', 'player', 'log', r.res.requeued ? 'Phew. That one again in a minute.' : 'There. Now we’ve counted it.'], id + ' ' + r.k);
+        assert.equal(E.sandOpts(r.help, r.help.step).ground, 'log', 'never in mud (ReedClan’s) or sand');
+      }
+    });
+    assert.equal(rows[3].prompt[0].text.split(' ').slice(0, 3).join(' '), 'The fish again!', 'a retry is his');
+    assert.equal(rows[3].prompt[0].label, 'Riffle');
+    const all = said(rows);
+    all.forEach(t => { assert.ok(!DEFAULTS.includes(t), id + ': an engine default: ' + t); assert.doesNotMatch(t, /\bfirst\b/i, id + ': ' + t); });
+    // after a miss nothing is Patience's, the retry's opening included (her right lines are an answer: they stay hers)
+    rows.forEach((r, i) => { if (i > 0) assert.ok(!r.prompt.some(p => p.who === 'patience'), id + ' ' + r.k); });
+  });
+  assert.equal(play5(cat5(st5), st5, 'ch05-catch', { '4x5': [25] })[0].help.style, 'swipe', 'the fives are swiped, on the log as anywhere');
+  assert.equal(play5(cat5(st5), st5, 'ch05-otter', { '7x2': [15] })[0].help.style, null);
+  // a right retry: "You GOT it!" would be the set's `again`; the facts keep their own right lines there
+  assert.deepEqual(play5(cat5(st5), st5, 'ch05-otter', { '7x2': [15] })[3].balloons.map(b => b.text), ['FOURTEEN?', 'For YES and NO?']);
+  const lentBack = play5(cat5(st5), st5, 'ch05-otter', { '7x2': [15], '2x1': [3] });
+  assert.deepEqual(lentBack.map(r => r.k), ['7x2✗', 'F:2x1✗', 'F:2x2', 'R:7x2', 'R:2x1']);
+  assert.deepEqual([lentBack[4].prompt[0].text, lentBack[4].line, lentBack[1].help.ground], ['An easy one! One answer. How many fish?', 'You GOT it!', 'log'], 'a borrowed one coming back opens as it did, and is his to cheer');
+  // "log" is a ground of its own
+  assert.deepEqual(E.GROUNDS, ['sand', 'earth', 'mud', 'grit', 'log']);
+  const bad = clone(ch05); bad.counts['ch05-otter'].ground = 'raft'; bad.counts['ch05-bill'].fillPicture = 'lender'; bad.counts['ch05-catch'].fillVoice = undefined; delete bad.counts['ch05-catch'].fillVoice;
+  const errs = E.checkStory(bad, list).join('\n');
+  for (const want of [/ch05-otter: ground is "sand", "earth", "mud", "grit" or "log"/, /ch05-bill: fillPicture is "borrower"/, /ch05-catch: fillPicture goes with fillVoice: "borrower"/]) assert.match(errs, want);
+});
+
+test('Puddle’s riddle and Wisp’s: his bump stars light a log at a time and she hops (no ground: `help: "picture"`); he borrows logs and bumps, never more than three logs; her set is lettered in captions, with one line of Patience’s, and borrows three herons and five; neither ever speaks one of the engine’s own sentences', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  const DEFAULTS = ['Here’s that one again.', 'There. We’ll come back to that one.', 'There. Now you’ve seen it counted.', 'There it is. You remembered that one.', 'Yes! That one came back, and you knew it.', 'Let’s scratch it out together.', 'Yes!'];
+  // Puddle
+  const p = play5(cat5(st5), st5, 'ch05-puddle', { '4x10': [44, 30] });
+  assert.deepEqual(p.map(r => r.k), ['4x10✗', 'F:1x10', 'F:10x2', 'R:4x10✗', 'F:10x3', 'F:1x10', 'R:4x10']);
+  assert.deepEqual(p[0].prompt.map(x => x.label + ': ' + x.text), ['The big-footed dragon: Four logs in this raft. I’ve bumped my head ten times on every one. How many bumps?'], 'he has not said his name yet');
+  assert.deepEqual(p[0].picture, { table: 10, groups: 4, per: 10, highlight: 0, kind: 'bumps', layout: undefined, thought: undefined, who: undefined, thing: 'bump', things: 'bumps' });
+  assert.deepEqual([p[0].help.intro, p[0].help.picture, p[0].help.ground, p[0].help.counter, p[0].help.nums, p[0].help.style, p[0].help.pair, p[0].help.line],
+    ['Count my bumps! You hop!', true, null, 'player', [10, 20, 30, 40], null, undefined, 'There! Let’s do that one again.']);
+  assert.deepEqual(E.helpSteps(p[0].help).map(s => E.lessonPicture(p[0].D, p[0].q, s.counted).highlight), [10, 20, 30, 40], 'the same picture, a log more lit at each hop');
+  assert.deepEqual(p.filter(r => r.q.filler).map(r => [r.prompt[0].text, r.picture.kind, r.picture.groups, r.line]),
+    [['Do another one! One log. How many bumps?', 'bumps', 1, 'YES!'], ['Do another one! Two logs. How many bumps?', 'bumps', 2, 'You’re GOOD at bumps!'], ['Do another one! Three logs. How many bumps?', 'bumps', 3, 'YES!'], ['Do another one! One log. How many bumps?', 'bumps', 1, 'You’re GOOD at bumps!']]);
+  assert.ok(p.every(r => r.q.groups <= 4 && r.teacher === 'puddle' && (!r.q.filler || r.q.groups <= 3)), 'never more logs than the raft has');
+  assert.equal(p[3].prompt[0].text, 'My bumps again! Four logs, ten bumps on every one. How many bumps?');
+  assert.deepEqual(p[6].balloons.map(b => b.who + ': ' + b.text), ['puddle: FORTY!', 'puddle: No wonder it hurts.']);
+  const p3 = play5(cat5(st5), st5, 'ch05-puddle', { '4x10': [44, 30, 14] });
+  assert.equal(p3.filter(r => /4x10✗/.test(r.k))[2].line, 'There! All my bumps, counted.', 'the last miss, in his words');
+  assert.equal(play5(cat5(st5), st5, 'ch05-puddle', { '4x10': [44], '1x10': [1] }).find(r => r.k === 'R:1x10').line, 'You DID it!');
+  // Wisp: nobody speaks in her set but Patience, once
+  const w = play5(cat5(st5), st5, 'ch05-wisp', { '7x1': [14, 8] });
+  assert.deepEqual(w.map(r => r.k), ['7x1✗', 'F:3x1', 'F:1x5', 'R:7x1✗', 'F:6x1', 'F:3x1', 'R:7x1']);
+  w.forEach(r => {
+    assert.equal(r.teacher, 'caption', r.k);
+    r.prompt.forEach(x => assert.deepEqual([x.kind, x.who, x.label], ['caption', undefined, null], r.k + ': ' + x.text));
+    r.balloons.forEach(b => assert.equal(b.kind, 'caption'));
+    assert.deepEqual([r.picture.kind, r.picture.per, r.picture.thing], ['herons', 1, 'leg in the water']);
+    if (r.help) assert.deepEqual([r.help.intro, r.help.says, r.help.counter, r.help.picture, r.help.ground, r.help.teacher], ['Look again. One leg each.', 'patience', 'player', true, null, 'caption'], 'Patience, without turning her head; and she counts them herself, by ones');
+  });
+  assert.deepEqual(w[0].prompt.map(x => x.text), ['Seven herons, each standing on one leg. How many legs in the water?']);
+  assert.deepEqual(w[0].help.nums, [1, 2, 3, 4, 5, 6, 7]);
+  assert.deepEqual(w.slice(1, 3).map(r => [r.prompt.map(x => x.text), r.picture.groups]), [[['She draws another one.', 'Three herons. How many legs in the water?'], 3], [['She draws another one.', 'Five herons. How many legs in the water?'], 5]], 'a caption of its own before the question’s');
+  assert.deepEqual(w[3].prompt.map(x => x.text), ['She taps the seven herons again.', 'Seven herons, each standing on one leg. How many legs in the water?']);
+  assert.deepEqual([w[0].line, w[3].line, w[6].balloons.map(b => b.text), w[1].line], ['She points at them again.', 'She points at them again.', ['She nods. Once.'], '']);
+  assert.equal(play5(cat5(st5), st5, 'ch05-wisp', { '7x1': [14, 8, 6] }).filter(r => /7x1✗/.test(r.k))[2].line, 'She counts them with you, one by one.');
+  assert.equal(play5(cat5(st5), st5, 'ch05-wisp', { '7x1': [14], '3x1': [4] }).find(r => r.k === 'R:3x1').line, 'She nods.');
+  assert.deepEqual(E.spoken('caption', 'She nods.'), { text: 'She nods.', kind: 'caption' });
+  assert.deepEqual(E.spoken('riffle', 'You GOT it!'), { who: 'riffle', text: 'You GOT it!' });
+  // neither set ever falls back on a sentence of the engine's (a teacher's)
+  [p, p3, w].forEach(rows => rows.forEach(r => [].concat(r.prompt.map(x => x.text), r.line, r.help ? [r.help.intro, r.help.line] : []).forEach(t => assert.ok(!DEFAULTS.includes(t), r.k + ': ' + t))));
+  // one question each, extra to the chapter's sixteen
+  assert.deepEqual([play5(cat5(st5), st5, 'ch05-puddle').length, play5(cat5(st5), st5, 'ch05-wisp').length], [1, 1]);
+  const bad = clone(ch05); bad.counts['ch05-puddle'].help = 'sand'; bad.counts['ch05-wisp'].helpSays = 7;
+  assert.match(E.checkStory(bad, list).join('\n'), /ch05-puddle: help is "picture"[\s\S]*ch05-wisp: helpSays is a line/);
+});
+
+test('a playthrough with no misses types sixteen answers, seventeen to nineteen with the riddles; the Taps that count log nothing: four paws aboard (counted in words by Tallyheart), nine claws in the log (her own thought, the scene drawn again as she taps, the roar growing), a forepaw each for Puddle and Wisp, and the bedtime nines', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  const typed = c => { const cat = start5(cat5(st5), st5), n0 = cat.counts.length; read5(cat, st5, { choices: choices5(c) }); return cat.counts.length - n0; };
+  assert.equal(typed({ up: false, lean: false, ask: false, wait: 0, first: 'otters' }), 16);
+  assert.deepEqual([typed({ up: true, lean: false, ask: false, wait: 0, first: 'heron' }), typed({ up: false, lean: false, ask: true, wait: 3, first: 'heron' }), typed({ up: true, lean: true, wait: 3, first: 'otters' })], [17, 18, 19]);
+  // paws aboard
+  const board = ch05.frames.c06.skip, bw = E.skipWords(board, 'tallyheart');
+  assert.deepEqual([0, 1, 2, 3, 4].map(n => E.skipView(board, n).count), ['', 'One.', 'One. Two.', 'One. Two. Three.', 'One. Two. Three. Four.']);
+  assert.deepEqual([E.skipView(board, 3).say, E.skipView(board, 4).done, E.skipView(board, 4).total, E.skipView(board, 2).paws], ['Three.', true, 4, 'board']);
+  assert.deepEqual(E.skipPicture(board, 2), { table: 1, groups: 4, per: 1, highlight: 2, totals: false, next: true, who: undefined, thing: 'paw', things: 'paws', paws: 'board', taps: 2 });
+  assert.deepEqual([bw.teacher, bw.words, bw.whisper, bw.label, bw.aria, bw.prompt], ['tallyheart', true, false, 'Put the next paw on the raft.', 'Your four paws at the raft’s edge. Touch the glowing one.', '**Tap** each paw onto the raft.']);
+  assert.equal(bw.noNumber, true, 'no big number over her paws: Tallyheart says the count');
+  assert.deepEqual([E.skipOnScene(board), E.skipInto(ch05, 'c07'), board.carry], [false, null, false], 'a counting picture of her own paws; its number stays on its page');
+  // nine claws in the log: no counting picture; the frame's scene with the step's options laid over it
+  const f = ch05.frames.o03, log = f.skip, lw = E.skipWords(log, 'riffle');
+  assert.deepEqual([lw.teacher, lw.think, lw.whisper, lw.label, lw.aria, lw.thing], ['player', true, false, 'Dig in the next claw.', 'Your two forepaws on a log. Touch anywhere to dig in the next claw.', 'claw']);
+  // (the big number is the tuck's and the older counts' alone: no chapter 1 to 4 skip says `noNumber`)
+  assert.deepEqual([E.skipWords(ch05.frames.h05.skip, 'tallyheart').noNumber, E.skipWords(ch05.frames.d11.skip, 'player').noNumber, E.skipWords({ table: 5, groups: 4, next: 'x' }).noNumber], [undefined, undefined, undefined]);
+  assert.deepEqual([E.skipOnScene(log), E.skipView(log, 0).anywhere, E.skipView(log, 9).done, E.skipView(log, 9).total, E.skipView(log, 4).count], [true, true, true, 9, '1… 2… 3… 4…']);
+  assert.equal(E.skipView(log, 9).count, '1… 2… 3… 4… 5… 6… 7… 8… 9!');
+  const scenes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => E.skipScene(f.scene, log, n, ''));
+  assert.deepEqual(scenes.map(s => s.scene.opts.plane), ['none', 'far', 'far', 'far', 'near', 'near', 'near', 'over', 'over', 'over'], 'three sizes are enough');
+  assert.deepEqual(scenes.map(s => s.scene.opts.claws), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 'a claw dug in at each tap, the tenth tucked');
+  assert.deepEqual(scenes.map(s => s.sfx), ['', 'rrr…', 'rrr…', 'rrr…', 'RRRrrr…', 'RRRrrr…', 'RRRrrr…', 'RRRRRR…', 'RRRRRR…', 'RRRRRR…'], 'the roar, lettered larger at each step');
+  assert.deepEqual(scenes.map(s => s.step), [-1, 0, 0, 0, 1, 1, 1, 2, 2, 2]);
+  assert.deepEqual([f.scene.opts.plane, f.scene.opts.claws, scenes[9].scene.set, scenes[9].scene.cam], ['none', undefined, 'openriver', 'log'], 'the story’s own scene is never changed');
+  assert.equal(E.skipScene(f.scene, log, 0, 'hush').sfx, 'hush', 'before the first step, the frame’s own lettering');
+  // the forepaws: chapter 4's one-group skip, for Puddle and for Wisp
+  ['ua7', 'ub7', 'k10'].forEach(id => {
+    const sk = ch05.frames[id].skip, who = id === 'k10' ? 'wisp' : 'puddle';
+    assert.deepEqual(E.skipPicture(sk, 1), { table: 5, groups: 1, per: 5, highlight: 5, totals: true, next: false, who: [{ who }], thing: 'claw', things: 'claws' });
+    assert.deepEqual([E.skipView(sk, 1).total, E.skipView(sk, 1).done, E.skipInto(ch05, sk.next)], [5, true, null]);
+  });
+  // the bedtime nines: both forepaws together, one claw tucked, nine lit a tap, the murmur trailing off
+  const bed = ch05.frames.d11.skip, w = E.skipWords(bed, 'player');
+  assert.deepEqual([0, 1, 2, 5].map(n => E.skipView(bed, n).count), ['', '9…', '9… 18…', '9… 18… 27… 36… 45…']);
+  assert.deepEqual(E.skipPicture(bed, 2), { table: 9, groups: 5, per: 9, highlight: 18, totals: false, next: true, who: undefined, thing: 'claw', things: 'claws', paws: 'own', both: true, taps: 2, lit: 'both', nextPaw: 'both' });
+  assert.deepEqual([w.teacher, w.whisper, w.label, E.skipReached(E.skipInto(ch05, 'd12'))], ['player', true, 'Tap your forepaws.', 45]);
+  // nothing here is an answer
+  const cat = start5(cat5(st5), st5), rows = read5(cat, st5, { choices: choices5({ up: false, lean: true, wait: 3, first: 'otters' }) });
+  ['h05', 'c06', 'o03', 'ua7', 'k10', 'b04', 'd11', 'm04', 'p01', 'ha6', 'm12'].forEach(id => { const i = ids5(rows).indexOf(id); assert.ok(i >= 0, id); assert.equal(rows[i + 1].counts, rows[i].counts, id + ' logs nothing'); });
+  // E.checkStory: the new paws, and steps only where the scene stays up
+  const bad = clone(ch05);
+  bad.frames.c06.skip.steps = [{ from: 1, opts: { plane: 'far' } }]; bad.frames.o03.skip.steps = [{ opts: { plane: 'far' } }]; bad.frames.d11.skip.paws = 'all';
+  delete bad.frames.o04.scene; bad.frames.o04.skip = { table: 1, groups: 2, paws: 'log', next: 'o05a' }; delete bad.frames.o04.choice;
+  const errs = E.checkStory(bad, list).join('\n');
+  for (const want of [/c06: skip steps redraw the frame’s scene/, /o03: skip steps is a list of \{ from, opts, sfx \}/, /d11: skip paws is "own", "both", "pile", "board", "log" or "mud"/, /o04: this skip-count is tapped on the frame’s own scene: it needs one/]) assert.match(errs, want);
+});
+
+test('the Training Hollow after chapter 5: it offers “Nine lives · the 9s” (never the pile, the warm-up, the fish or the riddles); Tallyheart’s lines there differ for the 5s, the 10s and the 9s; a round is the still picture, her sand, most recent fillers; the tree has five marks', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  const cat = start5(cat5(st5), st5);
+  read5(cat, st5, { choices: choices5({ up: true, lean: true, wait: 3, first: 'otters' }) });
+  cat.lessons['ch04-tens'] = cat.lessons['ch04-tens'] || { finished: true };
+  const learned = E.learnedCounts(cat, list);
+  assert.deepEqual(learned.map(c => [c.table, c.setId]), [[1, 'ch01-tails'], [2, 'ch02-ears'], [5, 'ch03-claws'], [10, 'ch04-tens'], [9, 'ch05-nines']], 'in the order they are taught');
+  const H = E.hollowLines(cat, list);
+  assert.deepEqual(H.counts.map(c => c.name), ['Tails · the 1s', 'Ears · the 2s', 'Claws · the 5s', 'Both forepaws · the 10s', 'Nine lives · the 9s']);
+  assert.equal(E.resolveScene({ set: 'hollow', opts: { marks: 'auto', glow: 'auto' } }, cat, list).opts.marks, 5);
+  const lines = t => { const d = E.hollowDef(list, t); return [E.hollowRoundLine(d), E.hollowGlowNote(d, true), E.hollowWord(d)]; };
+  assert.deepEqual(lines(9), ['A round of nines. Ready? Here we go.', 'Look! Your nines claw mark on the tree is glowing.', 'nines']);
+  [0, 1, 2].forEach(i => assert.equal(new Set([lines(5)[i], lines(10)[i], lines(9)[i]]).size, 3, 'the 5s, the 10s and the 9s never read the same'));
+  // the round's definition: the nines' own lines and help, and none of the story's machinery
+  const def = E.hollowDef(list, 9);
+  ['light', 'fillOrder', 'facts', 'firstPrompt', 'fillFrom', 'ground', 'help', 'helpSays', 'fillPicture'].forEach(k => assert.ok(!(k in def), k));
+  assert.deepEqual([def.id, def.table, def.teacher, def.thing, def.unit, def.helpIntroNotNine], ['hollow-9s', 9, 'tallyheart', 'life', 'cat', ch05.counts['ch05-nines'].helpIntroNotNine]);
+  const r = E.hollowStart(cat, list, 1, 9), ks = [];
+  for (let q; (q = E.counts.question(r.state));) {
+    ks.push(q.a + 'x' + q.b);
+    assert.deepEqual([q.table, q.per, q.light], [9, 9, null]);
+    assert.match(E.promptLines(r.def, r.def, q)[0].text, /^(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten) cats?\. How many lives\?$/);
+    assert.deepEqual(E.lessonPicture(r.def, q, 0), { table: 9, groups: q.groups, per: 9, highlight: 0, kind: undefined, layout: undefined, thought: undefined, who: undefined, thing: 'life', things: 'lives' });
+    E.counts.answer(r.state, r.def, q.answer, 2000, 1);
+  }
+  assert.deepEqual(ks.map(k => k.split('x').map(Number).sort((a, b) => a - b).join('x')).sort(), ['1x9', '2x9', '3x9', '4x9', '5x9', '6x9', '7x9', '8x9', '9x10', '9x9'].sort());
+  // the grown-ups' table for the 9s takes its name from the set
+  const t9 = E.factTables(cat, list).find(t => t.table === 9);
+  assert.deepEqual([t9.name, t9.rows.length], ['Nine lives · the 9s', 10]);
+  assert.equal(E.countFor(9, list).setId, 'ch05-nines');
+  // chapter 5's other sets teach nothing new: the 10s' own set is still chapter 4's, the 2s' chapter 2's
+  assert.deepEqual([E.countFor(10, list).setId, E.countFor(2, list).setId, E.countFor(5, list).setId, E.countFor(1, list).setId], ['ch04-tens', 'ch02-ears', 'ch03-claws', 'ch01-tails']);
+});
+
+test('one-tap frames (`scratch: { tap }`) on five new things, each with its instruction, its hidden button and its small answer to a tap anywhere else; the page picks the target named for the tap, and draws its own soft glow on it (PC.ui.taps)', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  require('../app/ui.js');
+  const T = PC.ui.taps;
+  const taps = Object.entries(ch05.frames).filter(([, f]) => f.scratch).map(([id, f]) => [id, f.scratch.tap, E.tapWords(f)]);
+  assert.deepEqual(taps.map(t => t[1]), ['nose', 'earth', 'fur', 'fur', 'mud', 'pole']);
+  assert.deepEqual(taps.map(t => [t[2].kind, t[2].label, t[2].miss]), [['tap', 'Wake him up.', 'snnnrrk…'], ['tap', 'Look at the dug earth.', 'rustle…'], ['tap', 'Sniff the fur.', 'flutter…'], ['tap', 'Sniff the fur.', 'flutter…'], ['tap', 'Look at the mud.', 'ripple…'], ['tap', 'Run up the pole.', 'wobble…']]);
+  assert.equal(taps[0][2].prompt, '**Tap** his nose to wake him up.');
+  // chapter 4's glitter Tap has no small answer, and its words are what they were
+  assert.deepEqual(E.tapWords({ scratch: { tap: 'glint', next: 'x' } }), { kind: 'tap', prompt: '**Tap** the glitter.', label: 'Look at the glitter.' });
+  assert.deepEqual(E.tapWords({ scratch: { tap: 'nose', next: 'x' } }), { kind: 'tap', prompt: '', label: 'Tap it.' });
+  // which of a picture's marks a tap is for: the one named for it; else the first glint or pc-tap
+  const marsh = [{ tap: 'mud', cls: 'pc-tap' }, { tap: 'pole', cls: 'pc-tap' }];
+  assert.deepEqual([T.pick(marsh, 'mud'), T.pick(marsh, 'pole'), T.pick(marsh, 'nose'), T.pick([], 'nose'), T.pick(null, 'x')], [0, 1, -1, -1, -1]);
+  assert.equal(T.pick([{ cls: 'pc-tap' }, { tap: 'pole', cls: 'pc-tap' }], 'mud'), 0, 'an unnamed mark is anybody’s');
+  assert.equal(T.pick([{ cls: 'pc-tap pc-tap-pole' }, { cls: 'pc-tap pc-tap-mud' }], 'mud'), 1);
+  assert.equal(T.pick([{ art: 'glint' }], 'glint'), 0, 'chapter 4’s glint, as it was found');
+  assert.equal(T.pick([{ cls: 'pc-tap' }, { art: 'glint' }], 'glint'), 1);
+  assert.equal(T.pick([{ cls: 'pc-glint' }], 'glint'), 0);
+  assert.equal(T.pick([{ art: 'fur' }], 'fur'), 0);
+  // the page's glow: as wide as the thing and a little more, never smaller than a fingertip nor wider than a quarter of the panel
+  assert.deepEqual([T.glow(0), T.glow(1), T.glow(5), T.glow(20), T.glow(undefined)], [9, 9, 12.5, 26, 9]);
+  // a tap on it turns the page, a tap anywhere else does not (the hit test is chapter 4's)
+  assert.ok(T.hit(1000, 625, { x: 30, y: 40 }, 300, 250, 3) && !T.hit(1000, 625, { x: 30, y: 40 }, 700, 500, 3));
+  // the art's picture of her answers is used when it names them; else the page draws its own
+  assert.equal(T.namesAnswers('<svg aria-label="Scratched in the sand: 18 and 36">', [18, 36]), true);
+  assert.equal(T.namesAnswers('<svg aria-label="1 groups of 1 scratches in the sand" viewBox="0 0 118 136">', [18, 36]), false, 'an art that does not know `answers` draws a scratch');
+  assert.equal(T.namesAnswers('<svg aria-label="36 alone">', [36]), true);
+  assert.equal(T.namesAnswers('<svg aria-label="136 and 18">', [18, 36]), false, 'whole numbers');
+  assert.equal(T.namesAnswers('', [36]), false);
+  // E.checkStory: `miss` is a line, and belongs to a tap
+  const bad = clone(ch05); bad.frames.p01.scratch.miss = 3;
+  assert.match(E.checkStory(bad, list).join('\n'), /p01: scratch miss is a line/);
+  // every eye card of the chapter comes straight after a Tap
+  const cat = start5(cat5(st5, { specialty: 'noticing' }), st5), rows = read5(cat, st5, { choices: choices5({ lean: false, wait: 0, first: 'otters' }) });
+  rows.forEach((r, i) => r.cards.filter(c => c.mark === 'eye' && !c.held).forEach(c => assert.ok(rows[i - 1].kind === 'scratch' || r.kind === 'scratch', c.id + ' at ' + r.id)));
+});
+
+test('speakers in chapter 5: “The big-footed dragon” until “I’m Puddle”, then “Puddle”, in the reeds too; Patience by name from her first balloon; the ferry otters as chapter 2 called them; Wisp has no label to need; the voices; and the grown-ups corner has words for every flag the chapter sets', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  require('../app/ui.js');
+  const Sp = PC.ui.speakers, cat = start5(cat5(st5), st5);
+  const rows = read5(cat, st5, { choices: choices5({ up: true, lean: true, wait: 3, first: 'otters' }), answers: { '4x10': [44] } });
+  const labels = id => frame5(rows, id).say.map(b => b.label);
+  assert.deepEqual([labels('ua2'), labels('ua3')], [['The big-footed dragon', 'Moonpaw', 'The big-footed dragon'], ['Moonpaw', 'The big-footed dragon']]);
+  frame5(rows, 'ua3').lesson.forEach(r => { r.prompt.forEach(p => assert.equal(p.label, 'The big-footed dragon', r.k)); assert.equal(label4({ who: r.teacher }, cat, ch05), 'The big-footed dragon', r.k + ': his praise, his miss line, his help'); });
+  assert.deepEqual([labels('ua4'), labels('ua5'), labels('ua6'), labels('ua7'), labels('k07')], [['Puddle', 'Riffle'], ['Puddle'], ['Moonpaw', 'Puddle'], ['Puddle'], ['Puddle', 'Puddle']]);
+  assert.equal(Sp.nameOn([{ who: 'puddle', name: 'Puddle', text: 'x' }], 'puddle'), 'Puddle');
+  assert.deepEqual([labels('m05'), labels('m07')], [['Patience', 'Patience'], ['Moonpaw', 'Patience']]);
+  assert.deepEqual([labels('c01'), labels('ha1'), labels('ha3')], [['Riffle', 'The old ferry otter'], ['Moonpaw', 'An otter'], ['Moonpaw', 'The old ferry otter']]);
+  assert.deepEqual(labels('r02'), ['The little dragon'], 'chapter 5 labels Squall as chapter 4 does');
+  assert.deepEqual(ch05.names, { squall: 'The little dragon', puddle: 'The big-footed dragon' });
+  assert.deepEqual([Sp.NAMES.patience, Sp.NAMES.puddle, Sp.NAMES.wisp], ['Patience', 'Puddle', 'Wisp']);
+  assert.equal(Sp.label({ who: 'puddle' }, { cat, story: st5.ch04, fill: t => t }), 'Puddle', 'a chapter without the label calls him by name');
+  // Read to me: Patience low and slow, Puddle bright and quick
+  assert.ok(Sp.pitch('patience') < Sp.pitch('glintstar') && Sp.rate('patience') < 0.9, 'low and slow');
+  assert.ok(Sp.pitch('puddle') > 1.2 && Sp.rate('puddle') > 1, 'bright and quick');
+  assert.deepEqual([Sp.pitch('tallyheart'), Sp.rate('tallyheart'), Sp.pitch('squall'), Sp.rate('sprinkle')], [0.92, 0.95, 1.7, 0.86], 'the others as they were');
+  // the grown-ups corner: words for every flag a frame or an option of chapter 5 sets
+  const W = PC.ui.flagWords;
+  Object.entries(ch05.frames).forEach(([id, f]) => {
+    Object.entries(f.sets || {}).forEach(([k, v]) => assert.ok(W[k] && W[k][String(v)], id + ': words for ' + k + ': ' + v));
+    ((f.choice && f.choice.options) || []).forEach(o => Object.entries(o.sets || {}).forEach(([k, v]) => assert.ok(W[k] && W[k][String(v)], id + ': words for ' + k + ': ' + v)));
+  });
+  assert.deepEqual([W.ch5First.otters, W.ch5First.heron, W.foundPuddle.true, W.foundWisp.true], ['asked the ferry otters first', 'asked the heron first', 'found Puddle under the ferry raft (later chapters remember)', 'found Wisp in the heron’s reeds (later chapters remember)']);
+  assert.match(W.ch5Roof.true, /^met Squall in chapter 5/);
+  assert.deepEqual(PC.ui.quietFlags, { looked: 1, caseFileOpen: 1 });
+  // her cards, as the corner lists them: all of them, with one her file does not show yet marked so
+  const half = start5(cat5(st5), st5);
+  read5(half, st5, { choices: choices5({ lean: true, first: 'otters' }), stop: 'ua6' });
+  while (half.frame !== 'o10') E.back(half, ch05);
+  assert.deepEqual(E.cards(half, list, { all: true }).filter(c => !c.shown).map(c => c.id), ['puddle-paws']);
+});
+
+test('the save after chapter 5: still version 2, and nothing new is stored; a chapter-4 save opens with chapter 5 next; a nines lesson in progress goes through the store and is picked up at the same question, with what it has shown her', () => {
+  const st5 = story5(), { ch05, list } = st5;
+  const old = cat5(st5);
+  assert.deepEqual(Object.keys(E.migrate({ version: 2, cats: [clone(old)], current: old.id }).cats[0]).sort(), Object.keys(E.blankCat({})).sort(), 'no new field on a cat');
+  assert.equal(E.upNext(E.migrate({ version: 2, cats: [clone(old)], current: old.id }).cats[0], list).id, 'ch05');
+  // mid-lesson, through the store
+  const cat = start5(cat5(st5), st5);
+  read5(cat, st5, { stop: 'h06' });
+  const L = E.chapterLesson(cat, ch05, 'ch05-nines', 1, list);
+  E.beginLesson(cat, ch05, 'h06', L.state);
+  [17, 90, 40].forEach(a => { const q = E.counts.question(L.state); E.logAnswer(cat, E.counts.answer(L.state, E.questionDef(L.def, q, ch05, list), a, 2000, 1).entry); });
+  cat.lesson = { mode: 'chapter', frame: 'h06', chapter: 'ch05', state: L.state };
+  const mem = memStorage(), store = E.createStore(mem);
+  store.save({ version: 2, cats: [cat], current: cat.id, settings: {} });
+  const back = store.load().cats[0], Lb = E.lessonAt(back, ch05, 'h06');
+  assert.ok(Lb, 'the lesson is handed back at its frame');
+  assert.deepEqual([Lb.state.pos, Lb.state.shown, Lb.state.easiest, Lb.state.queue[Lb.state.pos].a + 'x' + Lb.state.queue[Lb.state.pos].b, Lb.state.queue[Lb.state.pos].light], [3, true, true, '2x9', 'tuck']);
+  const q = E.counts.question(Lb.state), res = E.counts.answer(Lb.state, L.def, 18, 2000, 1);
+  assert.deepEqual([q.retry, res.balloons.map(b => b.text)], [true, ['Eighteen! One and eight. There’s your nine.']]);
+  // her flags and her cards from chapter 5 go through too
+  const done = start5(cat5(st5), st5); read5(done, st5, { choices: choices5({ up: true, lean: true, wait: 3, first: 'heron' }) });
+  store.save({ version: 2, cats: [done], current: done.id, settings: {} });
+  const again = store.load().cats[0];
+  assert.deepEqual([again.flags, again.cards, again.finished, again.lessons], [done.flags, done.cards, done.finished, done.lessons]);
+  assert.deepEqual(E.caseFile(again, list), E.caseFile(done, list));
 });

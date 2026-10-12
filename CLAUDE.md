@@ -11,7 +11,7 @@ Potomac Crossing is a story game Aron is designing for Lissa (8) and her friends
   `MOVED-TO-MINI` note and is not edited. The mini pushes with a **deploy key** that reaches
   this repo only: SSH alias `github-potomac-crossing`, key `~/.ssh/potomac_crossing_deploy`,
   repo deploy key 165338954 (revoke under Settings > Deploy keys).
-- **Phase: chapters 1 to 4 are live.** They deploy whenever `main` is pushed. The stack and file layout
+- **Phase: chapters 1 to 5 are live.** They deploy whenever `main` is pushed. The stack and file layout
   are in `docs/build.md`; follow it. Static site, no build step, no dependencies.
   **Bump `CACHE` in `sw.js` whenever a cached file changes**, or installed iPads keep the old
   version.
@@ -56,7 +56,13 @@ Potomac Crossing is a story game Aron is designing for Lissa (8) and her friends
   hand back a blank screenshot (one flat colour): `shots.mjs` reads each one before keeping it, takes
   a blank one again in a fresh session, takes a blank sheet as its single pages, and says `blank:` on
   stderr (exit 1) for a target that never paints; `node tools/shots.mjs --blank a.png` checks a PNG
-  you already have, so no look is spent on a black picture. Quick Look is not Safari: it drops a shadowed group
+  you already have, so no look is spent on a black picture. **The mini makes no sound** (Aron's
+  rule): `shots.mjs` is silent by construction (every page it serves has speech and audio switched
+  off before the game boots; "Read to me" stays off, a `@readBtn` tap is refused, and `READ=1`
+  switches it on in a page that still says nothing). Never run `say`, play audio, or touch the
+  system volume; check what Read to me would say in Node, with the engine (`E.captionsRead`,
+  `E.balloons`), or on the real page with `DRY=1 node tools/shots.mjs OUTDIR ch05:f053`, which
+  prints the page's own list with Read to me off. Quick Look is not Safari: it drops a shadowed group
   too big for its filter buffer (the header of `tools/frames.mjs`), so check a missing layer in
   Safari before fixing the art.
 - **Visual checks in the desktop app.** Use the browser pane. Never launch Homebrew's `chromium`:

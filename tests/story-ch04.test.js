@@ -2399,7 +2399,8 @@ test('book: title, chapter title, a 6–10 sentence recap on every combination, 
     assert.ok(typeof r.text === 'string' && r.text.trim(), 'recap ' + i);
     if (r.when) Object.keys(r.when).forEach(k => {
       if (k === 'not') return Object.keys(r.when.not).forEach(kk => assert.ok(FLAGS4[kk], 'recap ' + i + ': not ' + kk));
-      assert.ok(FLAGS4[k], 'recap ' + i + ': a chapter 4 recap line reads only chapter 4’s two flags, not ' + k);
+      // (and `ch5Roof`, chapter 5's flag for a cat who met Squall there: this page must not say she met him here)
+      assert.ok(FLAGS4[k] || k === 'ch5Roof', 'recap ' + i + ': a chapter 4 recap line reads only chapter 4’s two flags and chapter 5’s ch5Roof, not ' + k);
     });
     assert.match(r.text, /[.!?”’]$/, 'recap ' + i + ' is a whole sentence');
     assert.ok(words(r.text) <= 30, 'recap ' + i + ' is short: ' + words(r.text));
@@ -2420,6 +2421,23 @@ test('book: title, chapter title, a 6–10 sentence recap on every combination, 
     n++;
   }
   assert.equal(n, 12);
+  // A page says "found" only for a dragonet found in its own chapter (chapter 5's Build notes, "The
+  // book"): a cat who said "Not today" here and went up in chapter 5 has `foundSquall` and `ch5Roof`.
+  // This page tells her he was still roaring, never that she found him here; chapter 5's page says that.
+  for (const ch4CaughtFly of [true, undefined]) {
+    const flags = { ch3Told: true, foundSquall: true, ch5Roof: true }; if (ch4CaughtFly) flags.ch4CaughtFly = true;
+    const r = recapFor(flags), all = r.map(x => x.text).join(' ');
+    assert.equal(r.length, 9 + (ch4CaughtFly ? 1 : 0), JSON.stringify(flags));
+    assert.doesNotMatch(all, /Squall|two skinny shapes/, JSON.stringify(flags) + ': not found on this page');
+    assert.equal((all.match(/Sprinkle’s littlest brother is still roaring, and hiccuping\./g) || []).length, 1, JSON.stringify(flags) + ': still roaring, once');
+  }
+  // ... and a cat who met him here (no ch5Roof, or ch5Roof false) reads "found", never "still roaring", exactly as before
+  [{ foundSquall: true }, { foundSquall: true, ch5Roof: false }].forEach(flags => {
+    const all = recapFor(flags).map(x => x.text).join(' ');
+    assert.match(all, /found Squall, the littlest dragonet/, JSON.stringify(flags));
+    assert.doesNotMatch(all, /still roaring/, JSON.stringify(flags));
+  });
+  assert.deepEqual(b.recap.filter(r => r.when && 'ch5Roof' in r.when).map(r => [r.when.foundSquall, r.when.ch5Roof]), [[true, false], [true, false], [true, false], [undefined, true]]);
   // the text's proposed sentences, word for word
   const all = b.recap.map(r => r.text);
   ['On {name}paw’s third morning, the pile lay in rows of ten, and a gap showed in a heartbeat: four more pieces gone, twelve in three nights.',
@@ -2474,7 +2492,19 @@ test('the teaser for chapter 5, and chapter 3’s for this one', () => {
   const t = E.teaser(story, cat, PC.story);
   const ch05 = E.chapters(PC.story).find(s => s.number === 5);
   assert.equal(t.title, 'Chapter 5: Riffle’s River');
-  assert.deepEqual([t.built, t.next], ch05 ? [true, ch05.id] : [false, null], 'chapter 5: built, or coming soon');
+  // chapter 5 is built now: the hub offers it, and never "coming soon"
+  assert.ok(ch05 && ch05.id === 'ch05' && ch05.title === 'Riffle’s River', 'chapter 5 is built');
+  assert.ok(Object.values(ch05.frames).every(f => !/^STUB\b/.test(f.board || '')), 'and no stub frame is left in it');
+  assert.deepEqual([t.built, t.next], [true, 'ch05'], 'chapter 5: built');
+  const c4 = E.blankCat({}); c4.finished = { ch01: 1, ch02: 2, ch03: 3, ch04: 4 };
+  const p4 = E.progress(c4, PC.story);
+  assert.deepEqual([p4.next && p4.next.id, E.chapterHeading(p4.next), p4.soon], ['ch05', 'Chapter 5: Riffle’s River', null], 'the hub’s big button after chapter 4');
+  // the teaser's two lines are paid off: she rides Riffle's raft, and chapter 5 opens on the rows ("And forty
+  // pieces lie in their rows.": the first thing she does there is on its first screen)
+  const first5 = ch05.frames[ch05.start];
+  assert.deepEqual([first5.scene.set, first5.scene.cam, first5.scene.opts.rows.length], ['pile', 'rows', 4], 'chapter 5 opens on last night’s four rows');
+  assert.ok(first5.scratch && first5.scratch.tap, 'with something to do on its first screen');
+  assert.ok(Object.values(ch05.frames).some(f => f.scene.set === 'openriver'), 'and she rides the raft');
   // chapter 3's teaser is paid off on this chapter's first screen, and chapter 4 is built now
   const t3 = E.teaser(PC.story.ch03, cat, PC.story);
   assert.deepEqual([t3.title, t3.built, t3.next], ['Chapter 4: The Glittering Scale', true, 'ch04']);

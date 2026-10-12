@@ -10,7 +10,7 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-11):** chapters 1 to 4 are built as a static web app (`index.html`, `app/`; the
+**Status (2026-10-12):** chapters 1 to 5 are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
@@ -25,8 +25,8 @@ on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
 - [`docs/chapters/01-through-the-glass.md`](docs/chapters/01-through-the-glass.md): chapter 1,
   drafted as the actual game text.
 - [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
-  the Old Bridge, 04 The Glittering Scale), each with its notes, its Case File cards and the
-  questions it raised.
+  the Old Bridge, 04 The Glittering Scale, 05 Riffle's River), each with its notes, its Case File
+  cards and the questions it raised.
 - [`docs/storyboard/`](docs/storyboard/): the verbal storyboard of every frame, for an illustrator
   (generated from `app/story/`).
 - [`docs/build.md`](docs/build.md): how it is built, tested and deployed.
@@ -156,6 +156,116 @@ Each is Aron's to reverse.
   the fox comes to the far side of the Barking Field and the dogs see him off; she asks a fair
   question in front of the Clan and Glintstar charges no cat by name; Squall's riddle is 7 × 5;
   the "scale" stays where it was found until the Gathering.
+- **Chapter 5, *Riffle's River*, the seventeen calls of its text** (2026-10-11;
+  `docs/chapters/05-riffles-river.md`, "For Aron: The calls, in short", where each has its reason):
+  1. The 9s are tens with one claw tucked in: "hop, then tuck," on yesterday's cats; the two
+     numbers of a nines answer make nine, as a check. The nine lives are counted on claws and never
+     spent.
+  2. She types the morning count (3 × 10) and sees the gap; the old tom slept on guard; Glintstar
+     asks Tallyheart for proper guards by tomorrow night; tonight the old tom tries a pinecone.
+  3. Tallyheart comes down to the rocks for the Roar: she counts chapter 1's promise herself, calls
+     the nine claws, and counts them. The warm line waits for the den.
+  4. The Roar comes first, and can't be failed; then both witnesses are always asked, and the
+     player chooses the order.
+  5. She never sets a paw in the marsh: "Stay on the otters' raft. The marsh mud belongs to
+     ReedClan." ReedClan is on screen for the first time, as three cats on a log.
+  6. The otters' gossip comes from a duck; their useful news is that the old otter had the dragon
+     story from the fox himself, twice, the same way both times, and their useful find is a tuft of
+     thin brown fur: not cat, not otter, not fox. Nobody says weasel.
+  7. Patience the heron charges by the answer, sees in the dark, and does not guess. She saw two
+     small shapes cross her mud when the rain stopped, and they come back every night. Nine answers,
+     eighteen fish; Riffle catches twenty. She gives the way to Coil free, and Riffle one good word.
+  8. Puddle can be found twice over: by looking under a raft that is still shivering after the
+     Roar, or by asking after Riffle's slip on the way home. He saw the pile from the air and never
+     landed in camp. He stays under the raft by Mama's rule: stay where you land. If she finds him
+     before the reeds, he says hello to Wisp there, as a snout between the logs.
+  9. Wisp is found by choosing to keep still three times. She is silent: a claw across her snout,
+     a nod, a forepaw, two drawings, and no balloon. Patience says the rest, so the name is Wisp's
+     own. What the fox dropped has sunk. Half of every fee is hers: that is why the price is two.
+  10. Every player sees Sprinkle at sunset; the forepaws in chapter 3's mud become the quest's
+      tally.
+  11. The roof is offered again to a cat who has not met Squall, on one screen, after the lesson
+      and before the Crossing, with chapter 4's scene unchanged; a cat who says "Not today" twice
+      gets one more offer, in chapter 9. A cat who met him in chapter 4 reads nothing at the tower.
+  12. Riddles: Puddle's is 4 × 10 (bumps on the raft's four logs), Wisp's is 7 × 1 (herons on one
+      leg).
+  13. The 1s are typed once by everyone, as 9 × 1, tapped twice (paws aboard, claws in the log),
+      and typed again by a cat who waits for Wisp. The twos and the five she types are chapter 3's
+      own (7 × 2, 9 × 2, 4 × 5): chapter 6's mix should pick others.
+  14. The elders' claw trick is kept out of the lesson and held for the Training Hollow.
+  15. The old otter says what the Roar is and calls it the courage test, and she asks what happens
+      if she moves; the Roar's refrain counts claws, not whiskers; Riffle's seven questions are
+      seven taps; a noticing cat tells Tallyheart about the prints behind the pile the same night;
+      a chapter's page in her book says "found" only for a dragonet found in that chapter.
+  16. The fox tells the old otter one story, the same way twice (no goose: the case keeps
+      module-1's five); Tallyheart hears about the heron's two small shapes the same night; the
+      Count's picture is staged on Tallyheart's own paws and "one less than a ten" is said on
+      screen; the Roar is explained before Tallyheart names it; Riffle's pole holds the raft while
+      he dives; Coil is "that nosy old thing"; Glintstar's guards are for tomorrow night; Puddle is
+      never drawn going under; "Your secret is getting bigger."
+  17. Wisp is silent, and Patience speaks for her; a climber's sight from the pole is a card and is
+      told to Tallyheart; Puddle and Wisp meet when she has found him first; one measure for the
+      prints, half the size of hers; Tallyheart asks for "somebody else who was awake when the rain
+      stopped"; the loud way out of the first wait has a tell; a found Wisp gets her fish, and two
+      are left over on their string; the nines' hop and tuck plays on retries too; no life is
+      mentioned on the water, and the raft is never harmed.
+- **Chapter 5 keeps its length** (2026-10-11): about 1,965 words and 107 frames without the
+  optional scenes (the brief: 1,900, and 80 to 110), about 2,410 and 131 with Puddle and Wisp, and
+  about 2,670 and 146 with the roof as well; about 22, 27 and 30 minutes. The next cuts, if it must
+  come down, are listed in the text ("The length").
+- **Chapter 5 as built: where the pictures and the pages go past the text's notes** (2026-10-12;
+  `docs/build.md`, "Chapter 5", "As built, after review"). Each was a review finding; each is small.
+  - *The roof by day.* The roof is chapter 4's, frame for frame, but in chapter 5 she climbs it in
+    the morning, between the lesson and the Crossing: its panels are in daylight, not chapter 4's
+    afternoon gold, so the sky does not turn orange for eleven panels between two blue ones.
+  - *The gulp is two frames.* A cat who found Wisp reads "One for Patience. One for Wisp." on a
+    panel that has Wisp in it, swallowing; everyone else's panel has nothing in the reeds. (The
+    text's Build note had one frame with two captions, and a scene cannot change its cast by a
+    flag.)
+  - *Wisp is hidden until she is found.* While she is still "a reed" a sheaf of pale plumes stands
+    across her and she is thinner still; the knees, then the eyes, are real steps. Her flinch, for a
+    cat who yells, has its eyes squeezed shut: the two open gold eyes are the reward for waiting.
+  - *Her paw over a print.* "You hold your paw over one. It's half the size of yours." is drawn:
+    she crouches at the raft's very edge with one forepaw out over a print half its size. She is
+    still on the raft.
+  - *The prints stay, and so do the two spare fish.* Nobody wipes the marsh's prints, so they are
+    in the mud to the end of the marsh; and the string with the two fish left over rides home on
+    the raft's logs, on the river and at the Crossing ("Two to spare" is said, so they are drawn).
+  - *One panel is not in the text.* After "Under the raft" on the way home the raft glides on with
+    two nostrils and a small "blub…" between its logs: the Build note wants the bubbles on the
+    frame after that scene, and the text's next screen there has no raft.
+  - *Her book, for a tom.* Two recap sentences name the cat or Puddle where "he" or "him" would
+    have meant two different animals ("Puddle saw clever little paws…"; "…and showed {name}paw a
+    tuft of thin brown fur."), as chapter 4 did for the fox.
+  - *Smaller ones.* The bill's first question does not say the frame's line again (on a phone it
+    hid the top row of the nine pairs); a cat who already knows Puddle and picks "Not now. He's
+    being a log." does not read "Only blue sky."; the chapter's first two panels have the sleeper
+    alone at the left, so the snore is lettered over him; the Roar is lettered in the sky; the
+    telling at the den is in the wide view, so each balloon sits over its own speaker; Riffle is in
+    every panel that shows his seat on the raft; he asks "What did I miss?" wide-eyed (the laughing
+    face has tears, and he looked upset).
+  - *Three sounds have words for a child who listens.* Read to me never reads a sound effect, so
+    three captions that run on into theirs were heard as unfinished sentences. With Read to me on
+    she now hears the sound in words right after each: "From the tallest tower:" "a roar, and a
+    tiny hiccup."; "On the rocks, otter tails go" "Slap! Slap! Slap!", before Riffle's shout; and
+    "Then, a little later:" "a long, long snore." The page's lettering is unchanged; the words are
+    the frame's `sfxRead`.
+- **The open river is the Crossing's water: bright blue** (2026-10-12; chapter 5). The open river
+  was drawn green-brown, as the text's note asked ("green-brown and sunny, never black"), and on
+  the page it read as a lawn or a meadow with a raft sitting on it, not as water. One page earlier
+  the same river, at the Crossing, has been bright blue since chapter 2, so the water changed colour
+  three times in a reading (pushing off, coming back to the otters, the way home). The note was
+  there to keep the river from looking dark and frightening (it is the deep-water worry's river),
+  and that is kept and still measured: nothing on it is dark, in any light. So the open river is
+  now the same sunny water as the Crossing: the sky's colour toward the far shore, a touch greener
+  and deeper near the raft, with the towers' reflections, the ripples and the sun's glints on it.
+  The way home keeps its gold evening light: gold on the far water, a soft evening blue under the
+  raft. The small pictures on the raft (Puddle's forepaw, the claws in the log, the raft from
+  underneath) took the same blue. The Crossing and every panel of chapters 1 to 4 are untouched,
+  and the marsh keeps its still green water (it is a marsh, and never shows the river). No line she
+  reads changed; the text's notes say "bright blue" where they said "green-brown"
+  (`app/art/sets/openriver.js`; `docs/build.md`, "Chapter 5", "As built, after review"). This was
+  the final review's one finding left as an open question; it is answered here, not asked.
 
 ## Open questions, waiting on Aron
 
@@ -170,6 +280,22 @@ Nothing here blocks the chapter being built; each chapter's own questions are in
   (Hollypaw, Fernpaw, Stormpaw, Minnowpaw, Sedgepaw, Frostpaw) and "Moon" (Wings of Fire's
   Moonwatcher); "Ironsnakes" (Warriors' Thundersnake; Clankers?); "leaf-drop" (Warriors' leaf-fall);
   Dew (Warriors pairs Drizzle with Dew; before chapter 9 names her); Snip, one of the weasels
-  (Warriors has a Snipkit; before chapter 7 or 8 names them).
+  (Warriors has a Snipkit; before chapter 7 or 8 names them). From chapter 5's names check
+  (`docs/chapters/05-riffles-river.md`, "New names"): "skymonster," chapter 5's loudest Clan word
+  (it follows Warriors' monster and water-monster pattern); "the Needle," world.md's word for the
+  white monument, drawn in chapter 5 and still never on screen (Needle is a Wings of Fire dragon);
+  "the prey pile," on screen since chapter 1 (the Warriors wiki uses the phrase too, beside the
+  books' own coined word); and "growlers," world.md's word for cars, not on screen yet (Growler is a
+  Warriors cat): two lines that used it stay cut until you rule on the word.
+- **Puddle's name** (chapter 5, "Truly yours, 2"): the bare name is in neither series, but the
+  Warriors wiki lists "Puddle" as a name prefix (Puddleshine) and "-puddle" as a suffix (Mudpuddle),
+  the same class of echo as Snip. Chapter 5 puts "Puddle" on screen and on a page of her book for
+  the first time. If you would rather change it: Slush, Mizzle, Slosh and Shower are clear on both
+  wikis (checked 2026-10-11), and Riffle's slip ("Pud— PUDDLES. Raft puddles.") is rewritten around
+  the new name.
+- **"Nine lives"** (chapter 5, "Truly yours, 1"): in Warriors a leader is given nine lives; here
+  every cat has them, as the saying goes, counted on claws and never given, lost or spent. If the
+  echo still bothers you, the lesson works with the picture said once and the claws carrying the
+  rest; it does not work without the tucked claw.
 - **A near-miss version of Murmurpaw's test** is written out in chapter 3's notes, if you ever want
   to show what "nine in every ten" allows.

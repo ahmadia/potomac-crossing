@@ -148,8 +148,11 @@ test('the page: 10 × 10 = 100 keeps its last zero in a zoomed Safari; one group
   assert.match(ui, /var hold = view\.opts && view\.opts\.fromSkip \? 1100 : 280;/);
   // the skip-count's counter carries its speaker's name on that page, and the lesson's intro is the pure helper's
   assert.match(ui, /var tname = nameOn\(intro, teacher\);/);
-  assert.equal((ui.match(/who: teacher, name: tname/g) || []).length, 3, 'the whispered count, the plain count, the done line');
-  assert.match(ui, /var intro = lessonIntro\(balloonsOf\(f\), !!\(resume \|\| E\.keptSkip\(story, id, cat\)\)\);/);
+  // (chapter 5: one counter line for every kind of count, murmured, thought or said; and the done line)
+  assert.equal((ui.match(/who: teacher, name: tname/g) || []).length, 2, 'the count, the done line');
+  assert.match(ui, /var counter = \{ who: teacher, name: tname, html: '<span class="counter' \+ \(words\.words \? ' words' : ''\) \+ '">' \+ esc\(v\.count\) \+ '<\/span>' \};\n\s+if \(own\) counter\.kind = 'whisper'; else if \(words\.think\) counter\.kind = 'think';/);
+  // (chapter 5: a frame may say its lesson's first question needs no words of its own, `counts.intro: false`)
+  assert.match(ui, /var intro = lessonIntro\(balloonsOf\(f\), !!\(resume \|\| f\.counts\.intro === false \|\| E\.keptSkip\(story, id, cat\)\)\);/);
   // the Case File's legend shows the art's own marks (the ear her cards carry, not a warning triangle)
   assert.match(ui, /function markSvg\(mark\) \{ return artCall\('cardMark', mark\) \|\| MARK\[mark\] \|\| ''; \}/);
   assert.equal((ui.match(/markSvg\((big|g)\.mark\)/g) || []).length, 2);
@@ -164,4 +167,58 @@ test('the page: 10 × 10 = 100 keeps its last zero in a zoomed Safari; one group
   // the page tells the placer which balloon is the panel's last (an off-panel voice may then sit by the bottom edge)
   assert.match(ui, /var lastB = bi === bs\.length - 1;/);
   assert.equal((ui.match(/index: bi, last: lastB, margin: 8/g) || []).length, 3);
+});
+
+/* Chapter 5: the page's rules and wiring for what is new (pinned as text, as above; the engine's side
+ * of each is tested in engine.test.js, and the pure helpers there too). */
+test('the page, chapter 5: the soft glow on a thing she taps and its small answer; the questions she taps out; the roar that grows on the frame’s own scene; three cards in a row; the nines’ hop and tuck; the book’s dragonets on two sheets', () => {
+  const ui = fs.readFileSync(path.join(ROOT, 'app/ui.js'), 'utf8');
+  // no new markup: every new screen is drawn into #screen by the page's own renderers
+  assert.match(ui, /if \(kind === 'ask'\) return renderAsk\(f, id\);/);
+  // the things she taps: the page's own soft halo over the art's mark, a flare on a hit, a wobble and a small word on a miss
+  assert.match(html, /\.tapspot\.soft svg\{animation:softglow 1\.7s ease-in-out infinite\}/);
+  assert.match(html, /\.tapspot\.soft\.twinkle svg\{animation:softno \.5s ease-in-out 1\}/);
+  assert.match(html, /\.tapspot\.soft\.flare svg\{animation:softyes \.7s ease-out 1 forwards\}/);
+  assert.match(html, /\.tapmiss\{position:absolute;[^}]*pointer-events:none;z-index:2;animation:tapmiss 1\.3s ease-out both\}/);
+  assert.match(ui, /\[data-art="glint"\], \.pc-glint, \.pc-tap, \[data-tap\]/, 'what a picture may mark for a tap');
+  assert.match(ui, /tapPick\(/);
+  assert.match(ui, /artBox\.classList\.add\('tap-hit'\)/, 'the art may answer a hit');
+  assert.match(ui, /artBox\.classList\.add\('tap-miss'\)/, 'and a miss');
+  assert.match(ui, /w\.className = 'tapmiss';/);
+  // the glitter of chapter 4 is still the glitter: a hit there still turns the page as a skip-count's last tap does
+  assert.equal((ui.match(/go\('frame', \{ fromSkip: true \}\)/g) || []).length, 3);
+  // the questions she taps out: the engine's view and scene at every tap, the earlier pairs kept under the panel, a hidden button
+  assert.match(ui, /var v = E\.askView\(ak, taps\), scene = E\.askScene\(base, ak, taps\);/);
+  assert.match(ui, /'<ol class="asked" aria-label="Asked already">' \+ before \+ '<\/ol>'/);
+  assert.match(ui, /'<button class="sr" id="askBtn" type="button">' \+ esc\(words\.label\) \+ '<\/button>'/);
+  assert.match(ui, /if \(now\(\) - lastTap < 260\) return;   \/\/ a double tap asks one question, not two/);
+  assert.match(ui, /if \(now\(\) - renderedAt < 280 \|\| now\(\) - lastTap < 600\) return;/, 'the tap that asks the last question never also turns the page');
+  assert.match(html, /\.asked\{list-style:none;[^}]*font-size:\.8em;/);
+  // the skip as this cat meets it, and nine claws in the log on the frame's own scene
+  assert.match(ui, /var sk = E\.skipFor\(f\.skip, cat\), taps = 0, turning = false;/);
+  assert.match(ui, /var onScene = E\.skipOnScene\(sk\) && !!f\.scene, lastStep = -1;/);
+  assert.match(ui, /var sc = E\.skipScene\(E\.resolveScene\(f\.scene, cat, stories\(\)\), sk, taps, f\.sfx \? fill\(f\.sfx\) : ''\);/);
+  assert.match(html, /\.skipsfx\.s1\{font-size:clamp\(18px, 3vw, 44px\);[^}]*\}\n\.skipsfx\.s2\{font-size:clamp\(26px, 4\.6vw, 68px\)\}\n\.skipsfx\.s3\{font-size:clamp\(36px, 6\.4vw, 96px\)\}/, 'rrr… RRR…: larger at each step');
+  assert.match(html, /\.counter\.words\{/);
+  // her paws aboard and the mud count carry no big number over the picture (E.skipWords' `noNumber`)
+  assert.match(ui, /ov\.innerHTML = v\.total && !words\.noNumber \? '<div class="skipnum'/);
+  // the nines: the two steps play without a word; the help's steps are the engine's; the answers go in the sand
+  assert.match(ui, /function playTuck\(forQ, steps\) \{/);
+  assert.match(ui, /var steps = E\.helpSteps\(plan\), at = 0, cur = \{ counted: 0 \}, opener = plan\.says \|\| teacher;/);
+  assert.match(ui, /function answersPicture\(shows, plan\) \{/);
+  assert.match(ui, /function answersFallback\(answers\) \{/);
+  // her Case File: several lots of linked cards, and three in a row with a line under each join
+  assert.match(html, /\.cf-links\{grid-area:link;display:flex;flex-wrap:wrap;/);
+  assert.match(html, /\.cf-pair\.n3 \.cf-card\{width:min\(32%, 165px\)\}/);
+  assert.match(html, /\.cf-link\.row \.cf-linkline\.j0\{text-align:left;padding-left:4%;padding-right:24%\}\n\.cf-link\.row \.cf-linkline\.j1\{text-align:right;padding-left:24%;padding-right:4%;margin-top:7px\}/, 'each line keeps to its own join’s side');
+  // still when she asks for less motion; never printed
+  assert.match(html, /prefers-reduced-motion: reduce[\s\S]*\.tapspot\.soft\.hop\{animation:none!important\}\n\s*\.tapmiss\{animation:none!important;opacity:1\}/);
+  // her book: with Puddle's page and Wisp's the dragonets may run on to a second sheet, never through one of them
+  assert.match(html, /@media print\{[\s\S]*\.book \.bookpage\.dragonets\{break-inside:auto\}\n\s*\.book \.dragonet\{break-inside:avoid\}/);
+  // the voices and names of the river
+  assert.match(ui, /patience: 'Patience', puddle: 'Puddle', wisp: 'Wisp'/, 'the names on their balloons');
+  // the Grown-ups corner's words for what chapter 5 remembers
+  assert.match(ui, /ch5First: \{ otters: 'asked the ferry otters first', heron: 'asked the heron first' \},/);
+  assert.match(ui, /foundPuddle: \{ 'true': 'found Puddle under the ferry raft \(later chapters remember\)' \},/);
+  assert.match(ui, /foundWisp: \{ 'true': 'found Wisp in the heron’s reeds \(later chapters remember\)' \}/);
 });

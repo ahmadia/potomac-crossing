@@ -5,6 +5,14 @@
  * scratched in thin dark lines, as simple as a cave drawing (a child could copy one), and a small
  * mark in one corner: an eye for what she saw herself, an ear for what she was only told.
  *
+ * Chapter 4's nine pictures, and chapter 5's nine (the table in its text's notes, "The Case File":
+ * prints-pile, puddle-paws, otter-fox, fur, heron-no-moon, heron-shapes, prints-marsh,
+ * prints-tracks, wisp-fox). Cards the file lays touching show one thing drawn one way: one fox's
+ * head wherever the fox is (`fox`), one heron's head (`heron`), one track (`TRACK`: Squall's), one
+ * tiny print at one size (`prints`, `PRINT`), one kind of long low shape (`slink`), one "scale"
+ * (`shard`). Whoever took the prey is never on a card: paws, prints, two shapes, and nothing more
+ * of the animal.
+ *
  *   PC.art.card({ picture, mark, big, look, blank }) -> '<svg viewBox="0 0 200 240" …>…</svg>'
  *       picture: a key of PC.art.cardPictures (a card definition's `picture`: the card's own id).
  *                A key nobody has drawn gives the bare bark (and the mark), never an error.
@@ -300,6 +308,188 @@
     c.line('M50 80Q44 96 54 114', { w: 0.8 });
     c.line('M80 198H154', { w: 0.8 });
     c.fine('M110 96Q112 88 119 88', { w: 0.8 });                                         // the little hook at its wrist
+  } };
+
+  // ------------------------------------------------------------------ chapter 5: what its pictures are made of
+
+  // Where a small thing is scratched, at any size and turn: spot(x, y, k, rot) gives the place of
+  // the point (a, b) of the thing's own drawing when it is set down at (x, y), k its size, turned
+  // `rot` degrees (clockwise, as the page turns things), and at(...) gives it as path data. The
+  // numbers are worked out here and not left to a transform: a scaled group would scale the weight
+  // of its lines too.
+  function spot(x, y, k, rot) {
+    var r = (rot || 0) * Math.PI / 180, cs = Math.cos(r) * (k || 1), sn = Math.sin(r) * (k || 1);
+    return function (a, b) { return [x + a * cs - b * sn, y + a * sn + b * cs]; };
+  }
+  function at(x, y, k, rot) {
+    var S = spot(x, y, k, rot);
+    return function (a, b) { var p = S(a, b); return N(p[0]) + ' ' + N(p[1]); };
+  }
+
+  // Tiny prints, each [x, y, the way it walks in degrees (0: up the bark)]: a pad, and five little
+  // toes close together over it (module-1's clue 4). Nobody counts them: at the size of a paw they
+  // run into one beaded line, and it is the size of the print that tells. k: 1 is about 16 across.
+  // PRINT is the size they are wherever she is close enough to measure one (behind the pile, at
+  // the marsh: "half the size of yours" both times, so the two cards are sized one way).
+  var PRINT = 1.45;
+  var TOES = [[-6.6, -1.8], [-3.9, -5.2], [0, -6.5], [3.9, -5.2], [6.6, -1.8]];
+  function prints(c, list, k) {
+    var pads = '', toes = '';
+    list.forEach(function (p) {
+      var P = at(p[0], p[1], k, p[2]);
+      pads += 'M' + P(-1.7, 2.2) + 'L' + P(1.7, 2.2);
+      TOES.forEach(function (t) { toes += 'M' + P(t[0], t[1]) + 'h.1'; });
+    });
+    c.line(pads, { w: c.big ? 2.2 : 1.6 });
+    c.line(toes, { w: c.big ? 1.3 : 0.9 });
+  }
+
+  // The train tracks as Squall's card has them, from above: two long lines and their ties, in the
+  // same place at the same slant, so two cards that lie touching show one track.
+  var TRACK = { t: 'translate(128 102) rotate(36)', at: [128, 102, 36], rails: 'M-58 -8H54M-58 8H54', ties: 'M-46 -14V14M-26 -14V14M-6 -14V14M14 -14V14M34 -14V14' };
+
+  // Patience's head, from the side, bill to the right: a long bill, one round eye, the dark stripe
+  // that runs back into a thin plume, and the top of her neck. A head and no more, as the fox is;
+  // the same heron on both of her cards. In a 122 x 68 box whose corner is (x, y).
+  function heron(c, x, y) {
+    var t = 'translate(' + N(x) + ' ' + N(y) + ')';
+    c.line('M26 30C26 16 38 8 50 9C56 9.5 60 12 64 15L120 26L62 31C56 33 50 36 46 42C40 52 30 56 30 68', { t: t });   // crown, bill, throat
+    c.line('M26 30C20 42 12 54 14 68', { t: t });                                        // the back of her neck
+    c.line('M56 14C44 9.4 32 13 24 22C18 28 10 33 2 40', { t: t, w: 0.85 });             // the stripe, and its plume
+    c.dot(54, 21, { t: t, w: 1.5 });                                                     // one round eye
+    c.fine('M64 23.6L110 26.4', { t: t, w: 0.7 });                                       // her bill is shut
+    c.fine('M22 30Q14 36 8 46', { t: t, w: 0.7 });                                       // a second plume
+  }
+
+  // A cloud with a flat foot, w wide, its left end at (x, y).
+  function cloud(x, y, w) {
+    var k = w / 60;
+    function P(a, b) { return N(x + a * k) + ' ' + N(y + b * k); }
+    return 'M' + P(4, 0) + 'C' + P(-6, 0) + ' ' + P(-6, -13) + ' ' + P(6, -13) + 'C' + P(6, -25) + ' ' + P(24, -28) + ' ' + P(30, -18) +
+      'C' + P(36, -27) + ' ' + P(52, -23) + ' ' + P(50, -11) + 'C' + P(62, -12) + ' ' + P(64, 0) + ' ' + P(54, 0) + 'Z';
+  }
+
+  // The "scale" as its own card draws it, small: round at one end, a blunt point at the other.
+  function shard(x, y, k, rot) {
+    var P = at(x, y, k, rot);
+    return 'M' + P(-6, -46) + 'Q' + P(0, -50) + ' ' + P(6, -46) + 'C' + P(21, -34) + ' ' + P(39, -10) + ' ' + P(38, 9) +
+      'C' + P(37, 30) + ' ' + P(21, 39) + ' ' + P(0, 39) + 'C' + P(-21, 39) + ' ' + P(-37, 30) + ' ' + P(-38, 9) + 'C' + P(-39, -10) + ' ' + P(-21, -34) + ' ' + P(-6, -46) + 'Z';
+  }
+
+  // A ring on still water, seen from a cat's height: a flat oval.
+  function ring(x, y, rx, ry) {
+    return 'M' + N(x - rx) + ' ' + N(y) + 'a' + N(rx) + ' ' + N(ry) + ' 0 1 0 ' + N(2 * rx) + ' 0a' + N(rx) + ' ' + N(ry) + ' 0 1 0 ' + N(-2 * rx) + ' 0Z';
+  }
+
+  // ------------------------------------------------------------------ chapter 5: the pictures
+
+  // Tiny prints in the dug earth behind the pile. (eye, noticing only) The heap of her dug-earth
+  // card, close (its very outline, half as big again), and three tiny prints going up it.
+  PICS['prints-pile'] = { label: 'a small crumbly heap of earth with three tiny prints in it', draw: function (c) {
+    c.line('M26.5 176C47.5 173 58 146 73 126.5C82 114.5 94 117.5 101.5 108.5C113.5 101 127 111.5 133 126.5C145 149 154 173 173.5 176');
+    prints(c, [[69, 160, 70], [95, 151, 70], [121, 144, 70]], PRINT);
+    [[38, 154], [52, 128], [163, 151], [150, 121], [68, 106], [137, 99]].forEach(function (p) { c.dot(p[0], p[1], { w: 1.25 }); });
+    c.line('M36 185h13M150 185h14M91 185h17', { w: 0.8 });
+    c.fine('M24 150h.1M176 138h.1M102 92h.1', { w: 1.1 });
+  } };
+
+  // Puddle says clever little paws picked up mice on the storm night. (ear) One flash from the air:
+  // a heap of mice, and two little paws lifting the top one off it. Paws, and nothing of whose.
+  PICS['puddle-paws'] = { label: 'two little paws lifting a mouse off a heap of mice, under a zigzag of lightning', draw: function (c) {
+    var x = 86, y = 195, up = 125;
+    [x - 24, x, x + 24].forEach(function (mx) { mouse(c, mx, y, 2); });                  // a heap: three,
+    [x - 12, x + 12].forEach(function (mx) { mouse(c, mx, y - 22, 2); });                // two on them,
+    c.line('M' + N(x - 46) + ' ' + N(y + 5) + 'H' + N(x + 48), { w: 0.8 });
+    mouse(c, x, up, 2.4);                                                                // and the top one, going up
+    // a paw: a round end (two toe lines, large) and a wrist that comes from nowhere
+    [[x - 25.9, up - 10.8, 112], [x + 27.3, up - 10.8, -112]].forEach(function (p) {
+      var P = at(p[0], p[1], 1.6, p[2]);
+      c.line('M' + P(-4.6, 12) + 'L' + P(-4.6, 3) + 'C' + P(-6.8, -1) + ' ' + P(-5.6, -8) + ' ' + P(0, -8) + 'C' + P(5.6, -8) + ' ' + P(6.8, -1) + ' ' + P(4.6, 3) + 'L' + P(4.6, 12), { w: 0.85 });
+      c.fine('M' + P(-1.9, -7.6) + 'L' + P(-1.9, -3.2) + 'M' + P(1.9, -7.6) + 'L' + P(1.9, -3.2), { w: 0.6 });
+    });
+    c.line('M172 62L150 96H170L144 134');                                                // FLASH!
+    c.fine('M' + N(x - 7) + ' ' + N(up - 32) + 'v-7M' + N(x) + ' ' + N(up - 34) + 'v-8M' + N(x + 7) + ' ' + N(up - 32) + 'v-7', { w: 0.7 });   // up it goes
+  } };
+
+  // The old otter says the fox told him the dragon story. (ear) The fox's head, his nose at the old
+  // otter's ear (a small round one, and it does not hear well).
+  PICS['otter-fox'] = { label: 'a fox’s head beside an otter’s ear', draw: function (c) {
+    var t = 'translate(104 102)';
+    fox(c, 6, 88, 1);
+    // the old otter, looking the other way: a low flat head on a neck as thick as it is
+    c.line('M2 86C0 72 2 60 8 50C10 38 22 28 36 27C48 26 60 30 66 38C70 43 70 50 65 54C60 58 54 59 48 58C46.4 66 47 76 48 86', { t: t });
+    c.line('M9 51C1 48 -3 37 4 32C11 28 19 33 18 41', { t: t });                         // his ear
+    c.dot(50, 37, { t: t, w: 1.3 });
+    c.dot(66.4, 45, { t: t, w: 1.9 });
+    c.line('M60 51Q68 49 72 53M59 54Q67 57 71 65M57 57Q62 63 63 73', { t: t, w: 0.75 });  // his long whiskers
+    c.fine('M7 45C3 41 4 35 9 34', { t: t, w: 0.75 });
+    c.fine('M65 51C61 55 55 56 51 54', { t: t, w: 0.75 });
+    c.fine('M91 130Q95 137.6 91 145M96 126Q102 137.6 96 149', { w: 0.75 });              // told
+  } };
+
+  // Thin brown fur at the Crossing. (eye) The raft's vine, a twist in it, and a tuft caught there.
+  PICS.fur = { label: 'a tuft of fur caught on a twist of vine', draw: function (c) {
+    c.line('M24 104C50 94 76 94 96 102C110 108 112 124 101 126C90 127 89 112 102 105C124 95 152 99 176 90');
+    c.line('M56 97C52 86 57 77 67 74C69 84 65 93 56 97ZM142 99C147 109 156 113 166 111C163 102 153 97 142 99Z', { w: 0.8 });
+    c.line('M97 121C90 136 84 152 85 168M99 123C95 142 91 162 95 180M100 124C100 146 101 168 108 188M101 124C105 146 110 166 122 184' +
+      'M102 123C109 142 118 158 132 172M103 122C113 138 124 150 139 158M104 120C114 130 126 138 140 142', { w: 0.65 });
+    c.fine('M98 122C92 140 87 158 89 174M100 124C97 146 96 168 101 186M101 124C103 148 106 170 115 188M102 123C107 144 114 164 127 180M103 122C111 140 121 154 136 166', { w: 0.5 });
+    c.fine('M57 96Q62 86 66 76M144 100Q154 104 164 110', { w: 0.6 });
+  } };
+
+  // Patience says there was NO moon on the storm night. (ear) Her head under a dark sky: clouds
+  // where the fox's card has its moon, and nothing coming down from them (his moon came out "when
+  // the rain stopped", so a line of rain here would let both be true).
+  PICS['heron-no-moon'] = { label: 'a heron’s head under a dark sky: clouds, and no moon', draw: function (c) {
+    c.line(cloud(104, 104, 68) + cloud(30, 116, 56));
+    c.line('M76 68H176M72 78H100M28 86H92M98 112H176M112 121H176', { w: 0.8 });   // dark: no moon anywhere in it
+    heron(c, 30, 122);
+  } };
+
+  // Patience says two small shapes crossed her mud, carrying something. (ear) Her head, and under
+  // it two small low shapes, each with something at its front end. Shapes and nothing more, as
+  // Squall's two are: no ears, no tails, no feet.
+  PICS['heron-shapes'] = { label: 'a heron’s head, and under it two small low shapes, each with something in its mouth', draw: function (c) {
+    heron(c, 52, 60);
+    c.line(slink(0, 0, 50, 6.2), { t: 'translate(150 150) rotate(90)' });
+    c.line(slink(0, 0, 50, 6.2), { t: 'translate(108 180) rotate(90)' });
+    [[158, 150], [116, 180]].forEach(function (p) {
+      var P = at(p[0], p[1], 1, 0);
+      c.line('M' + P(-5, 0) + 'C' + P(-5, -5.6) + ' ' + P(4.6, -6.4) + ' ' + P(6, -0.4) + 'C' + P(6.6, 5.4) + ' ' + P(-4.4, 6.2) + ' ' + P(-5, 0) + 'Z', { w: 0.85 });
+    });
+    c.line('M94 164H170M50 194H128', { w: 0.8 });                                        // her mud
+  } };
+
+  // Tiny prints in the marsh mud. Much smaller than a cat's. (eye) A line of them across the mud,
+  // and her own forepaw held over one from the raft: a paw, never a print of hers in that mud.
+  PICS['prints-marsh'] = { label: 'a line of tiny prints, and her own paw held over one, twice its size', draw: function (c) {
+    prints(c, [[34, 96, 90], [67, 88, 90], [100, 96, 90], [133, 88, 90], [166, 96, 90]], PRINT);
+    c.line('M83 204C84 188 83 172 81.5 160C78 151 77.6 139 81 132C81 122 90 119 91.5 128C91.5 116 100 114 100 125C100 114 108.5 116 108.5 128C110 119 119 122 119 132C122.4 139 122 151 118.5 160C117 172 116 188 117 204');
+    c.line('M91.5 128V138M100 125V137M108.5 128V138', { w: 0.8 });
+    c.fine('M85 186l5 -4M115 186l-5 -4M86 196l5 -4M114 196l-5 -4', { w: 0.6 });
+  } };
+
+  // The tiny prints run toward the train tracks. (eye, climbing only) From the top of Riffle's pole:
+  // Squall's track, and a line of tiny prints running off to it where his card has the two shapes.
+  PICS['prints-tracks'] = { label: 'a line of tiny prints running off to the two lines of a track', draw: function (c) {
+    var T = spot(TRACK.at[0], TRACK.at[1], 1, TRACK.at[2]), list = [], i;
+    c.line(TRACK.rails, { t: TRACK.t });
+    c.line(TRACK.ties, { t: TRACK.t, w: 0.75 });
+    // six of them, left and right, straight at the nearer rail (in the track's own frame the rails
+    // lie level and the prints come up from below); from up here they are smaller still
+    for (i = 0; i < 6; i++) list.push(T(i % 2 ? 4.5 : -4.5, 25 + i * 17).concat(TRACK.at[2]));
+    prints(c, list, 0.9);
+  } };
+
+  // Wisp drew a fox dropping something glittering in the reeds. (ear) Her drawing, copied: the fox,
+  // a small thing with shine lines falling from his shut mouth, and a ring of ripples.
+  PICS['wisp-fox'] = { label: 'a fox’s head, a small shining thing falling from its mouth, and a ring of ripples', draw: function (c) {
+    fox(c, 46, 64, 1);
+    c.line(shard(129, 152, 0.3, 14));
+    c.line('M146 138L155 131M149 151L160 150M111 144L101 139M109 157L99 160', { w: 0.85 });
+    c.line(ring(128, 190, 40, 9.5), { w: 0.85 });
+    c.line(ring(128, 190, 19, 4.4), { w: 0.85 });
+    c.fine('M124 124V132M133 122V131', { w: 0.7 });                                       // falling
   } };
 
   // ------------------------------------------------------------------ public

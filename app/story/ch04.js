@@ -1870,11 +1870,15 @@
         { when: { ch4CaughtFly: true }, text: '{They} caught one hole in the fox’s story: Reynard said the dragon flew, and Sprinkle can’t fly.' },
 
         // the roof, for a cat who found him: two sentences, or (for a cat who also caught the fox's
-        // "flew", whose page would otherwise run to eleven) the same two as one
-        { when: { foundSquall: true, not: { ch4CaughtFly: true } }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who roars at airplanes and hiccups.' },
-        { when: { foundSquall: true, not: { ch4CaughtFly: true } }, text: 'Squall told {them} about two skinny shapes that go to the tracks every night. A thing to check.' },
-        { when: { foundSquall: true, ch4CaughtFly: true }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who told {them} about two skinny shapes that go to the tracks every night.' },
+        // "flew", whose page would otherwise run to eleven) the same two as one. A page says "found"
+        // only for a dragonet found in its own chapter: a cat who said "Not today" here and went up
+        // in chapter 5 (`ch5Roof`, set with `foundSquall` by chapter 5's roof) reads on this page
+        // that he was still roaring, and on chapter 5's that she found him
+        { when: { foundSquall: true, ch5Roof: false, not: { ch4CaughtFly: true } }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who roars at airplanes and hiccups.' },
+        { when: { foundSquall: true, ch5Roof: false, not: { ch4CaughtFly: true } }, text: 'Squall told {them} about two skinny shapes that go to the tracks every night. A thing to check.' },
+        { when: { foundSquall: true, ch5Roof: false, ch4CaughtFly: true }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who told {them} about two skinny shapes that go to the tracks every night.' },
         { when: { foundSquall: false }, text: 'On the roof of {their} old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.' },
+        { when: { ch5Roof: true }, text: 'On the roof of {their} old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.' },
 
         { text: 'Under the Old Bridge, Sprinkle looked herself over and said the scale wasn’t hers, and three friends made a thirty-claw promise.' },
         { text: 'That night there were forty in the rows, a moon as thin as a curl of bark, and a grey tom who fell asleep by fifty.' }

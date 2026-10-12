@@ -1536,7 +1536,7 @@ test('vocab, chapter 4: the tower\'s light, roar and ding with the corner and fo
   assert.ok(v.hollow.opts.marks.includes(4), 'marks: 4');
   // chapter 2's and 3's options are all still there, with the values they had
   assert.deepEqual(v.tower.opts.chime, [true, false]);
-  assert.deepEqual(v.den.opts.moon, [false, true]);
+  assert.deepEqual(v.den.opts.moon.slice(0, 2), [false, true]);   // (chapter 5 adds the moon's age: tested with chapter 5's vocabulary)
   assert.deepEqual(v.den.opts.stone, [false, true, 'nose', 'chin', 'auto']);
   assert.deepEqual(v.hollow.opts.glow, [true, false, 'auto']);
   // no option is on unless a frame asks: chapters 1-3 never did
@@ -1684,7 +1684,8 @@ test('tower corner: a climber on a balcony halfway up the tower\'s edge, behind 
 test('den bark: her pieces of bark stand in a row along her nest\'s front edge, as many as asked for, overlapping like roof tiles, the newest in front at the middle; in the panel in every inside camera; never seen from outside; none unless asked', { skip: !art.character && 'no cats.js' }, () => {
   for (const cam of ['nest', 'inside', 'doorway']) {
     assert.equal(pieces(art.render(nestScene({}, {}, cam), { look: LOOK }).svg).length, 0, cam + ': no bark before the Case File');
-    for (const n of [0, 1, 2, 5, 7, 9, 12]) {
+    // (one row holds nine, chapter 4's fullest; from the tenth the bark stands two deep: chapter 5's test, below)
+    for (const n of [0, 1, 2, 5, 7, 9]) {
       const scene = nestScene({ bark: n, stone: 'nose' }, {}, cam), r = art.render(scene, { look: LOOK });
       checkRender(r, scene, 'den/' + cam + ' bark ' + n);
       const P = pieces(r.svg), vb = viewBox(r.svg);
@@ -2195,6 +2196,8 @@ test('every frame of chapter 4 renders with the art vocabulary (once it is writt
   }
 });
 
+// chapter 5's three new characters, and its two new sets (their files are stubs until they are drawn)
+const NEW5 = ['patience', 'puddle', 'wisp'], NEW_SETS5 = ['openriver', 'marsh'];
 test('the gallery (dev/gallery.html) loads every art script and chapter the game does, in the game\'s order; every sample on it names a set, a camera, anchors and options the art has, and renders', () => {
   const game = (fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').match(/<script\s+src="(app\/(?:art|story)\/[^"]+\.js)"/g) || []).map((m) => m.match(/app\/[^"]+/)[0]);
   const page = fs.readFileSync(path.join(ROOT, 'dev/gallery.html'), 'utf8');
@@ -2210,19 +2213,24 @@ test('the gallery (dev/gallery.html) loads every art script and chapter the game
   const v = art.vocab, scenes = [];
   for (const [set, cams] of Object.entries(SAMPLES)) for (const [cam, smp] of Object.entries(cams)) scenes.push([set + ' / ' + cam, { set, cam, opts: smp.opts || {}, cast: smp.cast || [], fx: smp.fx || [] }]);
   for (const e of EXTRA) scenes.push([e[0] + ' / ' + e[1] + ' (' + e[3] + ')', { set: e[0], cam: e[1], opts: e[2].opts || {}, cast: e[2].cast || [], fx: e[2].fx || [] }]);
-  assert.ok(scenes.length >= 95, 'samples: ' + scenes.length);
-  const sets = new Set();
+  assert.ok(scenes.length >= 130, 'samples: ' + scenes.length);
+  const sets = new Set(), waiting = new Set();
   for (const [label, scene] of scenes) {
     const set = v.sets[scene.set];
     // (a set file that has not landed yet: its samples wait for it)
     if (!set && !CH1_SETS.includes(scene.set)) continue;
     assert.ok(set, label + ': set');
+    // (chapter 5's two sets while their files are still the stubs, one camera and no options: the same)
+    if (NEW_SETS5.includes(scene.set) && set.cams.length === 1 && !Object.keys(set.opts).length) { waiting.add(scene.set); continue; }
     if (!set.cams.includes(scene.cam) && !CH1_SETS.includes(scene.set)) continue;
     assert.ok(set.cams.includes(scene.cam), label + ': camera');
+    // (and a sample with one of chapter 5's three in it, until cats.js draws them)
+    const late = scene.cast.filter((m) => NEW5.includes(m.who) && v.cast && !v.cast.includes(m.who)).map((m) => m.who);
+    if (late.length) { late.forEach((w) => waiting.add(w)); continue; }
     sets.add(scene.set);
     for (const k of Object.keys(scene.opts)) assert.ok(Object.prototype.hasOwnProperty.call(set.opts, k), label + ': option ' + k);
     for (const m of scene.cast) {
-      if (typeof m.at === 'string' && CH1_SETS.includes(scene.set)) assert.ok(set.anchors.includes(m.at), label + ': anchor ' + m.at);
+      if (typeof m.at === 'string' && (CH1_SETS.includes(scene.set) || NEW_SETS5.includes(scene.set))) assert.ok(set.anchors.includes(m.at), label + ': anchor ' + m.at);
       assert.ok(!v.cast || v.cast.includes(m.who), label + ': cast ' + m.who);
       if (CAT_LIKE.has(m.who) && v.poses) assert.ok(v.poses.includes(m.pose), label + ': pose ' + m.pose);
       else if (v.otherPoses && v.otherPoses[m.who]) assert.ok(v.otherPoses[m.who].includes(m.pose), label + ': ' + m.who + ' pose ' + m.pose);
@@ -2236,6 +2244,17 @@ test('the gallery (dev/gallery.html) loads every art script and chapter the game
   const extras = EXTRA.map((e) => JSON.stringify(e[2].opts || {}) + JSON.stringify(e[2].cast || []));
   for (const k of ['"light":true', '"roar":true', '"ding":true', '"at":"corner"', '"at":"foot"', '"bark":"auto"', '"hidden":true', '"moon":true', '"bark":"falling"', '"bark":"sand"', '"bark":"row"', '"heap":true', '"marks":4',
     '"wink":true', '"holds":"bark"', '"who":"reynard"', '"who":"squall"', '"pose":"situp"']) assert.ok(extras.some((x) => x.includes(k)), 'the gallery shows ' + k);
+  // and every chapter 5 change: five marks, the rim's tucked claws, the fatter moon, a file two deep, the old tom asleep
+  // with his snail, Riffle's pole, Murmurchime on the rim, and the three new characters at a cat's anchor
+  for (const k of ['"marks":5', '"tuck":true', '"moon":5', '"asleep":true', '"snail":true', '"snail":"in"', '"holds":"pole"', '"who":"murmurchime"', '"who":"patience"', '"who":"puddle"', '"who":"wisp"'])
+    assert.ok(extras.some((x) => x.includes(k)), 'the gallery shows ' + k);
+  assert.ok(EXTRA.some((e) => e[0] === 'den' && Array.isArray((e[2].opts || {}).bark) && e[2].opts.bark.length >= 12 && e[2].opts.hidden), 'the gallery shows a chapter 5 file, two deep, two hidden');
+  assert.ok(EXTRA.some((e) => e[0] === 'tower' && (e[2].opts || {}).roar && (e[2].cast || []).length === 1 && e[2].cast[0].who === 'player' && e[2].cast[0].at === 'foot'), 'the gallery shows the offer: the roar, our cat at the foot, nobody at the railing');
+  // a sample for every camera of the two new sets, by the names the text gives them
+  assert.deepEqual(Object.keys(SAMPLES.openriver), ['wide', 'raft', 'light', 'log', 'sky', 'rocks', 'edge', 'beside', 'under']);
+  assert.deepEqual(Object.keys(SAMPLES.marsh), ['wide', 'far', 'heron', 'mud', 'pole', 'reeds', 'wisp', 'draw']);
+  for (const id of NEW_SETS5) if (v.sets[id] && !waiting.has(id)) for (const cam of v.sets[id].cams) assert.ok(SAMPLES[id][cam], 'the gallery samples ' + id + ' / ' + cam);
+  // (what still waits for another file to land is not a failure here; it is named in the suite's own tests)
 });
 
 test('art.kit, chapter 4: the red light, the young moon and the bark are there for the sets in their own files', () => {
@@ -2245,4 +2264,809 @@ test('art.kit, chapter 4: the red light, the young moon and the bark are there f
   assert.ok(/^<g transform="translate\(500 600\) rotate\(0\) scale\(0\.2\) translate\(-100 -240\)" data-bark="card">/.test(piece), piece.slice(0, 120));
   assert.ok(/^<g transform="translate\(500 600\) rotate\(5\) matrix\(0\.2 0 -0\.028 0\.1 0 0\) translate\(-100 -240\)" data-bark="blank">/.test(flat), flat.slice(0, 140));
   checkXml('<svg>' + piece + flat + '</svg>');
+});
+
+// ================================================================ chapter 5 (build.md, "Chapter 5 (v0.4)")
+// What Riffle's River asks of chapter 1's sets (docs/chapters/05-riffles-river.md: "Art needs", "Places
+// from before", and the Build notes' "Sets and options"): the Training Hollow with five marks, the den
+// at dusk under a crescent a little fatter than chapter 4's and at night with more bark along her
+// nest's edge, the tower for the offer and for "Not today", every new cast extra handed on to the
+// painters, and the three new characters sized and lettered. Chapters 1 to 4 look exactly as they did.
+
+// <ch4-fingerprint>
+// Chapter 4's own pictures of chapter 1's sets, before chapter 5: the tower's light, roar and DING with
+// the corner and foot anchors, the den's bark (to nine pieces, chapter 4's fullest row), its hidden
+// two and its young moon, the hollow's fourth mark, its curl of bark, its row and its heap; each with
+// a cast, in chapter 4's lights, drawn with placeholder cats and the scenes' own plain bark (no cats.js,
+// no cards.js: the fingerprint is the sets' alone). Recorded with scenes.js as chapter 4 shipped it (7ae12db).
+const CH4 = {
+  tower: {
+    cams: ['up'], fx: [['day'], ['dusk'], ['sunset']],
+    opts: [{ chime: true, light: true }, { chime: true, light: true, roar: true }, { chime: true, ding: true }, { roar: true, light: false }, { chime: true }],
+    casts: [
+      [{ who: 'waffles', at: 'railing', pose: 'peer', mood: 'scared', facing: 'left' }, { who: 'player', at: 'foot', pose: 'lookup', mood: 'wonder', facing: 'right' }],
+      [{ who: 'player', at: 'corner', pose: 'walk', mood: 'happy', facing: 'left' }, { who: 'waffles', at: 'railing', pose: 'peer', mood: 'shout', facing: 'left' }],
+      [{ who: 'waffles', at: 'railing', pose: 'peer', mood: 'sad', facing: 'left' }, { who: 'player', at: 'foot', pose: 'walk', mood: 'kind', facing: 'left' }], []
+    ]
+  },
+  den: {
+    cams: ['outside', 'inside', 'nest', 'doorway'], fx: [['dusk'], ['night'], ['morning'], ['sunset']],
+    opts: [{ weather: 'clear', moon: true, stone: 'nose' }, { weather: 'clear', moon: false, stone: 'chin', bark: 'auto' }, { stone: true, bark: 9, hidden: true }, { bark: 7, hidden: true, stone: 'nose' },
+      { bark: ['four-a-night', 'tidy', { picture: 'dug-earth', mark: 'eye' }, 'scale', { picture: 'fox-flew', mark: 'ear' }, 'sprinkle-scales', null, 'cant-fly'], hidden: true }, { bark: 3 }, { hidden: true }, { bark: 1, moon: true, weather: 'cloudy' }],
+    casts: [
+      [{ who: 'tallyheart', at: 'entrance-right', pose: 'sit', mood: 'kind', facing: 'left' }, { who: 'player', at: 'entrance-left', pose: 'sit', mood: 'wonder', facing: 'right' }],
+      [{ who: 'snorer', at: 'sleeper-1', pose: 'curl', mood: 'sleepy' }, { who: 'player', at: 'nest', pose: 'lie', mood: 'sleepy', facing: 'right' }],
+      [{ who: 'player', at: 'nest', pose: 'sit', mood: 'wonder', facing: 'left' }, { who: 'tallyheart', at: 'doorway', pose: 'peer', mood: 'happy', facing: 'left' }], []
+    ]
+  },
+  hollow: {
+    cams: ['wide', 'lesson', 'sand', 'tree'], fx: [['morning'], ['day'], ['sunset']],
+    opts: [{ marks: 3, glow: [true, false, false] }, { marks: 4, glow: [true, false, false, false], bark: 'falling' }, { marks: 4, bark: 'sand' }, { marks: 4, bark: 'row' },
+      { marks: 4, bark: 'row', cards: ['four-a-night', 'tidy', { id: 'dug-earth' }, 'scale', 'fox-flew'], blank: 1 }, { marks: 3, heap: true }, { marks: 4, depth: [2, 1, 1, 0], glow: true }],
+    casts: [
+      [1, 2, 3, 5].map((v, i) => ({ who: 'clancat', variant: v, at: 'rim-' + (i + 1), pose: ['sit', 'fall', 'lie', 'flat'][i], mood: 'proud', facing: i < 2 ? 'right' : 'left' })).concat([{ who: 'grizzled', at: 'rim-5', pose: 'sit', mood: 'stern', facing: 'left' },
+        { who: 'tallyheart', at: 'tree-far', pose: 'sit', mood: 'kind', facing: 'left', size: 1.2 }, { who: 'player', at: 'sunpatch-2', pose: 'sit', mood: 'wonder', facing: 'right' }]),
+      [{ who: 'tallyheart', at: 'sand-left', pose: 'sit', mood: 'kind', facing: 'right' }, { who: 'player', at: 'sand-right', pose: 'crouch', mood: 'wonder', facing: 'left' }],
+      [{ who: 'tallyheart', at: 'tree', pose: 'stretch', mood: 'proud', facing: 'right' }, { who: 'player', at: 'sand-left', pose: 'sit', mood: 'wonder', facing: 'right' }], []
+    ]
+  }
+};
+function ch4Fingerprint(art, crypto) {
+  const fake = function () { throw new Error('placeholder'); };
+  fake.placeholder = true;
+  const real = art.character, out = {}, hadCards = Object.prototype.hasOwnProperty.call(art, 'cardGroup'), cards = art.cardGroup;
+  art.character = fake;
+  delete art.cardGroup;
+  try {
+    for (const [set, d] of Object.entries(CH4)) for (const cam of d.cams) {
+      const h = crypto.createHash('sha1');
+      d.opts.forEach((opts, i) => d.fx.forEach((fx, f) => {
+        for (const cast of [d.casts[(i + f) % d.casts.length], d.casts[(i + f + 1) % d.casts.length]]) {
+          const r = art.render({ set, cam, opts, cast, fx }, { look: { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' } });
+          h.update(r.svg.replace(/pcs[0-9a-z]+-/g, '') + JSON.stringify(r.heads) + JSON.stringify(r.keep));
+        }
+      }));
+      out[set + '/' + cam] = h.digest('hex').slice(0, 16);
+    }
+  } finally { art.character = real; if (hadCards) art.cardGroup = cards; }
+  return out;
+}
+// </ch4-fingerprint>
+const CH4_FINGERPRINT = {
+  'tower/up': '96e3fc68e5a3954b', 'den/outside': 'd3b5f11fb127c97e', 'den/inside': '7b6e69ca2cae777b', 'den/nest': '54e406d4e5f25e9f', 'den/doorway': 'd1ae0ec50b624388', 'hollow/wide': 'e237a2033454bf0e', 'hollow/lesson': 'a9d6aa44bfed5c75', 'hollow/sand': '2a8aab8c5a2ee593', 'hollow/tree': '87a6cf49207f28a6'
+};
+
+test('chapter 4 looks exactly as it did: its own pictures of the tower, the den and the hollow (every option it added, with a cast, in its lights) match their fingerprint from before chapter 5', () => {
+  const now = ch4Fingerprint(art, require('crypto'));
+  assert.deepEqual(Object.keys(now), Object.keys(CH4_FINGERPRINT), 'the same sets and cameras, in the same order');
+  for (const k of Object.keys(CH4_FINGERPRINT)) assert.equal(now[k], CH4_FINGERPRINT[k], k + ' draws something else than it did for chapter 4');
+  assert.ok(!art.character || !art.character.placeholder, 'the real cats are back');
+});
+
+const CH1_CAMS = { room: ['wide', 'cushion', 'glass', 'outside'], tower: ['up', 'balcony', 'balcony-close'], garden: ['wide', 'paws', 'step', 'fence', 'lamp', 'meet', 'hedge', 'hedge-close'],
+  camp: ['reveal', 'crowd', 'fountain', 'entrance', 'fountain-close', 'ferns', 'purr'], hollow: ['wide', 'lesson', 'sand', 'tree'], den: ['outside', 'inside', 'nest', 'doorway'],
+  sky: ['up', 'cats'], river: ['crash'], title: ['wide'] };
+const CH1_ANCHORS = { room: ['cushion', 'floor', 'glass', 'doorway'], tower: ['window', 'railing', 'corner', 'foot'], garden: ['step', 'lawn', 'fence-foot', 'lamp-top', 'hedge-gap', 'doorway', 'hedge-side'],
+  camp: ['entrance', 'fountain-top', 'fountain-foot', 'crowd-left', 'crowd-right', 'ferns', 'center'],
+  hollow: ['sand-left', 'sand-right', 'sunpatch', 'tree', 'sunpatch-2', 'sunpatch-3', 'tree-far', 'rim-1', 'rim-2', 'rim-3', 'rim-4', 'rim-5'],
+  den: ['entrance-left', 'entrance-right', 'doorway', 'nest', 'sleeper-1', 'sleeper-2'], sky: ['ground-left', 'ground-right'], river: ['bank'], title: ['wall', 'wall-2'] };
+
+test('vocab, chapter 5: the den\'s moon takes its age in evenings (5: a little fatter than chapter 4\'s); five marks; nothing else is new on chapter 1\'s sets: the same cameras, anchors and option names, and no option on unless a frame asks', () => {
+  const v = art.vocab.sets;
+  assert.deepEqual(v.den.opts.moon, [false, true, 5], 'no moon, chapter 4\'s sliver, the fifth evening\'s crescent');
+  assert.ok(v.hollow.opts.marks.includes(5), 'marks: 5');
+  assert.deepEqual(v.den.opts.bark, [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 'bark: a number, or auto (her own cards, however many)');
+  assert.deepEqual(v.den.opts.hidden, [false, true], 'no change to hidden');
+  // chapter 5 needs no new place to stand and no new camera in chapter 1's sets (the storyboard has words for all of these)
+  for (const set of CH1_SETS) {
+    assert.deepEqual(v[set].cams, CH1_CAMS[set], set + ': cameras');
+    assert.deepEqual(v[set].anchors, CH1_ANCHORS[set], set + ': anchors');
+  }
+  assert.deepEqual(Object.keys(v.tower.opts), ['chime', 'light', 'roar', 'ding'], 'the tower as chapter 4 left it');
+  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden']);
+  assert.deepEqual(Object.keys(v.hollow.opts), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap']);
+  assert.equal(art.sceneInfo('den').defaults.moon, undefined, 'no moon unless a frame asks');
+  assert.equal(typeof art.kit.waxingMoon, 'function', 'kit.waxingMoon, for the sets in their own files');
+  // the three newcomers' sizes, published for the sets that lay props round them: the numbers a set may have copied
+  assert.deepEqual(art.sizeBands, { patience: { ref: 'tallyheart', pose: 'stand', by: 'tall', min: 1.4, max: 2.6 }, puddle: { ref: 'sprinkle', pose: 'head', by: 'head', min: 0.88, max: 1.12 }, wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 } });
+  const md = fs.readFileSync(path.join(ROOT, 'docs/build.md'), 'utf8');
+  assert.ok(md.indexOf('## Chapter 5') > 0, 'build.md has a chapter 5 section');
+});
+
+// ---------------------------------------------------------------- the cast: extras for the painters
+
+test('chapter 5 cast extras reach the drawing: tuck, asleep, snail (true and \'in\') and holds: \'pole\'; so does any other key a painter learns later; who, at, size, facing, purr and lift stay the scene\'s, and a cast member cannot bring her own look', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, calls = [];
+  const spy = function (who, opts) { calls.push({ who, opts: Object.assign({}, opts) }); return real(who, opts); };
+  const cast = [
+    { who: 'tallyheart', pose: 'situp', mood: 'kind', at: 'tree-far', facing: 'left', size: 1.2, tuck: true },
+    { who: 'clancat', variant: 1, pose: 'situp', mood: 'proud', at: 'rim-1', facing: 'right', tuck: true },
+    { who: 'murmurchime', pose: 'situp', mood: 'happy', at: 'rim-2', facing: 'right', tuck: true },
+    { who: 'grizzled', pose: 'sit', mood: 'sleepy', at: 'rim-5', facing: 'left', asleep: true, snail: true, purr: true },
+    { who: 'grizzled', pose: 'sit', mood: 'scared', at: 'rim-4', facing: 'left', snail: 'in' },
+    { who: 'riffle', pose: 'hug', mood: 'happy', at: 'sand-left', facing: 'right', holds: 'pole', lift: true },
+    { who: 'player', pose: 'sit', mood: 'wonder', at: 'sunpatch-2', facing: 'right', buzz: true, somethingNew: 'x', look: { fur: 'ginger' }, sex: 'she' }
+  ];
+  const scene = { set: 'hollow', cam: 'wide', opts: { marks: 5 }, cast, fx: ['morning'] };
+  const r = withCharacter(spy, () => art.render(scene, { look: LOOK }));
+  checkRender(r, scene, 'chapter 5 extras');
+  cast.forEach((m, i) => {
+    const call = calls.find((c) => c.who === m.who && c.opts.pose === m.pose && c.opts.mood === m.mood && c.opts.facing);
+    assert.ok(call, m.who + ' is drawn');
+    for (const k of ['tuck', 'asleep', 'snail', 'holds', 'buzz', 'somethingNew']) assert.equal(call.opts[k], m[k], i + ' ' + m.who + ': ' + k);
+    for (const k of ['size', 'at', 'purr', 'lift', 'who']) assert.equal(call.opts[k], undefined, i + ' ' + m.who + ': ' + k + ' stays the scene\'s');
+    assert.equal(call.opts.facing, m.facing, i + ': facing is handed over as the scene placed her');
+  });
+  // our cat's look is the page's (ctx.look), never a cast member's own; nobody else gets one
+  const me = calls.find((c) => c.who === 'player' && c.opts.facing);
+  assert.deepEqual(me.opts.look, LOOK);
+  assert.equal(me.opts.sex, LOOK.sex);
+  assert.equal(calls.find((c) => c.who === 'riffle' && c.opts.facing).opts.look, undefined);
+  // an extra that is null or undefined is not an extra
+  const quiet = [];
+  withCharacter(function (who, opts) { quiet.push(Object.assign({}, opts)); return real(who, opts); }, () => art.render({ set: 'hollow', cam: 'wide', cast: [{ who: 'tallyheart', pose: 'situp', mood: 'kind', at: 'tree-far', tuck: null, snail: undefined }] }, { look: LOOK }));
+  for (const o of quiet) assert.ok(!('tuck' in o) && !('snail' in o), 'nothing handed on: ' + JSON.stringify(o));
+});
+
+test('chapters 1 to 4 hand the painter exactly the options they did: for every cast member of every frame, pose, mood, variant, the twelve extras they knew (in their order), our cat\'s look and a Clan cat\'s, and nothing else', { skip: (!art.character || !has('app/story/ch04.js')) && 'no cats.js or stories' }, () => {
+  const OLD = ['flatEars', 'holds', 'holdAt', 'tear', 'mist', 'claws', 'puffed', 'squeeze', 'moss', 'pebbles', 'wink', 'flick'];
+  const KNOWN = new Set(['pose', 'mood', 'variant', 'look', 'sex', 'taken', 'facing'].concat(OLD));
+  const real = art.character;
+  let members = 0;
+  for (const id of ['ch01', 'ch02', 'ch03', 'ch04']) {
+    if (!has('app/story/' + id + '.js')) continue;
+    require(path.join(ROOT, 'app/story/' + id + '.js'));
+    for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+      if (!f.scene || !Array.isArray(f.scene.cast)) continue;
+      const calls = [];
+      const r = withCharacter(function (who, opts) { calls.push([who, JSON.stringify(Object.assign({}, opts, { facing: undefined }))]); return real(who, opts); }, () => art.render(f.scene, { look: LOOK }));
+      const clan = f.scene.cast.filter((c) => c && c.who === 'clancat').map((c) => c.variant);
+      f.scene.cast.forEach((m, i) => {
+        if (!r.heads[i] && typeof m.at === 'string' && !art.vocab.sets[f.scene.set].anchors.includes(m.at)) return;
+        const who = m.who || 'clancat', o = { pose: m.pose || (who === 'sparrow' ? 'perch' : who === 'moth' ? 'fly' : who === 'tallone' ? 'stand' : 'sit'), mood: m.mood || 'neutral' };
+        if (m.variant != null) o.variant = m.variant;
+        OLD.forEach((k) => { if (m[k] != null) o[k] = m[k]; });
+        if (who === 'player') { o.look = LOOK; o.sex = LOOK.sex; }
+        if (who === 'clancat') { o.look = LOOK; o.taken = clan; }
+        const want = JSON.stringify(o);
+        const mine = calls.filter((c) => c[0] === who);
+        if (!mine.length) return;   // out of this camera's sight: never drawn
+        assert.ok(mine.some((c) => c[1] === want), id + ' ' + fid + ' cast ' + i + ' (' + who + '): the painter is handed ' + want + ', got ' + mine.map((c) => c[1]).slice(0, 3).join(' | '));
+        members++;
+      });
+      for (const c of calls) for (const k of Object.keys(JSON.parse(c[1]))) assert.ok(KNOWN.has(k), id + ' ' + fid + ': a key the painter never had from chapters 1 to 4: ' + k);
+    }
+  }
+  assert.ok(members > 800, 'cast members checked: ' + members);
+  // the order, on a cast member who carries everything at once (none in chapters 1 to 4 does): the twelve first,
+  // as they always came, then chapter 5's three, then whatever else, as written; the scene's own never
+  const all = { zeta: 1, snail: 'in', flick: true, wink: true, pebbles: 4, moss: true, squeeze: true, puffed: true, claws: true, mist: true, tear: true, holdAt: 'paws', holds: 'stone', flatEars: true, asleep: true, tuck: true, alpha: 2,
+    size: 0.9, purr: true, lift: true, at: 'sand-left', facing: 'left', mood: 'kind', pose: 'sit', who: 'tallyheart' };
+  const got = [];
+  withCharacter(function (who, opts) { got.push(Object.keys(opts)); return real(who, opts); }, () => art.render({ set: 'hollow', cam: 'wide', cast: [all], fx: ['day'] }, { look: LOOK }));
+  assert.ok(got.some((k) => k.join(' ') === ['pose', 'mood'].concat(OLD, ['tuck', 'asleep', 'snail', 'zeta', 'alpha', 'facing']).join(' ')), 'in order: ' + JSON.stringify(got.filter((k) => k.includes('zeta'))[0]));
+});
+
+// ---------------------------------------------------------------- the den at dusk: the fifth evening's moon
+
+// the moon a den panel draws at dusk: where it is, how big, how it leans, and how thick its lit part
+// is at the widest (a share of its radius: 0.2 for chapter 4's sliver, 1 at the half moon, 2 when full)
+function duskMoon(opts, fx, cam) {
+  const scene = { set: 'den', cam: cam || 'outside', opts, cast: [], fx: fx || ['dusk'] }, r = art.render(scene, { look: LOOK });
+  checkRender(r, scene, 'den ' + JSON.stringify(opts) + ' ' + (fx || ['dusk']).join('+'));
+  const M = prop(r.svg, 'waxing-moon') || prop(r.svg, 'thin-moon');
+  if (!M) return { r, svg: r.svg, none: true };
+  const at = /<g transform="translate\(([\d.]+) ([\d.]+)\) rotate\((-?[\d.]+)\)">/.exec(M).slice(1).map(Number);
+  const arc = /<path d="M0 -([\d.]+)A([\d.]+) [\d.]+ 0 0 1 0 [\d.]+A([\d.]+) [\d.]+ 0 0 ([01]) 0 -[\d.]+Z" fill="#FFF3D2"\/>/.exec(M).slice(1).map(Number);
+  return { r, svg: r.svg, M, x: at[0], y: at[1], tilt: at[2], rad: arc[0], thick: (arc[1] + (arc[3] ? arc[2] : -arc[2])) / arc[1], waxing: !!prop(r.svg, 'waxing-moon') };
+}
+
+test('den moon, chapter 5: moon: 5 at dusk is the fifth evening\'s crescent, a little fatter than chapter 4\'s, a little bigger and a little higher over the towers, plain to see, and the lettering keeps off it; from inside it hangs in the doorway\'s sky, over a cat sitting there; moon: true is chapter 4\'s sliver still, from outside only; never by night, by day or under cloud', () => {
+  const four = duskMoon({ moon: true }), five = duskMoon({ moon: 5 });
+  assert.ok(!four.waxing && four.thick > 0.08 && four.thick <= 0.25, 'chapter 4\'s moon is the sliver it was: ' + four.thick);
+  assert.deepEqual([four.x, four.y, four.rad, four.tilt], [1496, 132, 40, 38], 'and where it was');
+  assert.deepEqual(four.r.keep, [], 'chapter 4\'s asks nothing of the lettering, as before');
+  assert.ok(five.waxing, 'a moon at dusk on the fifth evening');
+  assert.match(five.M, /^<g data-prop="waxing-moon" data-age="5">/);
+  // a little fatter: plainly thicker than the sliver (half as much again, at least), still a crescent well short of a half moon
+  assert.ok(five.thick >= four.thick * 1.5 && five.thick <= 0.5, 'a little fatter: ' + five.thick.toFixed(2) + ' against ' + four.thick.toFixed(2));
+  assert.ok(five.rad > four.rad && five.rad <= four.rad * 1.25, 'a little bigger: ' + five.rad);
+  assert.ok(five.y < four.y && five.y > four.y - 40 && five.x < four.x && five.x > four.x - 60, 'a little higher, a little further from where the sun went down: ' + [five.x, five.y]);
+  // whole in the panel, over the towers at the right (their tops are at y 200 and 280), clear of the rosebush
+  assert.ok(five.x - five.rad > 1380 && five.x + five.rad < 1600 && five.y - five.rad > 0 && five.y + five.rad < 200, 'over the towers, whole: ' + [five.x, five.y, five.rad]);
+  assert.ok(five.tilt > 10 && five.tilt <= four.tilt, 'lit from below right still');
+  // plain to see: the lit crescent at its widest is at least a hundredth of the panel across
+  assert.ok(five.thick * five.rad >= 16, 'the crescent is ' + (five.thick * five.rad).toFixed(1) + ' across at its widest');
+  // it is in the picture and no longer in the words: the lettering keeps off it
+  assert.equal(five.r.keep.length, 1);
+  const k = five.r.keep[0], kb = [k.x * 16, k.y * 10, (k.x + k.w) * 16, (k.y + k.h) * 10];
+  assert.ok(kb[0] <= five.x - five.rad && kb[2] >= five.x + five.rad && kb[1] <= five.y - five.rad && kb[3] >= five.y + five.rad, 'keep holds the whole moon: ' + kb.map(Math.round));
+  assert.ok(k.w < 9 && k.h < 14, 'and no more than the moon');
+  // at sunset too; with Tallyheart at the doorway under it and our cat beside her, both in the panel, the moon over her side
+  assert.ok(duskMoon({ moon: 5 }, ['sunset']).waxing, 'at sunset too');
+  const scene = { set: 'den', cam: 'outside', opts: { weather: 'clear', moon: 5, stone: 'auto' }, cast: [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'entrance-right', facing: 'left' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'entrance-left', facing: 'right' }], fx: ['dusk'] };
+  const both = art.render(scene, { look: LOOK });
+  checkRender(both, scene, 'the den at dusk, chapter 5');
+  assert.ok(both.heads[0] && both.heads[1] && both.heads[0].x > both.heads[1].x && five.x / 16 > both.heads[0].x, 'the moon hangs on Tallyheart\'s side, above her: ' + JSON.stringify(both.heads));
+  assert.ok(five.y / 10 < both.heads[0].y - 30, 'well above her head');
+  // by night the moon has set, or is the one chapter 2 drew; never under cloud, by day, or from inside the den
+  const night = duskMoon({ moon: 5 }, ['night']);
+  assert.ok(night.none && /<circle cx="1330" cy="150" r="132"/.test(night.svg), 'by night, chapter 2\'s crescent where it was');
+  for (const [opts, fx, why] of [[{ moon: 5, weather: 'cloudy' }, ['dusk'], 'cloud'], [{ moon: 5, weather: 'storm' }, ['dusk'], 'storm'], [{ moon: false }, ['dusk'], 'not asked for'], [{ moon: 5 }, ['morning'], 'morning'], [{ moon: 5 }, ['day'], 'day'], [{ moon: 0 }, ['dusk'], 'age 0']]) {
+    const m = duskMoon(opts, fx);
+    assert.ok(m.none && !m.svg.includes('#FFF3D2'), 'no moon: ' + why);
+  }
+  // from inside, the same moon hangs in the doorway's patch of sky (chapter 4's sliver is seen from outside only, as it was)
+  for (const cam of ['inside', 'doorway', 'nest']) {
+    assert.ok(duskMoon({ moon: true }, ['dusk'], cam).none, cam + ': chapter 4\'s moon is never seen from inside');
+    const m = duskMoon({ moon: 5 }, ['dusk'], cam), vb = viewBox(m.svg);
+    assert.ok(m.waxing && Math.abs(m.thick - five.thick) < 0.001 && m.tilt === five.tilt, cam + ': the same crescent through the doorway');
+    // inside the arch (at that height its opening runs from about x 1267 to 1513), above the bushes outside (y 640)
+    assert.ok(m.x - m.rad > 1290 && m.x + m.rad < 1500 && m.y - m.rad > 505 && m.y + m.rad < 630, cam + ': in the doorway\'s sky: ' + [m.x, m.y, m.rad]);
+    if (cam === 'nest') assert.deepEqual(m.r.keep, [], 'the nest close-up looks the other way: no moon in it, nothing to keep off');
+    else {
+      assert.ok(inVb(m.x - m.rad, m.y - m.rad, vb, 2) && inVb(m.x + m.rad, m.y + m.rad, vb, 2), cam + ': whole in the panel');
+      assert.equal(m.r.keep.length, 1, cam + ': the lettering keeps off it');
+    }
+    for (const [opts, fx, why] of [[{ moon: 5 }, ['night'], 'night'], [{ moon: 5 }, ['morning'], 'morning'], [{ moon: 5, weather: 'cloudy' }, ['dusk'], 'cloud'], [{ moon: 5, weather: 'storm' }, ['dusk'], 'storm'], [{}, ['dusk'], 'not asked for']])
+      assert.ok(duskMoon(opts, fx, cam).none, cam + ': no moon through the doorway: ' + why);
+  }
+  // over Tallyheart, sitting in the doorway: the crescent hangs above her head, clear of her ears
+  const inDoor = { set: 'den', cam: 'doorway', opts: { weather: 'clear', moon: 5 }, cast: [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'doorway', facing: 'left' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'nest', facing: 'right' }], fx: ['dusk'] };
+  const d = art.render(inDoor, { look: LOOK }), dm = duskMoon({ moon: 5 }, ['dusk'], 'doorway');
+  checkRender(d, inDoor, 'the doorway at dusk, chapter 5');
+  if (art.character) {
+    const hb = worldHeadBox(d, 0, inDoor, 'tallyheart', { pose: 'sit', mood: 'kind', facing: 'left' }, art.sceneInfo('den').anchors.inside.doorway.h / 200).box;
+    assert.ok(dm.y + dm.rad < hb[1] - 10, 'the moon is above her ears: ' + (dm.y + dm.rad) + ' against ' + Math.round(hb[1]));
+    assert.ok(Math.abs(dm.x - (hb[0] + hb[2]) / 2) < 140, 'and over her, not off to one side: ' + dm.x + ' against ' + Math.round((hb[0] + hb[2]) / 2));
+  }
+});
+
+test('the moon is the Gathering\'s clock: from the fourth evening to the fourteenth it is fatter every evening, a crescent, then a half moon, then bulging, then full; always whole in the den\'s sky; kit.waxingMoon draws the same moon anywhere', () => {
+  let prev = null;
+  for (let age = 4; age <= 14; age++) {
+    const m = duskMoon({ moon: age });
+    assert.ok(m.waxing, 'age ' + age);
+    assert.ok(m.x - m.rad > 0 && m.x + m.rad < 1600 && m.y - m.rad > 0 && m.y + m.rad < 290, 'age ' + age + ': whole, in the sky: ' + [m.x, m.y, m.rad]);
+    if (prev) assert.ok(m.thick > prev.thick + 0.05 && m.rad >= prev.rad && m.y <= prev.y, 'age ' + age + ': fatter than the evening before: ' + m.thick.toFixed(2));
+    prev = m;
+  }
+  assert.ok(Math.abs(duskMoon({ moon: 4 }).thick - 0.2) < 0.01, 'the fourth evening\'s is chapter 4\'s sliver');
+  assert.ok(duskMoon({ moon: 8 }).thick < 1 && duskMoon({ moon: 9 }).thick > 1, 'the half moon falls between the eighth and ninth evenings');
+  assert.ok(Math.abs(prev.thick - 2) < 0.01, 'full on the fourteenth: ' + prev.thick);
+  assert.ok(duskMoon({ moon: 30 }).thick <= 2 && duskMoon({ moon: 1 }).thick > 0, 'never more than full, never less than a hair');
+  // for a set in its own file: (x, y), radius, tilt and age
+  const S = { radU: () => 'url(#x)' };
+  const one = art.kit.waxingMoon(S, 500, 300, 60, 20, 5);
+  assert.match(one, /^<g data-prop="waxing-moon" data-age="5"><circle cx="500" cy="300" r="156" fill="url\(#x\)"\/><g transform="translate\(500 300\) rotate\(20\)">/);
+  checkXml('<svg>' + one + '</svg>');
+});
+
+// ---------------------------------------------------------------- the den at night: more bark
+
+// her file in chapter 5: chapter 4's cards, then today's (their ids are the pictures' keys: docs/chapters/05, "The Case File")
+const FILE5 = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly',
+  'prints-pile', 'puddle-paws', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'prints-tracks', 'wisp-fox'];
+const ROW9 = (112 - 38) * 1.06 / 8;   // how close chapter 4's fullest row stood its pieces (nine, none hidden)
+
+test('den bark, chapter 5: a file of ten pieces or more stands two deep along her nest\'s edge, like two courses of roof tiles: the older half behind, a little higher, its tops showing; the newer half in front where the one row stood; neither closer set than chapter 4\'s row of nine until the file passes eighteen; nine or fewer are the one row they were', { skip: !art.character && 'no cats.js' }, () => {
+  for (const cam of ['nest', 'inside', 'doorway']) for (const n of [9, 10, 11, 12, 14, 16, 18, 24]) {
+    const scene = nestScene({ bark: FILE5.concat(FILE5).slice(0, n), stone: 'nose' }, {}, cam), r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'den/' + cam + ' bark ' + n);
+    const P = pieces(r.svg), vb = viewBox(r.svg), label = cam + ' bark ' + n;
+    assert.equal(P.length, n, label + ': every piece is drawn');
+    assert.match(prop(r.svg, 'nest-bark'), new RegExp('data-count="' + n + '"'));
+    const nBack = n > 9 ? Math.floor(n / 2) : 0, back = P.slice(0, nBack), front = P.slice(nBack);
+    if (nBack) assert.ok(front.length >= back.length && front.length - back.length <= 1, label + ': the newer half (and the odd one) in front');
+    for (const q of P) {
+      assert.ok(!q.flat && q.w > 30 && q.w < 50, label + ': standing, a paw wide');
+      assert.ok(inVb(q.x - q.w / 2, q.y - q.w * 1.2, vb, 2) && inVb(q.x + q.w / 2, q.y, vb, 2), label + ': in the panel: ' + JSON.stringify(q));
+      assert.ok(Math.abs(q.x - NEST_X) < 148, label + ': within the nest: ' + q.x);
+    }
+    // the front course stands on the front rim, where the one row stood; each course runs in toward the middle
+    for (const q of front) assert.ok(q.y > 886 && q.y < 886 + 46, label + ': the front course on the front rim: ' + q.y);
+    for (const course of [back, front]) {
+      for (let i = 1; i < course.length; i++) {
+        const step = course[i].x - course[i - 1].x;
+        assert.ok(step > 4 && step < course[i].w * 0.6, label + ': overlapping like roof tiles: step ' + step.toFixed(1));
+        if (n <= 18) assert.ok(step >= ROW9 - 0.1, label + ': no closer set than chapter 4\'s nine: ' + step.toFixed(1) + ' against ' + ROW9.toFixed(1));
+      }
+      if (course.length) assert.ok(Math.abs(course[course.length - 1].x - NEST_X) <= Math.abs(course[0].x - NEST_X), label + ': the newest of a course nearest the middle');
+    }
+    if (nBack) {
+      // behind: drawn first, each a little higher than the front piece nearest it, so its top shows over the course in front
+      for (const q of back) {
+        const near = front.reduce((a, b) => (Math.abs(b.x - q.x) < Math.abs(a.x - q.x) ? b : a));
+        assert.ok(near.y - q.y > 9 && near.y - q.y < 24, label + ': the back course stands a little higher: ' + (near.y - q.y).toFixed(1));
+        assert.ok(q.y - q.w * 1.2 < near.y - near.w * 1.2 - 6, label + ': its top shows over the front course');
+      }
+      // and within the front course's reach: no back piece stands out past its ends by more than a step
+      const fx0 = Math.min(...front.map((q) => q.x)), fx1 = Math.max(...front.map((q) => q.x));
+      for (const q of back) assert.ok(q.x > fx0 - 9 && q.x < fx1 + 9, label + ': behind the front course: ' + q.x + ' in ' + [fx0, fx1].map(Math.round));
+      // half a step along (when the two courses hold the same number): no back piece stands exactly behind a front one
+      if (back.length === front.length) for (const q of back) assert.ok(front.every((f) => Math.abs(f.x - q.x) > 1.5), label + ': the courses are staggered');
+    } else {
+      for (const q of P) assert.ok(q.y > 886, label + ': one row, on the front rim');
+    }
+    // the lettering keeps off all of it
+    const k = r.keep[r.keep.length - 1], kx0 = vb[0] + k.x / 100 * vb[2], kx1 = vb[0] + (k.x + k.w) / 100 * vb[2], ky0 = vb[1] + k.y / 100 * vb[3];
+    for (const q of P) assert.ok(q.x > kx0 - 1 && q.x < kx1 + 1 && q.y - q.w * 1.2 >= ky0 - 1.5, label + ': inside keep');
+  }
+  // which piece stands where: the list is oldest first, and the older half is the course behind
+  const asked = [];
+  const spy = (o) => { asked.push(o.blank ? '(blank)' : o.picture); return { svg: '<rect class="spy-card" width="200" height="240" fill="#EDE1C5"/>', w: 200, h: 240 }; };
+  const row = (opts) => { asked.length = 0; withCards(spy, () => art.render(nestScene(opts), { look: LOOK })); return asked.slice(); };
+  assert.deepEqual(row({ bark: FILE5.slice(0, 14) }), FILE5.slice(0, 14), 'drawn oldest first: the back course, then the front');
+  // the two about Sprinkle still go under the moss (no change to hidden): sixteen stand, two corners show
+  assert.deepEqual(row({ bark: FILE5, hidden: true }), FILE5.filter((c) => c !== 'sprinkle-scales' && c !== 'cant-fly'));
+  // a file that outgrows the rim (a later chapter's: more than twenty-four standing): the oldest pieces are the ones
+  // left out, never today's; and the two about Sprinkle are still the two under the moss, wherever they are in it
+  const long = FILE5.concat(Array.from({ length: 14 }, (_, i) => 'later-' + (i + 1)));   // thirty-two cards
+  assert.deepEqual(row({ bark: long }), long.slice(8), 'thirty-two cards: the newest twenty-four stand');
+  assert.deepEqual(row({ bark: long, hidden: true }), long.filter((c) => c !== 'sprinkle-scales' && c !== 'cant-fly').slice(6), 'two hidden by their pictures, then the newest twenty-four of the thirty left');
+  assert.equal(corners(art.render(nestScene({ bark: long, hidden: true }), { look: LOOK }).svg).length, 2);
+  // the same row whatever she is doing: the pieces stand where they stood from one panel to the next
+  const at = (cat) => pieces(art.render(nestScene({ bark: FILE5.slice(0, 14), stone: 'chin' }, cat), { look: LOOK }).svg).map((q) => [q.x, q.y]);
+  for (const pose of ['loaf', 'curl', 'sit', 'pawup']) assert.deepEqual(at({ pose }), at({ pose: 'lie' }), pose + ': the row does not move when she does');
+  // the row chapter 4 drew is the row it was: nine and seven, piece for piece (chapter 4's own fingerprint is above)
+  assert.equal(pieces(art.render(nestScene({ bark: 'auto' }), { look: LOOK }).svg).length, 7, 'auto, unfilled: the seven every cat held at chapter 4\'s bedtime');
+});
+
+test('den bark, chapter 5: both courses keep to the side away from her head, whichever way she lies and in every pose; no piece on her face or on Riffle\'s stone; with two hidden, their corners show at the inner end, in the panel', { skip: !art.character && 'no cats.js' }, () => {
+  const s = art.sceneInfo('den').anchors.inside.nest.h / 200;
+  const STONE = /translate\(([-\d.]+) ([-\d.]+)\) rotate\(-?[\d.]+\)"><ellipse cx="0" cy="0" rx="([\d.]+)" ry="[\d.]+" fill="#24252C"/;
+  for (const facing of ['right', 'left']) for (const pose of ['lie', 'loaf', 'curl', 'sit', 'pawup', 'flat', 'crouch', 'situp']) for (const stone of [true, 'nose', 'chin']) for (const opts of [{ bark: FILE5.slice(0, 12) }, { bark: FILE5, hidden: true }, { bark: FILE5.slice(0, 16), hidden: true }]) {
+    const scene = nestScene(Object.assign({ stone }, opts), { pose, facing }), r = art.render(scene, { look: LOOK }), label = [pose, facing, stone, opts.bark.length, !!opts.hidden].join(' ');
+    const P = pieces(r.svg), C = corners(r.svg), dir = facing === 'left' ? 1 : -1;
+    assert.equal(P.length, opts.hidden ? opts.bark.length - 2 : opts.bark.length, label);
+    assert.equal(C.length, opts.hidden ? 2 : 0, label + ': corners');
+    for (const q of P.concat(C)) assert.ok(dir * (q.x - NEST_X) > -8, label + ': away from her head: ' + q.x);
+    const head = worldHeadBox(r, 0, scene, 'player', Object.assign({ pose, mood: 'happy', facing, look: LOOK }, LOOK.sex ? { sex: LOOK.sex } : {}), s).box;
+    for (const q of P) {
+      const box = [q.x - q.w / 2, q.y - q.w * 1.2, q.x + q.w / 2, q.y];
+      const fx0 = head[0] + (head[2] - head[0]) * 0.2, fx1 = head[2] - (head[2] - head[0]) * 0.2, fy1 = head[3] - (head[3] - head[1]) * 0.12;
+      assert.ok(box[2] < fx0 || box[0] > fx1 || box[1] > fy1, label + ': a piece on her face: ' + box.map(Math.round) + ' face ' + head.map(Math.round));
+    }
+    const st = STONE.exec(r.svg);
+    assert.ok(st, label + ': her stone is drawn');
+    for (const q of P.concat(C.map((c) => ({ x: c.x, y: c.y, w: 30 })))) assert.ok(Math.abs(q.x - +st[1]) > q.w / 2 + +st[3] - 2 || +st[2] < q.y - q.w * 1.2, label + ': a piece on the stone: ' + JSON.stringify(q) + ' stone ' + st.slice(1, 4));
+    // the corners: past the inner end of both courses
+    for (const c of C) for (const q of P) assert.ok(Math.abs(c.x - NEST_X) < Math.abs(q.x - NEST_X), label + ': the corners past the row\'s inner end');
+  }
+  for (const cam of ['nest', 'inside', 'doorway']) {
+    const r = art.render(nestScene({ bark: FILE5, hidden: true }, { pose: 'loaf' }, cam), { look: LOOK }), vb = viewBox(r.svg);
+    for (const c of corners(r.svg)) assert.ok(inVb(c.x, c.y - 24, vb, 2) && inVb(c.x, c.y, vb, 2), cam + ': the corners are in the panel');
+  }
+  const empty = pieces(art.render(nestScene({ bark: FILE5.slice(0, 13) }, null), { look: LOOK }).svg);
+  assert.ok(empty.length === 13 && empty.every((q) => q.x < NEST_X + 8), 'nobody in the nest: on the left');
+});
+
+// ---------------------------------------------------------------- the Training Hollow: five marks, the rim sitting up
+
+// this chapter's rim (the text's Build notes, "The tuck"): three Clan cats, Murmurchime second, the old tom last
+const RIM5 = (extra) => [['clancat', 1], ['murmurchime'], ['clancat', 3], ['clancat', 5], ['grizzled']].map(([who, variant], i) =>
+  Object.assign({ who, pose: 'situp', mood: i === 4 ? 'stern' : 'proud', at: 'rim-' + (i + 1), facing: i < 2 ? 'right' : 'left' }, variant ? { variant } : {}, extra || {}));
+
+test('hollow, chapter 5: a fifth claw mark, second in the row under the first three, fresh while the first three are deepest; the first four exactly where chapter 4 left them; no bark falls today; the five on the rim sit up (Murmurchime second, the old tom last) with Tallyheart in front of them, every face in the panel', { skip: !art.character && 'no cats.js' }, () => {
+  const draw = (opts, cam) => { const scene = { set: 'hollow', cam: cam || 'tree', opts, cast: [], fx: ['morning'] }, r = art.render(scene, { look: LOOK }); checkRender(r, scene, 'hollow ' + JSON.stringify(opts)); return r; };
+  const outer = (svg) => shapes(svg, 'fill="#3A281E"');
+  const five = draw({ marks: 5 }), sc = outer(five.svg);
+  assert.equal(sc.length, 15, 'five marks, three scratches each');
+  const per = [0, 1, 2, 3, 4].map((i) => sc.slice(i * 3, i * 3 + 3)), c = per.map((q) => centre(q.flat()));
+  assert.ok(c[1][0] > c[0][0] + 20 && c[2][0] > c[1][0] + 20 && Math.abs(c[0][1] - c[2][1]) < 12, 'three in the first row, left to right');
+  assert.ok(c[3][1] > c[0][1] + 40 && c[4][1] > c[0][1] + 40 && c[4][0] > c[3][0] + 20 && Math.abs(c[3][1] - c[4][1]) < 6, 'the fourth and the fifth below them: ' + JSON.stringify(c.map((p) => p.map(Math.round))));
+  // the first four never move for the fifth (scratched fresh, they are chapter 4's own)
+  assert.deepEqual(outer(draw({ marks: 5, depth: 0 }).svg).slice(0, 12), outer(draw({ marks: 4, depth: 0 }).svg), 'the first four stay where chapter 4 scratched them');
+  // by default practice has deepened every mark but the new one: 2, 2, 2, 1, 0
+  const groove = shapes(five.svg, 'fill="#6B4A32" opacity="0.9"');
+  const grooved = c.map((p) => groove.filter((q) => { const g = centre(q); return Math.abs(g[0] - p[0]) < 22 && Math.abs(g[1] - p[1]) < 40; }).length);
+  assert.deepEqual(grooved, [3, 3, 3, 3, 0], 'the fifth is fresh, the others grooved');
+  const width = (q) => q.reduce((a, s3) => { const xs = s3.map((p) => p[0]); return a + (Math.max(...xs) - Math.min(...xs)) / 3; }, 0);
+  assert.ok(width(per[0]) > width(per[3]) + 0.3 && width(per[3]) > width(per[4]) + 0.3, 'the oldest gouged widest, the newest thinnest');
+  // 'auto' with her five Counts, the tails' mark glowing (the page fills it so): one glow, on the first mark only
+  const lit = draw({ marks: 5, glow: [true, false, false, false, false] });
+  assert.equal(shapes(lit.svg, 'fill="#FFF6D0" class="pcs-pulse"').length, 3, 'one mark glows');
+  // in the panel in every camera that sees the trunk's marks; the lettering keeps off them
+  for (const cam of ['wide', 'tree']) {
+    const r = draw({ marks: 5 }, cam), vb = viewBox(r.svg);
+    for (const p of outer(r.svg).flat()) assert.ok(inVb(p[0], p[1], vb, 2), cam + ': the marks are in the panel');
+    assert.equal(r.keep.length, 1, cam + ': keep');
+  }
+  // "No bark falls today: she has plenty"
+  for (const name of ['bark-falling', 'bark-sand', 'bark-row']) assert.equal(prop(five.svg, name), '', 'no ' + name + ' unless a frame asks');
+  // the rim sitting up, Tallyheart apart in front of them (past the trunk, nearer and bigger), our cat in the sun
+  const wide = { set: 'hollow', cam: 'wide', opts: { marks: 4, glow: [true, false, false, false] }, cast: RIM5().concat([{ who: 'tallyheart', pose: 'situp', mood: 'kind', at: 'tree-far', facing: 'left', size: 1.2, tuck: true }, { who: 'player', pose: 'sit', mood: 'wonder', at: 'sunpatch-2', facing: 'right' }]), fx: ['morning'] };
+  const w = art.render(wide, { look: LOOK });
+  checkRender(w, wide, 'the rim, chapter 5');
+  w.heads.forEach((h, i) => assert.ok(h, 'cast ' + i + ' (' + wide.cast[i].who + ') is in the panel'));
+  for (let i = 1; i < 5; i++) assert.ok(w.heads[i].x > w.heads[i - 1].x + 5, 'the rim, left to right: Murmurchime second, the old tom last');
+  for (let i = 0; i < w.heads.length; i++) for (let j = i + 1; j < w.heads.length; j++) assert.ok(Math.hypot((w.heads[i].x - w.heads[j].x) * 1.6, w.heads[i].y - w.heads[j].y) > 7, 'faces ' + i + ' and ' + j + ' are apart');
+  assert.ok(w.heads[5].x > w.heads[4].x + 15 && w.heads[5].r > w.heads[4].r * 1.3, 'Tallyheart apart from the row, nearer and bigger');
+  // the lesson two-shot: Tallyheart sitting up at the sand with one claw tucked, our cat copying her; the old tom (who answers) still in the panel
+  const lesson = { set: 'hollow', cam: 'lesson', opts: { marks: 4 }, cast: [RIM5()[0], RIM5()[2], RIM5()[4], { who: 'tallyheart', pose: 'situp', mood: 'kind', at: 'sand-left', facing: 'right', tuck: true }, { who: 'player', pose: 'situp', mood: 'wonder', at: 'sand-right', facing: 'left', tuck: true }], fx: ['morning'] };
+  const l = art.render(lesson, { look: LOOK });
+  checkRender(l, lesson, 'the lesson, chapter 5');
+  l.heads.forEach((h, i) => assert.ok(h, 'lesson cast ' + i + ' is in the panel'));
+});
+
+// ---------------------------------------------------------------- the tower: the offer, and "Not today"
+
+test('tower, chapter 5: the offer is one panel from below (the roof\'s red light and its roar lines, our cat at the tower\'s foot looking up, nobody at the railing); "Not today" is chapter 4\'s panel, Waffles at her railing nineteen floors up', { skip: !art.character && 'no cats.js' }, () => {
+  const me = { who: 'player', pose: 'lookup', mood: 'wonder', at: 'foot', facing: 'right' };
+  const offer = towerUp({ chime: true, light: true, roar: true }, [me]);
+  assert.ok(prop(offer.svg, 'light') && prop(offer.svg, 'roar'), 'the red light and the roar');
+  assert.equal(offer.heads.length, 1);
+  assert.ok(offer.heads[0] && offer.heads[0].y > 80 && offer.heads[0].x > 50 && offer.heads[0].x < 75, 'our cat small at the foot of the tower, outside the glass: ' + JSON.stringify(offer.heads[0]));
+  // nobody at the railing: the picture is chapter 4's roar panel without Waffles, to the last shape
+  const waffles = { who: 'waffles', pose: 'peer', mood: 'scared', at: 'railing', facing: 'left' };
+  const with4 = towerUp({ chime: true, light: true, roar: true }, [waffles, me]);
+  assert.ok(with4.heads[0] && with4.heads[0].y < 30, 'chapter 4 had her at the railing, high up');
+  const cats = (svg) => (svg.match(/<g transform="translate\([\d.]+ [\d.]+\) scale\([\d.]+ [\d.]+\) translate\(-100 -200\)"/g) || []).length;
+  assert.deepEqual([cats(with4.svg), cats(offer.svg)], [2, 1], 'one cat is drawn in the offer, where chapter 4 drew two');
+  const balcony = (svg) => (svg.match(/#FBE3B0/g) || []).length;
+  assert.ok(balcony(offer.svg) >= 1 && balcony(offer.svg) === balcony(with4.svg), 'her balcony is there, its door lit, empty');
+  // the lettering keeps off the light at the very top, as in chapter 4
+  assert.deepEqual(offer.keep, with4.keep);
+  // "Not today": chapter 4's own panel (f076b), unchanged
+  if (has('app/story/ch04.js')) {
+    require(path.join(ROOT, 'app/story/ch04.js'));
+    const f = PC.story.ch04.frames.f076b;
+    assert.ok(f && f.scene.set === 'tower' && f.scene.cam === 'up', 'chapter 4\'s "Not today" panel is the tower from below');
+    const r = art.render(f.scene, { look: LOOK });
+    checkRender(r, f.scene, 'ch04 f076b');
+    const wi = f.scene.cast.findIndex((m) => m.who === 'waffles'), pi = f.scene.cast.findIndex((m) => m.who === 'player');
+    assert.ok(r.heads[wi] && r.heads[wi].y < 30 && r.heads[pi] && r.heads[pi].y > 80, 'Waffles at her railing, our cat at the foot: ' + JSON.stringify(r.heads));
+  }
+});
+
+// ---------------------------------------------------------------- the three new characters: sized and lettered
+
+// Stand-ins for chapter 5's three, each drawn at a wrong size on purpose, to see the scenes hold them
+// to the text's: a heron no taller than Tallyheart sits, a brother with a head far bigger than
+// Sprinkle's, a sister with a head exactly Sprinkle's size. `k` scales a whole stand-in.
+const SPR = () => { const c = art.character('sprinkle', { pose: 'sit', mood: 'neutral' }); return { tall: c.h - c.headBox.y0, head: (c.headBox.x1 - c.headBox.x0 + c.headBox.y1 - c.headBox.y0) / 2 }; };
+function standIns(real, k) {
+  k = k || {};
+  const spr = SPR(), tally = sitTall('tallyheart');
+  const make = (who, w, h, hb, bounds, cls) => ({ who, w, h, head: { x: (hb.x0 + hb.x1) / 2, y: hb.y0 + 8 }, headBox: hb, bounds, cls });
+  const defs = {
+    // head top to feet: Tallyheart's sitting height times k (1 by default: no taller than she sits)
+    patience: (() => { const t = Math.round(tally * (k.patience || 1)); return make('patience', 220, t + 12, { x0: 110, y0: 12, x1: 200, y1: 70 }, { x0: 40, y0: 12, x1: 200, y1: t + 10 }); })(),
+    // head: Sprinkle's times k (1.4 by default: far too big); the rest of him under the water
+    puddle: (() => { const d = spr.head * (k.puddle || 1.4); return make('puddle', 400, 300, { x0: 200 - d / 2, y0: 100, x1: 200 + d / 2, y1: 100 + d }, { x0: 200 - d / 2 - 10, y0: 100, x1: 200 + d / 2 + 10, y1: 298 }); })(),
+    // head: Sprinkle's times k (1 by default: not slighter at all)
+    wisp: (() => { const d = spr.head * (k.wisp || 1); return make('wisp', 300, 420, { x0: 150 - d / 2, y0: 20, x1: 150 + d / 2, y1: 20 + d }, { x0: 90, y0: 20, x1: 230, y1: 418 }); })()
+  };
+  return function (who, opts) {
+    const d = defs[who];
+    if (!d) return real(who, opts);
+    const b = JSON.parse(JSON.stringify(d));
+    // a pose with a different box: her neck up to swallow, his forepaw raised, her one jerk
+    if (opts && ['gulp', 'pawup', 'flinch'].includes(opts.pose)) { b.h += 50; b.head.y += 50; b.headBox.y0 += 50; b.headBox.y1 += 50; b.bounds.y0 += 50; b.bounds.y1 += 50; }
+    return { svg: '<rect class="new-' + who + '" x="' + b.bounds.x0 + '" y="' + b.bounds.y0 + '" width="' + (b.bounds.x1 - b.bounds.x0) + '" height="' + (b.bounds.y1 - b.bounds.y0) + '" fill="#8FA3B8"/>', w: b.w, h: b.h, head: b.head, headBox: b.headBox, bounds: b.bounds };
+  };
+}
+const headOf = (b) => (b.headBox.x1 - b.headBox.x0 + b.headBox.y1 - b.headBox.y0) / 2;
+const round4 = (v) => Math.round(v * 10000) / 10000;
+const footShade = (svg, y) => [...svg.matchAll(/<ellipse cx="([-\d.]+)" cy="([-\d.]+)" rx="([\d.]+)" ry="[\d.]+" fill="#[0-9A-F]{6}" opacity="0.3"\/>/g)].map((m) => m.slice(1).map(Number)).filter((e) => Math.abs(e[1] - (y - 1)) < 0.2);
+
+test('Patience at any anchor stands taller than Tallyheart sits: a heron drawn too small is brought up to the least a heron may be, one drawn inside the band is left exactly as drawn, a giant is brought down; every pose is scaled alike; a size multiplies on top; her face is lettered and her shadow lies under her body', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, tally = sitTall('tallyheart');
+  const near = (a, b, what) => assert.ok(Math.abs(a - b) < 0.0002, what + ': ' + a + ' vs ' + b);
+  const a = art.sceneInfo('title').anchors.main.wall, base = a.h / 200;
+  const heron = (m, cast) => { const scene = { set: 'title', cam: 'wide', cast: [Object.assign({ who: 'patience', pose: 'stand', at: 'wall', facing: 'left' }, m)].concat(cast || []), fx: ['day'] }; const r = art.render(scene, { look: LOOK }); checkRender(r, scene, 'patience ' + JSON.stringify(m)); return r; };
+  const box = (fake, pose) => fake('patience', { pose: pose || 'stand' });
+  // drawn no taller than Tallyheart sits: scaled up, so that she stands 1.4 times that
+  let fake = standIns(real);
+  withCharacter(fake, () => {
+    const b = box(fake), tall = b.h - b.headBox.y0, r = heron({}), s = placedScale(r.svg, a, b.w, b.h);
+    assert.ok(s, 'her box, feet on the wall');
+    near(s, round4(base * 1.4 * tally / tall), 'brought up to the least a heron may be');
+    assert.ok(s * tall > base * tally * 1.39, 'taller than Tallyheart sits: ' + (s * tall).toFixed(1) + ' against ' + (base * tally).toFixed(1));
+    // every pose at the same scale (neck up to swallow: a taller box, the same bird)
+    const g = box(fake, 'gulp');
+    near(placedScale(heron({ pose: 'gulp' }).svg, a, g.w, g.h), s, 'gulping');
+    // a size multiplies on top, both ways (a far heron, a near one)
+    near(placedScale(heron({ size: 0.5 }).svg, a, b.w, b.h), round4(base * 0.5 * 1.4 * tally / tall), 'size 0.5');
+    near(placedScale(heron({ size: 1.2 }).svg, a, b.w, b.h), round4(base * 1.2 * 1.4 * tally / tall), 'size 1.2');
+    // beside Tallyheart on the same wall: the top of her head is well above the tips of Tallyheart's ears
+    const w2 = art.sceneInfo('title').anchors.main['wall-2'], both = heron({}, [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'wall-2', facing: 'left' }]);
+    assert.ok(a.y - tall * s < w2.y - tally * (w2.h / 200) - 0.3 * tally * base, 'her head stands well above Tallyheart\'s ears');
+    assert.ok(both.heads[0] && both.heads[1] && both.heads[0].y < both.heads[1].y, 'and so it is in the panel: ' + JSON.stringify(both.heads));
+    // lettered like anyone with a face: r from her head box
+    const cat = real('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }), hb = cat.headBox, share = 0.2 * cat.h / ((hb.x1 - hb.x0 + hb.y1 - hb.y0) / 2);
+    assert.ok(r.heads[0] && Math.abs(r.heads[0].r - share * headOf(b) * s / 1600 * 100) < 0.02, 'r from her head box: ' + JSON.stringify(r.heads[0]));
+    // her shadow lies under her body as drawn
+    const shade = footShade(r.svg, a.y);
+    assert.ok(shade.length === 1 && Math.abs(shade[0][2] - (b.bounds.x1 - b.bounds.x0) * s * 0.42) < 0.3, 'shadow as wide as her body: ' + JSON.stringify(shade));
+  });
+  // drawn inside the band (the marsh is laid out for a heron about 2.3 sitting cats tall, 2.45 times Tallyheart): left exactly as the painter drew her
+  for (const k of [1.5, 1.9, 2.45]) {
+    fake = standIns(real, { patience: k });
+    withCharacter(fake, () => { const b = box(fake); near(placedScale(heron({}).svg, a, b.w, b.h), round4(base), 'inside the band (' + k + '): as drawn'); });
+  }
+  // a giant (3.5 times): brought down to the most a heron may be
+  fake = standIns(real, { patience: 3.5 });
+  withCharacter(fake, () => { const b = box(fake); near(placedScale(heron({}).svg, a, b.w, b.h), round4(base * 2.6 * tally / (b.h - b.headBox.y0)), 'a giant is brought down'); });
+  // should the painter report no head box, she still has a face to letter and a size to hold
+  fake = standIns(real);
+  withCharacter(function (who, opts) { const c = fake(who, opts); if (who === 'patience') { delete c.headBox; delete c.bounds; } return c; }, () => {
+    const r = heron({});
+    assert.ok(r.heads[0] && r.heads[0].r > 0, 'no head box: r from the box the scenes estimate: ' + JSON.stringify(r.heads[0]));
+  });
+  // nobody else is touched by her rule
+  for (const who of ['tallyheart', 'player', 'riffle']) { const c = art.character(who, { pose: 'sit', mood: 'kind', facing: 'right' }); near(placedScale(art.render({ set: 'title', cam: 'wide', cast: [{ who, pose: 'sit', mood: 'kind', at: 'wall' }], fx: ['day'] }, { look: LOOK }).svg, a, c.w, c.h), round4(a.h / 200), who); }
+});
+
+test('Puddle is about Sprinkle\'s size and Wisp is slighter: his head is held to hers (a little more or less is the painter\'s), her head to a little less than hers, never bigger; every pose alike; both lettered; no shadow is ever drawn under Puddle in the water (every pose of his but sitting), and none under Wisp or Patience at a spot a set marks as water or air', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, spr = SPR();
+  const near = (a, b, what) => assert.ok(Math.abs(a - b) < 0.0002, what + ': ' + a + ' vs ' + b);
+  const a = art.sceneInfo('title').anchors.main.wall, base = a.h / 200;
+  const at = (who, m) => { const scene = { set: 'title', cam: 'wide', cast: [Object.assign({ who, pose: who === 'puddle' ? 'head' : 'blink', mood: 'happy', at: 'wall', facing: 'left' }, m)], fx: ['day'] }; const r = art.render(scene, { look: LOOK }); checkRender(r, scene, who + ' ' + JSON.stringify(m)); return r; };
+  for (const [who, drawn, held, pose2] of [['puddle', 1.4, 1.12, 'pawup'], ['puddle', 0.6, 0.88, 'pawup'], ['puddle', 1.05, 1.05, 'pawup'], ['puddle', 0.9, 0.9, 'pawup'], ['wisp', 1, 0.94, 'flinch'], ['wisp', 1.3, 0.94, 'flinch'], ['wisp', 0.5, 0.7, 'flinch'], ['wisp', 0.8, 0.8, 'flinch']]) {
+    const fake = standIns(real, { [who]: drawn });
+    withCharacter(fake, () => {
+      const b = fake(who, { pose: 'x' }), r = at(who, {}), s = placedScale(r.svg, a, b.w, b.h), label = who + ' drawn with a head ' + drawn + ' of Sprinkle\'s';
+      assert.ok(s, label + ': placed');
+      near(s, round4(base * held / drawn), label + ': held at ' + held);
+      // on screen: his head against hers at the same spot
+      const ratio = headOf(b) * s / (spr.head * base);
+      assert.ok(Math.abs(ratio - held) < 0.002, label + ': on screen ' + ratio.toFixed(3));
+      if (who === 'wisp') assert.ok(ratio < 0.95, 'slighter than Sprinkle, always');
+      // another pose, another box: the same scale
+      const b2 = fake(who, { pose: pose2 });
+      near(placedScale(at(who, { pose: pose2 }).svg, a, b2.w, b2.h), s, label + ': ' + pose2 + ' at the same scale');
+      near(placedScale(at(who, { size: 0.6 }).svg, a, b.w, b.h), round4(base * 0.6 * held / drawn), label + ': a size multiplies on top');
+      const cat = real('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }), hb = cat.headBox, share = 0.2 * cat.h / ((hb.x1 - hb.x0 + hb.y1 - hb.y0) / 2);
+      assert.ok(r.heads[0] && Math.abs(r.heads[0].r - share * headOf(b) * s / 1600 * 100) < 0.02, label + ': r from the head box: ' + JSON.stringify(r.heads[0]));
+      // the ground under them: Wisp has a shadow like anyone (nothing ghostly); Puddle, in the river, never
+      const shade = footShade(r.svg, a.y);
+      if (who === 'puddle') {
+        assert.equal(shade.length, 0, 'nothing dark is drawn under Puddle in the water');
+        for (const pose of ['foot', 'log', 'sink', 'pawup', 'nostrils']) assert.equal(footShade(at(who, { pose }).svg, a.y).length, 0, 'nor in his ' + pose + ' pose');
+        // sitting on dry land (his page in her book; a later chapter), he has the shadow his sisters have
+        const sat = footShade(at(who, { pose: 'sit' }).svg, a.y);
+        assert.ok(sat.length === 1 && Math.abs(sat[0][2] - (b.bounds.x1 - b.bounds.x0) * s * 0.42) < 0.3, 'sitting, a shadow under his body: ' + JSON.stringify(sat));
+      }
+      else assert.ok(shade.length === 1 && Math.abs(shade[0][2] - (b.bounds.x1 - b.bounds.x0) * s * 0.42) < 0.3, 'Wisp\'s shadow under her body: ' + JSON.stringify(shade));
+    });
+  }
+  // a spot a set marks `air: true` (in the water, where the set draws its own rings; the hollow's heap has two such): no shadow for Wisp or Patience there, a shadow at the ground spots beside them
+  const fake = standIns(real, { patience: 1.9 });
+  withCharacter(fake, () => {
+    const H = art.sceneInfo('hollow').anchors.main;
+    const scene = { set: 'hollow', cam: 'wide', opts: { heap: true }, cast: [{ who: 'wisp', pose: 'blink', at: 'rim-1' }, { who: 'wisp', pose: 'blink', at: 'rim-2' }, { who: 'patience', pose: 'stand', at: 'rim-4' }, { who: 'patience', pose: 'stand', at: 'rim-5' }, { who: 'puddle', pose: 'head', at: 'rim-3' }, { who: 'wisp', pose: 'blink', at: 'sand-left' }], fx: ['day'] };
+    const r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'air anchors');
+    const all = [...r.svg.matchAll(/<ellipse cx="[-\d.]+" cy="([-\d.]+)" rx="[\d.]+" ry="[\d.]+" fill="#[0-9A-F]{6}" opacity="0.3"\/>/g)].map((m) => +m[1]);
+    assert.deepEqual(all.sort((x, y) => x - y), [792 - 1, 792 - 1, H['sand-left'].y - 1], 'a shadow at the three ground spots (rim-1, rim-5, the sand), none at the two in the air, none under Puddle: ' + all);
+  });
+  // none of the three is a cat: no pouf on the balcony, no close-up framed on them, and Riffle's stone is not laid at their noses
+  const fk = standIns(real);
+  withCharacter(fk, () => {
+    const b = art.render({ set: 'tower', cam: 'balcony-close', cast: [{ who: 'wisp', pose: 'blink', at: 'railing' }], fx: ['day'] }, { look: LOOK });
+    assert.ok(!/fill="#E58FA8"/.test(b.svg), 'no pouf for a dragonet');
+  });
+});
+
+test('a head that tops the camera: Patience (and Sprinkle\'s brother and sister) get a balloon point on what shows of the face, as Sprinkle does; a face almost wholly out of the panel stays out', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, fake = standIns(real, { patience: 1.9, puddle: 1, wisp: 0.9 });
+  withCharacter(fake, () => {
+    const A = art.sceneInfo('camp').anchors.main.center, cam = art.sceneInfo('camp').cams.crowd;
+    for (const [who, pose] of [['patience', 'stand'], ['wisp', 'blink'], ['puddle', 'head']]) {
+      // (each of the three is drawn inside its band here, so the scenes place it at the anchor's own scale times its size)
+      const b = fake(who, { pose }), s0 = A.h / 200, mid = (b.headBox.y0 + b.headBox.y1) / 2;
+      // feet at A.y: the middle of the head box lands on the camera's top edge when (b.h - mid) * s = A.y - cam.y,
+      // so the head point is above the camera and half the face is in it
+      const s = (A.y - cam.y) / (b.h - mid), size = s / s0;
+      const scene = { set: 'camp', cam: 'crowd', cast: [{ who, pose, at: 'center', size }], fx: ['sunset'] };
+      const r = art.render(scene, { look: LOOK }), vb = viewBox(r.svg);
+      checkRender(r, scene, who + ' topping the camera');
+      const placed = placedScale(r.svg, A, b.w, b.h);
+      assert.ok(placed, who + ': placed');
+      const top = A.y - (b.h - b.headBox.y0) * placed, bot = A.y - (b.h - b.headBox.y1) * placed, pt = A.y - (b.h - b.head.y) * placed;
+      assert.ok(pt < vb[1] && bot > vb[1] + 4, who + ': her head point is above the camera, her face partly in it: ' + [top, pt, bot, vb[1]].map(Math.round));
+      const h = r.heads[0];
+      assert.ok(h && h.y >= 0 && h.y < 100, who + ': still has a head: ' + JSON.stringify(h));
+      assert.ok(Math.abs(h.y - ((vb[1] + bot) / 2 - vb[1]) / vb[3] * 100) < 0.2, who + ': in the middle of what shows of the face: ' + h.y);
+      // twice as big: the face is all but gone, and so is the head
+      const gone = art.render({ set: 'camp', cam: 'crowd', cast: [{ who, pose, at: 'center', size: size * 2.2 }], fx: ['sunset'] }, { look: LOOK });
+      assert.equal(gone.heads[0], null, who + ': a face out of the panel has no head');
+    }
+  });
+});
+
+test('the real Patience, Puddle and Wisp (cats.js, once it draws them): in every pose of theirs, at every anchor of chapter 1\'s sets, Patience stands 1.4 to 2.6 times as tall as Tallyheart sits there, Puddle\'s head is Sprinkle\'s size (0.88 to 1.12) and Wisp\'s a little less (0.7 to 0.94); every face has a size', { skip: !(art.vocab.otherPoses && NEW5.every((w) => art.vocab.otherPoses[w])) && 'cats.js does not draw Patience, Puddle and Wisp yet' }, () => {
+  const tally = sitTall('tallyheart'), spr = SPR();
+  const drawn = {
+    patience: (() => { const c = art.character('patience', { pose: 'stand', mood: 'neutral' }); return (c.h - c.headBox.y0) / tally; })(),
+    puddle: headOf(art.character('puddle', { pose: 'head', mood: 'neutral' })) / spr.head,
+    wisp: headOf(art.character('wisp', { pose: 'blink', mood: 'neutral' })) / spr.head
+  };
+  const BAND = { patience: [1.4, 2.6], puddle: [0.88, 1.12], wisp: [0.7, 0.94] };
+  // the rule as the sets in their own files read it (the marsh lays its reeds and its thought cloud by it)
+  assert.deepEqual(art.sizeBands, { patience: { ref: 'tallyheart', pose: 'stand', by: 'tall', min: 1.4, max: 2.6 }, puddle: { ref: 'sprinkle', pose: 'head', by: 'head', min: 0.88, max: 1.12 }, wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 } });
+  let n = 0;
+  for (const set of CH1_SETS) {
+    const info = art.sceneInfo(set), seen = {};
+    for (const cam of art.vocab.sets[set].cams) {
+      const comp = info.cams[cam].comp, anchors = seen[comp] ? [] : Object.entries(info.anchors[comp] || {}).filter(([, a]) => a.x || a.y);
+      seen[comp] = true;
+      for (const [at, a] of anchors) for (const who of NEW5) {
+        const poses = art.vocab.otherPoses[who], pose = poses[n % poses.length], facing = n % 2 ? 'left' : 'right';
+        const scene = { set, cam, cast: [{ who, pose, mood: 'happy', at, facing }], fx: [set === 'den' || set === 'sky' ? 'night' : 'day'] };
+        const r = art.render(scene, { look: LOOK });
+        checkRender(r, scene, set + '/' + cam + ' ' + who + ':' + pose + '@' + at);
+        const ch = art.character(who, { pose, mood: 'happy', facing }), s = placedScale(r.svg, a, ch.w, ch.h);
+        if (s == null) continue;   // an anchor the drawing moves (the balcony)
+        const k = s / (a.h / 200) * drawn[who];
+        assert.ok(k >= BAND[who][0] - 0.01 && k <= BAND[who][1] + 0.01, set + '/' + cam + ' ' + who + '@' + at + ': ' + k.toFixed(3) + ' in ' + BAND[who]);
+        if (r.heads[0]) assert.ok(r.heads[0].r > 0, who + ' has a face size');
+        n++;
+      }
+    }
+  }
+  assert.ok(n > 80, 'placements checked: ' + n);
+  // side by side on the wall: Patience's head above Tallyheart's ears; Wisp's face smaller than Sprinkle's; Puddle's about hers
+  const wall = (who, pose) => art.render({ set: 'title', cam: 'wide', cast: [{ who, pose, mood: 'happy', at: 'wall', facing: 'left' }, { who: who === 'patience' ? 'tallyheart' : 'sprinkle', pose: 'sit', mood: 'kind', at: 'wall-2', facing: 'left' }], fx: ['day'] }, { look: LOOK });
+  const p = wall('patience', 'stand');
+  assert.ok(p.heads[0] && p.heads[1] && p.heads[0].y < p.heads[1].y, 'Patience looks down at Tallyheart');
+  const w = wall('wisp', 'blink'), u = wall('puddle', 'head');
+  assert.ok(w.heads[0].r < w.heads[1].r, 'Wisp\'s face is smaller than Sprinkle\'s: ' + JSON.stringify(w.heads));
+  assert.ok(Math.abs(u.heads[0].r / u.heads[1].r - 1) < 0.14, 'Puddle\'s is about hers: ' + JSON.stringify(u.heads));
+});
+
+test('the three new characters, in every pose cats.js gives them (or as it draws a newcomer until it does), at every anchor of every set and camera', { skip: !art.character && 'no cats.js' }, () => {
+  let renders = 0;
+  for (const who of NEW5) {
+    const poses = (art.vocab.otherPoses && art.vocab.otherPoses[who]) || { patience: ['stand', 'eye', 'shut', 'point', 'gulp', 'full', 'feather'], puddle: ['foot', 'head', 'log', 'sink', 'pawup', 'nostrils'], wisp: ['reed', 'blink', 'shh', 'draw', 'nod', 'flinch', 'gulp', 'pawup'] }[who];
+    for (const [set, info] of Object.entries(art.vocab.sets)) for (const cam of info.cams) {
+      const cast = info.anchors.map((at, i) => ({ who, pose: poses[(i + renders) % poses.length], mood: ['happy', 'wonder', 'worried', 'proud', 'neutral'][(i + renders) % 5], at, facing: i % 2 ? 'left' : 'right' }));
+      // (every third time with every effect a panel can carry: the purr, the sparkle, the zzz, the motion lines and the bonk find their faces and bodies too)
+      const scene = { set, cam, cast, fx: [set === 'den' || set === 'sky' ? 'night' : 'day'].concat(renders % 3 ? [] : ['purr', 'sparkle', 'zzz', 'motion', 'bonk', 'glow']) };
+      checkRender(art.render(scene, { look: LOOK }), scene, set + '/' + cam + ' ' + who + ' ' + scene.fx.join('+'));
+      renders++;
+    }
+  }
+  assert.ok(renders > 150, 'renders: ' + renders);
+});
+
+// ---------------------------------------------------------------- every chapter 5 value, everywhere; chapter 5's frames
+
+test('every chapter 5 option value renders in every camera of its set, in every light, alone and all together, with a cast at every anchor and with nobody', () => {
+  const lights = [[], ['morning'], ['dusk'], ['night'], ['sunset']];
+  const values = { den: { moon: [5, 9, 14], bark: [FILE5.slice(0, 12), FILE5, 12], hidden: [true] }, hollow: { marks: [5], glow: [[true, false, false, false, false]] }, tower: { roar: [true], light: [true] } };
+  let n = 0;
+  for (const [set, opts] of Object.entries(values)) {
+    const info = art.vocab.sets[set], all = {};
+    for (const [k, vals] of Object.entries(opts)) all[k] = vals[0];
+    for (const cam of info.cams) lights.forEach((fx, f) => {
+      const cast = info.anchors.map((at, i) => member(i + n, at, 0));
+      Object.entries(opts).flatMap(([k, vals]) => vals.map((v) => ({ [k]: v }))).forEach((one, j) => {
+        const scene = { set, cam, opts: one, cast: (j + f) % 2 ? [] : cast, fx };
+        checkRender(art.render(scene, { look: LOOK }), scene, set + '/' + cam + ' ' + JSON.stringify(one).slice(0, 60) + ' ' + fx.join('+'));
+        n++;
+      });
+      for (const c of [cast, []]) {
+        const scene = { set, cam, opts: all, cast: c, fx };
+        checkRender(art.render(scene, { look: LOOK }), scene, set + '/' + cam + ' all ' + fx.join('+'));
+        n++;
+      }
+    });
+  }
+  assert.ok(n > 300, 'renders: ' + n);
+  // and with placeholder cats (no cats.js): the moon, the marks and the bark are the sets' own; a newcomer is a plain cat
+  const fake = function () { throw new Error('placeholder'); };
+  fake.placeholder = true;
+  withCharacter(fake, () => {
+    for (const scene of [
+      { set: 'den', cam: 'outside', opts: { moon: 5 }, cast: [{ who: 'tallyheart', at: 'entrance-right', pose: 'sit' }, { who: 'patience', at: 'entrance-left', pose: 'stand' }], fx: ['dusk'] },
+      { set: 'den', cam: 'nest', opts: { bark: FILE5, hidden: true, stone: 'chin' }, cast: [{ who: 'player', at: 'nest', pose: 'lie', facing: 'left' }, { who: 'wisp', at: 'sleeper-2', pose: 'blink' }], fx: ['night'] },
+      { set: 'hollow', cam: 'wide', opts: { marks: 5 }, cast: RIM5({ tuck: true }).concat([{ who: 'puddle', at: 'sand-left', pose: 'head' }]), fx: ['morning'] }
+    ]) {
+      const r = art.render(scene, { look: LOOK });
+      checkXml(r.svg);
+      assert.ok(!/NaN|undefined|Infinity|="null"|\[object/.test(r.svg), 'placeholders: ' + scene.set + ': no NaN/undefined in the markup');
+      assert.equal(r.heads.length, scene.cast.length);
+    }
+  });
+});
+
+test('every frame of chapter 5 renders with the art vocabulary (once it is written): its sets, cameras and anchors are the art\'s; the den at dusk is under the fifth evening\'s moon; no bark falls in the hollow; the tower\'s offer has nobody at the railing', () => {
+  if (!has('app/story/ch05.js')) return;
+  require(path.join(ROOT, 'app/story/ch05.js'));
+  const ch = PC.story && PC.story.ch05;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.board !== 'STUB.') : [];
+  let dusk = 0;
+  for (const [id, f] of frames) {
+    const s = f.scene, v = art.vocab;
+    assert.ok(v.sets[s.set], id + ': set ' + s.set);
+    assert.ok(v.sets[s.set].cams.includes(s.cam), id + ': camera ' + s.set + '/' + s.cam);
+    for (const m of s.cast || []) if (typeof m.at === 'string') assert.ok(v.sets[s.set].anchors.includes(m.at), id + ': anchor ' + m.at + ' in ' + s.set);
+    // the page fills 'auto' from the cat before drawing; here, five marks, her stone by her nose, and a chapter 5 file
+    const o = Object.assign({}, s.opts || {});
+    if (o.marks === 'auto') o.marks = 5;
+    if (o.glow === 'auto') o.glow = [true, false, false, false, false];
+    if (o.depth === 'auto') delete o.depth;
+    if (o.stone === 'auto') o.stone = 'nose';
+    if (o.bark === 'auto') o.bark = FILE5.slice(0, 14);
+    if (Array.isArray(o.cards)) o.cards = o.cards.map((c) => (typeof c === 'string' ? c : c.id));
+    const scene = Object.assign({}, s, { opts: o });
+    checkRender(art.render(scene, { look: LOOK }), scene, 'ch05 ' + id);
+    // the sets this file draws: what the text's Art needs ask of them
+    if (s.set === 'den' && s.cam === 'outside' && ((s.fx || []).includes('dusk') || (s.fx || []).includes('sunset')) && s.opts && s.opts.moon) {
+      assert.ok(typeof s.opts.moon === 'number' && s.opts.moon >= 5, id + ': the den at dusk is under the fifth evening\'s moon (moon: 5), not chapter 4\'s sliver (moon: true)');
+      dusk++;
+    }
+    if (s.set === 'den' && s.opts && s.opts.hidden) assert.ok(s.opts.bark, id + ': hidden goes with her bark');
+    if (s.set === 'hollow') assert.ok(!(s.opts && s.opts.bark === 'falling'), id + ': no bark falls today');
+    if (s.set === 'tower') {
+      assert.ok(!(s.cast || []).some((m) => m.who === 'player' && m.at === 'window'), id + ': she is never back in her old room');
+      if (s.cam === 'up' && s.opts && s.opts.roar) assert.ok(!(s.cast || []).some((m) => m.who === 'waffles'), id + ': the offer: nobody at the railing');
+    }
+  }
+  if (frames.length) assert.ok(dusk >= 1, 'the den at dusk shows the fifth evening\'s moon (moon: 5)');
+});
+
+// ---------------------------------------------------------------- the gallery page itself, run in a stand-in page
+
+// dev/gallery.html's own script, run against a page of plain objects (no browser): every panel it
+// makes, and what each one drew. `stories` stands in for PC.story (the chapters' section).
+function runGallery(stories, search) {
+  const page = fs.readFileSync(path.join(ROOT, 'dev/gallery.html'), 'utf8');
+  const js = page.slice(page.lastIndexOf('<script>') + 8, page.lastIndexOf('</script>'));
+  const values = { fur: 'silver-tabby', marking: 'white-chest', eyes: 'green', sex: 'she' }, byId = {}, figures = [];
+  const el = (tag) => {
+    const e = { tag, children: [], style: {}, classList: { add() {} }, html: '', text: '', appendChild(c) { this.children.push(c); return c; }, insertAdjacentHTML() {}, addEventListener() {},
+      querySelector() { return this.panel || (this.panel = el('div')); }, getBoundingClientRect() { return { top: 0, bottom: 100 }; } };
+    Object.defineProperty(e, 'innerHTML', { get() { return this.html; }, set(v) { this.html = String(v); } });
+    Object.defineProperty(e, 'textContent', { get() { return this.text; }, set(v) { this.text = String(v); } });
+    if (tag === 'figure') figures.push(e);
+    return e;
+  };
+  const document = { body: el('body'), head: el('head'), createElement: el, getElementById(id) { return byId[id] || (byId[id] = Object.assign(el('div'), { id, value: values[id], checked: false })); } };
+  let io = null;
+  const IO = function (cb) { this.cb = cb; this.seen = []; io = this; };
+  IO.prototype.observe = function (t) { this.seen.push(t); };
+  const real = art.character;
+  try {
+    new Function('window', 'document', 'IntersectionObserver', 'location', 'performance', 'innerHeight', js)({ PC: Object.assign({}, PC, { story: stories }) }, document, IO, { search: search || '' }, { now: () => 0 }, 800);
+    // every panel scrolls into view
+    io.cb(io.seen.map((t) => ({ isIntersecting: true, target: t })));
+  } finally { art.character = real; }
+  return { figures: figures.map((f) => ({ caption: f.html, drawn: f.panel ? f.panel.html : '' })), status: byId.status ? byId.status.text : '', nav: byId.nav ? byId.nav.html : '' };
+}
+
+test('the gallery page runs: every set and camera, every extra and every frame of every chapter gets a panel, and every panel draws; a chapter 5 bedtime shows a chapter 5 file (every card that needs no dragonet found), chapter 4\'s the seven it always did', { skip: !art.character && 'no cats.js' }, () => {
+  const stories = {};
+  for (const id of ['ch01', 'ch02', 'ch03', 'ch04']) if (has('app/story/' + id + '.js')) { require(path.join(ROOT, 'app/story/' + id + '.js')); stories[id] = PC.story[id]; }
+  // a stand-in chapter 5: one bedtime frame, three cards of its own, one of them only for a cat who found a dragonet
+  const bed = { set: 'den', cam: 'nest', opts: { weather: 'clear', moon: false, stone: 'auto', bark: 'auto', hidden: true }, cast: [{ who: 'player', pose: 'lie', mood: 'sleepy', at: 'nest', facing: 'right' }], fx: ['night'] };
+  stories.ch05 = { id: 'ch05', number: 5, title: 'Riffle’s River', frames: { f001: { scene: bed, board: 'Bedtime.' }, f002: { scene: { set: 'hollow', cam: 'tree', opts: { marks: 'auto', glow: 'auto' }, cast: [], fx: ['morning'] }, board: 'The tree.' } },
+    cards: { fur: { mark: 'eye', line: 'x' }, 'otter-fox': { mark: 'ear', line: 'x' }, 'puddle-paws': { mark: 'ear', line: 'x', when: { foundPuddle: true } } } };
+  const g = runGallery(stories);
+  const sets = Object.values(art.vocab.sets).reduce((a, s) => a + s.cams.length, 0), frames = Object.values(stories).reduce((a, ch) => a + Object.keys(ch.frames).length, 0);
+  assert.ok(g.figures.length > sets + frames + 70, 'a panel for every camera, extra and frame: ' + g.figures.length);
+  assert.match(g.status, new RegExp('cats\\.js loaded · ' + g.figures.length + ' panels'));
+  for (const f of g.figures) {
+    assert.ok(!/class="pending err"/.test(f.drawn), 'a panel failed to draw: ' + f.caption.slice(0, 160) + ' :: ' + f.drawn.slice(0, 160));
+    assert.ok(f.drawn.startsWith('<svg') && f.drawn.includes('</svg><div class="ov">'), 'a panel drew: ' + f.caption.slice(0, 120));
+  }
+  for (const id of Object.keys(stories)) assert.ok(g.nav.includes('#chapter-' + id), 'the chapters\' section lists ' + id);
+  for (const id of Object.keys(art.vocab.sets)) assert.ok(g.nav.includes('#set-' + id), 'the sets\' section lists ' + id);
+  // chapter 5's frames: five marks on the tree; her nest with every card chapters 4 and 5 give without a dragonet found, two under the moss
+  const of = (title) => g.figures.find((f) => f.caption.includes('<code>' + title));
+  const file = Object.values(stories.ch04 ? stories.ch04.cards || {} : {}).filter((c) => !c.when).length + 2;
+  const nest5 = of('ch05 f001'), tree5 = of('ch05 f002');
+  assert.ok(nest5 && tree5, 'chapter 5\'s panels are there');
+  assert.equal(pieces(nest5.drawn).length, file - 2, 'chapter 5\'s bedtime: ' + file + ' cards, two of them under the moss');
+  assert.equal(corners(nest5.drawn).length, 2);
+  assert.equal(shapes(tree5.drawn, 'fill="#3A281E"').length, 15, 'five claw marks in chapter 5');
+  if (stories.ch04) {
+    const bed4 = Object.entries(stories.ch04.frames).find(([, f]) => f.scene && f.scene.set === 'den' && f.scene.opts && f.scene.opts.bark === 'auto' && f.scene.opts.hidden && ['nest', 'inside', 'doorway'].includes(f.scene.cam));
+    if (bed4) assert.equal(pieces(of('ch04 ' + bed4[0]).drawn).length, 5, 'chapter 4\'s bedtime is left as it was: seven, two under the moss');
+  }
+  // ?only= shows just the panels whose title or caption has that text
+  const only = runGallery(stories, '?only=' + encodeURIComponent('chapter 5:'));
+  assert.ok(only.figures.length >= 15 && only.figures.length < 40 && only.figures.every((f) => f.caption.includes('chapter 5:')), 'only chapter 5\'s extras: ' + only.figures.length);
 });

@@ -1,6 +1,6 @@
 /* Potomac Crossing · app/art/sets/pile.js
  *
- * The set: the prey pile in camp (chapters 2, 3 and 4), and PC.art.prey, the one piece of prey that both
+ * The set: the prey pile in camp (chapters 2 to 5), and PC.art.prey, the one piece of prey that both
  * the set and the Counts pictures draw.
  *
  *   pile: a shady corner of camp under a low arch of brambles; the pile sits in the arch's
@@ -47,6 +47,29 @@
  *   five new cameras draw rows whatever the options say (the third morning's, when `rows` is missing).
  *   Each row, the band and the "scale" are in `keep`.
  *
+ *   Chapter 5 (docs/chapters/05-riffles-river.md, "Art needs" and "Build": the fourth count). The
+ *   rows are four now (`rows: [10, 10, 10, { n: 10, gap: [3, 4, 5, 6] }]`: three full rows to count,
+ *   the hole in the back row where it was yesterday), the "scale" lies behind them (`scale:
+ *   'behind'`), and the dug earth behind the gap has three states in every camera that draws rows:
+ *   fresh (`dug`, as before), with tiny prints pressed in it (`prints: true`: a short line of them in
+ *   the loose earth at the heap's foot, each half a cat's paw; <g data-art="prints">), and swept flat
+ *   by the old tom's tail (`swept: true`: no heap, no prints, long side-to-side strokes;
+ *   <g data-art="swept">). `prints` and `swept` draw the earth whether or not `dug` is said; under
+ *   `back: 'shadow'` none of it shows, as ever. Pairs (chapters 2 and 3) take neither.
+ *   The noticing cat's Tap: on the `gap` camera, once the "scale" is behind the row (`scale:
+ *   'behind'`), the fresh dug earth carries the Tap's target, an unpainted <rect class="pc-tap"
+ *   data-art="dug-tap">, its box the heap (the page draws the glow on it: docs/build.md, "One-tap
+ *   frames"). Chapter 4's `gap` frames have no such rect: their Tap is the glint.
+ *   Camera `gap-close`: the same earth close, from the gap (its own composition, no anchors: a face is
+ *   never in it): the heap across the panel, the pressed places of the gap along the bottom edge, the
+ *   "scale" lying beside it when `scale: 'behind'`; with `prints: true` the tiny prints big enough to
+ *   read (the picture the Tap turns to), with `swept: true` the earth swept flat. The camera is on
+ *   the earth whatever `rows`, `back` and `lit` say (as the "scale" close-ups are on the "scale").
+ *   Anchor `behind` (`gap`, `rows`, `wide`, `low` and `close`): behind the back row, between it and
+ *   the dug earth, where the old tom has stomped round to look; he faces left, so his tail lies out
+ *   over the earth. It is drawn behind everyone else (z: 'behind') and takes no part in the depth a
+ *   spot of its own is given.
+ *
  *   PC.art.prey({ kind: 'mouse' | 'vole' | 'fish', lit, seed, facing?, part? }) -> { svg, w, h }:
  *   (the pile itself draws no fish; `fish` stays drawable only in case Aron rules to keep a few,
  *   traded from the otters, which the text would then have to say at the pile)
@@ -55,6 +78,8 @@
  *   halo in #ffb21f / #ffe36e, as cats.js lights a tail, and a little sparkle). `facing` is 'right'
  *   (default) or 'left'. `part` ('glow' | 'body' | 'spark') returns one layer only, for a caller
  *   that stacks pieces and wants every halo behind every body.
+ *   PC.art.prey.string({ count, len }) -> svg (chapter 5): `count` fish on a reed loop, for a set
+ *   to lay on a raft (the two spare fish on the way home); see the function.
  */
 (function (root) {
   'use strict';
@@ -202,6 +227,32 @@
     return { svg: inner ? '<g transform="' + t + '">' + inner + '</g>' : '', w: w, h: h, kind: kind };
   };
   art.prey.kinds = ['mouse', 'vole', 'fish'];
+
+  /* PC.art.prey.string({ count, len }) -> svg (chapter 5): a string of fish as it is carried home,
+   * the marsh's fourth string with its two spare fish ("Two to spare"; app/art/sets/marsh.js lays the
+   * four of them on the raft there, and the open river and the Crossing lay this one on the logs on
+   * the way home). `count` fish (two unless it says), each `len` long, fanned a little from the reed
+   * loop that holds their tails, eyes shut. The loop lies over the tails: nothing goes through a
+   * fish; no hook, no blood. Drawn hanging from (0, 0), heads toward +y: a group with no defs and no
+   * ids, for the caller to place and turn with a transform. */
+  var STRING = { reed: '#9BAC66', reedDk: '#70824E' };
+  art.prey.string = function (o) {
+    o = o || {};
+    var count = Math.max(1, Math.min(5, Math.round(+o.count) || 2)), len = +o.len > 0 ? +o.len : 60, body = '', i;
+    var lw = Math.max(1.5, len * 0.045), ry = len * 0.06, rx = len * (0.07 + count * 0.022), ly = len * 0.13;
+    for (i = 0; i < count; i++) {
+      var ang = 90 + (i - (count - 1) / 2) * 13, a = ang * Math.PI / 180, f = art.prey({ kind: 'fish', seed: 521 + i });
+      body += '<g transform="translate(' + f1(Math.cos(a) * len * 0.44) + ' ' + f1(Math.sin(a) * len * 0.44) + ') rotate(' + f1(ang) + ') scale(' + (len / f.w).toFixed(4) +
+        ') translate(' + f1(-f.w / 2) + ' ' + f1(-f.h / 2) + ')" data-fish="1">' + f.svg + '</g>';
+    }
+    function arc(sweep, col, w) {
+      return '<path d="M' + f1(-rx) + ' ' + f1(ly) + 'A' + f1(rx) + ' ' + f1(ry) + ' 0 0 ' + sweep + ' ' + f1(rx) + ' ' + f1(ly) + '" fill="none" stroke="' + col + '" stroke-width="' + f1(w) + '" stroke-linecap="round"/>';
+    }
+    // the far side of the loop behind the tails, the near side over them, the knot and its two loose ends
+    return '<g data-part="fish-string" data-fish-count="' + count + '">' + arc(1, STRING.reedDk, lw) + '<g>' + body + '</g>' + arc(0, STRING.reedDk, lw * 1.5) + arc(0, STRING.reed, lw) +
+      '<path d="M' + f1(rx) + ' ' + f1(ly) + 'l' + f1(len * 0.13) + ' ' + f1(-len * 0.09) + 'M' + f1(rx) + ' ' + f1(ly) + 'l' + f1(len * 0.15) + ' ' + f1(len * 0.03) + '" fill="none" stroke="' + STRING.reed + '" stroke-width="' + f1(lw) + '" stroke-linecap="round"/>' +
+      '<circle cx="' + f1(rx) + '" cy="' + f1(ly) + '" r="' + f1(lw * 0.9) + '" fill="' + STRING.reedDk + '"/></g>';
+  };
 
   // ------------------------------------------------------------------ the set
 
@@ -792,7 +843,13 @@
       // tonight the rows are laid a little forward of where it was found: behind the back row there is
       // bare earth, the "scale" on it, and then the dug earth
       if (o.scale === 'behind') dugY = Math.min(dugY, depthGeo(G, R + behind + 0.55).y - 4 * kd);
-      if (o.dug) out.dug = g(dugEarth(S, gx, dugY, back.sp * (G.dugW || 5), kd, seed + 31, o.dug === 'big'), { 'data-art': 'dug' });
+      // chapter 5: the same earth with tiny prints in it, or swept flat (either draws it, `dug` or not)
+      var dugW = back.sp * (G.dugW || 5), bigDug = o.dug === 'big', pk = G.printK || 11;
+      if (o.swept === true) out.dug = g(sweptEarth(S, gx, dugY, dugW, kd, seed + 31, bigDug), { 'data-art': 'swept' });
+      else if (o.dug) out.dug = g(dugEarth(S, gx, dugY, dugW, kd, seed + 31, bigDug), { 'data-art': 'dug' });
+      else if (o.prints === true) out.dug = g(dugEarth(S, gx, dugY, dugW, kd, seed + 31, false), { 'data-art': 'dug' });
+      if (o.prints === true && o.swept !== true) { var tp = tinyPrints(S, gx, dugY, dugW, kd, seed + 31, bigDug, pk); out.dug += tp.svg; out.prints = tp.box; }
+      if (out.dug) out.earth = earthBox(gx, dugY, dugW, kd, bigDug, o.swept === true);
       if (o.scale === 'behind') {
         var bd = depthGeo(G, R + behind);
         spot = { x: G.cx + bd.sp * 1.7, y: bd.y, u: bd.k, lean: 1, flat: true };
@@ -898,10 +955,107 @@
     back += insideArch(S, { key: 'pilegap', seed: 651, floor: 430, canopy: 150, legs: 100, leaf: 1.3, foot: 230 });
     var rows = rowList(o) || rowList({ rows: MORNING });
     var rp = rowsPile(S, GAP, rows.slice(-1), 7, Math.max(0, rows.length - 1));
-    back += rp.dug + g(rp.svg, wet ? null : { filter: pileTint(S) });
+    back += rp.dug;
+    // chapter 5: the "scale" lies behind the row now, and the fresh dug earth is what a noticing cat
+    // taps: an unpainted target over the heap (the page draws its glow), which the lettering keeps off
+    var tap = o.scale === 'behind' && rp.earth && o.swept !== true && o.prints !== true ? rp.earth : null;
+    if (tap) back += rect(tap.x, tap.y, tap.w, tap.h, 'none', { 'class': 'pc-tap', 'data-art': 'dug-tap', 'pointer-events': 'none' });
+    back += g(rp.svg, wet ? null : { filter: pileTint(S) });
     keepBoxes(S, rp.boxes);
+    if (tap) keepBoxes(S, [tap]);
+    if (rp.prints) keepBoxes(S, [rp.prints]);
     front += g(K.tufts(S, 0, 1600, 988, 1014, 18, 669, p.grassNear, p.grassLight, 2.4), { filter: S.shadow('m') });
     return { back: back, over: '', front: front };
+  }
+
+  // ------------------------------------------------------------------ chapter 5: prints in the dug earth, the earth swept flat, its close-up
+
+  // the dug earth's colours (dugEarth's own)
+  function soilCols(S) {
+    var p = S.pal;
+    return { soil: mix('#7A5638', p.shade, 0.18), lt: mix('#A27A55', p.rim, 0.12), dk: mix('#4E3524', p.shade, 0.2),
+      press: mix('#2A1B12', p.shade, 0.25), lip: mix('#C9A27A', p.rim, 0.2) };
+  }
+  // Where the earth lies, as a box { x, y, w, h }: the heap dugEarth draws at (cx, base), or the flat
+  // patch sweptEarth leaves there.
+  function earthBox(cx, base, w, k, big, swept) {
+    if (big) { w *= 1.22; k *= 1.2; }
+    return swept ? { x: cx - w * 0.6, y: base - 40 * k, w: w * 1.2, h: 52 * k } : { x: cx - w * 0.5 - 16 * k, y: base - 84 * k, w: w + 32 * k, h: 90 * k };
+  }
+  // One tiny print pressed in soft earth at (x, y): a small pad and four toes, L long, the toes along
+  // `ang` (radians on the ground), the ground foreshortened by fs. (Nobody counts the toes: the text
+  // sizes the prints, "half the size of yours", and no more.)
+  function tinyPrintD(x, y, L, ang, fs) {
+    var ca = Math.cos(ang), sa = Math.sin(ang), d = '';
+    function oval(u0, v0, ru, rv, f) {
+      var Q = [], cf = Math.cos(f), sf = Math.sin(f);
+      for (var j = 0; j < 10; j++) {
+        var t = Math.PI * 2 * j / 10, a = Math.cos(t) * ru, b = Math.sin(t) * rv, u = u0 + cf * a - sf * b, v = v0 + sf * a + cf * b;
+        Q.push([x + (ca * u - sa * v) * L, y + (sa * u + ca * v) * L * fs]);
+      }
+      return K.pts(Q) + 'Z';
+    }
+    d += oval(-0.16, 0, 0.25, 0.2, 0);
+    [-0.82, -0.28, 0.28, 0.82].forEach(function (f, i) { var rr = i === 0 || i === 3 ? 0.31 : 0.4; d += oval(Math.cos(f) * rr, Math.sin(f) * rr, 0.12, 0.082, f); });
+    return d;
+  }
+  // `prints: true`: tiny prints in the dug earth. A spill of loose earth at the heap's foot, and a
+  // short line of prints pressed in it, left foot and right taking turns, each `pk` × k long (half a
+  // cat's paw at that depth, drawn a little big so it can be found). Returns { svg, box }.
+  function tinyPrints(S, cx, base, w, k, seed, big, pk) {
+    if (big) { w *= 1.22; k *= 1.2; }
+    var c = soilCols(S), r = rng(seed + 307), L = pk * k, fs = 0.5, ya = base - 4 * k, all = '', tagged = '';
+    var count = clamp(Math.round(w * 0.6 / (L * 3)) + 1, 3, 7);
+    var s = path(blob(cx, ya, w * 0.4, 14 * k, 12, r, 0.12, 0.2), c.soil) + path(blob(cx - w * 0.02, ya - 2.5 * k, w * 0.35, 9.5 * k, 11, r, 0.12, 0.2), c.lt, { opacity: 0.62 });
+    for (var i = 0; i < count; i++) {
+      var t = (i + 0.5) / count, x = cx + (t - 0.5) * w * 0.62, y = ya - 1.5 * k - Math.sin(Math.PI * t) * 3.5 * k + (i % 2 ? 1 : -1) * L * 0.2;
+      var d = tinyPrintD(x, y, L, -0.1 - Math.cos(Math.PI * t) * 0.12 + (r() - 0.5) * 0.24, fs);
+      all += d;
+      tagged += '<path d="' + d + '" data-print="tiny"/>';
+    }
+    // each print: the lit lip at its near edge, then the pressed dark of it
+    s += path(all, c.lip, { opacity: 0.7, transform: 'translate(0 ' + n(Math.max(1, L * 0.07)) + ')' }) + g(tagged, { fill: c.press, opacity: 0.86 });
+    return { svg: g(s, { 'data-art': 'prints' }), box: { x: cx - w * 0.31 - L, y: ya - 6 * k - L * 0.5, w: w * 0.62 + L * 2, h: 8 * k + L } };
+  }
+  // `swept: true`: the same earth a panel later, swept flat by the old tom's tail as he stomps round
+  // the pile: no heap and no prints, a low smooth patch with long side-to-side strokes in it, and a
+  // little ridge of crumbs where each stroke ended.
+  function sweptEarth(S, cx, base, w, k, seed, big) {
+    if (big) { w *= 1.22; k *= 1.2; }
+    var c = soilCols(S), r = rng(seed + 211), yc = base - 18 * k, arcs = '', crumbs = '', i;
+    var s = ell(cx, yc + 5 * k, w * 0.58, 22 * k, c.dk, { opacity: 0.8 });
+    s += path(blob(cx, yc, w * 0.55, 18 * k, 14, r, 0.1, 0.07), c.soil);
+    s += path(blob(cx - w * 0.03, yc - 3 * k, w * 0.46, 11.5 * k, 12, r, 0.1, 0.07), c.lt, { opacity: 0.5 });
+    for (i = 0; i < 6; i++) {
+      var t = i / 5, yy = yc - 12 * k + t * 23 * k, half = w * (0.5 - Math.abs(t - 0.45) * 0.36) * (0.9 + r() * 0.1), sag = (4 + r() * 3.5) * k, x0 = cx - half + (r() - 0.5) * 10 * k;
+      arcs += 'M' + n(x0) + ' ' + n(yy) + 'Q' + n(cx + (r() - 0.5) * w * 0.1) + ' ' + n(yy + sag) + ' ' + n(x0 + half * 2) + ' ' + n(yy - 2 * k);
+      for (var j = 0; j < 4; j++) crumbs += blob(x0 + half * 2 + (2 + r() * 12) * k, yy - 2 * k + (r() - 0.5) * 9 * k, (2.5 + r() * 4) * k, (1.8 + r() * 2.4) * k, 6, r, 0.3, 0.3);
+    }
+    s += stroke(arcs, c.dk, 2.8 * k, { opacity: 0.5 }) + stroke(arcs, c.lip, 1.1 * k, { opacity: 0.45, transform: 'translate(0 ' + n(2.4 * k) + ')' });
+    s += path(crumbs, c.soil) + path(crumbs, c.lt, { opacity: 0.4, transform: 'translate(' + n(-0.8 * k) + ' ' + n(-0.8 * k) + ')' });
+    return s;
+  }
+
+  // `gap-close`: the dug earth behind the gap, close, from the gap. The brambles' shade behind it, the
+  // packed earth in front, the gap's pressed places along the bottom edge, and the "scale" lying
+  // beside it when it is behind the row. Fresh; with tiny prints in it; or swept flat.
+  var GAPCLOSE = { cx: 800, base: 640, w: 1300, k: 3.6, printK: 15, hz: 262, scale: [1390, 770, 2.4], places: [270, 623, 977, 1330] };
+  function drawGapClose(S) {
+    var o = S.opts, C = GAPCLOSE, back = '', big = o.dug === 'big';
+    back += gapEarth(S, 'pilegapclose', C.hz, 811);
+    C.places.forEach(function (x) { back += placeMark(S, x, 1010, 340); });
+    if (o.swept === true) back += g(sweptEarth(S, C.cx, C.base, C.w, C.k, 38, big), { 'data-art': 'swept' });
+    else {
+      back += g(dugEarth(S, C.cx, C.base, C.w, C.k, 38, big), { 'data-art': 'dug' });
+      if (o.prints === true) { var tp = tinyPrints(S, C.cx, C.base, C.w, C.k, 38, big, C.printK); back += tp.svg; keepBoxes(S, [tp.box]); }
+    }
+    if (o.scale === 'behind') {
+      var sc = scaleSmall(S, { x: C.scale[0], y: C.scale[1], u: C.scale[2], lean: 1, flat: true });
+      back += sc.svg + glintSvg(S, sc.top[0], sc.top[1], C.scale[2] * 22, 0);
+      keepBoxes(S, [sc.box]);
+    }
+    S.weatherClip = S.clip('pilenorain', rect(0, 0, 0, 0, '#fff'));
+    return { back: back, over: '', front: '' };
   }
 
   // ------------------------------------------------------------------ the "scale", close: scale, through, mirror
@@ -1106,6 +1260,7 @@
     if (S.comp === 'low') return drawLow(S);
     if (S.comp === 'rows') return drawRows(S);
     if (S.comp === 'gap') return drawGap(S);
+    if (S.comp === 'gapclose') return drawGapClose(S);
     if (S.comp === 'scale') return drawScale(S);
     if (S.comp === 'through') return drawThrough(S);
     if (S.comp === 'mirror') return drawMirror(S);
@@ -1123,34 +1278,44 @@
       gap: { box: [0, 0, 1600], comp: 'gap' },
       scale: { box: [0, 0, 1600], comp: 'scale' },
       through: { box: [0, 0, 1600], comp: 'through' },
-      mirror: { box: [0, 0, 1600], comp: 'mirror' }
+      mirror: { box: [0, 0, 1600], comp: 'mirror' },
+      // chapter 5
+      'gap-close': { box: [0, 0, 1600], comp: 'gapclose' }
     },
     anchors: {
       main: {
         'pile-left': A(300, 896, 258), 'pile-right': A(1185, 902, 262, 'left'), beside: A(985, 856, 236, 'left'),
         'crowd-1': A(140, 838, 228), 'crowd-2': A(1080, 742, 180, 'left'), 'crowd-3': A(1385, 948, 284, 'left'),
-        'fountain-edge': A(1490, 764, 245, 'left', { elev: true })
+        'fountain-edge': A(1490, 764, 245, 'left', { elev: true }),
+        // chapter 5: behind the back row (z: 'behind' also keeps it out of the depth a spot of its own gets)
+        behind: A(566, 732, 132, 'left', { z: 'behind' })
       },
       low: {
-        'pile-left': A(180, 946, 396), beside: A(1305, 914, 376, 'left'), 'pile-right': A(1458, 932, 396, 'left')
+        'pile-left': A(180, 946, 396), beside: A(1305, 914, 376, 'left'), 'pile-right': A(1458, 932, 396, 'left'),
+        behind: A(610, 742, 186, 'left', { z: 'behind' })
       },
       // chapter 4. rows: a cat each side at the front (the old tom sits at `beside`), and further back
       // beside the second row (`pile-right`, `crowd-1`) and the back row (`crowd-2`, `crowd-3`)
       rows: {
         'pile-left': A(118, 958, 320), beside: A(1474, 954, 320, 'left'), 'pile-right': A(1424, 818, 280, 'left'),
-        'crowd-1': A(176, 818, 280), 'crowd-2': A(246, 706, 249), 'crowd-3': A(1354, 706, 249, 'left')
+        'crowd-1': A(176, 818, 280), 'crowd-2': A(246, 706, 249), 'crowd-3': A(1354, 706, 249, 'left'),
+        behind: A(690, 548, 204, 'left', { z: 'behind' })
       },
       // gap: in front of the back row, the middle left clear for the hole. The cats are nearer the
       // camera than the row, three mice tall as in `rows` (at 330 the big ginger was barely two)
-      gap: { 'pile-left': A(200, 998, 430), 'pile-right': A(1400, 998, 430, 'left'), beside: A(1160, 998, 400, 'left') },
-      // the three close-ups of the "scale": no faces in them
-      scale: {}, through: {}, mirror: {}
+      // (chapter 5) `behind`: the old tom, round the back of the row, between its gap and the dug earth
+      gap: { 'pile-left': A(200, 998, 430), 'pile-right': A(1400, 998, 430, 'left'), beside: A(1160, 998, 400, 'left'),
+        behind: A(680, 474, 236, 'left', { z: 'behind' }) },
+      // the three close-ups of the "scale", and chapter 5's of the dug earth: no faces in them
+      scale: {}, through: {}, mirror: {}, gapclose: {}
     },
     // `rows` lists its usual values (each a list: compare by value); the set draws any list of up to five rows
     opts: { pairs: 'number', lit: 'number', dug: [true, false, 'big'], vole: [true, false],
-      rows: [[10, 10, 10], [10, 10, { n: 10, gap: [3, 4, 5, 6] }], [10, 10, 10, 10]],
-      back: ['none', 'shadow'], scale: [false, true, 'behind'], glint: [false, true] },
-    defaults: { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false }
+      rows: [[10, 10, 10], [10, 10, { n: 10, gap: [3, 4, 5, 6] }], [10, 10, 10, 10], [10, 10, 10, { n: 10, gap: [3, 4, 5, 6] }]],
+      back: ['none', 'shadow'], scale: [false, true, 'behind'], glint: [false, true],
+      // chapter 5: the dug earth with tiny prints in it, and swept flat
+      prints: [false, true], swept: [false, true] },
+    defaults: { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false }
   });
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;

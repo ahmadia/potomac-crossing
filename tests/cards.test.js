@@ -28,8 +28,12 @@ const CARDS5 = [
 ];
 const NEW5 = CARDS5.filter((c) => !IDS.includes(c[0]));
 const IDS5 = NEW5.map((c) => c[0]);
+// Chapter 6's three, from its spec's table (docs/chapters/06-the-snake-in-the-stones.spec.md, "3. The
+// Case File"), in its order: all ears
+const CARDS6 = [['reed-pile', 'ear'], ['coil-diggers', 'ear'], ['sleet-den', 'ear']];
+const IDS6 = CARDS6.map((c) => c[0]);
 // every drawing there is, with its card's mark
-const ALL = CARDS.concat(NEW5);
+const ALL = CARDS.concat(NEW5, CARDS6);
 const ALL_IDS = ALL.map((c) => c[0]);
 const MARK = Object.fromEntries(ALL);
 
@@ -259,7 +263,7 @@ test('every card, small and large, with either mark or none, is one well-formed 
       });
     });
   });
-  assert.equal(ALL_IDS.length, 18, 'chapter 4\'s nine and chapter 5\'s nine');
+  assert.equal(ALL_IDS.length, 21, 'chapter 4\'s nine, chapter 5\'s nine and chapter 6\'s three');
   assert.equal(seen.size, ALL_IDS.length * 3 * 2, 'no two of them are the same drawing');
 });
 
@@ -413,7 +417,8 @@ test('small cards are drawn in heavier lines than large ones, and large ones add
     assert.ok(bp.length >= sp.length, id + ': nothing is lost large');
   });
   ['fox-flew', 'fox-moon', 'cant-fly', 'tidy', 'four-a-night',
-    'prints-pile', 'puddle-paws', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'wisp-fox'].forEach((id) => {
+    'prints-pile', 'puddle-paws', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'wisp-fox',
+    'reed-pile', 'coil-diggers', 'sleet-den'].forEach((id) => {
     const small = group(art.card({ picture: id }), 'pcc-pic'), big = group(art.card({ picture: id, big: true }), 'pcc-pic');
     assert.ok(points(big.slice(big.lastIndexOf('<g stroke="#3A281E"'))).length > points(small).length, id + ': a small touch more, large');
   });
@@ -841,7 +846,8 @@ test('"clever little paws": two paws and nothing of whose, lifting the top mouse
 });
 
 test('every fox on a card is the one fox: the same head, side on, on the two chapter 4 gave her and the two she gets today', () => {
-  ['fox-moon', 'otter-fox', 'wisp-fox'].forEach((id) => {
+  // (and chapter 6's: Sleet's card has the same fox)
+  ['fox-moon', 'otter-fox', 'wisp-fox', 'sleet-den'].forEach((id) => {
     [false, true].forEach((big) => {
       const strip = (list) => list.map((p) => [p.d, p.sw]);
       assert.deepEqual(strip(foxOf(ink(id, big))), strip(foxOf(ink('fox-flew', big))), id + (big ? ', large' : '') + ': the fox of "the fox says it FLEW"');
@@ -1048,6 +1054,177 @@ test('"Wisp drew a fox": the fox, a small "scale" with shine lines under his nos
   // top to bottom: the fox, the thing, the ripples
   assert.ok(fb.cy < tb.cy && tb.cy < rings[0].cy);
   assert.equal(closed(rest), 3, 'no reeds, nobody else');
+});
+
+// ---------------------------------------------------------------- chapter 5's cards, as chapter 5 shipped them
+
+test('chapter 5\'s nine new cards are byte for byte what chapter 5 shipped', () => {
+  // as chapter 4's above (recorded from app/art/cards.js as chapter 5 shipped it, before chapter 6 added
+  // its three): [small, large], each card with its own mark. A change here changes a card a cat holds.
+  const SHIPPED5 = {
+    'prints-pile': ['99690b5bdeaf', '643b110c6317'], 'puddle-paws': ['23d30f679c0b', '23b3225178b4'], 'otter-fox': ['49ed53e4e1fe', 'a602ce667578'],
+    fur: ['d5f2334c79fa', 'a0daf033b8b0'], 'heron-no-moon': ['95ad04c2746f', 'f6be9f1a6221'], 'heron-shapes': ['dbbe2e6fa3d2', 'a8dabaedf2a1'],
+    'prints-marsh': ['3758c6559f53', '8385c87ba0ad'], 'prints-tracks': ['35f9347e11d1', '2267b9ea94c5'], 'wisp-fox': ['2475f452a3bc', 'd78b3fb6100b']
+  };
+  const sum = (s) => crypto.createHash('sha256').update(s).digest('hex').slice(0, 12);
+  assert.deepEqual(Object.keys(SHIPPED5), IDS5, 'the nine');
+  NEW5.forEach(([id, mark]) => {
+    assert.deepEqual([sum(art.card({ picture: id, mark: mark })), sum(art.card({ picture: id, mark: mark, big: true }))], SHIPPED5[id], id + ' is the card chapter 5 gave her');
+  });
+});
+
+// ---------------------------------------------------------------- chapter 6's pictures
+
+test('one drawing for every card chapter 6 can give: the three in its spec\'s table, all ears, each saying what it shows', () => {
+  const md = fs.readFileSync(path.join(ROOT, 'docs/chapters/06-the-snake-in-the-stones.spec.md'), 'utf8');
+  const sec = md.slice(md.indexOf('## 3. The Case File'), md.indexOf('## 4. Art needs'));
+  const rows = sec.split('\n').map((l) => /^\s*\|\s*`([a-z0-9-]+)`\s*\|\s*(eye|ear)\s*\|/.exec(l)).filter(Boolean).map((m) => [m[1], m[2]]);
+  assert.deepEqual(rows, CARDS6, 'this test\'s list is the spec\'s table, in its order, with its marks');
+  // what each says it is (the spec's pictures, in plain words), and nothing the story has not said
+  const SAYS = {
+    'reed-pile': ['a stern cat’s head', 'three drips under its chin', 'a tidy row of mice with one gap'],
+    'coil-diggers': ['a snake’s head', 'one round unblinking eye', 'a row of mice on the ground', 'short scrape marks under the ground'],
+    'sleet-den': ['a fox’s head', 'a round den mouth', 'three short dry lines over it']
+  };
+  IDS6.forEach((id) => {
+    const p = art.cardPictures[id];
+    assert.ok(p && typeof p.draw === 'function', 'a drawing for ' + id);
+    SAYS[id].forEach((w) => assert.ok(p.label.includes(w), id + ' says "' + w + '": ' + p.label));
+    assert.ok(!/weasel|stoat|tunnel|hole|glass|thief|snip|snatch|scale/i.test(p.label), id + ' names nothing nobody has said (no weasel, tunnel, hole or glass)');
+    assert.equal(art.card({ picture: id, mark: 'ear' }).match(/aria-label="([^"]+)"/)[1], 'A piece of bark: ' + p.label.replace(/"/g, '&quot;') + '; in its corner, an ear');
+  });
+  // once the chapter defines them, they are these, by id, with these marks
+  const six = PC.story && PC.story.ch06 && PC.story.ch06.cards;
+  if (six && Object.keys(six).length) {
+    for (const [id, mark] of CARDS6) if (six[id]) {
+      assert.equal(six[id].mark, mark, 'chapter 6 card ' + id + ' is an ear');
+      assert.ok(!six[id].picture || six[id].picture === id, 'chapter 6 card ' + id + ' is drawn under its own id');
+    }
+  }
+});
+
+// a mouse's dome (closed, curved: nothing else on these cards is a closed C-curve run), with where it sits
+const domes = (d) => (d.match(/M[\d.]+ [\d.]+C[^MZ]+Z/g) || []).map((m) => { const b = bounds(pathPoints(m)); return { d: m, x: r1((b.x0 + b.x1) / 2), y: r1(b.y1), w: b.x1 - b.x0, top: b.y0 }; });
+const allInk = (id, big) => ink(id, big).map((p) => p.d).join('');
+
+test('"left tidy": Sloshbank\'s card lays down tidy\'s own row, one place of it empty, so the two cards lie touching as one pile', () => {
+  const was = domes(allInk('tidy')), mice = domes(allInk('reed-pile'));
+  const low = was.filter((m) => m.y > 150).sort((a, b) => a.x - b.x);
+  assert.equal(low.length, 4, 'tidy\'s lower row: four');
+  assert.equal(mice.length, 3, 'three pieces on Sloshbank\'s card');
+  assert.deepEqual(mice.map((m) => m.d).sort(), [low[0], low[1], low[3]].map((m) => m.d).sort(), 'scratched exactly as tidy scratches them, in the same places');
+  // the same straight tails and the same ruled ground, at the same height
+  const tails = (id) => (allInk(id).match(/M[\d.]+ ([\d.]+)L[\d.]+ \1(?=M|$)/g) || []).filter((t) => pathPoints(t)[0][1] > 160);
+  assert.equal(tails('reed-pile').length, 3, 'three straight tails');
+  tails('reed-pile').forEach((t) => assert.ok(tails('tidy').includes(t), 'tidy\'s own tail: ' + t));
+  assert.equal((allInk('reed-pile').match(/M30 180H172/g) || []).length, 1, 'tidy\'s lower ground line');
+  assert.ok(allInk('tidy').includes('M30 180H172'));
+  // the gap: one light level dent where the third piece lay, a mouse's step from its neighbours
+  const dents = [...allInk('reed-pile').matchAll(/M([\d.]+) 174h([\d.]+)/g)].map((m) => ({ x: +m[1] + +m[2] / 2, w: +m[2] }));
+  assert.equal(dents.length, 1, 'one empty place');
+  assert.ok(Math.abs(dents[0].x - low[2].x) < 1.2, 'where tidy has its third piece: ' + dents[0].x + ' vs ' + low[2].x);
+  assert.ok(dents[0].w < mice[0].w, 'marked more lightly than a mouse');
+});
+
+test('"a stern cat\'s head with three drips under its chin": a broad face front on, brows down to the middle, no smile; three drops falling under it, above the row', () => {
+  const paths = ink('reed-pile'), d = paths.map((p) => p.d).join('');
+  const head = box(along({ d: subpaths(paths[0].d)[0], t: '' }));
+  assert.ok(head.w > 50 && head.cx > 90 && head.cx < 130, 'a broad head in the middle of the bark: ' + JSON.stringify(head));
+  // the brows: two short strokes, each lower at its inner end (a frown)
+  const brows = pieces(paths).filter((p) => /^M[\d.]+ [\d.]+L[\d.]+ [\d.]+$/.test(p.d)).map((p) => pathPoints(p.d)).filter((q) => q[0][1] < head.y1 && Math.abs(q[0][0] - q[1][0]) > 8 && Math.abs(q[0][1] - q[1][1]) > 3);
+  assert.equal(brows.length, 2, 'two brows');
+  brows.forEach((q) => {
+    const inner = Math.abs(q[0][0] - 110) < Math.abs(q[1][0] - 110) ? q[0] : q[1], outer = inner === q[0] ? q[1] : q[0];
+    assert.ok(inner[1] > outer[1], 'a brow drawn down to the middle: stern');
+  });
+  assert.ok(/M[\d.]+ 119H[\d.]+/.test(d), 'a level mouth: no smile');
+  // three drops: closed, round at the foot (a half circle), pointed at the top; under the chin, over the mice
+  const drops = subpaths(d).filter((s) => /A/.test(s) && /Z/.test(s)).map((s) => box(pathPoints(s)));
+  assert.equal(drops.length, 3, 'three drips');
+  const top = Math.min(...domes(d).map((m) => m.top));
+  drops.forEach((b) => {
+    assert.ok(b.y0 > head.y1 - 2, 'under his chin: ' + r1(b.y0) + ' vs ' + r1(head.y1));
+    assert.ok(b.y1 < top - 4, 'clear of the row: ' + r1(b.y1) + ' vs ' + r1(top));
+    assert.ok(b.cx > head.x0 + 8 && b.cx < head.x1 - 8, 'under the face');
+  });
+});
+
+test('"small diggers come and go under our pile": Coil\'s rounded head at the left, chin on the ground, one round eye that never shuts; the pile\'s mice beside him; under the ground only short scrapes', () => {
+  [false, true].forEach((big) => {
+    const paths = ink('coil-diggers', big), d = paths.map((p) => p.d).join(''), sz = big ? ', large' : '';
+    // the ground: one ruled line across the bark
+    const ground = paths.filter((p) => LEVELS.test(p.d)).flatMap((p) => subpaths(p.d).map((s) => pathPoints(s)));
+    assert.equal(ground.length, 1, 'one ground line' + sz);
+    const gy = ground[0][0][1];
+    assert.ok(ground[0][1][0] - ground[0][0][0] > 140, 'across the bark');
+    // the head: the first stroke, rounded (curves, no arrow point), at the left, his chin on the ground
+    const head = box(along({ d: subpaths(paths[0].d)[0], t: '' }));
+    assert.ok(/C/.test(paths[0].d), 'a rounded head' + sz);
+    assert.ok(head.x0 < 30 && head.x1 < 95, 'at the left: ' + JSON.stringify(head));
+    assert.ok(Math.abs(head.y1 - gy) < 7, 'his chin on the ground (feeling the footsteps)');
+    // one eye, perfectly round (no lid can shut it), a pupil in it, inside the head
+    const eyes = subpaths(d).filter((s) => /a([\d.]+) \1 0 1 0/.test(s));
+    assert.equal(eyes.length, 1, 'one round eye' + sz);
+    const eye = box(pathPoints(eyes[0]));
+    assert.ok(Math.abs(eye.w - eye.h) < 0.5, 'round, not an almond: no eyelid');
+    assert.ok(eye.x0 > head.x0 && eye.x1 < head.x1 && eye.y0 > head.y0 && eye.y1 < gy, 'in his head');
+    assert.ok(subpaths(d).some((s) => PECKS.test(s) && Math.abs(pathPoints(s)[0][0] - eye.cx) < 2 && Math.abs(pathPoints(s)[0][1] - eye.cy) < 2), 'with its round pupil');
+    // the pile's mice, on the ground beside him (as tidy's sit on theirs)
+    const mice = domes(d);
+    assert.equal(mice.length, 3, 'three mice' + sz);
+    mice.forEach((m) => { assert.ok(Math.abs(m.y - (gy - 6)) < 0.6, 'on the ground'); assert.ok(m.x - m.w / 2 > head.x1, 'beside his head, not under it'); });
+    // under the ground: only short strokes, a few, under the pile, none closed (no hole), none long (no way through)
+    const under = subpaths(d).filter((s) => pathPoints(s).every((q) => q[1] > gy + 3));
+    assert.ok(under.length >= 6, 'a few scrapes, in pairs' + sz);
+    const x0 = Math.min(...mice.map((m) => m.x - m.w / 2)) - 12, x1 = Math.max(...mice.map((m) => m.x + m.w / 2)) + 12;
+    under.forEach((s) => {
+      const q = pathPoints(s);
+      assert.ok(!/Z|C|Q|A/.test(s), 'a straight scratch, nothing closed or round: ' + s);
+      assert.equal(q.length, 2, 'one stroke: ' + s);
+      assert.ok(Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]) < 12, 'short: ' + s);
+      assert.ok(q[0][0] > x0 && q[0][0] < x1, 'under the pile: ' + s);
+    });
+    // and nothing of a digger: no other closed shape anywhere but the mice and his eye
+    assert.equal(closed(paths), mice.length + 1, 'no animal, no hole, no tunnel' + sz);
+  });
+});
+
+test('"a fine, dry den": the one fox, a small curl of words at his mouth, a round den mouth on the ground beside him with three short straight lines standing over it; nothing falling', () => {
+  [false, true].forEach((big) => {
+    const paths = ink('sleet-den', big), fox = foxOf(paths), rest = paths.filter((p) => !fox.includes(p)), sz = big ? ', large' : '';
+    assert.equal(new Set(fox.map((p) => p.t)).size, 1, 'one fox' + sz);
+    const nose = hull(fox.find((p) => PECKS.test(p.d)))[0], fb = box(fox.flatMap((p) => along(p)));
+    // his words: one small open curl starting at his nose
+    const curl = pieces(rest).find((p) => /Q/.test(p.d) && !/Z/.test(p.d) && box(curvePoints(p.d)).w < 20);
+    assert.ok(curl, 'a small speech curl' + sz);
+    assert.ok(dist(pathPoints(curl.d)[0], nose) < 16, 'from his mouth');
+    // the den: an open arch standing on a ground line, its two feet on the line, a smaller arch inside
+    const ground = pieces(rest).filter((p) => LEVELS.test(p.d)).map((p) => pathPoints(p.d));
+    assert.equal(ground.length, 1, 'the ground the den opens in' + sz);
+    const gy = ground[0][0][1];
+    const arches = pieces(rest).filter((p) => /^M[\d.]+ [\d.]+C[\d. ]+$/.test(p.d)).map((p) => ({ p, b: box(curvePoints(p.d)), q: pathPoints(p.d) }));
+    assert.equal(arches.length, 2, 'the den mouth and its dark inside' + sz);
+    const outer = arches.sort((a, b) => b.b.w - a.b.w)[0];
+    arches.forEach((a) => { assert.equal(a.q[0][1], gy); assert.equal(a.q[3][1], gy); assert.ok(Math.abs(a.b.w - 2 * (gy - a.b.y0)) < a.b.w * 0.5, 'round'); });
+    assert.ok(arches[1].b.x0 > outer.b.x0 && arches[1].b.x1 < outer.b.x1 && arches[1].b.y0 > outer.b.y0, 'the inside within it');
+    assert.ok(outer.b.x0 > fb.x1, 'beside the fox, not under him');
+    // dry: three short straight lines standing over it, fanned out from it, every one above the den
+    const dry = pieces(rest).filter((p) => /^M[\d.]+ [\d.]+[LV][\d. ]+$/.test(p.d)).map((p) => {
+      const q = pathPoints(p.d);
+      return q[0][1] > q[1][1] ? q : [q[1], q[0]];   // [its foot, its top]
+    });
+    assert.equal(dry.length, 3, 'three lines' + sz);
+    const dc = [outer.b.cx, gy];
+    const ang = dry.map((q) => Math.round(Math.atan2(q[1][0] - q[0][0], q[0][1] - q[1][1]) * 180 / Math.PI));
+    dry.forEach((q, i) => {
+      assert.ok(Math.max(q[0][1], q[1][1]) < outer.b.y0 - 4, 'over the den: ' + JSON.stringify(q));
+      assert.ok(Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]) < 20, 'short');
+      assert.ok(dist(q[1], dc) > dist(q[0], dc), 'standing out from it, not coming down on it');
+      assert.ok(q[0][0] > outer.b.x0 - 6 && q[0][0] < outer.b.x1 + 6, 'over its mouth');
+    });
+    assert.equal(new Set(ang).size, 3, 'fanned, not parallel (rain would be): ' + ang.join(', '));
+    assert.ok(Math.min(...ang) < -10 && Math.max(...ang) > 10, 'out to both sides');
+  });
 });
 
 // ---------------------------------------------------------------- pictures nobody has drawn, and new ones

@@ -39,6 +39,15 @@
  * `foxTail: true` (the `dogs` camera): a white-tipped tail going into long golden grass at the
  * panel's edge, on the side where no cat sits on the path; drawn under everyone.
  *
+ * Chapter 6 (docs/chapters/06-the-snake-in-the-stones.spec.md, section 4, the field row): anchor `grass` in
+ * the border's three cameras, Sleet's spot in the long grass just past the last post: nearer than the fox's
+ * spot, his face close enough to talk across the post, low in the panel, and far enough past it that no pose
+ * of his that stands up (nor, in `border` and the close-up, flat on his belly) puts anything of him on the
+ * Clan's side. Whoever is there gets long grass drawn over his lower body, just after him (<g data-part=
+ * "grass-cover">, never left of the post): sitting up it reaches his legs and haunches, his chest and head
+ * clear; lying low it stands over his body and comes only to his chin in front of his face. Nobody there:
+ * nothing, so chapter 4's panels are as they were. The fox is never drawn in his chapter.
+ *
  * Registered with PC.art.defineSet (app/art/scenes.js); painters come from PC.art.kit.
  */
 (function (root) {
@@ -600,6 +609,73 @@
     return g(s, { 'data-part': 'fox-exit' });
   }
 
+  // ---- chapter 6: Sleet's spot in the long grass, `grass`
+
+  // Where a cast member at anchor `a` is drawn, as scenes.js draws him (the cats' units, a sitting Clan
+  // cat's height to the anchor's `h`, and the size band PC.art.sizeBands holds him to): his body and
+  // head boxes and his chin, in the world. Null without the character drawings.
+  function castEstimate(S, m, a) {
+    var fn = art.character;
+    if (typeof fn !== 'function' || !m) return null;
+    var who = m.who || 'clancat', o = { pose: m.pose || 'sit', mood: m.mood || 'neutral', facing: m.facing || a.face || 'right' };
+    if (m.variant != null) o.variant = m.variant;
+    if (who === 'player') { o.look = S.look || {}; if (o.look.sex) o.sex = o.look.sex; }
+    var ch = null, ref = null;
+    try { ch = fn(who, o); ref = fn('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }); } catch (e) { return null; }
+    if (!ch || !ch.w || !ch.h || !ref || !ref.h) return null;
+    var s = a.h * (m.size > 0 ? +m.size : 1) / ref.h, band = art.sizeBands && art.sizeBands[who];
+    if (band) {
+      var meas = function (w, pose) {
+        var c = fn(w, { pose: pose, mood: 'neutral' }), hb = c && c.headBox;
+        if (!c || !hb) return 1;
+        return Math.max(1, band.by === 'head' ? ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2 : c.h - hb.y0);
+      };
+      var ratio = meas(who, band.pose) / meas(band.ref, 'sit');
+      s = s * clamp(ratio, band.min, band.max) / ratio;
+    }
+    var bb = ch.bounds || { x0: 0, y0: 0, x1: ch.w, y1: ch.h }, hb = ch.headBox || null;
+    function W(b) { return [a.x + (b.x0 - ch.w / 2) * s, a.y + (b.y0 - ch.h) * s, a.x + (b.x1 - ch.w / 2) * s, a.y + (b.y1 - ch.h) * s]; }
+    return { s: s, body: W(bb), head: hb ? W(hb) : null };
+  }
+
+  // The long grass over the lower body of whoever is at `grass` (Sleet), drawn just after him. Sitting
+  // up (his chin high), it reaches his legs and haunches only, a third of a cat's height, so his chest
+  // and head are clear of it (his tail flicking up out of the grass stands as tall as he sits, its curled
+  // tip high: it gets the same). Lying low (flat on his belly, hidden), it stands over his lower body,
+  // about half as high as he lies, and comes up only to his chin in front of his face: never over his
+  // eyes. Never on the Clan's side of the post. Nobody there: nothing (chapter 4's
+  // panels never had it).
+  function grassCover(S, C, G, B) {
+    var a = (S.anchorMap || {}).grass, m = null;
+    (S.cast || []).forEach(function (c) { if (!m && c && c.at === 'grass') m = c; });
+    if (!a || !m) return '';
+    var H = a.h * (m.size > 0 ? +m.size : 1), est = castEstimate(S, m, a), px = B.post.x + B.post.w / 2 + 4;
+    var body = est ? est.body : [a.x - H * 0.6, a.y - H, a.x + H * 0.6, a.y], head = est && est.head ? est.head : [a.x - H * 0.2, a.y - H, a.x + H * 0.2, a.y - H * 0.6];
+    var chinH = a.y - head[3], upright = chinH > H * 0.75, over = Math.max(H * 0.12, (a.y - body[1]) * 0.45);
+    var m0 = H * 0.1, w0 = Math.max(1.6, H * 0.016), x0 = Math.max(px + w0 * 1.4, body[0] - H * 0.08, -40), x1 = Math.min(body[2] + H * 0.08, 1640);
+    if (x1 <= x0) return '';
+    // how high the grass stands at x: in front of his face no higher than his chin
+    function tallAt(x) {
+      var t = upright ? Math.min(H * 0.34, chinH) : over;
+      return x > head[0] - m0 && x < head[2] + m0 ? Math.min(t, chinH) : t;
+    }
+    var r = rng(B.seed + 900 + Math.round(a.x)), a1 = '', b1 = '', c1 = '', heads = '', gap = Math.max(5, H * 0.03), top = a.y;
+    for (var x = x0; x < x1; x += gap * (0.55 + r() * 0.9)) {
+      var tall = tallAt(x);
+      // (in front of a chin that lies on the ground, no grass at all)
+      if (tall < H * 0.05) continue;
+      var seed = r() < 0.22 && tall > H * 0.15 && !(x > head[0] - m0 && x < head[2] + m0), sh = seed ? H * 0.05 : 0;
+      // (a blade leans out sideways at its tip; its tip, and the seed head on it, never higher than the grass's top there)
+      var y = a.y + H * (0.03 + r() * 0.04), hh = (tall - sh) * (0.78 + r() * 0.22) + (y - a.y), lean = (r() - 0.5) * hh * 0.22, w = w0 * (0.8 + r() * 0.5);
+      var d = K.bladeD(x, y, hh, lean, w), q = r();
+      if (q < 0.4) a1 += d; else if (q < 0.76) b1 += d; else c1 += d;
+      top = Math.min(top, y - hh - sh);
+      if (seed) heads += K.leafD(x + lean, y - hh * 0.97, sh, -1.57 + (r() - 0.5) * 0.5, Math.max(1.2, H * 0.011));
+    }
+    return g(path(c1, G.dark, { opacity: 0.92 }) + path(a1, G.base) + path(b1, G.light, { opacity: 0.95 }) + path(heads, G.seed),
+      { 'data-part': 'grass-cover', 'data-top': n(top) });
+  }
+
   /* The border, drawn for one of its three compositions (L.border). Back to front: sky, trees and
    * the field as ever; the fence coming up the path from the left; the verge, the path and its end;
    * the ground the long grass stands in. Over whoever is in the field: the fence running away to
@@ -658,6 +734,9 @@
     var fr = '';
     (B.front || []).forEach(function (q, qi) { fr += grassRow(S, G, q[0], q[1], function () { return q[2]; }, q[3] * B.grassK, q[4] * B.grassK, B.seed + 500 + qi * 17, q[5] ? null : low); });
     front += g(fr, { filter: S.shadow('s'), 'data-part': 'long-grass-front' });
+    // chapter 6: the long grass over Sleet's lower body at `grass`, drawn just after him
+    var gc = grassCover(S, C, G, B);
+    if (gc) S.covers.grass = gc;
     return { back: back, over: g(over, { 'data-part': 'fence' }), front: front };
   }
 
@@ -878,13 +957,22 @@
       border: {
         fox: A(1296, 928, 246, 'left'), lead: A(812, 934, 258), left: A(392, 916, 250), right: A(600, 958, 262),
         'back-1': A(70, 900, 206, 'right', B), 'back-2': A(226, 872, 204, 'right', B), 'back-3': A(500, 862, 208, 'right', B), 'back-4': A(740, 868, 214, 'right', B),
-        'dog-1': A(1164, 776, 160, 'left', B), 'dog-2': A(1344, 764, 154, 'left', B), 'dog-3': A(1510, 752, 148, 'left', B)
+        'dog-1': A(1164, 776, 160, 'left', B), 'dog-2': A(1344, 764, 154, 'left', B), 'dog-3': A(1510, 752, 148, 'left', B),
+        // chapter 6: Sleet in the long grass just past the post, nearer than the fox's spot, his face
+        // close enough to talk across the post; low in the panel. Far enough along that every pose he
+        // has, stretched flat on his belly too, is past the post. (On the line the other ground spots
+        // make, h = 254 + (y - 934) / 3, so a spot of its own gets the depth it always got.)
+        grass: A(1445, 970, 266, 'left')
       },
       'border-two': {
         fox: A(1330, 968, 392, 'left'), lead: A(850, 952, 396), left: A(250, 986, 432), right: A(540, 992, 440),
         // the four behind look out past the three in front: two at the left, one in each gap between heads
         'back-1': A(40, 934, 330, 'right', B), 'back-2': A(150, 888, 280, 'right', B), 'back-3': A(408, 900, 300, 'right', B), 'back-4': A(734, 896, 300, 'right', B),
-        'dog-1': A(1150, 806, 250, 'left', B), 'dog-2': A(1340, 800, 244, 'left', B), 'dog-3': A(1516, 794, 238, 'left', B)
+        'dog-1': A(1150, 806, 250, 'left', B), 'dog-2': A(1340, 800, 244, 'left', B), 'dog-3': A(1516, 794, 238, 'left', B),
+        // (nearer than the fox's spot, and as big as he can be with every pose of his that stands up
+        // past the post and his head inside the panel; `elev`: kept out of the depth a spot of its own
+        // gets, which the spots of chapter 4 fix)
+        grass: A(1485, 990, 395, 'left', { elev: true })
       },
       // the fox chest-up (his feet are below the panel); `left` and `right` are a corner of a cat in
       // the near edge, drawn bigger than he is, their feet far below the panel: `right` is set for a
@@ -894,7 +982,12 @@
       // looking. The four behind are out of this camera's sight
       'border-fox': {
         fox: A(1150, 1182, 1100, 'left'), lead: A(-60, 1262, 1120), left: A(-30, 1530, 1120), right: A(282, 1657, 1120),
-        'dog-1': A(470, 884, 330, 'right', B), 'dog-2': A(1400, 866, 320, 'left', B), 'dog-3': A(1548, 856, 300, 'left', B)
+        'dog-1': A(470, 884, 330, 'right', B), 'dog-2': A(1400, 866, 320, 'left', B), 'dog-3': A(1548, 856, 300, 'left', B),
+        // chapter 6: Sleet close, his head about where the fox's was, sitting up or flat on his belly in
+        // the grass with his face in the panel, clear of the two corners of cats at the left; the fox is
+        // never drawn in his chapter. (`elev`: the corners' depth here is not the grass's, so the spot
+        // takes no part in the depth a spot of its own gets)
+        grass: A(1260, 1010, 440, 'left', { elev: true })
       }
     },
     opts: { foxTail: [false, true] }, defaults: {}

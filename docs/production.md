@@ -1,7 +1,8 @@
 # Production: how a chapter gets made, what it cost, and how to make the next five cheaper
 
-*v0.1 · 2026-10-12 · written at the wrap of the session that built chapters 2 to 5. For whoever
-builds chapter 6: read this before starting a workflow.*
+*v0.2 · 2026-10-18 · written at the wrap of the session that built chapters 2 to 5 (v0.1,
+2026-10-12); v0.2 adds decision 47's budget and `dev/workflows/chapter.js`. For whoever builds
+chapter 6: read this before starting a workflow.*
 
 ## What the first five chapters cost
 
@@ -17,6 +18,14 @@ builds chapter 6: read this before starting a workflow.*
 | Findings confirmed in review | 71 | 44 | 36 | 18–31 |
 | Tests after | 321 | 428 | 643 | 902 |
 | Interrupted by the session limit | no | no | once | twice |
+
+**Chapter 6** (2026-10-18), the first made with `dev/workflows/chapter.js` on this plan: the text
+about 5.9M subagent tokens (two drafts, two judges, two critic rounds, one extra check of round 2's
+math, the spec), the build about 7.9M (four owners, the story builder, six reviewers with skeptics,
+two integrations, the final review), and 0.4M to bring `docs/continuity.md` forward: **about 14.2M in
+all**, with no session-limit stop, in one day. 136 frames (about 100 a reading, up to 114 with
+Sleet), about 22 minutes plain and 25 with the optional scene, 13 confirmed review findings and 2 in
+the final review, 1042 tests. Chapters 1 to 5 stayed byte-identical (674 frames compared).
 
 Chapter 1 was 98 frames and a 387-line text. The engine has grown from 841 to 2,933 lines, the page
 code from 1,635 to 3,109, the character art from 1,195 to 5,792, and `docs/build.md` to 1,254 lines.
@@ -81,7 +90,10 @@ text and one for the build, and a longest path under 22 minutes.**
 ### 1. A budget per chapter, enforced at the text stage
 
 - Plain path at most 1,800 words; at most **one** optional scene of at most 150 words.
-- At most 120 frames. About 16 typed answers.
+  **Decision 47** (2026-10-18) lets chapter 6 run to 22 minutes: the plain path at most about 2,000
+  words and the one optional scene at most about 300, so at most 130 frames. Chapters 7 to 10 keep
+  that budget unless Aron says otherwise (a call under decision 46).
+- At most 120 frames (130 under decision 47). About 16 typed answers.
 - At most one new place and two new characters, unless module-1 forces more (it does in chapters
   8 and 10: plan those as two build windows).
 - **No new engine keys** unless the chapter cannot be told without one, and then at most one new
@@ -123,8 +135,10 @@ what is left goes to the notes as "known". Expected: 3–4M instead of 9–10M.
 Each phase is a separate Workflow call; each writes its findings to
 `<scratch>/chNN/<phase>.json`; the next phase reads the file. A limit hit loses at most the phase
 in flight, nothing reruns, and the orchestrator reads each result before starting the next (an
-idle integrator is caught in a minute, not after a wasted final review). The proven scripts are in
-`dev/workflows/` as examples to adapt.
+idle integrator is caught in a minute, not after a wasted final review). Since 2026-10-18 this is
+`dev/workflows/chapter.js`, one phase a call (`args.phase`), with its runbook and chapter 6's args
+in `dev/workflows/README.md`; the work directory is `~/potomac-crossing-work/chNN/`, outside the
+repo.
 
 ### 6. A smaller review that still catches what matters
 
@@ -158,7 +172,8 @@ time instead of waiting to be asked.
 - The Warrior Counts' format: 55 pairs or 100 questions; one sitting or rounds; how retries work.
 - Dew's new name (before chapter 9); Snip's (before chapter 8); the 7s picture's words
   ("sunrises in a quarter-moon" echoes the books).
-- Whether chapters may run to 22 minutes or should come back to 15–20.
+- ~~Whether chapters may run to 22 minutes or should come back to 15–20.~~ Answered for chapter 6:
+  up to 22 minutes (decision 47, 2026-10-18).
 
 Under decision 46 the orchestrator may make these calls and record them; the first is big enough
 to ask.

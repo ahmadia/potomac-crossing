@@ -278,3 +278,39 @@ test('sheet.mjs: a contact sheet’s grid fits Quick Look’s 1600 square, six 1
   assert.ok(svg.includes('<image x="800" y="550"'));
   assert.ok(svg.includes('>f001</text>') && svg.includes('>a&lt;b</text>'), 'each picture carries its name, escaped');
 });
+
+/* Chapter 6: the storyboard's words for every new name in the spec's art needs
+ * (docs/chapters/06-the-snake-in-the-stones.spec.md, section 4), checked before the art lands: the
+ * names are added to the art's own vocabulary (`--check-words more.json`). Once the art owners have
+ * landed them, the plain run (tests/storyboard.test.js) checks the real vocabulary. */
+test('storyboard.mjs --check-words: words for every name chapter 6’s spec adds to the art (cameras, anchors, options, cast, poses, extras, ReedClan’s coats); a name the spec cut or never gave fails', () => {
+  const fs = require('node:fs'), os = require('node:os');
+  const TOOL = path.join(ROOT, 'tools/storyboard.mjs');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-words-'));
+  try {
+    const ch06 = {
+      sets: {
+        title: { cams: ['end', 'meet'], anchors: ['wall-3', 'end-1', 'end-2', 'end-3', 'reed-1', 'reed-2', 'reed-3'], opts: { rustle: [false, true] } },
+        sky: { cams: ['walk', 'below'], anchors: ['star-1', 'star-2'], opts: {} },
+        bridge: { cams: ['wall'], anchors: ['gap'], opts: { stones: [false, true] } },
+        field: { anchors: ['grass'] },
+        pile: { opts: { moon: 'number' } }
+      },
+      cast: ['coil', 'sloshbank', 'reedclan', 'sleet'],
+      otherPoses: { coil: ['stone', 'head', 'long', 'longer', 'still', 'listen', 'think', 'slide'], sleet: ['hidden', 'tail', 'flat', 'point', 'call', 'puff', 'droop', 'sit', 'pawup'], riffle: ['puff'], otter: ['puff'] },
+      extras: { holds: ['pinecone', 'pebbles', 'string'], holdAt: ['chin', 'paws', 'mouth'], tap: ['pinecone', 'paw', 'stone', 'eyes', 'pebbles', 'cheeks', 'ears'], starry: [true], grass: [true] },
+      variants: { reedclan: [1, 2, 3, 4] }
+    };
+    const run = (x) => { const f = path.join(tmp, 'more.json'); fs.writeFileSync(f, JSON.stringify(x)); return spawnSync(process.execPath, [TOOL, '--check-words', f], { encoding: 'utf8' }); };
+    const ok = run(ch06);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.match(ok.stdout, /^Every set, camera, anchor, option, pose, mood, effect, cast member and cast extra has words\.$/m);
+    // the title's `reeds` camera was cut (spec v0.2): it has no words, and a name nobody gave has none either
+    const bad = run({ sets: { title: { cams: ['reeds'] }, bridge: { opts: { hiss: [true] } } }, cast: ['bogwade'], otherPoses: { coil: ['strike'] }, extras: { tap: ['tongue'] }, variants: { reedclan: [5] } });
+    assert.equal(bad.status, 1);
+    assert.deepEqual(bad.stderr.trim().split('\n').slice(1).map(l => l.trim()).sort(),
+      ['bridge option hiss: true', 'cast bogwade', 'cast extra tap: "tongue"', 'cast reedclan variant 5', 'pose strike', 'title camera reeds'].sort());
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});

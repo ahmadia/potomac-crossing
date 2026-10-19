@@ -20,9 +20,10 @@ const BORDER = ['border', 'border-two', 'border-fox'];
 const DOGS = ['dog-1', 'dog-2', 'dog-3'];
 const FRONT = ['lead', 'left', 'right'];
 const BACK = ['back-1', 'back-2', 'back-3', 'back-4'];
-const BORDER_ANCHORS = ['fox', ...FRONT, ...BACK];
+// (chapter 6: `grass`, Sleet's spot in the long grass just past the post, in all three border cameras)
+const BORDER_ANCHORS = ['fox', ...FRONT, ...BACK, 'grass'];
 // what each border camera sees: the fox's close-up leaves the four at the back out
-const SEES = { border: ['fox', ...FRONT, ...BACK, ...DOGS], 'border-two': ['fox', ...FRONT, ...BACK, ...DOGS], 'border-fox': ['fox', ...FRONT, ...DOGS] };
+const SEES = { border: ['fox', ...FRONT, ...BACK, ...DOGS, 'grass'], 'border-two': ['fox', ...FRONT, ...BACK, ...DOGS, 'grass'], 'border-fox': ['fox', ...FRONT, ...DOGS, 'grass'] };
 // the Clan at the border, as the text has them: Glintstar in front, Tallyheart and our cat at her
 // shoulders (as the panel shows them: Tallyheart between our cat and the fox), four behind
 const CLAN = [{ who: 'glintstar', at: 'lead' }, { who: 'player', at: 'left' }, { who: 'tallyheart', at: 'right' },
@@ -444,7 +445,7 @@ test('the border: every camera renders well-formed SVG with a cast member at eac
     const odd = { set: 'field', cam, opts: { sparrows: 3, foxTail: true, nope: true }, cast: [], fx: art.vocab.fx.slice() };
     checkRender(art.render(odd, { look: LOOK }), odd, cam + ' with stray options and every effect');
   }
-  assert.equal(n, (11 + 11 + 7) * 5);
+  assert.equal(n, (12 + 12 + 8) * 5);
 });
 
 test('the border\'s spots are not in chapter 2\'s cameras, nor chapter 2\'s path spots in the border\'s; the dogs are in all six', () => {
@@ -463,7 +464,7 @@ test('the fox\'s spot is past the last post in the long grass, the Clan\'s on th
     const A = anchors[cam], post = I[cam].post, svg = bRender(cam).svg;
     assert.equal(count(svg, /data-part="last-post"/g), 1, cam + ': the last post');
     assert.equal(A.fox.face, 'left', cam + ': he faces the Clan (his eyes are on Glintstar, never out at the reader)');
-    for (const at of SEES[cam].filter((k) => k !== 'fox' && !DOGS.includes(k))) {
+    for (const at of SEES[cam].filter((k) => k !== 'fox' && k !== 'grass' && !DOGS.includes(k))) {
       // (in the close-up the two corners of cats are this side of everything, nearer than the post)
       const near = cam === 'border-fox' && (at === 'left' || at === 'right');
       assert.ok(near ? A[at].y > post.base + 300 : A[at].x < post.x, cam + ': ' + at + ' is on the Clan\'s side of the post');
@@ -740,4 +741,192 @@ test('border: Murmurchime at `back-4` looks out between Tallyheart and Glintstar
   const two = src.slice(src.indexOf("'border-two': {"), src.indexOf("'border-fox': {"));
   assert.match(two, /mud: \[\[560, 772, 330, 30\], \[1330, 768, 260, 26\]\],/);
   assert.match(two, /\n\s+puddles: \[\],\n\s+prints:/);
+});
+
+// ================================================================ chapter 6: Sleet's spot in the long grass
+// docs/chapters/06-the-snake-in-the-stones.spec.md, section 4 ("Places", the field row)
+
+const SPEC6 = path.join(ROOT, 'docs/chapters/06-the-snake-in-the-stones.spec.md');
+const r1 = (v) => Math.round(v * 10) / 10;
+// Sleet, once app/art/cats.js draws him (the eldest dragonet, on Sprinkle's model); until then Sprinkle stands in
+const SLEET_POSES = ['hidden', 'tail', 'flat', 'point', 'call', 'puff', 'droop', 'sit', 'pawup'];
+const sleetDraws = (() => {
+  if (!art.vocab.cast.includes('sleet')) return false;
+  try { return SLEET_POSES.every((pose) => { const c = art.character('sleet', { pose, facing: 'left' }); return !!c && !c.placeholder && !!c.headBox; }); } catch (e) { return false; }
+})();
+const SLEET = sleetDraws ? 'sleet' : 'sprinkle';
+const UPRIGHT = sleetDraws ? ['point', 'call', 'puff', 'sit', 'pawup'] : ['sit', 'pawup'];
+const LOW = sleetDraws ? ['hidden', 'tail', 'flat', 'droop'] : ['flat', 'lie'];
+// His boxes where scenes.js draws him: the cats' units, and the size band PC.art.sizeBands holds him to.
+function sleetBoxes(pose, a) {
+  const b = boxes({ who: SLEET, pose, facing: 'left' }, a), band = art.sizeBands && art.sizeBands[SLEET];
+  if (!band) return b;
+  const meas = (w, p) => { const hb = art.character(w, { pose: p, mood: 'neutral' }).headBox; return ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2; };
+  const ratio = meas(SLEET, band.pose) / meas(band.ref, 'sit'), k = Math.min(band.max, Math.max(band.min, ratio)) / ratio;
+  const sc = (q) => [a.x + (q[0] - a.x) * k, a.y + (q[1] - a.y) * k, a.x + (q[2] - a.x) * k, a.y + (q[3] - a.y) * k];
+  return { body: sc(b.body), head: sc(b.head) };
+}
+// the grass drawn over him: its blades (and the seed heads on some), [the middle of its root, root y, tip y]
+function coverBlades(svg) {
+  const at = svg.indexOf('data-part="grass-cover"');
+  if (at < 0) return null;
+  const g = svg.slice(svg.lastIndexOf('<g', at), svg.indexOf('</g>', at));
+  return (g.match(/M[-\d.]+ [-\d.]+Q[-\d.]+ [-\d.]+ [-\d.]+ [-\d.]+Q[-\d.]+ [-\d.]+ [-\d.]+ [-\d.]+Z/g) || []).map((b) => { const v = b.match(/[-\d.]+/g).map(Number); return [(v[0] + v[8]) / 2, v[1], Math.min(v[1], v[5])]; });
+}
+
+test('chapter 6: the spec names `grass` in the border\'s three cameras, and the set has it there and nowhere else', () => {
+  const md = fs.readFileSync(SPEC6, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**anchor `grass`** in the three border cameras', 'nearer than `fox`', 'Never on the Clan\'s side of the post', 'The fox is never drawn']) assert.ok(md.includes(want), 'the spec says: ' + want);
+  const A = art.sceneInfo('field').anchors;
+  for (const cam of BORDER) { assert.ok(A[cam].grass, cam + ': grass'); assert.equal(A[cam].grass.face, 'left', cam + ': he faces the Clan across the post'); assert.notEqual(A[cam].grass.z, 'behind', cam + ': in front of the fence that runs away'); }
+  for (const comp of ['main', 'dogs', 'fence']) assert.ok(!A[comp].grass, comp + ': chapter 2\'s cameras do not see it');
+  assert.deepEqual(art.vocab.sets.field.opts, { foxTail: [false, true] }, 'no new option');
+});
+
+test('chapter 6: chapter 2 and 4\'s frames are as they were: no `grass` in them, no grass cover, the spots of their own at the depth they had', () => {
+  let n = 0;
+  for (const id of ['ch02', 'ch03', 'ch04', 'ch05']) for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+    const sc = f.scene;
+    if (!sc || sc.set !== 'field') continue;
+    n++;
+    assert.ok(!(sc.cast || []).some((m) => m.at === 'grass'), id + ' ' + fid + ': nobody at `grass`');
+    assert.ok(!/data-part="grass-cover"/.test(art.render(sc, { look: LOOK }).svg), id + ' ' + fid + ': no grass cover');
+  }
+  assert.ok(n >= 20, 'chapters 2 and 4 visit the Barking Field: ' + n);
+  // with nobody at `grass`, nothing is drawn for it
+  for (const cam of BORDER) assert.ok(!/grass-cover/.test(bRender(cam, [FOX, ...CLAN.filter((m) => SEES[cam].includes(m.at))]).svg), cam + ': no cover without him');
+  // a spot of its own gets the depth the four ground spots of chapter 4 give it (chapter 4's f035a stands at { x: 352, y: 988 } in
+  // border-two): the new spot is on border's line, and out of the sums in the other two
+  const A = art.sceneInfo('field').anchors;
+  assert.ok(Math.abs(A.border.grass.h - (254 + (A.border.grass.y - 934) / 3)) < 1e-9, 'border: on the line h = 254 + (y - 934) / 3');
+  assert.ok(A['border-two'].grass.elev && A['border-fox'].grass.elev, 'border-two, border-fox: out of the depth sums');
+  const old = (cam, at) => art.render({ set: 'field', cam, cast: [{ who: 'player', at }], fx: ['day'] }, { look: LOOK }).heads[0];
+  // (recorded with app/art/sets/field.js as chapter 5 shipped it)
+  assert.deepEqual(old('border-two', { x: 352, y: 988 }), { x: 24.1, y: 76.3, r: 5.39 }, 'chapter 4\'s f035a: our cat where she was, as big as she was');
+});
+
+test('chapter 6: `grass` is past the last post in the long grass: Sleet is never on the Clan\'s side of it, in any pose that stands up, and his face is close enough to talk across it', () => {
+  const I = fieldInfo().border, A = art.sceneInfo('field').anchors;
+  for (const cam of BORDER) {
+    const post = I[cam].post, edge = post.x + post.w / 2, g = A[cam].grass;
+    assert.ok(g.x > post.x + post.w, cam + ': the spot is past the post');
+    for (const pose of UPRIGHT.concat(LOW.filter((p) => p !== 'flat'))) {
+      const b = sleetBoxes(pose, g).body;
+      assert.ok(b[0] > edge, cam + ': ' + SLEET + ' (' + pose + '): nothing of him is on the Clan\'s side: ' + Math.round(b[0]) + ' vs ' + edge);
+    }
+    // sitting up, his face is beside the post, within about a head's width of it (in the two wide ones; the
+    // close-up has the post at its edge and the cats' corners by it)
+    const h = sleetBoxes('sit', g).head, w = h[2] - h[0];
+    if (cam !== 'border-fox') assert.ok(h[0] - edge < 1.2 * w, cam + ': his face is close enough to talk across the post: ' + Math.round(h[0] - edge) + ' from it, a head ' + Math.round(w) + ' wide');
+    // and every pose's face is inside the panel
+    for (const pose of UPRIGHT) {
+      const hb = sleetBoxes(pose, g).head;
+      assert.ok(hb[0] > 0 && hb[2] <= 1601 && hb[1] > 0 && hb[3] < 1000, cam + ': ' + pose + ': his face is in the panel: ' + hb.map(Math.round));
+    }
+  }
+  // the two wide ones: nearer than the fox's spot, and no smaller than the fox; in front of the wire running away
+  for (const cam of ['border', 'border-two']) {
+    const g = A[cam].grass, f = A[cam].fox;
+    assert.ok(g.y > f.y && g.h >= f.h, cam + ': nearer than the fox\'s spot');
+    assert.ok(g.x < 1600, cam + ': in the panel');
+  }
+});
+
+// The spec's flat on his belly at `grass` (section 4): never on the Clan's side of the post. cats.js's `flat`
+// once reached further forward than he sits (his claws and head stretched out ahead of him), so at
+// border-two's spot his head was over the path; the cast owner moved it back in its box (`flat`'s front where
+// his sitting front is), and this guard is live: chapter 6 draws him flat at `grass` on `border-two` (f066a,
+// f067a) on every path that follows the trail.
+test('chapter 6: flat on his belly at `grass`, Sleet is past the post too', { skip: sleetDraws ? false : 'no sleet in cats.js yet' }, () => {
+  const I = fieldInfo().border, A = art.sceneInfo('field').anchors;
+  for (const cam of BORDER) {
+    const b = sleetBoxes('flat', A[cam].grass).body, post = I[cam].post;
+    assert.ok(b[0] > post.x + post.w / 2, cam + ': flat, nothing of him on the Clan\'s side: ' + Math.round(b[0]));
+  }
+});
+
+test('chapter 6: at `grass`, Sleet and the cats at the post are clear of each other; in the close-up his face is clear of the two corners', () => {
+  const A = art.sceneInfo('field').anchors;
+  for (const cam of ['border', 'border-two']) {
+    for (const pose of UPRIGHT.concat(LOW)) {
+      const s = sleetBoxes(pose, A[cam].grass).body;
+      for (const m of [{ who: 'player', at: 'left' }, { who: 'player', at: 'right' }, { who: 'tallyheart', at: 'right' }, { who: 'riffle', at: 'left' }, { who: 'riffle', at: 'right' }]) {
+        assert.equal(overlap(s, boxes(m, A[cam][m.at]).body), 0, cam + ': ' + SLEET + ' (' + pose + ') and ' + m.who + ' at ' + m.at + ' do not touch');
+      }
+    }
+  }
+  const F = A['border-fox'];
+  for (const pose of UPRIGHT.concat(LOW)) {
+    const h = sleetBoxes(pose, F.grass).head;
+    for (const m of [{ who: 'player', at: 'left' }, { who: 'tallyheart', at: 'right' }]) assert.equal(overlap(h, boxes(m, F[m.at]).head), 0, 'border-fox: his face (' + pose + ') is clear of the corner at ' + m.at);
+    assert.ok(h[3] <= 1000 && h[1] >= 0 && h[2] <= 1600, 'border-fox: his face (' + pose + ') is in the panel: ' + h.map(Math.round));
+  }
+  // and in shot, everyone, in every light
+  for (const cam of BORDER) for (const fx of [['day'], ['sunset'], ['dusk']]) {
+    const cast = [{ who: 'player', at: cam === 'border-fox' ? 'left' : 'right', pose: 'sit' }, { who: 'riffle', at: 'left' }, { who: SLEET, at: 'grass', pose: 'sit' }];
+    const scene = { set: 'field', cam, cast, fx };
+    const r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, cam + ' with Sleet ' + fx[0]);
+    assert.ok(r.heads[2], cam + ': Sleet\'s face is in shot');
+  }
+});
+
+// The tail flicking out of the long grass is the hook into his scene (f048, f049b, f050b): after the final
+// review it is drawn tall enough that its curled tip stands clear above the set's grass over him, in all
+// three border cameras, never on the Clan's side of the post.
+test('chapter 6: Sleet\'s tail at `grass` stands clear above the long grass over him', { skip: sleetDraws ? false : 'no sleet in cats.js yet' }, () => {
+  const I = fieldInfo().border, A = art.sceneInfo('field').anchors;
+  for (const cam of BORDER) {
+    const g = A[cam].grass, svg = bRender(cam, [{ who: 'player', at: cam === 'border-fox' ? 'left' : 'right' }, { who: 'sleet', at: 'grass', pose: 'tail', facing: 'left' }]).svg;
+    const top = +/data-part="grass-cover" data-top="([-\d.]+)"/.exec(svg)[1], tip = sleetBoxes('tail', g).head;
+    assert.ok(tip[3] < top, cam + ': the curled tip (' + Math.round(tip[1]) + ' to ' + Math.round(tip[3]) + ') is above the grass over him (its top ' + Math.round(top) + ')');
+    assert.ok(sleetBoxes('tail', g).body[0] > I[cam].post.x + I[cam].post.w / 2, cam + ': past the post');
+  }
+});
+
+test('chapter 6: the long grass over Sleet\'s lower body: sitting up, his chest and head clear it; flat on his belly, it reaches his chin and never his face; never on the Clan\'s side of the post', () => {
+  const I = fieldInfo().border, A = art.sceneInfo('field').anchors;
+  for (const cam of BORDER) {
+    const g = A[cam].grass, edge = I[cam].post.x + I[cam].post.w / 2;
+    for (const pose of UPRIGHT.concat(LOW)) {
+      const cast = [{ who: 'player', at: cam === 'border-fox' ? 'left' : 'right' }, { who: SLEET, at: 'grass', pose }];
+      const svg = bRender(cam, cast).svg, blades = coverBlades(svg), sb = sleetBoxes(pose, g);
+      assert.ok(blades && blades.length > 10, cam + ' ' + pose + ': the long grass over him');
+      // drawn just after him (and so over him), golden like the rest of the long grass
+      const him = svg.indexOf('<g transform="translate(' + num(g.x) + ' ' + num(g.y) + ')'), cover = svg.indexOf('data-part="grass-cover"');
+      assert.ok(him > 0 && cover > him, cam + ' ' + pose + ': over him');
+      blades.forEach((b) => assert.ok(b[0] > edge + 2, cam + ' ' + pose + ': never on the Clan\'s side: ' + b[0]));
+      const H = g.h, chin = sb.head[3], inFace = (x) => x > sb.head[0] - H * 0.06 && x < sb.head[2] + H * 0.06;
+      blades.forEach((b) => { if (inFace(b[0])) assert.ok(b[2] >= chin - 1, cam + ' ' + pose + ': no blade over his face: tip ' + r1(b[2]) + ', chin ' + r1(chin)); });
+      const tops = blades.map((b) => g.y - b[2]);
+      // (his flicking tail, since the final review, stands up out of the grass as tall as he sits, its curled
+      // tip well above it: the set gives it a sitting dragonet's grass, a third of a cat's height)
+      if (UPRIGHT.includes(pose) || pose === 'tail') {
+        // sitting up: legs and haunches; his chest (everything over a third of a cat's height) clear
+        assert.ok(Math.max(...tops) <= H * 0.36 + 1, cam + ' ' + pose + ': no higher than his haunches: ' + r1(Math.max(...tops)) + ' of ' + H);
+        assert.ok(Math.max(...tops) > H * 0.25, cam + ' ' + pose + ': and long grass, not a lawn');
+      } else {
+        // lying low: over his lower body, about half as high as he lies, and up to his chin in front of his face
+        const over = blades.filter((b) => !inFace(b[0])).map((b) => g.y - b[2]);
+        assert.ok(over.length && Math.max(...over) > (g.y - sb.body[1]) * 0.35, cam + ' ' + pose + ': over his lower body');
+        assert.ok(Math.max(...over) < (g.y - sb.body[1]) * 0.5 + 1, cam + ' ' + pose + ': and no higher than half of him');
+      }
+    }
+  }
+});
+
+test('chapter 6: the fox is never drawn at the last post in this chapter, and whatever chapter 6 puts at the Barking Field renders (once the chapter is written)', (t) => {
+  const ch = PC.story && PC.story.ch06;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.scene.set === 'field' && f.board !== 'STUB.') : [];
+  if (!frames.length) { t.diagnostic('chapter 6 has no frames at the Barking Field yet'); return; }
+  const v = art.vocab.sets.field;
+  for (const [id, f] of frames) {
+    const sc = f.scene;
+    assert.ok(v.cams.includes(sc.cam), id + ': camera ' + sc.cam);
+    assert.ok(!(sc.cast || []).some((m) => m.who === 'reynard'), id + ': the fox is never drawn');
+    for (const m of sc.cast || []) if (m.at === 'grass') assert.ok(BORDER.includes(sc.cam), id + ': `grass` is the border\'s');
+    const r = art.render(sc, { look: LOOK });
+    checkRender(r, sc, 'ch06 ' + id);
+  }
+  t.diagnostic(frames.length + ' frames at the Barking Field');
 });

@@ -39,7 +39,7 @@
   var PC = root.PC || (root.PC = {});
   var E = {};
 
-  E.VERSION = '0.5.0 (chapter 5, 2026-10-11)';
+  E.VERSION = '0.6.0 (chapter 6, 2026-10-18)';
   E.STORAGE_KEY = 'potomac-crossing.v1';   // the key stays: renaming it would strand every save
   E.SAVE_VERSION = 2;
   E.MAX_CATS = 4;
@@ -1597,15 +1597,15 @@
   E.skipReached = function (skip) { var v = E.skipView(skip, 1e9); return v.tuck ? v.total : v.groups * v.table; };
 
   /* ------------------------------------------------------------ scene options from the cat
-   * On the `hollow` set, `marks: 'auto'` is one mark per Count she has finished a chapter lesson
-   * for, and `glow: 'auto'` lights each mark whose Count glows in the Training Hollow. On the `den`,
-   * `stone: 'auto'` is Riffle's stone where she put it (`flags.ch2Stone`), and `bark: 'auto'` is the
-   * cards along her nest's edge: the ones her Case File shows, in its order, each `{ picture, mark }`
-   * (chapter 4; a row drawn from a count would show cards she doesn't hold). On any set, a `cards`
-   * list (the hollow's row of bark on the sand) is written as a row of bark is, ids and `{ id, when }`
-   * entries: the entries that are hers become `{ picture, mark }`, whether or not she holds the card
-   * yet (the picture is the story's: what the panel shows her scratching). The story's own scene is
-   * never changed: a resolved scene is a copy. */
+   * On the `hollow` set, `marks: 'auto'` is one mark per Count she has learned (E.learnedCounts: the
+   * Count's own set finished), and `glow: 'auto'` lights each mark whose Count glows in the Training
+   * Hollow. On the `den`, `stone: 'auto'` is Riffle's stone where she put it (`flags.ch2Stone`), and
+   * `bark: 'auto'` is the cards along her nest's edge: the ones her Case File shows, in its order,
+   * each `{ picture, mark }` (chapter 4; a row drawn from a count would show cards she doesn't hold).
+   * On any set, a `cards` list (the hollow's row of bark on the sand) is written as a row of bark is,
+   * ids and `{ id, when }` entries: the entries that are hers become `{ picture, mark }`, whether or
+   * not she holds the card yet (the picture is the story's: what the panel shows her scratching). The
+   * story's own scene is never changed: a resolved scene is a copy. */
   E.resolveScene = function (scene, cat, stories) {
     if (!scene || !isObj(scene.opts)) return scene;
     var o = scene.opts;
@@ -2485,9 +2485,9 @@
   };
 
   /* ------------------------------------------------------------ the Training Hollow
-   * One claw mark per Count: once a chapter lesson of a Count is finished, the Hollow offers it,
-   * a round of its ten facts at a time. Each Count keeps its own rounds and glow; every full round
-   * (of any Count) earns the next treasure. */
+   * One claw mark per Count: once the Count's own chapter lesson (E.countSets) is finished, the
+   * Hollow offers it, a round of its ten facts at a time. Each Count keeps its own rounds and glow;
+   * every full round (of any Count) earns the next treasure. */
   var COUNT_THINGS = { 1: ['tail', 'tails'], 2: ['ear', 'ears'], 3: ['cat', 'cats'], 4: ['paw', 'paws'], 5: ['claw', 'claws'], 9: ['life', 'lives'], 10: ['claw', 'claws'] };
   function setTable(def) {
     if (!def) return null;
@@ -2547,17 +2547,17 @@
   E.hollowGlowNote = function (def, many) {
     return many ? 'Look! Your ' + E.hollowWord(def) + ' claw mark on the tree is glowing.' : 'Look! Your claw mark on the tree is glowing.';
   };
-  /* The Counts she has learned (finished a chapter lesson of), in the order they are taught. */
+  /* The Counts she has learned, in the order they are taught: a Count is learned once its own set
+   * (E.countSets: the chapter lesson that teaches it) is finished. Another set on the same table
+   * does not teach it: chapter 6 asks four patrols of three (`ch06-four`) before Tallyheart teaches
+   * the threes, and until that lesson the Hollow offers no 3s and the tree has no sixth mark. In
+   * chapters 1 to 5 each Count's own set is the first of its table she finishes, so they read as
+   * they always did. */
   E.learnedCounts = function (cat, stories) {
-    var done = {};
-    var list = E.chapters(stories);
-    list.forEach(function (s) {
-      Object.keys(s.counts || {}).forEach(function (id) {
-        var L = cat && cat.lessons && cat.lessons[id];
-        if (L && L.finished !== false) { var t = setTable(s.counts[id]); if (t) done[t] = true; }
-      });
+    return E.countSets(E.chapters(stories)).filter(function (c) {
+      var L = cat && cat.lessons && cat.lessons[c.setId];
+      return !!(L && L.finished !== false);
     });
-    return E.countSets(list).filter(function (c) { return done[c.table]; });
   };
   /* One round: the ten facts of a table (n × table, both orders mixed), shuffled the same way
    * every time for the same round number. */

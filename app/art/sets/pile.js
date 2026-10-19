@@ -70,6 +70,12 @@
  *   over the earth. It is drawn behind everyone else (z: 'behind') and takes no part in the depth a
  *   spot of its own is given.
  *
+ *   Chapter 6 (docs/chapters/06-the-snake-in-the-stones.spec.md, section 4): `moon: n`, a number (default false,
+ *   off; declared 'number' as `pairs` is): the moon n evenings old, the kit's waxingMoon as over the den, in
+ *   `wide`'s open sky over the towers and in `low`'s patch of sky through the arch, at night, dusk or sunset
+ *   (never by day or in the morning); each evening a little fatter, bigger and higher, so chapter 7's
+ *   `moon: 7` needs no change here. <g data-prop="waxing-moon" data-age="n">, in `keep`.
+ *
  *   PC.art.prey({ kind: 'mouse' | 'vole' | 'fish', lit, seed, facing?, part? }) -> { svg, w, h }:
  *   (the pile itself draws no fish; `fish` stays drawable only in case Aron rules to keep a few,
  *   traded from the otters, which the text would then have to say at the pile)
@@ -451,6 +457,8 @@
     var p = S.pal, o = S.opts, back = '', front = '', r = rng(401), wet = S.tod === 'morning' || S.tod === 'day', i;
     var sun = wet ? [1300, 250] : [1210, 470];
     back += K.sky(S, 0, 0, 1600, 700, { sun: sun, sunR: wet ? 460 : 560 });
+    // chapter 6: the moon, so many evenings old, in the open sky over the towers (night, dusk or sunset)
+    back += pileMoon(S, 'wide');
     back += K.towers(S, [
       { x: 560, w: 120, top: 250, base: 640, far: 0.65, cap: 'slant' }, { x: 700, w: 100, top: 330, base: 640, far: 0.75 },
       { x: 860, w: 150, top: 200, base: 640, far: 0.55, cap: 'step' }, { x: 1030, w: 110, top: 300, base: 640, far: 0.7 },
@@ -541,6 +549,22 @@
     return { back: back, over: '', front: front };
   }
 
+  // Chapter 6 (docs/chapters/06-the-snake-in-the-stones.spec.md, section 4): `moon: n`, the moon n
+  // evenings old (the kit's waxingMoon, as over the den: 6 is the sixth evening's, a crescent a little
+  // fatter than chapter 5's; 7 is chapter 7's, with no change here), in `wide`'s sky and in `low`'s
+  // patch of sky through the arch. At night, and at dusk or sunset if a frame asks; never by day or in
+  // the morning, and nowhere without a number (off by default: chapters 2 to 5 have none). Each evening
+  // it stands a little higher and is a little bigger. In `keep`, so the lettering stays off it.
+  var MOON_AT = { wide: { x: 820, y: 140, r: 36, dx: -14, dy: -10, dr: 5, rmax: 56 }, low: { x: 1562, y: 128, r: 24, dx: 0, dy: -8, dr: 3, rmax: 34 } };
+  function moonAge(o) { var v = o ? o.moon : null; return typeof v === 'number' && isFinite(v) && v > 0 ? clamp(v, 1, 15) : 0; }
+  function pileMoon(S, cam) {
+    var age = moonAge(S.opts), M = MOON_AT[cam];
+    if (!age || !M || !(S.tod === 'night' || S.tod === 'dusk' || S.tod === 'golden' || S.tod === 'sunset')) return '';
+    var e = clamp(age - 4, 0, 10), x = M.x + M.dx * e, y = Math.max(M.r + 8, M.y + M.dy * e), r = Math.min(M.rmax, M.r + M.dr * e);
+    (S.keep = S.keep || []).push({ x: x - r - 8, y: y - r - 8, w: 2 * r + 16, h: 2 * r + 16 });
+    return K.waxingMoon(S, x, y, r, Math.max(8, 38 - 3 * e), age);
+  }
+
   // the prey sit in the scene's light: warm at last light, cool at dusk and night
   var TINT = {
     golden: '1 0 0 0 0.02  0 0.96 0 0 0.01  0 0 0.86 0 0  0 0 0 1 0',
@@ -612,6 +636,8 @@
     var p = S.pal, o = S.opts, back = '', front = '', r = rng(501), wet = S.tod === 'morning' || S.tod === 'day', i;
     // through the open side of the arch, at the right: sky, towers, the camp in the sun
     back += K.sky(S, 1100, 0, 500, 720, { sun: wet ? [1470, 210] : [1430, 430], sunR: 420 });
+    // chapter 6: the moon in the patch of sky through the arch, right of the canopy
+    back += pileMoon(S, 'low');
     back += K.towers(S, [{ x: 1380, w: 130, top: 130, base: 660, far: 0.5, cap: 'spire' }, { x: 1510, w: 140, top: 250, base: 660, far: 0.62 }]);
     back += path(mound(1160, 1720, 668, 586, 8, rng(502), 0.3, 0.25, 0.3), p.leaf);
     back += rect(1100, 650, 500, 350, S.lin('pilelowfield', [[0, p.grassFar], [1, p.grass]]));
@@ -1314,8 +1340,10 @@
       rows: [[10, 10, 10], [10, 10, { n: 10, gap: [3, 4, 5, 6] }], [10, 10, 10, 10], [10, 10, 10, { n: 10, gap: [3, 4, 5, 6] }]],
       back: ['none', 'shadow'], scale: [false, true, 'behind'], glint: [false, true],
       // chapter 5: the dug earth with tiny prints in it, and swept flat
-      prints: [false, true], swept: [false, true] },
-    defaults: { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false }
+      prints: [false, true], swept: [false, true],
+      // chapter 6: the moon's age in evenings (`wide` and `low`, at night, dusk or sunset)
+      moon: 'number' },
+    defaults: { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false, moon: false }
   });
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;

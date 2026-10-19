@@ -76,6 +76,7 @@
 <script src="../app/story/ch03.js"></script>
 <script src="../app/story/ch04.js"></script>
 <script src="../app/story/ch05.js"></script>
+<script src="../app/story/ch06.js"></script>
 <script>
 (function () {
   'use strict';
@@ -146,10 +147,20 @@
     },
     sky: {
       up: { cast: [], fx: ['night', 'stars', 'skyriver'] },
-      cats: { cast: [c('tallyheart', 'ground-left', 'lookup', 'kind'), c('player', 'ground-right', 'lookup', 'wonder', { facing: 'left' })], fx: ['night', 'stars', 'skyriver'] }
+      cats: { cast: [c('tallyheart', 'ground-left', 'lookup', 'kind'), c('player', 'ground-right', 'lookup', 'wonder', { facing: 'left' })], fx: ['night', 'stars', 'skyriver'] },
+      // chapter 6: the dream, walking on the Sky River, and looking down past its edge
+      walk: { cast: [c('player', 'star-1', 'walk', 'wonder', { facing: 'right' }), c('clancat', 'star-2', 'sit', 'kind', { starry: true })], fx: ['night'] },
+      below: { cast: [], fx: ['night'] }
     },
     river: { crash: { opts: { splash: true }, cast: [], fx: ['night', 'rain', 'lightning'] } },
-    title: { wide: { cast: [], fx: [] } },
+    title: {
+      wide: { cast: [], fx: [] },
+      // chapter 6: the wall's far end by day, three and three across the line where the stones stop
+      end: { cast: [c('tallyheart', 'end-1', 'sit', 'stern'), c('player', 'end-2', 'sit', 'wonder'), c('murmurchime', 'end-3', 'sit', 'worried'),
+        c('sloshbank', 'reed-1', 'sit', 'stern'), c('reedclan', 'reed-2', 'sit', 'happy', { variant: 2 }), c('reedclan', 'reed-3', 'sit', 'neutral', { variant: 1 })], fx: ['day'] },
+      meet: { cast: [c('tallyheart', 'end-1', 'sit', 'kind'), c('player', 'end-2', 'sit', 'wonder'), c('murmurchime', 'end-3', 'sit', 'proud'),
+        c('sloshbank', 'reed-1', 'sit', 'sad'), c('reedclan', 'reed-2', 'sit', 'happy', { variant: 2 }), c('reedclan', 'reed-3', 'sit', 'neutral', { variant: 1 })], fx: ['day'] }
+    },
     // chapter 4: the tallest tower's roof (app/art/sets/roof.js), the littlest dragonet by his pole
     roof: {
       wide: { cast: [c('squall', 'pole', 'hug', 'stern'), c('player', 'door', 'sit', 'wonder')], fx: ['day'] },
@@ -284,7 +295,43 @@
     ['title', 'wide', { cast: [c('puddle', 'wall', 'head', 'happy', { facing: 'left' }), c('sprinkle', 'wall-2', 'sit', 'kind')], fx: ['day'] }, 'chapter 5: Puddle beside Sprinkle (his pose is for the water): about her size, his head held to hers; in the water no shadow is ever drawn under him'],
     ['title', 'wide', { cast: [c('wisp', 'wall', 'blink', 'happy', { facing: 'left' }), c('sprinkle', 'wall-2', 'sit', 'kind')], fx: ['day'] }, 'chapter 5: Wisp beside Sprinkle: slighter, her head a little smaller than her sister\u2019s, never bigger'],
     ['camp', 'reveal', { cast: [c('grizzled', 'fountain-foot', 'sit', 'stern', { asleep: true, snail: true }), c('grizzled', 'center', 'sit', 'scared', { snail: 'in', facing: 'left' }), c('riffle', 'crowd-left', 'hug', 'happy', { holds: 'pole' }), c('player', 'entrance', 'loaf', 'wonder', { dragonfly: true, buzz: true })], fx: ['day'] },
-      'chapter 5: cast extras handed to the painter: asleep and snail (the old tom, resting his eyes), snail: \u2018in\u2019 (startled), holds: \u2018pole\u2019 (Riffle), and whatever else cats.js learns (a dragonfly on her nose, buzzing whiskers)']
+      'chapter 5: cast extras handed to the painter: asleep and snail (the old tom, resting his eyes), snail: \u2018in\u2019 (startled), holds: \u2018pole\u2019 (Riffle), and whatever else cats.js learns (a dragonfly on her nose, buzzing whiskers)'],
+    // chapter 6: the walk along the wall facing right, the wall's end (both cameras, the rustle, the wave), the dream, six
+    // marks and a patrol behind the rim, three cards under the moss, and the newcomers' sizes
+    ['title', 'wide', { cast: [c('murmurchime', 'wall-2', 'walk', 'happy', { facing: 'right' }), c('tallyheart', 'wall', 'walk', 'proud', { facing: 'right' }), c('player', 'wall-3', 'walk', 'proud', { facing: 'right' })], fx: ['day'] },
+      'chapter 6: your first patrol, \u201cLead the way!\u201d: walking right along the wall toward its far end, you in front at wall-3, Tallyheart right behind you at wall, {Murmur}chime at wall-2'],
+    ['title', 'wide', { cast: [c('murmurchime', 'wall-2', 'walk', 'happy', { facing: 'right' }), c('player', 'wall', 'walk', 'wonder', { facing: 'right' }), c('tallyheart', 'wall-3', 'walk', 'proud', { facing: 'right' })], fx: ['day'] },
+      'chapter 6: \u201cWalk in the middle\u201d: Tallyheart leads at wall-3 (room at the right for her face), you at wall, {Murmur}chime behind you at wall-2'],
+    ['title', 'end', { opts: { rustle: true }, cast: [c('tallyheart', 'end-1', 'stand', 'stern'), c('player', 'end-2', 'stand', 'wonder'), c('murmurchime', 'end-3', 'stand', 'worried')], fx: ['day'] },
+      'chapter 6: rustle: true at the wall\u2019s end: rustle lines in the reeds, nobody seen; CrystalClan on the dry ground where the stones stop'],
+    ['title', 'end', { cast: [c('tallyheart', 'end-1', 'stand', 'stern'), c('player', 'end-2', 'sit', 'wonder'), c('murmurchime', 'end-3', 'sit', 'worried'),
+      c('sloshbank', 'reed-1', 'stand', 'stern'), c('reedclan', 'reed-2', 'stand', 'proud', { variant: 2 }), c('reedclan', 'reed-3', 'stand', 'neutral', { variant: 1 })], fx: ['day'] },
+      'chapter 6: three and three: ReedClan steps out of the reeds onto the dry bank, Sloshbank (reed-1) nearest the line, bigger than Tallyheart'],
+    ['title', 'meet', { cast: [c('tallyheart', 'end-1', 'stand', 'stern'), c('player', 'end-2', 'stand', 'wonder'), c('murmurchime', 'end-3', 'stand', 'worried', { puffed: true }),
+      c('sloshbank', 'reed-1', 'stand', 'stern'), c('reedclan', 'reed-2', 'stand', 'proud', { variant: 2 }), c('reedclan', 'reed-3', 'stand', 'neutral', { variant: 1 })], fx: ['day'] },
+      'chapter 6: meet, at cat height: face to face across the line, each side\u2019s second behind its first, its third further back still (drawn so in any cast order)'],
+    ['title', 'end', { cast: [c('tallyheart', 'end-1', 'sit', 'kind'), c('player', 'end-2', 'pawup', 'happy'), c('murmurchime', 'end-3', 'sit', 'proud'),
+      c('sloshbank', 'reed-1', 'walk', 'stern', { facing: 'right' }), c('reedclan', 'reed-2', 'pawup', 'happy', { variant: 2 }), c('reedclan', 'reed-3', 'walk', 'neutral', { variant: 1, facing: 'right' })], fx: ['day'] },
+      'chapter 6: the wave: ReedClan walking off into the reeds, the young tom looking back with a paw up; you wave back'],
+    ['sky', 'walk', { cast: [c('player', 'star-1', 'walk', 'wonder', { facing: 'right' }), c('clancat', 'star-2', 'sit', 'kind', { starry: true, purr: true })], fx: ['night', 'purr'] },
+      'chapter 6: the dream: walking on the Sky River, the starry cat further along (starry: true), purring; the city\u2019s lights tiny far below'],
+    ['sky', 'below', { cast: [], fx: ['night'] }, 'chapter 6: looking down past the river\u2019s edge: the glass towers far below, the tallest\u2019s red light, one balcony with a wind chime in the starlight, nobody on it'],
+    ['hollow', 'wide', { opts: { marks: 6, glow: [true, false, true, false, false, false] }, cast: [c('clancat', 'rim-1', 'situp', 'proud', { variant: 1, facing: 'right' }), c('murmurchime', 'rim-2', 'situp', 'happy', { facing: 'right' }),
+      c('clancat', 'rim-3', 'situp', 'neutral', { variant: 3, facing: 'left' }), c('clancat', 'rim-4', 'situp', 'proud', { variant: 5, facing: 'left' }), c('grizzled', 'rim-5', 'situp', 'stern', { facing: 'left' }),
+      c('tallyheart', 'tree-far', 'sit', 'kind', { facing: 'left' }),
+      c('clancat', { x: 590, y: 690, h: 215, z: 'behind' }, 'walk', 'proud', { variant: 2, facing: 'right' }), c('clancat', { x: 790, y: 690, h: 215, z: 'behind' }, 'walk', 'proud', { variant: 4, facing: 'right' }),
+      c('clancat', { x: 990, y: 690, h: 215, z: 'behind' }, 'walk', 'proud', { variant: 6, facing: 'right' })], fx: ['morning'] },
+      'chapter 6: a patrol trots by along the top of the Hollow: three walking cats at the story\u2019s spots on the far edge, drawn behind the five sitters, heads and tails clear above them'],
+    ['hollow', 'tree', { opts: { marks: 6, glow: [true, false, true, false, false, false] }, cast: [c('tallyheart', 'tree', 'stretch', 'proud')], fx: ['morning'] }, 'chapter 6: marks: 6: SKRITCH, the sixth beside the fifth in the second row; older glowing marks keep glowing'],
+    ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'nose', hidden: true, bark: ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'prints-tracks', 'reed-pile', 'coil-diggers', 'sleet-den'] },
+      cast: [c('player', 'nest', 'lie', 'sleepy', { facing: 'right' })], fx: ['night'] },
+      'chapter 6: hidden: true takes Coil\u2019s card under the moss with Sprinkle\u2019s two: three corners showing; ReedClan\u2019s and Sleet\u2019s lie in the row'],
+    ['den', 'inside', { opts: { weather: 'clear', moon: false, stone: 'chin', hidden: true, bark: ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'reed-pile', 'coil-diggers'] },
+      cast: [c('snorer', 'sleeper-1', 'curl', 'sleepy'), c('player', 'nest', 'lie', 'sleepy', { facing: 'left' })], fx: ['night', 'zzz'] },
+      'chapter 6: the threes thing: her nest from the den, three under the moss, the grey tom asleep'],
+    ['title', 'wide', { cast: [c('coil', 'wall', 'head', 'neutral', { facing: 'left' }), c('player', 'wall-2', 'sit', 'wonder')], fx: ['day'] }, 'chapter 6: Coil at a cat\u2019s anchor: his head smaller than a cat\u2019s (held to a third to three fifths of hers)'],
+    ['title', 'wide', { cast: [c('sleet', 'wall', 'sit', 'proud', { facing: 'left' }), c('sprinkle', 'wall-2', 'sit', 'kind')], fx: ['day'] }, 'chapter 6: Sleet beside Sprinkle: about her size (his head 0.95 to 1.1 of hers)'],
+    ['title', 'wide', { cast: [c('sloshbank', 'wall', 'sit', 'stern', { facing: 'left' }), c('tallyheart', 'wall-2', 'sit', 'kind')], fx: ['day'] }, 'chapter 6: Sloshbank beside Tallyheart: bigger than she is (1.06 to 1.3 times as tall sitting)']
   ];
 
   // ---- panels, rendered when they scroll into view

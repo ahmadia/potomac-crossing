@@ -7,7 +7,9 @@
  *
  * Chapter 4's nine pictures, and chapter 5's nine (the table in its text's notes, "The Case File":
  * prints-pile, puddle-paws, otter-fox, fur, heron-no-moon, heron-shapes, prints-marsh,
- * prints-tracks, wisp-fox). Cards the file lays touching show one thing drawn one way: one fox's
+ * prints-tracks, wisp-fox), and chapter 6's three (its spec, "3. The Case File": reed-pile, which lays
+ * `tidy`'s own row down with one place empty, since the two lie touching; coil-diggers; sleet-den, with
+ * the one fox). Cards the file lays touching show one thing drawn one way: one fox's
  * head wherever the fox is (`fox`), one heron's head (`heron`), one track (`TRACK`: Squall's), one
  * tiny print at one size (`prints`, `PRINT`), one kind of long low shape (`slink`), one "scale"
  * (`shard`). Whoever took the prey is never on a card: paws, prints, two shapes, and nothing more
@@ -490,6 +492,81 @@
     c.line(ring(128, 190, 40, 9.5), { w: 0.85 });
     c.line(ring(128, 190, 19, 4.4), { w: 0.85 });
     c.fine('M124 124V132M133 122V131', { w: 0.7 });                                       // falling
+  } };
+
+  // ------------------------------------------------------------------ chapter 6: the pictures
+
+  // (docs/chapters/06-the-snake-in-the-stones.spec.md, "3. The Case File": three ears)
+
+  // Tidy's own row: four places at its step on its ruled ground, the row `tidy` draws twice, here
+  // once, at its lower row's height, so the two cards that lie touching show one pile. `gap`: the
+  // places left empty, each a light level dent in the earth where a piece lay (as "four gone").
+  var TIDY_ROW = { x0: 56, step: 33, y: 174, k: 1.7 };
+  function tidyRow(c, gap) {
+    var R = TIDY_ROW, dents = '';
+    for (var i = 0; i < 4; i++) {
+      var x = R.x0 + i * R.step;
+      if ((gap || []).indexOf(i) >= 0) dents += 'M' + N(x - 5.6) + ' ' + N(R.y) + 'h11.2';
+      else mouse(c, x, R.y, R.k, 'straight');
+    }
+    c.line('M30 ' + N(R.y + 6) + 'H172', { w: 0.8 });
+    if (dents) c.line(dents, { w: 0.8 });
+  }
+
+  // Sloshbank says ReedClan's pile is robbed too, and left tidy. (ear) A stern cat's head, three
+  // drips falling from under his chin (his belly is always dripping), beside tidy's row with one gap.
+  PICS['reed-pile'] = { label: 'a stern cat’s head with three drips under its chin, beside a tidy row of mice with one gap in it', draw: function (c) {
+    // a big tom's broad head, ears up, cheeks full: a face, front on
+    c.line('M84 86C80 100 82 114 94 121Q110 129 126 121C138 114 140 100 136 86');
+    c.line('M84 86L86 64L101 75Q110 72 119 75L134 64L136 86');
+    c.line('M89 93L104 99M131 93L116 99', { w: 1.15 });                                // stern: brows down to the middle
+    c.line('M93 103H103M117 103H127', { w: 0.9 });                                       // eyes level and narrow
+    c.line('M106.6 109.6H113.4L110 113.6Z', { w: 0.85 });                               // the nose
+    c.line('M103.6 119H116.4', { w: 0.9 });                                              // a mouth that does not smile
+    c.fine('M90 72L92 81M130 72L128 81', { w: 0.7 });                                    // inside the ears
+    c.fine('M80 108L66 106M80 113L67 116M140 108L154 106M140 113L153 116', { w: 0.6 });  // whiskers
+    // three drips under his chin, the last one falling
+    c.line('M100 129Q103.6 136 103.6 138.8A3.6 3.6 0 0 1 96.4 138.8Q96.4 136 100 129Z' +
+      'M110 134Q113.6 141 113.6 143.8A3.6 3.6 0 0 1 106.4 143.8Q106.4 141 110 134Z' +
+      'M120 129Q123.6 136 123.6 138.8A3.6 3.6 0 0 1 116.4 138.8Q116.4 136 120 129Z', { w: 0.85 });
+    c.fine('M110 151v2.6', { w: 0.7 });                                                 // drip
+    tidyRow(c, [2]);
+  } };
+
+  // Coil says small diggers come and go under our pile. (ear) A snake's rounded head at the left, his
+  // chin on the ground, one round eye that never shuts; the pile's mice on the ground beside him;
+  // and under the ground only a few short scrape marks. Nothing of the diggers: no animal, no hole.
+  PICS['coil-diggers'] = { label: 'a snake’s head with one round unblinking eye, beside a row of mice on the ground, and short scrape marks under the ground', draw: function (c) {
+    // his head, side on, nose to the right: round over the top, the chin flat on the ground (listening),
+    // and his neck going off to the left along the ground
+    c.line('M24 140C34 140 40 132 50 126C62 118 78 120 84 132C87 138 86 146 82 150L28 150');
+    c.line('M52 134a6.4 6.4 0 1 0 12.8 0a6.4 6.4 0 1 0 -12.8 0Z', { w: 0.9 });        // one round eye, wide open
+    c.dot(58.4, 134, { w: 1.6 });                                                        // its round pupil
+    c.line('M70 145Q76 147 82 145', { w: 0.8 });                                        // his mouth, shut
+    c.fine('M80 136h.1', { w: 1.1 });                                                    // a nostril
+    c.fine('M30 145Q36 142 40 145M42 141Q48 138 52 141', { w: 0.6 });                   // his scales
+    // the ground and the pile's mice on it
+    [104, 132, 160].forEach(function (x) { mouse(c, x, 150, 1.5, 'straight'); });
+    c.line('M22 156H176', { w: 0.8 });
+    // scrape, scrape: under the ground, under the pile, a few short claw scrapes, two strokes side by
+    // side each, this way and that (never a line long enough to be a way through)
+    c.line('M98 166l6 7M104 166l6 7M126 172l-6 7M132 172l-6 7M148 166l6 7M154 166l6 7', { w: 0.85 });
+    c.fine('M110 186l5 6M115 186l5 6M141 187l-5 6M146 187l-5 6', { w: 0.65 });
+  } };
+
+  // Sleet says the fox talks about 'a fine, dry den'. (ear) The fox's head, eyes half shut, a small
+  // curl of words from his mouth, and beside him a round den mouth with three short straight lines
+  // standing over it: dry (no rain, nothing falling).
+  PICS['sleet-den'] = { label: 'a fox’s head saying something, and a round den mouth with three short dry lines over it', draw: function (c) {
+    fox(c, 22, 114, 1);
+    c.line('M104 150Q109 144 114 147Q118 151 113 154Q109 155 109 151', { w: 0.85 });   // a small speech curl
+    // the den: a round mouth in the ground, its inside, the ground it opens in
+    c.line('M118 196C118 158 172 158 172 196');
+    c.line('M128 196C128 172 162 172 162 196', { w: 0.8 });
+    c.line('M108 196H178', { w: 0.8 });
+    // dry: three short straight lines standing over it, fanned out, nothing coming down
+    c.line('M145 150V136M130 154L123 142M160 154L167 142', { w: 0.85 });
+    c.fine('M136 182h.1M152 186h.1M144 178h.1', { w: 1.1 });                            // dry leaves inside
   } };
 
   // ------------------------------------------------------------------ public

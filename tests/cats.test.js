@@ -52,7 +52,7 @@ const FACINGS = ['left', 'right'];
 test('vocabulary lists the contract ids', () => {
   assert.deepStrictEqual(A.vocab.cast, ['player', 'tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer',
     'mutterer', 'snorter', 'clancat', 'sparrow', 'moth', 'riffle', 'otter', 'dog', 'sprinkle', 'murmurchime', 'reynard', 'squall',
-    'patience', 'puddle', 'wisp']);
+    'patience', 'puddle', 'wisp', 'coil', 'sloshbank', 'reedclan', 'sleet']);
   assert.deepStrictEqual(A.vocab.poses, ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall',
     'stretch', 'peer', 'pawup', 'tummy', 'situp']);
   assert.deepStrictEqual(A.vocab.moods, ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh',
@@ -313,7 +313,8 @@ test('chapter 2 vocabulary: otter and dog poses, variants (build.md v0.3)', () =
   assert.deepStrictEqual(A.vocab.otherPoses.otter.slice(0, OTTER_POSES.length), OTTER_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.dog, DOG_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.tallone, ['stand', 'water', 'set-dish'], 'chapter 1 poses kept');
-  assert.deepStrictEqual(A.vocab.variants, { clancat: [1, 2, 3, 4, 5, 6], otter: [1, 2, 3], dog: [1, 2, 3] });
+  // (chapter 6 adds ReedClan's four coats)
+  assert.deepStrictEqual(A.vocab.variants, { clancat: [1, 2, 3, 4, 5, 6], otter: [1, 2, 3], dog: [1, 2, 3], reedclan: [1, 2, 3, 4] });
   assert.deepStrictEqual(A.vocab.clanVariants, [1, 2, 3, 4, 5, 6], 'kept for chapter 1 readers');
   // the vocab is a copy: changing it changes nothing
   A.vocab.otherPoses.dog.push('nope');
@@ -546,11 +547,16 @@ test('chapter 1’s counts pictures are unchanged (every table but the 9s and th
   // cat and nine pebbles, which no chapter ever showed (no lesson of chapters 1 to 4 pictures nine
   // things a group); it is now the 9s' own (the 10s' group with one claw tucked in: the tests under
   // "chapter 5" below). Over tables 1-8 the chapter 4 code and this one both give the hash below.
+  // Changed on purpose 2026-10-18 (chapter 6): table 3 left this sweep too. Its picture, patrols of three
+  // walking cats, was drawn by no chapter before 6 (no lesson, filler, skip or Hollow round of chapters 1 to
+  // 5 pictures three things a group); chapter 6 widened its tile so each patrol walks on its own card (the
+  // tests under "chapter 6" below). Over tables 1, 2 and 4 to 8 the chapter 5 code and this one both give
+  // the hash below (with table 3 the chapter 5 code gave 75d68e12…).
   const out = [];
-  for (let t = 1; t <= 8; t++) for (const g of [0, 1, 3, 5, 8, 10]) for (const h of [0, 2, 5, 12]) out.push(strip(A.countsPicture({ table: t, groups: g, highlight: h })));
+  for (let t = 1; t <= 8; t++) if (t !== 3) for (const g of [0, 1, 3, 5, 8, 10]) for (const h of [0, 2, 5, 12]) out.push(strip(A.countsPicture({ table: t, groups: g, highlight: h })));
   out.push(strip(A.countsPicture({})));
   const all = out.join('\n');
-  assert.strictEqual(crypto.createHash('sha256').update(all).digest('hex'), '75d68e12593cfb46e4677f6d097a6bb09d4fbd18fc3de847ee158da8fc300d5f');
+  assert.strictEqual(crypto.createHash('sha256').update(all).digest('hex'), '66c46805b5dec7de16be8c8c0e967aad0571867a453b35fb6c47f5c06d5ca34a');
   // the UI's extra keys (thing, things) and an explicit per equal to the table change nothing
   assert.strictEqual(strip(A.countsPicture({ table: 2, groups: 3, highlight: 2, thing: 'ear', things: 'ears' })), strip(A.countsPicture({ table: 2, groups: 3, highlight: 2 })));
   assert.strictEqual(strip(A.countsPicture({ table: 2, groups: 3, per: 2, highlight: 2 })), strip(A.countsPicture({ table: 2, groups: 3, highlight: 2 })));
@@ -2122,8 +2128,9 @@ const rgbOf = (hex) => { const n = parseInt(hex.slice(1), 16); return [n >> 16, 
 const measure = (who, pose, by) => { const ch = A.character(who, { pose, mood: 'neutral' }), hb = ch.headBox; return by === 'head' ? ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2 : ch.h - hb.y0; };
 
 test('chapters 1 to 4 are unchanged by chapter 5 (a fingerprint of every cast member, pose, mood and extra, the Counts pictures and the sand)', () => {
-  // Taken from the chapter 4 code before chapter 5 extended it (2026-10-11), ids normalised: 26,640
-  // drawings. Every cat in every pose and mood, the extras, the otters and dogs, Sprinkle, Reynard,
+  // Taken from the chapter 4 code before chapter 5 extended it (2026-10-11), ids normalised: 26,628
+  // drawings (26,640 until table 3's patrols left the sweep on purpose in chapter 6; the chapter 4 and 5
+  // code give the same hash without them). Every cat in every pose and mood, the extras, the otters and dogs, Sprinkle, Reynard,
   // Squall, the Tall One, sparrow and moth; the 10s, the 5s' named pairs, the grit, the mud, her own
   // paws, the promise, tables 1 to 8, the prey, and the sand in every ground and style. If their
   // art is ever changed on purpose, take a new fingerprint and say so. One thing chapter 5 changed
@@ -2157,13 +2164,15 @@ test('chapters 1 to 4 are unchanged by chapter 5 (a fingerprint of every cast me
   for (let tap = 0; tap <= 5; tap++) cp({ paws: 'own', both: true, table: 10, groups: 5, per: 10, highlight: tap * 10, taps: tap, look, lit: tap ? 'both' : null, nextPaw: tap < 5 ? 'both' : null, totals: false, next: tap < 5 });
   for (let tap = 0; tap <= 4; tap++) cp({ paws: 'own', table: 5, groups: 4, per: 5, highlight: tap * 5, taps: tap, look, next: tap < 4, totals: tap % 2 === 0 });
   for (let tap = 0; tap <= 3; tap++) for (const paws of ['promise', 'pile']) cp({ paws, table: 10, groups: 3, taps: tap, highlight: tap * 10, look, next: tap < 3, totals: paws === 'pile' });
-  for (let t = 1; t <= 8; t++) for (const g of [1, 4, 7]) for (const fl of [{}, { totals: true, next: true }, { thought: true }, { layout: 'rows', totals: true }]) cp(Object.assign({ table: t, groups: g, highlight: t * 2, who: t === 2 ? RIM5 : undefined, look }, fl));
+  // (table 3, the patrols, is chapter 6's own picture since 2026-10-18: no chapter before it draws one; see
+  // chapter 1's counts sweep above)
+  for (let t = 1; t <= 8; t++) if (t !== 3) for (const g of [1, 4, 7]) for (const fl of [{}, { totals: true, next: true }, { thought: true }, { layout: 'rows', totals: true }]) cp(Object.assign({ table: t, groups: g, highlight: t * 2, who: t === 2 ? RIM5 : undefined, look }, fl));
   for (const [g, p] of [[9, 2], [4, 10], [3, 10], [2, 8]]) for (const layout of ['stacks', 'rows']) for (const thought of [false, true, 'right']) cp({ table: p, groups: g, per: p, highlight: p, kind: 'prey', layout, thought, totals: true, next: true });
   for (const ground of [undefined, 'earth', 'mud', 'grit']) for (const style of [undefined, 'swipe']) for (const pair of [undefined, true]) for (const [g, p, c] of [[4, 10, 20], [10, 10, 30], [6, 5, 12], [9, 2, 4], [1, 1, 0]]) out.push(A.sand({ groups: g, per: p, counted: c, ground, style, pair }));
   for (const step of [undefined, 10, 2]) for (const [g, p, c] of [[4, 10, 10], [2, 8, 6], [3, 10, 30]]) out.push(A.sand({ groups: g, per: p, counted: c, layout: 'rows', ground: 'earth', step }));
   for (const kind of ['mouse', 'vole', 'fish']) for (const lit of [false, true]) for (const part of [undefined, 'glow', 'body', 'spark']) out.push(JSON.stringify(A.preyFallback({ kind, lit, part, facing: lit ? 'left' : 'right' })));
-  assert.strictEqual(out.length, 26640);
-  assert.strictEqual(crypto.createHash('sha256').update(out.join('\n')).digest('hex'), '579401daaef9678a788127f0317ff74240a8fc2beec0d45d3ead949ca367f988');
+  assert.strictEqual(out.length, 26628);
+  assert.strictEqual(crypto.createHash('sha256').update(out.join('\n')).digest('hex'), 'f06b20d92bd69d17c7dac4323362d47a483a21caed9d96abc053e120aa5c8b18');
   // and chapter 5's options, when absent or false, change nothing
   const base = A.character('grizzled', { pose: 'situp', mood: 'stern' });
   assert.strictEqual(strip(A.character('grizzled', { pose: 'situp', mood: 'stern', tuck: false, asleep: false, snail: false, buzz: false, dragonfly: false, glow: false, tap: false }).svg), strip(base.svg));
@@ -2174,16 +2183,16 @@ test('chapters 1 to 4 are unchanged by chapter 5 (a fingerprint of every cast me
 });
 
 test('chapter 5 vocabulary: patience, puddle and wisp and their poses; the otters’ seven new poses; Sprinkle’s lookdown; the extras (earlier ids never move)', () => {
-  assert.deepStrictEqual(A.vocab.cast.slice(-3), ['patience', 'puddle', 'wisp']);
+  assert.deepStrictEqual(A.vocab.cast.slice(19, 22), ['patience', 'puddle', 'wisp']);
   assert.deepStrictEqual(A.vocab.otherPoses.patience, HERON_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.puddle, PUDDLE_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.wisp, WISP_POSES);
-  assert.deepStrictEqual(A.vocab.otherPoses.riffle.slice(11), OTTER_POSES5);
+  assert.deepStrictEqual(A.vocab.otherPoses.riffle.slice(11, 18), OTTER_POSES5);
   assert.deepStrictEqual(A.vocab.otherPoses.otter, A.vocab.otherPoses.riffle);
   assert.deepStrictEqual(A.vocab.otherPoses.sprinkle.slice(19), ['lookdown']);
   assert.strictEqual(A.vocab.poses.length, 15, 'the cats have no new pose: what is new for them is an extra');
   for (const k of ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach']) assert.ok(Array.isArray(A.vocab.extras[k]) && A.vocab.extras[k].length, 'extra ' + k);
-  assert.deepStrictEqual(Object.keys(A.vocab.extras), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach']);
+  assert.deepStrictEqual(Object.keys(A.vocab.extras).slice(0, 9), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach']);
   assert.deepStrictEqual(A.vocab.extras.reach, [true]);
   assert.deepStrictEqual(A.vocab.extras.snail, [true, 'in']);
   assert.ok(A.vocab.extras.holds.includes('pole'));
@@ -3391,4 +3400,508 @@ test('dev/gallery-cats.html: the page’s own script runs and draws every sectio
   for (const pose of A.vocab.otherPoses.otter) assert.strictEqual(count(otters, new RegExp('<small title="' + pose + ' · \\w+">', 'g')), 4, 'otters: ' + pose + ', for Riffle and the three ferry otters');
   assert.ok(!/undefined|NaN/.test(otters));
   assert.ok(/lookdown · wonder/.test(run('?only=sprinkle').out));
+});
+
+// ================================================================== chapter 6
+// Coil the water snake; Sloshbank and the ReedClan cats; Sleet, the eldest dragonet; the starry cat;
+// the old tom's pinecone; our cat's paw and ears to tap; Riffle's puff, pebbles and string of fish;
+// and the Counts art: Sleet's roll call, his forepaw, ReedClan's patrols (the spec, section 4).
+
+const COIL_POSES = ['stone', 'head', 'long', 'longer', 'still', 'listen', 'think', 'slide'];
+const SLEET_POSES = ['hidden', 'tail', 'flat', 'point', 'call', 'puff', 'droop', 'sit', 'pawup'];
+const MOODS6 = ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn', 'sad', 'shy'];
+const POSES6 = ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer', 'pawup', 'tummy', 'situp'];
+// the nine furs' own colours (LOOKS.fur), which every CLAN coat is drawn in too
+const FUR_BASES = { black: '#3d3844', white: '#fbf8f2', 'silver-tabby': '#c3cbd4', 'brown-tabby': '#b5895b', ginger: '#e8913a', cream: '#f2dbb1', grey: '#9ea5ad', tortie: '#3f3330', calico: '#fbf8f2' };
+const REED_BASES = ['#6b5a4e', '#d8ba7e', '#7d7b7a', '#c4a088'];
+const rgbDist = (a, b) => { const p = rgbOf(a), q = rgbOf(b); return Math.sqrt((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2); };
+const inBox = (r, label, slack) => { const b = r.bounds, k = slack || 0; assert.ok(b.x0 >= -k && b.y0 >= -k && b.x1 <= r.w + k && b.y1 <= r.h + k, label + ': inside its ' + r.w + ' x ' + r.h + ' box: ' + JSON.stringify(b)); };
+const tapsOf = (s) => (s.match(/class="pc-tap pc-tap-[a-z]+"/g) || []).map((x) => x.replace(/^class="pc-tap pc-tap-/, '').slice(0, -1));
+const ALL_LOOKS = Object.keys(FUR_BASES).map((fur, i) => ({ fur, marking: ['none', 'white-paws', 'white-chest', 'back-stripe', 'nose-splash'][i % 5], eyes: ['green', 'amber', 'blue', 'copper', 'odd'][i % 5], sex: i % 2 ? 'tom' : 'she' }));
+
+test('chapter 6 vocabulary: coil, sloshbank, reedclan and sleet (earlier ids never move); their poses; Riffle’s puff; the extras; ReedClan’s variants', () => {
+  assert.deepStrictEqual(A.vocab.cast.slice(-4), ['coil', 'sloshbank', 'reedclan', 'sleet']);
+  assert.deepStrictEqual(A.vocab.otherPoses.coil, COIL_POSES);
+  assert.deepStrictEqual(A.vocab.otherPoses.sleet, SLEET_POSES);
+  assert.deepStrictEqual(A.vocab.otherPoses.riffle.slice(-1), ['puff']);
+  assert.deepStrictEqual(A.vocab.otherPoses.otter, A.vocab.otherPoses.riffle);
+  assert.deepStrictEqual(A.vocab.poses, POSES6, 'the cats have no new pose (Sloshbank and ReedClan take every cat pose)');
+  assert.deepStrictEqual(Object.keys(A.vocab.extras), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach', 'starry', 'grass']);
+  assert.deepStrictEqual(A.vocab.extras.tap, ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes']);
+  assert.deepStrictEqual(A.vocab.extras.holds, ['stone', 'pebble', 'vole', 'bark', 'fish', 'fish2', 'pole', 'pinecone', 'pebbles', 'string']);
+  assert.deepStrictEqual(A.vocab.extras.starry, [true]);
+  assert.deepStrictEqual(A.vocab.extras.grass, [true]);
+  assert.deepStrictEqual(A.vocab.variants.reedclan, [1, 2, 3, 4]);
+  for (const who of ['coil', 'sleet', 'sloshbank']) assert.ok(!(who in A.vocab.variants), 'one ' + who);
+  // an unknown pose: Sleet sits (his page in her book), Coil puts his head out
+  assert.strictEqual(strip(A.character('sleet', { pose: 'nope' }).svg), strip(A.character('sleet', { pose: 'sit' }).svg));
+  assert.strictEqual(strip(A.character('coil', { pose: 'nope' }).svg), strip(A.character('coil', { pose: 'head' }).svg));
+});
+
+test('chapters 1 to 5 are unchanged by chapter 6 (a fingerprint of every cast member, pose, mood and extra, the Counts pictures and the sand)', () => {
+  // Taken from the chapter 5 code before chapter 6 extended it (2026-10-18), ids normalised: 43,192
+  // drawings and pictures (43,282 until table 3's patrols left the sweep on purpose, below; the chapter 5
+  // code gives the same hash without them) (every cat in every pose and mood and the extras, the otters and dogs in
+  // all eighteen poses, Sprinkle, Reynard, Squall, Patience, Puddle and Wisp, the Tall One, sparrow
+  // and moth; tables 1 to 10, the who pictures, the 9s, the paws, the fish, bumps and herons, the
+  // answers, the sand in every ground and style). If their art is ever changed on purpose, take a
+  // new fingerprint and say so.
+  const s5 = (x) => x.replace(/pc[0-9a-z]+-[0-9a-z]+/g, 'id').replace(/pc(?:dzf|fp|op|wp|tp|pr|t)[0-9a-z]+/g, 'id').replace(/pc(?:paw|day|fish|raft|board|log)_[0-9a-z]+/g, 'id');
+  const MOODS = MOODS6, POSES = POSES6;
+  const OTTER = ['stand', 'sit', 'scramble', 'swim', 'float', 'juggle', 'slide', 'hug', 'sun', 'dive', 'hush', 'whistle', 'groan', 'flip', 'hop', 'point', 'fall', 'slap'];
+  const DOG = ['stand', 'jump', 'sit', 'bounce', 'howl'];
+  const DZ = DZ_POSES.concat(['lookdown']);
+  const OWN = { reynard: FOX_POSES, squall: SQUALL_POSES, patience: HERON_POSES, puddle: PUDDLE_POSES, wisp: WISP_POSES };
+  const look = { fur: 'calico', marking: 'white-chest', eyes: 'odd', sex: 'tom' };
+  const keepPrey = A.prey;
+  delete A.prey;
+  const out = [];
+  try {
+    const rec = (r) => { out.push(s5(r.svg), JSON.stringify([r.w, r.h, r.head, r.headBox || null, r.bounds || null, r.held || null, r.chestTop || null, r.nest || null, r.pole || null, r.paw || null, r.reach || null, r.bill || null]), s5(r.front || '')); };
+    for (const who of CATS) for (const pose of POSES) for (const mood of MOODS) rec(A.character(who, { pose, mood, look, variant: (mood.length % 6) + 1, facing: (pose.length + mood.length) % 2 ? 'left' : 'right' }));
+    const EX = [{ wink: true }, { holds: 'bark' }, { holds: 'stone', holdAt: 'chin' }, { holds: 'vole' }, { holds: 'pebble', holdAt: 'nose' }, { flatEars: true, claws: true }, { puffed: true, tear: true }, { moss: true, mist: true, squeeze: true },
+      { tuck: true }, { asleep: true, snail: true }, { snail: 'in', tap: 'nose' }, { buzz: true }, { dragonfly: true }, { glow: true }, { reach: true }, { tap: false }, { holds: 'stone', holdAt: 'mouth' }];
+    for (const who of ['tallyheart', 'player', 'grizzled', 'murmurchime', 'clancat']) for (const pose of POSES) for (const ex of EX) rec(A.character(who, Object.assign({ pose, mood: 'kind', look, variant: 2 }, ex)));
+    for (const [who, poses] of [['riffle', OTTER], ['otter', OTTER], ['dog', DOG]]) for (const variant of [1, 2, 3]) for (const pose of poses) for (const mood of MOODS)
+      for (const ex of [{}, { holds: 'fish2', tear: true }, { pebbles: 5, squeeze: true, mist: true }]) rec(A.character(who, Object.assign({ pose, mood, variant, facing: mood.length % 2 ? 'left' : 'right' }, ex)));
+    for (const pose of OTTER) for (const ex of [{ holds: 'pole', tap: 'pole' }, { holds: 'fish' }, { glow: true }]) rec(A.character('riffle', Object.assign({ pose, mood: 'happy' }, ex)));
+    for (const pose of DZ) for (const mood of MOODS) for (const facing of FACINGS) rec(A.character('sprinkle', { pose, mood, facing }));
+    for (const pose of DZ) rec(A.character('sprinkle', { pose, mood: 'shy', holds: 'pebble', tear: true, mist: true, noArms: pose === 'sit' }));
+    for (const who of Object.keys(OWN)) for (const pose of OWN[who]) for (const mood of MOODS) for (const facing of FACINGS)
+      for (const ex of [{}, { tear: true, mist: true, squeeze: true, flick: true, dragonfly: true }, { lit: 3, pole: true, noArms: true }]) rec(A.character(who, Object.assign({ pose, mood, facing }, ex)));
+    for (const who of ['tallone', 'sparrow', 'moth']) for (const pose of ['stand', 'water', 'set-dish', 'perch', 'fluffed', 'fly']) for (const facing of FACINGS) rec(A.character(who, { pose, facing }));
+    for (const who of ['nobody', undefined]) rec(A.character(who, { pose: 'sit' }));
+    rec(A.cat({ look, pose: 'walk', mood: 'happy' })); out.push(JSON.stringify(A.dragonfly({ asleep: true })), JSON.stringify(A.dragonfly()));
+    const RIM5 = [{ who: 'clancat', variant: 1 }, { who: 'murmurchime' }, { who: 'clancat', variant: 3 }, { who: 'clancat', variant: 5 }, { who: 'grizzled' }];
+    const cp = (o) => out.push(s5(A.countsPicture(o)));
+    // (table 3's plain picture, the patrols, left this sweep on purpose: chapter 6 widened its tile so each
+    // patrol walks on its own card, and no chapter before 6 draws it; see chapter 1's counts sweep)
+    for (let t = 1; t <= 10; t++) if (t !== 3) for (const g of [1, 3, 5, 7, 10]) for (const fl of [{}, { totals: true, next: true }, { thought: true }, { layout: 'rows', totals: true }, { kind: 'prey' }])
+      for (const hl of [0, t * 2, t * g]) cp(Object.assign({ table: t, groups: g, highlight: hl, look }, fl));
+    for (const who of [RIM5, RIM5.slice(1, 4), [{ who: 'player' }, { who: 'tallyheart' }], [{ who: 'riffle' }, { who: 'otter', variant: 1 }, { who: 'dog', variant: 3 }], [{ who: 'sprinkle' }, { who: 'squall' }, { who: 'puddle' }, { who: 'wisp' }]])
+      for (const t of [1, 2, 5, 9, 10]) for (const g of [1, 2, 4]) cp({ table: t, groups: g, highlight: t * 2, who, look, totals: true, next: true });
+    for (const w of ['sprinkle', 'squall', 'puddle', 'wisp', 'tallyheart']) for (const hl of [0, 5]) cp({ table: 5, groups: 1, per: 5, highlight: hl, who: [{ who: w }], next: true, totals: true, look });
+    for (let tap = 0; tap <= 5; tap++) { cp({ paws: 'own', both: true, table: 10, groups: 5, per: 10, highlight: tap * 10, taps: tap, look, next: tap < 5 }); cp({ paws: 'both', table: 9, groups: 5, per: 9, highlight: tap * 9, taps: tap, look, next: true }); cp({ table: 9, groups: 5, per: 9, tuck: true, taps: tap, next: true, who: RIM5, look }); }
+    for (let tap = 0; tap <= 4; tap++) { cp({ paws: 'own', table: 5, groups: 4, per: 5, highlight: tap * 5, taps: tap, look, next: true, totals: true }); cp({ paws: 'board', table: 1, groups: 4, per: 1, taps: tap, next: true, look }); }
+    for (let tap = 0; tap <= 9; tap += 3) cp({ paws: 'log', table: 1, groups: 9, per: 1, taps: tap, look, plane: tap ? 'over' : true, next: true });
+    for (const hl of [0, 12, 35]) { cp({ table: 5, groups: 7, per: 5, kind: 'grit', ground: 'grit', highlight: hl }); cp({ table: 5, groups: 6, per: 5, kind: 'mud', highlight: hl, totals: true, next: true }); cp({ paws: 'mud', kind: 'mud', table: 5, per: 5, groups: 3, of: 7, highlight: hl, totals: true, next: true }); }
+    for (let tap = 0; tap <= 3; tap++) cp({ paws: 'promise', table: 10, groups: 3, taps: tap, highlight: tap * 10, look, next: true });
+    for (const k of [['fish', 'pairs', 2, 7, true], ['fish', 'strings', 5, 4, false], ['bumps', undefined, 10, 4, false], ['herons', undefined, 1, 7, false]]) for (const hl of [0, 6, 40]) cp({ kind: k[0], layout: k[1], table: k[2], per: k[2], groups: k[3], thought: k[4], highlight: hl });
+    for (const g of [1, 4, 10]) for (const tk of [undefined, 0, 2]) cp({ table: 9, groups: g, per: 9, highlight: g * 4, tuck: tk, who: RIM5, look });
+    cp({ kind: 'answers', answers: [18, 36] });
+    for (const ground of [undefined, 'earth', 'mud', 'grit', 'log']) for (const style of [undefined, 'swipe']) for (const pair of [undefined, true]) for (const [g, p, c] of [[4, 10, 20], [6, 5, 12], [9, 2, 4], [1, 1, 0], [6, 3, 9]]) out.push(A.sand({ groups: g, per: p, counted: c, ground, style, pair }));
+    for (const step of [undefined, 10, 2]) for (const [g, p, c] of [[4, 10, 10], [2, 8, 6], [3, 10, 30]]) out.push(A.sand({ groups: g, per: p, counted: c, layout: 'rows', ground: 'earth', step }));
+    out.push(A.sand({ groups: 4, per: 10, counted: 40, style: 'swipe', pair: true, rubbed: 2 }), A.sand({ answers: [18, 36] }));
+    for (const kind of ['mouse', 'vole', 'fish']) for (const lit of [false, true]) for (const part of [undefined, 'glow', 'body', 'spark']) out.push(JSON.stringify(A.preyFallback({ kind, lit, part, facing: lit ? 'left' : 'right' })));
+  } finally { if (keepPrey) A.prey = keepPrey; }
+  assert.strictEqual(out.length, 43192);
+  assert.strictEqual(crypto.createHash('sha256').update(out.join('\n')).digest('hex'), '295647018196a13c99f84b200fd9b46e4482dd0c7504b3f08bde4fe3a5da66eb');
+  // and chapter 6's options, when absent or false, change nothing
+  assert.strictEqual(strip(A.character('grizzled', { pose: 'lie', mood: 'kind', starry: false, holds: 'nothing', tap: 'nothing', grass: true }).svg), strip(A.character('grizzled', { pose: 'lie', mood: 'kind' }).svg));
+  assert.strictEqual(strip(A.character('riffle', { pose: 'juggle', holds: 'pebbles', tap: 'nothing' }).svg), strip(A.character('riffle', { pose: 'juggle' }).svg), 'juggle keeps its own three, and holds nothing else');
+  assert.strictEqual(strip(A.character('dog', { pose: 'sit', holds: 'string', tap: 'cheeks' }).svg), strip(A.character('dog', { pose: 'sit' }).svg), 'the dogs hold nothing');
+});
+
+// ----- Coil
+
+test('every Coil pose x mood x facing renders inside his box (720 x 160), the same box and scale every time; ids unique', () => {
+  for (const pose of COIL_POSES) for (const mood of MOODS6) for (const facing of FACINGS) {
+    const r = A.character('coil', { pose, mood, facing }), label = 'coil ' + pose + ' ' + mood + ' ' + facing;
+    checkResult(r, label);
+    assert.ok(r.w === 720 && r.h === 160, label + ': one box');
+    inBox(r, label);
+    checkIds(r.svg, label);
+  }
+  const a = A.character('coil', { pose: 'head' }), b = A.character('coil', { pose: 'head' });
+  assert.notStrictEqual(a.svg, b.svg, 'two Coils in one panel have their own ids');
+  assert.strictEqual(strip(a.svg), strip(b.svg));
+});
+
+test('Coil’s eyes never shut: two round eyes, a round pupil and a shine dot in each, in every pose that shows them and every mood; no lids, ever', () => {
+  for (const pose of COIL_POSES) for (const mood of MOODS6) for (const ex of [{}, { facing: 'left' }, { tap: 'eyes' }, { squeeze: true, asleep: true }]) {
+    const s = A.character('coil', Object.assign({ pose, mood }, ex)).svg, label = pose + ' ' + mood + ' ' + JSON.stringify(ex);
+    const shown = pose !== 'stone' && pose !== 'slide';
+    assert.strictEqual(count(s, /class="pc-eye"/g), shown ? 2 : 0, label + ': two eyes (in stone and slide his head is turned into the gap)');
+    assert.strictEqual(count(s, /class="pc-pupil"/g), shown ? 2 : 0, label + ': two round pupils');
+    assert.strictEqual(count(s, /class="pc-shine"/g), shown ? 2 : 0, label + ': a shine dot in each');
+    for (const m of s.match(/<circle class="pc-pupil"[^>]*r="([\d.]+)"/g) || []) assert.ok(+m.match(/ r="([\d.]+)"/)[1] > 1.2, label + ': the pupil is round and open');
+    assert.ok(!/pc-lid|pc-closed|squeeze/.test(s), label + ': no lid, no shut eye');
+  }
+  // `stone`: one more rounded stone of the wall, nothing of a face
+  const st = A.character('coil', { pose: 'stone' }).svg;
+  assert.ok(!/pc-mouth|pc-brow/.test(st), 'stone: no face showing');
+  // and not his brown with its dark bands either (a brown spotted bun in a blue-grey wall, it was no stone:
+  // chapter 6's review): the old stones' blue-grey; sliding back in, the dome is his own brown again
+  for (const mood of MOODS6) {
+    const s1 = A.character('coil', { pose: 'stone', mood }).svg.toLowerCase();
+    assert.ok(!s1.includes('#8a6a4a') && !s1.includes('#5a4130'), 'stone ' + mood + ': no brown, no bands');
+    const fill = /fill="(#[0-9a-f]{6})"/.exec(s1.slice(s1.lastIndexOf('<g transform')))[1], v = [1, 3, 5].map((i) => parseInt(fill.slice(i, i + 2), 16));
+    assert.ok(v[2] >= v[0], 'stone ' + mood + ': blue-grey, not brown: ' + fill);
+  }
+  assert.ok(A.character('coil', { pose: 'slide' }).svg.includes('#8a6a4a'), 'slide: his own brown');
+});
+
+test('Coil’s mouth is always shut: no tongue, no fang, no open mouth, in any pose, mood or extra', () => {
+  const PINKS = ['#f28a9c', '#f08a9c', '#f2879a', '#ee8a9c', '#7a2c3b', '#5d3844'];
+  for (const pose of COIL_POSES) for (const mood of MOODS6) {
+    const s = A.character('coil', { pose, mood, tap: 'eyes' }).svg;
+    for (const c of PINKS) assert.ok(!s.toLowerCase().includes(c), pose + ' ' + mood + ': no tongue or open mouth (' + c + ')');
+    assert.ok(!/fang|tooth|teeth|tongue/i.test(s), pose + ' ' + mood + ': no fang');
+    const mouths = s.match(/<path class="pc-mouth" d="([^"]+)"[^>]*>/g) || [];
+    assert.strictEqual(mouths.length, pose === 'stone' || pose === 'slide' ? 0 : 1, pose + ' ' + mood + ': one mouth');
+    for (const m of mouths) { assert.ok(/fill="none"/.test(m), 'a line, never a filled shape'); assert.ok(!/[Zz]/.test(m.match(/d="([^"]+)"/)[1]), 'never a closed shape'); }
+  }
+});
+
+test('Coil’s head is at the bottom middle of his box in every pose (the bridge’s `gap` puts it in his gap), his body trailing back along the bottom, never in front of his face', () => {
+  for (const pose of COIL_POSES) for (const facing of FACINGS) {
+    const r = A.character('coil', { pose, facing, mood: 'neutral' }), hb = r.headBox, b = r.bounds, label = pose + ' ' + facing;
+    assert.ok(Math.abs(r.head.x - r.w / 2) <= 0.5, label + ': head.x on the middle: ' + r.head.x);
+    assert.ok(Math.abs((hb.x0 + hb.x1) / 2 - r.w / 2) <= 8, label + ': the head box is on the middle: ' + JSON.stringify(hb));
+    const low = pose === 'still' ? 30 : pose === 'think' ? 38 : 12;
+    assert.ok(hb.y1 >= r.h - 3 - low, label + ': the head at the bottom (within ' + low + ' of the ground): ' + hb.y1);
+    assert.ok(b.y1 <= r.h && b.y1 >= r.h - 6, label + ': lying on the bottom line: ' + b.y1);
+    // nothing of him further forward than his face: the body runs back, away from whoever he faces
+    if (facing === 'right') assert.ok(b.x1 <= hb.x1 + 1 && b.x0 <= hb.x0, label + ': trailing back to the left');
+    else assert.ok(b.x0 >= hb.x0 - 1 && b.x1 >= hb.x1, label + ': trailing back to the right');
+    // and close to the ground: he never rears up
+    assert.ok(r.h - b.y0 <= 70, label + ': never rearing: ' + (r.h - b.y0) + ' high');
+  }
+  // the longer poses show more of him, along the bottom line
+  const len = (p) => { const b = A.character('coil', { pose: p }).bounds; return b.x1 - b.x0; };
+  assert.ok(len('head') < len('long') && len('long') < len('longer'), 'head, long, longer: more of him each time');
+  assert.ok(len('longer') > 300, 'loops and loops');
+  // one size: the head the same in every pose that shows it
+  const hw = (p) => { const hb = A.character('coil', { pose: p }).headBox; return hb.x1 - hb.x0; };
+  for (const p of ['long', 'longer', 'still', 'listen', 'think']) assert.ok(Math.abs(hw(p) - hw('head')) < 3, p + ': his head as big as in `head`');
+});
+
+test('Coil’s head is smaller than a cat’s (between a third and three fifths of our cat’s, as the scenes hold him), brown with darker bands and a cream belly', () => {
+  const avg = (hb) => ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2;
+  const me = avg(A.character('player', { pose: 'sit', mood: 'neutral' }).headBox), coil = avg(A.character('coil', { pose: 'head', mood: 'neutral' }).headBox);
+  assert.ok(coil / me > 0.35 && coil / me < 0.6, 'head ' + (coil / me).toFixed(3) + ' of our cat’s');
+  for (const cat of ['tallyheart', 'clancat', 'snorer']) assert.ok(coil < avg(A.character(cat, { pose: 'sit' }).headBox) * 0.6, 'smaller than ' + cat + '’s');
+  const s = A.character('coil', { pose: 'longer' }).svg;
+  assert.ok(s.includes('#8a6a4a') && s.includes('#5a4130') && s.includes('#efe0bf'), 'brown, darker cross-bands, a cream belly');
+  assert.ok(count(s, /class="pc-bands"/g) >= 8, 'banded all along');
+});
+
+// ----- Sleet
+
+test('every Sleet pose x mood x facing renders inside his box (640 x 340, his sister’s), on the ground; ids unique', () => {
+  for (const pose of SLEET_POSES) for (const mood of MOODS6) for (const facing of FACINGS) for (const ex of [{}, { grass: true, tear: true, mist: true, squeeze: true, lit: 5 }]) {
+    const r = A.character('sleet', Object.assign({ pose, mood, facing }, ex)), label = 'sleet ' + pose + ' ' + mood + ' ' + facing + ' ' + JSON.stringify(ex);
+    checkResult(r, label);
+    assert.ok(r.w === 640 && r.h === 340, label + ': his sister’s box');
+    inBox(r, label, 1);
+    assert.ok(r.bounds.y1 >= 330, label + ': on the ground');
+    checkIds(r.svg, label);
+  }
+});
+
+test('Sleet: on Sprinkle’s model and her size, silver-white with blue-grey ridges, bold blue eyes under bossy brows, five frost-white claws a forepaw; the book page draws', () => {
+  const avg = (hb) => ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2;
+  const sl = A.character('sleet', { pose: 'sit', mood: 'neutral' }), sp = A.character('sprinkle', { pose: 'sit', mood: 'neutral' });
+  const k = avg(sl.headBox) / avg(sp.headBox);
+  assert.ok(k >= 0.95 && k <= 1.1, 'his head is hers: ' + k.toFixed(3));
+  assert.ok(sl.headBox.y1 < 200, 'sitting, his head well above a cat’s');
+  const s = sl.svg;
+  assert.ok(s.includes('#e1e7ed') && !s.includes('#a8b1b6'), 'silver-white, not Sprinkle’s mist-grey');
+  assert.ok(s.includes('#b3c2d2'), 'a blue-grey shade in his ridges');
+  assert.ok(s.includes('#6fb0e6'), 'blue eyes');
+  assert.ok(!/#f28a9c|tooth|fang/.test(A.character('sleet', { pose: 'sit', mood: 'neutral' }).svg), 'never toothy');
+  // bossy brows in every mood, Sprinkle has them only for some
+  for (const mood of MOODS6) assert.ok(/stroke="#4d5b6b" stroke-width="4.2"/.test(A.character('sleet', { pose: 'sit', mood }).svg), mood + ': his brows');
+  assert.ok(!/stroke-width="4.2"/.test(sp.svg), 'Sprinkle’s are her own');
+  // both wings folded (no sore wing), five claws on each forepaw (two forepaws: ten, frost-white)
+  assert.ok(count(s, /class="pc-wing"/g) === 2);
+  const claws = (s.match(/<g class="pc-dclaws" fill="([^"]+)"[^>]*>([\s\S]*?)<\/g>/g) || []);
+  assert.strictEqual(claws.length, 2, 'two forepaws');
+  for (const c of claws) { assert.strictEqual(count(c, /<path /g), 5, 'five claws'); assert.ok(/fill="#fbfdff"|fill="#[ed][0-9a-f]{5}"/.test(c), 'frost-white'); }
+  // his page in her book: puff, happy
+  const page = A.character('sleet', { pose: 'puff', mood: 'happy' });
+  checkResult(page, 'sleet puff happy'); assert.notStrictEqual(strip(page.svg), strip(A.character('sleet', { pose: 'sit', mood: 'happy' }).svg));
+  assert.ok(/class="pc-seed"/.test(page.svg), 'puff: a grass seed falling off his chest');
+});
+
+test('Sleet’s pawup lights n of its five claws frost-white (lit: n) and reports where the paw is; his poses', () => {
+  for (let n = 0; n <= 5; n++) {
+    const r = A.character('sleet', { pose: 'pawup', mood: 'proud', lit: n }), lit = r.svg.match(/<g class="pc-dclaws pc-lit"[^>]*>([\s\S]*?)<\/g>/);
+    assert.strictEqual(lit ? count(lit[1], /<path /g) : 0, n, n + ' lit');
+    if (n) assert.ok(/class="pc-dclaws pc-lit" fill="#ffffff" stroke="#79b3d6"/.test(r.svg), 'frost-white');
+    assert.ok(r.paw && r.paw.x > r.w / 2 && r.paw.y < r.h * 0.6 && r.paw.r > 20, 'the paw, up: ' + JSON.stringify(r.paw));
+  }
+  assert.strictEqual(count(A.character('sleet', { pose: 'pawup', lit: true }).svg.match(/<g class="pc-dclaws pc-lit"[^>]*>([\s\S]*?)<\/g>/)[1], /<path /g), 5, 'lit: true lights all five');
+  assert.ok(!A.character('sleet', { pose: 'sit' }).paw, 'only a raised forepaw is reported');
+  // hidden: nothing of him but the grass bent where he is; tail: the tip of a silver-white tail out of it
+  const hid = A.character('sleet', { pose: 'hidden' }).svg, tail = A.character('sleet', { pose: 'tail' }).svg;
+  for (const [s, p] of [[hid, 'hidden'], [tail, 'tail']]) { assert.ok(/class="pc-long-grass/.test(s), p + ': the long grass'); assert.ok(!/pc-dclaws|radialGradient|pc-wing/.test(s), p + ': no face, no paws, no wings'); }
+  assert.ok(tail.includes('#e1e7ed') && /class="pc-flick"/.test(tail) && !hid.includes('#e1e7ed'), 'tail: his tail flicking; hidden: none of him');
+  // (the final review: the tail read as a bent white stick) a dragonet's tail: his blue-grey plates along its
+  // back, three scale arcs across it, his blue-grey shade and outline, and its tip curled over wholly above
+  // the tallest of his grass, on either facing
+  for (const facing of ['left', 'right']) {
+    const t = A.character('sleet', { pose: 'tail', facing }), h = A.character('sleet', { pose: 'hidden', facing });
+    assert.ok(/class="pc-ridges"/.test(t.svg) && t.svg.includes('#b3c2d2'), facing + ': the plates along its back, in his blue-grey');
+    assert.strictEqual((/class="pc-scales" d="([^"]+)"/.exec(t.svg)[1].match(/M/g) || []).length, 3, facing + ': three scale arcs');
+    assert.ok(t.svg.includes('#59687a') && /fill="#[0-9a-f]{6}"/.test(t.svg), facing + ': outlined in his blue-grey');
+    assert.ok(t.headBox.y1 < h.bounds.y0 - 20, facing + ': the curled tip (' + t.headBox.y0 + ' to ' + t.headBox.y1 + ') stands clear above the grass (its top ' + h.bounds.y0 + ')');
+    assert.ok(t.bounds.y0 < h.bounds.y0 - 80, facing + ': tall enough to see');
+  }
+  assert.ok(/class="pc-grass-tuft"/.test(A.character('sleet', { pose: 'sit', grass: true }).svg) && !/pc-grass-tuft/.test(A.character('sleet', { pose: 'sit' }).svg), 'grass: a tuft on his head');
+  const call = A.character('sleet', { pose: 'call', mood: 'neutral' }), sit = A.character('sleet', { pose: 'sit', mood: 'neutral' });
+  assert.ok(call.headBox.y0 < sit.headBox.y0, 'call: his head up');
+  assert.ok(A.character('sleet', { pose: 'droop' }).headBox.y0 > sit.headBox.y0 + 40, 'droop: head low');
+  assert.ok(A.character('sleet', { pose: 'flat' }).headBox.y0 > sit.headBox.y0 + 100, 'flat: on his belly');
+  // flat on his belly in the long grass, his front no further forward than it is sitting (the last post)
+  assert.ok(A.character('sleet', { pose: 'flat' }).bounds.x1 <= sit.bounds.x1 + 0.5, 'flat: his front where his sitting front is');
+});
+
+// ----- ReedClan, Sloshbank, the starry cat
+
+test('ReedClan’s four coats are marsh coats of their own: none of LOOKS.fur’s nine and none of CLAN’s, visibly apart from all of them, whatever look is passed, in character() and in the patrol picture', () => {
+  for (const [i, base] of REED_BASES.entries()) for (const [fur, fb] of Object.entries(FUR_BASES)) assert.ok(rgbDist(base, fb) >= 45, 'reedclan ' + (i + 1) + ' vs ' + fur + ': ' + rgbDist(base, fb).toFixed(1));
+  for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) assert.ok(rgbDist(REED_BASES[i], REED_BASES[j]) >= 30, 'reedclan ' + (i + 1) + ' and ' + (j + 1) + ' apart');
+  const furs = Object.values(FUR_BASES);
+  for (let v = 1; v <= 4; v++) for (const pose of ['sit', 'walk', 'pawup']) {
+    const plain = strip(A.character('reedclan', { variant: v, pose }).svg);
+    assert.ok(plain.includes(REED_BASES[v - 1]), 'reedclan ' + v + ': its own coat');
+    for (const fb of furs) assert.ok(!plain.includes(fb), 'reedclan ' + v + ' ' + pose + ': no ' + fb);
+    assert.ok(/class="pc-sheen"/.test(plain) && /class="pc-mud"/.test(plain), 'sleek and wet, mud to the elbows');
+    for (const look of ALL_LOOKS) assert.strictEqual(strip(A.character('reedclan', { variant: v, pose, look, taken: [v, 1, 4] }).svg), plain, 'reedclan ' + v + ': ' + look.fur + ' changes nothing');
+  }
+  assert.strictEqual(strip(A.character('reedclan', { variant: 9 }).svg), strip(A.character('reedclan', { variant: 4 }).svg), 'a variant out of range clamps');
+  // the watchers' picture: nine ReedClan cats, three patrols, in their own coats whatever her look
+  const r = (n) => ({ who: 'reedclan', variant: n }), REED9 = [r(3), r(1), r(4), r(2), r(3), r(1), r(4), r(2), r(3)];
+  const pic = (look) => strip2(A.countsPicture({ table: 3, groups: 3, highlight: 0, who: REED9, look }));
+  const p0 = pic(ALL_LOOKS[0]);
+  for (const base of REED_BASES) assert.ok(p0.includes(base), 'the patrol picture draws ' + base);
+  for (const fb of furs) assert.ok(!p0.includes(fb), 'no CrystalClan coat in it: ' + fb);
+  for (const look of ALL_LOOKS) assert.strictEqual(pic(look), p0, look.fur + ': the same nine coats');
+  assert.notStrictEqual(p0, strip2(A.countsPicture({ table: 3, groups: 3, highlight: 0, look: ALL_LOOKS[0] })), 'not the Clan’s patrols');
+});
+
+test('the patrol picture (table 3, chapter 6): every patrol walks on its own green card, its third walker ending inside it, never on the next card or the picture\'s edge; one to ten patrols, the Clan\'s coats or ReedClan\'s', () => {
+  // the widest a walker is drawn, of every coat a patrol can wear (a walker's drawing runs from about 19 to 195
+  // of its 200 box)
+  const r = (n) => ({ who: 'reedclan', variant: n });
+  const walkers = [1, 2, 3, 4, 5, 6].map((variant) => A.character('clancat', { pose: 'walk', mood: 'happy', variant }))
+    .concat([1, 2, 3, 4].map((variant) => A.character('reedclan', { pose: 'walk', mood: 'happy', variant })), [A.character('player', { pose: 'walk', mood: 'happy', look: ALL_LOOKS[0] })]);
+  const X0 = Math.min(...walkers.map((c) => c.bounds.x0)), X1 = Math.max(...walkers.map((c) => c.bounds.x1));
+  for (const who of [undefined, [r(3), r(1), r(4), r(2), r(3), r(1), r(4), r(2), r(3)]]) for (let groups = 1; groups <= 10; groups++) {
+    const svg = A.countsPicture({ table: 3, groups, highlight: 0, who, look: ALL_LOOKS[0] }), W = +/viewBox="0 0 ([\d.]+) /.exec(svg)[1];
+    const tiles = [...svg.matchAll(/<g transform="translate\(([\d.]+),([\d.]+)\) scale\(1\)"><rect x="4" y="10" width="([\d.]+)"/g)];
+    assert.equal(tiles.length, groups, groups + ' patrols, ' + groups + ' cards');
+    tiles.forEach((t, i) => {
+      const x = +t[1], cardEnd = x + 4 + +t[3], from = t.index, to = i + 1 < tiles.length ? tiles[i + 1].index : svg.length;
+      const cells = [...svg.slice(from, to).matchAll(/<g transform="translate\(([-\d.]+),[-\d.]+\) scale\(0\.52\)"><g transform="matrix\(([\d.]+),0,0,[\d.]+,([-\d.]+),[-\d.]+\)">/g)];
+      assert.equal(cells.length, 3, 'three walkers a patrol');
+      cells.forEach((c, k) => {
+        const left = x + +c[1] + 0.52 * (+c[3] + +c[2] * X0), right = x + +c[1] + 0.52 * (+c[3] + +c[2] * X1);
+        assert.ok(left >= x + 4 && right <= cardEnd, groups + ' patrols, patrol ' + (i + 1) + ', walker ' + (k + 1) + ': on its card: ' + left.toFixed(1) + '..' + right.toFixed(1) + ' of ' + (x + 4) + '..' + cardEnd);
+      });
+      if (i + 1 < tiles.length && +tiles[i + 1][2] === +t[2]) assert.ok(+tiles[i + 1][1] + 4 >= cardEnd, 'the next card starts after this one ends');
+      assert.ok(cardEnd <= W - 4, 'inside the picture');
+    });
+  }
+});
+
+test('every Sloshbank and ReedClan pose x mood renders inside the box; Sloshbank is bigger than Tallyheart, solid brown, wet and dripping in every pose, his paws muddy', () => {
+  for (const pose of POSES6) for (const mood of MOODS6) {
+    const sb = A.character('sloshbank', { pose, mood, facing: mood.length % 2 ? 'left' : 'right' });
+    checkResult(sb, 'sloshbank ' + pose + ' ' + mood); inBox(sb, 'sloshbank ' + pose + ' ' + mood, 0.5);
+    assert.ok(count(sb.svg, /class="pc-puddle"/g) === 1 && count(sb.svg, /class="pc-drop"/g) >= 1, 'sloshbank ' + pose + ': drops falling, one on the ground');
+    for (let v = 1; v <= 4; v++) { const rc = A.character('reedclan', { variant: v, pose, mood }); checkResult(rc, 'reedclan ' + v + ' ' + pose); inBox(rc, 'reedclan ' + v + ' ' + pose, 0.5); }
+  }
+  const sb = A.character('sloshbank', { pose: 'sit', mood: 'stern' }), t = A.character('tallyheart', { pose: 'sit', mood: 'stern' });
+  assert.ok(sb.w === 228 && sb.h === 228, 'his box, 1.14 times a cat’s');
+  const tall = (r) => r.h - r.headBox.y0;
+  assert.ok(tall(sb) / tall(t) > 1.06 && tall(sb) / tall(t) < 1.3, 'bigger than Tallyheart, never a giant: ' + (tall(sb) / tall(t)).toFixed(3));
+  assert.ok(sb.headBox.x1 - sb.headBox.x0 > t.headBox.x1 - t.headBox.x0, 'a bigger head too');
+  assert.ok(sb.svg.includes('#86603f') && !sb.svg.includes('#5b3f27') && !/stroke="#b5602a"/.test(sb.svg), 'solid brown, no stripes');
+  assert.ok(/class="pc-wet"/.test(A.character('sloshbank', { pose: 'stand' }).svg), 'his belly fur clumped wet');
+  assert.ok(sb.svg.includes('#5d4431'), 'muddy paws');
+  // scenes give him `look` and `taken` as for anyone: nothing changes
+  assert.strictEqual(strip(A.character('sloshbank', { pose: 'sit', look: ALL_LOOKS[3] }).svg), strip(A.character('sloshbank', { pose: 'sit' }).svg));
+});
+
+test('starry: true on any cat draws the starry cat, whatever the coat: pale blue-white, a little see-through, stars inside her, a soft glow; nobody she knows', () => {
+  const base = strip(A.character('clancat', { variant: 1, pose: 'sit', mood: 'kind', starry: true }).svg);
+  for (let v = 1; v <= 6; v++) for (const look of ALL_LOOKS.slice(0, 4)) assert.strictEqual(strip(A.character('clancat', { variant: v, pose: 'sit', mood: 'kind', starry: true, look, taken: [1, 2] }).svg), base, 'clancat ' + v + ': the same starry cat');
+  for (const who of ['tallyheart', 'glintstar', 'player', 'grizzled', 'waffles']) assert.strictEqual(strip(A.character(who, { pose: 'sit', mood: 'kind', starry: true, look: ALL_LOOKS[1] }).svg), base, who + ' starry: nobody she knows');
+  for (const pose of POSES6) for (const mood of ['kind', 'neutral', 'happy']) {
+    const r = A.character('clancat', { variant: 3, pose, mood, starry: true }), s = r.svg;
+    checkResult(r, 'starry ' + pose); checkIds(s, 'starry ' + pose);
+    assert.ok(/class="pc-starry" opacity="\.8\d"/.test(s), pose + ': a little see-through');
+    assert.ok(count(s.match(/<g class="pc-stars"[\s\S]*?<\/g>/)[0], /<path /g) >= 8, pose + ': stars inside her');
+    assert.ok(/class="pc-starglow"/.test(s) && /radialGradient/.test(s), pose + ': a soft glow');
+    assert.ok(s.includes('#dde8fb') && !s.includes('#b5895b'), pose + ': starlight, not her coat');
+    assert.ok(!/EAR_NOTCH|#f47aa8|#dba79f/.test(s), pose + ': no torn ear, no bow, no scar');
+  }
+});
+
+// ----- the extras on the old cast
+
+test('holds: pinecone: under the old tom’s chin (asleep on it), at his paws, by his nose, carried in his mouth, held up sitting up; tap: pinecone marks it', () => {
+  const at = (o) => A.character('grizzled', Object.assign({ mood: 'neutral', holds: 'pinecone' }, o));
+  const chin = at({ pose: 'lie', holdAt: 'chin', asleep: true, tap: 'pinecone' });
+  assert.ok(chin.held && chin.held.what === 'pinecone' && chin.held.at === 'chin', JSON.stringify(chin.held));
+  assert.ok(chin.held.y > chin.head.y && chin.held.y + chin.held.r * 0.5 <= 197, 'on the ground under his chin');
+  assert.ok(count(chin.svg, /class="pc-pinecone"/g) === 1 && count(chin.svg, /<path class="pc-eye"|pc-pupil/g) === 0);
+  assert.deepStrictEqual(tapsOf(chin.svg), ['pinecone'], 'the pinecone to tap');
+  const tm = chin.svg.match(/<g class="pc-tap pc-tap-pinecone"><circle cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)" fill="none"\/><\/g>/);
+  assert.ok(tm && +tm[3] > 20, 'unpainted, the size of the thing');
+  const paws = at({ pose: 'sit', holdAt: 'paws' }), mouth = at({ pose: 'walk', holdAt: 'mouth' }), nose = at({ pose: 'loaf', holdAt: 'nose' }), up = at({ pose: 'situp' });
+  assert.ok(paws.held.at === 'paws' && paws.held.y > 160, 'at his paws, on the ground');
+  assert.ok(mouth.held.at === 'mouth' && Math.abs(mouth.held.y - mouth.head.y) < 40, 'carried in his mouth');
+  assert.ok(nose.held.at === 'nose' && up.held && up.held.y < 160, 'by his nose; held up sitting up');
+  assert.ok(at({ pose: 'walk' }).held.at === 'mouth' && at({ pose: 'sit' }).held.at === 'paws', 'unset: in the mouth on his feet, else at his paws');
+  for (const who of ['tallyheart', 'player', 'clancat']) for (const pose of POSES6) checkResult(A.character(who, { pose, holds: 'pinecone', holdAt: pose.length % 2 ? 'chin' : 'mouth' }), who + ' ' + pose + ' pinecone');
+  assert.ok(!at({ pose: 'fall' }).held && !at({ pose: 'tummy' }).held, 'tumbling or on his back, nothing held');
+});
+
+test('our cat’s taps: paw (her raised forepaw in pawup; else her front paw on the ground) and ears (both), unpainted; Murmurchime’s tail up when proud', () => {
+  const look = { fur: 'ginger', marking: 'white-paws', eyes: 'amber', sex: 'she' };
+  const up = A.character('player', { pose: 'pawup', mood: 'happy', tap: 'paw', look });
+  assert.deepStrictEqual(tapsOf(up.svg), ['paw']);
+  const m = up.svg.match(/<g class="pc-tap pc-tap-paw"><circle cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)" fill="none"\/><\/g>/);
+  assert.ok(m && +m[2] < 135 && +m[1] > 140, 'her raised forepaw (in her own coordinates): ' + m.slice(1));
+  const pat = A.character('player', { pose: 'sit', tap: 'paw', look }).svg.match(/pc-tap-paw"><circle cx="([-\d.]+)" cy="([-\d.]+)"/);
+  assert.ok(pat && +pat[2] > 180, 'sitting: her front paw on the ground');
+  const ears = A.character('player', { pose: 'sit', tap: 'ears', look }).svg.match(/<g class="pc-tap pc-tap-ears">([\s\S]*?)<\/g>/);
+  assert.ok(ears && count(ears[1], /<circle [^>]*fill="none"\/>/g) === 2, 'both ears');
+  assert.ok(!/pc-tap/.test(A.character('player', { pose: 'pawup', look }).svg), 'no tap, no mark');
+  for (const pose of POSES6) for (const tap of ['paw', 'ears']) assert.deepStrictEqual(tapsOf(A.character('player', { pose, tap, look }).svg), [tap], pose + ' ' + tap);
+  // tail up by mood `proud`, as Tallyheart's (the wave back: {Murmur}chime proud, her tail up)
+  for (const who of ['player', 'murmurchime', 'tallyheart']) assert.strictEqual(strip(A.character(who, { pose: 'pawup', mood: 'proud', look }).svg), strip(A.character(who, { pose: 'pawup', mood: 'proud', look, tail: 'up' }).svg), who + ': proud, tail up');
+});
+
+test('Riffle: puff (cheeks puffed round past his face, holding his breath, eyes wide), tap: cheeks; holds: pebbles (three plain brown, in his paws or set down at his feet), tap: pebbles; holds: string (three fish on a reed, from one forepaw)', () => {
+  const puff = A.character('riffle', { pose: 'puff', tap: 'cheeks' }), sit = A.character('riffle', { pose: 'sit' });
+  checkResult(puff, 'riffle puff');
+  assert.ok(/class="pc-cheeks"/.test(puff.svg) && puff.headBox.x1 - puff.headBox.x0 > sit.headBox.x1 - sit.headBox.x0, 'his cheeks bulge past his face');
+  assert.deepStrictEqual(tapsOf(puff.svg), ['cheeks']);
+  assert.strictEqual(count(puff.svg.match(/<g class="pc-tap pc-tap-cheeks">([\s\S]*?)<\/g>/)[1], /<circle /g), 2, 'both cheeks');
+  for (const mood of MOODS6) for (const v of [1, 2, 3]) { const r = A.character(v === 1 ? 'riffle' : 'otter', { pose: 'puff', mood, variant: v }); checkResult(r, 'puff ' + mood); assert.ok(!/#f28a9c/.test(r.svg.split('pc-cheeks')[1] || ''), 'a held breath: no open mouth'); }
+  const held = A.character('riffle', { pose: 'sit', holds: 'pebbles', tap: 'pebbles' }), down = A.character('riffle', { pose: 'sit', holds: 'pebbles', holdAt: 'paws', tap: 'pebbles' });
+  for (const [r, at] of [[held, 'paws'], [down, 'ground']]) {
+    assert.strictEqual(count(r.svg, /class="pc-pebble pc-plain"/g), 3, at + ': three pebbles');
+    assert.ok(/fill="#93704F"/.test(r.svg) && !r.svg.includes('#868f90'), at + ': plain brown, never Sprinkle’s grey');
+    assert.ok(r.held && r.held.what === 'pebbles' && r.held.at === at, JSON.stringify(r.held));
+    assert.deepStrictEqual(tapsOf(r.svg), ['pebbles']);
+  }
+  assert.ok(down.held.y > held.held.y + 30 && down.held.y > down.h * 0.85, 'set down on the ground in front of his feet');
+  assert.ok(down.held.x > A.character('riffle', { pose: 'sit' }).bounds.x1 - 30, 'in front of him');
+  // the string: the pile set's PC.art.prey.string when it is there, looked up when drawn; else our own
+  const keep = A.prey;
+  try {
+    let asked = null;
+    A.prey = function () { return { svg: '<g/>', w: 10, h: 4 }; };
+    A.prey.string = function (o) { asked = o; return '<g data-part="fish-string" data-fish-count="' + o.count + '"><g data-fish="1"></g><g data-fish="1"></g><g data-fish="1"></g></g>'; };
+    const st = A.character('riffle', { pose: 'stand', mood: 'happy', holds: 'string' });
+    assert.ok(asked && asked.count === 3 && asked.len > 30, 'three fish, asked of the pile set: ' + JSON.stringify(asked));
+    assert.ok(/class="pc-string"/.test(st.svg) && st.held.what === 'string', 'hanging from his forepaw');
+    assert.ok(!/class="pc-string"[^]*?<path[^>]*wave/.test(st.svg), 'that paw is busy: no wave');
+    delete A.prey;
+    const own = A.character('riffle', { pose: 'sit', holds: 'string' });
+    assert.strictEqual(count(own.svg, /class="pc-fish"/g), 3, 'without the pile set: three fish of our own on a reed');
+    for (const pose of A.vocab.otherPoses.riffle) { const r = A.character('riffle', { pose, holds: 'string' }); checkResult(r, 'string ' + pose); }
+  } finally { if (keep) A.prey = keep; else delete A.prey; }
+});
+
+test('each chapter 6 tap is marked once, unpainted, where the thing is: pinecone, paw, ears, pebbles, cheeks, stone, eyes', () => {
+  const cases = [['pinecone', A.character('grizzled', { pose: 'lie', holds: 'pinecone', holdAt: 'chin', asleep: true, tap: 'pinecone' })],
+    ['paw', A.character('player', { pose: 'pawup', tap: 'paw' })], ['ears', A.character('player', { pose: 'sit', tap: 'ears' })],
+    ['pebbles', A.character('riffle', { pose: 'sit', holds: 'pebbles', tap: 'pebbles' })], ['cheeks', A.character('riffle', { pose: 'puff', tap: 'cheeks' })],
+    ['stone', A.character('coil', { pose: 'stone', tap: 'stone' })], ['eyes', A.character('coil', { pose: 'head', tap: 'eyes' })]];
+  for (const [name, r] of cases) {
+    assert.deepStrictEqual(tapsOf(r.svg), [name], name);
+    const g = r.svg.match(new RegExp('<g class="pc-tap pc-tap-' + name + '">([\\s\\S]*?)</g>'))[1];
+    assert.ok(/^(<circle cx="[-\d.]+" cy="[-\d.]+" r="[\d.]+" fill="none"\/>)+$/.test(g), name + ': unpainted circles only: ' + g);
+  }
+  // the eyes' marks are on his two eyes; the stone's on his head in the gap
+  const eyes = A.character('coil', { pose: 'head', tap: 'eyes' }).svg.match(/pc-tap-eyes">([\s\S]*?)<\/g>/)[1];
+  assert.strictEqual(count(eyes, /<circle /g), 2);
+});
+
+// ----- Counts art
+
+test('the roll call (kind: roll): `groups` little plain pale dragonets in one row, all alike, three HEREs over each head, lit in order, a dragonet’s three at a time', () => {
+  for (let g = 1; g <= 7; g++) {
+    for (let hl = 0; hl <= 3 * g; hl++) {
+      const s = A.countsPicture({ table: 3, groups: g, per: 3, kind: 'roll', highlight: hl, totals: true, next: true });
+      checkSvgDoc(s, 'roll ' + g + ' ' + hl);
+      const heres = s.match(/<text class="pc-here[^"]*"/g) || [];
+      assert.strictEqual(heres.length, 3 * g, g + ': three HEREs a dragonet');
+      // lit in order: the first hl of them, as they are lettered (left to right, each from the bottom up)
+      assert.deepStrictEqual(heres.map((h) => h.includes('pc-lit')), heres.map((h, i) => i < hl), g + ' dragonets, ' + hl + ' lit');
+      assert.strictEqual(count(s, /class="pc-dragonet"/g), g);
+      assert.deepStrictEqual(totals(s), Array.from({ length: Math.floor(hl / 3) }, (x, i) => (i + 1) * 3), 'a total under each dragonet whose three are lit');
+      assert.strictEqual(nexts(s), hl < 3 * g ? 1 : 0, 'the next one glows');
+      assert.ok(new RegExp('aria-label="' + g + (g === 1 ? ' dragonet' : ' dragonets') + ', three HEREs each"').test(s), 'its label');
+    }
+    // all alike: no clutch colours
+    const s = A.countsPicture({ table: 3, groups: g, per: 3, kind: 'roll' }), ds = s.match(/<g class="pc-dragonet">[\s\S]*?<\/g><\/g>/g) || [];
+    assert.ok(new Set(ds).size <= 1, 'every dragonet the same');
+    for (const c of ['#e1e7ed', '#a8b1b6', '#5f6c7e', '#8fa3b8', '#f2efe4']) assert.ok(!s.includes(c), 'no dragonet’s own colours: ' + c);
+  }
+  const help = A.countsPicture({ table: 3, groups: 7, per: 3, kind: 'roll', highlight: 6 });
+  assert.strictEqual(count(help, /pc-here pc-lit/g), 6, 'the help lights two dragonets’ three');
+  assert.strictEqual(strip5(A.countsPicture({ table: 3, groups: 7, per: 3, kind: 'roll', highlight: 9 })), strip5(A.countsPicture({ table: 3, groups: 7, per: 3, kind: 'roll', highlight: 9 })), 'nothing random');
+});
+
+test('Sleet’s forepaw (a `who` of one sleet on the 5s): his one raised silver forepaw in the long grass, five claws lit frost-white; and Sleet in the other who pictures', () => {
+  for (let hl = 0; hl <= 5; hl++) {
+    const s = A.countsPicture({ table: 5, groups: 1, per: 5, highlight: hl, next: hl < 5, totals: true, who: [{ who: 'sleet' }] });
+    checkSvgDoc(s, 'sleet paw ' + hl);
+    assert.ok(/aria-label="Sleet in the long grass, one silver forepaw held up: five claws"/.test(s));
+    const lit = s.match(/<g class="pc-dclaws pc-lit"[^>]*>([\s\S]*?)<\/g>/);
+    assert.strictEqual(lit ? count(lit[1], /<path /g) : 0, hl, hl + ' claws lit');
+    assert.strictEqual(nexts(s), hl < 5 ? 1 : 0, 'the paw glows until it is tapped');
+    assert.ok(/class="pc-long-grass"/.test(s) && s.includes('#e1e7ed'), 'his silver in the long grass');
+    assert.ok(s.length < 130000, 'light enough: ' + s.length);
+  }
+  // in the 5s and the 10s with others: his own silver paws, him small behind them
+  const five = A.countsPicture({ table: 5, groups: 3, per: 5, highlight: 7, who: [{ who: 'sprinkle' }, { who: 'sleet' }, { who: 'puddle' }] });
+  const ten = A.countsPicture({ table: 10, groups: 2, per: 10, highlight: 14, who: [{ who: 'sleet' }, { who: 'sprinkle' }] });
+  for (const s of [five, ten]) { checkSvgDoc(s, 'sleet among'); assert.ok(s.includes('#e1e7ed') && !s.includes('#b5895b'), 'his silver, never a Clan cat’s paw'); }
+});
+
+test('chapter 6’s pictures and drawings: unique ids on one page, every reference resolves, none heavy', () => {
+  const r = (n) => ({ who: 'reedclan', variant: n });
+  const pics = [A.countsPicture({ table: 3, groups: 7, per: 3, kind: 'roll', highlight: 12, totals: true, next: true }), A.countsPicture({ table: 5, groups: 1, per: 5, highlight: 3, next: true, who: [{ who: 'sleet' }] }),
+    A.countsPicture({ table: 3, groups: 3, highlight: 9, totals: true, who: [r(3), r(1), r(4), r(2), r(3), r(1), r(4), r(2), r(3)] })];
+  const chars = [A.character('coil', { pose: 'longer', tap: 'eyes' }), A.character('sleet', { pose: 'pawup', lit: 3 }), A.character('sloshbank', { pose: 'walk' }), A.character('reedclan', { variant: 2, pose: 'pawup' }),
+    A.character('clancat', { pose: 'sit', starry: true }), A.character('grizzled', { pose: 'lie', holds: 'pinecone', holdAt: 'chin' }), A.character('riffle', { pose: 'puff' }), A.character('riffle', { pose: 'sit', holds: 'string' })];
+  const all = pics.join('') + chars.map((c) => c.svg).join('');
+  const ids = idsOf(all);
+  assert.strictEqual(new Set(ids).size, ids.length, 'every id on the page is its own');
+  for (const ref of all.match(/(?:url\(#|href="#)([^)"]+)/g) || []) assert.ok(ids.includes(ref.replace(/^(url\(#|href="#)/, '')), 'dangling ' + ref);
+  pics.forEach((s, i) => { checkSvgDoc(s, 'picture ' + i); assert.ok(s.length < 130000, 'picture ' + i + ': ' + s.length); });
+  chars.forEach((c, i) => assert.ok(c.svg.length < 60000, 'drawing ' + i + ': ' + c.svg.length + ' bytes'));
+});
+
+test('dev/gallery-cats.html: chapter 6’s sections draw (Coil, Sleet, ReedClan, the extras, the Counts pictures), every pose of Coil and Sleet labelled', () => {
+  const fs = require('fs'), path = require('path'), vm = require('vm');
+  const dir = path.join(__dirname, '..', 'dev'), html = fs.readFileSync(path.join(dir, 'gallery-cats.html'), 'utf8');
+  const scripts = [...html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)];
+  const run = (search) => {
+    const els = {};
+    const el = (id) => els[id] || (els[id] = { id, innerHTML: '', value: id === 'size' ? '120' : '', options: [{ value: '120' }], add() {} });
+    const ctx = { URLSearchParams, document: { getElementById: el, body: { className: '' } }, location: { search } };
+    ctx.globalThis = ctx;
+    vm.createContext(ctx);
+    for (const m of scripts) vm.runInContext(m[1] ? fs.readFileSync(path.join(dir, m[1]), 'utf8') : m[2], ctx, { filename: m[1] || 'gallery-cats.html' });
+    return { out: els.out.innerHTML, nav: els.nav.innerHTML };
+  };
+  for (const [id, least] of [['coil', 28], ['sleet', 36], ['reedclan', 50], ['extras6', 26], ['counts6', 12]]) {
+    const page = run('?only=' + id);
+    assert.ok(page.nav.includes('href="?only=' + id + '"'), id + ' is in the menu');
+    assert.ok(new RegExp('<section id="' + id + '"><h2>[^<]*hapter 6').test(page.out), id + ': its section');
+    assert.ok(count(page.out, /<svg[ >]/g) >= least, id + ': ' + count(page.out, /<svg[ >]/g) + ' drawings');
+    assert.ok(!/NaN|undefined|\[object |Infinity/.test(page.out), id + ': every drawing drew');
+    assert.strictEqual(balanced(page.out.replace(/<small title="[^"]*">/g, '<small>')), null, id + ': well-formed');
+  }
+  for (const who of ['coil', 'sleet']) { const page = run('?only=' + who).out; for (const pose of A.vocab.otherPoses[who]) assert.ok(new RegExp('<small title="' + pose + ' · ').test(page), who + ': ' + pose); }
+  assert.ok(/pc-tap-stone"[^>]*>[^]*?stroke-dasharray/.test(run('?only=coil').out), 'the marks to tap are outlined in the gallery');
 });

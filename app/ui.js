@@ -353,21 +353,29 @@
     reynard: 'Reynard', squall: 'Squall',
     // chapter 5: the heron is Patience from her first balloon (Riffle has named her); Puddle is "The
     // big-footed dragon" (the chapter's `names`) until "I'm Puddle"; Wisp never speaks on screen
-    patience: 'Patience', puddle: 'Puddle', wisp: 'Wisp'
+    patience: 'Patience', puddle: 'Puddle', wisp: 'Wisp',
+    // chapter 6: Coil is "A voice", then "The snake" (the chapter's `names`) until Riffle names him; Sleet
+    // is "The long grass", then "The silver-white dragon" until "I'm Sleet"; ReedClan's cats by variant
+    coil: 'Coil', sloshbank: 'Sloshbank', sleet: 'Sleet', reedclan: 'A ReedClan cat'
   };
   // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
   var VARIANT_NAMES = {
     otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
-    dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' }
+    dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' },
+    // chapter 6: the she-cat never speaks; 3 and 4 are the watchers' two more marsh coats
+    reedclan: { 1: 'ReedClan she-cat', 2: 'Young ReedClan tom', 3: 'A ReedClan cat', 4: 'A ReedClan cat' }
   };
   var PITCH = { waffles: 1.45, tallyheart: 0.92, glintstar: 0.85, grizzled: 0.6, player: 1.2, snorer: 1.1, mutterer: 1.3, snorter: 1.15, clancat: 1.0, tallone: 1.0,
     riffle: 1.5, otter: 1.05, dog: 0.9, sprinkle: 1.38, murmurchime: 1.3, reynard: 0.8, squall: 1.7,
-    patience: 0.7, puddle: 1.32, wisp: 1.25 };
-  var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 } };
+    patience: 0.7, puddle: 1.32, wisp: 1.25,
+    coil: 0.72, sloshbank: 0.62, sleet: 1.45, reedclan: 1.0 };
+  var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 }, reedclan: { 2: 1.12 } };
   // Sprinkle is shy: a little slower than everyone else's 0.95. Reynard is slow and smooth; Squall
   // is high and loud (as loud as the voice goes), and in a hurry. Chapter 5: Patience is low and
-  // slow; Puddle is bright and quick, a little out of breath
-  var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02, patience: 0.8, puddle: 1.05 };
+  // slow; Puddle is bright and quick, a little out of breath. Chapter 6: Coil is low and very slow
+  // (every word on its own); Sloshbank low and slow, a big stern tom; Sleet high, quick and loud (the
+  // voice's full volume, as everyone's); the young ReedClan tom a little high (VARIANT_PITCH)
+  var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02, patience: 0.8, puddle: 1.05, coil: 0.7, sloshbank: 0.88, sleet: 1.04 };
   function pitchOf(who, variant) {
     var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
     return v || PITCH[who] || 1;
@@ -387,8 +395,11 @@
   }
   /* A voice the story hasn't shown yet keeps its face to itself in the stacked balloons: a named
    * balloon whose speaker isn't in the picture, or is only eyes in the dark ("A small voice"), or
-   * hides her face under her tail ("A muffled voice", "The tail"). */
-  function faceHidden(s, member) { return !!s.name && (!member || member.pose === 'eyes' || member.pose === 'hide'); }
+   * hides her face under her tail ("A muffled voice", "The tail"). Chapter 6: or is only a stone in
+   * the wall (Coil's `stone`: "A voice"), or only bent grass or a tail's tip in the long grass
+   * (Sleet's `hidden` and `tail`: "The long grass"). */
+  var NO_FACE_POSES = { eyes: 1, hide: 1, stone: 1, hidden: 1, tail: 1 };
+  function faceHidden(s, member) { return !!s.name && (!member || NO_FACE_POSES[member.pose] === 1); }
   /* The name a speaker's balloons carry on a page (the latest of that speaker's that has one), for a
    * balloon the page adds itself: a skip-count's counter under Squall's own "Squall" balloon is his
    * too, not the chapter's "The little dragon". Undefined when none of them is named. */
@@ -428,7 +439,9 @@
     ch5First: { otters: 'asked the ferry otters first', heron: 'asked the heron first' },
     ch5Roof: { 'true': 'met Squall in chapter 5: the roof, offered again ({their} book says so on chapter 5’s page)' },
     foundPuddle: { 'true': 'found Puddle under the ferry raft (later chapters remember)' },
-    foundWisp: { 'true': 'found Wisp in the heron’s reeds (later chapters remember)' }
+    foundWisp: { 'true': 'found Wisp in the heron’s reeds (later chapters remember)' },
+    // chapter 6: set on the last screen of Sleet's scene, never unset
+    foundSleet: { 'true': 'found Sleet at the last post of the Barking Field (later chapters remember)' }
   };
   UI.flagWords = FLAG_WORDS;
   // flags the engine keeps for itself: never listed among "what the choices say"

@@ -1011,6 +1011,11 @@ test('counts through the engine: every set finishes, a miss comes back two quest
   assert.match(pile[0], /^10x2 \[grizzled: Lucky guess\. \/ tallyheart: Luck doesn’t hop by twos\.\]/);
   assert.equal(pile[1], '8x2', 'no praise line on the pile');
   assert.equal(check[0], '2x8');
+  // the 2s are learned (the ears, their own lesson); the warm-up on the 1s does not teach the 1s, chapter 1's
+  // lesson does (a Count is learned when its own set is finished: chapter 6's review), and every real cat has
+  // finished it before chapter 2
+  assert.deepEqual(E.learnedCounts(cat, PC.story).map(c => c.table), [2], 'the 2s are learned; the 1s are chapter 1’s to teach');
+  cat.lessons['ch01-tails'] = { finished: true };
   assert.deepEqual(E.learnedCounts(cat, PC.story).map(c => c.table), [1, 2], 'the 1s and the 2s are learned');
   assert.equal(E.countFor(2, PC.story).setId, 'ch02-ears', 'the Hollow’s 2s are the ears lesson');
   const hd = E.hollowDef(PC.story, 2);

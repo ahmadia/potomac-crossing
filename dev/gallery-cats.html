@@ -64,6 +64,11 @@
   // chapter 5: Puddle's and Wisp's poses, each with a mood the text gives it (Patience has one mood, level)
   var PD_MOOD = { foot: 'happy', head: 'happy', log: 'proud', sink: 'worried', pawup: 'happy', nostrils: 'neutral', sit: 'happy' };
   var WS_MOOD = { reed: 'neutral', blink: 'neutral', shh: 'shy', draw: 'neutral', nod: 'kind', flinch: 'neutral', gulp: 'happy', pawup: 'kind' };
+  // chapter 6: Coil's and Sleet's poses, each with a mood the text gives it
+  var COIL_MOOD = { stone: 'neutral', head: 'kind', long: 'neutral', longer: 'happy', still: 'kind', listen: 'dreamy', think: 'wonder', slide: 'sniff' };
+  var SLEET_MOOD = { hidden: 'neutral', tail: 'sniff', flat: 'stern', point: 'stern', call: 'shout', puff: 'proud', droop: 'sad', sit: 'proud', pawup: 'happy' };
+  // the marks to tap are unpainted (the page glows them): the gallery outlines them so they can be seen
+  function showTaps(r) { return { svg: r.svg.replace(/(<g class="pc-tap pc-tap-[a-z]+">)([\s\S]*?)(<\/g>)/g, function (m, a, b, c) { return a + b.replace(/fill="none"/g, 'fill="none" stroke="#e8504a" stroke-width="2.4" stroke-dasharray="5 4"') + c; }), w: r.w, h: r.h }; }
   // what she is seen against: the marsh's reeds, the open river (so a see-through Wisp and a Puddle up to his chin can be judged)
   function reedsBg(w, h) {
     var b = '<rect width="' + w + '" height="' + h + '" fill="#cfe0b6"/>';
@@ -218,7 +223,7 @@
     }],
     otters: ['Otters: Riffle and the ferry otters, every pose', function (S) {
       var h = '', PM = { stand: 'happy', sit: 'neutral', scramble: 'happy', swim: 'happy', float: 'happy', juggle: 'laugh', slide: 'laugh', hug: 'happy', sun: 'sleepy', dive: 'happy', hush: 'worried',
-        whistle: 'neutral', groan: 'neutral', flip: 'laugh', hop: 'happy', point: 'worried', fall: 'shout', slap: 'happy' };
+        whistle: 'neutral', groan: 'neutral', flip: 'laugh', hop: 'happy', point: 'worried', fall: 'shout', slap: 'happy', puff: 'neutral' };
       [['riffle', 1, 'Riffle'], ['otter', 1, 'old ferry otter'], ['otter', 2, 'otter 2'], ['otter', 3, 'otter 3']].forEach(function (b) {
         h += '<div class="row"><div class="rowlabel">' + b[2] + '</div>';
         V.otherPoses.otter.forEach(function (p) { h += cell(A.character(b[0], { variant: b[1], pose: p, mood: PM[p] }), p + ' · ' + PM[p], S); });
@@ -622,6 +627,96 @@
         ['the catch on the log: five for every string (4 × 5, counted 10)', { groups: 4, per: 5, counted: 10, ground: 'log', style: 'swipe' }]].forEach(function (it) {
         h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:560px">' + A.sand(it[1]) + '</div>';
       });
+      return h;
+    }],
+    coil: ['Coil (chapter 6): every pose, every mood; his eyes never shut, his mouth never opens, his head at the bottom middle of his box', function (S) {
+      var h = '<h3>every pose (one box, one scale: the dashed line is the bottom of his box; his head on its middle)</h3><div class="row stage" style="background:#cdbfa6">';
+      V.otherPoses.coil.forEach(function (p) { h += cell(A.character('coil', { pose: p, mood: COIL_MOOD[p] }), p + ' · ' + COIL_MOOD[p], S * 3); });
+      h += '</div><h3>facing left (his body trails off to the right, away from whoever he faces)</h3><div class="row">';
+      ['head', 'longer', 'listen', 'slide'].forEach(function (p) { h += cell(A.character('coil', { pose: p, mood: COIL_MOOD[p], facing: 'left' }), p + ' ←', S * 3); });
+      h += '</div><h3>every mood, drawn his way (head)</h3><div class="row">';
+      V.moods.forEach(function (m) { var r = A.character('coil', { pose: 'head', mood: m }); h += '<div class="cell"><svg viewBox="300 100 120 60" width="' + S + '" height="' + (S / 2) + '">' + r.svg + '</svg><small title="' + m + '">' + m + '</small></div>'; });
+      h += '</div><h3>the taps: the stone (his head in his gap), his eyes</h3><div class="row">';
+      h += cell(showTaps(A.character('coil', { pose: 'stone', tap: 'stone' })), 'stone · tap: stone', S * 3);
+      h += cell(showTaps(A.character('coil', { pose: 'head', mood: 'kind', tap: 'eyes' })), 'head · tap: eyes', S * 3);
+      return h + '</div>';
+    }],
+    sleet: ['Sleet (chapter 6): the eldest dragonet, every pose, every mood, at one scale', function (S) {
+      var h = '<div class="row">';
+      V.otherPoses.sleet.forEach(function (p) { h += cell(A.character('sleet', { pose: p, mood: SLEET_MOOD[p], lit: p === 'pawup' ? 5 : 0 }), p + ' · ' + SLEET_MOOD[p], S * 1.7); });
+      h += '</div><h3>facing left; the tuft of long grass on his head (grass: true); his book page (puff, happy); beside Sprinkle</h3><div class="row">';
+      ['sit', 'point', 'flat'].forEach(function (p) { h += cell(A.character('sleet', { pose: p, mood: SLEET_MOOD[p], facing: 'left' }), p + ' ←', S * 1.7); });
+      h += cell(A.character('sleet', { pose: 'sit', mood: 'proud', grass: true }), 'sit · grass', S * 1.7);
+      h += cell(A.character('sleet', { pose: 'puff', mood: 'happy' }), 'puff · happy (his page)', S * 1.7);
+      h += cell(A.character('sprinkle', { pose: 'sit', mood: 'happy' }), 'Sprinkle sit (for size)', S * 1.7);
+      h += '</div><h3>pawup: lit 0 to 5, frost-white</h3><div class="row">';
+      [0, 1, 2, 3, 4, 5].forEach(function (n) { h += cell(A.character('sleet', { pose: 'pawup', mood: 'proud', lit: n }), 'lit ' + n, S * 1.2); });
+      h += '</div><h3>every mood (sit)</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('sleet', { pose: 'sit', mood: m }), m, S * 1.3); });
+      return h + '</div>';
+    }],
+    reedclan: ['ReedClan (chapter 6): Sloshbank and the four marsh coats; sleek and wet, mud to the elbows', function (S) {
+      var h = '<h3>Sloshbank: every pose (wet belly, drops falling, one on the ground; big muddy paws; his box 1.14 times a cat\u2019s)</h3><div class="row">';
+      V.poses.forEach(function (p) { h += cell(A.character('sloshbank', { pose: p, mood: p === 'sit' || p === 'stand' ? 'stern' : POSE_MOOD[p] }), p, S * 1.14); });
+      h += '</div><h3>Sloshbank: every mood (sit)</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('sloshbank', { pose: 'sit', mood: m }), m, S * 1.14); });
+      h += '</div><h3>the four marsh coats (1 the she-cat, 2 the young tom, 3 smoky, 4 fawn): sit, walk, pawup, stern</h3>';
+      [1, 2, 3, 4].forEach(function (v) {
+        h += '<div class="row"><div class="rowlabel">reedclan ' + v + '</div>';
+        [['sit', 'kind'], ['walk', 'happy'], ['pawup', 'happy'], ['sit', 'stern'], ['stand', 'proud'], ['lie', 'sleepy']].forEach(function (it) { h += cell(A.character('reedclan', { variant: v, pose: it[0], mood: it[1] }), it[0] + ' · ' + it[1], S); });
+        h += '</div>';
+      });
+      // one scale: Sloshbank bigger than Tallyheart; ReedClan beside CrystalClan
+      var stage = '', k = 0.9, x = 20;
+      function put(r) { stage += '<g transform="translate(' + x + ',' + (230 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; x += r.w * k * 0.82; }
+      [A.character('tallyheart', { pose: 'sit', mood: 'stern' }), A.character('sloshbank', { pose: 'sit', mood: 'stern', facing: 'left' }), A.character('reedclan', { variant: 1, pose: 'sit', facing: 'left' }),
+        A.character('reedclan', { variant: 2, pose: 'sit', mood: 'happy', facing: 'left' }), A.character('clancat', { variant: 1, pose: 'sit' }), A.character('reedclan', { variant: 3, pose: 'sit', facing: 'left' }), A.character('reedclan', { variant: 4, pose: 'sit', facing: 'left' })].forEach(put);
+      h += '<h3>one scale: Tallyheart, Sloshbank, the she-cat, the young tom, a CrystalClan cat, the smoky and the fawn</h3><div class="stage"><svg viewBox="0 0 ' + Math.round(x + 60) + ' 240" width="100%">' + stage + '</svg></div>';
+      return h;
+    }],
+    extras6: ['Chapter 6: the starry cat, the pinecone, the taps, Riffle\u2019s puffed cheeks, his pebbles and his string of fish', function (S) {
+      var look = { fur: 'brown-tabby', marking: 'none', eyes: 'green', sex: 'she' };
+      var h = '<h3>starry: true, on any cat, whatever her coat (clancat 1 to 6, and on Tallyheart: nobody she knows)</h3><div class="row" style="background:#1d2546;border-radius:12px;padding:6px">';
+      [1, 2, 3, 4, 5, 6].forEach(function (v) { h += cell(A.character('clancat', { variant: v, pose: v % 2 ? 'sit' : 'walk', mood: 'kind', starry: true }), 'clancat ' + v + ' · starry', S); });
+      h += cell(A.character('tallyheart', { pose: 'sit', mood: 'kind', starry: true }), 'tallyheart · starry', S);
+      h += '</div><h3>holds: pinecone (the old tom asleep on it, at his paws, carried; held up sitting up), tap: pinecone</h3><div class="row">';
+      [[{ pose: 'lie', holdAt: 'chin', asleep: true, tap: 'pinecone' }, 'lie · chin · asleep · tap'], [{ pose: 'curl', holdAt: 'chin', asleep: true }, 'curl · chin'], [{ pose: 'sit', holdAt: 'paws' }, 'sit · paws'],
+        [{ pose: 'walk', holdAt: 'mouth', mood: 'sleepy' }, 'walk · mouth'], [{ pose: 'situp' }, 'situp'], [{ pose: 'loaf', holdAt: 'nose' }, 'loaf · nose']].forEach(function (it) {
+        h += cell(showTaps(A.character('grizzled', Object.assign({ mood: 'neutral', holds: 'pinecone' }, it[0]))), it[1], S * 1.3);
+      });
+      h += '</div><h3>our cat\u2019s taps: paw (her raised forepaw in pawup; else her front paw: a pat), ears</h3><div class="row">';
+      h += cell(showTaps(A.character('player', { pose: 'pawup', mood: 'happy', tap: 'paw', look: look })), 'pawup · tap: paw', S * 1.3);
+      h += cell(showTaps(A.character('player', { pose: 'sit', mood: 'neutral', tap: 'paw', look: look })), 'sit · tap: paw', S * 1.3);
+      h += cell(showTaps(A.character('player', { pose: 'sit', mood: 'wonder', tap: 'ears', look: look })), 'sit · tap: ears', S * 1.3);
+      h += cell(showTaps(A.character('murmurchime', { pose: 'pawup', mood: 'proud' })), 'Murmurchime pawup · proud (tail up)', S * 1.3);
+      h += '</div><h3>Riffle: puff (cheeks puffed, holding his breath), tap: cheeks; holds: pebbles (in his paws, or set down at his feet), tap: pebbles; holds: string (three fish on a reed)</h3><div class="row">';
+      [[{ pose: 'puff', tap: 'cheeks' }, 'puff · tap: cheeks'], [{ pose: 'puff', facing: 'left' }, 'puff ←'], [{ pose: 'sit', mood: 'worried', holds: 'pebbles', tap: 'pebbles' }, 'sit · pebbles · tap'],
+        [{ pose: 'sit', holds: 'pebbles', holdAt: 'paws', tap: 'pebbles' }, 'sit · pebbles at his paws'], [{ pose: 'stand', mood: 'happy', holds: 'string' }, 'stand · string'], [{ pose: 'sit', holds: 'string' }, 'sit · string'],
+        [{ pose: 'scramble', holds: 'string' }, 'scramble · string'], [{ pose: 'juggle', holds: 'pebbles' }, 'juggle keeps its three']].forEach(function (it) {
+        h += cell(showTaps(A.character('riffle', Object.assign({ mood: 'neutral' }, it[0]))), it[1], S * 1.3);
+      });
+      [1, 2, 3].forEach(function (v) { h += cell(A.character('otter', { variant: v, pose: 'puff' }), 'otter ' + v + ' puff', S * 1.3); });
+      return h + '</div>';
+    }],
+    counts6: ['Counts pictures, chapter 6: Sleet\u2019s roll call, his forepaw, ReedClan\u2019s patrols', function (S) {
+      var look = { fur: 'grey', marking: 'white-paws', eyes: 'green', sex: 'she' };
+      var r = function (n) { return { who: 'reedclan', variant: n }; }, REED9 = [r(3), r(1), r(4), r(2), r(3), r(1), r(4), r(2), r(3)];
+      var list = [
+        ['the riddle (kind: roll): seven little dragonets, three HEREs over every head', { table: 3, groups: 7, per: 3, kind: 'roll' }],
+        ['the help: lit a dragonet\u2019s three at a time (highlight 12, totals)', { table: 3, groups: 7, per: 3, kind: 'roll', highlight: 12, totals: true, next: true }],
+        ['all twenty-one', { table: 3, groups: 7, per: 3, kind: 'roll', highlight: 21, totals: true }],
+        ['a smaller roll call: one dragonet', { table: 3, groups: 1, per: 3, kind: 'roll' }],
+        ['two dragonets, four HEREs lit', { table: 3, groups: 2, per: 3, kind: 'roll', highlight: 4 }],
+        ['Sleet\u2019s forepaw Tap: glowing', { table: 5, groups: 1, per: 5, highlight: 0, next: true, who: [{ who: 'sleet' }] }],
+        ['Sleet\u2019s forepaw, tapped: five claws frost-white', { table: 5, groups: 1, per: 5, highlight: 5, who: [{ who: 'sleet' }] }],
+        ['the watchers: three patrols in ReedClan\u2019s coats (REED9), whatever her look', { table: 3, groups: 3, highlight: 0, who: REED9, look: look }],
+        ['… lit (a right answer)', { table: 3, groups: 3, highlight: 9, totals: true, who: REED9, look: look }],
+        ['the guards: six patrols, CrystalClan', { table: 3, groups: 6, highlight: 0, look: look }],
+        ['Sleet among the 5s and the 10s (who: his forepaws, him small behind)', { table: 10, groups: 2, per: 10, highlight: 14, who: [{ who: 'sleet' }, { who: 'sprinkle' }] }],
+        ['… and the 5s', { table: 5, groups: 3, per: 5, highlight: 7, who: [{ who: 'sprinkle' }, { who: 'sleet' }, { who: 'puddle' }] }]
+      ];
+      var h = '';
+      list.forEach(function (it) { h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:720px">' + A.countsPicture(it[1]) + '</div>'; });
       return h;
     }],
     sand: ['Sand tallies', function (S) {

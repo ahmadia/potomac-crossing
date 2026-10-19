@@ -322,6 +322,101 @@ test('its words for chapter 5’s art: the open river and the marsh with their c
   }
 });
 
+test('its words for chapter 6’s art and keys: the wall’s far end, the dream, Coil’s wall and his gap, the last post’s grass, the pile’s moon; Coil, Sloshbank, ReedClan by coat and Sleet in their own poses; the new holds and taps; the starry cat; the roll call; a set’s own cast; the tree’s questions; patrols of three; Sleet’s page', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-storyboard-'));
+  try {
+    const file = path.join(tmp, 'fx11.js');
+    const c = (who, pose, at, extra) => Object.assign({ who, pose, mood: 'happy', at, facing: 'left' }, extra || {});
+    const r = n => ({ who: 'reedclan', variant: n });
+    const story = { id: 'fx11', number: 11, title: 'Words', start: 'a', names: { coil: 'The snake', sleet: 'The silver-white dragon' }, frames: {
+      a: { scene: { set: 'title', cam: 'end', opts: { rustle: true }, cast: [c('player', 'walk', 'end-1', { facing: 'right' }), c('tallyheart', 'sit', 'end-2'), c('murmurchime', 'sit', 'end-3')], fx: ['day'] }, caption: ['The reeds rustle.'], next: 'b' },
+      b: { scene: { set: 'title', cam: 'meet', cast: [c('player', 'sit', 'end-1'), c('sloshbank', 'stand', 'reed-1', { mood: 'stern' }), c('reedclan', 'sit', 'reed-2', { variant: 2 }), c('reedclan', 'sit', 'reed-3', { variant: 1 })], fx: ['day'] },
+        say: [{ who: 'sloshbank', text: 'CrystalClan.' }, { who: 'reedclan', text: 'Except at night.' }], next: 'c' },
+      c: { scene: { set: 'title', cam: 'wide', cast: [c('player', 'walk', 'wall-3', { facing: 'right' }), c('tallyheart', 'walk', 'wall', { facing: 'right' }), c('murmurchime', 'walk', 'wall-2', { facing: 'right' })], fx: ['day'] }, caption: ['Along the wall.'], next: 'd' },
+      d: { scene: { set: 'bridge', cam: 'back', opts: { prints: true, stones: true }, cast: [c('coil', 'stone', 'gap', { tap: 'stone' }), c('player', 'sit', 'back-left'), c('sprinkle', 'sit', 'dragon')] },
+        say: [{ who: 'coil', name: 'A voice', text: 'Hello.' }], scratch: { tap: 'stone', prompt: '**Tap** the stones to find the voice.', label: 'Find the voice.', miss: 'drip…', next: 'e' } },
+      e: { scene: { set: 'bridge', cam: 'wall', opts: { train: true }, cast: [c('coil', 'head', 'gap'), c('coil', 'long', 'gap'), c('coil', 'longer', 'gap'), c('coil', 'still', 'gap'), c('coil', 'listen', 'gap'), c('coil', 'think', 'gap'), c('coil', 'slide', 'gap', { tap: 'eyes' }), c('coil', 'still', 'gap', { mood: 'sniff' }), c('sprinkle', 'sit', 'dragon', { mood: 'sniff' }),
+        c('player', 'pawup', 'back-left', { tap: 'paw' }), c('riffle', 'puff', 'back-right', { tap: 'cheeks' }), c('riffle', 'stand', 'back-right', { holds: 'pebbles', tap: 'pebbles' }), c('riffle', 'sit', 'back-right', { holds: 'pebbles', holdAt: 'paws' }), c('riffle', 'walk', 'back-right', { holds: 'string' }), c('player', 'sit', 'back-left', { tap: 'ears' })] },
+        say: [{ who: 'coil', text: 'How… do… you… do.' }, { who: 'coil', name: 'Coil', text: 'Quiet, please.' }], next: 'f' },
+      f: { scene: { set: 'field', cam: 'border', cast: [c('sleet', 'hidden', 'grass'), c('sleet', 'tail', 'grass'), c('sleet', 'flat', 'grass'), c('sleet', 'point', 'grass'), c('sleet', 'call', 'grass'), c('sleet', 'puff', 'grass'), c('sleet', 'droop', 'grass'), c('sleet', 'sit', 'grass', { grass: true }), c('sleet', 'pawup', 'grass')] },
+        say: [{ who: 'sleet', name: 'The long grass', text: 'PSST!' }, { who: 'sleet', text: 'Riddle first.' }], next: 'g' },
+      g: { scene: { set: 'sky', cam: 'walk', cast: [c('player', 'walk', 'star-1', { facing: 'right' }), c('clancat', 'sit', 'star-2', { starry: true, mood: 'kind' })], fx: ['night', 'stars'] }, say: [{ who: 'clancat', name: 'The starry cat', text: 'Count what’s missing, little one.' }], next: 'h' },
+      h: { scene: { set: 'sky', cam: 'below', cast: [] }, caption: ['Far below.'], next: 'i' },
+      i: { scene: { set: 'pile', cam: 'wide', opts: { rows: [10, 10, 10, 10], moon: 6 }, cast: [c('grizzled', 'lie', 'pile-left', { holds: 'pinecone', holdAt: 'chin', asleep: true, tap: 'pinecone' }), c('grizzled', 'sit', 'pile-right', { holds: 'pinecone', holdAt: 'paws' }),
+        c('grizzled', 'walk', 'crowd-1', { holds: 'pinecone', holdAt: 'mouth' }), c('grizzled', 'sit', 'crowd-2', { holds: 'pinecone' }), c('riffle', 'puff', 'crowd-3'), c('riffle', 'slide', 'crowd-3'), c('puddle', 'head', 'crowd-3')], fx: ['night'] }, caption: ['The moon comes out, a little fatter.'], next: 'j' },
+      j: { scene: { set: 'hollow', cam: 'lesson', opts: { marks: 5, glow: 'auto' }, cast: [c('tallyheart', 'sit', 'sand-left'), c('player', 'sit', 'sand-right')] },
+        ask: { who: 'tallyheart', to: 'player', prompt: '**Tap** Tallyheart to find out.', label: 'Ask the next Count.', pairs: [['Tails?', 'Three cats, three tails!'], ['Ears?', 'Three cats, six ears!']], next: 'k' } },
+      k: { scene: { set: 'hollow', cam: 'wide', cast: [c('tallyheart', 'sit', 'tree-far')] }, skip: { table: 3, groups: 5, teacher: 'tallyheart', thing: 'cat', things: 'cats', label: 'Count the next patrol.', prompt: '**Tap** the patrols.', next: 'l' } },
+      l: { scene: { set: 'title', cam: 'meet', cast: [c('player', 'sit', 'end-1'), c('sloshbank', 'stand', 'reed-1')] }, counts: { set: 'fx11-watchers', next: 'm' } },
+      m: { scene: { set: 'field', cam: 'border-two', cast: [c('sleet', 'call', 'grass')] }, counts: { set: 'fx11-sleet', next: 'n' } },
+      n: { scene: { set: 'field', cam: 'border-fox', cast: [c('sleet', 'pawup', 'grass')] }, skip: { table: 5, groups: 1, who: [{ who: 'sleet' }], thing: 'claw', things: 'claws', label: 'Tap his forepaw.', prompt: '**Tap** his forepaw.', carry: false, next: 'z' }, sets: { foundSleet: true } },
+      z: { scene: { set: 'den', cam: 'nest', opts: { hidden: true } }, caption: ['The end.'], end: true }
+    }, counts: {
+      'fx11-watchers': { table: 3, thing: 'cat', things: 'cats', unit: 'patrol', units: 'patrols', teacher: 'tallyheart', ask: '{a} × {b}', who: [r(3), r(1), r(4), r(2), r(3), r(1), r(4), r(2), r(3)],
+        fillFrom: 'fx11-threes', fillOrder: 'easiest', fillVoice: 'borrower', fillPicture: 'borrower',
+        facts: [{ a: 3, b: 3, prompt: [{ kind: 'caption', text: 'How many ReedClan cats watched you?' }], retryPrompt: true, right: [{ who: 'player', text: 'NINE? I only saw three!' }, { who: 'sloshbank', text: 'That is the point of reeds.' }], rightAgain: true }],
+        ground: 'earth', praise: [], done: null },
+      'fx11-sleet': { table: 3, thing: 'HERE', things: 'HEREs', unit: 'dragonet', units: 'dragonets', teacher: 'sleet', ask: '{a} × {b}', picture: { kind: 'roll' },
+        facts: [{ a: 7, b: 3, prompt: [{ kind: 'caption', text: 'How many times does Mama hear HERE?' }], retryPrompt: 'Seven of us, three HEREs each. How many HEREs?', right: [{ who: 'sleet', text: 'TWENTY-ONE! You pass.' }], rightAgain: true }],
+        help: 'picture', helpCounter: 'you', againIntro: 'My roll call AGAIN!', fillIntro: 'A smaller roll call!', praise: [], done: null }
+    }, book: { recap: [{ text: 'Sleet.' }], dragonet: [{ id: 'sleet', name: 'Sleet', when: { foundSleet: true }, pose: 'puff', lines: ['Silver-white, the eldest.'] }] } };
+    fs.writeFileSync(file, 'globalThis.PC = globalThis.PC || {}; PC.story = PC.story || {}; PC.story.fx11 = ' + JSON.stringify(story) + ';\nmodule.exports = PC;\n');
+    const md = generate(file, tmp);
+    // the wall's far end: its own place words, its two cameras, the anchors on both sides, the rustle
+    assert.match(md, /\*\*Scene\.\*\* Title: the old stone wall’s far end above the river, where its stones stop and tall reeds begin: the border with ReedClan, by day \(the river behind and below\)\. Camera: wide: the end of the wall at the left, where its stones stop, the tall reeds at the right \(`end`\)\. Cast: you \(walking, happy, at the wall’s end, nearest the line where the stones stop, facing right\); Tallyheart \(sitting, happy, at the wall’s end, second from the line, facing left\); Murmurchime, the tortoiseshell warrior \(sitting, happy, at the wall’s end, furthest from the line, facing left\)\. Also: rustle lines in the reeds; nobody seen\./);
+    assert.match(md, /Camera: at cat height: three cats each side, face to face across the line where the stones stop \(`meet`\)\. Cast: you \(sitting, happy, at the wall’s end, nearest the line where the stones stop, facing left\); Sloshbank, the ReedClan tom \(big, heavy and stern[^)]*\) \(standing, stern, stepping out of the reeds, nearest the line, facing left\); the young ReedClan tom \(lanky and sandy, big ears, eager; mud to the elbows\) \(sitting, happy, stepping out of the reeds, second from the line, facing left\); the ReedClan she-cat \(sleek, dark grey-brown, a pale belly, calm amber eyes; mud to the elbows\) \(sitting, happy, stepping out of the reeds, furthest from the line, facing left\)\./);
+    assert.doesNotMatch(md, /Camera: two cats, medium \(`meet`\)/, 'the wall’s `meet` is its own, not the garden’s');
+    assert.match(md, /- \*\*Sloshbank\*\*: “CrystalClan\.”\n- \*\*Young ReedClan tom\*\*: “Except at night\.”/);
+    assert.match(md, /Title: the river, glass towers, a bridge, by day \(one cat on a wall\)\. Camera: wide shot \(`wide`\)\. Cast: you \(walking, happy, on the wall, right, at the front, facing right\); Tallyheart \(walking, happy, on the wall, facing right\); Murmurchime[^;]*\(walking, happy, on the wall, left, facing right\)\./);
+    // Coil: the stones on the back of the bridge, his gap, his wall as a picture of its own, all eight poses in his own words
+    assert.match(md, /Camera: the very back of the dark \(`back`\)\. Cast: Coil, a northern water snake \(brown with darker cross-bands[^)]*never shut; his mouth always shut: no tongue, no fangs; his body runs sideways along the wall’s foot, away from the cats\) \(only his head, turned into the gap so its top reads as one more rounded stone of the wall; no eyes showing, happy, at the dark gap low in the stone wall, facing left, the head, turned into the gap like one more stone of the wall, is what she taps\);[^\n]*Also: Sprinkle’s big five-claw prints in the mud beside the drag marks; the bridge’s stone leg beside Sprinkle’s nook: a wall of big old fitted stones, its foot on the dry floor, with one dark gap low in it\./);
+    assert.match(md, /- \*\*A voice \(Coil\)\*\*: “Hello\.”/);
+    assert.match(md, /\*\*Then she taps the stones in the wall \(one of them is the snake’s head\)\*\* \(one tap, on this scene\)[^\n]*“drip…”/);
+    assert.match(md, /\*\*Scene\.\*\* Bridge: the Old Bridge’s stone leg, under the bridge beside Sprinkle’s nook, by day \(a wall of big old fitted stones, its foot on the dry floor, one dark gap low in it\)\. Camera: at cat height, close on the stone leg across the middle distance: its dark gap low in it, about a quarter to a third of the way across, the dry floor in front \(`wall`\)\./);
+    for (const w of ['his head out of the gap, tilted politely: two round eyes, shiny as wet pebbles, mouth shut', 'his head out and a first loop of body along the wall’s foot', 'loops and loops of him along the wall’s foot, in and out of the stones’ shadow',
+      'lying along the wall, head raised a little: talking', 'chin flat on the floor: feeling footsteps', 'head tilted up, eyes open, thinking', 'sliding back into the gap, the tail end last']) assert.ok(md.includes('Coil, a northern water snake') && md.includes('(' + w + ', happy, at the dark gap low in the stone wall'), w);
+    assert.ok(md.includes('(lying along the wall, head raised a little: talking, an offended lift of the chin, at the dark gap low in the stone wall, facing left)'), 'Coil’s sniff is his own');
+    assert.match(md, /Sprinkle, a Mistscale dragonet[^;]*\(sitting, sniffing, in Sprinkle’s spot at the very back/, 'everyone else’s sniff as before');
+    assert.match(md, /- \*\*The snake \(Coil\)\*\*: “How… do… you… do\.”\n- \*\*Coil \(Coil\)\*\*: “Quiet, please\.”/);
+    // the global head is Puddle's, slide Riffle's, puff Riffle's cheeks: each keeps its own words
+    assert.match(md, /Riffle, the otter pup \(cheeks puffed round, holding his breath, eyes wide, happy, in the crowd, facing left\); Riffle, the otter pup \(belly-sliding, happy, in the crowd, facing left\); Puddle, a Mistscale dragonet[^;]*\(his head out of the water, a small bump on it, happy, in the crowd, facing left\)/);
+    assert.match(md, /\(sliding back into the gap, the tail end last, happy, at the dark gap low in the stone wall, facing left, the two round open eyes are what she taps\)/);
+    // the new holds and taps
+    assert.match(md, /you \(one forepaw raised, happy, at the back, left, facing left, the raised forepaw is what she taps\); Riffle, the otter pup \(cheeks puffed round, holding his breath, eyes wide, happy, at the back, right, facing left, the puffed-up cheeks are what she taps\); Riffle, the otter pup \(standing up on his hind legs, happy, at the back, right, facing left, three plain round brown pebbles held in the forepaws, the pebbles are what she taps\); Riffle, the otter pup \(sitting, happy, at the back, right, facing left, three plain round brown pebbles set down neatly on the ground in front of the feet\); Riffle, the otter pup \(walking, happy, at the back, right, facing left, a reed string of three fish hanging from one forepaw \(eyes shut, nothing through a fish\)\); you \(sitting, happy, at the back, left, facing left, the ears are what she taps\)\. Also: an Ironsnake \(a train\) crossing on top\./);
+    assert.match(md, /the grizzled old tom \(lying down, happy, left of the pile, facing left, eyes shut: asleep, a big pinecone under the chin, the pinecone is what she taps\); the grizzled old tom \(sitting, happy, right of the pile, facing left, a big pinecone at the front paws\); the grizzled old tom \(walking, happy, in the crowd, facing left, carrying a big pinecone in the mouth\); the grizzled old tom \(sitting, happy, in the crowd, facing left, holding a big pinecone\)/);
+    // the pile's moon is a number, in the words that were there for the den's
+    assert.match(md, /Pile: [^\n]*at night[^\n]*Also: four rows of ten, running back under the brambles; a crescent moon, a little fatter than last night’s\./);
+    // Sleet at the last post, in all nine poses, in his own words; his tuft; his labels
+    assert.match(md, /Camera: wide, both sides of the fence’s last post: the path in front, the long golden grass beyond \(`border`\)\. Cast: Sleet, the eldest dragonet \(a Mistscale about Sprinkle’s size, silver-white[^)]*never toothy\) \(in the long grass: nothing of him showing but the grass bent where he is, happy, low in the long grass just past the last post, close enough to talk across it, facing left\)/);
+    for (const w of ['only the tip of a scaly silver-white tail, flicking up out of the grass', 'flat on his belly in the grass, chin down: spying', 'one claw pointing', 'head up, his mouth a round O: the roll call', 'his chest puffed out, a grass seed falling off it',
+      'head low, his tail drooping', 'sitting up, all of him, happy, low in the long grass just past the last post, close enough to talk across it, facing left, a tuft of long grass on the head, between the horn nubs', 'one forepaw raised, five frost-white claws out']) assert.ok(md.includes('(' + w), w);
+    assert.match(md, /- \*\*The long grass \(Sleet\)\*\*: “PSST!”\n- \*\*The silver-white dragon \(Sleet\)\*\*: “Riddle first\.”/);
+    // the dream: its own place words, its cameras and anchors, the starry cat
+    assert.match(md, /\*\*Scene\.\*\* Sky: the dream: the Sky River, at night \(a broad soft path of stars underfoot, dark blue all round, the city’s lights tiny far below\)\. Camera: on the Sky River: our cat walking on the stars, the starry cat sitting further along \(`walk`\)\. Cast: you \(walking, happy, on the Sky River, facing right\); a Clan cat \(sitting, kind, further along the Sky River, facing left, drawn in starlight: pale blue-white, a little see-through, small stars inside the outline, a soft glow at the edge, a kind face\)\. Effects: night, stars\./);
+    assert.match(md, /- \*\*The starry cat \(A Clan cat\)\*\*: “Count what’s missing, little one\.”/);
+    assert.match(md, /Camera: looking down past the Sky River’s edge: the glass towers far below, the tallest with its red light, and one balcony nineteen floors up with a wind chime catching the starlight; nobody on it \(`below`\)\. No one in shot\./);
+    // the tree's questions: Tallyheart asks, the answer is hers, and the hollow shows nothing owed
+    assert.match(md, /\*\*Then she taps Tallyheart, once for each question\*\* \(two taps, on this scene, counting nothing\): Tallyheart glows softly; a tap on her letters her next question in her balloon and your own answer in your balloon, and the scene stays as it is; the pairs before stay under the panel, small, to read back\. A tap anywhere else makes her hop\./);
+    assert.match(md, /1\. \*\*Tallyheart\*\*: “Tails\?” \*\*You\*\*: “Three cats, three tails!”/);
+    assert.doesNotMatch(md, /thought cloud over the heron/);
+    // patrols of three, the watchers in ReedClan coats, the roll call, Sleet's forepaw
+    assert.match(md, /\*\*Then she counts by 3s\*\* \(the skip-count\): 5 taps, one on each patrol in turn \(the next one glows; a tap anywhere else makes it wiggle\), each lighting its three cats and adding its running total: 3, 6, 9, 12, 15\./);
+    assert.match(md, /\*\*Then the Counts lesson\*\* `fx11-watchers` \(cats\): 3 × 3 \(its own question, kept on its retry; its own lines after a right answer; its own lines after a right retry\)\. Its picture has its own cast in the places, left to right: a ReedClan cat \(coat 3\), a ReedClan cat \(coat 1\), a ReedClan cat \(coat 4\), a ReedClan cat \(coat 2\), a ReedClan cat \(coat 3\), a ReedClan cat \(coat 1\), a ReedClan cat \(coat 4\), a ReedClan cat \(coat 2\), a ReedClan cat \(coat 3\), the questions it lends included\. She types/);
+    assert.match(md, /  - \*\*Sloshbank\*\*: “That is the point of reeds\.”/);
+    assert.match(md, /\*\*Then the Counts lesson\*\* `fx11-sleet` \(HEREs, little dragonets in a row, all alike and pale, three HERE!s lettered over every head\): 7 × 3 [^\n]*a miss gets the set’s own picture lit a group at a time, the player keeping the count,/);
+    assert.match(md, /  - \*\*Sleet\*\*: “My roll call AGAIN! Seven of us, three HEREs each\. How many HEREs\?”/);
+    assert.match(md, /\*\*Then she taps the forepaw Sleet holds up\*\* \(one tap; the forepaw glows, and a tap anywhere else makes it wiggle\): its five claws light and a big 5 grows over them\.[^\n]*which does not show the number\./);
+    assert.match(md, /\*\*Set for good:\*\* `foundSleet: true`/);
+    // the den's hidden words stay chapter 4's (the spec's section 7, item 12)
+    assert.match(md, /Also: two of the pieces of bark under the moss, two corners showing\./);
+    // Sleet's page, in his own puff
+    assert.match(md, /\*\*A dragonet page:\*\* Sleet \(`sleet`\), found in this chapter by a reader whose foundSleet is true \(the page is there only then\)\. Her book gains a page for Sleet \(drawn his chest puffed out, a grass seed falling off it\)/);
+    assert.doesNotMatch(md, /\[object Object\]|undefined|Set: |Camera: (end|meet|walk|below|wall) |\bat (end-\d|reed-\d|star-\d|gap|grass|wall-3)\b/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
 test('its words cover the art’s whole vocabulary: every set (with its time of day), camera, anchor, option value, pose, mood, effect, cast member and cast extra', () => {
   const run = spawnSync(process.execPath, [TOOL, '--check-words'], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);

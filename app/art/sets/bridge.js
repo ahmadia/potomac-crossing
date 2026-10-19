@@ -75,6 +75,24 @@
  *   lays them). <g data-art="mud-paws">, each paw <g data-paw="mud"> with five data-claw="mud"; in
  *   `keep`. They are drawings: nothing lights here (the count's own picture does that).
  *
+ * Chapter 6 (docs/chapters/06-the-snake-in-the-stones.spec.md, section 4, the bridge row): Coil's stones.
+ *   `stones: true` (on `back`; off by default, so chapters 3 to 5's back is as it was): the bridge's stone leg
+ *   beside Sprinkle's nook, at the left, big old fitted stones (courses of uneven height, worn corners, a few
+ *   cracks, moss in the low joints) standing on the dry floor, with one dark gap low in its bottom course where
+ *   a block is long gone: Coil's door (<g data-art="leg">, the gap <g data-art="gap" data-x0 data-x1 data-top
+ *   data-foot>, in `keep`). Anchor `gap` at its mouth, on the floor (h = y - 560, as the others): Coil's head
+ *   there, his body trailing back along the wall's foot to the panel's left edge, behind every spot.
+ *   Camera `wall`, its own composition (Coil's close beats): at cat height, the leg across the middle distance,
+ *   its far end at the right where the dark of the back goes on, its gap low a little over a quarter of the
+ *   way across, the dry floor in front, the deck's beam overhead. Anchors (back's names): `gap` (Coil, facing
+ *   the cats; his body trails off the panel's left edge; its height is his size in this close shot, not a
+ *   depth: his head about two fifths of our cat's beside him, as chapter 6 draws him in `back` with
+ *   `size`), `back-left` (our cat, near, between the gap and the
+ *   centre, facing it), `back-right` (Riffle, near, on the right), `dragon` (at the right edge, her feet far
+ *   below the panel: only Sprinkle's head and neck come in; drawn behind the others, out of the depth sums).
+ *   No `near`, no `beside`. `train: true` shakes grit down in front of the wall; `drips` as ever; the
+ *   evening light as in `back`. Nobody's spot covers the gap or Coil's head (tests/set-bridge.test.js).
+ *
  * The dark is mysterious and a little sad, never scary: cool blues with faint shapes of stones and
  * mud in them, soft rounded shapes, a warm rim of daylight at its edges, and gentle round eyes.
  * The rocks are drawn in the `over` layer, so a custom spot `{ x, y, z: 'behind' }` just behind
@@ -908,6 +926,8 @@
     if (o.prints === true) fl += printsAlong(S, B_MARKS, 160, 46, { lip: mix(c.dark4, '#B7AC94', 0.35), deep: mix(c.dark0, '#0A0F1C', 0.3), fs: 0.55, size: 1.05, gap: 0.5, step: 0.14, t0: 0.12, t1: 0.92 });
     fl += path(fd, S.linU([[0, c.dark0, 0.55], [0.5, c.dark0, 0.2], [1, c.dark0, 0]], 0, 680, 0, 1000));
     back += g(fl, { 'clip-path': S.clip('brbfloor', path(fd, '#fff')) });
+    // chapter 6: the bridge's stone leg beside the nook, big old fitted stones, Coil's gap low in it
+    if (o.stones === true) back += backLeg(S, c);
     // the beam overhead, warm daylight along its lower edge from the way she came in
     back += path(quad([[-10, -10], [1610, -10], [1610, 86], [-10, 122]]), S.linU([[0, c.dark2], [1, c.dark1]], 0, 0, 0, 122));
     back += path(quad([[-10, 104], [1610, 72], [1610, 92], [-10, 128]]), c.dark2);
@@ -960,6 +980,170 @@
       stroke('M-10 966Q200 946 420 950Q640 954 800 990', c.warm, 4, { opacity: 0.45 }), { filter: S.shadow('m') });
     front += g(path(blob(1560, 1010, 180, 54, 10, rng(705), 0.25, 0.3), mix(c.dark1, c.mudDk, 0.3)), { filter: S.shadow('m') });
     S.weatherClip = S.clip('brbrain', rect(0, 0, 0, 0, '#fff'));
+    return { back: back, over: '', front: front };
+  }
+
+  // ------------------------------------------------------------------ chapter 6: the stone leg and Coil's gap
+
+  // The bridge's stone leg, as Coil knows it: big old fitted stones. Courses of uneven height, each
+  // of blocks of uneven width, their corners worn, laid with a dark joint between them; each block's
+  // top edge catches what light there is, a few are cracked, a little moss grows in the lowest joints,
+  // and the dark settles over the leg higher up. Q: the face [top-left, top-right, bottom-right,
+  // bottom-left]; o: rows, per (blocks to a course, about), seed, k (line weight), gap: { x, w } (px):
+  // the one block of the bottom course that is long gone, left open for Coil's gap. Returns { svg, gap:
+  // { x0, x1, top, foot } } (the opening, in the world).
+  function oldStones(S, c, Q, o) {
+    var p = S.pal, r = rng(o.seed), k = o.k || 1, rows = o.rows || 6, per = o.per || 4, i;
+    var W = Math.abs(Q[1][0] - Q[0][0]), H = Math.abs(Q[3][1] - Q[0][1]), ju = 7 * k / W, jv = 7 * k / H;
+    var hs = [], tot = 0;
+    for (i = 0; i < rows; i++) { hs.push(0.82 + r() * 0.4); tot += hs[i]; }
+    var g0 = null, g1 = null, gapOut = null;
+    if (o.gap) { g0 = (o.gap.x - o.gap.w / 2 - Q[3][0]) / (Q[2][0] - Q[3][0]); g1 = (o.gap.x + o.gap.w / 2 - Q[3][0]) / (Q[2][0] - Q[3][0]); }
+    var fills = ['', '', ''], hi = '', lo = '', cracks = '', moss = '', v = 0;
+    function block(a0, a1, v0, v1) {
+      var cu = Math.min((a1 - a0) * 0.16, (0.05 + r() * 0.07) * (H / W)), cv = (v1 - v0) * (0.12 + r() * 0.14);
+      var P = [[a0 + cu, v0], [a1 - cu * (0.5 + r()), v0], [a1, v0 + cv], [a1, v1 - cv * (0.5 + r() * 0.8)], [a1 - cu, v1], [a0 + cu * (0.4 + r()), v1], [a0, v1 - cv], [a0, v0 + cv * (0.6 + r() * 0.8)]]
+        .map(function (q) { var m = inQuad(Q, q[0], q[1]); return [m[0] + (r() - 0.5) * 4 * k, m[1] + (r() - 0.5) * 4 * k]; });
+      fills[Math.floor(r() * 3)] += pts(P) + 'Z';
+      hi += pts([P[7], P[0], P[1], P[2]]);
+      lo += pts([P[3], P[4], P[5]]);
+      if (r() < 0.2) {
+        var cx = lerp(P[0][0], P[1][0], 0.3 + r() * 0.4), cy = P[0][1], L = (P[5][1] - P[0][1]) * (0.35 + r() * 0.3);
+        cracks += 'M' + n(cx) + ' ' + n(cy) + 'l' + n((r() - 0.5) * 14 * k) + ' ' + n(L * 0.4) + 'l' + n((r() - 0.5) * 18 * k) + ' ' + n(L * 0.35) + 'l' + n((r() - 0.5) * 10 * k) + ' ' + n(L * 0.25);
+      }
+      return P;
+    }
+    for (var row = 0; row < rows; row++) {
+      var v0 = v + jv / 2, v1 = v + hs[row] / tot - jv / 2, last = row === rows - 1, u = -r() * 0.7 / per;
+      v += hs[row] / tot;
+      if (last) v1 = 1;
+      while (u < 1) {
+        var w = (0.6 + r() * 0.8) / per, a0 = Math.max(0, u) + ju / 2, a1 = Math.min(1, u + w) - ju / 2;
+        if (last && g0 != null && a1 > g0 - ju && a0 < g1 + ju) {
+          // the block that is gone: a joint each side of the gap, the gap itself open
+          if (g0 - ju / 2 - a0 > 0.2 / per) block(a0, g0 - ju / 2, v0, v1);
+          u = g1 + ju / 2;
+          var tl = inQuad(Q, g0, v0 - jv / 2), tr = inQuad(Q, g1, v0 - jv / 2), bl = inQuad(Q, g0, 1), br = inQuad(Q, g1, 1);
+          gapOut = { x0: tl[0], x1: tr[0], top: Math.max(tl[1], tr[1]) + 2 * k, foot: (bl[1] + br[1]) / 2 };
+          g0 = null;
+          continue;
+        }
+        if (a1 - a0 > 0.12 / per) {
+          var P = block(a0, a1, v0, v1);
+          if (row >= rows - 2 && r() < 0.3) moss += blob(lerp(P[5][0], P[4][0], 0.3 + r() * 0.4), P[4][1] + 3 * k, (10 + r() * 10) * k, 5 * k, 7, r, 0.3, 0.3);
+        }
+        u += w;
+      }
+    }
+    var col = mix(c.dark2, c.dark3, 0.38), lw = 3 * k;
+    var svg = path(quad(Q), mix(c.dark0, '#090D18', 0.4)) + path(fills[0], col) + path(fills[1], mix(col, c.dark1, 0.32)) + path(fills[2], mix(col, c.dark4, 0.22)) +
+      stroke(lo, c.dark0, lw * 1.5, { opacity: 0.5 }) + stroke(hi, c.dark4, lw, { opacity: 0.42 }) + stroke(cracks, c.dark0, lw * 0.9, { opacity: 0.7 }) +
+      (moss ? path(moss, mix(p.moss, c.dark2, 0.55), { opacity: 0.8 }) : '') +
+      path(quad(Q), S.linU([[0, c.dark0, 0.62], [0.5, c.dark0, 0.22], [1, c.dark0, 0]], 0, Math.min(Q[0][1], Q[1][1]), 0, Math.max(Q[2][1], Q[3][1])));
+    return { svg: svg, gap: gapOut };
+  }
+  // Coil's door: the block that is gone from the bottom course, a dark gap whose mouth is on the floor:
+  // G { x0, x1, top, foot }. Darkest at its heart, the block over it shadowing its top, its edges worn
+  // and broken, a few chips of old stone fallen at its foot. In `keep`, with room over it for his head.
+  function stoneGap(S, c, G, seed) {
+    var r = rng(seed), x0 = G.x0, x1 = G.x1, w = x1 - x0, h = G.foot - G.top, x = (x0 + x1) / 2, foot = G.foot;
+    var d = 'M' + n(x0 + w * 0.02) + ' ' + n(foot) + 'L' + n(x0 + w * 0.04) + ' ' + n(G.top + h * 0.34) + 'L' + n(x0 + w * 0.01) + ' ' + n(G.top + h * 0.18) + 'L' + n(x0 + w * 0.1) + ' ' + n(G.top + h * 0.02) +
+      'L' + n(x0 + w * 0.42) + ' ' + n(G.top + h * 0.06) + 'L' + n(x0 + w * 0.5) + ' ' + n(G.top) + 'L' + n(x1 - w * 0.12) + ' ' + n(G.top + h * 0.03) + 'L' + n(x1 - w * 0.01) + ' ' + n(G.top + h * 0.2) +
+      'L' + n(x1 - w * 0.05) + ' ' + n(G.top + h * 0.5) + 'L' + n(x1 - w * 0.02) + ' ' + n(foot) + 'Z';
+    var s = path(d, S.radU([[0, '#05080F'], [0.55, mix(c.dark0, '#05080F', 0.6)], [1, c.dark0]], x, foot - h * 0.25, w * 0.66));
+    // the block over it shadows its top; the worn edge on the side the light comes from
+    s += path(d, S.linU([[0, '#03050B', 0.75], [0.35, '#03050B', 0]], 0, G.top, 0, foot));
+    s += stroke('M' + n(x0 + w * 0.02) + ' ' + n(foot) + 'L' + n(x0 + w * 0.04) + ' ' + n(G.top + h * 0.34) + 'L' + n(x0 + w * 0.01) + ' ' + n(G.top + h * 0.18), c.dark4, Math.max(1.5, h * 0.025), { opacity: 0.35 });
+    // its dark spilling a little onto the floor, and chips of stone at its foot
+    s += ell(x, foot + h * 0.03, w * 0.58, h * 0.08, '#05080F', { opacity: 0.4 });
+    var chips = '';
+    [[-0.62, 0.05, 0.06], [0.58, 0.07, 0.05], [0.7, 0.01, 0.035], [-0.48, 0.1, 0.035]].forEach(function (q) {
+      chips += blob(x + q[0] * w, foot + q[1] * h, w * q[2], w * q[2] * 0.6, 7, r, 0.25, 0.3);
+    });
+    s += path(chips, mix(c.dark2, c.dark3, 0.5), { stroke: c.dark0, 'stroke-width': n(Math.max(1.5, h * 0.025)), 'stroke-linejoin': 'round' });
+    (S.keep = S.keep || []).push({ x: x0 - w * 0.06, y: G.top - h * 0.5, w: w * 1.12, h: h * 1.62 });
+    return g(s, { 'data-art': 'gap', 'data-x0': n(x0), 'data-x1': n(x1), 'data-top': n(G.top), 'data-foot': n(foot) });
+  }
+  // The floor line of a face Q at x (its foot).
+  function footOf(Q, x) { return lerp(Q[3][1], Q[2][1], (x - Q[3][0]) / (Q[2][0] - Q[3][0])); }
+
+  // `stones: true` on `back`: the leg stands on the dry floor at the left, beside the nook, over the
+  // left of the heap; its far side recedes toward the nook. The gap is low in its bottom course near
+  // the panel's left edge, so Coil at `gap` (facing right, his body trailing back along the wall's
+  // foot) lies between the panel's edge and every spot: clear of `near`, of `back-left` and of
+  // Sprinkle's nook.
+  var B_LEG = { face: [[-10, 96], [598, 104], [604, 752], [-10, 760]], side: [[598, 104], [660, 128], [664, 712], [604, 752]], gap: { x: 100, w: 124 }, rows: 6, per: 3.2, seed: 762 };
+  function backLeg(S, c) {
+    var L = B_LEG, s = '';
+    s += path(quad(L.side), S.linU([[0, c.dark0], [1, mix(c.dark1, c.dark2, 0.3)]], 0, 120, 0, 740));
+    s += oldStones(S, c, L.side, { rows: L.rows, per: 1, seed: 761 }).svg;
+    var face = oldStones(S, c, L.face, { rows: L.rows, per: L.per, seed: L.seed, gap: L.gap });
+    s += face.svg;
+    // its foot on the dry floor: a soft dark line where stone meets dust
+    s += stroke('M-10 758L604 750L664 712', '#070B16', 10, { opacity: 0.5 }) + stroke('M-10 764L604 756', mix(c.dark3, '#A09682', 0.2), 3, { opacity: 0.35 });
+    if (face.gap) s += stoneGap(S, c, face.gap, 763);
+    return g(s, { 'data-art': 'leg' });
+  }
+
+  // ------------------------------------------------------------------ chapter 6: WALL, Coil's close beats
+
+  // Its own composition, at cat height under the bridge: the stone leg across the middle distance,
+  // its far end at the right where the dark of the back goes on; Coil's gap low in it a little under a
+  // third of the way across; the dry floor in front. The overhead beam at the top. Our cat and Riffle
+  // sit near, Sprinkle's head and neck come in at the right edge; nobody's spot covers the gap.
+  var W_LEG = { face: [[-10, 84], [1232, 92], [1236, 704], [-10, 712]], side: [[1232, 92], [1312, 124], [1314, 668], [1236, 704]], gap: { x: 420, w: 156 }, rows: 6, per: 5, seed: 1612 };
+  var W_FLOOR = 'M-10 708L1236 702L1314 666Q1460 652 1610 664V1010H-10Z';
+  function drawWall(S) {
+    var p = S.pal, o = S.opts, c = cols(S), back = '', front = '', r = rng(1601), i, x, y;
+    back += rect(-10, -10, 1620, 1020, S.linU([[0, c.dark1], [0.5, c.dark0], [1, mix(c.dark2, c.mudDk, 0.2)]], 0, 0, 0, 1000));
+    // beyond the leg's far end, the very back: the heap of old stones fading into the dark
+    var heap = '';
+    for (i = 0; i < 9; i++) { x = 1300 + i * 46 + r() * 20; y = 520 + Math.sin(i * 2.3) * 60 + r() * 40; heap += blob(x, y, 40 + r() * 20, 26 + r() * 10, 9, r, 0.18, 0.3); }
+    for (i = 0; i < 7; i++) { x = 1320 + i * 52 + r() * 16; y = 620 + r() * 24; heap += blob(x, y, 46 + r() * 16, 28 + r() * 8, 9, r, 0.18, 0.3); }
+    back += path(heap, mix(c.dark0, c.dark1, 0.6), { stroke: c.dark0, 'stroke-width': 4, 'stroke-linejoin': 'round' });
+    back += rect(1260, 300, 360, 420, S.radU([[0, '#0A1020', 0.7], [1, '#0A1020', 0]], 1460, 520, 300));
+    // the dry floor, pale and dusty, darker toward the back
+    back += path(W_FLOOR, S.linU([[0, mix(c.dark3, '#A09682', 0.22)], [1, mix(c.dark2, '#7E7464', 0.2)]], 0, 660, 0, 1000));
+    var dust = '', leaves = '', st = '', sth = '';
+    for (i = 0; i < 90; i++) { x = r() * 1600; y = 712 + Math.pow(r(), 1.1) * 290; dust += blob(x, y, 2 + (y - 700) * 0.024 + r() * 4, 1.5 + (y - 700) * 0.012, 6, r, 0.3, 0.3); }
+    for (i = 0; i < 16; i++) leaves += leafD(r() * 1600, 730 + r() * 260, 16 + r() * 16, r() * 6.28, 6);
+    [[160, 960, 44], [1500, 930, 38], [980, 748, 22], [70, 760, 26]].forEach(function (q) {
+      st += blob(q[0], q[1], q[2], q[2] * 0.62, 9, r, 0.2, 0.3);
+      sth += 'M' + n(q[0] - q[2] * 0.6) + ' ' + n(q[1] - q[2] * 0.42) + 'q' + n(q[2] * 0.6) + ' ' + n(-q[2] * 0.26) + ' ' + n(q[2] * 1.2) + ' 0';
+    });
+    var fl = path(dust, mix(c.dark3, '#B0A690', 0.2), { opacity: 0.6 }) + path(leaves, mix(c.dark3, '#8A6A3E', 0.3), { opacity: 0.75 }) +
+      path(st, mix(c.dark1, c.dark2, 0.5), { stroke: c.dark0, 'stroke-width': 4, 'stroke-linejoin': 'round' }) + stroke(sth, c.dark4, 2.5, { opacity: 0.4 });
+    fl += path(W_FLOOR, S.linU([[0, c.dark0, 0.5], [0.4, c.dark0, 0.15], [1, c.dark0, 0]], 0, 680, 0, 1000));
+    back += g(fl, { 'clip-path': S.clip('brwfloor', path(W_FLOOR, '#fff')) });
+    // the leg: its far side receding into the dark, its face of big fitted stones, its foot on the floor
+    var L = W_LEG, face = oldStones(S, c, L.face, { rows: L.rows, per: L.per, seed: L.seed, k: 1.15, gap: L.gap });
+    back += path(quad(L.side), S.linU([[0, c.dark0], [1, mix(c.dark1, c.dark2, 0.3)]], 0, 120, 0, 700));
+    back += oldStones(S, c, L.side, { rows: L.rows, per: 1, seed: 1611, k: 1.15 }).svg;
+    back += g(face.svg, { 'data-art': 'leg' });
+    back += stroke('M-10 710L1236 703L1314 667', '#070B16', 12, { opacity: 0.5 }) + stroke('M-10 717L1236 709', mix(c.dark3, '#A09682', 0.2), 3, { opacity: 0.35 });
+    if (face.gap) back += stoneGap(S, c, face.gap, 1613);
+    // the beam overhead, warm daylight along its lower edge from the way in, behind us at the left
+    back += path(quad([[-10, -10], [1610, -10], [1610, 62], [-10, 92]]), S.linU([[0, c.dark2], [1, c.dark1]], 0, 0, 0, 92));
+    back += path(quad([[-10, 78], [1610, 50], [1610, 66], [-10, 96]]), c.dark2);
+    var riv = '';
+    for (x = 20; x < 1610; x += 44) riv += dot(x, 28 - x * 0.012, 4.5) + dot(x, 72 - x * 0.018, 4);
+    back += path(riv, c.dark3) + stroke(pts([[-10, 96], [1610, 66]]), S.linU([[0, c.warm, 0.7], [0.5, c.warm, 0.15], [1, c.warm, 0]], 0, 0, 1600, 0), 4);
+    // daylight from the way in, warming the near floor and the leg's low left
+    back += rect(-10, 380, 1100, 640, S.radU([[0, c.warm, 0.3], [0.55, c.warm, 0.08], [1, c.warm, 0]], -80, 1060, 900));
+    var ev = evening(S);
+    if (ev) {
+      var ec = eveCol(S, ev), eo = ev === 'gold' ? 1 : 0.6, bands = '', wash = ev === 'gold' ? 0.2 : 0.08;
+      back += rect(-10, 90, 1620, 930, S.linU([[0, ec, wash], [0.45, ec, wash * 0.3], [1, ec, 0]], 0, 0, 1500, 0), { style: 'mix-blend-mode:screen' });
+      [[948, 1010], [836, 876], [752, 774]].forEach(function (b) { bands += pts([[-10, b[0]], [1610, b[0] - 30], [1610, b[1] - 22], [-10, b[1]]]) + 'Z'; });
+      back += g(path(bands, S.linU([[0, ec, 0.46 * eo], [0.6, ec, 0.2 * eo], [1, ec, 0.03]], 0, 0, 1500, 0)), { 'clip-path': S.clip('brwfloor', path(W_FLOOR, '#fff')), style: 'mix-blend-mode:screen' });
+      back += stroke(pts([[-10, 96], [1610, 66]]), ec, 5, { opacity: 0.45 * eo });
+    }
+    if (o.drips !== false) back += drip(S, 300, 96, 680, 5, 0.6, c.drop, c.dark4) + drip(S, 1080, 80, 640, 4.6, 1.5, c.drop, c.dark4);
+    // a train overhead: grit shaken down in front of the wall
+    if (o.train) back += grit(S, 60, 1540, 90, 580, 26, 1614, mix(c.dark4, '#FFFFFF', 0.2));
+    // dark clods in the near corners
+    front += g(path(blob(-20, 1010, 200, 56, 10, rng(1615), 0.25, 0.3) + blob(1620, 1012, 150, 44, 9, rng(1616), 0.25, 0.3), mix(c.dark1, c.mudDk, 0.3)), { filter: S.shadow('m') });
+    S.weatherClip = S.clip('brwrain', rect(0, 0, 0, 0, '#fff'));
     return { back: back, over: '', front: front };
   }
 
@@ -1528,6 +1712,7 @@
     if (S.comp === 'under') return drawUnder(S);
     if (S.comp === 'back') return drawBack(S);
     if (S.comp === 'paws') return drawPaws(S);
+    if (S.comp === 'wall') return drawWall(S);
     return drawBank(S);
   }
 
@@ -1538,7 +1723,9 @@
       mouth: { box: [0, 0, 1600], comp: 'mouth' },
       under: { box: [0, 0, 1600], comp: 'under' },
       back: { box: [0, 0, 1600], comp: 'back' },
-      paws: { box: [0, 0, 1600], comp: 'paws' }
+      paws: { box: [0, 0, 1600], comp: 'paws' },
+      // chapter 6: Coil's close beats, its own composition (sharing `back`'s anchor names)
+      wall: { box: [0, 0, 1600], comp: 'wall' }
     },
     anchors: {
       // the riverbank; `rock` and `edge` also show here, small, at the dark's mouth
@@ -1557,16 +1744,29 @@
       // side, nearer. A cat-height camera, so h = y - 560 all over this floor
       back: {
         near: A(360, 1000, 440), dragon: A(1040, 820, 260, 'left'), beside: A(1150, 850, 290, 'left'),
-        'back-left': A(560, 900, 340, 'right'), 'back-right': A(1430, 885, 325, 'left')
+        'back-left': A(560, 900, 340, 'right'), 'back-right': A(1430, 885, 325, 'left'),
+        // chapter 6: the mouth of Coil's gap, low in the stone leg (`stones: true`): his head here, his
+        // body trailing back along the wall's foot toward the panel's left edge, behind every spot
+        gap: A(B_LEG.gap.x, Math.round(footOf(B_LEG.face, B_LEG.gap.x)), Math.round(footOf(B_LEG.face, B_LEG.gap.x)) - 560, 'right')
       },
       // the three forepaws, close: no faces in it
-      paws: {}
+      paws: {},
+      // chapter 6: Coil at his gap, facing the cats (his body trails left along the wall's foot, off
+      // the panel's left edge); our cat near, between the gap and the centre, facing it; Riffle near on
+      // the right; Sprinkle's head and neck at the right edge (her feet far below the panel, drawn
+      // behind the others and left out of the depth a spot of its own gets). No `near`, no `beside`.
+      wall: {
+        gap: A(W_LEG.gap.x, Math.round(footOf(W_LEG.face, W_LEG.gap.x)), 370, 'right'), 'back-left': A(740, 958, 430, 'left'), 'back-right': A(1110, 948, 418, 'left'),
+        dragon: A(1560, 1100, 320, 'left', { z: 'behind' })
+      }
     },
     opts: { train: [false, true], eyes: ['none', 'open', 'blink', 'sprinkle'], drag: [true, false], drips: [true, false],
       pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true],
       // chapter 5: the little forepaws drawn in the mud (`back`)
-      mudPaws: [0, 6, 7] },
-    defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0 }
+      mudPaws: [0, 6, 7],
+      // chapter 6: the stone leg beside the nook, with Coil's gap (`back`; `wall` always has it)
+      stones: [false, true] },
+    defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false }
   });
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;

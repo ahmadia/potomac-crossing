@@ -1252,3 +1252,75 @@ What the review of the built chapter changed. Each is tested where it lives.
   page's (an end page letters beside the panel by design) and the fox in the mud (f111a: the
   drawing is kept clear and two heads have the top, so no second box fits on the panel however
   the words are cut; one box, in the column, with its card).
+
+## Chapter 6 (v0.1)
+
+Chapter 6, *The Snake in the Stones*, is [`chapters/06-the-snake-in-the-stones.md`](chapters/06-the-snake-in-the-stones.md)
+(Draft v0.4, final), built in `app/story/ch06.js`. **Its spec,
+[`chapters/06-the-snake-in-the-stones.spec.md`](chapters/06-the-snake-in-the-stones.spec.md) (v0.2),
+is the build's contract**: the flag, the Counts sets, the cards, the art needs, the build notes and
+the names, which the art, the engine, the storyboard and the story all use as written there. No new
+engine key and no new set (the spec's "Engine needs": no new key, and one behaviour, below). This
+section records the names and the words as built; the spec has the rest.
+
+**The art's new names** (every option off by default and every anchor and camera additional, so
+chapters 2 to 5 draw as they did):
+
+- `title`: anchor `wall-3` on `wide` (the front of a patrol walking right). A second composition,
+  the old wall's far end where the reeds begin: cameras `end` and `meet` (no `reeds`: cut in spec
+  v0.2), anchors `end-1` to `end-3` and `reed-1` to `reed-3`, option `rustle`.
+- `sky`: a second composition, the dream: cameras `walk` and `below`, anchors `star-1`, `star-2`.
+- `bridge`: option `stones` on `back` (Coil's wall beside Sprinkle's nook) and anchor `gap`; camera
+  **`wall`, a composition of its own** (as the field's border cameras are), with `gap`, `back-left`,
+  `back-right` and `dragon` of its own. `wall`'s `gap` is 370 high (after review; it was 205): Coil's
+  size in that close shot, not a depth, so his head is about two fifths of our cat's beside him and
+  his eyes read; in `back` the chapter gives him `size: 1.45` for the same share. His `stone` pose is
+  the old stones' blue-grey, with no bands, until the tap shows his face.
+- `field`: anchor `grass` (Sleet's spot past the last post) in the three border cameras. Sleet's
+  `tail` pose (after the final review) is a dragonet's tail, not a thin hook: thick at the grass and
+  tapering to a point, his plates along its back, three scale arcs, a curl and the flick's lines, its
+  tip standing clear above the grass (the set gives it a sitting dragonet's grass).
+- `pile`: **`moon`, a number** in `opts` (default off): the evening's age, `moon: 6` tonight.
+- `den`: `hidden: true` also takes `coil-diggers` under the moss.
+- Cast: `coil` (poses `stone`, `head`, `long`, `longer`, `still`, `listen`, `think`, `slide`),
+  `sloshbank`, `reedclan` (variants 1 to 4, marsh coats of their own), `sleet` (poses `hidden`,
+  `tail`, `flat`, `point`, `call`, `puff`, `droop`, `sit`, `pawup`); Riffle's pose `puff`. Extras:
+  `holds: 'pinecone' | 'pebbles' | 'string'` (with `holdAt`), `tap: 'pinecone' | 'paw' | 'stone' |
+  'eyes' | 'pebbles' | 'cheeks' | 'ears'`, `starry: true` (the starry cat, a `clancat`), `grass: true`.
+- Counts art: `kind: 'roll'` (Sleet's roll call), Sleet's forepaw on the 5s, `reedclan` in the
+  patrol picture's `who`. The patrol picture (table 3, which no chapter before 6 draws) has a wider
+  tile (236), so each patrol's three walkers end on their own green card (after review; the counts
+  fingerprints of chapters 1 to 5 leave table 3 out, and are otherwise unchanged).
+
+**Engine, UI and tools, as built (chapter 6)**
+
+- `E.VERSION = '0.6.0 (chapter 6, 2026-10-18)'`; the save stays version 2 and nothing new is stored
+  (`foundSleet` is a sticky flag like `foundWisp`).
+- **A Count is learned when its own set is finished** (`E.learnedCounts`, after review): the set
+  `E.countSets` names for its table, not any finished set on that table. Chapter 6 asks four patrols
+  of three (`ch06-four`) before the threes' lesson, and the Hollow's "Patrols · the 3s" and the
+  tree's sixth mark (`marks: 'auto'`) wait for the lesson. Chapters 1 to 5 are unchanged: each
+  Count's own set is the first of its table finished there.
+- `PC.ui.speakers`: `coil` "Coil", `sloshbank` "Sloshbank", `sleet` "Sleet", and `reedclan` by
+  variant: 1 "ReedClan she-cat", 2 "Young ReedClan tom", 3 and 4 "A ReedClan cat" (no variant reads
+  as 1, as an otter's does). The chapter's `names` (`coil: 'The snake'`, `sleet: 'The silver-white
+  dragon'`) and a balloon's own `name` ("A voice", "The long grass", "The starry cat") win, as
+  before. Read to me (pitch, rate): Coil 0.72, 0.7, the slowest voice in the game; Sloshbank 0.62,
+  0.88; Sleet 1.45, 1.04; the young tom pitch 1.12, the other ReedClan cats 1.0. Nobody else's voice
+  changes.
+- **`faceHidden`**: a named balloon whose speaker is in pose `stone`, `hidden` or `tail` keeps its
+  face to itself, as `eyes` and `hide` do. No cast of chapters 1 to 5 uses those three poses, so no
+  earlier balloon changes.
+- `PC.ui.flagWords.foundSleet`: "found Sleet at the last post of the Barking Field (later chapters
+  remember)".
+- `tools/storyboard.mjs` has words for every name above, and each character's own where the shared
+  pose word would be wrong (`COIL_POSE`: the global `head` is Puddle's and `slide` Riffle's;
+  `SLEET_POSE`; `OTTER_POSE.puff`, Riffle's cheeks; Coil's `sniff` mood), on the dragonet page too.
+  It also prints, only where a chapter uses them: the wall's end, the dream and Coil's wall in place
+  words of their own; a Counts set's own `who`; `kind: 'roll'`; an `ask` whose asker is a she and
+  whose answer is the reader's, on a scene with nothing owed; a 3s skip-count as patrols; `asleep`
+  lying down.
+  `--check-words more.json` adds a chapter's names to the art's vocabulary before it checks (the
+  tests run it with the spec's), and it now checks each variant of a cast member that has words by
+  variant. Chapters 1 to 5's storyboards regenerate byte for byte. Two words stay chapter 4's on
+  purpose (spec section 7, item 12): the den's `hidden` and the field's border cameras.

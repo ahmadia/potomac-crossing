@@ -1129,9 +1129,9 @@ function finishedCat(stories, over) {
   return cat;
 }
 
-test('version 0.5.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapter 5 adds none)', () => {
-  assert.equal(E.VERSION, '0.5.0 (chapter 5, 2026-10-11)');
-  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapter 5 stores nothing new');
+test('version 0.6.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 and 6 add none)', () => {
+  assert.equal(E.VERSION, '0.6.0 (chapter 6, 2026-10-18)');
+  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 and 6 store nothing new');
   assert.equal(E.STORAGE_KEY, 'potomac-crossing.v1');
   assert.deepEqual(E.newSave(), { version: 2, cats: [], current: null, settings: { readAloud: false, bigText: false } });
   const c = E.blankCat({ now: 5, id: 'x' });
@@ -1904,7 +1904,13 @@ test('hollow: one Count per chapter lesson, in teaching order, each with its own
   assert.deepEqual(E.learnedCounts(cat, list), []);
   cat.lessons['ch01-tails'] = { finished: true };
   assert.deepEqual(E.learnedCounts(cat, list).map(c => c.table), [1]);
-  cat.lessons['ch02-pile'] = { finished: true };   // any finished chapter lesson of a Count learns it
+  // another set on the table does not teach it (chapter 6 asks four patrols of three before the threes'
+  // lesson): only the Count's own set, finished, learns it
+  cat.lessons['ch02-pile'] = { finished: true };
+  assert.deepEqual(E.learnedCounts(cat, list).map(c => c.table), [1], 'the pile’s twos are not the ears’ lesson');
+  cat.lessons['ch02-ears'] = { finished: false };
+  assert.deepEqual(E.learnedCounts(cat, list).map(c => c.table), [1], 'a lesson set aside is not finished');
+  cat.lessons['ch02-ears'] = { finished: true };
   assert.deepEqual(E.learnedCounts(cat, list).map(c => c.table), [1, 2]);
   const def = E.hollowDef(list, 2);
   assert.deepEqual([def.id, def.table, def.things, def.teacher], ['hollow-2s', 2, 'ears', 'tallyheart']);
@@ -5987,4 +5993,84 @@ test('the save after chapter 5: still version 2, and nothing new is stored; a ch
   const again = store.load().cats[0];
   assert.deepEqual([again.flags, again.cards, again.finished, again.lessons], [done.flags, done.cards, done.finished, done.lessons]);
   assert.deepEqual(E.caseFile(again, list), E.caseFile(done, list));
+});
+
+/* ================================================================ chapter 6 (the words: docs/build.md, "Chapter 6")
+ * No engine key changes (the spec's "Engine needs"; one behaviour does: a Count is learned when its own
+ * set is finished, tested in the hollow tests above and in story-ch06). The UI's speakers gain Coil, Sloshbank,
+ * Sleet and ReedClan's cats by coat, their voices, the three poses that show no face, and the
+ * grown-ups corner's words for `foundSleet`; chapters 1 to 5's labels, voices and faces are as they were. */
+test('chapter 6’s speakers (PC.ui.speakers): Coil, Sloshbank, Sleet and ReedClan by coat, the chapter’s stand-in names and a balloon’s own name, their voices', () => {
+  require('../app/ui.js');
+  const Sp = PC.ui.speakers;
+  const cat = E.blankCat({}); cat.name = 'Fern';
+  const fill = t => E.fill(t, cat);
+  // the chapter's `names`, as the spec gives them (a stand-in: the story builder writes app/story/ch06.js)
+  const ch06 = { id: 'ch06', names: { coil: 'The snake', sleet: 'The silver-white dragon' } };
+  const label = (s, story) => Sp.label(s, { cat, story, fill });
+  assert.deepEqual([label({ who: 'coil' }, ch06), label({ who: 'coil', name: 'A voice' }, ch06), label({ who: 'coil', name: 'Coil' }, ch06), label({ who: 'coil' }, {})],
+    ['The snake', 'A voice', 'Coil', 'Coil'], 'a stand-in until Riffle names him; a balloon’s own name wins; a chapter without it calls him Coil');
+  assert.deepEqual([label({ who: 'sleet' }, ch06), label({ who: 'sleet', name: 'The long grass' }, ch06), label({ who: 'sleet', name: 'Sleet' }, ch06), label({ who: 'sleet' }, {})],
+    ['The silver-white dragon', 'The long grass', 'Sleet', 'Sleet']);
+  assert.equal(label({ who: 'sloshbank' }, ch06), 'Sloshbank');
+  assert.deepEqual([1, 2, 3, 4].map(v => label({ who: 'reedclan', variant: v }, ch06)), ['ReedClan she-cat', 'Young ReedClan tom', 'A ReedClan cat', 'A ReedClan cat']);
+  assert.equal(label({ who: 'reedclan' }, ch06), 'ReedClan she-cat', 'no variant is the first, as an otter’s and a dog’s are');
+  assert.equal(label({ who: 'reedclan', variant: 9 }, ch06), 'A ReedClan cat');
+  assert.deepEqual([Sp.NAMES.coil, Sp.NAMES.sloshbank, Sp.NAMES.sleet, Sp.NAMES.reedclan], ['Coil', 'Sloshbank', 'Sleet', 'A ReedClan cat']);
+  // {name} in a balloon's own name is filled, as before ("{Murmur}chime")
+  assert.equal(label({ who: 'murmurchime' }, ch06), 'Murmurchime');
+  // Read to me: Coil low and very slow, Sloshbank low and slow, Sleet high, quick and loud, the young tom a little high
+  assert.deepEqual([Sp.pitch('coil'), Sp.rate('coil')], [0.72, 0.7]);
+  assert.deepEqual([Sp.pitch('sloshbank'), Sp.rate('sloshbank')], [0.62, 0.88]);
+  assert.deepEqual([Sp.pitch('sleet'), Sp.rate('sleet')], [1.45, 1.04]);
+  assert.ok(Sp.rate('coil') < Sp.rate('patience') && Sp.rate('coil') < Sp.rate('sloshbank'), 'Coil is the slowest voice in the game');
+  assert.ok(Sp.pitch('sloshbank') < Sp.pitch('glintstar') && Sp.pitch('sloshbank') < Sp.pitch('coil'), 'the big stern tom the lowest but the old tom');
+  assert.ok(Sp.pitch('sleet') > Sp.pitch('tallyheart') && Sp.rate('sleet') > 0.95);
+  const young = Sp.pitch('reedclan', 2), she = Sp.pitch('reedclan', 1);
+  assert.ok(young > she && young > 1 && young < Sp.pitch('player'), 'the young tom a little high: ' + young);
+  assert.deepEqual([3, 4].map(v => Sp.pitch('reedclan', v)), [she, she]);
+  // everyone from chapters 1 to 5 as they were
+  assert.deepEqual(['tallyheart', 'glintstar', 'grizzled', 'riffle', 'sprinkle', 'reynard', 'squall', 'patience', 'puddle', 'wisp', 'player', 'clancat'].map(w => [Sp.pitch(w), Sp.rate(w)]),
+    [[0.92, 0.95], [0.85, 0.95], [0.6, 0.95], [1.5, 0.95], [1.38, 0.86], [0.8, 0.82], [1.7, 1.02], [0.7, 0.8], [1.32, 1.05], [1.25, 0.95], [1.2, 0.95], [1.0, 0.95]]);
+  assert.deepEqual([Sp.pitch('otter', 1), Sp.pitch('otter', 2), Sp.pitch('dog', 3)], [0.68, 1.05, 1.75]);
+});
+
+test('chapter 6’s faces not shown: a named balloon whose speaker is only a stone in the wall (Coil’s `stone`) or only grass and a tail’s tip (Sleet’s `hidden`, `tail`); every other pose shows the face, and chapters 1 to 5’s faces are as they were', () => {
+  require('../app/ui.js');
+  const Sp = PC.ui.speakers;
+  assert.equal(Sp.faceHidden({ who: 'coil', name: 'A voice' }, { who: 'coil', pose: 'stone' }), true);
+  assert.equal(Sp.faceHidden({ who: 'sleet', name: 'The long grass' }, { who: 'sleet', pose: 'hidden' }), true);
+  assert.equal(Sp.faceHidden({ who: 'sleet', name: 'The long grass' }, { who: 'sleet', pose: 'tail' }), true);
+  // shown: every other pose of theirs, named or not
+  ['head', 'long', 'longer', 'still', 'listen', 'think', 'slide'].forEach(p => assert.equal(Sp.faceHidden({ who: 'coil', name: 'The snake' }, { who: 'coil', pose: p }), false, 'Coil ' + p));
+  ['flat', 'point', 'call', 'puff', 'droop', 'sit', 'pawup'].forEach(p => assert.equal(Sp.faceHidden({ who: 'sleet', name: 'Sleet' }, { who: 'sleet', pose: p }), false, 'Sleet ' + p));
+  // a balloon without its own name keeps its face, in any pose (the chapter's stand-in names are labels only)
+  assert.equal(Sp.faceHidden({ who: 'coil' }, { who: 'coil', pose: 'stone' }), false);
+  assert.equal(Sp.faceHidden({ who: 'sleet' }, { who: 'sleet', pose: 'hidden' }), false);
+  // the old ones: eyes and hide still hide; the poses that came before still show
+  assert.equal(Sp.faceHidden({ who: 'sprinkle', name: 'A small voice' }, { who: 'sprinkle', pose: 'eyes' }), true);
+  assert.equal(Sp.faceHidden({ who: 'sprinkle', name: 'A muffled voice' }, { who: 'sprinkle', pose: 'hide' }), true);
+  assert.equal(Sp.faceHidden({ who: 'sprinkle', name: 'A small voice' }, null), true, 'out of the picture: as before');
+  ['sit', 'peek', 'tailup', 'unfold', 'head', 'flat'].forEach(p => assert.equal(Sp.faceHidden({ who: 'sprinkle', name: 'The dragon' }, { who: 'sprinkle', pose: p }), false, p));
+  // every cast member of chapters 1 to 5, as a named speaker in the pose it is drawn in: the rule before chapter 6
+  const before = (s, m) => !!s.name && (!m || m.pose === 'eyes' || m.pose === 'hide');
+  const S = realStories();
+  let n = 0;
+  ['ch01', 'ch02', 'ch03', 'ch04', 'ch05'].forEach(ch => Object.entries(S[ch].frames).forEach(([id, f]) => ((f.scene && f.scene.cast) || []).forEach(c => {
+    const b = { who: c.who, name: 'Somebody' };
+    n++;
+    assert.equal(Sp.faceHidden(b, c), before(b, c), ch + ' ' + id + ': ' + c.who + ' ' + c.pose);
+  })));
+  assert.ok(n > 1000, n + ' cast members');
+});
+
+test('chapter 6’s words in the grown-ups corner: foundSleet, for a she-cat and a tom; the flags before as they were', () => {
+  require('../app/ui.js');
+  const W = PC.ui.flagWords;
+  assert.deepEqual(W.foundSleet, { 'true': 'found Sleet at the last post of the Barking Field (later chapters remember)' });
+  const tom = E.blankCat({}); tom.look.sex = 'tom';
+  assert.equal(E.fill(W.foundSleet.true, tom), W.foundSleet.true, 'nothing in it changes for a tom');
+  assert.deepEqual([W.foundSquall.true, W.foundPuddle.true, W.foundWisp.true], ['found Squall on the tower roof (later chapters remember)', 'found Puddle under the ferry raft (later chapters remember)', 'found Wisp in the heron’s reeds (later chapters remember)']);
+  assert.ok(!PC.ui.quietFlags.foundSleet, 'listed among what she did');
+  assert.deepEqual(Object.keys(W).slice(-1), ['foundSleet'], 'chapter 6 adds one flag');
 });

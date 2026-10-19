@@ -10,10 +10,11 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-12):** chapters 1 to 5 are built as a static web app (`index.html`, `app/`; the
+**Status (2026-10-18):** chapters 1 to 6 are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
-on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
+on the Mac mini, in `~/potomac-crossing` (since 2026-10-04). Chapter 6, *The Snake in the Stones*,
+shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`.
 
 ## Docs
 
@@ -25,15 +26,18 @@ on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
 - [`docs/chapters/01-through-the-glass.md`](docs/chapters/01-through-the-glass.md): chapter 1,
   drafted as the actual game text.
 - [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
-  the Old Bridge, 04 The Glittering Scale, 05 Riffle's River), each with its notes, its Case File
-  cards and the questions it raised.
+  the Old Bridge, 04 The Glittering Scale, 05 Riffle's River, 06 The Snake in the Stones), chapters 2
+  to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
+  steering calls, the budget and the names, written before drafting), its **story** (what she
+  reads), and its **spec** (flags, Counts sets, cards, art needs and build notes, written once the
+  story is final).
 - [`docs/storyboard/`](docs/storyboard/): the verbal storyboard of every frame, for an illustrator
   (generated from `app/story/`).
 - [`docs/build.md`](docs/build.md): how it is built, tested and deployed.
 - [`docs/continuity.md`](docs/continuity.md): where the story stands after the last shipped
   chapter (what happened, the flags, the cards, the names), for whoever writes the next one.
 - [`docs/production.md`](docs/production.md): how a chapter gets made, what the first five cost,
-  and the plan for chapters 6 to 10. The workflow scripts it refers to are in
+  and the plan for chapters 6 to 10. The workflow script and its runbook are in
   [`dev/workflows/`](dev/workflows/).
 
 ## Decisions (Aron, 2026-10-03)
@@ -138,6 +142,11 @@ on the Mac mini, in `~/potomac-crossing` (since 2026-10-04).
 46. **"I'll let you steer"** (Aron, 2026-10-10): from chapter 5 on, Claude decides the open
     questions as they come up, records each choice below with its reason, and keeps building. Aron
     can reverse any of them; a reversed choice gets a new numbered decision.
+47. **Chapter 6 may run to 22 minutes** (Aron, 2026-10-18), answering `docs/production.md`'s open
+    question (22 minutes, or back to 15–20) for this chapter. It takes it as: the plain path at
+    most about 2,000 words (chapter 5's was 1,965, about 22 minutes), and its one optional scene,
+    Sleet's, up to about 300 words, with room for a full riddle. The kids are enjoying chapters 3
+    to 5, and chapter 6 is built on the current plan.
 
 ## Claude's calls under decision 46
 
@@ -272,6 +281,58 @@ Each is Aron's to reverse.
   (`app/art/sets/openriver.js`; `docs/build.md`, "Chapter 5", "As built, after review"). This was
   the final review's one finding left as an open question; it is answered here, not asked.
 
+- **Chapter 6's brief** (2026-10-18; `docs/chapters/06-the-snake-in-the-stones.brief.md`, where
+  each call has its reason in full). In short:
+  1. The day is her first border patrol, three cats because a patrol is three: the morning count
+     (twenty gone in five nights), the 9s warm-up and the 3s, ReedClan met on the patrol, Coil on her
+     visit to Sprinkle, Sleet offered at the Barking Field's far corner, guards set at sunset, the
+     dream at night.
+  2. Coil is funny-creepy and never frightening, carried by two true snake facts: a snake has no
+     eyelids (so he never shuts his eyes, Patience's tip), and a snake feels footsteps through the
+     ground (so he felt the small diggers under the pile). He never strikes, squeezes or shows a
+     fang.
+  3. His price is quiet: no juggling under the bridge. He has always known about Sprinkle and told
+     nobody, and he never trades with foxes, said plainly, so no child worries that he will give her
+     away.
+  4. ReedClan blames CrystalClan (an apprentice on their marsh yesterday, looking at their mud),
+     then, at her fair question, admits what their pride had hidden: their own pile has been raided
+     too, night after night, and left tidy. No number is given for their losses, so nothing touches
+     chapter 7's sum.
+  5. The ReedClan speaker is **Sloshbank**, a big, stern tom whose belly is always dripping; the
+     other two are unnamed. Clear on both wikis, whole name and both halves (2026-10-18): Sloshbank,
+     Plashwick, Wadebank, Ploppaw. The drafts called him Bogwade, renamed before the critics: Wings
+     of Fire has a "Bog" (the MudWing Chameleon pretends to be). Damplark and Boglark are out too:
+     Lark is a character in both series.
+  6. The dream gives no Case File card (a dream is not evidence). It points her toward a witness who
+     was awake when the rain stopped; the third witness to the moon is chapter 7's.
+  7. Sleet is found at the last post of the fox's border, never past it, with Riffle (or Tallyheart,
+     on the told path) beside her; on the kept path Tallyheart never sees a dragonet. Sleet is a he,
+     so the clutch is four sisters and three brothers (module-1 does not say).
+  8. The 3s are taught as "you already know half the threes": 3 × 1, 3 × 2, 5 × 3, 10 × 3 and 3 × 9
+     came up in chapters 1 to 5, so at least six of the lesson's ten facts are the new ones (3 × 3,
+     3 × 4, 3 × 6, 3 × 7, 3 × 8, either order).
+  9. No new engine features, at most four new cards, and one new flag (`foundSleet`) plus at most one
+     choice flag a later chapter reads.
+  10. Chapters 7 to 10 keep decision 47's budget (about 2,000 words on the plain path, one optional
+      scene of about 300) unless Aron says otherwise.
+- **Chapter 6 as built** (2026-10-18; the spec's "Calls made",
+  `docs/chapters/06-the-snake-in-the-stones.spec.md`, has all of them with their reasons). The ones
+  worth knowing:
+  - *No new place.* The ReedClan border is the old stone wall's far end, where the reeds begin (a
+    second picture of the `title` set), and the dream is a second picture of the Sky River.
+  - *ReedClan's cats have marsh coats of their own*, which no player's cat can have, so the first
+    ReedClan faces never look like her or her Clan.
+  - *The starry cat is a Clan cat drawn in starlight*: unnamed, kind, and nobody she knows.
+  - *Coil's card goes under the moss* with Sprinkle's two, on every path.
+  - *Coil is drawn larger than the spec first had him* (his head was a speck in the close-ups); still
+    smaller than a cat's head, mouth shut, no tongue or fangs.
+  - *One small engine change*: a Count now counts as learned when its own lesson is finished, not
+    when any Counts on that table are. Chapter 6 asks four patrols of three before the 3s lesson,
+    which would have lit a sixth claw mark one screen early. Checked at every point a player can
+    stop in chapters 1 to 5: nothing changes for them.
+  - *The length:* about 22 minutes on the plain path and 25 with Sleet; 16 typed answers, 17 with
+    Sleet; 136 frames, about 100 in a reading and up to 114 with Sleet.
+
 ## Open questions, waiting on Aron
 
 Nothing here blocks the chapter being built; each chapter's own questions are in its text, under
@@ -296,8 +357,12 @@ Nothing here blocks the chapter being built; each chapter's own questions are in
   Warriors wiki lists "Puddle" as a name prefix (Puddleshine) and "-puddle" as a suffix (Mudpuddle),
   the same class of echo as Snip. Chapter 5 puts "Puddle" on screen and on a page of her book for
   the first time. If you would rather change it: Slush, Mizzle, Slosh and Shower are clear on both
-  wikis (checked 2026-10-11), and Riffle's slip ("Pud— PUDDLES. Raft puddles.") is rewritten around
-  the new name.
+  wikis (checked 2026-10-11; Slosh would now echo chapter 6's Sloshbank), and Riffle's slip ("Pud— PUDDLES. Raft puddles.") is rewritten around
+  the new name. **Sleet** (chapter 6, optional) is the same class: no page on either wiki, but the
+  Warriors wiki's Names page lists "Sleet-" as a name prefix, from a post on the official *Warrior
+  Cats* Instagram, with no cat in the books behind it (chapter 5's check found it; checked again
+  2026-10-18). Sleet stays unless you say otherwise; a new weather name would be
+  checked on both wikis before chapter 6 is drafted.
 - **"Nine lives"** (chapter 5, "Truly yours, 1"): in Warriors a leader is given nine lives; here
   every cat has them, as the saying goes, counted on claws and never given, lost or spent. If the
   echo still bothers you, the lesson works with the picture said once and the claws carrying the

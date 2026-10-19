@@ -18,6 +18,7 @@ const CH5_ANCHORS = ['behind'];                             // chapter 5: behind
 const OPTS = ['pairs', 'lit', 'dug', 'vole'];
 const CH4_OPTS = ['rows', 'back', 'scale', 'glint'];
 const CH5_OPTS = ['prints', 'swept'];                       // chapter 5: tiny prints in the dug earth; the earth swept flat
+const CH6_OPTS = ['moon'];                                  // chapter 6: the moon's age in evenings, in the sky of `wide` and `low`
 const WHO = ['tallyheart', 'player', 'grizzled', 'clancat', 'glintstar', 'snorer', 'mutterer'];
 
 // ---------------------------------------------------------------- helpers
@@ -98,7 +99,7 @@ test('vocab: the pile set lists exactly the cameras, anchors and options of the 
   assert.ok(v, 'PC.art.vocab.sets.pile');
   assert.deepEqual([...v.cams].sort(), [...CAMS, ...CH4_CAMS, ...CH5_CAMS].sort());
   assert.deepEqual([...v.anchors].sort(), [...ANCHORS, ...CH5_ANCHORS].sort());
-  assert.deepEqual(Object.keys(v.opts).sort(), [...OPTS, ...CH4_OPTS, ...CH5_OPTS].sort());
+  assert.deepEqual(Object.keys(v.opts).sort(), [...OPTS, ...CH4_OPTS, ...CH5_OPTS, ...CH6_OPTS].sort());
   const spec = specRow();
   for (const c of spec.cams) assert.ok(v.cams.includes(c), 'camera ' + c + ' from build.md');
   for (const a of spec.anchors) assert.ok(v.anchors.includes(a), 'anchor ' + a + ' from build.md');
@@ -552,8 +553,8 @@ test('chapter 4: build.md names the five new cameras and the options, and the se
   assert.deepEqual(v.opts.back, ['none', 'shadow']);
   assert.deepEqual(v.opts.scale, [false, true, 'behind']);
   assert.deepEqual(v.opts.glint, [false, true]);
-  assert.deepEqual(info.defaults, { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false },
-    'nothing of chapter 4 (or 5) by default; no `rows`: the pile is in pairs');
+  assert.deepEqual(info.defaults, { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false, moon: false },
+    'nothing of chapter 4 (or 5, or 6: no moon) by default; no `rows`: the pile is in pairs');
   // anchors: rows and gap have the pile's own names (chapter 5 adds `behind`); the three close-ups have none
   assert.deepEqual(Object.keys(info.anchors.rows).sort(), ['behind', 'beside', 'crowd-1', 'crowd-2', 'crowd-3', 'pile-left', 'pile-right']);
   assert.deepEqual(Object.keys(info.anchors.gap).sort(), ['behind', 'beside', 'pile-left', 'pile-right']);
@@ -1591,4 +1592,115 @@ test('chapter 5: whatever chapter 5 puts at the pile renders, uses the vocabular
     if (sc.opts && sc.opts.swept) assert.equal(tinyOf(r.svg).length, 0, id + ': swept');
   }
   t.diagnostic(frames.length + ' frames at the pile, ' + taps + ' Tap at the gap');
+});
+
+// ================================================================ chapter 6: the moon over the pile
+// docs/chapters/06-the-snake-in-the-stones.spec.md, section 4 ("Places", the pile row): `moon: 6`
+
+const SPEC6 = path.join(ROOT, 'docs/chapters/06-the-snake-in-the-stones.spec.md');
+// the moon in a picture: its age, its middle and radius (the outline of its lit part, in its own frame)
+function moonsOf(svg) {
+  const out = [], re = /<g data-prop="waxing-moon" data-age="([\d.]+)">/g;
+  let m;
+  while ((m = re.exec(svg))) {
+    const rest = svg.slice(m.index, m.index + 1200);
+    const t = /transform="translate\(([-\d.]+) ([-\d.]+)\) rotate\(([-\d.]+)\)"/.exec(rest), d = /<path d="M0 (-[\d.]+)A([\d.]+) [\d.]+ 0 0 1 0 [\d.]+A([\d.]+) /.exec(rest);
+    out.push({ age: +m[1], x: +t[1], y: +t[2], r: +d[2], inner: +d[3] });
+  }
+  return out;
+}
+const NIGHT_ROWS = { rows: NIGHT, scale: 'behind', dug: 'big' };
+
+test('chapter 6: the spec asks for `moon: 6` on `wide` and `low`, declared a number as `pairs` is, off by default', () => {
+  const md = fs.readFileSync(SPEC6, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**`moon: 6`**', "in `wide`'s sky and in `low`'s patch of sky through the arch", "Declared in `opts` as `'number'` (default `false`, off), as `pairs` is"]) assert.ok(md.includes(want), 'the spec says: ' + want);
+  const v = art.vocab.sets.pile, info = art.sceneInfo('pile');
+  assert.equal(v.opts.moon, 'number', 'a number, as `pairs` is: chapter 7\'s `moon: 7` needs no art change');
+  assert.equal(v.opts.pairs, 'number');
+  assert.equal(info.defaults.moon, false, 'off');
+});
+
+test('chapter 6: chapters 2 to 5 have no moon over the pile, and anything but a number of evenings draws none', () => {
+  let n = 0;
+  for (const id of ['ch02', 'ch03', 'ch04', 'ch05']) for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+    const sc = f.scene;
+    if (!sc || sc.set !== 'pile') continue;
+    n++;
+    assert.ok(!(sc.opts && 'moon' in sc.opts), id + ' ' + fid + ': no moon');
+    assert.equal(moonsOf(art.render(sc, { look: LOOK }).svg).length, 0, id + ' ' + fid + ': none drawn');
+  }
+  assert.ok(n >= 40, 'chapters 2 to 5 visit the pile: ' + n);
+  for (const cam of ['wide', 'low']) for (const fx of [['night'], ['dusk'], ['sunset']]) {
+    const plain = renderP(cam, NIGHT_ROWS, [], fx).svg;
+    for (const off of [false, 0, null, true, '6', -3, NaN, 'moon']) {
+      assert.equal(strip(renderP(cam, Object.assign({ moon: off }, NIGHT_ROWS), [], fx).svg), strip(plain), cam + ' ' + fx[0] + ': moon ' + JSON.stringify(off) + ' draws nothing');
+    }
+  }
+});
+
+test('chapter 6: `moon: 6` at night: the sixth evening\'s moon, the kit\'s waxing crescent, in `wide`\'s open sky and in `low`\'s patch of sky through the arch; the lettering keeps off it', () => {
+  // wide: over the towers in the open sky, clear of the hedge ring and the brambles below it
+  const w = renderP('wide', Object.assign({ moon: 6 }, NIGHT_ROWS), [{ who: 'tallyheart', at: 'behind' }, { who: 'player', at: 'pile-left' }], ['night']);
+  checkRender(w, { cast: [{}, {}] }, 'wide at night with the moon');
+  const mw = moonsOf(w.svg);
+  assert.equal(mw.length, 1, 'one moon');
+  assert.equal(mw[0].age, 6, 'six evenings old');
+  assert.ok(mw[0].y + mw[0].r < 240 && mw[0].y - mw[0].r > 0, 'high in the sky, whole: ' + JSON.stringify(mw[0]));
+  assert.ok(mw[0].x - mw[0].r > 680 && mw[0].x + mw[0].r < 860, 'in the open sky between the towers there');
+  assert.ok((w.keep || []).some((k) => k.x <= (mw[0].x - mw[0].r) / 16 && k.x + k.w >= (mw[0].x + mw[0].r) / 16 && k.y <= (mw[0].y - mw[0].r) / 10), 'kept clear of the lettering');
+  // the kit's own drawing: the same moon the den has, at the same age
+  assert.ok(w.svg.includes('data-prop="waxing-moon" data-age="6"'));
+  // low: in the patch of sky right of the canopy, above the towers there
+  const l = renderP('low', Object.assign({ moon: 6 }, NIGHT_ROWS), [{ who: 'player', at: 'pile-left' }], ['night']);
+  const ml = moonsOf(l.svg);
+  assert.equal(ml.length, 1);
+  assert.ok(ml[0].x - ml[0].r >= 1520 && ml[0].x + ml[0].r <= 1600 && ml[0].y + ml[0].r < 250, 'through the arch, at its right: ' + JSON.stringify(ml[0]));
+  assert.ok(ml[0].r < mw[0].r, 'smaller, through the gap in the leaves');
+  // the other cameras have no sky: no moon (`close` is `low` close: its box leaves that corner out)
+  for (const cam of ['rows', 'gap', 'scale', 'through', 'mirror', 'gap-close']) assert.equal(moonsOf(renderP(cam, Object.assign({ moon: 6 }, NIGHT_ROWS), [], ['night']).svg).length, 0, cam + ': no sky, no moon');
+  const c = renderP('close', Object.assign({ moon: 6 }, NIGHT_ROWS), [], ['night']), vb = /viewBox="([^"]+)"/.exec(c.svg)[1].split(' ').map(Number);
+  moonsOf(c.svg).forEach((m) => assert.ok(m.x - m.r > vb[0] + vb[2] || m.y - m.r > vb[1] + vb[3], 'close: out of its box'));
+  assert.ok(!(c.keep || []).some((k) => k.x > 90 && k.y < 30), 'and no keep for it there');
+});
+
+test('chapter 6: the moon at dusk and sunset if asked, never by day or in the morning; seven evenings old it is fatter and higher, with no change to the art', () => {
+  for (const cam of ['wide', 'low']) {
+    for (const fx of [['night'], ['dusk'], ['sunset']]) assert.equal(moonsOf(renderP(cam, { moon: 6 }, [], fx).svg).length, 1, cam + ' ' + fx[0]);
+    for (const fx of [['day'], ['morning'], []]) assert.equal(moonsOf(renderP(cam, { moon: 6 }, [], fx).svg).length, 0, cam + ' ' + (fx[0] || 'by default (morning)'));
+    const six = moonsOf(renderP(cam, { moon: 6 }, [], ['night']).svg)[0], seven = moonsOf(renderP(cam, { moon: 7 }, [], ['night']).svg)[0], five = moonsOf(renderP(cam, { moon: 5 }, [], ['night']).svg)[0];
+    assert.equal(seven.age, 7);
+    // the terminator: an ellipse narrower each evening toward the half moon, so the lit crescent fattens
+    assert.ok(five.inner / five.r > six.inner / six.r && six.inner / six.r > seven.inner / seven.r, cam + ': fatter each evening: ' + [five, six, seven].map((m) => (m.inner / m.r).toFixed(2)).join(' > '));
+    assert.ok(seven.r >= six.r && seven.y <= six.y, cam + ': a little bigger and higher');
+  }
+  // the same moon as over the den: the kit's waxingMoon at that age (chapter 5's `moon: 5`)
+  const den = art.render({ set: 'den', cam: 'outside', opts: { moon: 6 }, cast: [], fx: ['dusk'] }, { look: LOOK }).svg;
+  const dm = moonsOf(den)[0], pm = moonsOf(renderP('wide', { moon: 6 }, [], ['dusk']).svg)[0];
+  assert.ok(dm && pm && Math.abs(dm.inner / dm.r - pm.inner / pm.r) < 0.01, 'the den\'s sixth-evening moon and the pile\'s are one shape');
+  // every light and every option renders with it
+  for (const cam of ['wide', 'low', 'close']) for (const fx of [['night'], ['dusk'], ['sunset'], ['day'], art.vocab.fx.slice()]) {
+    const scene = { set: 'pile', cam, opts: { moon: 6, rows: NIGHT, dug: 'big', scale: 'behind' }, cast: [{ who: 'player', at: 'pile-left' }], fx };
+    checkRender(art.render(scene, { look: LOOK }), scene, cam + ' ' + fx.join('+'));
+  }
+});
+
+test('chapter 6: whatever chapter 6 puts at the pile renders, uses the vocabulary, and asks for the moon only on `wide` or `low` (once the chapter is written)', (t) => {
+  const ch = PC.story && PC.story.ch06;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.scene.set === 'pile' && f.board !== 'STUB.') : [];
+  if (!frames.length) { t.diagnostic('chapter 6 has no frames at the pile yet'); return; }
+  const v = art.vocab.sets.pile;
+  let moons = 0;
+  for (const [id, f] of frames) {
+    const sc = f.scene;
+    assert.ok(v.cams.includes(sc.cam), id + ': camera ' + sc.cam);
+    const r = art.render(sc, { look: LOOK });
+    checkRender(r, sc, 'ch06 ' + id);
+    if (sc.opts && sc.opts.moon) {
+      moons++;
+      assert.ok(sc.cam === 'wide' || sc.cam === 'low', id + ': the moon is in the sky of `wide` or `low`');
+      assert.equal(sc.opts.moon, 6, id + ': the sixth evening');
+      assert.equal(moonsOf(r.svg).length, 1, id + ': and it is drawn');
+    }
+  }
+  t.diagnostic(frames.length + ' frames at the pile, ' + moons + ' with the moon');
 });

@@ -7,8 +7,9 @@
  *
  * Every set is drawn in a 1600 x 1000 world, and each camera is a 16:10 viewBox onto it
  * (docs/build.md, "Art vocabulary").  A few cameras look at a set from somewhere the wide
- * shot cannot (the balcony nineteen floors up, the inside of the den): those cameras have
- * their own composition in the same 1600 x 1000 space, with their own anchor spots.
+ * shot cannot (the balcony nineteen floors up, the inside of the den; chapter 6's wall's end and
+ * the dream): those cameras have their own composition in the same 1600 x 1000 space, with their
+ * own anchor spots.
  *
  * Characters come from PC.art.character(who, opts) in app/art/cats.js.  If it is missing,
  * a plain placeholder cat is drawn so the sets can still be checked.
@@ -2218,7 +2219,11 @@
   // (given only a number, an eighth piece is taken for the dug earth, never for Squall's two shapes: a
   // cat who has not been up the tower must not find his clue on her nest's edge; a list says which)
   var BARK_EXTRA = [[2, { picture: 'dug-earth', mark: 'eye' }], [6, { picture: 'squall-shapes', mark: 'ear' }]];
-  var BARK_SECRET = { 'sprinkle-scales': 1, 'cant-fly': 1 }, BARK_MAX = 24;
+  // (chapter 6: Coil's card, `coil-diggers`, goes under the moss too, on every path: every secret
+  // picture she holds is out of the row, a corner showing for each, so three once she holds his. A
+  // row with fewer than two of them still hides two, as chapter 4 did: chapters 4 and 5 draw as
+  // they always did)
+  var BARK_SECRET = { 'sprinkle-scales': 1, 'cant-fly': 1, 'coil-diggers': 1 }, BARK_MAX = 24;
   // the most pieces one row holds (chapter 4's fullest); how much higher the course behind it stands (denBark)
   var BARK_ROW = 9, BARK_LIFT = 15;
   function barkRow(S) {
@@ -2236,9 +2241,9 @@
     }
     var hid = 0;
     if (S.opts.hidden) {
-      list = list.filter(function (c) { if (c && BARK_SECRET[c.picture] && hid < 2) { hid++; return false; } return true; });
+      list = list.filter(function (c) { if (c && BARK_SECRET[c.picture]) { hid++; return false; } return true; });
       while (hid < 2 && list.length) { list.pop(); hid++; }
-      hid = 2;   // the corners show whatever the row holds: she has put two under
+      hid = Math.max(2, hid);   // the corners show whatever the row holds: she has put two under, or every secret she holds
     }
     if (list.length > BARK_MAX) list = list.slice(list.length - BARK_MAX);
     return { row: list, hid: hid };
@@ -2257,7 +2262,9 @@
     function tuck(tx, ty, tr0) { tucks += dot(tx, ty, tr0); lights += dot(tx - tr0 * 0.25, ty - tr0 * 0.35, tr0 * 0.5); }
     // the row runs along the front of the rim from the nest's end (t = 0) in to the middle; with
     // two hidden, their corners take its inner end
-    var T = (R.hid ? 86 : 112) * k, nRow = R.row.length, step = nRow > 1 ? Math.min(15 * k, (T - cw) / (nRow - 1)) : 0, len = nRow ? cw + (nRow - 1) * step : 0, t0 = (T - len) / 2;
+    // (three under the moss, chapter 6: the row gives up a little more of the rim and the corners stand
+    // a little closer, so the innermost keeps to where chapter 4's second stood, short of the middle)
+    var T = (R.hid ? 86 - 8 * Math.max(0, R.hid - 2) : 112) * k, cGap = (R.hid > 2 ? (110 - (T / k + 9)) / (R.hid - 1) : 15) * k, nRow = R.row.length, step = nRow > 1 ? Math.min(15 * k, (T - cw) / (nRow - 1)) : 0, len = nRow ? cw + (nRow - 1) * step : 0, t0 = (T - len) / 2;
     function at(t) { return x + d * (118 * k - t); }
     var x0 = 1e9, x1 = -1e9, top = 1e9, i, total = nRow;
     // Chapter 5: a bigger file. One row holds nine pieces as chapter 4 stood them (its fullest row);
@@ -2286,7 +2293,7 @@
     if (nRow) tuck(at(t0 + len) - d * 2 * k, rim(at(t0 + len)) + 3 * k, 9 * k);
     for (i = 0; i < R.hid; i++) {
       // pushed down under the moss, askew: one corner of each is left showing above it
-      var hx = at(T + (9 + i * 15) * k), hy = rim(hx) + 5 * k, rot = (i ? -1 : 1) * d * (16 + i * 10);
+      var hx = at(T + 9 * k + i * cGap), hy = rim(hx) + 5 * k, rot = (i % 2 ? -1 : 1) * d * (16 + i * 10);
       cards += g(path('M-15 3L-10 -19Q-8.5 -24.5 -3 -23.5L17 -16L14 3Z', BARK.under, { transform: 'translate(1 1.4)' }) +
         path('M-15 3L-10 -19Q-8.5 -24.5 -3 -23.5L17 -16L14 3Z', BARK.face, { stroke: BARK.edge, 'stroke-width': 1.3, 'stroke-linejoin': 'round' }) +
         stroke('M-5 -12h7M2 -6h6', BARK.grain, 1.1), { transform: tr(hx, hy, k * 0.92) + ' rotate(' + n(rot) + ')', 'data-bark': 'corner' });
@@ -2546,6 +2553,8 @@
   // ------------------------------------------------------------------ SKY
 
   function drawSky(S) {
+    if (S.comp === 'walk') return drawSkyWalk(S);
+    if (S.comp === 'below') return drawSkyBelow(S);
     var p = S.pal, back = '', front = '', r = rng(201);
     back += sky(S, 0, 0, 1600, 1000, { river: true, starCount: 520, seed: 202, riverH: 0.85 });
     // the horizon: towers and the camp, black against the stars
@@ -2568,6 +2577,183 @@
     // grass the cats sit on
     front += g(tufts(S, 300, 1300, 985, 1010, 30, 206, '#050914', '#0B1328', 1.8));
     return { back: back, over: '', front: front };
+  }
+
+  // Chapter 6, the dream: two pictures of their own, at night, high above everything.
+  //   `walk`: the Sky River underfoot, a broad soft path of stars across the panel, wide and near at
+  //     the lower left, narrowing as it runs away up to the right; dark blue all round; the city's
+  //     lights tiny far below, under the path's edge. `star-1` (our cat, walking along it, near) and
+  //     `star-2` (the starry cat, sitting further along, facing back). Nobody there casts a dark
+  //     shadow on starlight: a soft glow lies under each of them instead.
+  //   `below`: looking down past the river's edge at the glass towers far below: the tallest with
+  //     its little red light, and one balcony nineteen floors up, a wind chime on it catching the
+  //     starlight, nobody on it. No spots: nobody is seen in it.
+  var DREAM = { p0: [-160, 1040], p1: [640, 900], p2: [1740, 600], w0: 380, w1: 140 };
+  function dreamAt(t) {
+    var P = bez2(DREAM.p0, DREAM.p1, DREAM.p2, t);
+    return { x: P[0], y: P[1], w: lerp(DREAM.w0, DREAM.w1, t) };
+  }
+  function dreamT(x) {
+    var lo = 0, hi = 1;
+    for (var i = 0; i < 40; i++) { var m = (lo + hi) / 2; if (dreamAt(m).x < x) lo = m; else hi = m; }
+    return (lo + hi) / 2;
+  }
+  function dreamSpot(x, below, h, face) {
+    var c = dreamAt(dreamT(x));
+    return A(x, Math.round(c.y + c.w * below), h, face, { air: true });
+  }
+  function dreamBand(k, lo, hi, steps) {
+    var up = [], dn = [];
+    for (var i = 0; i <= (steps || 24); i++) {
+      var c = dreamAt(i / (steps || 24));
+      up.push([c.x, c.y - c.w * lo * k]);
+      dn.push([c.x, c.y + c.w * hi * k]);
+    }
+    return pts(up.concat(dn.reverse())) + 'Z';
+  }
+  function drawSkyWalk(S) {
+    var back = '', r = rng(1701), i;
+    back += rect(0, 0, 1600, 1000, skyGrad(S));
+    back += stars(S, 0, 0, 1600, 1000, 560, 1702);
+    // the river running on, up into the sky beyond the panel's edge
+    back += g(skyRiver(S, 0, 0, 1600, 700, { cx: 1500, cy: 330, L: 1200, ang: -38, T: 70 }), { opacity: 0.45 });
+    // far below, under the path's edge: the city's lights, tiny, and a tiny blinking red one
+    var low = function (x) { var c = dreamAt(dreamT(x)); return c.y + c.w * 0.7; };
+    var lights = '', lights2 = '', tw = '';
+    for (i = 0; i < 240; i++) {
+      var lx = 640 + Math.pow(r(), 0.8) * 1000, ly = low(Math.min(1600, lx)) + 30 + r() * 300;
+      if (ly > 1000 || lx > 1600) continue;
+      if (r() < 0.65) lights += dot(lx, ly, 0.9 + r() * 1.2); else lights2 += dot(lx, ly, 0.8 + r() * 1);
+    }
+    for (i = 0; i < 9; i++) { var tx = 900 + i * 76 + r() * 30, ty = low(tx) + 120 + r() * 70, th = 16 + r() * 22; if (ty < 1000) tw += 'M' + n(tx) + ' ' + n(ty) + 'h5v' + n(-th) + 'h-5z'; }
+    back += g(path('M600 1000L600 ' + n(low(600) + 30) + 'Q1100 ' + n(low(1100) + 10) + ' 1600 ' + n(low(1600) + 20) + 'V1000Z', S.lin('dhaze', [[0, '#0A1430', 0], [1, '#050A18', 0.55]])) +
+      path(tw, '#0B1428', { opacity: 0.9 }) + path(lights, '#FFD27F', { opacity: 0.85 }) + path(lights2, '#E8F0FF', { opacity: 0.75 }) +
+      circ(1290, low(1290) + 150, 1.8, '#FF5A4E', { 'class': 'pcs-blink' }), { 'data-prop': 'city-far' });
+    // the path of stars: a soft glow, a paler band, a bright core, knots of colour, thousands of tiny
+    // stars packed along it (thicker in the middle), and bright twinkles
+    var blur = S.blur('dpath', 26), blur2 = S.blur('dpath2', 9);
+    var knots = '';
+    for (i = 0; i < 18; i++) {
+      var kc = dreamAt(r()), kcol = ['#FFF2DC', '#E3DCFF', '#CDEBFF', '#FFD9F0'][i % 4];
+      knots += ell(kc.x, kc.y + gauss(r) * kc.w * 0.2, kc.w * (0.4 + r() * 0.5), kc.w * (0.1 + r() * 0.12), kcol, { opacity: 0.25 + r() * 0.2 });
+    }
+    var band = g(path(dreamBand(1, 0.95, 0.85), '#7F6FD6', { opacity: 0.32 }) + path(dreamBand(1, 0.6, 0.6), '#AFC2F4', { opacity: 0.45 }), { filter: blur }) +
+      g(path(dreamBand(1, 0.42, 0.4), '#FFF3DE', { opacity: 0.4 }) + knots, { filter: blur2 });
+    // its far edge, a soft line of light, so it reads as a path she walks on
+    var far = [];
+    for (i = 0; i <= 24; i++) { var fc = dreamAt(i / 24); far.push([fc.x, fc.y - fc.w * 0.5]); }
+    band += g(stroke(pts(far), '#FFF8EC', 7, { opacity: 0.55 }), { filter: blur2 });
+    var a = '', b = '', c = '', twk = '';
+    for (i = 0; i < 2100; i++) {
+      var t = Math.pow(r(), 0.85), q = dreamAt(t), v = clamp(gauss(r) * 0.3, -0.5, 0.75) * q.w, rr = (0.5 + r() * r() * 1.9) * lerp(1.35, 0.8, t), u = r();
+      if (u < 0.5) a += dot(q.x, q.y + v, rr); else if (u < 0.78) b += dot(q.x, q.y + v, rr); else c += dot(q.x, q.y + v, rr);
+    }
+    for (i = 0; i < 34; i++) {
+      var tq = dreamAt(r()), br = (3 + r() * 5) * lerp(1.3, 0.8, tq.x / 1600);
+      twk += path(sparkleD(tq.x, tq.y + gauss(r) * tq.w * 0.4, br * 2.2), '#FFFFFF', { 'class': i % 2 ? 'pcs-twk' : null, style: i % 2 ? 'animation-delay:-' + (r() * 4).toFixed(1) + 's' : null });
+    }
+    band += path(a, '#FFFFFF', { opacity: 0.95 }) + path(b, '#FFE7C2', { opacity: 0.9 }) + path(c, '#CFE0FF', { opacity: 0.95 }) + twk;
+    back += g(band, { 'data-prop': 'star-path' });
+    // a soft pool of starlight under whoever stands on it (never a dark shadow)
+    var pools = '';
+    Object.keys(S.anchorMap || {}).forEach(function (key) {
+      if (!(S.cast || []).some(function (m) { return m && m.at === key; })) return;
+      var sp = S.anchorMap[key];
+      pools += ell(sp.x, sp.y - 2, sp.h * 0.5, sp.h * 0.09, S.radB('dpool', [[0, '#FFFFFF', 0.7], [0.5, '#FFF3DE', 0.35], [1, '#FFF3DE', 0]]));
+    });
+    back += pools;
+    return { back: back, over: '', front: '' };
+  }
+  // Looking down from the river's edge: the city far below, its glass towers rising toward us (each
+  // a roof we look down on and a face that runs away down toward the ground, all leaning in toward a
+  // point far below the panel), streets of tiny lights, the river, dark and glinting.
+  var DREAM_V = [800, 1900];
+  var DREAM_TOWERS = [
+    { x: 260, y: 640, w: 120, f: 0.3, cap: 'slant' }, { x: 470, y: 760, w: 96, f: 0.22 }, { x: 1380, y: 700, w: 110, f: 0.28, cap: 'step' },
+    { x: 1160, y: 820, w: 84, f: 0.2 },
+    // the tallest, the nearest roof, with its mast and little red light, is her old tower (one glass
+    // tower all along: her ground-floor window, Waffles nineteen floors up, the red light on top), so
+    // Waffles's balcony is on it, just under its roof, jutting past its right edge
+    { x: 700, y: 520, w: 150, f: 0.42, tallest: true, chime: true },
+    { x: 1030, y: 540, w: 140, f: 0.4 }
+  ];
+  function drawSkyBelow(S) {
+    var back = '', r = rng(1801), i, V = DREAM_V;
+    back += rect(0, 0, 1600, 1000, S.lin('dbelow', [[0, '#1A2B52'], [0.45, '#0E1A33'], [1, '#070C1C']]));
+    back += stars(S, 0, 0, 1600, 420, 160, 1802);
+    // the ground far below: streets of tiny lights running toward the point under us, and across
+    var gd = 'M-20 1000V430Q800 400 1620 430V1000Z';
+    back += path(gd, S.lin('dground', [[0, '#0B1430'], [1, '#060B1A']]));
+    var st = '', st2 = '';
+    for (i = 0; i < 11; i++) {
+      var x0 = -200 + i * 200, steps = 26;
+      for (var j = 0; j < steps; j++) { var u = j / steps, sx = lerp(x0, V[0], u * 0.5), sy = lerp(440, V[1], u * 0.5); if (sy < 1000 && r() < 0.8) st += dot(sx + (r() - 0.5) * 3, sy, 1.1 + u * 0.8); }
+    }
+    for (i = 0; i < 6; i++) { var yy = 470 + i * 90 + i * i * 6; for (j = 0; j < 60; j++) if (r() < 0.7) st2 += dot(j * 28 + r() * 8, yy + (r() - 0.5) * 3, 1 + i * 0.15); }
+    back += path(st, '#FFD27F', { opacity: 0.7 }) + path(st2, '#E8F0FF', { opacity: 0.45 });
+    // the river, dark, the city's lights glinting in it
+    var rv = 'M-20 860Q500 760 900 800T1620 700V780Q1200 860 900 880T-20 950Z';
+    back += path(rv, '#0A1A36') + path(rv, 'none', { stroke: '#2C4878', 'stroke-width': 2, opacity: 0.6 });
+    var rg = '';
+    for (i = 0; i < 40; i++) { var gx = r() * 1600, gy = 870 - gx * 0.1 + (r() - 0.3) * 50; rg += 'M' + n(gx) + ' ' + n(gy) + 'h' + n(8 + r() * 18); }
+    back += stroke(rg, '#FFD27F', 2, { opacity: 0.45, 'class': 'pcs-glint' });
+    // the towers, the farthest (lowest roofs) first
+    var list = DREAM_TOWERS.slice().sort(function (a, b) { return b.y - a.y; }), tw = '';
+    list.forEach(function (t, ti) { tw += dreamTower(S, t, rng(1810 + ti)); });
+    back += g(tw, { 'data-prop': 'towers-below' });
+    // the river's edge, near, across the top: starlight spilling over it
+    var edge = 'M-40 -40H1640V' + n(150);
+    for (i = 16; i >= 0; i--) edge += 'L' + n(i * 100) + ' ' + n(150 + Math.sin(i * 1.3) * 22 + (i % 3) * 8);
+    edge += 'Z';
+    var blur = S.blur('dedge', 18), dots = '', spill = '';
+    for (i = 0; i < 900; i++) { var ex = r() * 1600, ey = Math.pow(r(), 0.6) * 170; dots += dot(ex, ey, 0.6 + r() * r() * 2.4); }
+    for (i = 0; i < 40; i++) { var fx = r() * 1600, fy = 150 + Math.pow(r(), 2) * 120; spill += dot(fx, fy, 0.8 + r() * 1.4); }
+    back += g(g(path(edge, '#8E9BE0', { opacity: 0.55 }) + path(edge, '#FFF3DE', { opacity: 0.35, transform: 'translate(0 -40)' }), { filter: blur }) +
+      path(dots, '#FFFFFF', { opacity: 0.9 }) + path(spill, '#FFF3DE', { opacity: 0.8 }), { 'data-prop': 'river-edge' });
+    return { back: back, over: '', front: '' };
+  }
+  function dreamTower(S, t, r) {
+    var V = DREAM_V, p = S.pal, d = t.w * 0.42, x0 = t.x - t.w / 2, x1 = t.x + t.w / 2, y0 = t.y - d / 2, y1 = t.y + d / 2, s = '';
+    function toward(P, f) { return [P[0] + (V[0] - P[0]) * f, P[1] + (V[1] - P[1]) * f]; }
+    // the face below the roof's near edge, running away down toward the ground
+    var A0 = [x0, y1], A1 = [x1, y1], B1 = toward(A1, t.f), B0 = toward(A0, t.f);
+    s += poly([A0, A1, B1, B0], S.linU([[0, p.glassTop], [1, '#070C1C']], 0, y1, 0, B0[1]));
+    var lit = '', rows = 22, cols = Math.max(4, Math.round(t.w / 18));
+    for (var i = 0; i < rows; i++) {
+      var u0 = i / rows, u1 = (i + 0.6) / rows;
+      for (var j = 0; j < cols; j++) {
+        if (r() > 0.42) continue;
+        var v0 = (j + 0.18) / cols, v1 = (j + 0.82) / cols;
+        var q = function (u, v) { var L = [lerp(A0[0], B0[0], u), lerp(A0[1], B0[1], u)], R = [lerp(A1[0], B1[0], u), lerp(A1[1], B1[1], u)]; return [lerp(L[0], R[0], v), lerp(L[1], R[1], v)]; };
+        lit += pts([q(u0, v0), q(u0, v1), q(u1, v1), q(u1, v0)]) + 'Z';
+      }
+    }
+    s += path(lit, p.lit, { opacity: 0.75 });
+    // the roof, looked down on: a slab with a lip of light along its edges
+    s += poly([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], mix(p.glassBot, '#22345F', 0.4)) + stroke(pts([[x0, y1], [x0, y0], [x1, y0], [x1, y1]]), p.rim, 2, { opacity: 0.5 });
+    if (t.cap === 'step') s += poly([[x0 + t.w * 0.2, y0 + d * 0.15], [x1 - t.w * 0.2, y0 + d * 0.15], [x1 - t.w * 0.2, y1 - d * 0.2], [x0 + t.w * 0.2, y1 - d * 0.2]], mix(p.glassBot, '#2C3F6C', 0.5));
+    if (t.cap === 'slant') s += poly([[x0, y0], [x1, y0], [x1, y1]], mix(p.glassTop, '#22345F', 0.3), { opacity: 0.6 });
+    if (t.tallest) {
+      // the mast and its little red light, blinking
+      s += rect(t.x - 3, t.y - 46, 6, 46, '#0B1428') + redLight(S, t.x, t.y - 50, 7, true);
+    }
+    if (t.chime) {
+      // her balcony nineteen floors up, just under the roof: a slab, a glass rail, the glow of her
+      // door, the geranium, and the wind chime catching the starlight; nobody on it
+      // (it juts out past the tower's right edge, so it is the one thing on that face you see)
+      var bu = 0.2, L = [lerp(A0[0], B0[0], bu), lerp(A0[1], B0[1], bu)], R2 = [lerp(A1[0], B1[0], bu), lerp(A1[1], B1[1], bu)];
+      var bx0 = lerp(L[0], R2[0], 0.3), bx1 = R2[0] + 34, by = lerp(L[1], R2[1], 0.75), bw = bx1 - bx0;
+      s += g(rect(bx0 + 8, by - 52, bw * 0.42, 52, '#FBE3B0', { opacity: 0.95 }) + circ(bx0 + 8 + bw * 0.21, by - 26, 46, S.radB('dwin', [[0, '#FFF0C6', 0.8], [1, '#FFE0A0', 0]])) +
+        rect(bx0, by, bw, 12, '#9AA6BC') + rect(bx0, by + 12, bw, 6, '#050A18', { opacity: 0.5 }) +
+        rect(bx0 + 2, by - 30, bw - 4, 30, '#CFE6EA', { opacity: 0.22 }) + rect(bx0, by - 34, bw, 5, '#E4DED6') +
+        stroke('M' + n(bx0 + 2) + ' ' + n(by) + 'V' + n(by - 32) + 'M' + n(bx1 - 2) + ' ' + n(by) + 'V' + n(by - 32), '#DAD3CB', 2.5) +
+        circ(bx1 - 12, by - 42, 8, '#F28CA6') + circ(bx1 - 22, by - 46, 6.5, '#F7B7C6') + rect(bx1 - 24, by - 36, 20, 10, '#C46A4A') +
+        stroke('M' + n(bx1 - 30) + ' ' + n(by - 34) + 'V' + n(by - 118) + 'Q' + n(bx1 - 30) + ' ' + n(by - 132) + ' ' + n(bx1 - 46) + ' ' + n(by - 128), '#8E8A90', 3) +
+        windChime(S, bx1 - 48, by - 126, 0.62) +
+        g(path(sparkleD(0, 0, 18), '#FFF8D8', { 'class': 'pcs-tw' }), { transform: tr(bx1 - 40, by - 82) }) +
+        g(path(sparkleD(0, 0, 10), '#FFFFFF', { 'class': 'pcs-tw', style: 'animation-delay:-1.2s' }), { transform: tr(bx1 - 64, by - 104) }), { 'data-prop': 'chime-balcony' });
+    }
+    return s;
   }
 
   // ------------------------------------------------------------------ RIVER
@@ -2615,6 +2801,7 @@
   // ------------------------------------------------------------------ TITLE
 
   function drawTitle(S) {
+    if (TITLE_END[S.comp]) return drawTitleEnd(S, TITLE_END[S.comp]);
     var p = S.pal, back = '', front = '', r = rng(221);
     // by day the sun stands high over the river, and its glitter on the water moves under it
     var sx = p.day ? 1250 : 1120, sd = sx - 1120;
@@ -2667,6 +2854,166 @@
     front += g(wall, { filter: S.shadow('l') });
     front += g(tufts(S, 0, 560, 930, 1005, 30, 224, p.grassNear, p.grassLight, 2.4) + fernClump(S, 520, 1010, 200, { seed: 225, count: 6 }) +
       flowers(S, 0, 540, 950, 995, 10, 226, '#F7D6E0'), { filter: S.shadow('m') });
+    return { back: back, over: '', front: front };
+  }
+
+  // Chapter 6: the wall's far end, by day: where the old stone wall's stones stop above the river and
+  // tall reeds begin (the ReedClan border; the river behind and below). Two pictures of it, one
+  // painter (drawTitleEnd), as field.js draws its border: `end`, wide (the wall's end at the left, the
+  // reeds at the right) and `meet`, closer, at cat height (three cats each side, face to face across
+  // the line where the stones stop). Both see the same six spots: `end-1` to `end-3` (CrystalClan, on
+  // the dry ground at the wall's foot, facing right; end-1 nearest the line) and `reed-1` to `reed-3`
+  // (ReedClan, just stepped out of the reeds onto the same dry bank, facing left; reed-1 nearest the
+  // line, Sloshbank's). Nobody stands in mud or water: every spot is on the dry bank, and the river
+  // lies behind it, below. Every reed is drawn behind the cast, so a reed never crosses a face; the
+  // grass in front is a fringe at the panel's foot, below every face. In `meet` the cats stand in
+  // depth, each side's three in a row going back from the line: the second behind the first
+  // (z: 'behind'), the third further back still (z: 'far'), each drawn under the one in front of it,
+  // in any cast order.
+  // `rustle: true`: rustle lines in the reeds (nobody seen), the reeds by them swaying.
+  var TITLE_END = {
+    end: {
+      k: 1, sun: [360, 150], sunR: 420, horizon: 588, riverTo: 712, seed: 1601,
+      far: [{ x: -20, w: 70, top: 512, base: 600, far: 0.8 }, { x: 56, w: 50, top: 540, base: 600, far: 0.85, cap: 'slant' }, { x: 112, w: 40, top: 552, base: 600, far: 0.88, cap: 'round' }],
+      wall: { x0: -40, x1: 790, top: 690, foot: 852, courses: 4, block: 74, step: 30 },
+      line: 806, stone: [810, 886, 30, 16],
+      reeds: { x0: 818, x1: 1640, base: 858, top: [392, 476], n: 150, w: 5.2 },
+      ground: 866,
+      spots: { 'end-1': [660, 928, 262], 'end-2': [430, 900, 240], 'end-3': [225, 876, 222], 'reed-1': [960, 928, 262], 'reed-2': [1235, 900, 240], 'reed-3': [1450, 876, 222] },
+      behind: false,
+      rustle: [[1030, 560, 1], [1250, 515, 1.1], [1450, 585, 0.95]],
+      front: [976, 1010, 24, 2.2]
+    },
+    meet: {
+      k: 1.5, sun: [300, 100], sunR: 380, horizon: 552, riverTo: 636, seed: 1631,
+      far: [{ x: -30, w: 96, top: 448, base: 566, far: 0.8 }, { x: 74, w: 66, top: 486, base: 566, far: 0.85, cap: 'slant' }],
+      wall: { x0: -60, x1: 770, top: 640, foot: 888, courses: 4, block: 108, step: 44 },
+      line: 798, stone: [800, 950, 42, 22],
+      reeds: { x0: 808, x1: 1660, base: 878, top: [30, 150], n: 120, w: 8 },
+      ground: 888,
+      spots: { 'end-1': [600, 975, 330], 'end-2': [330, 940, 295], 'end-3': [80, 900, 260], 'reed-1': [1000, 975, 330], 'reed-2': [1300, 940, 295], 'reed-3': [1548, 900, 260] },
+      behind: true,
+      rustle: [[1170, 300, 1.45], [1460, 230, 1.5]],
+      front: [982, 1012, 20, 3.2]
+    }
+  };
+  function titleEndAnchors(comp) {
+    var L = TITLE_END[comp], out = {};
+    Object.keys(L.spots).forEach(function (k) {
+      var s = L.spots[k], back = L.behind ? (/-2$/.test(k) ? 'behind' : /-3$/.test(k) ? 'far' : null) : null;
+      out[k] = A(s[0], s[1], s[2], /^reed/.test(k) ? 'left' : 'right', back ? { z: back } : null);
+    });
+    return out;
+  }
+  // The old wall's stones, course by course from the top, ending in steps where its stones stop: each
+  // course one step longer than the one above, so the wall crumbles away to the line.
+  function titleWall(S, W, k, seed) {
+    var p = S.pal, r = rng(seed), nc = W.courses, ch = (W.foot - W.top) / nc, s = '', mortar = mix(p.stoneDark, '#000000', 0.25), moss = '';
+    var faces = [p.stone, mix(p.stone, p.stoneLight, 0.35), mix(p.stone, p.stoneDark, 0.3), mix(p.stone, p.sand, 0.2)];
+    var blocks = ['', '', '', ''], edges = '', tops = '';
+    for (var i = 0; i < nc; i++) {
+      var y0 = W.top + i * ch, end = W.x1 - (nc - 1 - i) * W.step, x = W.x0 - (i % 2) * W.block * 0.5;
+      while (x < end - 4) {
+        var w = W.block * (0.78 + r() * 0.44), x1 = Math.min(end, x + w), last = x1 >= end - 0.5, rr = 7 * k;
+        var d = 'M' + n(x + rr) + ' ' + n(y0 + 2 * k) + 'H' + n(x1 - (last ? rr * 2 : rr)) + 'Q' + n(x1 - (last ? rr * 0.5 : 0)) + ' ' + n(y0 + 2 * k) + ' ' + n(x1) + ' ' + n(y0 + rr + 2 * k) +
+          'V' + n(y0 + ch - rr) + 'Q' + n(x1) + ' ' + n(y0 + ch) + ' ' + n(x1 - rr) + ' ' + n(y0 + ch) + 'H' + n(x + rr) + 'Q' + n(x) + ' ' + n(y0 + ch) + ' ' + n(x) + ' ' + n(y0 + ch - rr) +
+          'V' + n(y0 + rr + 2 * k) + 'Q' + n(x) + ' ' + n(y0 + 2 * k) + ' ' + n(x + rr) + ' ' + n(y0 + 2 * k) + 'Z';
+        blocks[Math.floor(r() * 4)] += d;
+        edges += d;
+        // the light along each stone's top, and on the end of the course where the wall stops
+        tops += 'M' + n(x + rr) + ' ' + n(y0 + 4 * k) + 'H' + n(x1 - rr * 1.4);
+        if (last) tops += 'M' + n(x1 - 2 * k) + ' ' + n(y0 + rr + 3 * k) + 'V' + n(y0 + ch - rr);
+        if (i === 0 && r() < 0.5) moss += blob(x + (x1 - x) * (0.3 + r() * 0.4), y0 + 4 * k, (14 + r() * 16) * k, 5 * k, 7, r, 0.3, 0.3);
+        x = x1 + 3 * k;
+      }
+    }
+    for (i = 0; i < 4; i++) s += path(blocks[i], faces[i]);
+    s += path(edges, 'none', { stroke: mortar, 'stroke-width': n(2.6 * k), opacity: 0.55 });
+    s += stroke(tops, p.rim, 2.2 * k, { opacity: 0.6 }) + path(moss, p.moss, { opacity: 0.9 });
+    return s;
+  }
+  function drawTitleEnd(S, L) {
+    var p = S.pal, o = S.opts, back = '', front = '', k = L.k, r = rng(L.seed), i, R = L.reeds;
+    back += sky(S, 0, 0, 1600, L.horizon + 24, p.day ? { sun: L.sun, sunR: L.sunR } : { sun: [L.sun[0], L.horizon - 40], sunR: L.sunR * 1.4 });
+    // the far shore, and Crystal City's towers far off along it, behind us
+    var shore = mix(p.haze, p.sky[1], 0.4);
+    back += g(towers(S, L.far), { opacity: 0.85 });
+    back += path(mound(-60, 1660, L.horizon + 6, L.horizon - 30 * k, 18, rng(L.seed + 1), 0.3, 0.3, 0.2), shore);
+    // the river below the bank, glinting under the sun
+    back += rect(0, L.horizon, 1600, L.riverTo - L.horizon + 4, S.lin('teriver', [[0, mix(p.sky[3] || p.sky[2], p.water, 0.35)], [1, p.water]]));
+    var gl = '';
+    for (i = 0; i < 40; i++) { var gy = L.horizon + 6 + r() * (L.riverTo - L.horizon - 14), gx = L.sun[0] + (r() - 0.5) * (220 + (gy - L.horizon) * 2.2); gl += 'M' + n(gx) + ' ' + n(gy) + 'h' + n((14 + r() * 26) * k); }
+    back += stroke(gl, p.sun || p.glow, 2.6 * k, { opacity: 0.6, 'class': 'pcs-glint' });
+    // the bank: dry ground from the river's edge to the panel's foot, the trodden path along it
+    back += rect(0, L.riverTo, 1600, 1000 - L.riverTo, S.lin('teground', [[0, p.grassFar], [0.45, p.grass], [1, p.grassNear]]));
+    back += g(tufts(S, -20, 1620, L.riverTo - 6 * k, L.riverTo + 14 * k, 50, L.seed + 2, p.grass, p.grassLight, 1.1 * k));
+    var dirt = mix(p.sand, p.grass, 0.38), dirtD = mix(p.sandDark, p.grassNear, 0.35);
+    back += path('M-20 ' + n(L.ground + 6 * k) + 'Q800 ' + n(L.ground - 18 * k) + ' 1620 ' + n(L.ground + 2 * k) + 'V1020H-20Z', S.lin('tepath', [[0, mix(dirt, p.grass, 0.35)], [0.3, dirt], [1, dirtD]]));
+    var peb = '';
+    for (i = 0; i < 46; i++) { var px = r() * 1600, py = L.ground + 20 * k + Math.pow(r(), 0.7) * (1000 - L.ground - 20 * k); peb += blob(px, py, (2.5 + r() * 4) * k, (1.6 + r() * 2.4) * k, 6, r, 0.3, 0.3); }
+    back += path(peb, p.stoneDark, { opacity: 0.55 });
+    // the old wall, its foot's shadow on the ground, and the one stone left lying at the line
+    var W = L.wall;
+    back += ell((W.x0 + W.x1) / 2, W.foot + 2 * k, (W.x1 - W.x0) / 2 + 30 * k, 12 * k, p.shade, { opacity: 0.22 });
+    back += g(titleWall(S, W, k, L.seed + 3), { filter: S.shadow('m'), 'data-prop': 'wall-end' });
+    var st = L.stone;
+    back += g(ell(st[0], st[1] + st[3] * 0.7, st[2] * 1.15, st[3] * 0.35, p.shade, { opacity: 0.25 }) +
+      path(blob(st[0], st[1], st[2], st[3], 9, rng(L.seed + 4), 0.18, 0.3), mix(p.stone, p.stoneDark, 0.2)) +
+      path(blob(st[0] - st[2] * 0.2, st[1] - st[3] * 0.35, st[2] * 0.6, st[3] * 0.32, 7, rng(L.seed + 5), 0.2, 0.3), p.stoneLight, { opacity: 0.7 }), { 'data-prop': 'line-stone' });
+    // the reed bed: a dark mass of reeds behind, then tall reeds in front of it, each a stem with a
+    // leaf or two arching off it, many topped with a brown seed head on a spike; the back ones taller
+    // and hazier, the front ones brighter. The ones by a rustle sway, and lines ring them.
+    var mass = 'M' + n(R.x0 - 6 * k) + ' ' + n(R.base + 8 * k), mx;
+    for (mx = R.x0; mx <= 1660; mx += 26 * k) {
+      var mt = R.base - (R.base - lerp(R.top[0], R.top[1], 0.5)) * clamp((mx - R.x0) / (150 * k), 0.25, 1) * (0.5 + r() * 0.16);
+      mass += 'L' + n(mx) + ' ' + n(mt) + 'L' + n(mx + 13 * k) + ' ' + n(mt + (18 + r() * 20) * k);
+    }
+    back += path(mass + 'L1660 ' + n(R.base + 8 * k) + 'Z', S.lin('temass', [[0, mix(p.leaf, p.haze, 0.25)], [0.7, mix(p.leaf, p.grassNear, 0.5)], [1, mix(p.grassNear, p.woodDark, 0.35)]]));
+    var rust = o.rustle ? L.rustle : [], still = ['', '', ''], sway = ['', '', ''], blades = ['', '', ''], swayB = ['', '', ''], heads = ['', ''], spikes = '';
+    var cols = [mix(p.leaf, p.haze, 0.3), mix(p.leafMid, p.grassFar, 0.3), mix(p.leafLight, p.grassLight, 0.35)];
+    for (var pass = 0; pass < 2; pass++) {
+      var cnt = Math.round(R.n * (pass ? 0.45 : 0.55));
+      for (i = 0; i < cnt; i++) {
+        var x = R.x0 + (i + r() * 0.9) / cnt * (R.x1 - R.x0), edge = clamp((x - R.x0) / (160 * k), 0.35, 1);
+        var top = lerp(R.top[0], R.top[1], r()) + (pass ? 40 * k : 0), base = R.base + (pass ? 6 : -4) * k + r() * 8 * k;
+        var h = (base - top) * edge, lean = (r() - 0.5) * 34 * k, near = null;
+        for (var q = 0; q < rust.length; q++) if (Math.abs(x - rust[q][0]) < 70 * k * rust[q][2]) near = rust[q];
+        if (near) lean += (x < near[0] ? -1 : 1) * 26 * k;
+        var tx = x + lean, ty = base - h, c = pass ? (r() < 0.5 ? 2 : 1) : (r() < 0.6 ? 0 : 1);
+        var d = 'M' + n(x) + ' ' + n(base) + 'Q' + n(x + lean * 0.2) + ' ' + n(base - h * 0.55) + ' ' + n(tx) + ' ' + n(ty);
+        // a leaf off the stem, arching away
+        var lb = bladeD(x, base, h * (0.35 + r() * 0.3), (r() < 0.5 ? -1 : 1) * (40 + r() * 50) * k, R.w * 0.9);
+        if (near) { sway[c] += d; swayB[c] += lb; } else { still[c] += d; blades[c] += lb; }
+        if (r() < 0.4) {
+          var hw = R.w * 0.95, hl = h * 0.13, hy = ty + h * 0.05;
+          heads[pass] += 'M' + n(tx - hw) + ' ' + n(hy + hw) + 'Q' + n(tx - hw) + ' ' + n(hy) + ' ' + n(tx) + ' ' + n(hy) + 'Q' + n(tx + hw) + ' ' + n(hy) + ' ' + n(tx + hw) + ' ' + n(hy + hw) +
+            'V' + n(hy + hl) + 'Q' + n(tx + hw) + ' ' + n(hy + hl + hw) + ' ' + n(tx) + ' ' + n(hy + hl + hw) + 'Q' + n(tx - hw) + ' ' + n(hy + hl + hw) + ' ' + n(tx - hw) + ' ' + n(hy + hl) + 'Z';
+          spikes += 'M' + n(tx) + ' ' + n(hy + 2 * k) + 'L' + n(tx + lean * 0.04) + ' ' + n(ty - h * 0.06);
+        }
+      }
+    }
+    var reeds = '', swayG = '';
+    for (i = 0; i < 3; i++) {
+      reeds += path(blades[i], cols[i]) + stroke(still[i], cols[i], R.w * 0.62);
+      swayG += path(swayB[i], cols[i]) + stroke(sway[i], cols[i], R.w * 0.62);
+    }
+    reeds += stroke(spikes, mix(p.woodDark, p.leaf, 0.4), R.w * 0.3) + path(heads[0], mix(p.woodDark, p.wood, 0.4)) + path(heads[1], p.wood);
+    if (swayG) reeds += g(swayG, { 'class': 'pcs-sway' });
+    back += g(reeds, { filter: S.shadow('s'), 'data-prop': 'reeds' });
+    if (rust.length) {
+      var lines = '';
+      rust.forEach(function (sp) {
+        var cx = sp[0], cy = sp[1], z = sp[2] * k;
+        for (var j = 0; j < 3; j++) {
+          var rx = (46 + j * 16) * z, ry = (30 + j * 12) * z, a0 = -0.75, a1 = 0.75;
+          for (var sd = -1; sd <= 1; sd += 2) lines += 'M' + n(cx + sd * Math.cos(a0) * rx) + ' ' + n(cy + Math.sin(a0) * ry) + 'Q' + n(cx + sd * rx * 1.25) + ' ' + n(cy) + ' ' + n(cx + sd * Math.cos(a1) * rx) + ' ' + n(cy + Math.sin(a1) * ry);
+        }
+      });
+      back += g(stroke(lines, p.ink, 7 * k, { opacity: 0.3 }) + stroke(lines, '#FFFDF6', 3.6 * k), { 'data-prop': 'rustle', 'class': 'pcs-pulse' });
+    }
+    // in front of everyone: a fringe of grass along the panel's foot, below every face
+    var F = L.front;
+    front += g(tufts(S, -20, 1620, F[0], F[1], F[2], L.seed + 6, p.grassNear, p.grassLight, F[3]), { filter: S.shadow('s') });
     return { back: back, over: '', front: front };
   }
 
@@ -2954,8 +3301,14 @@
     },
     sky: {
       label: 'the Sky River', tod: 'night', draw: drawSky,
-      cams: { up: { box: [160, 0, 1280] }, cats: { box: [0, 0, 1600] } },
-      anchors: { main: { 'ground-left': A(680, 992, 290), 'ground-right': A(940, 992, 300, 'left') } },
+      // chapter 6: the dream, two pictures of its own (DREAM): `walk` on the Sky River, `below` looking down
+      cams: { up: { box: [160, 0, 1280] }, cats: { box: [0, 0, 1600] }, walk: { box: [0, 0, 1600], comp: 'walk' }, below: { box: [0, 0, 1600], comp: 'below' } },
+      anchors: {
+        main: { 'ground-left': A(680, 992, 290), 'ground-right': A(940, 992, 300, 'left') },
+        // star-1: our cat walking on the stars, near; star-2: the starry cat sitting further along, facing back
+        walk: { 'star-1': dreamSpot(500, 0.08, 290, 'right'), 'star-2': dreamSpot(1150, 0.05, 206, 'left') },
+        below: {}
+      },
       opts: {}, defaults: {}
     },
     river: {
@@ -2966,10 +3319,21 @@
     },
     title: {
       label: 'the river at dusk', tod: 'sunset', draw: drawTitle,
-      cams: { wide: { box: [0, 0, 1600] } },
-      // wall-2: a second cat on the wall, left of the first
-      anchors: { main: { wall: A(1180, 840, 255, 'left'), 'wall-2': A(900, 840, 255, 'left') } },
-      opts: {}, defaults: {}
+      // chapter 6: the wall's far end by day, its own picture (TITLE_END): `end` wide, `meet` closer, at
+      // cat height; both see the same six spots
+      cams: { wide: { box: [0, 0, 1600] }, end: { box: [0, 0, 1600], comp: 'end' }, meet: { box: [0, 0, 1600], comp: 'meet' } },
+      // wall-2: a second cat on the wall, left of the first; chapter 6's wall-3, a third, right of the
+      // first: the front of a patrol walking right along the wall (facing right, toward its far end),
+      // with room at the right for the leader's face
+      anchors: {
+        main: { wall: A(1180, 840, 255, 'left'), 'wall-2': A(900, 840, 255, 'left'), 'wall-3': A(1440, 840, 255, 'left') },
+        // CrystalClan on the dry ground at the wall's end, facing right (end-1 nearest the line where
+        // the stones stop), ReedClan stepping out of the reeds, facing left (reed-1 nearest it)
+        end: titleEndAnchors('end'),
+        meet: titleEndAnchors('meet')
+      },
+      // rustle: rustle lines in the reeds, nobody seen (chapter 6)
+      opts: { rustle: [false, true] }, defaults: {}
     }
   };
   var SET_ORDER = ['room', 'tower', 'garden', 'camp', 'hollow', 'den', 'sky', 'river', 'title'];
@@ -3010,7 +3374,7 @@
   // Height of a sitting cat at a ground point y, from this composition's ground anchors.
   function depthAt(S, y) {
     var A0 = S.anchorMap, xs = [], ys = [];
-    for (var k in A0) if (!A0[k].elev && A0[k].z !== 'behind') { xs.push(A0[k].y); ys.push(A0[k].h); }
+    for (var k in A0) if (!A0[k].elev && A0[k].z !== 'behind' && A0[k].z !== 'far') { xs.push(A0[k].y); ys.push(A0[k].h); }
     if (xs.length === 0) return 220;
     if (xs.length === 1) return ys[0] * clamp(y / xs[0], 0.3, 2);
     var mx = 0, my = 0;
@@ -3085,10 +3449,21 @@
   // that lays its own props round one of them (the marsh: the reeds over Wisp, the cloud over
   // Patience) reads the rule from art.sizeBands, below, so the two never disagree.
   //   by 'tall': the top of the head to the feet; by 'head': the head box, width and height averaged.
+  // Chapter 6's newcomers, held the same way:
+  //   Coil, the water snake: his head smaller than a cat's, no bigger than a stone of the wall he
+  //     lives in: measured with it out of his gap (`head`), against our cat's (the smallest cat, and
+  //     the one beside him), between a third and three fifths of hers;
+  //   Sleet, the eldest dragonet, is about Sprinkle's size: his head, sitting, is hers, a little more
+  //     at most (he is the eldest), never smaller than a hair under it;
+  //   Sloshbank, ReedClan's big stern tom, is bigger than Tallyheart: sitting, a little taller than
+  //     she sits (a drawing that already makes him so is left as it is), never a giant.
   var SIZE_BAND = {
     patience: { ref: 'tallyheart', pose: 'stand', by: 'tall', min: 1.4, max: 2.6 },
     puddle: { ref: 'sprinkle', pose: 'head', by: 'head', min: 0.88, max: 1.12 },
-    wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 }
+    wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 },
+    coil: { ref: 'player', pose: 'head', by: 'head', min: 0.35, max: 0.6 },
+    sleet: { ref: 'sprinkle', pose: 'sit', by: 'head', min: 0.95, max: 1.1 },
+    sloshbank: { ref: 'tallyheart', pose: 'sit', by: 'tall', min: 1.06, max: 1.3 }
   };
   function measure(S, who, pose, by) {
     var memo = S.measured || (S.measured = {}), key = who + ':' + pose + ':' + by;
@@ -3148,16 +3523,22 @@
     var hb = castBoxes(pl).head, over = hb[3] - (L.y - L.gap);
     if (over > 0) { pl.y -= over; pl.lift = over; }
   }
-  // (`murmurchime`: the tortie named, chapter 3, if cats.js gives her a cast id of her own)
-  var CAT_IDS = { player: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, murmurchime: 1, snorter: 1, clancat: 1 };
+  // (`murmurchime`: the tortie named, chapter 3, if cats.js gives her a cast id of her own;
+  // chapter 6's ReedClan cats, `sloshbank` and `reedclan`, are cats too: a face from the box, as everyone's)
+  var CAT_IDS = { player: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, murmurchime: 1, snorter: 1, clancat: 1, sloshbank: 1, reedclan: 1 };
   // Bigger than a cat (Sprinkle, heron-sized): drawn in the cats' units like everyone (cats.js gives
   // her a box bigger than a cat's, so a cat's anchor fits her), her face's r from her head box as the
   // otters' and dogs' are, and her shadow under her body rather than her whole box.
   // (chapter 5: Patience, taller than any cat, and Sprinkle's brother and sister, built as she is)
-  var BIG = { sprinkle: 1, patience: 1, puddle: 1, wisp: 1 };
+  // (chapter 6: Sleet, the eldest, built on her model and about her size)
+  var BIG = { sprinkle: 1, patience: 1, puddle: 1, wisp: 1, sleet: 1 };
   // Whose box is mostly tail or wings, so the shadow lies under the body as drawn, not the whole box:
   // Sprinkle, and chapter 4's fox (his brush) and littlest dragonet (his stubby wings and tail).
-  var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1 };
+  // Chapter 6: Coil (his box is mostly his body trailing back from his head, at its bottom centre)
+  // and Sleet (Sprinkle's model). Neither has one where nothing of him lies on open ground: Coil as
+  // a stone in his gap, Sleet hidden in the long grass or only his tail tip showing (a shadow there
+  // would give him away).
+  var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1, coil: 1, sleet: 1 }, NO_SHADOW = { coil: { stone: 1 }, sleet: { hidden: 1, tail: 1 } };
   // Chapter 5's three have a shadow of that kind too, but only on ground that can take one: none at
   // an anchor a set marks `air: true` (a spot in the water, where the set draws its own rings), and
   // never under Puddle in the river, which is every pose the chapter gives him (a foot through the
@@ -3211,7 +3592,8 @@
   }
 
   function drawCast(S, cast) {
-    var behind = '', front = '', heads = [], info = [], used = {}, covered = {}, R = refH(), overBehind = '', overFront = '';
+    // (chapter 6: z: 'far', a spot further back than the ones behind, is drawn under them, in any cast order)
+    var behind = '', front = '', heads = [], info = [], used = {}, covered = {}, R = refH(), overBehind = '', overFront = '', far = '', overFar = '';
     var tint = castTint(S);
     for (var i = 0; i < cast.length; i++) if (cast[i] && typeof cast[i].at === 'string') used[cast[i].at] = true;
     for (i = 0; i < cast.length; i++) {
@@ -3234,7 +3616,7 @@
       } else if (OWN_SHADOW[who]) {
         // bigger than a cat, and her box is mostly neck, wings and tail: the shadow lies under her
         // body as drawn (none when only her eyes show in the dark)
-        if (co.pose !== 'eyes') piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
+        if (co.pose !== 'eyes' && !(NO_SHADOW[who] && NO_SHADOW[who][co.pose])) piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
       } else if (who !== 'moth' && !a.air && co.pose !== 'fall') piece += ell(a.x, restY - 1, c.w * 0.4, Math.max(2.5, a.h * 0.045), S.pal.shade, { opacity: 0.28 });
       // `holds: 'stone'` is drawn by cats.js with the cat (in her paws, or in the mouth on her feet),
       // which reports where it is (`held`, in its box): the sparkle effect twinkles on it
@@ -3245,8 +3627,8 @@
         held = { what: c.ch.held.what, x: a.x + (c.ch.held.x - c.ch.w / 2) * hsx, y: ay + (c.ch.held.y - c.ch.h) * pl.s, r: c.ch.held.r * pl.s };
       }
       if (typeof m.at === 'string' && S.covers[m.at] && !covered[m.at]) { piece += S.covers[m.at]; covered[m.at] = true; }
-      if (a.z === 'behind') behind += piece; else front += piece;
-      if (c.over) { if (a.z === 'behind') overBehind += c.over; else overFront += c.over; }
+      if (a.z === 'behind') behind += piece; else if (a.z === 'far') far += piece; else front += piece;
+      if (c.over) { if (a.z === 'behind') overBehind += c.over; else if (a.z === 'far') overFar += c.over; else overFront += c.over; }
       var px = (c.head[0] - S.box.x) / S.box.w * 100, py = (c.head[1] - S.box.y) / S.box.h * 100;
       var inside = px >= 0 && px <= 100 && py >= 0 && py <= 100;
       if (!inside && BIG[who]) {
@@ -3267,7 +3649,7 @@
     }
     var spare = '';
     for (var k in S.covers) if (!covered[k]) spare += S.covers[k];
-    return { behind: behind + overBehind, front: front + overFront, spare: spare, heads: heads, info: info };
+    return { behind: far + overFar + behind + overBehind, front: front + overFront, spare: spare, heads: heads, info: info };
   }
 
   // ------------------------------------------------------------------ effects (panel space: 1600 x 1000)
@@ -3561,7 +3943,8 @@
     if (setId === 'river' || setId === 'sky') tod = setId === 'river' ? 'storm' : 'night';
     var cast = Array.isArray(scene.cast) ? scene.cast.filter(function (c) { return c && typeof c === 'object'; }) : [];
     // the title screen's cat on the wall, when no cast is given
-    var silhouetteCat = setId === 'title' && cast.length === 0 && opts.cat !== false;
+    // (chapter 6: only on the river at dusk, chapter 1's picture; the wall's end has no cat on the wall)
+    var silhouetteCat = setId === 'title' && cast.length === 0 && opts.cat !== false && compOf(set, camId) === 'main';
 
     serial += 1;
     var S = makeCtx('pcs' + serial.toString(36) + (typeof ctx.uid === 'string' ? ctx.uid.replace(/[^A-Za-z0-9_-]/g, '') : ''));
@@ -3728,6 +4111,21 @@
   // a copy. measure(who, pose, by) / measure(ref, 'sit', by) is brought inside [min, max]; by 'tall'
   // is the drawing's h minus its head box's y0, by 'head' its head box's width and height averaged.
   art.sizeBands = JSON.parse(JSON.stringify(SIZE_BAND));
+  // For the tests (chapter 6): the wall's end, by composition (the line where the stones stop, the
+  // river's near edge, the wall, the reed bed, the trodden ground, the grass fringe in front), and the
+  // dream's path of stars (its middle and half-width at x) and its towers far below.
+  art.titleEndInfo = function () {
+    var out = {};
+    Object.keys(TITLE_END).forEach(function (k) {
+      var L = TITLE_END[k];
+      out[k] = { line: L.line, riverTo: L.riverTo, ground: L.ground, wall: { x0: L.wall.x0, x1: L.wall.x1, top: L.wall.top, foot: L.wall.foot },
+        reeds: { x0: L.reeds.x0, base: L.reeds.base }, rustle: L.rustle.map(function (q) { return q.slice(); }), front: [L.front[0], L.front[1]] };
+    });
+    return out;
+  };
+  art.dreamInfo = function () {
+    return { at: function (x) { var c = dreamAt(dreamT(x)); return { y: c.y, w: c.w }; }, towers: JSON.parse(JSON.stringify(DREAM_TOWERS)) };
+  };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

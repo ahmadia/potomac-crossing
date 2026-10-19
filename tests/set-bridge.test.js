@@ -11,12 +11,15 @@ const art = PC.art;
 const LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
 
 // docs/build.md, "Art vocabulary, chapter 2" and "Chapter 3 (v0.4)": the names the story is written against
-const CAMS = ['bank', 'mouth', 'under', 'back', 'paws'];
+// (chapter 6 adds `wall`, Coil's close beats, a composition of its own; chapters 2 to 5 had the first five)
+const CAMS5 = ['bank', 'mouth', 'under', 'back', 'paws'];
+const CAMS = [...CAMS5, 'wall'];
 const DRAG_CAMS = ['bank', 'mouth', 'under', 'back'];   // the cameras with drag marks, drips and the train
+// (chapter 6: `gap` in `back`, the mouth of Coil's gap in the stone leg; `wall` shares `back`'s names)
 const ANCHORS = { bank: ['bank-left', 'bank-right', 'reeds'], mouth: ['rock', 'edge', 'sun', 'sun-edge'], under: ['mud', 'inside'],
-  back: ['near', 'dragon', 'beside', 'back-left', 'back-right'], paws: [] };
+  back: ['near', 'dragon', 'beside', 'back-left', 'back-right', 'gap'], paws: [], wall: ['gap', 'back-left', 'back-right', 'dragon'] };
 const OPTS = { train: [true, false], eyes: ['none', 'open', 'blink', 'sprinkle'], drag: [true, false], drips: [true, false],
-  pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true] };
+  pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true], stones: [true, false] };
 const CH3_OPTS = ['pebble', 'branch', 'prints', 'pawsIn', 'hop'];
 
 // ---------------------------------------------------------------- helpers
@@ -92,8 +95,8 @@ test('bridge: the build.md row and the set agree (every name in the row exists)'
 
 test('bridge: defaults are day, no train, no eyes, drag marks and drips on; chapter 3\'s props off', () => {
   const info = art.sceneInfo('bridge');
-  // (chapter 5's `mudPaws` is off too: 0)
-  assert.deepEqual(info.defaults, { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0 });
+  // (chapter 5's `mudPaws` is off too: 0; chapter 6's `stones` too: chapters 3 to 5's back has no leg)
+  assert.deepEqual(info.defaults, { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false });
   const plain = render('back', {}).svg, none = render('back', { eyes: 'none', drag: true, drips: true, train: false }).svg;
   assert.equal(strip(plain).length, strip(none).length, 'an empty opts is the defaults');
 });
@@ -102,16 +105,19 @@ test('bridge: defaults are day, no train, no eyes, drag marks and drips on; chap
 
 test('bridge: each camera frames its own anchors, inside its box', () => {
   const info = art.sceneInfo('bridge');
+  // (one spot stands below its panel on purpose: chapter 6's `dragon` in `wall`, where only Sprinkle's
+  // head and neck come into the panel at its right edge, her feet far below it; its own test is below)
+  const below = (cam, k) => cam === 'wall' && k === 'dragon';
   for (const cam of CAMS) {
     const box = info.cams[cam], comp = info.anchors[box.comp];
     assert.ok(comp, cam + ': has its anchors');
     for (const a of ANCHORS[cam]) {
       const at = comp[a];
       assert.ok(at, cam + ': anchor ' + a + ' is in its composition');
-      assert.ok(at.x >= box.x && at.x <= box.x + box.w && at.y >= box.y && at.y <= box.y + box.h, cam + ' ' + a + ' inside ' + JSON.stringify(box));
+      assert.ok(at.x >= box.x && at.x <= box.x + box.w && at.y >= box.y && (below(cam, a) || at.y <= box.y + box.h), cam + ' ' + a + ' inside ' + JSON.stringify(box));
       assert.ok(at.h > 0, cam + ' ' + a + ': a cat height');
     }
-    for (const [k, at] of Object.entries(comp)) assert.ok(at.x >= box.x && at.x <= box.x + box.w && at.y >= box.y && at.y <= box.y + box.h, cam + ' ' + k + ' inside');
+    for (const [k, at] of Object.entries(comp)) assert.ok(at.x >= box.x && at.x <= box.x + box.w && at.y >= box.y && (below(cam, k) || at.y <= box.y + box.h), cam + ' ' + k + ' inside');
   }
 });
 
@@ -824,7 +830,7 @@ test('bridge (chapter 5): the text\'s notes name what the set has: `bank` with R
   const v = art.vocab.sets.bridge, info = art.sceneInfo('bridge');
   assert.deepEqual(v.opts.mudPaws, [0, 6, 7]);
   assert.equal(info.defaults.mudPaws, 0);
-  assert.deepEqual(v.cams, CAMS, 'no new camera: the bank and the back are chapter 2\'s and 3\'s');
+  assert.deepEqual(v.cams.slice(0, 5), CAMS5, 'no new camera: the bank and the back are chapter 2\'s and 3\'s (chapter 6 adds `wall` after them)');
   // `water`: on the bank's composition only (the other cameras cannot see the river she walks beside)
   assert.ok(v.anchors.includes('water'));
   for (const comp of Object.keys(info.anchors)) assert.equal(!!info.anchors[comp].water, comp === 'main', comp + ': water');
@@ -998,4 +1004,283 @@ test('bridge (chapter 5): whatever chapter 5 puts at the Old Bridge renders, wit
     if (sc.opts && sc.opts.mudPaws) { mud++; assert.equal(sc.cam, 'back', id + ': the forepaws in the mud are the back camera\'s'); }
   }
   t.diagnostic(frames.length + ' frames at the Old Bridge, ' + mud + ' with the forepaws in the mud');
+});
+
+// ================================================================ chapter 6: the stone leg, Coil's gap and `wall`
+// docs/chapters/06-the-snake-in-the-stones.spec.md, section 4 ("Places", the bridge row) and section 5
+
+const SPEC6 = path.join(ROOT, 'docs/chapters/06-the-snake-in-the-stones.spec.md');
+const refH = () => art.character('clancat', { pose: 'sit', variant: 1 }).h;
+// A cast member's body and head boxes where scenes.js draws it at anchor `a`: [x0, y0, x1, y1] in the world
+// (the cats' units, and the size band PC.art.sizeBands holds a newcomer to, as Coil's).
+function bandOf(who) {
+  const b = art.sizeBands && art.sizeBands[who];
+  if (!b) return 1;
+  const meas = (w, p) => { const c = art.character(w, { pose: p, mood: 'neutral' }), hb = c.headBox; return b.by === 'head' ? ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2 : c.h - hb.y0; };
+  const ratio = meas(who, b.pose) / meas(b.ref, 'sit');
+  return Math.min(b.max, Math.max(b.min, ratio)) / ratio;
+}
+function boxesAt(m, a) {
+  const o = { pose: m.pose || 'sit', mood: m.mood || 'neutral', facing: m.facing || a.face || 'right' };
+  if (m.variant) o.variant = m.variant;
+  if (m.who === 'player') { o.look = LOOK; o.sex = LOOK.sex; }
+  const ch = art.character(m.who, o), s = a.h * (m.size > 0 ? m.size : 1) / refH() * bandOf(m.who);
+  const W = (b) => [a.x + (b.x0 - ch.w / 2) * s, a.y + (b.y0 - ch.h) * s, a.x + (b.x1 - ch.w / 2) * s, a.y + (b.y1 - ch.h) * s];
+  return { body: W(ch.bounds || { x0: 0, y0: 0, x1: ch.w, y1: ch.h }), head: ch.headBox ? W(ch.headBox) : null };
+}
+const meets = (p, q) => p[0] < q[2] && p[2] > q[0] && p[1] < q[3] && p[3] > q[1];
+// a head's size as the scenes' size bands measure it: the head box, width and height averaged
+const headSize = (b) => ((b[2] - b[0]) + (b[3] - b[1])) / 2;
+// Coil, once app/art/cats.js draws him (the spec: one box for every pose, his head at its bottom
+// centre, facing right, his body trailing back from it along the bottom line)
+const COIL_POSES = ['stone', 'head', 'long', 'longer', 'still', 'listen', 'think', 'slide'];
+const coilDraws = (() => {
+  if (!art.vocab.cast.includes('coil')) return false;
+  try { return COIL_POSES.every((pose) => { const c = art.character('coil', { pose, facing: 'right' }); return !!c && !c.placeholder && c.w > 0 && !!c.headBox; }); } catch (e) { return false; }
+})();
+// His head at `a` as the spec places it: at the anchor's bottom centre, smaller than a cat's head there
+// (a sitting Clan cat's head is about 0.46 of its height across; his, at most about four fifths of
+// that): the drawing's own, once there is one.
+function coilHead(a) {
+  if (coilDraws) return boxesAt({ who: 'coil', pose: 'head' }, a).head;
+  return [a.x - 0.18 * a.h, a.y - 0.3 * a.h, a.x + 0.18 * a.h, a.y];
+}
+// The strip of floor his body lies along, from the panel's edge behind him to his head (facing right:
+// the left edge), as high as he lies, a little over his head's height.
+function coilStrip(a) { return [a.face === 'left' ? a.x : 0, a.y - 0.3 * a.h, a.face === 'left' ? 1600 : a.x, a.y]; }
+// Everyone who sits at the bridge's spots in this chapter, in poses they take; Sprinkle in hers
+const SITTERS = [].concat(
+  ['sit', 'stand', 'walk', 'crouch', 'pawup', 'lookup', 'peer', 'loaf'].map((pose) => ({ who: 'player', pose })),
+  ['sit', 'stand', 'walk', 'pawup'].map((pose) => ({ who: 'tallyheart', pose })),
+  [1, 2, 3, 4, 5, 6].map((variant) => ({ who: 'clancat', variant, pose: 'sit' })),
+  ['sit', 'stand', 'juggle', 'hop', 'puff', 'point', 'scramble', 'hush'].filter((p) => art.vocab.otherPoses.riffle.includes(p)).map((pose) => ({ who: 'riffle', pose })));
+const SPRINKLE = ['sit', 'peek', 'sniff', 'unfold', 'pawup', 'lie', 'curl', 'gulp'].filter((p) => art.vocab.otherPoses.sprinkle.includes(p));
+const legOf = (svg) => groupNamed(svg, 'leg');
+function gapOf(svg) {
+  const m = /<g data-art="gap" data-x0="([-\d.]+)" data-x1="([-\d.]+)" data-top="([-\d.]+)" data-foot="([-\d.]+)">/.exec(svg);
+  return m ? { x0: +m[1], x1: +m[2], top: +m[3], foot: +m[4], box: [+m[1], +m[3], +m[2], +m[4]] } : null;
+}
+// a `keep` box (percent of the panel) holding the world point (x, y) of a full-world camera
+const kept = (r, x, y) => (r.keep || []).some((k) => x / 16 >= k.x && x / 16 <= k.x + k.w && y / 10 >= k.y && y / 10 <= k.y + k.h);
+
+test('bridge (chapter 6): the spec names `stones`, `gap` and the camera `wall`, and the set has them; `wall` is a composition of its own', () => {
+  const md = fs.readFileSync(SPEC6, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**`stones: true`** on `back`', '**Anchor `gap`** in `back`', "**Camera `wall`, its own composition** (`cams.wall = { box: [0, 0, 1600], comp: 'wall' }`",
+    '**`gap`** (default facing right', '**`back-left`**', '**`back-right`**', '**`dragon`**', 'No `near` or `beside`', '`train: true` works here']) assert.ok(md.includes(want), 'the spec says: ' + want);
+  const v = art.vocab.sets.bridge, info = art.sceneInfo('bridge');
+  assert.deepEqual(v.cams, CAMS, 'chapter 2 to 5\'s five cameras, then `wall`');
+  assert.deepEqual(v.opts.stones, [false, true]);
+  assert.equal(info.defaults.stones, false, 'off unless a frame asks: chapters 3 to 5\'s back has no leg');
+  assert.equal(info.cams.wall.comp, 'wall');
+  assert.deepEqual([info.cams.wall.x, info.cams.wall.y, info.cams.wall.w], [0, 0, 1600], 'the whole world, as `back` and `paws`');
+  assert.deepEqual(Object.keys(info.anchors.wall).sort(), ['back-left', 'back-right', 'dragon', 'gap'], 'wall: the four, sharing their names');
+  assert.ok(!info.anchors.wall.near && !info.anchors.wall.beside, 'no `near` or `beside`: none of Tallyheart\'s told-path spots is in view');
+  for (const comp of Object.keys(info.anchors)) assert.equal(!!info.anchors[comp].gap, comp === 'back' || comp === 'wall', comp + ': gap');
+});
+
+test('bridge (chapter 6): chapters 2 to 5 keep their bridge: none of their frames asks for the leg or the wall, and `stones` off draws exactly what it drew', () => {
+  let n = 0;
+  for (const id of ['ch02', 'ch03', 'ch04', 'ch05']) for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+    const sc = f.scene;
+    if (!sc || sc.set !== 'bridge') continue;
+    n++;
+    assert.ok(!(sc.opts && 'stones' in sc.opts), id + ' ' + fid + ': no stones');
+    assert.notEqual(sc.cam, 'wall', id + ' ' + fid + ': not the wall');
+    assert.ok(!(sc.cast || []).some((m) => m.at === 'gap'), id + ' ' + fid + ': nobody at `gap`');
+    assert.ok(!/data-art="(leg|gap)"/.test(art.render(sc, { look: LOOK }).svg), id + ' ' + fid + ': no leg, no gap');
+  }
+  assert.ok(n >= 120, 'chapters 2 to 5 visit the bridge: ' + n);
+  // `stones` off, false or odd is nothing at all; and on, it is `back`'s alone
+  for (const cam of CAMS5) for (const opts of [{}, { prints: true }, { eyes: 'sprinkle', prints: true }, { branch: true, train: true, prints: true }, { mudPaws: 7, prints: true }]) {
+    const plain = render(cam, opts).svg;
+    for (const off of [false, null, 'no', 0]) assert.ok(same5(render(cam, Object.assign({ stones: off }, opts)).svg, plain), cam + ' ' + JSON.stringify(opts) + ': stones ' + JSON.stringify(off));
+    assert.equal(same5(render(cam, Object.assign({ stones: true }, opts)).svg, plain), cam !== 'back', cam + ': stones: true draws ' + (cam === 'back' ? 'the leg' : 'nothing here'));
+  }
+  // the back's five spots have not moved, and the new one is on their floor (h = y - 560), so a spot of its own
+  // gets the depth it always got
+  const A = art.sceneInfo('bridge').anchors.back;
+  assert.deepEqual(['dragon', 'beside', 'back-left', 'back-right', 'near'].map((k) => [A[k].x, A[k].y, A[k].h]), [[1040, 820, 260], [1150, 850, 290], [560, 900, 340], [1430, 885, 325], [360, 1000, 440]]);
+  assert.equal(A.gap.h, A.gap.y - 560);
+});
+
+test('bridge (chapter 6): `stones: true`: the stone leg beside Sprinkle\'s nook, big old fitted stones on the dry floor, one dark gap low in it, its mouth at `gap`', () => {
+  const r = render('back', { stones: true, prints: true }), svg = r.svg, a = art.sceneInfo('bridge').anchors.back.gap;
+  checkRender(r, [], 'back with the leg');
+  const leg = legOf(svg), G = gapOf(svg);
+  assert.ok(leg && G, 'the leg, and the gap in it');
+  assert.ok(leg.includes('data-art="gap"'), 'the gap is in the leg');
+  // beside the nook: the leg stands at the left, clear of the nook's mouth (Sprinkle's spot) and its arch
+  const lb = boxOf(leg);
+  assert.ok(lb.x0 <= 0 && lb.x1 < 700 && lb.x1 > 500, 'the leg at the left, beside the nook: x ' + Math.round(lb.x0) + '..' + Math.round(lb.x1));
+  assert.ok(lb.y1 > 700 && lb.y1 < 790, 'its foot on the dry floor: ' + Math.round(lb.y1));
+  assert.ok(lb.y0 < 140, 'up into the dark under the deck');
+  // big old fitted stones: many of them, of different widths
+  const stones = (leg.match(/<path d="([^"]+)" fill="#[0-9A-Fa-f]{6}"\/>/g) || []).flatMap((p) => (p.match(/M[^MZ]+Z/g) || [])).map((d) => boxOf(' d="' + d + '"'));
+  const big = stones.filter((b) => b.w > 60);
+  assert.ok(big.length >= 14, 'courses of big blocks: ' + big.length);
+  assert.ok(Math.max(...big.map((b) => b.w)) > Math.min(...big.map((b) => b.w)) * 1.6, 'old, of uneven sizes');
+  // the gap: low, in the bottom course, its mouth on the floor at `gap`
+  assert.ok(a.x > G.x0 && a.x < G.x1 && Math.abs(a.y - G.foot) < 3, 'gap: the mouth of the gap: ' + JSON.stringify(a) + ' ' + JSON.stringify(G));
+  assert.ok(G.foot - G.top < 120 && G.foot - G.top > 50 && G.top > 600, 'low in the leg, one block high: ' + G.top + '..' + G.foot);
+  assert.ok(G.x1 - G.x0 > 80 && G.x1 - G.x0 < 200, 'a block wide');
+  assert.equal(a.face, 'right', 'Coil faces the cats; his body trails back toward the panel\'s left edge');
+  assert.ok(kept(r, a.x, a.y - 30), 'the lettering keeps off the gap and his head');
+  // his head is smaller than the stones round his door
+  const hd = coilHead(a);
+  assert.ok(hd[2] - hd[0] < Math.max(...big.map((b) => b.w)) && hd[2] - hd[0] < 0.46 * a.h + 1, 'no bigger than a stone of the wall, smaller than a cat\'s head');
+});
+
+test('bridge (chapter 6): Coil at `gap` in `back` lies along the wall\'s foot behind everyone, toward the panel\'s edge; `dragon`, `beside`, `back-left`, `back-right` and `near` all still read', () => {
+  const A = art.sceneInfo('bridge').anchors.back, a = A.gap, hd = coilHead(a), strip = coilStrip(a);
+  assert.ok(strip[2] - strip[0] > 0.5 * a.h, 'room for his body between the gap and the panel\'s edge');
+  // no one at any spot, in any pose this chapter gives them, is over his head or the floor his body lies on
+  for (const at of ['near', 'back-left', 'back-right', 'beside']) for (const m of SITTERS) for (const facing of ['left', 'right']) {
+    const b = boxesAt(Object.assign({ facing }, m), A[at]).body;
+    assert.ok(!meets(b, hd), at + ': ' + m.who + ' (' + m.pose + ') is clear of Coil\'s head');
+    assert.ok(!meets(b, strip), at + ': ' + m.who + ' (' + m.pose + ') is clear of the floor his body lies along');
+  }
+  for (const pose of SPRINKLE) {
+    const b = boxesAt({ who: 'sprinkle', pose, facing: 'left' }, A.dragon).body;
+    assert.ok(!meets(b, hd) && !meets(b, strip), 'Sprinkle (' + pose + ') at `dragon` is clear of him');
+  }
+  if (coilDraws) for (const pose of COIL_POSES) {
+    const c = boxesAt({ who: 'coil', pose, facing: 'right' }, a);
+    assert.ok(c.body[2] <= a.x + 0.4 * a.h, pose + ': nothing of him reaches past his head toward the cats');
+    for (const at of ['near', 'back-left', 'back-right', 'beside']) assert.ok(!meets(c.body, boxesAt({ who: 'player' }, A[at]).body), pose + ': not over ' + at);
+  }
+  // the whole cast at once, with every prop of the back, in every light: every face in sight
+  const cast = [{ who: 'sprinkle', at: 'dragon', pose: 'sit' }, { who: 'player', at: 'beside' }, { who: 'riffle', at: 'back-left' }, { who: 'tallyheart', at: 'back-right' }, { who: 'clancat', at: 'near', variant: 2 }]
+    .concat(coilDraws ? [{ who: 'coil', at: 'gap', pose: 'head' }] : []);
+  for (const opts of [{ stones: true, prints: true }, { stones: true, prints: true, branch: true, train: true }, { stones: true, eyes: 'sprinkle', mudPaws: 7 }]) {
+    for (const fx of [['day'], ['sunset'], ['dusk'], ['night']]) {
+      const r = render('back', opts, cast, fx);
+      checkRender(r, cast, 'back ' + JSON.stringify(opts) + ' ' + fx[0]);
+      r.heads.forEach((h, i) => assert.ok(h, cast[i].who + ' at ' + cast[i].at + ' in sight'));
+    }
+  }
+});
+
+test('bridge (chapter 6): `wall`: at cat height, the stone leg across the middle distance, its gap low, a quarter to a third of the way across; the dry floor in front', () => {
+  const info = art.sceneInfo('bridge'), A = info.anchors.wall, r = render('wall', {}), svg = r.svg;
+  checkRender(r, [], 'wall');
+  const leg = legOf(svg), G = gapOf(svg), lb = boxOf(leg);
+  assert.ok(leg && G, 'the leg and its gap');
+  assert.ok(lb.x0 <= 0 && lb.x1 > 1100, 'across the middle distance: x ' + Math.round(lb.x0) + '..' + Math.round(lb.x1));
+  assert.ok(lb.y1 > 640 && lb.y1 < 760 && lb.y0 < 120, 'from under the deck to its foot on the floor: ' + Math.round(lb.y0) + '..' + Math.round(lb.y1));
+  const gx = (G.x0 + G.x1) / 2;
+  assert.ok(gx >= 1600 / 4 && gx <= 1600 / 3, 'the gap a quarter to a third of the way across: ' + gx);
+  assert.ok(Math.abs(G.foot - lb.y1) < 12 && G.foot - G.top < 120, 'low: in the bottom course, its mouth on the floor');
+  assert.ok(A.gap.x > G.x0 && A.gap.x < G.x1 && Math.abs(A.gap.y - G.foot) < 3, '`gap` at its mouth');
+  assert.ok(kept(r, A.gap.x, A.gap.y - 30), 'kept clear of the lettering');
+  // always drawn here: `stones` says nothing to this camera
+  for (const opts of [{ stones: true }, { stones: false }]) assert.ok(same5(render('wall', opts).svg, svg), 'wall ' + JSON.stringify(opts));
+  // the spots: Coil facing the cats; our cat near, between the gap and the centre, facing it; Riffle near on the
+  // right; Sprinkle at the right edge
+  assert.equal(A.gap.face, 'right');
+  assert.ok(A['back-left'].x > G.x1 && A['back-left'].x < 800 && A['back-left'].face === 'left', 'back-left: between the gap and the centre, facing it');
+  assert.ok(A['back-right'].x > A['back-left'].x + 250 && A['back-right'].face === 'left', 'back-right: on the right, facing left');
+  for (const k of ['back-left', 'back-right']) assert.ok(A[k].y > A.gap.y + 150, k + ': near, on the floor in front');
+  // Coil is drawn by his own size band (smaller than a cat's head, no bigger than a stone): `gap`'s height is
+  // his size in this close shot, not a depth, and it makes his head about two fifths of our cat's beside him,
+  // so his eyes read (at 205 they were a few pixels across)
+  if (coilDraws) {
+    const hd = coilHead(A.gap), cat = boxesAt({ who: 'player', facing: 'left' }, A['back-left']).head;
+    const share = headSize(hd) / headSize(cat);
+    assert.ok(share > 0.36 && share < 0.55, 'his head beside our cat\'s: ' + share.toFixed(2));
+    const big = (legOf(svg).match(/<path d="([^"]+)" fill="#[0-9A-Fa-f]{6}"\/>/g) || []).flatMap((p) => (p.match(/M[^MZ]+Z/g) || [])).map((d) => boxOf(' d="' + d + '"')).filter((b) => b.w > 60);
+    assert.ok(hd[2] - hd[0] < Math.max(...big.map((b) => b.w)), 'no bigger than a stone of the wall');
+  }
+  assert.ok(A.dragon.x >= 1500 && A.dragon.face === 'left' && A.dragon.z === 'behind', 'dragon: at the right edge, facing left (drawn behind the cats, out of the depth sums)');
+  assert.ok(A.dragon.y > 1000, 'her feet far below the panel');
+  // and nobody else's spot is seen from here
+  const far = render('wall', {}, [{ who: 'tallyheart', at: 'near' }, { who: 'player', at: 'beside' }, { who: 'riffle', at: 'mud' }, { who: 'player', at: 'bank-left' }]);
+  assert.deepEqual(far.heads, [null, null, null, null], 'no `near`, no `beside`: the told path\'s spots are out of the panel');
+});
+
+test('bridge (chapter 6): in `wall` no cat\'s box covers the gap or Coil\'s head; his body trails left along the wall\'s foot and off the panel, away from them; Sprinkle shows only her head and neck', () => {
+  const A = art.sceneInfo('bridge').anchors.wall, G = gapOf(render('wall', {}).svg), hd = coilHead(A.gap), strip = coilStrip(A.gap);
+  assert.equal(strip[0], 0, 'his body goes off the panel\'s left edge');
+  for (const at of ['back-left', 'back-right']) for (const m of SITTERS) for (const facing of ['left', 'right']) {
+    const b = boxesAt(Object.assign({ facing }, m), A[at]).body;
+    assert.ok(!meets(b, G.box), at + ': ' + m.who + ' (' + m.pose + ', ' + facing + ') is clear of the gap');
+    assert.ok(!meets(b, hd), at + ': ' + m.who + ' (' + m.pose + ', ' + facing + ') is clear of Coil\'s head');
+    assert.ok(!meets(b, strip), at + ': ' + m.who + ' (' + m.pose + ', ' + facing + ') is clear of the floor his body lies along');
+  }
+  for (const pose of SPRINKLE) {
+    const s = boxesAt({ who: 'sprinkle', pose, facing: 'left' }, A.dragon);
+    assert.ok(!meets(s.body, G.box) && !meets(s.body, hd) && !meets(s.body, strip), 'Sprinkle (' + pose + ') is clear of the gap and of him');
+    assert.ok(s.body[2] > 1600 || s.body[3] > 1000, pose + ': the rest of her is off the panel');
+  }
+  // sitting up: her head in the panel at its right edge, level with the cats' heads; her chest and forepaws below it
+  const sit = boxesAt({ who: 'sprinkle', pose: 'sit', facing: 'left' }, A.dragon), cat = boxesAt({ who: 'player', facing: 'left' }, A['back-left']);
+  const shown = Math.max(0, Math.min(sit.head[2], 1600) - sit.head[0]) / (sit.head[2] - sit.head[0]);
+  assert.ok(shown > 0.6 && sit.head[3] < 1000 && sit.head[1] > 300, 'her head is in the panel at its right edge: ' + sit.head.map(Math.round));
+  assert.ok(Math.abs((sit.head[1] + sit.head[3]) / 2 - (cat.head[1] + cat.head[3]) / 2) < 150, 'about level with our cat\'s');
+  assert.ok(A.dragon.y - 0.4 * A.dragon.h > 950, 'her chest at the panel\'s foot, her forepaws below it: only her head and neck');
+  // the whole cast, Coil drawn where cats.js draws him: every face in sight, Sprinkle's head at the right edge
+  const cast = [{ who: 'sprinkle', at: 'dragon', pose: 'sit' }, { who: 'player', at: 'back-left' }, { who: 'riffle', at: 'back-right' }]
+    .concat(coilDraws ? [{ who: 'coil', at: 'gap', pose: 'longer' }] : []);
+  const r = render('wall', {}, cast);
+  checkRender(r, cast, 'wall, everyone');
+  r.heads.forEach((h, i) => assert.ok(h, cast[i].who + ' at ' + cast[i].at + ' in sight'));
+  assert.ok(r.heads[0].x > 80, 'Sprinkle\'s face at the right edge');
+  if (coilDraws) for (const pose of COIL_POSES) {
+    const c = boxesAt({ who: 'coil', pose, facing: 'right' }, A.gap);
+    assert.ok(c.body[2] <= A.gap.x + 0.4 * A.gap.h, pose + ': nothing of him toward the cats past his head');
+    assert.ok(!meets(c.body, cat.body), pose + ': never over our cat');
+  }
+});
+
+test('bridge (chapter 6): `train: true` on `wall` shakes grit down in front of the wall; the wall renders in every light, with every option', () => {
+  const floats = (svg) => count(svg, /class="pcs-float"/g);
+  assert.ok(floats(render('wall', { train: true }).svg) >= floats(render('wall', {}).svg) + 20, 'grit falling from the deck');
+  assert.ok(floats(render('back', { train: true, stones: true }).svg) >= floats(render('back', { stones: true }).svg) + 20, 'and on `back` with the leg');
+  const cast = [{ who: 'sprinkle', at: 'dragon', pose: 'peek' }, { who: 'player', at: 'back-left', pose: 'pawup' }, { who: 'riffle', at: 'back-right', pose: 'juggle' }];
+  for (const fx of [['day'], ['sunset'], ['dusk'], ['night'], art.vocab.fx.slice()]) for (const opts of [{}, { train: true }, { drips: false, train: true }]) {
+    checkRender(render('wall', opts, cast, fx), cast, 'wall ' + JSON.stringify(opts) + ' ' + fx.join('+'));
+  }
+  assert.ok(count(render('wall', {}, [], ['sunset']).svg, /mix-blend-mode:screen/g) >= 2, 'the evening light reaches in');
+  assert.ok(same5(render('wall', {}, cast).svg, render('wall', {}, cast).svg), 'the same picture every time');
+  // the dark is never black here either
+  const fills = (render('wall', {}).svg.match(/fill="#([0-9A-Fa-f]{6})"/g) || []).map((f) => parseInt(f.slice(7, 13), 16));
+  assert.ok(!fills.includes(0), 'no pure black');
+});
+
+test('bridge (chapter 6): Coil is the same size beside the cats in every frame he is in, close (`wall`) or wide (`back`, his `size`): his head about two fifths of our cat\'s, never a speck, never a cat\'s; nobody covers it', (t) => {
+  const ch = PC.story && PC.story.ch06;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.scene.set === 'bridge' && (f.scene.cast || []).some((m) => m.who === 'coil')) : [];
+  if (!frames.length || !coilDraws) { t.diagnostic('no Coil yet'); return; }
+  const A = art.sceneInfo('bridge').anchors, shares = {};
+  for (const [id, f] of frames) {
+    const sc = f.scene, cast = sc.cast, co = cast.find((m) => m.who === 'coil'), me = cast.find((m) => m.who === 'player');
+    assert.equal(co.at, 'gap', id + ': at his gap');
+    const hd = boxesAt(Object.assign({}, co, { pose: 'head' }), A[sc.cam].gap).head;
+    if (me) {
+      const cat = boxesAt(me, typeof me.at === 'string' ? A[sc.cam][me.at] : me.at).head;
+      const share = headSize(hd) / headSize(cat);
+      (shares[sc.cam] = shares[sc.cam] || []).push(share);
+      assert.ok(share > 0.36 && share < 0.55, id + ' (' + sc.cam + '): his head beside our cat\'s: ' + share.toFixed(2));
+    }
+    const head = boxesAt(co, A[sc.cam].gap).head;
+    for (const m of cast) if (m !== co && typeof m.at === 'string' && m.at !== 'dragon') assert.ok(!meets(boxesAt(m, A[sc.cam][m.at]).body, head), id + ': ' + m.who + ' at ' + m.at + ' is clear of his head');
+  }
+  const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+  assert.ok(shares.wall && shares.back && Math.abs(mean(shares.wall) - mean(shares.back)) < 0.03, 'close or wide, the same size: wall ' + mean(shares.wall).toFixed(3) + ', back ' + mean(shares.back).toFixed(3));
+});
+
+test('bridge (chapter 6): whatever chapter 6 puts at the Old Bridge renders, with the vocabulary; Coil at `gap` only, on `back` with the leg or on `wall` (once the chapter is written)', (t) => {
+  const ch = PC.story && PC.story.ch06;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.scene.set === 'bridge' && f.board !== 'STUB.') : [];
+  if (!frames.length) { t.diagnostic('chapter 6 has no frames at the Old Bridge yet'); return; }
+  const v = art.vocab.sets.bridge;
+  for (const [id, f] of frames) {
+    const sc = f.scene;
+    assert.ok(v.cams.includes(sc.cam), id + ': camera ' + sc.cam);
+    for (const [k, val] of Object.entries(sc.opts || {})) assert.ok(Array.isArray(v.opts[k]) && v.opts[k].includes(val), id + ': ' + k + '=' + JSON.stringify(val));
+    const r = art.render(sc, { look: LOOK });
+    checkRender(r, sc.cast || [], 'ch06 ' + id);
+    (sc.cast || []).forEach((m, i) => { if (typeof m.at === 'string') assert.ok(r.heads[i] || m.who === 'coil', id + ': ' + m.who + ' at ' + m.at + ' is in sight of the ' + sc.cam + ' camera'); });
+    for (const m of sc.cast || []) if (m.at === 'gap') assert.ok(sc.cam === 'wall' || (sc.opts && sc.opts.stones === true), id + ': the gap is only there with the leg');
+  }
+  t.diagnostic(frames.length + ' frames at the Old Bridge');
 });

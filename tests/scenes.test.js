@@ -1434,6 +1434,13 @@ const CH13 = {
   who: ['player', 'tallyheart', 'waffles', 'grizzled', 'clancat', 'sparrow', 'moth', 'tallone', 'riffle', 'sprinkle'],
   poses: ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer']
 };
+// What chapter 6 adds to chapter 1's sets, by name (its own cameras and spots; every one is new, so
+// the fingerprints below keep to the cameras they always covered)
+const CH6_NEW = {
+  title: { cams: ['end', 'meet'], anchors: ['wall-3', 'end-1', 'end-2', 'end-3', 'reed-1', 'reed-2', 'reed-3'], opts: ['rustle'] },
+  sky: { cams: ['walk', 'below'], anchors: ['star-1', 'star-2'], opts: [] }
+};
+const ch1Cams = (set) => art.vocab.sets[set].cams.filter((c) => !((CH6_NEW[set] || {}).cams || []).includes(c));
 function ch13Fingerprint(art, crypto) {
   const fake = function () { throw new Error('placeholder'); };
   fake.placeholder = true;
@@ -1441,7 +1448,7 @@ function ch13Fingerprint(art, crypto) {
   art.character = fake;
   try {
     for (const set of Object.keys(CH13.anchors)) {
-      for (const cam of art.vocab.sets[set].cams) {
+      for (const cam of ch1Cams(set)) {
         const h = crypto.createHash('sha1');
         CH13.fx.forEach((fx, f) => {
           const cast = CH13.anchors[set].map((at, i) => {
@@ -2197,7 +2204,7 @@ test('every frame of chapter 4 renders with the art vocabulary (once it is writt
 });
 
 // chapter 5's three new characters, and its two new sets (their files are stubs until they are drawn)
-const NEW5 = ['patience', 'puddle', 'wisp'], NEW_SETS5 = ['openriver', 'marsh'];
+const NEW5 = ['patience', 'puddle', 'wisp'], NEW_SETS5 = ['openriver', 'marsh'], NEW6 = ['coil', 'sleet', 'sloshbank', 'reedclan'];
 test('the gallery (dev/gallery.html) loads every art script and chapter the game does, in the game\'s order; every sample on it names a set, a camera, anchors and options the art has, and renders', () => {
   const game = (fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').match(/<script\s+src="(app\/(?:art|story)\/[^"]+\.js)"/g) || []).map((m) => m.match(/app\/[^"]+/)[0]);
   const page = fs.readFileSync(path.join(ROOT, 'dev/gallery.html'), 'utf8');
@@ -2225,7 +2232,7 @@ test('the gallery (dev/gallery.html) loads every art script and chapter the game
     if (!set.cams.includes(scene.cam) && !CH1_SETS.includes(scene.set)) continue;
     assert.ok(set.cams.includes(scene.cam), label + ': camera');
     // (and a sample with one of chapter 5's three in it, until cats.js draws them)
-    const late = scene.cast.filter((m) => NEW5.includes(m.who) && v.cast && !v.cast.includes(m.who)).map((m) => m.who);
+    const late = scene.cast.filter((m) => (NEW5.includes(m.who) || NEW6.includes(m.who)) && v.cast && !v.cast.includes(m.who)).map((m) => m.who);
     if (late.length) { late.forEach((w) => waiting.add(w)); continue; }
     sets.add(scene.set);
     for (const k of Object.keys(scene.opts)) assert.ok(Object.prototype.hasOwnProperty.call(set.opts, k), label + ': option ' + k);
@@ -2250,6 +2257,16 @@ test('the gallery (dev/gallery.html) loads every art script and chapter the game
     assert.ok(extras.some((x) => x.includes(k)), 'the gallery shows ' + k);
   assert.ok(EXTRA.some((e) => e[0] === 'den' && Array.isArray((e[2].opts || {}).bark) && e[2].opts.bark.length >= 12 && e[2].opts.hidden), 'the gallery shows a chapter 5 file, two deep, two hidden');
   assert.ok(EXTRA.some((e) => e[0] === 'tower' && (e[2].opts || {}).roar && (e[2].cast || []).length === 1 && e[2].cast[0].who === 'player' && e[2].cast[0].at === 'foot'), 'the gallery shows the offer: the roar, our cat at the foot, nobody at the railing');
+  // and every chapter 6 change: the walk at wall-3, both cameras of the wall's end with the rustle, three and three, the
+  // dream (both cameras, the starry cat), six marks and the patrol behind the rim, three under the moss, the newcomers
+  for (const k of ['"at":"wall-3"', '"rustle":true', '"at":"reed-1"', '"starry":true', '"marks":6', '"z":"behind"', '"coil-diggers"', '"who":"coil"', '"who":"sleet"', '"who":"sloshbank"', '"who":"reedclan"'])
+    assert.ok(extras.some((x) => x.includes(k)), 'the gallery shows ' + k);
+  for (const [set, cam] of [['title', 'end'], ['title', 'meet'], ['sky', 'walk'], ['sky', 'below']]) {
+    assert.ok(SAMPLES[set][cam], 'the gallery samples ' + set + ' / ' + cam);
+    assert.ok(EXTRA.some((e) => e[0] === set && e[1] === cam && /^chapter 6:/.test(e[3])), 'a chapter 6 panel on ' + set + ' / ' + cam);
+  }
+  assert.ok(EXTRA.some((e) => e[0] === 'den' && Array.isArray((e[2].opts || {}).bark) && e[2].opts.bark.includes('coil-diggers') && e[2].opts.hidden), 'the gallery shows Coil\'s card under the moss');
+  assert.ok(EXTRA.some((e) => e[0] === 'hollow' && (e[2].cast || []).filter((m) => m.at && m.at.z === 'behind' && m.pose === 'walk').length === 3), 'the gallery shows the patrol of three behind the rim');
   // a sample for every camera of the two new sets, by the names the text gives them
   assert.deepEqual(Object.keys(SAMPLES.openriver), ['wide', 'raft', 'light', 'log', 'sky', 'rocks', 'edge', 'beside', 'under']);
   assert.deepEqual(Object.keys(SAMPLES.marsh), ['wide', 'far', 'heron', 'mud', 'pole', 'reeds', 'wisp', 'draw']);
@@ -2357,10 +2374,11 @@ test('vocab, chapter 5: the den\'s moon takes its age in evenings (5: a little f
   assert.ok(v.hollow.opts.marks.includes(5), 'marks: 5');
   assert.deepEqual(v.den.opts.bark, [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 'bark: a number, or auto (her own cards, however many)');
   assert.deepEqual(v.den.opts.hidden, [false, true], 'no change to hidden');
-  // chapter 5 needs no new place to stand and no new camera in chapter 1's sets (the storyboard has words for all of these)
+  // chapter 5 needs no new place to stand and no new camera in chapter 1's sets (the storyboard has words for all of these);
+  // chapter 6's are its own, named in CH6_NEW, after them
   for (const set of CH1_SETS) {
-    assert.deepEqual(v[set].cams, CH1_CAMS[set], set + ': cameras');
-    assert.deepEqual(v[set].anchors, CH1_ANCHORS[set], set + ': anchors');
+    assert.deepEqual(v[set].cams, CH1_CAMS[set].concat((CH6_NEW[set] || {}).cams || []), set + ': cameras');
+    assert.deepEqual(v[set].anchors, CH1_ANCHORS[set].concat((CH6_NEW[set] || {}).anchors || []), set + ': anchors');
   }
   assert.deepEqual(Object.keys(v.tower.opts), ['chime', 'light', 'roar', 'ding'], 'the tower as chapter 4 left it');
   assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden']);
@@ -2368,7 +2386,9 @@ test('vocab, chapter 5: the den\'s moon takes its age in evenings (5: a little f
   assert.equal(art.sceneInfo('den').defaults.moon, undefined, 'no moon unless a frame asks');
   assert.equal(typeof art.kit.waxingMoon, 'function', 'kit.waxingMoon, for the sets in their own files');
   // the three newcomers' sizes, published for the sets that lay props round them: the numbers a set may have copied
-  assert.deepEqual(art.sizeBands, { patience: { ref: 'tallyheart', pose: 'stand', by: 'tall', min: 1.4, max: 2.6 }, puddle: { ref: 'sprinkle', pose: 'head', by: 'head', min: 0.88, max: 1.12 }, wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 } });
+  // (chapter 6 adds three more, tested with it)
+  const five = (b) => ({ patience: b.patience, puddle: b.puddle, wisp: b.wisp });
+  assert.deepEqual(five(art.sizeBands), { patience: { ref: 'tallyheart', pose: 'stand', by: 'tall', min: 1.4, max: 2.6 }, puddle: { ref: 'sprinkle', pose: 'head', by: 'head', min: 0.88, max: 1.12 }, wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 } });
   const md = fs.readFileSync(path.join(ROOT, 'docs/build.md'), 'utf8');
   assert.ok(md.indexOf('## Chapter 5') > 0, 'build.md has a chapter 5 section');
 });
@@ -2884,8 +2904,8 @@ test('the real Patience, Puddle and Wisp (cats.js, once it draws them): in every
     wisp: headOf(art.character('wisp', { pose: 'blink', mood: 'neutral' })) / spr.head
   };
   const BAND = { patience: [1.4, 2.6], puddle: [0.88, 1.12], wisp: [0.7, 0.94] };
-  // the rule as the sets in their own files read it (the marsh lays its reeds and its thought cloud by it)
-  assert.deepEqual(art.sizeBands, { patience: { ref: 'tallyheart', pose: 'stand', by: 'tall', min: 1.4, max: 2.6 }, puddle: { ref: 'sprinkle', pose: 'head', by: 'head', min: 0.88, max: 1.12 }, wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 } });
+  // the rule as the sets in their own files read it (the marsh lays its reeds and its thought cloud by it; chapter 6's three are tested with it)
+  assert.deepEqual({ patience: art.sizeBands.patience, puddle: art.sizeBands.puddle, wisp: art.sizeBands.wisp }, { patience: { ref: 'tallyheart', pose: 'stand', by: 'tall', min: 1.4, max: 2.6 }, puddle: { ref: 'sprinkle', pose: 'head', by: 'head', min: 0.88, max: 1.12 }, wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 } });
   let n = 0;
   for (const set of CH1_SETS) {
     const info = art.sceneInfo(set), seen = {};
@@ -3069,4 +3089,441 @@ test('the gallery page runs: every set and camera, every extra and every frame o
   // ?only= shows just the panels whose title or caption has that text
   const only = runGallery(stories, '?only=' + encodeURIComponent('chapter 5:'));
   assert.ok(only.figures.length >= 15 && only.figures.length < 40 && only.figures.every((f) => f.caption.includes('chapter 5:')), 'only chapter 5\'s extras: ' + only.figures.length);
+});
+
+
+// ================================================================ chapter 6: The Snake in the Stones
+// (docs/chapters/06-the-snake-in-the-stones.spec.md, section 4: the title's wall-3 and the wall's end,
+// the dream on the sky, Coil's card under the moss, six marks and a patrol behind the rim, and the
+// newcomers' sizes)
+
+// The spots the story builder is given for the patrol of three trotting by behind the rim (spec
+// section 5, "Patrols"): along the hollow's far edge, at the brambles' foot, behind rim-1 to rim-5.
+const PATROL6 = [{ x: 590, y: 690, h: 215, z: 'behind' }, { x: 790, y: 690, h: 215, z: 'behind' }, { x: 990, y: 690, h: 215, z: 'behind' }];
+// Where a cast member landed: the index of its markup, its scale, and its head and body boxes in
+// world units (from the drawing's own boxes, as the scenes place it at spot `a`).
+function landed(svg, m, a) {
+  const c = art.character(m.who, Object.assign({}, m, { facing: m.facing || a.face, mood: m.mood || 'neutral' }, m.who === 'player' ? { look: LOOK, sex: LOOK.sex } : {}));
+  const re = new RegExp('<g transform="translate\\(' + a.x + ' ' + a.y + '\\) scale\\(([\\d.]+) [\\d.]+\\) translate\\(-' + (c.w / 2) + ' -' + c.h + '\\)"');
+  const mm = re.exec(svg);
+  if (!mm) return null;
+  const s = +mm[1], w = (b) => [a.x + (b.x0 - c.w / 2) * s, a.y + (b.y0 - c.h) * s, a.x + (b.x1 - c.w / 2) * s, a.y + (b.y1 - c.h) * s];
+  return { idx: mm.index, s, head: w(c.headBox || { x0: c.w * 0.3, y0: 0, x1: c.w * 0.7, y1: c.h * 0.4 }), body: w(c.bounds || { x0: 0, y0: 0, x1: c.w, y1: c.h }) };
+}
+const area = (b) => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]);
+const overlap = (p, q) => area([Math.max(p[0], q[0]), Math.max(p[1], q[1]), Math.min(p[2], q[2]), Math.min(p[3], q[3])]);
+
+// <ch6-fingerprint>
+// Every frame of chapters 1 to 5 on the sets this file draws for chapter 6 (title, sky, den, hollow),
+// as the story asks and filled in as the page fills it, drawn with stand-in cats and plain bark, and the
+// title screen: hashed per set and camera. The numbers were taken from scenes.js before chapter 6
+// touched it (2026-10-18), and the same function run on the new file gives the same: chapters 1 to 5
+// look exactly as they did.
+function ch6Fingerprint(art, story, crypto) {
+  const fake = function () { throw new Error('placeholder'); };
+  fake.placeholder = true;
+  const real = art.character, out = {}, hadCards = Object.prototype.hasOwnProperty.call(art, 'cardGroup'), cards = art.cardGroup;
+  art.character = fake;
+  delete art.cardGroup;
+  // a chapter 5 cat's whole file (every card but the three that need a dragonet found), for her nest
+  const file5 = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'prints-tracks'];
+  try {
+    for (const ch of ['ch01', 'ch02', 'ch03', 'ch04', 'ch05']) {
+      const n = +ch.slice(2);
+      for (const [id, f] of Object.entries(story[ch].frames)) {
+        const sc = f.scene;
+        if (!sc || !['title', 'sky', 'den', 'hollow'].includes(sc.set)) continue;
+        const key = sc.set + '/' + sc.cam, h = out[key] || (out[key] = crypto.createHash('sha1'));
+        const o = Object.assign({}, sc.opts || {});
+        // what the page fills in from a cat: one mark a Count so far, the first glowing; her stone by her nose; her file
+        if (o.marks === 'auto') o.marks = n;
+        if (o.glow === 'auto') o.glow = Array.from({ length: n }, (v, i) => i === 0);
+        if (o.stone === 'auto') o.stone = 'nose';
+        const filled = [Object.assign({}, sc, { opts: o })];
+        if (o.bark === 'auto' && n >= 5) filled.push(Object.assign({}, sc, { opts: Object.assign({}, o, { bark: file5.map((p) => ({ picture: p, mark: 'eye' })) }) }));
+        for (const scene of [sc].concat(filled)) {
+          const r = art.render(scene, { look: { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' } });
+          h.update(id + ':' + r.svg.replace(/pcs[0-9a-z]+-/g, '') + JSON.stringify(r.heads) + JSON.stringify(r.keep));
+        }
+      }
+    }
+    // and the title screen, by sunset and by day, with nobody on the wall
+    for (const fx of [[], ['day']]) {
+      const r = art.render({ set: 'title', cam: 'wide', cast: [], fx }, {}), h = out['title/screen'] || (out['title/screen'] = crypto.createHash('sha1'));
+      h.update(r.svg.replace(/pcs[0-9a-z]+-/g, '') + JSON.stringify(r.heads));
+    }
+  } finally { art.character = real; if (hadCards) art.cardGroup = cards; }
+  for (const k of Object.keys(out)) out[k] = out[k].digest('hex').slice(0, 16);
+  return out;
+}
+// </ch6-fingerprint>
+const CH6_FINGERPRINT = {
+  'hollow/wide': '107d86731a0b15bb', 'hollow/lesson': 'c03f2d59b1e2fd11', 'hollow/tree': 'c007de6bf7e80159', 'hollow/sand': 'fc571230aa06ba33',
+  'den/outside': '90343e6e48cbf384', 'den/doorway': 'a1725bfb26e736d0', 'den/inside': 'c732dad417c8ca99', 'den/nest': 'ab54042717631d90',
+  'sky/up': '64694e99e1e09f60', 'sky/cats': '6a3ba2004eca9ef9', 'title/wide': 'd67278db4420dbaa', 'title/screen': '620b0a7df13a7592'
+};
+
+test('chapters 1 to 5 look exactly as they did on the title, the sky, the den and the hollow: every frame of theirs on those sets, and the title screen, matches its fingerprint from before chapter 6', () => {
+  for (const id of ['ch01', 'ch02', 'ch03', 'ch04', 'ch05']) require(path.join(ROOT, 'app/story/' + id + '.js'));
+  const now = ch6Fingerprint(art, PC.story, require('crypto'));
+  assert.deepEqual(Object.keys(now).sort(), Object.keys(CH6_FINGERPRINT).sort(), 'the same sets and cameras');
+  for (const k of Object.keys(CH6_FINGERPRINT)) assert.equal(now[k], CH6_FINGERPRINT[k], k + ' draws something else than it did for chapters 1 to 5');
+  assert.ok(!art.character || !art.character.placeholder, 'the real cats are back');
+});
+
+test('vocab, chapter 6: the title\'s wall-3 and the wall\'s end (end, meet; end-1..3, reed-1..3; rustle), the dream on the sky (walk, below; star-1, star-2), nothing new on the den or the hollow; the newcomers\' sizes published', () => {
+  const v = art.vocab.sets;
+  assert.deepEqual(v.title.cams, ['wide', 'end', 'meet']);
+  assert.deepEqual(v.title.anchors, ['wall', 'wall-2', 'wall-3', 'end-1', 'end-2', 'end-3', 'reed-1', 'reed-2', 'reed-3']);
+  assert.deepEqual(v.title.opts, { rustle: [false, true] }, 'rustle, off unless a frame asks');
+  assert.ok(!v.title.cams.includes('reeds'), 'no reeds close-up (spec v0.2, call 21)');
+  assert.deepEqual(v.sky.cams, ['up', 'cats', 'walk', 'below']);
+  assert.deepEqual(v.sky.anchors, ['ground-left', 'ground-right', 'star-1', 'star-2']);
+  assert.deepEqual(v.sky.opts, {});
+  const ti = art.sceneInfo('title'), si = art.sceneInfo('sky');
+  assert.deepEqual([ti.cams.wide.comp, ti.cams.end.comp, ti.cams.meet.comp], ['main', 'end', 'meet'], 'the wall\'s end is its own picture, in two compositions');
+  assert.deepEqual([si.cams.up.comp, si.cams.cats.comp, si.cams.walk.comp, si.cams.below.comp], ['main', 'main', 'walk', 'below']);
+  for (const comp of ['end', 'meet']) assert.deepEqual(Object.keys(ti.anchors[comp]), ['end-1', 'end-2', 'end-3', 'reed-1', 'reed-2', 'reed-3'], comp + ': all six, seen by both cameras');
+  assert.deepEqual(Object.keys(ti.anchors.main), ['wall', 'wall-2', 'wall-3']);
+  assert.deepEqual(Object.keys(si.anchors.walk), ['star-1', 'star-2']);
+  assert.deepEqual(si.anchors.below, {}, 'nobody is seen looking down');
+  assert.deepEqual(ti.defaults, {}, 'no rustle unless asked');
+  // the den and the hollow take nothing new: Coil's card goes under the moss by its picture, the sixth mark exists
+  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden']);
+  assert.deepEqual(v.den.opts.hidden, [false, true]);
+  assert.deepEqual(Object.keys(v.hollow.opts), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap']);
+  assert.ok(v.hollow.opts.marks.includes(6));
+  assert.deepEqual({ coil: art.sizeBands.coil, sleet: art.sizeBands.sleet, sloshbank: art.sizeBands.sloshbank }, {
+    coil: { ref: 'player', pose: 'head', by: 'head', min: 0.35, max: 0.6 },
+    sleet: { ref: 'sprinkle', pose: 'sit', by: 'head', min: 0.95, max: 1.1 },
+    sloshbank: { ref: 'tallyheart', pose: 'sit', by: 'tall', min: 1.06, max: 1.3 }
+  });
+});
+
+test('title wall-3: a third cat on the wall, right of the first, on the same stones; a patrol walks right along it, the leader at wall-3 with room for her face, nobody\'s head on another\'s', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('title').anchors.main;
+  assert.ok(A['wall-3'].x > A.wall.x + 200 && A['wall-3'].y === A.wall.y && A['wall-3'].h === A.wall.h, 'right of wall, on the wall\'s top, the same size');
+  assert.equal(A['wall-3'].face, 'left', 'facing left by default, as its neighbours');
+  for (const fx of [['day'], ['sunset']]) for (const lead of ['player', 'tallyheart', 'murmurchime']) {
+    const rest = ['player', 'tallyheart', 'murmurchime'].filter((w) => w !== lead);
+    const cast = [{ who: rest[1], at: 'wall-2', pose: 'walk', mood: 'happy', facing: 'right' }, { who: rest[0], at: 'wall', pose: 'walk', mood: 'proud', facing: 'right' }, { who: lead, at: 'wall-3', pose: 'walk', mood: 'proud', facing: 'right' }];
+    const scene = { set: 'title', cam: 'wide', cast, fx }, r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'title wide, the patrol led by ' + lead);
+    const L = cast.map((m) => landed(r.svg, m, A[m.at]));
+    assert.ok(L.every(Boolean), 'all three on the wall');
+    // the leader's face is wholly in the panel, with room to spare at the right
+    assert.ok(L[2].head[2] < 1600 - 10 && L[2].head[0] > 0, lead + ' leads: her face in the panel, room at the right: ' + L[2].head.map(Math.round));
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (i !== j) assert.equal(overlap(L[i].head, L[j].head), 0, 'no head on another');
+    assert.ok(r.heads.every((h) => h && h.x > 0 && h.x < 100), 'every head in the panel');
+  }
+  // with nobody given a spot, three take the wall in order: wall, wall-2, wall-3
+  const r = art.render({ set: 'title', cam: 'wide', cast: [{ who: 'clancat' }, { who: 'clancat', variant: 2 }, { who: 'clancat', variant: 3 }] }, { look: LOOK });
+  assert.ok(r.heads[0].x > r.heads[1].x && r.heads[2].x > r.heads[0].x, 'wall, then wall-2 at its left, then wall-3 at its right: ' + JSON.stringify(r.heads));
+});
+
+const END_CAST = (pose1, pose2, order) => {
+  const c = [{ who: 'tallyheart', at: 'end-1', pose: pose1, mood: 'stern' }, { who: 'player', at: 'end-2', pose: pose2, mood: 'wonder' }, { who: 'murmurchime', at: 'end-3', pose: pose2, mood: 'worried' },
+    { who: 'sloshbank', at: 'reed-1', pose: pose1, mood: 'stern' }, { who: 'reedclan', variant: 2, at: 'reed-2', pose: pose2, mood: 'happy' }, { who: 'reedclan', variant: 1, at: 'reed-3', pose: pose2, mood: 'neutral' }];
+  return order ? c.reverse() : c;
+};
+
+test('the wall\'s end: CrystalClan on the dry ground at the wall\'s foot facing right, ReedClan out of the reeds facing left, end-1 and reed-1 nearest the line where the stones stop; nobody in mud or water; every face in the panel in both cameras, no head on another\'s, and at cat height each side stands in depth, the nearer drawn over the farther in any cast order', { skip: !art.character && 'no cats.js' }, () => {
+  const ti = art.sceneInfo('title'), E = art.titleEndInfo();
+  for (const cam of ['end', 'meet']) {
+    const A = ti.anchors[cam], I = E[cam];
+    const ours = ['end-1', 'end-2', 'end-3'].map((k) => A[k]), theirs = ['reed-1', 'reed-2', 'reed-3'].map((k) => A[k]);
+    assert.ok(ours.every((a) => a.x < I.line && a.face === 'right') && theirs.every((a) => a.x > I.line && a.face === 'left'), cam + ': each side of the line, face to face');
+    assert.ok(ours[0].x > ours[1].x && ours[1].x > ours[2].x && theirs[0].x < theirs[1].x && theirs[1].x < theirs[2].x, cam + ': end-1 and reed-1 nearest the line');
+    assert.ok(I.wall.x1 < I.line && I.reeds.x0 > I.line, cam + ': the stones stop at the line, the reeds begin past it');
+    // on the dry bank: below the river's edge, on the trodden ground, in front of the wall's foot and of the reed bed's dark foot
+    for (const a of ours.concat(theirs)) assert.ok(a.y > I.riverTo + 100 && a.y > I.ground && a.y > I.reeds.base + 15 && a.y > I.wall.foot, cam + ': on the dry bank: ' + JSON.stringify(a));
+    // at cat height the second of each side stands behind the first, the third further back still
+    if (cam === 'meet') assert.deepEqual([A['end-1'].z, A['end-2'].z, A['end-3'].z, A['reed-1'].z, A['reed-2'].z, A['reed-3'].z], [undefined, 'behind', 'far', undefined, 'behind', 'far']);
+    else assert.ok(Object.values(A).every((a) => a.z === undefined), 'wide: all on one line, so a spot of its own is sized by depth');
+    for (const [p1, p2] of [['sit', 'sit'], ['stand', 'sit'], ['stand', 'stand'], ['pawup', 'sit'], ['walk', 'stand']]) for (const order of [0, 1]) {
+      const cast = END_CAST(p1, p2, order), scene = { set: 'title', cam, cast, fx: ['day'] }, r = art.render(scene, { look: LOOK });
+      checkRender(r, scene, 'title/' + cam + ' ' + p1 + '/' + p2 + (order ? ' reversed' : ''));
+      assert.ok(r.heads.every((h) => h && h.x > 0 && h.x < 100 && h.y > 0 && h.y < 100), cam + ': every face in the panel: ' + JSON.stringify(r.heads));
+      const L = cast.map((m) => Object.assign(landed(r.svg, m, A[m.at]), { m }));
+      for (const x of L) {
+        assert.ok(x.head[0] >= 0 && x.head[2] <= 1600 && x.head[1] >= 0, cam + ' ' + x.m.at + ': the head box in the panel: ' + x.head.map(Math.round));
+        for (const y of L) if (x !== y) assert.equal(overlap(x.head, y.head), 0, cam + ': ' + x.m.at + '\'s head clear of ' + y.m.at + '\'s');
+      }
+      if (cam === 'meet') {
+        // drawn far, then behind, then in front, whatever the cast's order
+        const at = (k) => L.find((x) => x.m.at === k).idx;
+        for (const side of ['end', 'reed']) assert.ok(at(side + '-3') < at(side + '-2') && at(side + '-2') < at(side + '-1'), cam + ' ' + side + ': the farther under the nearer');
+      }
+      // sitting, as a talk is drawn, nobody's face is under another's body; standing, at most a tail tip
+      // crosses the edge of one (body boxes, which hold the tails)
+      for (const x of L) for (const y of L) if (x !== y && y.idx > x.idx) assert.ok(overlap(x.head, y.body) / area(x.head) < (p1 === 'sit' && p2 === 'sit' ? 0.05 : 0.2), cam + ' ' + p1 + '/' + p2 + ': ' + x.m.at + '\'s face clear of ' + y.m.at + ': ' + (overlap(x.head, y.body) / area(x.head)).toFixed(2));
+      // every reed is drawn under the cast, and nothing in front of everyone reaches a face
+      const reeds = r.svg.indexOf('data-prop="reeds"'), first = Math.min(...L.map((x) => x.idx));
+      assert.ok(reeds > 0 && reeds < first, cam + ': the reeds behind everyone');
+      // (the layer in front of everyone is the panel's last shadowed group, after the cast)
+      const fronts = [...r.svg.matchAll(/<g filter="url\(#[^)]*-f-sh-s\)">/g)].map((m) => m.index), front = fronts[fronts.length - 1];
+      assert.ok(front > Math.max(...L.map((x) => x.idx)), cam + ': the grass in front comes after the cast');
+      const ys = [...r.svg.slice(front).matchAll(/<path d="([^"]+)"/g)].flatMap((m) => (m[1].match(/-?[\d.]+/g) || []).map(Number).filter((v, i) => i % 2 === 1));
+      const lowestFace = Math.min(...L.map((x) => x.head[3]));
+      assert.ok(ys.every((y) => y > lowestFace), cam + ': the grass in front stays below every face');
+    }
+    // with nobody there: no cat on the wall (the title screen's is chapter 1's picture), nothing drawn for a cast
+    const empty = art.render({ set: 'title', cam, cast: [], fx: ['day'] }, { look: LOOK });
+    checkRender(empty, { cast: [] }, 'title/' + cam + ' nobody');
+    assert.ok(!/-f-titlecat"/.test(empty.svg), cam + ': no silhouette cat');
+    for (const fx of [['sunset'], ['morning'], ['dusk'], ['night']]) checkRender(art.render({ set: 'title', cam, cast: END_CAST('sit', 'sit'), opts: { rustle: true }, fx }, { look: LOOK }), { cast: END_CAST('sit', 'sit') }, 'title/' + cam + ' ' + fx);
+  }
+  // a spot of the story's own on the wide picture is sized by its depth there
+  const near = art.render({ set: 'title', cam: 'end', cast: [{ who: 'clancat', at: { x: 1300, y: 940 } }, { who: 'clancat', at: { x: 1500, y: 880 } }], fx: ['day'] }, { look: LOOK });
+  assert.ok(near.heads[0].r > near.heads[1].r, 'nearer is bigger: ' + JSON.stringify(near.heads));
+  // the old wall's stones and the line's one stone are drawn; the river lies behind, between the far shore and the bank
+  const svg = art.render({ set: 'title', cam: 'end', cast: [], fx: ['day'] }).svg;
+  assert.ok(svg.includes('data-prop="wall-end"') && svg.includes('data-prop="line-stone"'));
+});
+
+test('rustle: rustle lines in the reeds and the reeds by them swaying, in both cameras of the wall\'s end, above every face; never without the option, never on the river at dusk', { skip: !art.character && 'no cats.js' }, () => {
+  const E = art.titleEndInfo(), A = art.sceneInfo('title').anchors;
+  for (const cam of ['end', 'meet']) {
+    const off = art.render({ set: 'title', cam, cast: END_CAST('sit', 'sit'), fx: ['day'] }, { look: LOOK });
+    assert.ok(!off.svg.includes('data-prop="rustle"') && !off.svg.includes('pcs-sway'), cam + ': no rustle unless asked');
+    for (const cast of [[], END_CAST('sit', 'sit'), END_CAST('stand', 'stand')]) {
+      const r = art.render({ set: 'title', cam, cast, opts: { rustle: true }, fx: ['day'] }, { look: LOOK });
+      checkRender(r, { cast }, cam + ' rustle');
+      const lines = prop(r.svg, 'rustle');
+      assert.ok(lines && /class="pcs-pulse"/.test(lines), cam + ': the rustle lines, pulsing');
+      assert.ok(r.svg.includes('class="pcs-sway"'), cam + ': the reeds by them sway');
+      const P = pathPoints(lines);
+      assert.ok(P.length > 10 && P.every((q) => q[0] > E[cam].line && q[0] < 1600), cam + ': in the reeds, past the line');
+      const L = cast.map((m) => landed(r.svg, m, A[cam][m.at]));
+      for (const x of L) assert.ok(P.every((q) => q[1] < x.head[1]), cam + ': above every face');
+    }
+  }
+  const wide = art.render({ set: 'title', cam: 'wide', opts: { rustle: true }, cast: [], fx: ['day'] });
+  assert.ok(!wide.svg.includes('data-prop="rustle"'), 'the river at dusk has no reeds to rustle');
+});
+
+test('the dream: walking on the Sky River (star-1 near, our cat walking; star-2 further along, the starry cat, smaller, facing back), both on the path of stars, a soft pool of starlight under each and never a dark shadow; the city\'s lights tiny far below; looking down: the towers far below, the tallest\'s red light, one balcony with a wind chime catching the starlight, nobody seen', { skip: !art.character && 'no cats.js' }, () => {
+  const W = art.sceneInfo('sky').anchors.walk, D = art.dreamInfo();
+  const a1 = W['star-1'], a2 = W['star-2'];
+  assert.ok(a1.face === 'right' && a2.face === 'left', 'she walks toward the starry cat, who faces back');
+  assert.ok(a2.x > a1.x && a2.y < a1.y && a2.h < a1.h * 0.8, 'the starry cat is further along: further off, higher up the path, smaller');
+  for (const a of [a1, a2]) {
+    const c = D.at(a.x);
+    assert.ok(Math.abs(a.y - c.y) < c.w * 0.35, 'on the path of stars at x ' + a.x + ': ' + a.y + ' vs ' + JSON.stringify(c));
+  }
+  const cast = [{ who: 'player', at: 'star-1', pose: 'walk', mood: 'wonder', facing: 'right' }, { who: 'clancat', at: 'star-2', pose: 'sit', mood: 'kind', starry: true }];
+  for (const fx of [['night'], ['night', 'stars'], []]) {
+    const scene = { set: 'sky', cam: 'walk', cast, fx }, r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'sky/walk ' + fx);
+    assert.ok(r.heads.every((h) => h && h.x > 2 && h.x < 98 && h.y > 2), 'both faces in the panel: ' + JSON.stringify(r.heads));
+    assert.ok(r.heads[0].r > r.heads[1].r, 'our cat is nearer');
+    assert.ok(r.svg.includes('data-prop="star-path"') && r.svg.includes('data-prop="city-far"'), 'the path of stars; the city far below');
+    for (const a of [a1, a2]) assert.equal(footShade(r.svg, a.y).length, 0, 'no dark shadow on starlight');
+    assert.equal((r.svg.match(/-r-dpool\)"/g) || []).length, 2, 'a pool of starlight under each of them');
+    // the starry extra reaches the drawing (cats.js draws her in starlight)
+    const asked = [], real = art.character;
+    withCharacter((who, o) => { asked.push(Object.assign({ who }, o)); return real(who, o); }, () => art.render(scene, { look: LOOK }));
+    assert.ok(asked.some((o) => o.who === 'clancat' && o.starry === true), 'starry: true is handed to the painter');
+  }
+  const nobody = art.render({ set: 'sky', cam: 'walk', cast: [], fx: ['night'] });
+  assert.ok(!nobody.svg.includes('-r-dpool'), 'no pool where nobody stands');
+  // looking down: nobody is seen, whoever the frame names
+  const down = art.render({ set: 'sky', cam: 'below', cast, fx: ['night'] }, { look: LOOK });
+  checkRender(down, { cast }, 'sky/below');
+  assert.deepEqual(down.heads, [null, null], 'no spots: nobody drawn');
+  assert.ok(!/translate\(-100 -200\)/.test(down.svg), 'no cat in the picture');
+  const towers = prop(down.svg, 'towers-below'), balcony = prop(down.svg, 'chime-balcony');
+  assert.ok(towers && /class="pcs-blink"/.test(towers) && towers.includes('#FF4B3E'), 'the tallest tower\'s little red light, blinking');
+  assert.ok(balcony && balcony.includes('class="pcs-chime"') && balcony.includes('class="pcs-tw"'), 'a balcony with a wind chime, twinkling in the starlight');
+  assert.ok(down.svg.includes('data-prop="river-edge"'), 'the river\'s edge, near, across the top');
+  assert.equal(D.towers.filter((t) => t.chime).length, 1, 'one balcony'); assert.equal(D.towers.filter((t) => t.tallest).length, 1, 'one tallest');
+  const tallest = D.towers.find((t) => t.tallest);
+  assert.ok(D.towers.every((t) => t === tallest || t.w < tallest.w), 'the tallest is the nearest roof, the biggest');
+  // one glass tower all along (chapters 1 to 5): her old window, Waffles nineteen floors up, the red light on top
+  assert.ok(tallest.chime, 'Waffles\'s balcony is on the tallest tower, the one with the red light');
+  // its rail and door (the rects' x) start on that tower's face and stop short of the next tower to the right
+  const xs = [...balcony.matchAll(/<rect x="([-\d.]+)"[^>]* width="([-\d.]+)"/g)].flatMap((m) => [+m[1], +m[1] + +m[2]]);
+  const next = Math.min(...D.towers.filter((t) => t.x > tallest.x).map((t) => t.x - t.w / 2));
+  assert.ok(xs.length && Math.min(...xs) >= tallest.x - tallest.w / 2 && Math.max(...xs) < next,
+    'the balcony is on its face, clear of the next tower: x ' + Math.round(Math.min(...xs)) + '..' + Math.round(Math.max(...xs)) + ' (next tower from ' + next + ')');
+  // chapter 1's two cameras are as they were (the fingerprints above)
+  assert.deepEqual(art.sceneInfo('sky').cams.up, { x: 160, y: 0, w: 1280, h: 800, comp: 'main', follow: false, head: false });
+});
+
+test('den hidden, chapter 6: Coil\'s card goes under the moss with Sprinkle\'s two: three fewer in the row, three corners showing at its inner end, the third short of the nest\'s middle; chapters 4 and 5\'s files, which hold no such card, keep their two', { skip: !art.character && 'no cats.js' }, () => {
+  const file = ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'prints-tracks', 'reed-pile', 'coil-diggers'];
+  for (const n of [9, 12, 15]) {
+    const list = file.slice(0, n - 2).concat(['reed-pile', 'coil-diggers']).filter((v, i, a) => a.indexOf(v) === i);
+    if (!list.includes('sprinkle-scales')) continue;
+    for (const cam of ['nest', 'inside', 'doorway']) for (const facing of ['right', 'left']) {
+      const scene = nestScene({ bark: list, hidden: true }, { pose: 'lie', facing }, cam), r = art.render(scene, { look: LOOK }), vb = viewBox(r.svg);
+      checkRender(r, scene, 'den/' + cam + ' three hidden');
+      const P = pieces(r.svg), C = corners(r.svg);
+      assert.equal(P.length, list.length - 3, cam + ': three fewer in the row');
+      assert.equal(C.length, 3, cam + ': three corners');
+      const two = corners(art.render(nestScene({ bark: list.filter((c) => c !== 'coil-diggers'), hidden: true }, { pose: 'lie', facing }, cam), { look: LOOK }).svg);
+      assert.equal(two.length, 2, 'without Coil\'s card: two, as before');
+      const inner = (cs) => Math.min(...cs.map((c) => Math.abs(c.x - NEST_X)));
+      assert.ok(inner(C) >= inner(two) - 1, cam + ': the third keeps short of the middle, where chapter 4\'s second stood: ' + inner(C).toFixed(1) + ' vs ' + inner(two).toFixed(1));
+      for (const c of C) {
+        assert.ok(inVb(c.x, c.y - 24, vb, 2) && inVb(c.x, c.y, vb, 2), cam + ': in the panel');
+        assert.ok(c.y > 886 && c.y < 886 + 50 && Math.abs(c.x - NEST_X) < 120, cam + ': in the front rim\'s moss');
+        for (const q of P) assert.ok(Math.abs(c.x - NEST_X) < Math.abs(q.x - NEST_X), cam + ': past the row\'s inner end');
+      }
+      for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) assert.ok(Math.abs(C[i].x - C[j].x) > 8, 'side by side');
+      // never on her face
+      const me = landed(r.svg, scene.cast[0], art.sceneInfo('den').anchors.inside.nest);
+      if (me) for (const c of C) assert.ok(!(c.x > me.head[0] && c.x < me.head[2] && c.y - 20 > me.head[1] && c.y - 20 < me.head[3]), 'a corner off her face');
+    }
+  }
+  // which three: the secret pictures, wherever they are in her file, by picture
+  const asked = [], spy = (o) => { asked.push(o.blank ? '(blank)' : o.picture); return { svg: '<rect class="spy-card" width="200" height="240" fill="#EDE1C5"/>', w: 200, h: 240 }; };
+  const row = (opts) => { asked.length = 0; withCards(spy, () => art.render(nestScene(opts), { look: LOOK })); return asked.slice(); };
+  assert.deepEqual(row({ bark: ['four-a-night', 'coil-diggers', 'sprinkle-scales', 'reed-pile', 'cant-fly', 'sleet-den'], hidden: true }), ['four-a-night', 'reed-pile', 'sleet-den'], 'ReedClan\'s and Sleet\'s lie in the row; Coil\'s goes under');
+  assert.deepEqual(row({ bark: [{ picture: 'four-a-night', mark: 'eye' }, { picture: 'coil-diggers', mark: 'ear' }, { picture: 'tidy', mark: 'eye' }], hidden: true }), ['four-a-night'], 'one secret held: it, and the newest other (two under, as chapter 4 had it)');
+  assert.deepEqual(row({ bark: ['four-a-night', 'coil-diggers', 'tidy'] }), ['four-a-night', 'coil-diggers', 'tidy'], 'not hidden: the list as given');
+  assert.equal(corners(art.render(nestScene({ bark: ['a', 'coil-diggers', 'b'], hidden: true }), { look: LOOK }).svg).length, 2, 'two corners when fewer than two secrets are held');
+});
+
+test('hollow, chapter 6: a sixth claw mark, beside the fifth in the second row, on the trunk, in the tree close-up and the wide; older glowing marks keep glowing; the lesson camera draws it as chapter 5 drew its five', () => {
+  const at = (cam, opts) => art.render({ set: 'hollow', cam, opts: Object.assign({ marks: 6 }, opts || {}), cast: [], fx: ['morning'] });
+  const r = at('wide');
+  checkRender(r, { cast: [] }, 'hollow six');
+  const outer = shapes(r.svg, 'fill="#3A281E"');
+  assert.equal(outer.length, 18, 'six marks, three scratches each');
+  const C = outer.map(centre), mark = (i) => centre(C.slice(i * 3, i * 3 + 3));
+  // the first five exactly where chapter 5 put them
+  const five = shapes(art.render({ set: 'hollow', cam: 'wide', opts: { marks: 5 }, cast: [], fx: ['morning'] }).svg, 'fill="#3A281E"').map(centre);
+  const m5 = (i) => centre(five.slice(i * 3, i * 3 + 3));
+  for (let i = 0; i < 3; i++) assert.ok(Math.abs(mark(i)[1] - mark(0)[1]) < 1, 'the first row');
+  assert.ok(Math.abs(mark(5)[1] - mark(4)[1]) < 1 && mark(5)[0] - mark(4)[0] > 40 && mark(5)[0] - mark(4)[0] < 60, 'the sixth beside the fifth, in the second row: ' + mark(4) + ' / ' + mark(5));
+  assert.ok(mark(3)[1] > mark(0)[1] + 40, 'the second row under the first');
+  for (const [i, p] of [[3, m5(3)], [4, m5(4)]]) assert.ok(Math.abs(mark(i)[0] - p[0]) < 12 && Math.abs(mark(i)[1] - p[1]) < 1, 'the second row starts as chapter 5\'s did');
+  // in the tree close-up, all six whole, and in the keep area
+  const t = at('tree', { glow: [true, false, true, false, false, false] }), vb = viewBox(t.svg);
+  for (const p of shapes(t.svg, 'fill="#3A281E"').flat()) assert.ok(inVb(p[0], p[1], vb, 2), 'the tree close-up holds every mark: ' + p);
+  const k = t.keep[0];
+  for (const p of shapes(t.svg, 'fill="#3A281E"').flat()) assert.ok(p[0] >= vb[0] + k.x / 100 * vb[2] - 1 && p[0] <= vb[0] + (k.x + k.w) / 100 * vb[2] + 1, 'in the keep');
+  // glow: a list lights mark by mark, so the older ones that glow keep glowing beside the new
+  const lit = shapes(t.svg, 'fill="#FFF6D0" class="pcs-pulse"'), dim = shapes(t.svg, 'fill="#E9D2A6"');
+  assert.equal(lit.length, 6, 'two marks lit (first and third)');
+  assert.equal(dim.length, 12);
+  // the lesson camera draws the six as it drew chapter 5's five (its right edge at x 1140, the trunk's edge)
+  const L = at('lesson', { glow: [true, false, false, false, false, false] });
+  checkRender(L, { cast: [] }, 'hollow lesson six');
+  assert.ok(L.keep.length <= 1);
+});
+
+test('hollow, chapter 6: the patrol of three trotting by behind the rim, at the story\'s three spots on the far edge: drawn behind the five sitters in any cast order, their heads and backs clear above every sitter\'s head, in the wide panel', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('hollow').anchors.main;
+  for (const rim2 of ['murmurchime', 'clancat']) for (const facing of ['right', 'left']) for (const order of [0, 1]) {
+    // (chapter 5's rim, RIM5 above, as its rim() lays it; or a grown cat in Murmurchime's place)
+    const rim = RIM5().map((m) => (m.at === 'rim-2' && rim2 === 'clancat' ? Object.assign({}, m, { who: 'clancat', variant: 2 }) : m));
+    const walkers = PATROL6.map((at, i) => ({ who: 'clancat', variant: [4, 6, 2][i], pose: 'walk', mood: 'proud', facing, at }));
+    const cast = order ? walkers.concat(rim, [{ who: 'tallyheart', at: 'tree-far', pose: 'sit', mood: 'kind', facing: 'left' }]) : rim.concat([{ who: 'tallyheart', at: 'tree-far', pose: 'sit', mood: 'kind', facing: 'left' }], walkers);
+    const scene = { set: 'hollow', cam: 'wide', opts: { marks: 6, glow: [true, false, false, false, false, false] }, cast, fx: ['morning'] }, r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'hollow patrol');
+    const sit = rim.map((m) => landed(r.svg, m, A[m.at])), walk = walkers.map((m) => landed(r.svg, m, Object.assign({ face: m.facing }, m.at)));
+    assert.ok(sit.every(Boolean) && walk.every(Boolean), 'all eight drawn');
+    for (const w of walk) {
+      assert.ok(sit.every((s) => w.idx < s.idx), 'a walker is drawn behind every sitter');
+      const over = sit.filter((s) => s.head[0] < w.head[2] && s.head[2] > w.head[0]);
+      for (const s of over) assert.ok(s.head[1] - w.head[1] > 50, 'a walker\'s head well above the sitter\'s in front of it: ' + (s.head[1] - w.head[1]).toFixed(1));
+      assert.ok(w.head[0] > 0 && w.head[2] < 1600 && w.head[1] > 0, 'in the panel');
+    }
+    for (let i = 1; i < 3; i++) assert.ok(walk[i].body[0] >= walk[i - 1].body[2] - 20, 'single file, one after another');
+  }
+});
+
+// Stand-ins for chapter 6's three, drawn at a chosen size, to see the scenes hold them to the text's.
+function standIns6(real, k) {
+  const head = (c) => (c.headBox.x1 - c.headBox.x0 + c.headBox.y1 - c.headBox.y0) / 2;
+  const player = head(real('player', { pose: 'sit', mood: 'neutral', look: LOOK, sex: LOOK.sex })), spr = head(real('sprinkle', { pose: 'sit', mood: 'neutral' }));
+  const tally = (() => { const c = real('tallyheart', { pose: 'sit', mood: 'neutral' }); return c.h - c.headBox.y0; })();
+  return function (who, o) {
+    let d;
+    if (who === 'coil') { const s = player * k.coil; d = { w: 300, h: 120, headBox: { x0: 150 - s / 2, y0: 120 - s, x1: 150 + s / 2, y1: 120 }, bounds: { x0: 20, y0: 120 - s, x1: 150 + s / 2, y1: 120 } }; }
+    else if (who === 'sleet') { const s = spr * k.sleet; d = { w: 640, h: 340, headBox: { x0: 360 - s / 2, y0: 30, x1: 360 + s / 2, y1: 30 + s }, bounds: { x0: 120, y0: 30, x1: 500, y1: 338 } }; }
+    else if (who === 'sloshbank') { const t = tally * k.sloshbank; d = { w: 200, h: 200, headBox: { x0: 60, y0: 200 - t, x1: 170, y1: 200 - t + 90 }, bounds: { x0: 20, y0: 200 - t, x1: 190, y1: 198 } }; }
+    else return real(who, o);
+    if (o && ['stone', 'hidden', 'tail'].includes(o.pose)) d.bounds = { x0: d.headBox.x0, y0: d.headBox.y0, x1: d.headBox.x1, y1: d.headBox.y1 };
+    return { svg: '<rect class="new-' + who + '" x="' + d.bounds.x0 + '" y="' + d.bounds.y0 + '" width="' + (d.bounds.x1 - d.bounds.x0) + '" height="' + (d.bounds.y1 - d.bounds.y0) + '" fill="#8FA3B8"/>', w: d.w, h: d.h, head: { x: (d.headBox.x0 + d.headBox.x1) / 2, y: d.headBox.y0 + 8 }, headBox: d.headBox, bounds: d.bounds };
+  };
+}
+
+test('Coil, Sleet and Sloshbank at any anchor are held to the text\'s sizes: Coil\'s head smaller than a cat\'s (no bigger than a stone of the wall), Sleet\'s head about Sprinkle\'s, Sloshbank bigger than Tallyheart; a drawing inside its band is left as drawn; every pose alike', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, a = art.sceneInfo('title').anchors.main.wall, base = a.h / 200;
+  const near = (x, y, what) => assert.ok(Math.abs(x - y) < 0.0002, what + ': ' + x + ' vs ' + y);
+  const B = art.sizeBands;
+  const cases = [['coil', 'head', ['stone', 'still']], ['sleet', 'sit', ['flat', 'hidden']], ['sloshbank', 'sit', ['stand']]];
+  for (const [who, pose, others] of cases) {
+    const band = B[who];
+    for (const k of [band.min * 0.5, (band.min + band.max) / 2, band.max * 1.6]) {
+      const fake = standIns6(real, { coil: 0.5, sleet: 1, sloshbank: 1.2, [who]: k });
+      withCharacter(fake, () => {
+        const c = fake(who, { pose }), want = round4(base * Math.min(Math.max(k, band.min), band.max) / k);
+        const place = (p) => art.render({ set: 'title', cam: 'wide', cast: [{ who, pose: p, mood: 'neutral', at: 'wall', facing: 'left' }], fx: ['day'] }, { look: LOOK });
+        const r = place(pose);
+        checkRender(r, { cast: [1] }, who + ' ' + k);
+        near(placedScale(r.svg, a, c.w, c.h), want, who + ' drawn at ' + k.toFixed(2) + (k >= band.min && k <= band.max ? ' (inside: as drawn)' : ' (brought into the band)'));
+        for (const p of others) { const d = fake(who, { pose: p }); near(placedScale(place(p).svg, a, d.w, d.h), want, who + ' ' + p + ': the same scale'); }
+      });
+    }
+  }
+  // the real ones (cats.js, once it draws them): inside their bands as drawn
+  if (art.vocab.cast && art.vocab.cast.includes('coil')) {
+    const hd = (c) => (c.headBox.x1 - c.headBox.x0 + c.headBox.y1 - c.headBox.y0) / 2;
+    const k = {
+      coil: hd(real('coil', { pose: 'head', mood: 'neutral' })) / hd(real('player', { pose: 'sit', mood: 'neutral', look: LOOK, sex: LOOK.sex })),
+      sleet: hd(real('sleet', { pose: 'sit', mood: 'neutral' })) / hd(real('sprinkle', { pose: 'sit', mood: 'neutral' })),
+      sloshbank: sitTall('sloshbank') / sitTall('tallyheart')
+    };
+    for (const w of Object.keys(k)) {
+      const s = placedScale(art.render({ set: 'title', cam: 'wide', cast: [{ who: w, pose: B[w].pose, mood: 'neutral', at: 'wall', facing: 'left' }], fx: ['day'] }, { look: LOOK }).svg, a, real(w, { pose: B[w].pose, mood: 'neutral', facing: 'left' }).w, real(w, { pose: B[w].pose, mood: 'neutral', facing: 'left' }).h);
+      const held = s / base * k[w];
+      assert.ok(held >= B[w].min - 0.005 && held <= B[w].max + 0.005, w + ' as the painter draws him, held at ' + held.toFixed(3) + ' of ' + B[w].ref);
+    }
+  }
+});
+
+test('shadows, chapter 6: Coil\'s under his body as drawn, none when he is a stone in his gap; Sleet\'s under his body, none hidden in the long grass or with only his tail showing; Sleet\'s head that tops a cat\'s camera still gets a balloon point', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, a = art.sceneInfo('title').anchors.main.wall;
+  withCharacter(standIns6(real, { coil: 0.5, sleet: 1, sloshbank: 1.2 }), () => {
+    const one = (who, pose) => art.render({ set: 'title', cam: 'wide', cast: [{ who, pose, mood: 'neutral', at: 'wall', facing: 'left' }], fx: ['day'] }, { look: LOOK });
+    assert.equal(footShade(one('coil', 'stone').svg, a.y).length, 0, 'a stone casts no shadow');
+    assert.equal(footShade(one('coil', 'still').svg, a.y).length, 1, 'Coil lying along the wall');
+    for (const p of ['hidden', 'tail']) assert.equal(footShade(one('sleet', p).svg, a.y).length, 0, 'Sleet ' + p + ': nothing gives him away');
+    assert.equal(footShade(one('sleet', 'sit').svg, a.y).length, 1, 'Sleet sitting');
+  });
+});
+
+test('every frame of chapter 6 renders with the art vocabulary (once it is written): its sets, cameras and anchors are the art\'s', () => {
+  if (!has('app/story/ch06.js')) return;
+  require(path.join(ROOT, 'app/story/ch06.js'));
+  const ch = PC.story && PC.story.ch06;
+  for (const [id, f] of Object.entries((ch && ch.frames) || {})) {
+    const s = f.scene, v = art.vocab;
+    if (!s) continue;
+    assert.ok(v.sets[s.set], id + ': set ' + s.set);
+    assert.ok(v.sets[s.set].cams.includes(s.cam), id + ': camera ' + s.set + '/' + s.cam);
+    for (const m of s.cast || []) if (typeof m.at === 'string') assert.ok(v.sets[s.set].anchors.includes(m.at), id + ': anchor ' + m.at + ' in ' + s.set);
+    for (const k of Object.keys(s.opts || {})) assert.ok(Object.prototype.hasOwnProperty.call(v.sets[s.set].opts, k), id + ': option ' + k + ' on ' + s.set);
+    const o = Object.assign({}, s.opts || {});
+    if (o.marks === 'auto') o.marks = 6;
+    if (o.glow === 'auto') o.glow = [true, false, false, false, false, false];
+    if (o.depth === 'auto') delete o.depth;
+    if (o.stone === 'auto') o.stone = 'nose';
+    if (o.bark === 'auto') o.bark = FILE5.slice(0, 14).concat(['reed-pile', 'coil-diggers']);
+    if (Array.isArray(o.cards)) o.cards = o.cards.map((c) => (typeof c === 'string' ? c : c.id));
+    const scene = Object.assign({}, s, { opts: o });
+    checkRender(art.render(scene, { look: LOOK }), scene, 'ch06 ' + id);
+  }
+});
+
+test('chapter 6: ReedClan’s cats are cats: a face sized from the box, as a Clan cat’s is (CAT_IDS)', () => {
+  const at = (who, extra) => art.render({ set: 'title', cam: 'meet', fx: ['day'], cast: [Object.assign({ who, at: 'reed-1', pose: 'sit', mood: 'stern' }, extra || {})] }, { look: LOOK });
+  const clan = at('clancat', { variant: 1 }).heads[0], slosh = at('sloshbank').heads[0], reed = at('reedclan', { variant: 2 }).heads[0];
+  assert.ok(clan && slosh && reed && clan.r > 0, 'all three faces are in the panel, with a size');
+  assert.ok(Math.abs(reed.r / clan.r - 1) < 0.02, 'a ReedClan cat’s face is a cat’s: ' + reed.r + ' vs ' + clan.r);
+  assert.ok(slosh.r / clan.r > 1.08 && slosh.r / clan.r < 1.25, 'Sloshbank’s is a big cat’s, from his bigger box: ' + slosh.r + ' vs ' + clan.r);
 });

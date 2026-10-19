@@ -3633,7 +3633,7 @@ test('book: title, chapter title, a 6–10 sentence recap on every combination; 
   assert.ok(shePage.includes('The old ferry otter said the fox had told him the dragon story, twice, and showed Moonpaw a tuft of thin brown fur.'));
 });
 
-test('the teaser for chapter 6, and chapter 4’s for this one', () => {
+test('the teaser for chapter 6 (built now, and the hub offers it), and chapter 4’s for this one', () => {
   assert.deepEqual(story.teaser, { title: 'Chapter 6: The Snake in the Stones', lines: ['Tomorrow, you ask a nosy old snake what a secret costs.', 'And Tallyheart counts out guards for the pile.'] });
   story.teaser.lines.forEach(l => assert.ok(words(l) <= 25, l));
   // it promises what today set up: Patience's tip (the one who never shuts his eyes) and Glintstar's order (proper guards)
@@ -3642,8 +3642,18 @@ test('the teaser for chapter 6, and chapter 4’s for this one', () => {
   assert.match(T(F(/^Tomorrow: Coil\./)), /What does a nosy old snake want for a secret\?/);
   assert.doesNotMatch(story.teaser.lines.join(' '), /Coil|weasel|ReedClan|patrol/i, 'no name, and nothing chapter 6 has not promised');
   const cat = E.blankCat({}); cat.name = 'Moon';
+  // chapter 6 is built now (2026-10-18): the teaser stands as it was, its title chapter 6's own, and the
+  // hub offers chapter 6 itself; read with chapters 1 to 5 only, it is still "coming soon"
+  const six = PC.story.ch06;
+  assert.ok(six && Object.values(six.frames).every(f => !/^STUB\b/.test(f.board || '')), 'chapter 6 is written');
+  assert.equal(E.chapterHeading(six), story.teaser.title, 'the teaser’s title is chapter 6’s');
   const t = E.teaser(story, cat, PC.story);
-  assert.deepEqual(t, { title: 'Chapter 6: The Snake in the Stones', lines: story.teaser.lines, built: false, next: null }, 'chapter 6 is not built: coming soon');
+  assert.deepEqual(t, { title: 'Chapter 6: The Snake in the Stones', lines: story.teaser.lines, built: true, next: 'ch06' }, 'chapter 6 is built: the hub offers it');
+  assert.deepEqual(E.teaser(story, cat, STORIES), { title: 'Chapter 6: The Snake in the Stones', lines: story.teaser.lines, built: false, next: null }, 'without it, coming soon');
+  // …and both its promises are kept there: a nosy old snake asks what a secret is worth, and Tallyheart counts out guards
+  const said6 = Object.values(six.frames).map(f => (f.say || []).map(b => b.text).join(' ')).join(' ');
+  assert.match(said6, /And what will you give me for a secret\?/);
+  assert.match(said6, /Tonight, our guards do the same\. Six patrols, one after another, sunset to sunrise\. Three cats in every one\./);
   // chapter 4's teaser is paid off on this chapter's first screen, and chapter 5 is built now
   const t4 = E.teaser(ch04, cat, PC.story);
   assert.deepEqual([t4.title, t4.built, t4.next], ['Chapter 5: Riffle’s River', true, 'ch05']);
@@ -3652,12 +3662,15 @@ test('the teaser for chapter 6, and chapter 4’s for this one', () => {
   assert.deepEqual([first.scene.set, first.scene.cam, first.scene.opts.rows.slice(0, 3)], ['pile', 'rows', [10, 10, 10]], 'forty pieces lay in their rows: the chapter opens on them, with four gone');
   assert.ok(ids.some(id => frames[id].scene.set === 'openriver' && castOf(id, 'player').some(c => c.at === 'raft-1')), 'and she rides the raft');
   assert.match(T(F(/So who’s first\?/)), /Otters HEAR everything\. Patience the heron SEES everything\./);
-  // the hub: after chapter 4, chapter 5 is the big button; afterwards chapter 6 is coming soon
+  // the hub: after chapter 4, chapter 5 is the big button; afterwards chapter 6 is (with chapters 1 to 5
+  // alone, it is coming soon)
   const c4 = E.blankCat({}); c4.finished = { ch01: 1, ch02: 2, ch03: 3, ch04: 4 };
   const p4 = E.progress(c4, STORIES);
   assert.deepEqual([p4.next && p4.next.id, E.chapterHeading(p4.next), p4.soon], ['ch05', 'Chapter 5: Riffle’s River', null]);
   const done = reading({ specialty: 'sneaking' }, {}).cat, p = E.progress(done, STORIES);
   assert.deepEqual([p.next, p.soon && p.soon.title, p.latest.id, E.status(done, STORIES)], [null, 'Chapter 6: The Snake in the Stones', 'ch05', 'Chapter 5 finished']);
+  const all = E.progress(done, PC.story);
+  assert.deepEqual([all.next && all.next.id, E.chapterHeading(all.next), all.soon, all.latest.id], ['ch06', 'Chapter 6: The Snake in the Stones', null, 'ch05']);
 });
 
 /* ------------------------------------------------------------------ the engine, end to end */

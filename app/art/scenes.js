@@ -1848,6 +1848,57 @@
     return '<g transform="translate(' + n(x) + ' ' + n(y) + ') rotate(' + n(rot || 0) + ')' + m + ' translate(' + n(-b.w / 2) + ' ' + n(-b.h) + ')" data-bark="' + (card ? 'card' : 'blank') + '">' + b.svg + '</g>';
   }
 
+  // ------------------------------------------------------------------ chapter 7: a comparison scratched in the ground
+
+  /* compareLines(S, o) -> { svg, box } or null (chapter 7, `compare: [24, 60]`: the hollow's `lesson`
+   * and `sand`, and the bridge's `under`; docs/chapters/07-the-counts-dont-lie.spec.md, section 4).
+   * Two straight lines scratched one above the other, starting together at the left, their lengths in
+   * the ratio of their two numbers (60 against 24: the long one two and a half times the short one),
+   * and each number scratched just left of its own line, in the digits chapter 5's answers in the sand
+   * are scratched in (Andika, bold: a groove, and the light on its lower lip a little below and to the
+   * right). The first number's line is the top one. Nothing else: no ticks, no marks to count.
+   *   o.nums   the two numbers (compareNums: two positive numbers, or nothing is drawn)
+   *   o.x, o.y the group's top left; o.w its whole width (the numbers' column, then the long line)
+   *   o.size   a digit's height; o.gap the room between the two rows
+   *   o.groove, o.shine  the scratch and its lit lip; o.word 'sand' | 'mud' (for the label)
+   *   o.patch  (optional) the ground smoothed flat under it, a little paler, so the scratches read in the dark
+   * One group, <g data-art="compare" data-nums="24 60" aria-label="…">, which names both numbers;
+   * `box` is what it covers, for the render's keep. */
+  function compareNums(v) {
+    if (!Array.isArray(v) || v.length !== 2) return null;
+    var a = +v[0], b = +v[1];
+    return isFinite(a) && isFinite(b) && a > 0 && b > 0 && a < 1000 && b < 1000 ? [Math.round(a), Math.round(b)] : null;
+  }
+  function compareLines(S, o) {
+    var nums = compareNums(o && o.nums);
+    if (!nums) return null;
+    var size = o.size > 0 ? +o.size : 30, gap = o.gap >= 0 ? +o.gap : size * 0.4, fs = size / 0.7, digW = size * 0.66;
+    var numW = Math.max(String(nums[0]).length, String(nums[1]).length) * digW, pad = size * 0.32, x0 = o.x + numW + pad;
+    var long = Math.max(size, o.w - numW - pad), top = Math.max(nums[0], nums[1]), sw = Math.max(1.6, size * 0.22);
+    var groove = o.groove || '#6B4A2E', shine = o.shine || '#F4E2BC', dx = size * 0.07, dy = size * 0.07, lines = '', digits = '', lips = '', lit = '';
+    var words = [];
+    nums.forEach(function (v, i) {
+      var cy = o.y + size / 2 + i * (size + gap), len = long * v / top, ty = cy + size / 2;
+      lines += 'M' + n(x0) + ' ' + n(cy) + 'H' + n(x0 + len);
+      var t = String(v), tx = o.x + numW - t.length * digW / 2;
+      function txt(x, y, fill, extra) {
+        return '<text x="' + n(x) + '" y="' + n(y) + '" text-anchor="middle" font-family="Andika, ui-rounded, system-ui, sans-serif" font-weight="700" font-size="' + n(fs) +
+          '" fill="' + fill + '"' + (extra || '') + '>' + esc(t) + '</text>';
+      }
+      lit += txt(tx + dx, ty + dy, shine, ' opacity="0.85"');
+      digits += txt(tx, ty, groove);
+      words.push((v === top && nums[0] !== nums[1] ? 'a long line, ' : nums[0] === nums[1] ? 'a line, ' : 'a short line, ') + t);
+    });
+    lips = stroke(lines, shine, sw * 0.8, { transform: 'translate(' + n(dx) + ' ' + n(dy) + ')', opacity: 0.8 });
+    var label = 'Scratched in the ' + (o.word || 'sand') + ': ' + words.join(', and ');
+    var h = size * 2 + gap, gw = numW + pad + long;
+    var box = { x: o.x - size * 0.1, y: o.y - size * 0.05, w: gw + sw + size * 0.2, h: h + dy + size * 0.1 };
+    var flat = o.patch ? ell(o.x + gw / 2, o.y + h / 2 + dy, gw / 2 + size * 0.35, h / 2 + size * 0.4, o.patch, { opacity: 0.55 }) : '';
+    var svg = '<g data-art="compare" data-nums="' + nums.join(' ') + '" data-box="' + [box.x, box.y, box.x + box.w, box.y + box.h].map(function (v) { return n(v); }).join(' ') +
+      '" aria-label="' + esc(label) + '">' + flat + lips + lit + stroke(lines, groove, sw) + digits + '</g>';
+    return { svg: svg, box: box, nums: nums, label: label };
+  }
+
   // ------------------------------------------------------------------ HOLLOW
 
   // Where the claw marks go on the old tree, [x, y, size] each, in order: one Count each, left to
@@ -1894,6 +1945,10 @@
   // blank pieces, or the row a `cards` list gives): between the two sand anchors, at the cats' feet,
   // inside every camera that sees the sand (the lesson two-shot's bottom edge is just below).
   var SAND_BARK = { x: 785, y: 884 };
+  // Chapter 7's sum in the sand (`compare: [24, 60]`): between the two cats sitting at sand-left and
+  // sand-right (Tallyheart's body ends at x 739, a cat's facing left at sand-right begins at 855), on
+  // the sand at their feet, inside the lesson two-shot (its bottom edge is y 915) and the sand close-up
+  var HOLLOW_COMPARE = { x: 742, y: 848, w: 106, size: 18, gap: 9 };
   // The row on the sand (`bark: 'row'`), oldest first; null is a blank piece. With `cards` (a list:
   // each a picture's key, { picture, mark }, or a story's own entry { id } before the page has
   // resolved it, which is drawn for every cat), those pieces scratched, then `blank` blank pieces
@@ -2057,6 +2112,12 @@
     // chapter 4: the curl of bark (falling from the new mark; lying on the sand; a row of pieces to
     // scratch), and the one soft shadow under the heap of rim cats
     if (o.bark) back += hollowBark(S, marks);
+    // chapter 7: the sum scratched in the sand between the two cats (`lesson`, `sand`), clear of the lettering
+    if (o.compare && (S.cam === 'lesson' || S.cam === 'sand')) {
+      var cmp = compareLines(S, { nums: o.compare, x: HOLLOW_COMPARE.x, y: HOLLOW_COMPARE.y, w: HOLLOW_COMPARE.w, size: HOLLOW_COMPARE.size, gap: HOLLOW_COMPARE.gap,
+        groove: mix(p.sandDark, p.woodDark, 0.55), shine: mix(p.sandLight, '#FFFFFF', 0.4), word: 'sand' });
+      if (cmp) { back += cmp.svg; (S.keep = S.keep || []).push(cmp.box); }
+    }
     if (o.heap) back += ell(800, 796, 226, 20, p.shade, { opacity: 0.2, 'data-prop': 'heap' });
     // front: grass lip of the hollow
     front += g(tufts(S, 0, 1600, 960, 1010, 40, 160, p.grassNear, p.grassLight, 2.2), { filter: S.shadow('s') });
@@ -2223,7 +2284,9 @@
   // picture she holds is out of the row, a corner showing for each, so three once she holds his. A
   // row with fewer than two of them still hides two, as chapter 4 did: chapters 4 and 5 draw as
   // they always did)
-  var BARK_SECRET = { 'sprinkle-scales': 1, 'cant-fly': 1, 'coil-diggers': 1 }, BARK_MAX = 24;
+  // (chapter 7: her own three eyes go under the moss too, on every path: the sum, Sprinkle's prints and the
+  // tunnel. Six secrets, a corner showing for each; a file of chapters 4 to 6 holds none of them)
+  var BARK_SECRET = { 'sprinkle-scales': 1, 'cant-fly': 1, 'coil-diggers': 1, 'my-count': 1, 'prints-sprinkle': 1, tunnel: 1 }, BARK_MAX = 24;
   // the most pieces one row holds (chapter 4's fullest); how much higher the course behind it stands (denBark)
   var BARK_ROW = 9, BARK_LIFT = 15;
   function barkRow(S) {
@@ -2264,7 +2327,10 @@
     // two hidden, their corners take its inner end
     // (three under the moss, chapter 6: the row gives up a little more of the rim and the corners stand
     // a little closer, so the innermost keeps to where chapter 4's second stood, short of the middle)
-    var T = (R.hid ? 86 - 8 * Math.max(0, R.hid - 2) : 112) * k, cGap = (R.hid > 2 ? (110 - (T / k + 9)) / (R.hid - 1) : 15) * k, nRow = R.row.length, step = nRow > 1 ? Math.min(15 * k, (T - cw) / (nRow - 1)) : 0, len = nRow ? cw + (nRow - 1) * step : 0, t0 = (T - len) / 2;
+    // (more than three under the moss, chapter 7: the row keeps chapter 6's room, 78, so neither course is
+    // ever closer set than chapter 6's fullest (a step of 5 at eighteen), and the corners go on from where
+    // chapter 6's first stood, 8 apart, a little past the nest's middle; three or fewer draw as they did)
+    var T = (R.hid ? 86 - 8 * Math.min(1, Math.max(0, R.hid - 2)) : 112) * k, cGap = (R.hid > 3 ? 8 : R.hid > 2 ? (110 - (T / k + 9)) / (R.hid - 1) : 15) * k, nRow = R.row.length, step = nRow > 1 ? Math.min(15 * k, (T - cw) / (nRow - 1)) : 0, len = nRow ? cw + (nRow - 1) * step : 0, t0 = (T - len) / 2;
     function at(t) { return x + d * (118 * k - t); }
     var x0 = 1e9, x1 = -1e9, top = 1e9, i, total = nRow;
     // Chapter 5: a bigger file. One row holds nine pieces as chapter 4 stood them (its fullest row);
@@ -3271,7 +3337,10 @@
       // no bark falls that day), and the rim's five and Tallyheart sitting up with `tuck: true`, a
       // cast extra the painter draws (one claw curled back in: nine out)
       opts: { marks: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'auto'], glow: [true, false, 'auto'], depth: [0, 1, 2, 'auto'],
-        bark: [false, 'falling', 'sand', 'row'], cards: 'cards', blank: [0, 1, 2, 3], heap: [false, true] }, defaults: { marks: 0 }
+        bark: [false, 'falling', 'sand', 'row'], cards: 'cards', blank: [0, 1, 2, 3], heap: [false, true],
+        // chapter 7: the sum scratched in the sand between the two cats, a short line by 24 and a line two and a
+        // half times as long by 60 (`lesson` and `sand`; a list of two numbers, compared by value as the pile's rows)
+        compare: [false, [24, 60]] }, defaults: { marks: 0, compare: false }
     },
     den: {
       label: "the apprentices' den", tod: 'night', draw: drawDen,
@@ -4095,6 +4164,10 @@
     redLight: redLight, thinMoon: thinMoon, barkCurl: barkCurl, barkAt: barkAt,
     // chapter 5: waxingMoon(S, x, y, r, tilt, age) (the moon `age` evenings old: 4 is thinMoon's sliver, 5 a little fatter)
     waxingMoon: waxingMoon,
+    // chapter 7: compareLines(S, { nums, x, y, w, size, gap, groove, shine, word }) -> { svg, box } (two lines
+    // scratched in the ground in the ratio of their numbers, each number by its line: the hollow's and the
+    // bridge's `compare`), compareNums(v) (the two numbers it will draw, or null)
+    compareLines: compareLines, compareNums: compareNums,
     anchor: A
   };
 

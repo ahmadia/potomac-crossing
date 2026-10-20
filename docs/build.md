@@ -1324,3 +1324,101 @@ chapters 2 to 5 draw as they did):
   tests run it with the spec's), and it now checks each variant of a cast member that has words by
   variant. Chapters 1 to 5's storyboards regenerate byte for byte. Two words stay chapter 4's on
   purpose (spec section 7, item 12): the den's `hidden` and the field's border cameras.
+
+## Chapter 7 (v0.1)
+
+Chapter 7, *The Counts Don’t Lie*, is [`chapters/07-the-counts-dont-lie.md`](chapters/07-the-counts-dont-lie.md)
+(Draft v0.4, final), built in `app/story/ch07.js`. **Its spec,
+[`chapters/07-the-counts-dont-lie.spec.md`](chapters/07-the-counts-dont-lie.spec.md) (v0.3), is the
+build's contract**: the flag, the Counts sets, the cards, the art needs and the names. No new engine key
+and no new behaviour (the spec's "Engine needs"); no new place and no new cast. This section records the
+names and the words as built; the spec has the rest.
+
+**The flag, and the one edit to shipped story code**
+
+- `ch7Flew: true`, sticky, set by the FLEW screen at the Old Bridge on every path (the frame's `sets`).
+  Chapter 7 never sets `ch4CaughtFly`, which still means one thing: a noticing cat caught the fox's
+  FLEW at the border (chapter 4's f043 is still the only frame that sets it).
+- `app/story/ch04.js`, `cards['fox-flew'].link.when`: `{ ch4CaughtFly: true }` became
+  `{ not: { ch4CaughtFly: false, ch7Flew: false } }` (`E.matches`' own `not`: either flag `true`), so her
+  Case File draws FLEW and can't-fly touching for every cat from the FLEW screen on. Its answers and
+  line are unchanged, and so is every other reader of `ch4CaughtFly` (the spec's section 1 lists them).
+- `PC.ui.flagWords.ch7Flew`: "saw Sprinkle try to fly at the Old Bridge: the fox’s “flew” can’t be
+  true (later chapters remember)". No new speaker, voice or `faceHidden` pose.
+- `E.VERSION = '0.7.0 (chapter 7, <ship date>)'`; the save stays version 2 and nothing new is stored.
+
+**The art's new names** (every option off by default, every camera and anchor additional): the pile's
+cameras `rear` (round the back) and `hole` (the tunnel's mouth), anchors `rear-1`, `rear-2`, `guard-1`
+to `guard-3`, `brink` and `arch`, options `tunnel`, `tracks` and `tap: 'none' | 'back' | 'roots'`; the
+bridge's camera `print`, anchor `over`, options `tap: 'none' | 'print'` and `compare`; the hollow's
+`compare` (both declared `[false, [24, 60]]`, one painter); the den's `hidden` taking three more cards;
+the cast extras `tap: 'fish'` (Riffle's string) and `tap: 'mist'` (Sprinkle's burp); the Counts
+pictures `kind: 'cheeks'`, `'cheeks-top'` and `'marks'` (with `ground`), the skip-counts on
+`thing: 'gap'` and `thing: 'whisker'` (one cheek at table 3; cheeks at table 6, a `who` pair one face),
+and the sand at per 6.
+
+**Words (`tools/storyboard.mjs`)**: words for every name above (the pile's two cameras round the back
+with place words of their own, `PILE_REAR` and `PILE_HOLE`; her `reach` over a print under the Old
+Bridge reads as the marsh's turned round; `compare` from its two numbers, in the mud or the sand; a `tap`
+value nobody gave prints as its bare id, so `--check-words` finds it); the new skip-counts and Counts
+pictures (the empty places one at a time, one cheek's two rows of whiskers and the cheek kept after it,
+cheeks with a `who` pair worded as one face, nights of marks lit a night at a time as their teacher hops
+them, the 6s' sand three and three, a set's own question words, `prompt`). A frame that draws a picture
+of its own (a skip-count, the questions she taps out, a row of bark) no longer says a kept picture stays
+on it, as the page never drew one there. **A card link's condition** reads a `not` whose every value is
+false as the or it is ("once ch4CaughtFly or ch7Flew is true"); every other `when` reads as before, so
+chapter 5's "found today" (`not` over three flags, all false) prints as it always has. The den's
+`hidden` words are count-free: "her secret cards under the moss, a corner showing for each".
+Chapters 1 to 3's storyboards regenerate byte for byte; chapters 4 to 6's differ only in chapter 4's
+`fox-flew` card row and the den rows' `hidden` words (with both put back, each is the shipped file), and
+in chapter 5's `ch05-bill` row: a Counts frame with `intro: false` is now worded from its set's first
+fact (asked in the engine's words and timed on itself; in its own words, read first, so only a miss
+counts as hard; or a check, never timed), and the bill's 9 × 2 has its own question. A doc correction,
+not play.
+
+**Integration round 1** (the build review): Sprinkle's print on the bridge's `print` camera is drawn as
+big as the wide shots draw her prints (`PR.paw` 4.6, about four-tenths of the cat's height there), its
+toes toward us, our cat's paw over its heel pad (`over` raised to y 799 with it), its lit rim
+(`data-art="print-rim"`, 0.9) drawn after her shadows; the bridge's `compare` on `under` sits higher and
+bigger (`U_COMPARE` y 856, digits 42); the pile's `hole` draws its heap without the two soft dips and their
+root arcs (`dugEarth`'s `noDips`, passed by `drawHole` only, so every other camera draws as it did). All
+three are chapter 7's cameras or options; nothing of chapters 1 to 6 draws differently.
+
+**Final review** (the last fixes before the ship): chapter 5's cast extra `asleep` takes a second value,
+`'half'` (half asleep: heavy upper lids down to the middle of the eyes, sagging a little, `LID.lidDrowsy`,
+whatever the mood, which keeps its own mouth and blush; `vocab.extras.asleep` is `[true, 'half']`, and
+the storyboard words it "eyes half shut, heavy-lidded: half asleep"), for our cat curling up to sleep
+(f103, `kind`: `kind` alone looks out wide awake). The pile's `tracks` read on an iPad page: a dark bed,
+sleepers across it (one filled shape), two rails 5 wide over a soft glow, from x 880 off behind the
+tallest tower; its `arch` anchor is as big as a cat by the back row (`h` 172, was 108). Both draw only
+with chapter 7's option and anchor, and `asleep: true` draws as it did, so nothing of chapters 1 to 6
+draws differently. In the story: the told FLY panel's Tallyheart stands by the wall behind our cat
+(`{ x: 300, y: 960, h: 330 }`, facing right, before our cat in the cast), clear of the hurt wing, and the
+twenty-four's Tallyheart crouches with `claws: true` as she scratches the sand. The bridge's `back` takes
+`wing: true` (declared `[false, true]`, off by default; the FLY pair only): Sprinkle's drooping wing at
+`dragon` (`WING_KEEP`, x 1040 to 1440, y 630 to 780) goes in `keep`, so the told panel's second balloon
+(“I KNEW it!”) no longer lands on it; nothing is drawn.
+
+**The proof that chapters 1 to 6 are unchanged** (the spec's section 7, item 2):
+
+- `tests/fixtures/ch06-golden.json`, recorded by `tests/fixtures/make-ch06-golden.js` from the shipped
+  chapter-6 tree (`GOLDEN_ROOT`, in a process of its own): ten readings of chapters 1 to 6 and a reread
+  (a noticing cat who catches FLEW, rereads chapter 1 as a climber, then chapters 4 and 5), every frame
+  and what it shows, with the art's drawings hashed (scenes, Counts pictures, sand, cards: the
+  per-render ids taken out, `strip`, and every drawing made a second time before recording to prove its
+  hash does not move), the speakers' labels and voices, Read to me's captions, every lesson hop by hop,
+  the Hollow, the book, the grown-ups corner and the cat. Every card's `link` is digested as
+  `{ with, line, drawn }`, never its raw `when`. `tests/engine.test.js` compares today's tree with it.
+- The same ten readings again with every loaded story handed to the engine, as the page does (ui.js's
+  `stories()` is `PC.story`): `run6` reads the chapters in `ctx.read` (chapters 1 to 6) and hands the
+  engine `ctx.list` (here `PC.story`) everywhere else. Every reading, lesson and Hollow round, the corner,
+  her cards and file and the cat match the golden exactly; only the list's own deltas are allowed, by
+  name: chapter 6's teaser in her book is `built: true, next: 'ch07'` (its words as they were), and the
+  hub's `E.upNext`/`E.progress` offer chapter 7 instead of "coming soon". Chapters 8 to 10 leave those as
+  they are, so any other difference there is a later chapter changing an earlier one (final review).
+- `ch04-golden.json` is never re-recorded: its test sets `fox-flew`'s condition back to
+  `{ ch4CaughtFly: true }` while it reads (restored in a `finally`, the records digested inside it) and
+  checks at every frame that the two conditions agree.
+- After chapter 7: every golden reading's cat, with `ch7Flew` and without, reads chapters 4 and 5 again;
+  everything she sees is the same but her Case File, which gains FLEW and can't-fly touching, and only
+  for a cat without `ch4CaughtFly`. A truth table checks the link over every combination of the two flags.

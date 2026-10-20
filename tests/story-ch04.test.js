@@ -2186,7 +2186,14 @@ test('her Case File: the nine cards as the text’s table has them; given once, 
   assert.equal(story.cards.scale.line, 'The ‘scale’ is smooth, like glass.');
   // the claim and its answer (stored for chapter 10), drawn touching only once she has made the link
   assert.deepEqual(story.cards['fox-flew'].answers, ['cant-fly']);
-  assert.deepEqual(story.cards['fox-flew'].link, { when: { ch4CaughtFly: true }, line: 'They can’t both be true.' });
+  // (chapter 7: drawn for her too once she has seen Sprinkle try to fly at the Old Bridge, `ch7Flew`; the
+  // condition reads either flag, and with neither set it matches exactly where `{ ch4CaughtFly: true }` did)
+  assert.deepEqual(story.cards['fox-flew'].link, { when: { not: { ch4CaughtFly: false, ch7Flew: false } }, line: 'They can’t both be true.' });
+  for (const a of [true, false, undefined]) for (const b of [true, false, undefined]) {
+    const flags = {}; if (a !== undefined) flags.ch4CaughtFly = a; if (b !== undefined) flags.ch7Flew = b;
+    assert.equal(E.matches(story.cards['fox-flew'].link.when, { flags }), a === true || b === true, JSON.stringify(flags));
+    if (b === undefined) assert.equal(E.matches(story.cards['fox-flew'].link.when, { flags }), E.matches({ ch4CaughtFly: true }, { flags }), 'as chapter 4 shipped it: ' + JSON.stringify(flags));
+  }
   assert.deepEqual(CARD_IDS.filter(cid => story.cards[cid].answers || story.cards[cid].link), ['fox-flew']);
   // Squall's card is shown only with the flag
   assert.deepEqual(story.cards['squall-shapes'].when, { foundSquall: true });

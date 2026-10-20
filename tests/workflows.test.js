@@ -138,3 +138,16 @@ test('chapter.js review and final: only high and medium findings go to a skeptic
   const fin = await run(Object.assign({ phase: 'final' }, BASE), reply);
   assert.equal(fin.calls.filter(c => c.opts.label.startsWith('final:')).length, 2, 'regression and deploy, no playtest unless asked');
 });
+
+test('chapter.js: no prompt carries an unfilled ${…}, and args.model names the chapter the agents follow', async () => {
+  const model = { n: 6, storyFile: 'app/story/ch06.js', test: 'tests/story-ch06.test.js', spec: 'chapter 6’s spec' };
+  for (const [phase, extra] of Object.entries(PHASES)) {
+    const { calls } = await run(Object.assign({ phase, model }, BASE, extra));
+    for (const c of calls) assert.ok(!/\$\{/.test(c.prompt), `${c.opts.label}: an unfilled \${…}`);
+    if (phase === 'critique') assert.ok(calls.some(c => /the voice of chapter 6/.test(c.prompt)), 'the reader critic hears chapter 6');
+    if (phase === 'frames') assert.ok(calls.some(c => /app\/story\/ch06\.js did chapter 6/.test(c.prompt) && /tests\/story-ch06\.test\.js/.test(c.prompt)));
+    if (phase === 'spec') assert.ok(calls.some(c => /chapter 6’s spec/.test(c.prompt)));
+  }
+  const { calls } = await run(Object.assign({ phase: 'draft', model }, BASE, { cleared: ['x'] }));
+  assert.ok(calls.some(c => c.opts.label === 'judge:2' && /the voice of chapter 6/.test(c.prompt)), 'the second judge hears chapter 6');
+});

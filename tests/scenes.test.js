@@ -2382,7 +2382,8 @@ test('vocab, chapter 5: the den\'s moon takes its age in evenings (5: a little f
   }
   assert.deepEqual(Object.keys(v.tower.opts), ['chime', 'light', 'roar', 'ding'], 'the tower as chapter 4 left it');
   assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden']);
-  assert.deepEqual(Object.keys(v.hollow.opts), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap']);
+  // (chapter 7's `compare` comes after them: tested with it)
+  assert.deepEqual(Object.keys(v.hollow.opts).slice(0, 7), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap']);
   assert.equal(art.sceneInfo('den').defaults.moon, undefined, 'no moon unless a frame asks');
   assert.equal(typeof art.kit.waxingMoon, 'function', 'kit.waxingMoon, for the sets in their own files');
   // the three newcomers' sizes, published for the sets that lay props round them: the numbers a set may have copied
@@ -3191,7 +3192,8 @@ test('vocab, chapter 6: the title\'s wall-3 and the wall\'s end (end, meet; end-
   // the den and the hollow take nothing new: Coil's card goes under the moss by its picture, the sixth mark exists
   assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden']);
   assert.deepEqual(v.den.opts.hidden, [false, true]);
-  assert.deepEqual(Object.keys(v.hollow.opts), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap']);
+  // (chapter 7's `compare` comes after them: tested with it)
+  assert.deepEqual(Object.keys(v.hollow.opts).slice(0, 7), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap']);
   assert.ok(v.hollow.opts.marks.includes(6));
   assert.deepEqual({ coil: art.sizeBands.coil, sleet: art.sizeBands.sleet, sloshbank: art.sizeBands.sloshbank }, {
     coil: { ref: 'player', pose: 'head', by: 'head', min: 0.35, max: 0.6 },
@@ -3526,4 +3528,282 @@ test('chapter 6: ReedClan’s cats are cats: a face sized from the box, as a Cla
   assert.ok(clan && slosh && reed && clan.r > 0, 'all three faces are in the panel, with a size');
   assert.ok(Math.abs(reed.r / clan.r - 1) < 0.02, 'a ReedClan cat’s face is a cat’s: ' + reed.r + ' vs ' + clan.r);
   assert.ok(slosh.r / clan.r > 1.08 && slosh.r / clan.r < 1.25, 'Sloshbank’s is a big cat’s, from his bigger box: ' + slosh.r + ' vs ' + clan.r);
+});
+
+
+// ================================================================ chapter 7 (docs/chapters/07-the-counts-dont-lie.spec.md, sections 3 and 4)
+
+// The proof that chapters 1 to 6 look exactly as they did: every frame of chapters 1 to 6 (every set, each
+// 'auto' filled as the gallery fills it), each gallery panel for a set and camera they had, and the
+// gallery's first 93 extras (all it had), drawn with the real cats and cards, hashed with the per-render
+// ids stripped and with the heads and keep, one hash per chapter and set, per gallery camera and per set
+// of extras. The numbers were taken once from the tree as chapter 6 shipped it (the snapshot taken before
+// chapter 7's build, loaded in a process of its own), and are kept here: this test never reads that tree.
+// <ch7-fingerprint>
+// Every frame of chapters 1 to 6 (all their sets, each 'auto' filled as the gallery fills it), every
+// set x camera sample on the gallery, and its first `extras` extras, hashed with the per-render ids
+// stripped, and the heads and keep; one hash per chapter and set, per gallery camera, and per set of
+// the extras.
+function ch7Fingerprint(PC, page, crypto, extras) {
+  const art = PC.art, out = {}, LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
+  const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+  // a chapter 5 and a chapter 6 cat's file as the gallery fills `bark: 'auto'` (every card without a `when`)
+  const F5 = ['four-a-night:eye', 'tidy:eye', 'dug-earth:eye', 'scale:eye', 'fox-flew:ear', 'fox-moon:ear', 'sprinkle-scales:eye', 'cant-fly:eye', 'prints-pile:eye',
+    'otter-fox:ear', 'fur:eye', 'heron-no-moon:ear', 'heron-shapes:ear', 'prints-marsh:eye', 'prints-tracks:eye'];
+  const FILE = { 5: F5, 6: F5.concat(['reed-pile:ear', 'coil-diggers:ear']) };
+  function fill(s, number) {
+    if (!s || !s.opts) return s;
+    const o = Object.assign({}, s.opts), m = Math.max(1, Math.min(10, number || 2));
+    if (o.marks === 'auto') o.marks = m;
+    if (o.glow === 'auto') o.glow = Array.from({ length: m }, (v, i) => i === 0);
+    if (o.stone === 'auto') o.stone = 'nose';
+    if (o.bark === 'auto' && FILE[number]) o.bark = FILE[number].map((p) => ({ picture: p.split(':')[0], mark: p.split(':')[1] }));
+    return Object.assign({}, s, { opts: o });
+  }
+  function add(key, tag, scene) {
+    const r = art.render(scene, { look: LOOK }), h = out[key] || (out[key] = crypto.createHash('sha1'));
+    h.update(tag + ':' + strip(r.svg) + JSON.stringify(r.heads) + JSON.stringify(r.keep));
+  }
+  for (const ch of ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06']) {
+    const n = +ch.slice(2);
+    for (const [id, f] of Object.entries(PC.story[ch].frames)) if (f.scene) add(ch + '/' + f.scene.set, id, fill(f.scene, n));
+  }
+  const js = page.slice(page.lastIndexOf('<script>') + 8, page.lastIndexOf('</script>'));
+  const from = js.indexOf('// ---- a sample cast'), to = js.indexOf('// ---- panels');
+  const G = new Function(js.slice(from, to) + '\nreturn { SAMPLES: SAMPLES, EXTRA: EXTRA };')();
+  for (const set of Object.keys(art.vocab.sets)) for (const cam of art.vocab.sets[set].cams) {
+    const smp = (G.SAMPLES[set] || {})[cam] || { cast: [], fx: [] };
+    add('gallery/' + set + '/' + cam, cam, { set, cam, opts: smp.opts || {}, cast: smp.cast || [], fx: smp.fx || [] });
+  }
+  G.EXTRA.slice(0, extras).forEach((e, i) => add('extras/' + e[0], i + ' ' + e[3], { set: e[0], cam: e[1], opts: e[2].opts || {}, cast: e[2].cast || [], fx: e[2].fx || [] }));
+  for (const k of Object.keys(out)) out[k] = out[k].digest('hex').slice(0, 12);
+  return out;
+}
+// </ch7-fingerprint>
+
+const CH7_FINGERPRINT = {
+  'ch01/room': 'cf825a01bd38', 'ch01/tower': '2a616c069d47', 'ch01/garden': 'cf2137f8e9eb', 'ch01/camp': 'f40e5855d370',
+  'ch01/hollow': 'c4abb94db607', 'ch01/den': '568f080f23ed', 'ch01/sky': 'b59ef7613441', 'ch01/river': '174102393782', 'ch02/den': '4f8a3a50cd3a',
+  'ch02/garden': '53e7e96faf9b', 'ch02/tower': '5b0e2982dc11', 'ch02/hollow': 'e9c6bbaf421a', 'ch02/pile': '05cfd6f528ca',
+  'ch02/camp': '790bceaf444a', 'ch02/title': '966b0c25e839', 'ch02/bridge': '4e92a8c50bbe', 'ch02/field': '8fab5f8d1dbb',
+  'ch02/crossing': 'a5401d3fa701', 'ch02/riverbank': '2b40ee055e70', 'ch03/den': '5a6421c08e58', 'ch03/pile': '5ef9d29137dc',
+  'ch03/camp': 'fd05152b881e', 'ch03/tower': '288fb139e478', 'ch03/hollow': 'f06f981adc35', 'ch03/bridge': '5db17c4fa576',
+  'ch03/title': '497e2fa54127', 'ch03/garden': 'b80f10b46413', 'ch03/riverbank': 'f588ad6f7605', 'ch04/den': 'b4988ee98647',
+  'ch04/hollow': '40225f5302e2', 'ch04/pile': '5b3607c78cb5', 'ch04/camp': 'e1a69084b621', 'ch04/field': 'ffb16f3c8954',
+  'ch04/title': '9f0b895c57ca', 'ch04/garden': '304a6894c4b3', 'ch04/tower': '93d27baac159', 'ch04/riverbank': '6844e41f92eb',
+  'ch04/bridge': 'f7aa2d5c7e58', 'ch04/roof': 'ef460b3e5a7a', 'ch05/pile': 'a77a3e2e5fe4', 'ch05/hollow': '71c179b3e020',
+  'ch05/tower': '85ca16331cc0', 'ch05/roof': '6a6e4ca36158', 'ch05/crossing': '7edbe5fab476', 'ch05/openriver': 'b9f739e462be',
+  'ch05/marsh': 'c92a1e88baaa', 'ch05/bridge': 'a90d977e115d', 'ch05/den': 'b910b0ab1c06', 'ch06/pile': 'c0561d0cae2b',
+  'ch06/hollow': '2a346b12ffab', 'ch06/title': '3378c0228d32', 'ch06/field': '8b96e3d40662', 'ch06/bridge': '575e6d26d8f5',
+  'ch06/den': 'aa0000c75631', 'ch06/sky': '511b3bc100be', 'gallery/room/wide': '9ca5890994ac', 'gallery/room/cushion': '4b68d25db677',
+  'gallery/room/glass': 'ce0ebb9cfddb', 'gallery/room/outside': '8fd28f7de379', 'gallery/tower/up': '41c1068decda',
+  'gallery/tower/balcony': '55ae32a34000', 'gallery/tower/balcony-close': '3ea768d65301', 'gallery/garden/wide': '3c454b12e66b',
+  'gallery/garden/paws': '0edabf335048', 'gallery/garden/step': '930d04cb2c29', 'gallery/garden/fence': 'f85ca6a610c5',
+  'gallery/garden/lamp': '46cd9b94b9c5', 'gallery/garden/meet': '14c7bc288559', 'gallery/garden/hedge': 'ae4bf49a128f',
+  'gallery/garden/hedge-close': 'c79a27607258', 'gallery/camp/reveal': 'f4b7cba14dc8', 'gallery/camp/crowd': 'c5cf9f2f7edf',
+  'gallery/camp/fountain': '3f1db44c9232', 'gallery/camp/entrance': 'ddadbce79d51', 'gallery/camp/fountain-close': '0565e248766d',
+  'gallery/camp/ferns': '3f1837a121b6', 'gallery/camp/purr': 'fa844c432626', 'gallery/hollow/wide': 'e7d25166ee39',
+  'gallery/hollow/lesson': '82508f80b182', 'gallery/hollow/sand': '6f1fb7da32e9', 'gallery/hollow/tree': '17b5162322f5',
+  'gallery/den/outside': 'ea78767a068b', 'gallery/den/inside': '77e5555dac16', 'gallery/den/nest': '28d0379b67c2',
+  'gallery/den/doorway': '436c92612103', 'gallery/sky/up': '0909005f4475', 'gallery/sky/cats': '3f58c5ff88e8', 'gallery/sky/walk': 'eefe9e6142c6',
+  'gallery/sky/below': 'cd372e9fe5fc', 'gallery/river/crash': '73e3c9adab7d', 'gallery/title/wide': 'ac111e5ec24b',
+  'gallery/title/end': '12eeb7870236', 'gallery/title/meet': '34f5fc28a651', 'gallery/pile/wide': '5b8bc029f202', 'gallery/pile/low': '751cad9b2f06',
+  'gallery/pile/close': '1c5ef81c5701', 'gallery/pile/rows': '7e938ffc9f06', 'gallery/pile/gap': '648b4687493d',
+  'gallery/pile/scale': '30b53fe07218', 'gallery/pile/through': 'bd3f419c846f', 'gallery/pile/mirror': '6328905dc5e8',
+  'gallery/pile/gap-close': '55d06c1f3883', 'gallery/bridge/bank': '770995da539e', 'gallery/bridge/mouth': 'b747945a5716',
+  'gallery/bridge/under': '37f4e9b2e01d', 'gallery/bridge/back': 'c170d1423d90', 'gallery/bridge/paws': '5d77544130a6',
+  'gallery/bridge/wall': '4238ab260bf1', 'gallery/field/wide': '1f2724ed87c3', 'gallery/field/fence': '91fa5108744d',
+  'gallery/field/dogs': '4223ab0a291a', 'gallery/field/border': '973d91e7497e', 'gallery/field/border-two': 'a57edd4417ba',
+  'gallery/field/border-fox': '1a1dd3a85a66', 'gallery/crossing/wide': '6f3a2c1fafde', 'gallery/crossing/low': '9a995781b1a2',
+  'gallery/crossing/rocks': 'e039ad7927a1', 'gallery/crossing/raft': '0596fe3444e6', 'gallery/crossing/board': '414fe16484e9',
+  'gallery/riverbank/path': '4e78441c58a3', 'gallery/riverbank/water': '1d4ba8639817', 'gallery/riverbank/roof': '7c2f7ca4107e',
+  'gallery/riverbank/slide': 'f70b23ba5a32', 'gallery/roof/wide': 'a75cdcd875e8', 'gallery/roof/pole': 'cb963871863b',
+  'gallery/roof/two': '6d1f32a5d35f', 'gallery/roof/over': '4783a03c2e3a', 'gallery/roof/sky': '153a1ddfe65c', 'gallery/roof/paw': '708e6c78c8b4',
+  'gallery/openriver/wide': '772a003d1459', 'gallery/openriver/raft': '1c26d6dbe2fa', 'gallery/openriver/light': 'a1a23b116f81',
+  'gallery/openriver/log': 'b97d5283967c', 'gallery/openriver/sky': '6721dfbfb881', 'gallery/openriver/rocks': '5da4e07fb27e',
+  'gallery/openriver/edge': '90be44c22839', 'gallery/openriver/beside': 'ce98df20de7f', 'gallery/openriver/under': 'ef5c04a9d900',
+  'gallery/marsh/wide': '7ac33d43b3ea', 'gallery/marsh/far': '020f419ed493', 'gallery/marsh/heron': 'ac274200e7d1',
+  'gallery/marsh/mud': 'bad5acba76cd', 'gallery/marsh/pole': '8d19883879c9', 'gallery/marsh/reeds': '1cd849393cde',
+  'gallery/marsh/wisp': '859645b25aee', 'gallery/marsh/draw': 'd05fda152f08', 'extras/room': '54a765d4aa65', 'extras/den': '2ea4a271e989',
+  'extras/tower': '58db7918fcd2', 'extras/garden': '0bb137c4bc87', 'extras/camp': 'e415327c10b4', 'extras/title': '716921a6a397',
+  'extras/hollow': '7fcab8b57947', 'extras/sky': 'ff86c7dffdfe'
+};
+
+
+test('chapter 7: chapters 1 to 6 draw byte for byte as they shipped: every frame of theirs, every gallery panel of a camera they had, and the gallery\'s first 93 extras', { skip: !art.character && 'no cats.js' }, () => {
+  for (const id of ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06']) require(path.join(ROOT, 'app/story/' + id + '.js'));
+  const page = fs.readFileSync(path.join(ROOT, 'dev/gallery.html'), 'utf8');
+  const now = ch7Fingerprint(PC, page, require('crypto'), 93);
+  const want = Object.keys(CH7_FINGERPRINT);
+  assert.ok(want.length > 140, 'the whole of chapters 1 to 6: ' + want.length + ' hashes');
+  for (const k of want) assert.equal(now[k], CH7_FINGERPRINT[k], k + ' draws something else than it did when chapter 6 shipped');
+  // what is new is only chapter 7's: its cameras on the gallery
+  assert.deepEqual(Object.keys(now).filter((k) => !want.includes(k)).sort(), ['gallery/bridge/print', 'gallery/pile/hole', 'gallery/pile/rear']);
+});
+
+test('vocab, chapter 7: the hollow\'s `compare`, declared as the bridge\'s ([false, [24, 60]], off by default); seven marks as markSpots has always drawn them; the den takes nothing new by name; the kit\'s one painter', () => {
+  const v = art.vocab.sets;
+  assert.deepEqual(v.hollow.opts.compare, [false, [24, 60]], 'a list of two numbers, compared by value');
+  assert.deepEqual(Object.keys(v.hollow.opts), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap', 'compare']);
+  assert.deepEqual(art.sceneInfo('hollow').defaults, { marks: 0, compare: false }, 'no comparison unless a frame asks');
+  assert.ok(v.hollow.opts.marks.includes(7), 'marks: 7');
+  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden'], 'the den: three more cards under the moss, by their pictures; no new option');
+  assert.deepEqual(v.hollow.cams, ['wide', 'lesson', 'sand', 'tree']);
+  assert.equal(typeof art.kit.compareLines, 'function', 'kit.compareLines, the one drawing for the hollow and the bridge');
+  assert.equal(typeof art.kit.compareNums, 'function');
+  if (v.bridge) assert.deepEqual(v.bridge.opts.compare, v.hollow.opts.compare, 'the bridge declares it the same');
+  // the spec names it so
+  const md = fs.readFileSync(path.join(ROOT, 'docs/chapters/07-the-counts-dont-lie.spec.md'), 'utf8').replace(/\s+/g, ' ');
+  assert.ok(md.includes('**Option `compare`**, as the bridge\'s and declared the same (`[false, [24, 60]]`, default false; one drawing for both: one painter in `PC.art.kit`), on `lesson` and `sand`'));
+});
+
+// the comparison scratched in the ground: its group, its box, its two lines and its two numbers
+function compareOf(svg) {
+  const m = /<g data-art="compare" data-nums="([^"]+)" data-box="([^"]+)" aria-label="([^"]+)">(.*?)<\/g>/.exec(svg);
+  if (!m) return null;
+  const lines = [...m[4].matchAll(/<path d="((?:M[-\d.]+ [-\d.]+H[-\d.]+)+)" fill="none" stroke="(#[0-9a-fA-F]{6})"/g)];
+  const dark = lines[lines.length - 1];
+  const segs = (dark ? dark[1].match(/M[-\d.]+ [-\d.]+H[-\d.]+/g) : []).map((s) => { const v = s.match(/-?[\d.]+/g).map(Number); return { x0: v[0], y: v[1], x1: v[2], len: v[2] - v[0] }; });
+  const texts = [...m[4].matchAll(/<text x="([-\d.]+)" y="([-\d.]+)"[^>]*fill="(#[0-9a-fA-F]{6})"[^>]*>(\d+)<\/text>/g)].map((t) => ({ x: +t[1], y: +t[2], fill: t[3], s: t[4] }));
+  return { nums: m[1].split(' ').map(Number), box: m[2].split(' ').map(Number), label: m[3], lines: segs, texts, groove: dark ? dark[2] : null, markup: m[4] };
+}
+const boxMeets = (p, q, pad) => p[0] < q[2] + (pad || 0) && p[2] > q[0] - (pad || 0) && p[1] < q[3] + (pad || 0) && p[3] > q[1] - (pad || 0);
+const keptBox = (r, b) => { const vb = viewBox(r.svg); return (r.keep || []).some((k) => vb[0] + k.x / 100 * vb[2] <= b[0] + 1 && vb[1] + k.y / 100 * vb[3] <= b[1] + 1 && vb[0] + (k.x + k.w) / 100 * vb[2] >= Math.min(b[2], vb[0] + vb[2]) - 1 && vb[1] + (k.y + k.h) / 100 * vb[3] >= Math.min(b[3], vb[1] + vb[3]) - 1); };
+
+test('kit.compareLines: two straight lines, starting together, in the ratio of their numbers; each number scratched just left of its own line, in the digits of chapter 5\'s answers in the sand; both named in the label', () => {
+  const S = {};
+  const one = art.kit.compareLines(S, { nums: [24, 60], x: 100, y: 200, w: 400, size: 30, gap: 10, groove: '#664422', shine: '#FFEEDD', word: 'mud' });
+  const c = compareOf(one.svg);
+  assert.ok(c, 'one group');
+  assert.deepEqual(c.nums, [24, 60]);
+  assert.equal(c.label, 'Scratched in the mud: a short line, 24, and a long line, 60', 'both numbers named');
+  assert.equal(c.lines.length, 2, 'two lines');
+  assert.equal(c.lines[0].x0, c.lines[1].x0, 'starting together');
+  assert.ok(c.lines[1].y > c.lines[0].y + 30, 'one above the other: 24 on top');
+  assert.ok(Math.abs(c.lines[1].len / c.lines[0].len - 2.5) < 0.01, 'the long one two and a half times the short one: ' + c.lines[1].len + ' / ' + c.lines[0].len);
+  const dark = c.texts.filter((t) => t.fill === '#664422');
+  assert.deepEqual(dark.map((t) => t.s), ['24', '60'], 'the numbers, in the groove\'s colour');
+  dark.forEach((t, i) => {
+    assert.ok(t.x < c.lines[i].x0, t.s + ' left of its line');
+    assert.ok(Math.abs((t.y - 15) - c.lines[i].y) < 2, t.s + ' level with its line');
+  });
+  assert.equal(c.texts.filter((t) => t.fill === '#FFEEDD').length, 2, 'and the light on their lips, a little below and right');
+  assert.ok(/font-family="Andika, ui-rounded, system-ui, sans-serif" font-weight="700"/.test(c.markup), 'chapter 5\'s answers\' digits');
+  assert.deepEqual(c.box.map(Math.round), [97, 199, 510, 274], 'its box: the drawing and a little more');
+  // only two positive numbers draw anything
+  for (const bad of [[24], [0, 60], [-1, 3], ['a', 3], 24, null, undefined, [24, 60, 3], [1e6, 2]]) assert.equal(art.kit.compareLines(S, { nums: bad, x: 0, y: 0, w: 100 }), null, JSON.stringify(bad));
+  assert.deepEqual(art.kit.compareNums([24, 60]), [24, 60]);
+  assert.equal(art.kit.compareNums(false), null);
+});
+
+test('hollow, chapter 7: `compare: [24, 60]` on `lesson` and `sand`: the sum scratched in the sand between the two cats sitting at sand-left and sand-right, clear of both, in both cameras, kept clear of the lettering; nowhere else, and nothing when off', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('hollow').anchors.main;
+  const cats = [{ who: 'tallyheart', at: 'sand-left', pose: 'sit', mood: 'kind', wink: true }, { who: 'player', at: 'sand-right', pose: 'sit', mood: 'wonder', facing: 'left' }];
+  for (const cam of ['lesson', 'sand']) for (const fx of [['morning'], ['day'], ['sunset']]) {
+    const scene = { set: 'hollow', cam, opts: { marks: 7, glow: [true, false, false, false, false, false, true], compare: [24, 60] }, cast: cats, fx }, r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'hollow/' + cam + ' compare');
+    const c = compareOf(r.svg), vb = viewBox(r.svg);
+    assert.ok(c, cam + ': the sum is drawn');
+    assert.equal(c.label, 'Scratched in the sand: a short line, 24, and a long line, 60');
+    assert.ok(Math.abs(c.lines[1].len / c.lines[0].len - 2.5) < 0.01, 'two and a half times');
+    assert.ok(inVb(c.box[0], c.box[1], vb, 2) && inVb(c.box[2], c.box[3], vb, 2), cam + ': whole in the panel ' + c.box + ' / ' + vb);
+    assert.ok(keptBox(r, c.box), cam + ': in keep, so no balloon covers it');
+    for (const m of cats) {
+      const me = landed(r.svg, m, A[m.at]);
+      assert.ok(me, m.who + ' drawn');
+      assert.ok(!boxMeets(me.body, c.box), cam + ': clear of ' + m.who + ' at ' + m.at + ': ' + me.body.map(Math.round) + ' / ' + c.box.map(Math.round));
+    }
+    assert.ok(c.box[0] > A['sand-left'].x && c.box[2] < A['sand-right'].x, 'between the two cats');
+  }
+  // only where asked: off by default, and never on `wide` or `tree` (the spec puts it on lesson and sand)
+  for (const cam of ['wide', 'lesson', 'sand', 'tree']) {
+    const on = art.render({ set: 'hollow', cam, opts: { marks: 7, compare: [24, 60] }, cast: [], fx: ['morning'] }), off = art.render({ set: 'hollow', cam, opts: { marks: 7 }, cast: [], fx: ['morning'] });
+    assert.equal(!!compareOf(on.svg), cam === 'lesson' || cam === 'sand', cam);
+    assert.equal(compareOf(off.svg), null, cam + ': nothing when off');
+    const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+    assert.equal(strip(art.render({ set: 'hollow', cam, opts: { marks: 7, compare: false }, cast: [], fx: ['morning'] }).svg), strip(off.svg), cam + ': compare: false is nothing at all');
+  }
+});
+
+test('hollow, chapter 7: `marks: 7` draws as markSpots has drawn seven since chapter 1: four to a row and three, a little smaller, the seventh beside the sixth; all seven on the trunk in the tree close-up and the wide, and the six frames before it keep six', () => {
+  const at = (cam, n, opts) => art.render({ set: 'hollow', cam, opts: Object.assign({ marks: n }, opts || {}), cast: [], fx: ['morning'] });
+  const marksOf = (svg) => { const o = shapes(svg, 'fill="#3A281E"').map(centre); const out = []; for (let i = 0; i < o.length; i += 3) out.push(centre(o.slice(i, i + 3))); return out; };
+  const seven = marksOf(at('wide', 7).svg), six = marksOf(at('wide', 6).svg), ten = marksOf(at('wide', 10).svg);
+  assert.equal(seven.length, 7, 'seven marks, three scratches each');
+  assert.equal(six.length, 6);
+  for (let i = 1; i < 4; i++) assert.ok(Math.abs(seven[i][1] - seven[0][1]) < 1, 'four in the first row');
+  for (let i = 5; i < 7; i++) assert.ok(Math.abs(seven[i][1] - seven[4][1]) < 1, 'three in the second');
+  assert.ok(seven[4][1] > seven[0][1] + 30, 'the second row under the first');
+  assert.ok(seven[6][0] - seven[5][0] > 25 && seven[6][0] - seven[5][0] < 45, 'the seventh beside the sixth');
+  // the seven stand where the first seven of ten stand (the chapters 1 to 3 fingerprint pins ten)
+  for (let i = 0; i < 7; i++) assert.ok(Math.abs(seven[i][0] - ten[i][0]) < 0.5 && Math.abs(seven[i][1] - ten[i][1]) < 0.5, 'mark ' + (i + 1) + ' where ten put it');
+  // smaller than six's (0.55 against 0.72): the scratches are shorter
+  const len = (svg) => { const s = shapes(svg, 'fill="#3A281E"')[0]; const ys = s.map((p) => p[1]); return Math.max(...ys) - Math.min(...ys); };
+  assert.ok(len(at('wide', 7).svg) < len(at('wide', 6).svg) * 0.85, 'a little smaller');
+  // every one in the tree close-up, and in its keep
+  const t = at('tree', 7, { glow: [false, false, false, false, false, false, true] }), vb = viewBox(t.svg);
+  checkRender(t, { cast: [] }, 'hollow tree seven');
+  for (const p of shapes(t.svg, 'fill="#3A281E"').flat()) assert.ok(inVb(p[0], p[1], vb, 2), 'the tree close-up holds every mark: ' + p);
+  assert.equal(shapes(t.svg, 'fill="#FFF6D0" class="pcs-pulse"').length, 3, 'the new one lit');
+});
+
+test('den hidden, chapter 7: her three eyes go under the moss too (the sum, Sprinkle\'s prints, the tunnel): six corners; the row keeps chapter 6\'s room, each course\'s step at least 5; 24 cards (eighteen along the edge, two deep) and 18 (twelve), every piece inside the nest camera; three or fewer hidden draw as before', { skip: !art.character && 'no cats.js' }, () => {
+  const F24 = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes',
+    'prints-marsh', 'prints-tracks', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel'];
+  const F18 = ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'coil-diggers', 'sleet-den',
+    'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel'];
+  const SECRETS = ['sprinkle-scales', 'cant-fly', 'coil-diggers', 'my-count', 'prints-sprinkle', 'tunnel'];
+  const k = 1.06;   // her nest's scale in the den (scenes.js, drawDenInside: the nest at 1060, 886, 1.06)
+  assert.equal(F24.length, 24);
+  for (const [file, inRow] of [[F24, 18], [F18, 12]]) for (const facing of ['right', 'left']) for (const cam of ['nest', 'inside']) {
+    const scene = nestScene({ weather: 'clear', moon: false, stone: 'nose', hidden: true, bark: file }, { pose: 'lie', mood: 'sleepy', facing }, cam), r = art.render(scene, { look: LOOK }), vb = viewBox(r.svg);
+    checkRender(r, scene, 'den/' + cam + ' ' + file.length + ' cards, six hidden');
+    const P = pieces(r.svg), C = corners(r.svg);
+    assert.equal(P.length, inRow, file.length + ' cards: ' + inRow + ' along the edge');
+    assert.equal(C.length, 6, 'six corners, one for each secret');
+    assert.equal((r.svg.match(/data-bark="corner"/g) || []).length, 6, 'six data-bark="corner"');
+    // the two courses (the older half behind, a little higher), each set at least 5k apart
+    const ys = [...new Set(P.map((p) => Math.round(p.y)))];
+    const courses = [P.slice(0, inRow / 2), P.slice(inRow / 2)];
+    for (const course of courses) {
+      const xs = course.map((p) => p.x).sort((a, b) => a - b);
+      for (let i = 1; i < xs.length; i++) assert.ok(xs[i] - xs[i - 1] >= 5 * k - 0.11, file.length + ' cards: a course\'s step at least 5k: ' + (xs[i] - xs[i - 1]).toFixed(2));
+    }
+    assert.ok(ys.length >= 2, 'two deep');
+    for (const q of P) assert.ok(inVb(q.x - q.w / 2, q.y - q.w * 1.2, vb, 0) && inVb(q.x + q.w / 2, q.y, vb, 0), cam + ': a piece inside the camera: ' + JSON.stringify(q));
+    for (const c of C) {
+      assert.ok(inVb(c.x - 22, c.y - 26, vb, 0) && inVb(c.x + 22, c.y + 4, vb, 0), cam + ': a corner inside the camera');
+      assert.ok(c.y > 886 && c.y < 886 + 50 && Math.abs(c.x - NEST_X) < 140, cam + ': in the front rim\'s moss');
+    }
+    const cx = C.map((c) => c.x).sort((a, b) => a - b);
+    for (let i = 1; i < 6; i++) assert.ok(cx[i] - cx[i - 1] > 7.5 * k && cx[i] - cx[i - 1] < 9 * k, 'the corners about 8k apart: ' + (cx[i] - cx[i - 1]).toFixed(2));
+    // which go under: the secret pictures, by picture, whatever else she holds
+    const asked = [], spy = (o) => { asked.push(o.blank ? '(blank)' : o.picture); return { svg: '<rect class="spy-card" width="200" height="240" fill="#EDE1C5"/>', w: 200, h: 240 }; };
+    withCards(spy, () => art.render(scene, { look: LOOK }));
+    assert.deepEqual(asked, file.filter((c) => !SECRETS.includes(c)), 'the row: every card but the six, Waffles\' among them');
+    assert.ok(asked.includes('waffles-no-moon'), 'Waffles\' piece is along the mossy edge');
+  }
+  // three or fewer hidden: chapter 6's room and corners, as before (the chapters 1 to 6 fingerprint holds the frames)
+  const six = ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'coil-diggers', 'sleet-den'];
+  const c3 = corners(art.render(nestScene({ bark: six, hidden: true }), { look: LOOK }).svg).map((c) => c.x).sort((a, b) => a - b);
+  assert.equal(c3.length, 3);
+  for (let i = 1; i < 3; i++) assert.ok(Math.abs(c3[i] - c3[i - 1] - 11.5 * 1.06) < 0.3, 'three hidden: chapter 6\'s corners, 11.5k apart');
+});
+
+test('the gallery shows every chapter 7 name: the pile\'s rear and hole and the bridge\'s print as panels of their own, and the Taps, the tunnel, the tracks, the climber, the sums, seven marks and six under the moss among the extras', () => {
+  const page = fs.readFileSync(path.join(ROOT, 'dev/gallery.html'), 'utf8');
+  assert.ok(page.indexOf('<script src="../app/story/ch06.js"></script>\n<script src="../app/story/ch07.js"></script>') > 0, 'chapter 7 after chapter 6, as index.html has it');
+  const js = page.slice(page.lastIndexOf('<script>') + 8, page.lastIndexOf('</script>'));
+  const from = js.indexOf('// ---- a sample cast'), to = js.indexOf('// ---- panels');
+  const { SAMPLES, EXTRA } = new Function(js.slice(from, to) + '\nreturn { SAMPLES: SAMPLES, EXTRA: EXTRA };')();
+  assert.deepEqual(Object.keys(SAMPLES.pile), ['rear', 'hole'], 'only the new cameras: the old ones keep their plain panels');
+  assert.deepEqual(Object.keys(SAMPLES.bridge), ['print']);
+  assert.ok(SAMPLES.bridge.print.cast.some((m) => m.at === 'over' && m.reach === true && m.pose === 'crouch'), 'her paw over the print');
+  assert.ok(SAMPLES.pile.hole.cast.some((m) => m.at === 'brink' && m.pose === 'crouch'), 'our cat at the brink');
+  const extras = EXTRA.slice(93).map((e) => e[0] + '/' + e[1] + ' ' + JSON.stringify(e[2].opts || {}) + JSON.stringify(e[2].cast || []));
+  for (const k of ['pile/rows {"rows"', '"tap":"back"', '"tap":"roots"', '"tunnel":true', '"tracks":true', '"at":"arch"', '"at":"rear-1"', '"at":"rear-2"', '"at":"guard-1"', '"at":"guard-2"', '"at":"guard-3"',
+    '"at":"brink"', 'pile/low', '"moon":7', '"tap":"print"', 'bridge/under {"prints":true,"compare":[24,60]}', 'hollow/lesson', 'hollow/sand', '"compare":[24,60]', '"marks":7', '"my-count"', '"prints-sprinkle"', '"tunnel"', '"waffles-no-moon"'])
+    assert.ok(extras.some((x) => x.includes(k)), 'the gallery shows ' + k);
+  assert.ok(EXTRA.slice(93).every((e) => /^chapter 7: /.test(e[3])), 'each says it is chapter 7\'s');
+  assert.ok(EXTRA.slice(93).some((e) => e[0] === 'den' && e[2].opts.hidden && e[2].opts.bark.length === 24), 'the fullest nest: 24 cards');
 });

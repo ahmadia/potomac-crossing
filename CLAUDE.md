@@ -11,7 +11,7 @@ one workflow per phase). `dev/workflows/chapter.js` makes a chapter one phase a 
 (the order, each phase's args, what to read between phases) and the standing note every subagent
 prompt needs are in `dev/workflows/README.md`. A chapter starts from its brief
 (`docs/chapters/NN-title.brief.md`: the steering calls, the budget, the names checked before
-drafting); chapter 6's is written (2026-10-18).
+drafting); chapter 7's is the latest (2026-10-20).
 
 - **Where it lives.** Development happens on the Mac mini, in `~/potomac-crossing` (since
   2026-10-04). GitHub `ahmadia/potomac-crossing` is the shared remote, and GitHub Pages serves
@@ -19,7 +19,7 @@ drafting); chapter 6's is written (2026-10-18).
   `MOVED-TO-MINI` note and is not edited. The mini pushes with a **deploy key** that reaches
   this repo only: SSH alias `github-potomac-crossing`, key `~/.ssh/potomac_crossing_deploy`,
   repo deploy key 165338954 (revoke under Settings > Deploy keys).
-- **Phase: chapters 1 to 6 are live.** They deploy whenever `main` is pushed. The stack and file layout
+- **Phase: chapters 1 to 7 are live.** They deploy whenever `main` is pushed. The stack and file layout
   are in `docs/build.md`; follow it. Static site, no build step, no dependencies.
   **Bump `CACHE` in `sw.js` whenever a cached file changes**, or installed iPads keep the old
   version.

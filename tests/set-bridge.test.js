@@ -13,13 +13,15 @@ const LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
 // docs/build.md, "Art vocabulary, chapter 2" and "Chapter 3 (v0.4)": the names the story is written against
 // (chapter 6 adds `wall`, Coil's close beats, a composition of its own; chapters 2 to 5 had the first five)
 const CAMS5 = ['bank', 'mouth', 'under', 'back', 'paws'];
-const CAMS = [...CAMS5, 'wall'];
+const CAMS = [...CAMS5, 'wall', 'print'];   // (chapter 7 adds `print`, close on one of her prints, a composition of its own)
 const DRAG_CAMS = ['bank', 'mouth', 'under', 'back'];   // the cameras with drag marks, drips and the train
 // (chapter 6: `gap` in `back`, the mouth of Coil's gap in the stone leg; `wall` shares `back`'s names)
 const ANCHORS = { bank: ['bank-left', 'bank-right', 'reeds'], mouth: ['rock', 'edge', 'sun', 'sun-edge'], under: ['mud', 'inside'],
-  back: ['near', 'dragon', 'beside', 'back-left', 'back-right', 'gap'], paws: [], wall: ['gap', 'back-left', 'back-right', 'dragon'] };
+  back: ['near', 'dragon', 'beside', 'back-left', 'back-right', 'gap'], paws: [], wall: ['gap', 'back-left', 'back-right', 'dragon'], print: ['over'] };
 const OPTS = { train: [true, false], eyes: ['none', 'open', 'blink', 'sprinkle'], drag: [true, false], drips: [true, false],
-  pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true], stones: [true, false] };
+  pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true], stones: [true, false],
+  // chapter 7: the print's Tap on `under`, and the sum scratched in the mud
+  tap: ['none', 'print'], compare: [false, [24, 60]] };
 const CH3_OPTS = ['pebble', 'branch', 'prints', 'pawsIn', 'hop'];
 
 // ---------------------------------------------------------------- helpers
@@ -76,7 +78,8 @@ test('bridge: the vocabulary lists the cameras, anchors and options of docs/buil
   for (const list of Object.values(ANCHORS)) for (const a of list) assert.ok(v.anchors.includes(a), 'anchor ' + a);
   for (const [k, vals] of Object.entries(OPTS)) {
     assert.ok(Array.isArray(v.opts[k]), 'option ' + k + ' lists its values');
-    for (const x of vals) assert.ok(v.opts[k].includes(x), k + ': ' + x);
+    // (by value: chapter 7's `compare` lists a list)
+    for (const x of vals) assert.ok(v.opts[k].some((y) => JSON.stringify(y) === JSON.stringify(x)), k + ': ' + x);
   }
   assert.ok(art.vocab.sets.bridge && art.vocab.fx.includes('day') && art.vocab.fx.includes('morning'));
 });
@@ -95,8 +98,9 @@ test('bridge: the build.md row and the set agree (every name in the row exists)'
 
 test('bridge: defaults are day, no train, no eyes, drag marks and drips on; chapter 3\'s props off', () => {
   const info = art.sceneInfo('bridge');
-  // (chapter 5's `mudPaws` is off too: 0; chapter 6's `stones` too: chapters 3 to 5's back has no leg)
-  assert.deepEqual(info.defaults, { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false });
+  // (chapter 5's `mudPaws` is off too: 0; chapter 6's `stones` too: chapters 3 to 5's back has no leg; chapter 7's
+  // Tap, sum and wing kept clear too)
+  assert.deepEqual(info.defaults, { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false, tap: 'none', compare: false, wing: false });
   const plain = render('back', {}).svg, none = render('back', { eyes: 'none', drag: true, drips: true, train: false }).svg;
   assert.equal(strip(plain).length, strip(none).length, 'an empty opts is the defaults');
 });
@@ -129,6 +133,9 @@ test('bridge: every camera renders with a cat at each of its anchors, its head o
         const cast = [{ who: w, at, pose: 'sit', mood: 'worried', facing: i % 2 ? 'left' : 'right' }];
         const r = render(cam, {}, cast);
         checkRender(r, cast, cam + ' ' + at + ' ' + w);
+        // (`over` is our cat's reaching crouch over the print, in a close shot at her size: an otter sitting
+        // up there, the tallest drawing of all, puts his head above the panel; nobody but our cat goes there)
+        if (cam === 'print' && w === 'otter') continue;
         assert.ok(r.heads[0], cam + ': ' + w + ' at ' + at + ' is in sight');
       }
     });
@@ -1068,7 +1075,7 @@ test('bridge (chapter 6): the spec names `stones`, `gap` and the camera `wall`, 
   for (const want of ['**`stones: true`** on `back`', '**Anchor `gap`** in `back`', "**Camera `wall`, its own composition** (`cams.wall = { box: [0, 0, 1600], comp: 'wall' }`",
     '**`gap`** (default facing right', '**`back-left`**', '**`back-right`**', '**`dragon`**', 'No `near` or `beside`', '`train: true` works here']) assert.ok(md.includes(want), 'the spec says: ' + want);
   const v = art.vocab.sets.bridge, info = art.sceneInfo('bridge');
-  assert.deepEqual(v.cams, CAMS, 'chapter 2 to 5\'s five cameras, then `wall`');
+  assert.deepEqual(v.cams, CAMS, 'chapter 2 to 5\'s five cameras, then `wall` (and chapter 7\'s `print`)');
   assert.deepEqual(v.opts.stones, [false, true]);
   assert.equal(info.defaults.stones, false, 'off unless a frame asks: chapters 3 to 5\'s back has no leg');
   assert.equal(info.cams.wall.comp, 'wall');
@@ -1283,4 +1290,197 @@ test('bridge (chapter 6): whatever chapter 6 puts at the Old Bridge renders, wit
     for (const m of sc.cast || []) if (m.at === 'gap') assert.ok(sc.cam === 'wall' || (sc.opts && sc.opts.stones === true), id + ': the gap is only there with the leg');
   }
   t.diagnostic(frames.length + ' frames at the Old Bridge');
+});
+
+// ================================================================ chapter 7 (docs/chapters/07-the-counts-dont-lie.spec.md, section 4, the bridge row)
+// The print's Tap on `under`, the sum scratched in the mud (`compare`), and `print`, close on one of
+// Sprinkle's big prints with her paw held over it.
+
+const SPEC7 = path.join(ROOT, 'docs/chapters/07-the-counts-dont-lie.spec.md');
+const tapsOf7 = (svg) => [...svg.matchAll(/<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="([\d.]+)" height="([\d.]+)" fill="none" class="pc-tap" data-tap="(\w+)" pointer-events="none"\/>/g)]
+  .map((m) => ({ x0: +m[1], y0: +m[2], x1: +m[1] + +m[3], y1: +m[2] + +m[4], name: m[5] }));
+const printBoxes7 = (svg) => groupsOf(svg, 'print').map((g) => boxOf(g.replace(/<path d="[^"]+" fill="[^"]+" opacity="[\d.]+" transform="translate\(0 [\d.]+\)"\/>/g, '')));
+const compare7 = (svg) => { const m = /<g data-art="compare" data-nums="([^"]+)" data-box="([^"]+)" aria-label="([^"]+)">/.exec(svg); return m ? { nums: m[1].split(' ').map(Number), box: m[2].split(' ').map(Number), label: m[3] } : null; };
+const keeps7 = (r, b) => (r.keep || []).some((k) => k.x * 16 <= b[0] + 0.6 && k.y * 10 <= b[1] + 0.6 && (k.x + k.w) * 16 >= Math.min(1600, b[2]) - 0.6 && (k.y + k.h) * 10 >= Math.min(1000, b[3]) - 0.6);
+// the drag marks under the bridge (drawUnder: the cubic U_MARKS, 220 wide at the front, 30 at the back) and how
+// far their scuffs reach either side (dragMarks: 0.68 of the width out, a scuff 0.16 long)
+const U_MARKS7 = [[420, 1050], [820, 1000], [880, 720], [1040, 506]];
+function dragDistance(b) {
+  let best = Infinity;
+  for (let i = 0; i <= 200; i++) {
+    const t = i / 200, u = 1 - t, x = u * u * u * U_MARKS7[0][0] + 3 * u * u * t * U_MARKS7[1][0] + 3 * u * t * t * U_MARKS7[2][0] + t * t * t * U_MARKS7[3][0];
+    const y = u * u * u * U_MARKS7[0][1] + 3 * u * u * t * U_MARKS7[1][1] + 3 * u * t * t * U_MARKS7[2][1] + t * t * t * U_MARKS7[3][1], w = 220 + (30 - 220) * t;
+    const dx = Math.max(b[0] - x, 0, x - b[2]), dy = Math.max(b[1] - y, 0, y - b[3]);
+    best = Math.min(best, Math.hypot(dx, dy) - w * 0.84);
+  }
+  return best;
+}
+// a spot of one's own under the bridge: its height as scenes.js gives it (the line through the ground anchors there)
+function spotUnder(x, y, face) {
+  const A = art.sceneInfo('bridge').anchors.under, k = (A.mud.h - A.inside.h) / (A.mud.y - A.inside.y);
+  return { x, y, h: A.inside.h + k * (y - A.inside.y), face: face || 'right' };
+}
+const castBox = (m, a) => { const b = boxesAt(m, a).body; return b; };
+
+test('bridge, chapter 7: the spec names the print\'s Tap, `compare` and the camera `print` with `over`, and the set has them, declared, off by default', () => {
+  const md = fs.readFileSync(SPEC7, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**Option `tap: \'none\' \\| \'print\'`** on `under` (with `prints: true`)', '**Camera `print`**, its own composition (`comp: \'print\'`, as `wall` is)', 'Anchor **`over`**',
+    '**Option `compare`** on `under`, declared `opts: { compare: [false, [24, 60]] }`, `defaults: { compare: false }`', '**right of `mud`, about x 980–1325, y 855–955 in the world**'])
+    assert.ok(md.includes(want), 'the spec says: ' + want);
+  const v = art.vocab.sets.bridge, info = art.sceneInfo('bridge');
+  assert.ok(v.cams.includes('print'), 'the camera');
+  assert.equal(info.cams.print.comp, 'print', 'a composition of its own');
+  assert.deepEqual([info.cams.print.x, info.cams.print.y, info.cams.print.w], [0, 0, 1600]);
+  assert.deepEqual(Object.keys(info.anchors.print), ['over'], 'only `over`: no spot of Tallyheart\'s');
+  const o = info.anchors.print.over;
+  assert.ok(o.air && o.elev && o.face === 'right', '`over` is where her paw hangs (air, elev), facing right, as the marsh\'s raft-edge');
+  assert.deepEqual(v.opts.tap, ['none', 'print']);
+  assert.deepEqual(v.opts.compare, [false, [24, 60]], 'a list of two numbers, compared by value');
+  assert.deepEqual([info.defaults.tap, info.defaults.compare], ['none', false]);
+  // off is nothing at all, on every camera
+  for (const cam of CAMS) for (const base of [{}, { prints: true }, { prints: true, branch: true, stones: true }]) {
+    assert.ok(same5(render(cam, Object.assign({ tap: 'none', compare: false }, base)).svg, render(cam, base).svg), cam + ' ' + JSON.stringify(base) + ': off is nothing');
+    if (cam !== 'under') assert.ok(same5(render(cam, Object.assign({ tap: 'print', compare: [24, 60] }, base)).svg, render(cam, base).svg), cam + ': the Tap and the sum belong to `under`');
+  }
+});
+
+test('bridge, chapter 7: `tap: \'print\'` on `under` with `prints: true`: one unpainted pc-tap rect, its box one of her big prints: the nearest wholly in the picture and clear of the spot at `mud`; first in keep; nothing else changes', () => {
+  const plain = render('under', { prints: true }), r = render('under', { prints: true, tap: 'print' });
+  checkRender(r, [], 'under, the print\'s Tap');
+  const T = tapsOf7(r.svg), P = printBoxes7(plain.svg);
+  assert.equal(T.length, 1, 'one target');
+  assert.equal(T[0].name, 'print');
+  assert.ok(same5(r.svg.replace(/<rect[^>]*class="pc-tap"[^>]*\/>/, ''), plain.svg), 'unpainted: the only change');
+  assert.ok(keeps7({ keep: r.keep.slice(0, 1) }, [T[0].x0, T[0].y0, T[0].x1, T[0].y1]), 'first in keep');
+  const i = P.findIndex((b) => Math.abs(b.x0 - T[0].x0) < 1.5 && Math.abs(b.y0 - T[0].y0) < 3 && Math.abs(b.x1 - T[0].x1) < 1.5 && Math.abs(b.y1 - T[0].y1) < 3);
+  assert.ok(i >= 0, 'its box is a print\'s: ' + JSON.stringify(T[0]));
+  const inPic = (b) => b.x0 >= 8 && b.y0 >= 8 && b.x1 <= 1592 && b.y1 <= 992;
+  assert.ok(inPic(P[i]), 'wholly in the picture');
+  // clear of whoever crouches at `mud` looking down at it, in any pose
+  const mud = art.sceneInfo('bridge').anchors.under.mud;
+  for (const pose of ['crouch', 'sit', 'stand', 'loaf', 'lie']) for (const facing of ['right', 'left']) {
+    const b = castBox({ who: 'player', pose, facing }, mud);
+    assert.ok(!(b[0] < T[0].x1 && b[2] > T[0].x0 && b[1] < T[0].y1 && b[3] > T[0].y0), 'not under our cat at mud (' + pose + ', ' + facing + ')');
+  }
+  // the nearest such: every print laid before it is out of the picture or under the spot at mud
+  const clear = [mud.x - mud.h * 0.5, mud.y - mud.h * 0.6, mud.x + mud.h * 0.55, mud.y + 4];
+  for (let j = 0; j < i; j++) assert.ok(!inPic(P[j]) || (P[j].x0 < clear[2] && P[j].x1 > clear[0] && P[j].y0 < clear[3] && P[j].y1 > clear[1]), 'print ' + j + ' is nearer, but out of the picture or under her');
+  assert.ok(P[i].w > 60, 'a big print, big enough to tap');
+  // nothing without the prints, and nothing on the other cameras
+  assert.equal(tapsOf7(render('under', { tap: 'print' }).svg).length, 0, 'no prints, no Tap');
+  for (const cam of CAMS.filter((c) => c !== 'under')) assert.equal(tapsOf7(render(cam, { prints: true, tap: 'print' }).svg).length, 0, cam);
+});
+
+test('bridge, chapter 7: `compare: [24, 60]` on `under`: the sum scratched in the open mud right of `mud`, the short line by 24, the long one two and a half times as long by 60; clear of the drag marks, every print, and everyone at `mud`, at `inside` and at Riffle\'s { x: 400, y: 940 }; its box in keep', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('bridge').anchors.under, riffleAt = spotUnder(400, 940, 'right');
+  for (const fx of [['day'], ['sunset'], ['dusk']]) {
+    const cast = [{ who: 'player', at: 'mud', pose: 'pawup', mood: 'proud', claws: true }, { who: 'riffle', at: { x: 400, y: 940 }, pose: 'stand', mood: 'happy' }, { who: 'sprinkle', at: 'inside', pose: 'sit', mood: 'wonder', facing: 'left' }];
+    const r = render('under', { prints: true, compare: [24, 60] }, cast, fx);
+    checkRender(r, cast, 'under, the sum ' + fx);
+    const c = compare7(r.svg);
+    assert.ok(c, 'drawn');
+    assert.deepEqual(c.nums, [24, 60]);
+    assert.equal(c.label, 'Scratched in the mud: a short line, 24, and a long line, 60', 'both numbers named');
+    const b = c.box;
+    assert.ok(b[0] > A.mud.x && b[0] >= 860 - 40 && b[2] <= 1325 + 10 && b[1] >= 845 && b[3] <= 965, 'right of mud, about x 980–1325, y 855–955, well off the bottom edge: ' + b.map(Math.round));
+    assert.ok(b[3] - b[1] > 95, 'big enough to read on a phone: ' + (b[3] - b[1]).toFixed(0));
+    assert.ok(keeps7(r, b), 'its box in keep: no balloon covers it');
+    assert.ok(dragDistance(b) > 10, 'clear of the drag marks and their scuffs: ' + dragDistance(b).toFixed(1));
+    for (const p of printBoxes7(r.svg)) assert.ok(!(p.x0 < b[2] && p.x1 > b[0] && p.y0 < b[3] && p.y1 > b[1]), 'clear of every print: ' + [p.x0, p.y0, p.x1, p.y1].map(Math.round));
+    // the lines: two, the long two and a half times the short (scenes.js draws them, kit.compareLines)
+    const g = (r.svg.match(/<g data-art="compare"[^>]*>(.*?)<\/g>/) || [])[1], lines = [...g.matchAll(/M([\d.]+) ([\d.]+)H([\d.]+)/g)].map((m) => +m[3] - +m[1]);
+    assert.ok(lines.length >= 2 && Math.abs(lines[1] / lines[0] - 2.5) < 0.01, 'two and a half times');
+  }
+  // nobody stands on it: our cat at mud, Sprinkle at inside, Riffle at his three-shot spot, in the poses they take there
+  const b = compare7(render('under', { prints: true, compare: [24, 60] }).svg).box;
+  const meet = (q) => q[0] < b[2] && q[2] > b[0] && q[1] < b[3] && q[3] > b[1];
+  for (const pose of ['pawup', 'crouch', 'sit', 'stand', 'loaf']) for (const facing of ['right', 'left']) assert.ok(!meet(castBox({ who: 'player', pose, facing, claws: true }, A.mud)), 'our cat at mud: ' + pose + ', ' + facing);
+  for (const pose of ['sit', 'wings', 'curl', 'gulp', 'burp']) for (const facing of ['right', 'left']) {
+    let q = null;
+    try { q = castBox({ who: 'sprinkle', pose, facing }, A.inside); } catch (e) { q = null; }
+    if (q) assert.ok(!meet(q), 'Sprinkle at inside: ' + pose + ', ' + facing);
+  }
+  for (const pose of ['stand', 'sit', 'hush', 'hug']) for (const facing of ['right', 'left']) {
+    let q = null;
+    try { q = castBox({ who: 'riffle', pose, facing }, riffleAt); } catch (e) { q = null; }
+    if (q) assert.ok(!meet(q), 'Riffle at { x: 400, y: 940 }: ' + pose + ', ' + facing);
+  }
+  // only on under
+  for (const cam of CAMS.filter((c) => c !== 'under')) assert.equal(compare7(render(cam, { prints: true, compare: [24, 60] }).svg), null, cam);
+});
+
+test('bridge, chapter 7: `print`, close on the mud: one of her big prints in front, five claws, as big as the wide shots draw it; the drag marks\' edge along the right; our cat at `over` crouched with `reach: true`, her paw over the heel pad, the pad showing all round it and the toes and claws fanned out beyond, clear of her paw (room to spare); the lit rim after her shadows; her feet on the mud just above it', { skip: !art.character && 'no cats.js' }, () => {
+  for (const fx of [['day'], ['sunset'], ['dusk']]) for (const opts of [{}, { prints: true }, { train: true, drips: false }]) {
+    const r = render('print', opts, [], fx);
+    checkRender(r, [], 'print ' + fx + ' ' + JSON.stringify(opts));
+    assert.equal(groupsOf(r.svg, 'print').length, 1, 'one print, whatever `prints` says (the camera is on it)');
+  }
+  const a = art.sceneInfo('bridge').anchors.print.over, r = render('print', { prints: true }, [{ who: 'player', at: 'over', pose: 'crouch', mood: 'wonder', reach: true }]);
+  checkRender(r, [{}], 'print, her paw over it');
+  assert.ok(r.heads[0] && r.heads[0].x > 5 && r.heads[0].x < 95 && r.heads[0].y > 5, 'her face in the panel, for her line');
+  const P = printBoxes7(r.svg)[0], grp = groupsOf(r.svg, 'print')[0], claws = (grp.match(/<path d="([^"]+)" fill="[^"]+"\/>/g) || []).pop();
+  assert.equal((claws.match(/M/g) || []).length, 5, 'five long claws');
+  assert.ok(P.w > 140 && P.h > 100, 'big in the picture: ' + P.w.toFixed(0) + ' x ' + P.h.toFixed(0));
+  assert.ok(P.x0 > 8 && P.x1 < 1592 && P.y0 > 8 && P.y1 < 992, 'wholly in the picture: ' + [P.x0, P.y0, P.x1, P.y1].map(Math.round));
+  assert.ok(keeps7(r, [P.x0, P.y0, P.x1, P.y1]), 'the print kept clear of the lettering');
+  // her paw, from the cat drawing's own `reach`
+  const ch = art.character('player', { pose: 'crouch', mood: 'wonder', reach: true, facing: 'right', look: LOOK, sex: LOOK.sex }), k = a.h / refH();
+  const paw = [a.x + (ch.reach.x - ch.w / 2) * k, a.y + (ch.reach.y - ch.h) * k], pr = ch.reach.r * k, feet = a.y + (ch.reach.edge - ch.h) * k;
+  // the heel pad: the first shape of the print's dark (unlifted) pad path; the toes and claws the rest
+  const padD = /<path d="([^"]+)" fill="[^"]+" opacity="[\d.]+"\/>/.exec(grp)[1], pad = boxOf(' d="' + padD.split('Z')[0] + 'Z"');
+  assert.ok(Math.abs(paw[0] - pad.cx) < pad.w * 0.15 && Math.abs(paw[1] - pad.cy) < pad.h * 0.3, 'her paw over the heel pad\'s middle: ' + paw.map(Math.round) + ' / ' + [pad.cx, pad.cy].map(Math.round));
+  assert.ok(pad.x0 < paw[0] - pr * 1.6 && pad.x1 > paw[0] + pr * 1.6, 'the pad showing either side of her paw, with room to spare: ' + [pad.x0, pad.x1].map(Math.round) + ' / ' + (paw[0] - pr).toFixed(0) + '–' + (paw[0] + pr).toFixed(0));
+  assert.ok(pad.y1 > paw[1] + pr * 1.2, 'and in front of it');
+  const pts = d => (d.match(/-?\d+(\.\d+)?/g) || []).map(Number).reduce((o, v, i, all) => (i % 2 ? o : o.concat([[v, all[i + 1]]])), []);
+  const clear = (pp, by) => pp.every(q => Math.hypot(q[0] - paw[0], q[1] - paw[1]) > pr * by);
+  padD.split('Z').slice(1, 6).forEach((t, i) => assert.ok(clear(pts(t), 1.1), 'toe ' + (i + 1) + ' clear of her paw, beyond it'));
+  /d="([^"]+)"/.exec(claws)[1].split('Z').filter(t => /\d/.test(t)).forEach((t, i) => assert.ok(clear(pts(t), 2), 'claw ' + (i + 1) + ' well clear of her paw (none reads as her own claws)'));
+  // as big as the wide shots draw her prints (over 0.3 of a cat's height there), so her paw is about a fifth of it
+  const len = Math.hypot(P.w * 0.7, P.h);
+  assert.ok(len / a.h > 0.25, 'as big as a heron\'s foot, beside her: ' + (len / a.h).toFixed(2) + ' of her height');
+  assert.ok(2 * pr / len > 0.12 && 2 * pr / len < 0.3, 'her paw about a fifth of the print\'s length: ' + (2 * pr / len).toFixed(2));
+  assert.ok(feet < P.y0 && P.y0 - feet < 60, 'the line her feet are on lies on the mud just above the print: ' + feet.toFixed(1) + ' / ' + P.y0.toFixed(1));
+  assert.equal(groupsOf(r.svg, 'paw-shadow').length, 0, '(the paw\'s shadow is an ellipse, not a group)');
+  assert.ok(/data-art="paw-shadow"/.test(r.svg) && /data-art="over-shadow"/.test(r.svg), 'her shadow at her feet and her paw\'s on the print, as the marsh draws them');
+  // the pressed edge, lit, drawn after the shadows, so it reads all round her paw
+  const rim = groupsOf(r.svg, 'print-rim');
+  assert.equal(rim.length, 1);
+  assert.ok(r.svg.indexOf('data-art="print-rim"') > r.svg.indexOf('data-art="over-shadow"'), 'the rim after her shadows');
+  assert.match(rim[0], /opacity="0.9"/);
+  // the drag marks' edge along the right side, clear of her and the print
+  const me = boxesAt({ who: 'player', pose: 'crouch', reach: true }, a).body;
+  assert.ok(me[2] < 1330 && P.x1 < 1330, 'she and the print keep left of the drag marks');
+  assert.ok(!/data-art="paw-shadow"/.test(render('print', {}, []).svg), 'nobody at over: no shadows');
+});
+
+test('bridge, chapter 7 (final review): `wing: true` on `back` keeps the lettering off Sprinkle\'s drooping wing (her `wings` at `dragon`): a `keep` area over it, clear of every other spot; nothing drawn; off, or on another camera, exactly as before', { skip: !art.character && 'no cats.js' }, () => {
+  const v = art.vocab.sets.bridge, info = art.sceneInfo('bridge');
+  assert.deepEqual([v.opts.wing, info.defaults.wing], [[false, true], false], 'declared, off by default');
+  const md = fs.readFileSync(SPEC7, 'utf8').replace(/\s+/g, ' ');
+  assert.ok(md.includes('**Option `wing: true`** on `back`'), 'the spec names it');
+  const cast = [{ who: 'sprinkle', pose: 'wings', mood: 'sad', at: 'dragon', facing: 'left' }];
+  for (const base of [{}, { prints: true, stones: true }]) for (const fx of [['day'], ['sunset'], ['dusk']]) {
+    const off = render('back', base, cast, fx), on = render('back', Object.assign({ wing: true }, base), cast, fx);
+    assert.equal(strip(on.svg), strip(off.svg), JSON.stringify(base) + ' ' + fx + ': nothing drawn');
+    assert.deepEqual(on.heads, off.heads);
+    assert.deepEqual(on.keep.slice(0, off.keep.length), off.keep, 'the set\'s own keep areas first, as they were');
+    assert.equal(on.keep.length, off.keep.length + 1, 'one area more');
+    const k = on.keep[on.keep.length - 1], box = [k.x * 16, k.y * 10, (k.x + k.w) * 16, (k.y + k.h) * 10];
+    // the wing, as Sprinkle's `wings` holds it at `dragon`: from her back (right of her face) to its tip,
+    // low, above her tail; her face and the good wing above stay outside it
+    const D = info.anchors.back.dragon, face = on.heads[0];
+    assert.ok(box[0] > face.x * 16 && box[0] < D.x + 60 && box[2] >= D.x + 380 && box[1] > face.y * 10 && box[3] <= D.y, 'over the drooping wing: ' + box.map(Math.round));
+    assert.equal(render('back', Object.assign({ wing: false }, base), cast, fx).keep.length, off.keep.length, 'off is nothing');
+  }
+  // only `back` has her there: another camera draws and keeps exactly as without it
+  for (const cam of CAMS.filter(c => c !== 'back')) {
+    const off = render(cam, { prints: true }), on = render(cam, { prints: true, wing: true });
+    assert.deepEqual([strip(on.svg), on.keep], [strip(off.svg), off.keep], cam);
+  }
+  // chapters 3 to 6 never ask for it
+  for (const ch of ['ch03', 'ch04', 'ch05', 'ch06']) {
+    const st = PC.story && PC.story[ch];
+    if (!st) continue;
+    for (const id of Object.keys(st.frames)) { const sc = st.frames[id].scene; if (sc && sc.set === 'bridge') assert.ok(!sc.opts || sc.opts.wing === undefined, ch + ' ' + id); }
+  }
 });

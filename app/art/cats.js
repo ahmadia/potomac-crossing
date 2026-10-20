@@ -83,7 +83,9 @@
  *     a happy Wisp keeps her eyes open); `squeeze`, `tear`. `pawup`: `paw`, and `lit: n` lights the
  *     claws pale as frost. An unknown pose draws `blink`.
  *   - cats, extras: `tuck: true` (a raised paw's dewclaw curled back in: sitting up, nine claws out),
- *     `asleep: true` (eyes shut whatever the mood), `snail: true | 'in'` (a snail halfway up the
+ *     `asleep: true` (eyes shut whatever the mood; chapter 7, `asleep: 'half'`: half asleep, heavy
+ *     upper lids down to the middle of the eyes whatever the mood, which keeps its mouth: our cat
+ *     curling up to sleep with a small smile), `snail: true | 'in'` (a snail halfway up the
  *     whole ear; its horns pulled in), `buzz: true` (short zigzags along her outline and zigzag
  *     whiskers: the Roar), `dragonfly: true` (on her nose, her eyes turned in to it), `tap: 'nose'`
  *     (the nose marked for the page as the thing to tap: an unpainted <g class="pc-tap pc-tap-nose">;
@@ -141,6 +143,22 @@
  *   - countsPicture: `kind: 'roll'` (Sleet's roll call: `groups` little plain dragonets in one row,
  *     `per` HERE!s over each head, lit in order); a `who` of one `sleet` on the 5s (his forepaw in
  *     the long grass); Sleet among the dragonets of the 5s, 9s and 10s; `reedclan` in any `who`.
+ *
+ * Chapter 7 (docs/chapters/07-the-counts-dont-lie.spec.md, section 4): no new cast, pose or mood.
+ *   - cast extras: Riffle's `tap: 'fish'` (with `holds: 'string'`: the string's box, unpainted, class
+ *     pc-tap pc-tap-fish: the toss Tap) and Sprinkle's `tap: 'mist'` (with her mist, as `burp` draws
+ *     it: the cloud, pc-tap pc-tap-mist: the HURP Tap); vocab.extras.tap gains 'fish' and 'mist'.
+ *   - countsPicture, the 6s' cheeks (`kind: 'cheeks'` or `'cheeks-top'` at per 6, or `thing: 'whisker'`
+ *     at per 6 with no kind; per 6 with neither draws as it always has): one to ten cheeks close up,
+ *     each a group of six whiskers in two rows of three, in the `who` entry's coat (else the rim's coats
+ *     in order), lit cheek by cheek, top row then bottom; `cheeks-top` lights every top row from the
+ *     start; THE FACE RULE: two consecutive `who` entries with the same who and variant are one face,
+ *     its two cheeks side by side on one card, puffed round. `thing: 'whisker'` at per 3: one big cheek,
+ *     its two rows the two groups. `thing: 'gap'`: the pile's back row close up, three pieces, `groups`
+ *     empty pressed places, three pieces. `kind: 'marks'`: the nights, `per` short scratches each, side
+ *     by side in the sand or (`ground: 'mud'`) the mud.
+ *   - sand at per 6: each group two short rows of three, one above the other (every other per as before).
+ *   The game's cats keep two whiskers a side: six on a cheek exist only in these Counts close-ups.
  *
  * `svg` is markup for a group (no outer <svg>) drawn in a local box 0..w x 0..h, with the
  * character's feet centred at (w/2, h). Every character is drawn facing right and mirrored for
@@ -645,7 +663,9 @@
   // upper lids for the 'lid' eye kinds: [inner corner y, curve control y, outer corner y], in eye coordinates
   // lidKind: soft, a little lifted, so a kind face reads warm and never sly (it looks at you, pupils centred)
   // lidSad: high at the inner corner, drooping to the outer (homesick); lidShy: lowered, the eyes looking down
-  var LID = { lidSoft: [2, -10.5, -2], lidFlat: [3.4, 1.4, -4.6], lidHalf: [-0.4, 0.4, -1.2], lidKind: [1.2, -12.8, -3.4],
+  // lidDrowsy (chapter 7, `asleep: 'half'`): heavy, down to the middle of the eye, its edge sagging a little in
+  // the middle, so what shows of the eye is a soft crescent (a content cat's slow blink, never a glare)
+  var LID = { lidSoft: [2, -10.5, -2], lidFlat: [3.4, 1.4, -4.6], lidHalf: [-0.4, 0.4, -1.2], lidKind: [1.2, -12.8, -3.4], lidDrowsy: [-1.6, 4.0, -0.4],
     lidSad: [-7.6, -8.6, -1.4], lidShy: [1.4, -8.8, -0.6] };
   var BLUSH = { happy: 1, laugh: 1, kind: 1, dreamy: 1, proud: 1, wonder: 1, shy: 1 };
 
@@ -765,8 +785,11 @@
 
     // eyes (chapter 3, `squeeze: true`: squeezed shut whatever the mood)
     var kind = EYE_KIND[mood] || 'open';
-    // chapter 5, `asleep: true`: eyes shut whatever the mood (the old tom on guard, "resting his eyes")
-    if (ctx.asleep) kind = 'closed';
+    // chapter 5, `asleep: true`: eyes shut whatever the mood (the old tom on guard, "resting his eyes");
+    // chapter 7, `asleep: 'half'`: half asleep, heavy lids down to the middle of the eyes, sagging a little
+    // (lidDrowsy; solemn's level lids read as deadpan), with the mood's own mouth and blush: our cat
+    // curling up to sleep with a small smile (f103)
+    if (ctx.asleep) kind = ctx.asleep === 'half' ? 'lidDrowsy' : 'closed';
     if (ctx.squeeze) kind = 'squeeze';
     var exd = ff ? 17 : 15.5, eyY = ff ? 1 : -1, ek = ff ? 1.1 : 1;
     var look = ctx.look || [1.4, 0];
@@ -1425,7 +1448,7 @@
     // chapter 5's: asleep (eyes shut, whatever the mood), a snail on one ear (`'in'`: its horns
     // pulled in), buzzing whiskers, a dragonfly on the nose, and the nose to tap, marked for the page
     // (`tap: 'nose'`; or, no `tap` given, the sleeper with a snail on his ear, as the first screen draws him)
-    if (o.asleep) hctx.asleep = true;
+    if (o.asleep) hctx.asleep = o.asleep === 'half' ? 'half' : true;
     if (o.snail) hctx.snail = o.snail === 'in' ? 'in' : true;
     if (o.buzz) hctx.buzz = true;
     if (o.dragonfly) hctx.dragonfly = true;
@@ -2744,6 +2767,8 @@
       over += '<g class="pc-string" transform="translate(' + N(hf[0]) + ',' + N(hf[1] + 3) + ')">' + fishString(3, len6) + '</g>' + paw(held6.hand, false);
       addPts([[hf[0] - len6 * 0.32, hf[1]], [hf[0] + len6 * 0.32, hf[1] + 3 + len6 * 0.96]]);
       heldAt6 = { c: [hf[0], hf[1] + 3 + len6 * 0.55], r: len6 * 0.5 };
+      // chapter 7, `tap: 'fish'` (the toss Tap): the string marked for the page, its box, unpainted
+      if (o.tap === 'fish') over += '<g class="pc-tap pc-tap-fish"><rect x="' + N(hf[0] - len6 * 0.36) + '" y="' + N(hf[1] - 2) + '" width="' + N(len6 * 0.72) + '" height="' + N(len6 * 0.96 + 9) + '" fill="none"/></g>';
     }
     (P.mud || []).forEach(function (md, i) {
       over += '<path d="' + blob(md[0], md[1], md[2], i + 2) + '" fill="#7a5638" stroke="#4e3420" stroke-width="' + N(1.2 * bk) + '"/>';
@@ -3117,6 +3142,8 @@
     // the extras: a misty tear rolling down beside her nose; a cloud of breath, or of burp
     if (ctx.tear) { s += tearSvg(13, 6, 1.5); pts.push([20, 28]); }
     if (ctx.mist) { var mk2 = ctx.mistK || 1.3, mx = ctx.mistX || 54; s += mistSvg(mx, my + 2, mk2); MIST_BOX.forEach(function (q) { pts.push([mx + q[0] * mk2, my + 2 + q[1] * mk2]); }); }
+    // chapter 7, `tap: 'mist'` (the HURP Tap): the cloud marked for the page, unpainted
+    if (ctx.mist && ctx.tapMist) s += tapMark('mist', mx + 3.5 * mk2, my + 2, 22 * mk2);
     return { svg: s, pts: pts, eyes: ctx.splitEyes ? eyesSvg : '' };
   }
 
@@ -3257,6 +3284,7 @@
     if (o.squeeze) hctx.squeeze = true;
     if (o.tear) hctx.tear = true;
     if (o.mist || P.mist) { hctx.mist = true; if (P.mist) { hctx.mistK = P.mistK; hctx.mistX = P.mistX; } }
+    if (o.tap === 'mist') hctx.tapMist = true;
     if (K.bump) hctx.bump = true;
     // chapter 6, Sleet: his bossy brows, whatever the mood (`K.brows`), and the tuft of long grass on his head
     if (K.brows) hctx.brows = K.brows;
@@ -6050,6 +6078,233 @@
       '<g clip-path="url(#' + id + ')">' + back + body + '</g><rect x="4" y="4" width="' + (W - 8) + '" height="' + (H - 8) + '" rx="24" fill="none" stroke="' + LOGS.line + '" stroke-width="3"/>');
   }
 
+  // ----- chapter 7: the 6s' cheeks close up, her whiskers on one cheek, the back row's gaps, the nights
+  // (docs/chapters/07-the-counts-dont-lie.spec.md, section 4). Each is reached only by a `kind` or a
+  // `thing` no chapter before 7 passes, so no earlier picture changes. The game's cats keep two
+  // whiskers a side: six on a cheek, two rows of three, exist only in these close-ups.
+
+  // The rim's coats, in order, for cheeks with no `who` (round again): never a face, never her coat
+  var RIM_COATS = [{ who: 'clancat', variant: 1 }, { who: 'murmurchime' }, { who: 'clancat', variant: 3 }, { who: 'clancat', variant: 5 }, { who: 'grizzled' }];
+  // the cats a cheek can be (anyone else in a `who` takes the rim's coat for that place)
+  var CHEEK_CATS = { player: 1, clancat: 1, reedclan: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, snorter: 1, murmurchime: 1, sloshbank: 1 };
+  function cheekCoat(o, gi) {
+    var e = Array.isArray(o.who) ? o.who[gi] : null;
+    if (e && CHEEK_CATS[e.who]) return resolve(whoSpec(o, e));
+    return resolve(whoSpec({ who: RIM_COATS, look: o.look }, RIM_COATS[gi % RIM_COATS.length]));
+  }
+  // THE FACE RULE: two consecutive `who` entries with the same `who` and the same `variant` (both
+  // absent counts as the same) are one character's face close up, its two cheeks side by side and
+  // puffed round, one group each: 1 its left cheek, 2 its right, 0 a cheek of its own. Pairs are
+  // taken from the left, so the entry after a pair starts afresh; with no `who`, no faces.
+  function cheekFaces(o, groups) {
+    var who = Array.isArray(o.who) ? o.who : [], out = [];
+    var v = function (e) { return e.variant == null ? '' : String(e.variant); };
+    for (var i = 0; i < groups; i++) {
+      var a = who[i], b = who[i + 1];
+      if (i + 1 < groups && a && b && a.who && a.who === b.who && v(a) === v(b)) { out.push(1, 2); i++; } else out.push(0);
+    }
+    return out;
+  }
+  // One cheek close up: the left half of a face as we look at it, in face coordinates (the face's
+  // middle line at x = 0, the eye near the top, the chin at y = 200): the cheek in the cat's coat, its
+  // muzzle puff with six whisker dots in two rows of three, and the six whiskers, thin curves fanning
+  // out to the left past the cheek: three on top, three below. `lit(j)` lights whisker j (0 to 2 the
+  // top row, from the top; 3 to 5 the row below). o: `puff` (puffed round: a face), `right` (the
+  // face's right half, which the caller mirrors: the other eye, no scar), `sliver` (the other cheek's
+  // edge beside a single cheek: fur and puff only). Returns { fur, rows: [top, bottom], boxes }: the
+  // rows are drawn after the fur, so a caller can glow one; `boxes` are the rows' boxes.
+  var CHEEK_DOTS = [[-20, 93], [-37, 98], [-54, 103], [-54, 131], [-37, 136], [-20, 141]];
+  var CHEEK_TIPS = [[-194, 46], [-194, 69], [-194, 92], [-194, 142], [-194, 165], [-194, 188]];
+  var CHEEK_LINE = { unlit: '#3b302a', lit: '#c27a0c' };
+  function cheekHalf(sp, lit, o) {
+    o = o || {};
+    var p = sp.pal, puff = !!o.puff, line = p.line, muz = sp.muzzle || p.light, id = 'pcck' + (++serial).toString(36);
+    var outl = puff ? 'M-60,-46C-112,-42 -150,-8 -158,38C-162,58 -164,72 -164,84L-176,94L-165,100L-172,110C-182,148 -160,184 -112,194C-74,202 -32,203 0,203'
+      : 'M-60,-46C-108,-42 -138,-8 -145,38C-149,60 -151,76 -150,88L-162,99L-150,105L-159,118L-145,122C-139,148 -119,170 -89,182C-60,193 -28,197 0,197';
+    var fillD = outl + 'L4,203L4,-46Z', inner = '';
+    // the markings, inside the whole face (so one that crosses the middle line, a blaze or a pale chin,
+    // is never cut there, and the other half draws the same over it): a tabby's forehead stripes and two
+    // short thick bars at the cheek's edge (never like a whisker, and clear of them), a tortie's or
+    // calico's patches, a blaze down the nose, a pale chin
+    if (sp.pattern === 'tabby') inner += '<path d="M-12,-50L-11,2M-32,-48L-29,-4M-146,22L-128,28M-148,38L-130,42" stroke="' + p.stripe + '" stroke-width="9" stroke-linecap="round" fill="none"/>';
+    else if (sp.pattern === 'tortie') inner += '<path d="' + blob(-112, 30, 40, 3) + '" fill="' + p.patches[0] + '"/><path d="' + blob(-70, 182, 22, 5) + '" fill="' + p.patches[1] + '"/>';
+    else if (sp.pattern === 'calico') inner += '<path d="' + blob(-106, 22, 44, 3) + '" fill="' + p.patches[0] + '"/><path d="' + blob(-30, -40, 20, 6) + '" fill="' + p.patches[1] + '"/>';
+    if (sp.marks.back) inner += '<path d="M0,-50L0,-10" stroke="' + mix(p.base, line, 0.6) + '" stroke-width="16" stroke-linecap="round"/>';
+    if (sp.marks.splash) inner += '<path d="M10,-50Q14,8 22,44Q38,76 24,100L-24,100Q-38,76 -22,44Q-14,8 -10,-50Z" fill="' + markFill(sp) + '"' + markEdge(sp) + '/>';
+    if (sp.marks.chin || sp.marks.chest) inner += '<ellipse cx="0" cy="198" rx="62" ry="28" fill="' + (sp.marks.chin || sp.marks.chest) + '"/>';
+    inner += '<ellipse cx="-106" cy="12" rx="32" ry="12" transform="rotate(-28 -106 12)" fill="' + p.light + '" opacity=".5"/>';
+    if (puff) inner += '<path d="M-156,132Q-150,104 -126,94" stroke="#ffffff" stroke-width="6" stroke-linecap="round" fill="none" opacity=".4"/>';
+    var fur = '<defs><clipPath id="' + id + '"><path d="' + fillD + '"/><path d="' + fillD + '" transform="scale(-1,1)"/></clipPath></defs><path class="pc-fur" d="' + fillD + '" fill="' + p.base + '"/>' +
+      '<g clip-path="url(#' + id + ')">' + inner + '</g><path d="' + outl + '" stroke="' + line + '" stroke-width="3.4" fill="none" stroke-linejoin="round"/>';
+    // the muzzle puff the whiskers grow from
+    var mc = puff ? [-34, 124, 44] : [-30, 120, 38];
+    fur += '<circle class="pc-muzzle" cx="' + mc[0] + '" cy="' + mc[1] + '" r="' + mc[2] + '" fill="' + muz + '" stroke="' + mix(muz, line, 0.4) + '" stroke-width="2" stroke-opacity=".55"/>';
+    if (o.sliver) return { fur: fur, rows: ['', ''], boxes: [] };
+    // the eye (the left one as we look; the right one on a face's right half), as the scenes draw it
+    var ed = 'pcce' + (++serial).toString(36);
+    fur += '<defs><path id="' + ed + '" d="' + EYE + '"/><clipPath id="' + ed + 'c"><use href="#' + ed + '"/></clipPath></defs>' +
+      '<g transform="translate(-66,36) scale(-2.1,2.1)">' + eyeSvg(puff ? 'wonder' : 'open', sp.iris[o.right ? 1 : 0], [0.8, 0.6], -1, p, p.base, ed, ed + 'c', sp) + '</g>';
+    if (sp.scar && !o.right) fur += '<path d="M-52,-16Q-66,26 -80,68" stroke="#dba79f" stroke-width="6" fill="none" stroke-linecap="round"/>';
+    // the nose and the mouth, on the middle line (a puffed face holds its breath: the mouth shut small)
+    var ml = p.feat === p.line ? mix(p.line, '#000', 0.1) : p.feat;
+    fur += '<path d="' + (puff ? 'M0,98V108M0,108Q-6,114 -13,110' : 'M0,98V114M0,114Q-9,126 -22,117') + '" stroke="' + ml + '" stroke-width="3.6" stroke-linecap="round" fill="none"/>' +
+      '<path d="M-3.8,7.2Q0,6 3.8,7.2Q2.2,10.6 0,11.7Q-2.2,10.6 -3.8,7.2Z" transform="translate(0,56) scale(3.6)" fill="' + p.nose + '" stroke="' + mix(p.nose, '#5a2a33', 0.45) + '" stroke-width=".5" stroke-linejoin="round"/>';
+    // the six whiskers, each from its dot: a dark edge and a pale core, so they show on any coat and
+    // on the card; lit, gold with a glow behind
+    var rows = ['', ''], boxes = [[1e9, 1e9, -1e9, -1e9], [1e9, 1e9, -1e9, -1e9]], dx = puff ? -4 : 0, dy = puff ? 3 : 0, reach = puff ? -10 : 0;
+    for (var j = 0; j < 6; j++) {
+      var r = j < 3 ? 0 : 1, on = !!lit(j), d0 = [CHEEK_DOTS[j][0] + dx, CHEEK_DOTS[j][1] + dy], t = [CHEEK_TIPS[j][0] + reach, CHEEK_TIPS[j][1] + dy];
+      var m = [(d0[0] + t[0]) / 2, (d0[1] + t[1]) / 2 + (r ? 7 : -7)], wd = 'M' + pt(d0) + 'Q' + pt(m) + ' ' + pt(t), w = '';
+      if (on) w += '<path d="' + wd + '" stroke="' + GLOW + '" stroke-width="14" stroke-linecap="round" fill="none" opacity=".5"/>';
+      w += '<path class="pc-whisker' + (on ? ' pc-lit' : '') + '" d="' + wd + '" stroke="' + (on ? CHEEK_LINE.lit : CHEEK_LINE.unlit) + '" stroke-width="5.6" stroke-linecap="round" fill="none"/>' +
+        '<path d="' + wd + '" stroke="' + (on ? GLOW2 : '#fbf6ea') + '" stroke-width="2.6" stroke-linecap="round" fill="none"/>' +
+        '<circle cx="' + N(d0[0]) + '" cy="' + N(d0[1]) + '" r="4.6" fill="' + (on ? GLOW2 : mix(line, '#000', 0.15)) + '"' + (on ? ' stroke="' + CHEEK_LINE.lit + '" stroke-width="1.6"' : '') + '/>';
+      rows[r] += w;
+      var b = boxes[r];
+      [d0, t, m].forEach(function (q) { b[0] = Math.min(b[0], q[0]); b[1] = Math.min(b[1], q[1]); b[2] = Math.max(b[2], q[0]); b[3] = Math.max(b[3], q[1]); });
+    }
+    return { fur: fur, rows: rows, boxes: boxes };
+  }
+
+  // The 6s: `groups` cheeks close up (one to ten, up to five a row; six to ten: five, then the rest),
+  // each a group of six whiskers, two rows of three; a face (THE FACE RULE above) is its two cheeks
+  // side by side on one card, puffed round, and never split across a row. `highlight` lights whiskers
+  // in order, cheek by cheek, each cheek's top three then its bottom three; `kind: 'cheeks-top'` lights
+  // every cheek's top three from the start, whatever `highlight` says. `totals`: the running total
+  // under each cheek; `next`: the next cheek glowing (pc-next, the tap target).
+  function cheeksPicture(o, groups) {
+    var per = 6, hl = clamp(intOr(o.highlight, 0), 0, per * groups), top = o.kind === 'cheeks-top';
+    var TOT = o.totals ? 46 : 0, nextG = o.next ? Math.floor(hl / per) : -1;
+    var CW = 220, CH = 206, pad = 18, face = cheekFaces(o, groups), slot = [], col = 0, inRow = [0], gi;
+    for (gi = 0; gi < groups; gi++) {
+      if (col >= 5 || (face[gi] === 1 && col >= 4)) { col = 0; inRow.push(0); }
+      slot.push([col, inRow.length - 1]); col++; inRow[inRow.length - 1]++;
+    }
+    var cols = Math.max(1, Math.max.apply(null, inRow)), rows = inRow.length;
+    var W = pad * 2 + cols * CW, H = pad * 2 + rows * (CH + TOT), defs = '', cards = '', body = '', clip = [];
+    var X = function (k) { return pad + (W - pad * 2 - inRow[slot[k][1]] * CW) / 2 + slot[k][0] * CW; };
+    var Y = function (k) { return pad + slot[k][1] * (CH + TOT); };
+    // the cards first (a face's one card under both its cheeks), so a glow shows on its card
+    for (gi = 0; gi < groups; gi++) {
+      if (face[gi] === 2) { clip[gi] = clip[gi - 1]; continue; }
+      var cid = 'pccc' + (++serial).toString(36), rr = 'x="' + N(X(gi) + 6) + '" y="' + N(Y(gi) + 6) + '" width="' + N((face[gi] === 1 ? 2 : 1) * CW - 12) + '" height="' + N(CH - 6) + '" rx="22"';
+      defs += '<clipPath id="' + cid + '"><rect ' + rr + '/></clipPath>';
+      cards += '<rect class="pc-card" ' + rr + ' fill="#d6e5c8"/>';
+      clip[gi] = cid;
+    }
+    for (gi = 0; gi < groups; gi++) {
+      var sp = cheekCoat(o, gi), litN = clamp(hl - gi * per, 0, per), x0 = X(gi), y0 = Y(gi), g;
+      var lit = function (j) { return j < litN || (top && j < 3); };
+      if (face[gi]) {
+        var hf = cheekHalf(sp, lit, { puff: true, right: face[gi] === 2 });
+        g = '<g transform="translate(' + N(face[gi] === 1 ? x0 + CW : x0) + ',' + N(y0 + 2) + ')' + (face[gi] === 2 ? ' scale(-1,1)' : '') + '">' + hf.fur + hf.rows[0] + hf.rows[1] + '</g>';
+      } else {
+        // a cheek of its own: the nose whole at the card's edge, a sliver of the other cheek beyond it
+        var one = cheekHalf(sp, lit), other = cheekHalf(sp, lit, { sliver: true });
+        g = '<g transform="translate(' + N(x0 + CW - 32) + ',' + N(y0 + 8) + ') scale(.92)"><g transform="scale(-1,1)">' + other.fur + '</g>' + one.fur + one.rows[0] + one.rows[1] + '</g>';
+      }
+      if (gi === nextG) body += nextGlowSoft(x0 + 1, y0 + 1, CW - 2, CH + 4 + TOT * 0.5, '.7');
+      body += '<g class="pc-cheek' + (face[gi] ? ' pc-face' : '') + '" clip-path="url(#' + clip[gi] + ')">' + g + '</g>';
+      if (TOT && litN >= per) body += totalNum(x0 + CW / 2, y0 + CH + 32, (gi + 1) * per, false);
+    }
+    var label = groups + (groups === 1 ? ' cheek, six whiskers' : ' cheeks, six whiskers each');
+    return svgDoc(W, H, label, '<defs>' + defs + '</defs><rect x="4" y="4" width="' + N(W - 8) + '" height="' + N(H - 8) + '" rx="22" fill="#e6efdc" stroke="#c4d6b6" stroke-width="3"/>' + cards + body);
+  }
+
+  // Her whiskers (the 3s' skip, `thing: 'whisker'`): one big cheek close up in who[0]'s coat
+  // (Tallyheart's), its two rows of three the two groups: the top row first, then the row below.
+  // `highlight` 3 lights the top row, 6 both; `totals` puts 3 and 6 beside the rows; `next` glows
+  // on the next row.
+  function oneCheekPicture(o, groups) {
+    var per = 3, n = clamp(groups, 1, 2), hl = clamp(intOr(o.highlight, 0), 0, per * n), nextR = o.next && hl < per * n ? Math.floor(hl / per) : -1;
+    // a 16:10 picture with a clear band along the top (where the page puts the big number) and the
+    // card in the middle, the totals to its left, beside the rows
+    var K = 1.46, W = 640, H = 400, cw = Math.round(30 + 224 * K), TW = o.totals ? 74 : 0, cx0 = Math.round((W - cw - TW) / 2 + TW), cy0 = 58;
+    var mx = cx0 + cw - 30 * K, my = cy0 + 4, sp = cheekCoat(o, 0), lit = function (j) { return j < hl; };
+    var one = cheekHalf(sp, lit), other = cheekHalf(sp, lit, { sliver: true }), cid = 'pcco' + (++serial).toString(36);
+    var card = 'x="' + N(cx0) + '" y="' + cy0 + '" width="' + N(cw) + '" height="' + N(H - cy0 - 14) + '" rx="26"';
+    var at = 'translate(' + N(mx) + ',' + N(my) + ') scale(' + K + ')', body = '', tot = '';
+    for (var r = 0; r < n; r++) {
+      var b = one.boxes[r], x0 = mx + b[0] * K, y0 = my + b[1] * K, x1 = mx + b[2] * K, y1 = my + b[3] * K;
+      if (r === nextR) body += nextGlowSoft(x0 - 12, y0 - 14, x1 - x0 + 26, y1 - y0 + 28, '.55');
+      body += '<g class="pc-row" transform="' + at + '">' + one.rows[r] + '</g>';
+      if (o.totals && hl >= (r + 1) * per) tot += totalNum(cx0 - 34, (y0 + y1) / 2 + 13, (r + 1) * per, false);
+    }
+    return svgDoc(W, H, 'One cheek: two rows of three whiskers', '<defs><clipPath id="' + cid + '"><rect ' + card + '/></clipPath></defs>' +
+      '<rect x="4" y="4" width="' + N(W - 8) + '" height="' + N(H - 8) + '" rx="22" fill="#e6efdc" stroke="#c4d6b6" stroke-width="3"/><rect ' + card + ' fill="#d6e5c8"/>' +
+      '<g class="pc-cheek" clip-path="url(#' + cid + ')"><g transform="' + at + '"><g transform="scale(-1,1)">' + other.fur + '</g>' + one.fur + '</g>' + body + '</g>' + tot);
+  }
+
+  // The back row close up (the gaps' skip, `thing: 'gap'`): three pieces, `groups` empty places pressed
+  // in the earth, three pieces (PC.art.prey's mice and voles, eyes shut, as the pile draws them). Each
+  // empty place is a group: the next glows, a lit one is outlined in gold; `totals` 1, 2, 3… under them.
+  var GAP_EARTH = { patch: '#c9a679', edge: '#94724b', dots: '#a98760', press: '#a88459', lip: '#e2c79c', rim: '#7f603e' };
+  function gapsPicture(o, groups) {
+    var n = clamp(groups, 1, 10), hl = clamp(intOr(o.highlight, 0), 0, n), TOT = o.totals ? 52 : 0, nextG = o.next && hl < n ? hl : -1;
+    var fn = typeof art.prey === 'function' ? art.prey : preyFallback, SW = 100, PW = 90, PH = 56, pad = 24, slots = n + 6;
+    var W = pad * 2 + slots * SW, H = pad * 2 + 112 + TOT, base = pad + 92, body = '', E = GAP_EARTH;
+    function piece(cx, c) {
+      var q0 = { kind: preyKind(c, 0), lit: false, seed: 300 + c, facing: 'right', part: 'body' }, q = null;
+      try { q = fn(q0); } catch (e) { q = null; }
+      if (!q || typeof q.svg !== 'string' || !q.svg || !(q.w > 0 && q.h > 0)) q = preyFallback(q0);
+      var k = Math.min(PW / q.w, PH / q.h), svg = q.svg.replace(/^\s*<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+      return '<ellipse cx="' + N(cx) + '" cy="' + N(base - 2) + '" rx="' + N(PW * 0.48) + '" ry="7" fill="#5a4026" opacity=".22"/>' +
+        '<g transform="translate(' + N(cx - q.w * k / 2) + ',' + N(base - q.h * k) + ') scale(' + N(k) + ')">' + svg + '</g>';
+    }
+    // the earth: a long soft strip, crumbs
+    body += '<rect x="6" y="' + N(pad + 6) + '" width="' + N(W - 12) + '" height="' + N(112 - 6) + '" rx="40" fill="' + E.patch + '" stroke="' + E.edge + '" stroke-width="3"/>';
+    var crumbs = '';
+    for (var d = 0; d < slots * 3; d++) crumbs += '<circle cx="' + N(20 + rand(d * 5 + 2) * (W - 40)) + '" cy="' + N(pad + 18 + rand(d * 5 + 3) * 84) + '" r="' + N(1 + rand(d) * 1.6) + '"/>';
+    body += '<g fill="' + E.dots + '" opacity=".7">' + crumbs + '</g>';
+    for (var c = 0; c < slots; c++) {
+      var cx = pad + c * SW + SW / 2, gi = c - 3;
+      if (gi < 0 || gi >= n) { body += piece(cx, c); continue; }
+      // an empty place: the earth pressed smooth where a piece lay last night
+      var on = gi < hl, place = '<ellipse cx="' + N(cx) + '" cy="' + N(base - 10) + '" rx="40" ry="15" fill="' + E.press + '"/>' +
+        '<ellipse cx="' + N(cx) + '" cy="' + N(base - 13) + '" rx="31" ry="9" fill="' + E.lip + '" opacity=".55"/>' +
+        '<path d="M' + N(cx - 38) + ',' + N(base - 6) + 'q38,12 76,0" stroke="' + E.rim + '" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".7"/>';
+      if (on) place = '<ellipse cx="' + N(cx) + '" cy="' + N(base - 10) + '" rx="48" ry="22" fill="' + GLOW + '" opacity=".35"/>' + place +
+        '<ellipse class="pc-lit" cx="' + N(cx) + '" cy="' + N(base - 10) + '" rx="42" ry="17" fill="none" stroke="' + GLOW + '" stroke-width="5"/>';
+      if (gi === nextG) body += nextGlowSoft(cx - SW / 2 + 4, pad + 2, SW - 8, 114 + TOT * 0.5, '.6');
+      body += '<g class="pc-gap">' + place + '</g>';
+      if (TOT && on) body += totalNum(cx, base + 64, gi + 1, false);
+    }
+    return svgDoc(W, H, 'The back row: ' + (n === 4 ? 'four' : n) + ' empty place' + (n === 1 ? '' : 's'), body);
+  }
+
+  // The nights (`kind: 'marks'`): `groups` nights side by side in one row (seven to ten: two rows),
+  // each a cluster of `per` short upright scratches (four in a row; ten as two rows of five), a clear
+  // gap between nights and nothing else to count (no moon, no number); in the sand, or `ground: 'mud'`.
+  // `highlight` lights the marks in order, a night at a time.
+  function marksPicture(o, groups, per) {
+    var G = GROUNDS[o.ground] || GROUNDS.sand, n = clamp(groups, 1, 10), hl = clamp(intOr(o.highlight, 0), 0, n * per);
+    var SP = 17, LEN = 40, gap = 34, pad = 26, perRow = Math.min(per, 5), subRows = Math.ceil(per / perRow);
+    var cw = perRow * SP + 26, ch = subRows * (LEN + 12) + 18, perLine = n <= 6 ? n : Math.ceil(n / 2), lines = Math.ceil(n / perLine);
+    var W = pad * 2 + perLine * cw + (perLine - 1) * gap, H = pad * 2 + lines * ch + (lines - 1) * 18, edge = [];
+    for (var i = 0; i < 28; i++) {
+      var a = Math.PI * 2 * i / 28, k = 0.97 + 0.03 * rand(i * 3 + 1), c = Math.cos(a), sn = Math.sin(a);
+      edge.push([W / 2 + (c < 0 ? -1 : 1) * Math.pow(Math.abs(c), 0.42) * (W / 2 - 5) * k, H / 2 + (sn < 0 ? -1 : 1) * Math.pow(Math.abs(sn), 0.42) * (H / 2 - 5) * k]);
+    }
+    var s = groundPatch(G, W, H, edge), dots = '';
+    for (var d = 0; d < Math.round(W * H / 900); d++) dots += '<circle cx="' + N(W / 2 + (rand(d * 5 + 2) - 0.5) * (W - 60)) + '" cy="' + N(H / 2 + (rand(d * 5 + 3) - 0.5) * (H - 40)) + '" r="' + N(0.8 + rand(d) * 1.4) + '"/>';
+    s += '<g fill="' + G.dots + '" opacity=".7">' + dots + '</g>';
+    for (var g = 0; g < n; g++) {
+      var line = Math.floor(g / perLine), inLine = Math.min(perLine, n - line * perLine);
+      var x0 = (W - (inLine * cw + (inLine - 1) * gap)) / 2 + (g % perLine) * (cw + gap), y0 = pad + line * (ch + 18), night = '';
+      night += '<rect x="' + N(x0) + '" y="' + N(y0) + '" width="' + N(cw) + '" height="' + N(ch) + '" rx="18" fill="' + G.box + '" opacity=".55"/>';
+      for (var j = 0; j < per; j++) {
+        var sx = x0 + 13 + SP / 2 + (j % perRow) * SP, sy = y0 + 12 + Math.floor(j / perRow) * (LEN + 12), on = g * per + j < hl;
+        var d1 = 'M' + N(sx + 4) + ',' + N(sy) + 'Q' + N(sx + 1) + ',' + N(sy + LEN / 2) + ' ' + N(sx - 4) + ',' + N(sy + LEN);
+        if (on) night += '<path d="' + d1 + '" stroke="#ffd25e" stroke-width="13" stroke-linecap="round" fill="none" opacity=".55"/>';
+        night += '<path class="pc-mark' + (on ? ' pc-lit' : '') + '" d="' + d1 + '" stroke="' + (on ? '#e39a12' : G.groove) + '" stroke-width="4.6" stroke-linecap="round" fill="none"/>' +
+          '<path d="' + d1 + '" transform="translate(1.8,0)" stroke="' + (on ? '#fff4c2' : G.shine) + '" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".9"/>';
+      }
+      s += '<g class="pc-night">' + night + '</g>';
+    }
+    var label = n + (n === 1 ? ' night, ' : ' nights, ') + per + (per === 1 ? ' mark' : ' marks') + (n === 1 ? '' : ' each');
+    return svgDoc(W, H, label, s);
+  }
+
   art.countsPicture = function (opts) {
     var o = opts || {};
     var table = clamp(intOr(o.table, 1), 1, 10), groups = clamp(intOr(o.groups, 1), 0, 20);
@@ -6075,6 +6330,14 @@
     // chapter 6: Sleet's roll call (a row of little dragonets, three HEREs over every head), and his
     // one raised forepaw in the long grass
     if (o.kind === 'roll') return rollPicture(o, groups, per);
+    // chapter 7: the nights' marks in the sand or the mud (before the 10s' forepaws); the 6s' cheeks
+    // close up (a lesson's `kind`, or a skip's `thing: 'whisker'` at per 6; per 6 with neither draws as
+    // it always has); her whiskers, one cheek's two rows (`thing: 'whisker'` at per 3, before the 3s'
+    // patrols); the back row's empty places (`thing: 'gap'`, before the 1s' tails)
+    if (o.kind === 'marks') return marksPicture(o, Math.max(1, groups), per);
+    if (per === 6 && (o.kind === 'cheeks' || o.kind === 'cheeks-top' || (!o.kind && o.thing === 'whisker'))) return cheeksPicture(o, clamp(groups, 1, 10));
+    if (per === 3 && !o.kind && o.thing === 'whisker') return oneCheekPicture(o, groups);
+    if (!o.kind && o.thing === 'gap') return gapsPicture(o, groups);
     if (per === 5 && groups === 1 && Array.isArray(o.who) && o.who[0] && o.who[0].who === 'sleet' && o.layout !== 'rows' && o.kind !== 'prey') return sleetPawPicture(o, o.who[0]);
     if (per === 5 && groups === 1 && Array.isArray(o.who) && o.who[0] && (o.who[0].who === 'puddle' || o.who[0].who === 'wisp') && o.layout !== 'rows' && o.kind !== 'prey') return onePawPicture(o, o.who[0]);
     if (per === 5 && o.layout !== 'rows' && o.kind !== 'prey' && Array.isArray(o.who) && o.who.some(function (e) { return e && e.who; })) return whoPawsPicture(o, groups);
@@ -6391,7 +6654,9 @@
         for (var jr = 0; jr < per; jr++) spots.push([pad + 13 + SP / 2 + jr * SP + Math.floor(jr / 5) * gap5, ry0 + 9, byRow ? r * per + jr : jr * groups + r, r]);
       }
     } else {
-      var perRow = Math.min(per, 5), subRows = Math.ceil(per / 5);
+      // (chapter 7: six to a group are two short rows of three, one above the other, the top row lit
+      // first, "six is two threes"; every other `per` as before, rows of five)
+      var perRow = per === 6 ? 3 : Math.min(per, 5), subRows = Math.ceil(per / perRow);
       var cw = perRow * SP + 26, ch = subRows * (LEN + 12) + 18;
       var cols = Math.max(1, Math.min(5, groups)), nrows = Math.max(1, Math.ceil(groups / 5)), idx = 0;
       W = pad * 2 + cols * cw + (cols - 1) * gap; H = pad * 2 + nrows * ch + (nrows - 1) * gap;
@@ -6399,7 +6664,7 @@
         var row = Math.floor(g / 5), col = g % 5, inRow = Math.min(5, groups - row * 5);
         var x0 = (W - (inRow * cw + (inRow - 1) * gap)) / 2 + col * (cw + gap), y0 = pad + row * (ch + gap);
         boxes.push([x0, y0, cw, ch]);
-        for (var j = 0; j < per; j++) spots.push([x0 + 13 + SP / 2 + (j % 5) * SP, y0 + 12 + Math.floor(j / 5) * (LEN + 12), idx++, g]);
+        for (var j = 0; j < per; j++) spots.push([x0 + 13 + SP / 2 + (j % perRow) * SP, y0 + 12 + Math.floor(j / perRow) * (LEN + 12), idx++, g]);
       }
     }
     // the patch, a soft wobbly blob
@@ -6536,8 +6801,10 @@
   // with the values each takes, for the gallery and the tools
   // (chapter 6: holds pinecone, pebbles and string; taps paw, ears, pinecone, pebbles, cheeks, stone
   // and eyes; `starry` on any cat; Sleet's `grass`)
-  vocab.extras = { tuck: [true], asleep: [true], snail: [true, 'in'], buzz: [true], dragonfly: [true], glow: [true],
-    tap: ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes'],
+  // (chapter 7: taps fish, Riffle's string, and mist, Sprinkle's burp; earlier ids never move)
+  // (chapter 7 also: `asleep: 'half'`, half asleep, after chapter 5's `true`)
+  vocab.extras = { tuck: [true], asleep: [true, 'half'], snail: [true, 'in'], buzz: [true], dragonfly: [true], glow: [true],
+    tap: ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes', 'fish', 'mist'],
     holds: ['stone', 'pebble', 'vole', 'bark', 'fish', 'fish2', 'pole', 'pinecone', 'pebbles', 'string'], reach: [true], starry: [true], grass: [true] };
   vocab.clanVariants = [1, 2, 3, 4, 5, 6];
   // who takes a `variant`, and which: clancat 1-6 (coats), otter 1-3 (1 the old ferry otter), dog 1-3 (1 shaggy, 2 spotty, 3 tiny),

@@ -36,8 +36,15 @@
  * picture), the last post's long grass, the pile's moon, Coil, Sloshbank, ReedClan by coat and Sleet
  * in their poses (each character's own words where a shared pose word would be wrong), the new holds
  * and taps, the starry cat, Sleet's roll call, a Counts set's own cast for its pictures, and the
- * questions Tallyheart taps out on the tree. Written for an illustrator, a grown-up reading along, or
- * anyone checking the chapter without playing it. No dependencies.
+ * questions Tallyheart taps out on the tree. Chapter 7 on: round the back of the pile (`rear`, `hole`:
+ * the tunnel's mouth, the roots over it, the guards past the rows, the climber on the arch, the tracks
+ * far off), her paw over Sprinkle's print (`print`, `over`), the two lines of the comparison
+ * (`compare`), the taps on the back row, the roots, the print, Riffle's fish and Sprinkle's mist, the
+ * Counts pictures of cheeks (`cheeks`, `cheeks-top`; a `who` pair as one face), of nights of marks
+ * (`marks`) and the skip-counts on the back row's empty places (`gap`) and on whiskers (`whisker`, one
+ * cheek at the 3s, cheeks at the 6s), the sand at the 6s, a set's own question words (`prompt`), and a
+ * card link's `not` whose values are all false read as an or. Written for an illustrator, a grown-up
+ * reading along, or anyone checking the chapter without playing it. No dependencies.
  */
 import { createRequire } from 'node:module';
 import { writeFileSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
@@ -94,7 +101,10 @@ function todOf(sc) {
 // chapter 6: a set's second composition, seen only through its own cameras, in words of its own
 const WALL_END = ['the old stone wall’s far end above the river, where its stones stop and tall reeds begin: the border with ReedClan', 'the river behind and below'];
 const DREAM = ['the dream: the Sky River', 'a broad soft path of stars underfoot, dark blue all round, the city’s lights tiny far below'];
-const SET_COMP = { title: { end: WALL_END, meet: WALL_END }, sky: { walk: DREAM, below: DREAM },
+// chapter 7: round the back of the prey pile, a composition of its own (the camp beyond, no sky)
+const PILE_REAR = ['round the back of the prey pile, under the bramble arch', 'the low roots of the arch, the dug earth heaped behind the back row, the back row seen from behind, the camp past the pile’s front; no sky'];
+const PILE_HOLE = ['the tunnel’s mouth, round the back of the prey pile', 'the dug earth, the bramble roots lifted over it, the back row’s backs along the top'];
+const SET_COMP = { title: { end: WALL_END, meet: WALL_END }, sky: { walk: DREAM, below: DREAM }, pile: { rear: PILE_REAR, hole: PILE_HOLE },
   bridge: { wall: ['the Old Bridge’s stone leg, under the bridge beside Sprinkle’s nook', 'a wall of big old fitted stones, its foot on the dry floor, one dark gap low in it'] } };
 function setWords(sc) {
   const d = (SET_COMP[sc.set] || {})[sc.cam] || SETS[sc.set], t = (SET_TOD_WORDS[sc.set] || {})[todOf(sc)] || TOD_WORDS[todOf(sc)];
@@ -130,12 +140,17 @@ const SET_CAMS = {
     scale: 'close on the “scale” where it leans in the gap', through: 'through the “scale”: the camp, wavy and a little green',
     mirror: 'into the “scale”: her own small face looking back',
     // chapter 5
-    'gap-close': 'very close on the dug earth behind the gap' },
+    'gap-close': 'very close on the dug earth behind the gap',
+    // chapter 7: round the back, and the tunnel's mouth
+    rear: 'round the back, at cat height, from behind the back row: the low roots of the bramble arch nearest, the dug earth heaped under them, then the back row seen from behind, and past the pile’s front the camp',
+    hole: 'close on the tunnel’s mouth from behind, at cat height: a round dark hole in the dug earth under the lifted roots, going down and in under the pile, its far end dark; much too small for a dragon, about as wide as a small cat’s shoulders' },
   bridge: { bank: 'wide from the riverbank, the dark space under the near end at left', mouth: 'close on the dark from outside in the sun, a rock at the shadow’s edge',
     under: 'inside the dark, her view: mud with deep drag marks running into the dark, dry ground further back, drips', back: 'the very back of the dark',
     paws: 'extreme close-up of forepaws piled together',
     // chapter 6: Coil's wall, a picture of its own
-    wall: 'at cat height, close on the stone leg across the middle distance: its dark gap low in it, about a quarter to a third of the way across, the dry floor in front' },
+    wall: 'at cat height, close on the stone leg across the middle distance: its dark gap low in it, about a quarter to a third of the way across, the dry floor in front',
+    // chapter 7: her paw over Sprinkle's print
+    print: 'at cat height, close on the mud: one of Sprinkle’s big prints in front (five long claw marks, as big as a heron’s foot), the drag marks’ edge at one side' },
   field: { wide: 'wide shot of the field and its fence', fence: 'close on the wire, a nose squashed through, cats on the path', dogs: 'the dogs bouncing at the fence, seen from the path',
     // chapter 4: the border, at the fence's far corner
     border: 'wide, both sides of the fence’s last post: the path in front, the long golden grass beyond', 'border-two': 'at cat height: Tallyheart’s shoulder between the fox and our cat',
@@ -309,7 +324,14 @@ const ANCH = {
 // anchor names that mean something different in a particular set
 const SET_ANCH = { bridge: { beside: 'pressed against Sprinkle’s side',
     // chapter 6: Coil's place, in `back` and in `wall`
-    gap: 'at the dark gap low in the stone wall' },
+    gap: 'at the dark gap low in the stone wall',
+    // chapter 7: in `print`, her paw over the print
+    over: 'crouched over the print, her near forepaw held just over its heel pad' },
+  // chapter 7: round the back (`rear`), at the tunnel's mouth (`hole`), and on top of the arch (`wide`)
+  pile: { 'rear-1': 'round the back, left of the roots over the tunnel’s mouth', 'rear-2': 'round the back, right of the roots over the tunnel’s mouth',
+    'guard-1': 'small, past the rows at the pile’s front: a guard settling in, looking out over the camp', 'guard-2': 'small, past the rows at the pile’s front: a second guard settling in',
+    'guard-3': 'small, past the rows at the pile’s front: a third guard settling in', brink: 'crouched at the very edge of the tunnel’s mouth',
+    arch: 'standing on top of the bramble arch over the pile, as big as a cat by the back row' },
   // chapter 6: Sleet's spot, nearer than the fox's, close enough to talk across the post
   field: { grass: 'low in the long grass just past the last post, close enough to talk across it' },
   roof: { beside: 'beside the pole' },
@@ -320,7 +342,10 @@ const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 const TAPS = { nose: 'the old tom’s nose', earth: 'the freshly dug earth', fur: 'the tuft of fur', mud: 'the mud', pole: 'Riffle’s pole',
   // chapter 6
   pinecone: 'the old tom’s pinecone', paw: 'her own raised forepaw', stone: 'the stones in the wall (one of them is the snake’s head)', eyes: 'the snake’s two open eyes',
-  pebbles: 'the pebbles in Riffle’s paws', cheeks: 'Riffle’s puffed-up cheeks', ears: 'her own ears' };
+  pebbles: 'the pebbles in Riffle’s paws', cheeks: 'Riffle’s puffed-up cheeks', ears: 'her own ears',
+  // chapter 7
+  back: 'the back row of the pile', roots: 'the low bramble roots', print: 'the nearest of Sprinkle’s big prints', fish: 'the reed string of fish in Riffle’s paw',
+  mist: 'Sprinkle’s little cloud of mist' };
 
 /* ------------------------------------------------------------------ helpers */
 const q = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
@@ -330,11 +355,16 @@ function factWords(k) {
   const m = /^(\d+)\s*[x×]\s*(\d+)$/.exec(String(k).trim());
   return m ? m[1] + ' × ' + m[2] : String(k);
 }
-/* A `when` in words: "specialty is noticing and not (the ch02-tails lesson went without help)". */
-function whenWords(w) {
+/* A `when` in words: "specialty is noticing and not (the ch02-tails lesson went without help)".
+ * Chapter 7: `or` reads a `not` whose every value is false as the or it is ("ch4CaughtFly or ch7Flew is
+ * true": chapter 4's FLEW link, which reads either flag). It is asked for by a card link's condition
+ * alone, so chapter 5's "found today" (`not` over three flags, all false: its frames and its book line)
+ * prints as it always has. */
+function whenWords(w, or) {
   if (!w || typeof w !== 'object') return '';
   return Object.keys(w).map(k => {
     const v = w[k];
+    if (or && k === 'not' && v && typeof v === 'object' && Object.keys(v).length && Object.keys(v).every(x => v[x] === false)) return Object.keys(v).join(' or ') + ' is true';
     if (k === 'not') return 'not (' + whenWords(v) + ')';
     if (k === 'lessonClean') return asList(v).map(s => 'the ' + s + ' lesson went without help').join(' or ');
     if (k === 'firstTry') return asList(v).map(f => 'she got ' + factWords(f) + ' right the first time').join(' or ');
@@ -371,7 +401,7 @@ function sandRowWords(cards, blank) {
 }
 
 // the cast extras the art draws (docs/build.md, "Chapter 2"): flat ears, the stone, her own purr, the pouf
-function castExtraWords(c) {
+function castExtraWords(c, set) {
   const out = [];
   if (c.flatEars) out.push('ears laid flat');
   if (c.holds === 'stone') out.push(['stand', 'walk', 'peer', 'stretch'].includes(c.pose) && !c.holdAt ? 'carrying Riffle’s stone in the mouth' : 'Riffle’s stone at the front paws');
@@ -396,8 +426,9 @@ function castExtraWords(c) {
   if (c.flick) out.push('one ear flicks');
   // chapter 5's extras
   if (c.tuck) out.push('one claw curled back in: nine out, one tucked');
-  // (chapter 6: the old tom asleep lying on his pinecone is not sitting up)
-  if (c.asleep) out.push(['lie', 'curl', 'loaf', 'flat', 'sun'].includes(c.pose) ? 'eyes shut: asleep' : 'eyes shut: asleep sitting up');
+  // (chapter 6: the old tom asleep lying on his pinecone is not sitting up; chapter 7: `'half'`, half asleep)
+  if (c.asleep === 'half') out.push('eyes half shut, heavy-lidded: half asleep');
+  else if (c.asleep) out.push(['lie', 'curl', 'loaf', 'flat', 'sun'].includes(c.pose) ? 'eyes shut: asleep' : 'eyes shut: asleep sitting up');
   if (c.snail) out.push(c.snail === 'in' ? 'a snail on one ear, its horns pulled in' : 'a snail halfway up one ear');
   if (c.holds === 'pole') out.push(c.pose === 'hug' ? 'hugging the raft’s pole, twice his size' : 'holding the raft’s long pole');
   if (c.buzz) out.push('buzzing all over: short zigzags along the outline (shaking, with nothing blowing)');
@@ -405,7 +436,9 @@ function castExtraWords(c) {
   if (c.glow) out.push('glowing softly: the one she taps');
   if (c.tap === 'nose' || c.tap === true) out.push('the nose is what she taps');
   if (c.tap === 'pole') out.push('the pole, where the paws hold it, is what she taps');
-  if (c.reach) out.push('one forepaw held out and down over the edge, touching nothing: over a tiny print in the mud, half the paw’s size, the paw’s small shadow on it');
+  // (chapter 7: under the Old Bridge the print is Sprinkle's, and her paw is the small one)
+  if (c.reach) out.push(set === 'bridge' ? 'one forepaw held out and down, touching nothing: just over the heel pad of one of Sprinkle’s big prints, the pad showing all round it and the five toes and long claws fanned out beyond, toward us, room to spare (her paw about a fifth of its length)' :
+    'one forepaw held out and down over the edge, touching nothing: over a tiny print in the mud, half the paw’s size, the paw’s small shadow on it');
   // chapter 6's extras: what is held and where (`holdAt`), what she taps, the starry cat, Sleet's tuft
   const AT = { chin: 'under the chin', paws: 'at the front paws', mouth: 'in the mouth' };
   if (c.holds === 'pinecone') out.push(c.holdAt === 'chin' ? 'a big pinecone under the chin' : c.holdAt === 'paws' ? 'a big pinecone at the front paws' : c.holdAt === 'mouth' ? 'carrying a big pinecone in the mouth' : 'holding a big pinecone');
@@ -419,11 +452,30 @@ function castExtraWords(c) {
   if (c.tap === 'eyes') out.push('the two round open eyes are what she taps');
   if (c.tap === 'pebbles') out.push('the pebbles are what she taps');
   if (c.tap === 'cheeks') out.push('the puffed-up cheeks are what she taps');
+  // chapter 7: Riffle's fish to toss, Sprinkle's burp
+  if (c.tap === 'fish') out.push('the string of fish is what she taps');
+  if (c.tap === 'mist') out.push('the little cloud of mist is what she taps');
   if (c.starry) out.push('drawn in starlight: pale blue-white, a little see-through, small stars inside the outline, a soft glow at the edge, a kind face');
   if (c.grass) out.push('a tuft of long grass on the head, between the horn nubs');
   return out;
 }
 
+
+/* Chapter 7: `compare: [24, 60]`, two straight lines scratched to scale, each with its number (the
+ * bridge's in the mud, the Hollow's in the sand); false draws none. Any other value is a shape nobody
+ * gave, and has no words. */
+function timesWords(r) {
+  const whole = Math.floor(r), half = Math.abs(r - whole - 0.5) < 1e-9;
+  if (Math.abs(r - whole) < 1e-9) return whole === 2 ? 'twice as long as' : numWord(whole) + ' times as long as';
+  return half ? numWord(whole) + ' and a half times as long as' : 'about ' + numWord(Math.round(r)) + ' times as long as';
+}
+function compareWords(set, v) {
+  if (v === false || v == null) return '';
+  if (!Array.isArray(v) || v.length !== 2 || !v.every(n => typeof n === 'number' && n > 0)) return 'compare: ' + JSON.stringify(v);
+  const lo = Math.min(v[0], v[1]), hi = Math.max(v[0], v[1]);
+  return 'two straight lines scratched ' + (set === 'bridge' ? 'in the open mud at the front' : 'in the sand between them') + ', the long one ' + timesWords(hi / lo) +
+    ' the short one: “' + lo + '” by the short line and “' + hi + '” by the long one';
+}
 
 /* A scene option in words; '' when it adds nothing to say (a default, or off). */
 function optWords(set, k, v, all) {
@@ -445,7 +497,8 @@ function optWords(set, k, v, all) {
   if (k === 'scale') return v === 'behind' ? 'the “scale” where it was found, on the bare earth behind the back row: a small glint under the brambles' : v ? 'the “scale” in the gap, leaning on the next piece' : '';
   if (k === 'glint') return v ? 'the sun reaches the “scale”: it glitters' : '';
   if (k === 'heap') return v ? 'the five rim cats all in a heap' : '';
-  if (k === 'hidden') return v ? 'two of the pieces of bark under the moss, two corners showing' : '';
+  // (chapter 7: count-free; chapter 6 hides three and chapter 7 six)
+  if (k === 'hidden') return v ? 'her secret cards under the moss, a corner showing for each' : '';
   // the row of bark's own cards and blank pieces are said with the row itself (`bark`, below)
   if (k === 'cards' || k === 'blank') return '';
   if (k === 'bark') {
@@ -500,6 +553,7 @@ function optWords(set, k, v, all) {
   if (k === 'branch') return v ? 'fallen branches heaped across the back, like a pile of old sticks, up to Sprinkle’s chin' : '';
   // chapter 6: Coil's wall beside Sprinkle's nook, the rustle in the reeds at the wall's end
   if (k === 'stones') return v ? 'the bridge’s stone leg beside Sprinkle’s nook: a wall of big old fitted stones, its foot on the dry floor, with one dark gap low in it' : '';
+  if (k === 'wing') return v ? 'her drooping wing kept clear of the lettering: no balloon or caption over it' : '';
   if (k === 'rustle') return v ? 'rustle lines in the reeds; nobody seen' : '';
   // chapter 5: tiny prints, behind the pile and in the marsh's mud (the bridge's are Sprinkle's)
   if (k === 'prints' && set === 'pile') return v ? 'tiny prints in the dug earth, each half the size of a cat’s' : '';
@@ -530,10 +584,17 @@ function optWords(set, k, v, all) {
   if (k === 'snout') return v ? 'a blue-grey snout poking up between the raft’s logs' : '';
   if (k === 'drawing') return v === 'herons' ? 'her drawing in the mud: seven little herons, each standing on one leg' :
     v === 'fox' ? 'her drawing in the mud: a fox, something small falling from its mouth with shine lines, a ring of ripples' : '';
-  if (k === 'tap') return v === 'mud' ? 'a patch of the mud beside the raft is what she taps' : v === 'pole' ? 'the pole in Riffle’s paws is what she taps' : '';
+  if (k === 'tap') return v === 'mud' ? 'a patch of the mud beside the raft is what she taps' : v === 'pole' ? 'the pole in Riffle’s paws is what she taps' :
+    // chapter 7: the pile's back row and its roots, the print under the Old Bridge (a value nobody gave has no words)
+    v === 'back' ? 'the back row is what she taps' : v === 'roots' ? 'the low bramble roots are what she taps' : v === 'print' ? 'the nearest of Sprinkle’s big prints is what she taps' :
+    v === 'none' || !v ? '' : k + ': ' + JSON.stringify(v);
   if (k === 'swept') return v ? 'the dug earth swept flat by a tail: the prints are gone' : '';
   if (k === 'tuft') return v ? 'a tuft of thin brown fur caught in the raft’s vine' : '';
   if (k === 'mudPaws') return +v ? numWord(+v) + ' little forepaws drawn in the mud, five claw marks each' : '';
+  // chapter 7: round the back of the pile, the tracks far off, and the two lines of the comparison
+  if (k === 'tunnel') return v ? 'the roots lifted back, and under them the round dark mouth of a small tunnel in the dug earth, going down and in under the pile' : '';
+  if (k === 'tracks') return v ? 'far off past the towers, low at the horizon, the train tracks catching the last light: two bright rails on a dark bed, the sleepers across it, running off behind the tallest tower' : '';
+  if (k === 'compare') return compareWords(set, v);
   return k + ': ' + JSON.stringify(v);
 }
 /* ------------------------------------------------------------------ one chapter */
@@ -617,6 +678,19 @@ function board(storyPath, outPath) {
     if (VARIANT_WHO[c.who]) return VARIANT_WHO[c.who][c.variant || 1] || WHO[c.who];
     return WHO[c.who] || c.who;
   }
+  /* Chapter 7: the cheeks of a Counts picture, left to right, by the face rule: two entries in a row
+   * with the same `who` and variant are one face close up, its two cheeks puffed round (pairs taken
+   * from the left); any other entry is one cat's cheek. */
+  function cheekWords(list) {
+    const L = asList(list), out = [];
+    const name = c => (c.who === 'clancat' ? 'a Clan cat' + (c.variant ? ' (coat ' + c.variant + ')' : '') : whoWords(c));
+    for (let i = 0; i < L.length; i++) {
+      const c = L[i] || {}, d = L[i + 1];
+      if (d && d.who === c.who && (d.variant || null) === (c.variant || null)) { out.push((c.who === 'player' ? 'your face' : 'the face of ' + name(c)) + ', its two cheeks puffed round'); i++; }
+      else out.push(c.who === 'player' ? 'one of your cheeks' : 'a cheek of ' + name(c));
+    }
+    return out.join('; ');
+  }
   function poseWords(c) {
     if (c.pose === 'stand' && (c.who === 'otter' || c.who === 'riffle')) return OTTER_STAND;
     // (chapter 5: with the raft's pole in his arms, the hug is the pole's: the extras say so)
@@ -633,7 +707,7 @@ function board(storyPath, outPath) {
     if (c.who === 'sleet' && SLEET_POSE[c.pose]) return SLEET_POSE[c.pose];
     return POSES[c.pose] || c.pose;
   }
-  const extraWords = castExtraWords;
+  const extraWords = (c, set) => castExtraWords(c, set);
   function sceneWords(sc) {
     if (!sc) return 'No scene: a plain panel.';
     const parts = [];
@@ -644,7 +718,7 @@ function board(storyPath, outPath) {
       const where = c.at && typeof c.at === 'object' ? 'at a spot of this frame’s own (x ' + c.at.x + ', y ' + c.at.y + ')' : (SET_ANCH[sc.set] || {})[c.at] || ANCH[c.at] || (c.at ? 'at ' + c.at : null);
       const mood = c.who === 'coil' && COIL_MOOD[c.mood] ? COIL_MOOD[c.mood] : MOODS[c.mood] != null ? MOODS[c.mood] : c.mood;
       const how = [poseWords(c), c.mood ? mood : null, where, c.facing ? 'facing ' + c.facing : null]
-        .concat(extraWords(c)).filter(Boolean).join(', ');
+        .concat(extraWords(c, sc.set)).filter(Boolean).join(', ');
       const coat = c.variant && !VARIANT_WHO[c.who] ? ', coat ' + c.variant : '';
       if (how || coat) bits.push('(' + how + (c.size && c.size !== 1 ? ', size ×' + c.size : '') + coat + ')');
       return bits.join(' ');
@@ -680,13 +754,15 @@ function board(storyPath, outPath) {
     if (Array.isArray(f)) return { a: f[0], b: f[1] };
     return f || {};
   }
-  function factLabel(f) {
+  function factLabel(f, set) {
     const x = fact(f);
     const notes = [];
     if (x.table) notes.push('from the ' + x.table + 's');
     if (x.groups != null || x.per != null) notes.push('pictured as ' + (x.groups != null ? x.groups : '?') + ' × ' + (x.per != null ? x.per : '?'));
     if (x.picture) notes.push(pictureWords(x.picture));
-    if (Array.isArray(x.who) && x.who.length) notes.push(x.who.every(c => c && c.who === 'sprinkle') ? 'Sprinkle’s own forepaws in the picture' : 'its own cats in the picture');
+    // (chapter 7: in a cheeks picture its own cats are cheeks, a pair in a row one face)
+    const cheeks = set && set.picture && /^cheeks/.test(set.picture.kind || '');
+    if (Array.isArray(x.who) && x.who.length) notes.push(cheeks ? 'drawn as ' + cheekWords(x.who) : x.who.every(c => c && c.who === 'sprinkle') ? 'Sprinkle’s own forepaws in the picture' : 'its own cats in the picture');
     if (x.lit) notes.push('the first ' + x.lit + ' lit as it is asked');
     if (x.light) notes.push(x.light === 'rows' ? 'lit a row at a time as it is asked' : x.light === 'tuck' ? 'the hop and the tuck as it is asked' : 'lit a group at a time as it is asked');
     if (x.prompt != null) notes.push('its own question' + (x.retryPrompt === true ? ', kept on its retry' : x.retryPrompt ? ', and another of its own on its retry' : ''));
@@ -706,7 +782,11 @@ function board(storyPath, outPath) {
     // chapter 5: fish (in pairs, or on strings), the raft's logs from underneath, herons scratched in the mud
     const five = p.kind === 'fish' ? (p.layout === 'strings' ? 'fish on reed strings' : 'fish in pairs') : p.kind === 'bumps' ? 'the raft from underneath, bump stars on its logs' : p.kind === 'herons' ? 'little herons scratched in the mud' :
       // chapter 6: Sleet's roll call
-      p.kind === 'roll' ? 'little dragonets in a row, all alike and pale, three HERE!s lettered over every head' : null;
+      p.kind === 'roll' ? 'little dragonets in a row, all alike and pale, three HERE!s lettered over every head' :
+      // chapter 7: cheeks close up, six whiskers each (the doubling questions open with every top row lit); nights of marks
+      p.kind === 'cheeks' ? 'cheeks close up, six whiskers on each: three on top, three below' :
+      p.kind === 'cheeks-top' ? 'cheeks close up, six whiskers on each, every cheek’s top three lit from the start' :
+      p.kind === 'marks' ? 'nights side by side, scratched in the ' + (p.ground === 'mud' ? 'mud' : 'sand') + ', a cluster of short upright marks for each night and nothing else' : null;
     const bits = [five || (p.kind === 'prey' ? 'prey' : grit ? 'forepaws scratched in the roof’s grit' : p.kind === 'mud' ? 'forepaws drawn in the mud' : 'cats')];
     if (p.layout === 'rows') bits.push('in rows');
     if (p.thought) bits.push('in a thought cloud');
@@ -721,7 +801,7 @@ function board(storyPath, outPath) {
     // chapter 5: a Counts frame may run another chapter's set (the roof, found later: chapter 4's riddle)
     const own = (story.counts || {})[f.counts.set], found = own || E.countsSet(f.counts.set, story, siblings()), set = found || {};
     if (!found) return '**Then the Counts lesson** `' + f.counts.set + '`, another chapter’s, run here as it is there (see that chapter’s storyboard). On to ' + f.counts.next + '.';
-    const facts = (set.facts || []).map(factLabel).join(', ');
+    const facts = (set.facts || []).map(x => factLabel(x, set)).join(', ');
     const out = ['**Then the Counts lesson** `' + f.counts.set + '`' + (own ? '' : ', another chapter’s, run here as it is there') + ' (' + (set.things || 'things') + (set.picture ? ', ' + pictureWords(set.picture) : '') + '): ' + facts + '.'];
     // a line the set's teacher says; in a set nobody speaks in (`teacher: 'caption'`), a caption
     const silent = set.teacher === 'caption', teacherSays = t => (silent ? '  - *Caption*: ' + t : '  - **' + (SPEAKER[set.teacher] || 'Tallyheart') + '**: “' + t + '”');
@@ -736,7 +816,15 @@ function board(storyPath, outPath) {
     // chapter 5: a set's own `light`, and a Counts frame that says none of its lines again
     if (set.light === 'tuck') out[0] += ' Every question it asks first, and every retry, plays the two steps in its picture without a word: all ten claws lit on every cat (the hop), one curling in on each (the tuck), then unlit, and she types. A question lent to fill a gap shows the still picture.';
     else if (set.light) out[0] += ' Its picture lights a ' + (set.light === 'rows' ? 'row' : 'group') + ' at a time as each question is asked.';
-    if (f.counts.intro === false) out[0] += ' None of this frame’s own lines is said again over the first question: it is asked in the engine’s own words, and timed on itself.';
+    // (worded from the set's first fact: a fact with its own question is asked in it and read first, so only
+    // a miss there counts as hard; a check is never timed; only a fact with neither is asked in the engine's
+    // words and timed on itself)
+    if (f.counts.intro === false) {
+      const first = fact(asList(set.facts)[0]), own = first.prompt != null && first.prompt !== false;
+      out[0] += ' None of this frame’s own lines is said again over the first question: ' +
+        (own ? 'it is asked in its own words' : 'it is asked in the engine’s own words') +
+        (first.check ? ', and as a check it is never timed.' : own ? ', read first, so only a miss there counts as hard.' : ', and timed on itself.');
+    }
     // chapter 6: a set's own cast in the places of its picture (ReedClan's watchers), the questions it lends included when they are asked as its own
     if (Array.isArray(set.who) && set.who.length) out[0] += ' Its picture has its own cast in the places, left to right: ' +
       set.who.map(c => (c && (c.who === 'clancat' || c.who === 'reedclan') ? (c.who === 'clancat' ? 'a Clan cat' : 'a ReedClan cat') + (c.variant ? ' (coat ' + c.variant + ')' : '') : whoWords(c || {}))).join(', ') +
@@ -745,16 +833,22 @@ function board(storyPath, outPath) {
     const GROUND = { sand: 'on the sand', earth: 'in the earth', mud: 'in the mud', grit: 'in the roof’s grit', log: 'on a log of the raft' };
     // chapter 5: a help that scratches nothing (`help: 'picture'`: the set's own picture lit a group at a time);
     // the 9s' help in two phases; a log of the raft; a set nobody swipes in
-    const missWords = set.help === 'picture' ? 'a miss gets the set’s own picture lit a group at a time, the player keeping the count,' :
+    // (chapter 7: nights of marks light a night at a time as the teacher hops; the 6s are scratched three and three)
+    const marks = set.picture && set.picture.kind === 'marks';
+    const missWords = set.help === 'picture' && marks ? 'a miss gets the set’s own picture lit a night at a time, ' + (set.helpCounter === 'you' ? 'the player keeping the count,' : (SPEAKER[set.teacher] || 'Tallyheart') + ' hopping it,') :
+      set.help === 'picture' ? 'a miss gets the set’s own picture lit a group at a time, the player keeping the count,' :
       set.ground || set.helpCounter ? 'a miss gets the count scratched ' + (GROUND[set.ground] || 'on the sand') +
       (set.helpCounter === 'you' ? ', ' + (set.ground === 'log' ? 'the player scratching and keeping the count herself' : (SPEAKER[set.teacher] || 'the teacher') + ' swiping and the player keeping the count') : '') + ',' :
-      set.table === 9 ? 'a miss gets the sand count in two steps (two swipes for every cat, hopped by tens; then one line rubbed out of every pair, stepping back by ones)' : 'a miss gets the sand count';
+      set.table === 9 ? 'a miss gets the sand count in two steps (two swipes for every cat, hopped by tens; then one line rubbed out of every pair, stepping back by ones)' :
+      set.table === 6 ? 'a miss gets the sand count (six marks for every ' + (set.unit || 'group') + ', scratched three and three: two short rows of three, one above the other)' : 'a miss gets the sand count';
     out[0] += ' She types each answer on the keypad; ' + missWords + ' and comes back two questions later' +
       (set.fillFrom ? ' (the questions in between come from `' + set.fillFrom + '`' + (set.fillOrder === 'easiest' ? ', the easiest first' : '') +
         ', never a pair asked already while there is another, each asked ' + (set.fillPicture === 'borrower' ? 'as this lesson’s own question, in its picture and its voice' :
         'in that lesson’s picture and ' + (set.fillVoice === 'borrower' ? 'this lesson’s own voice' : 'words')) +
         (set.fillIntro ? ' after “' + q(set.fillIntro) + '”' : '') + ')' : set.fillOrder === 'easiest' ? ' (the questions in between are the easiest of her right answers in this lesson, not the latest)' : '') + '. On to ' + f.counts.next + '.';
     const lines = [];
+    // (chapter 7: a set's own words for a question with none of its own)
+    if (typeof set.prompt === 'string' && set.prompt) lines.push('- Asking a question with no words of its own:', teacherSays(q(set.prompt)));
     (set.facts || []).forEach(x => {
       x = fact(x);
       if (x.prompt != null) {
@@ -838,6 +932,27 @@ function board(storyPath, outPath) {
     if (s.paws === 'pile') {
       return '**Then she hops by ' + t + 's on the pile of forepaws** (the skip-count): ' + g + ' taps, one for each friend (the next pair of forepaws glows; a tap anywhere else makes it wiggle), each lighting that friend’s ' + numWord(t) + ' claws and putting the next number in her own balloon: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
         (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) + more;
+    }
+    // chapter 7: the back row's empty places, the whiskers on one cheek (the 3s), and cheeks (the 6s)
+    const counter = s.teacher === 'player' ? 'her own' : (SPEAKER[s.teacher] || 'Tallyheart') + '’s';
+    if (s.thing === 'gap') {
+      return '**Then she counts the empty places** (the skip-count, by ' + t + 's): the back row close up on the earth, its ' + numWord(g) + ' empty pressed places among the pieces (in play they take the panel); ' + g +
+        ' taps, one on each empty place in turn (the next one glows; a tap anywhere else makes it wiggle), each outlining it in gold and putting the next number under it and in ' + counter + ' balloon: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
+        (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) + more;
+    }
+    if (s.thing === 'whisker' && t === 3) {
+      const whose = asList(s.who).map(c => (c.who === 'player' ? 'your own' : (SPEAKER[c.who] || whoWords(c)) + '’s'))[0];
+      return '**Then she counts the whiskers on one cheek** (the skip-count, by 3s): one cheek close up' + (whose ? ', ' + whose : '') + ', six whiskers in two rows of three (in play it takes the panel); ' + g +
+        ' taps, a row at a time from the top (the next row glows; a tap anywhere else makes it wiggle), each lighting its three whiskers and putting the running total beside it and in ' + counter + ' balloon: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
+        (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) +
+        (s.keep ? ' The cheek stays on the plain pages after it, both rows lit, ' + nums.replace(/, ([^,]*)$/, ' and $1') + ' beside them.' : '') + more;
+    }
+    if (s.thing === 'whisker') {
+      const cheeks = asList(s.who).length ? cheekWords(s.who) : '';
+      return '**Then she counts by ' + t + 's on the cheeks** (the skip-count): ' + numWord(g) + ' cheeks close up in a row, ' + numWord(t) + ' whiskers on each, three on top and three below' + (cheeks ? ' (left to right: ' + cheeks + ')' : '') + '; ' + g +
+        ' taps, one on each cheek in turn (the next one glows; a tap anywhere else makes it wiggle), each lighting its whiskers, top row then bottom, and adding its running total under it and in ' + counter + ' balloon: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
+        (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) +
+        (s.keep ? ' The running totals stay under the cheeks on the plain pages after it.' : '') + more;
     }
     if (g === 1) {
       const whose = (s.who || []).map(c => SPEAKER[c.who] || whoWords(c)).join(', ');
@@ -957,9 +1072,13 @@ function board(storyPath, outPath) {
     // (chapter 5: a count as long as the cats it is for shows the number she reached; the tuck, where it stopped)
     if (into && F[into].skip.groups == null) out.push('', '**The count:** the number the skip-count reached for her (from ' + into + ') shows big over the picture, in the times-table font.');
     else if (into) { const sk = F[into].skip; out.push('', '**The count:** the skip-count’s ' + ((sk.groups || 5) * (sk.table || 2)) + ' (from ' + into + ') shows big over the picture, in the times-table font.'); }
-    const kept = E.keptSkip(story, id);
+    // (a frame that draws a picture of its own, a skip-count, the questions she taps out or a row of bark, never shows the kept one: the page draws its own)
+    const kept = f.skip || f.ask || (f.scratch && !f.scratch.tap) ? null : E.keptSkip(story, id);
     if (kept && kept.skip.tuck) out.push('', '**The picture stays:** in place of this scene, the counting picture from ' + kept.id + ', nine claws lit and one tucked in on every cat, ' + ((kept.skip.groups || 5) * 9) + ' over them and no number under any cat' + (f.counts ? ', until the lesson starts' : '') + '; the balloons sit beside it.');
-    else if (kept) out.push('', '**The totals stay:** in place of this scene, the counting picture from ' + kept.id + ', every ' + (kept.skip.table === 5 ? 'paw' : kept.skip.table === 10 ? 'cat' : 'group') + ' lit, its running totals (' +
+    // (chapter 7: one cheek's two rows of whiskers, their totals beside them)
+    else if (kept && kept.skip.thing === 'whisker' && kept.skip.table === 3) out.push('', '**The cheek stays:** in place of this scene, the cheek from ' + kept.id + ', both rows of whiskers lit, ' +
+      Array.from({ length: kept.skip.groups || 2 }, (_, i) => (i + 1) * 3).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' beside them' + (f.counts ? ', until the lesson starts' : '') + '; the balloons sit beside it.');
+    else if (kept) out.push('', '**The totals stay:** in place of this scene, the counting picture from ' + kept.id + ', every ' + (kept.skip.thing === 'whisker' ? 'cheek' : kept.skip.thing === 'gap' ? 'empty place' : kept.skip.table === 5 ? 'paw' : kept.skip.table === 10 ? 'cat' : 'group') + ' lit, its running totals (' +
       Array.from({ length: kept.skip.groups || 5 }, (_, i) => (i + 1) * (kept.skip.table || 2)).join(', ') + ') under them' + (f.counts ? ', until the lesson starts' : '') + '; the balloons sit beside it.');
     if (f.gift) {
       const g = E && E.gift(f.gift);
@@ -1130,8 +1249,8 @@ function board(storyPath, outPath) {
       if (c.when) notes.push('her file shows it only once ' + whenWords(c.when));
       if (asList(c.answers).length) notes.push('answered by ' + asList(c.answers).map(a => '`' + a + '`').join(', ') + ' (for chapter 10)');
       // (chapter 5: a link may name the cards it touches itself)
-      if (c.link && asList(c.link.with).length) notes.push('drawn touching ' + asList(c.link.with).map(a => '`' + a + '`').join(', ') + (c.link.when ? ' once ' + whenWords(c.link.when) : ' from the moment she holds both') + ': “' + q(c.link.line || 'They can’t both be true.') + '”');
-      else if (c.link) notes.push('drawn touching ' + (asList(c.answers).length ? 'them' : 'its answers') + (c.link.when ? ' once ' + whenWords(c.link.when) : '') + ': “' + q(c.link.line || 'They can’t both be true.') + '”');
+      if (c.link && asList(c.link.with).length) notes.push('drawn touching ' + asList(c.link.with).map(a => '`' + a + '`').join(', ') + (c.link.when ? ' once ' + whenWords(c.link.when, true) : ' from the moment she holds both') + ': “' + q(c.link.line || 'They can’t both be true.') + '”');
+      else if (c.link) notes.push('drawn touching ' + (asList(c.answers).length ? 'them' : 'its answers') + (c.link.when ? ' once ' + whenWords(c.link.when, true) : '') + ': “' + q(c.link.line || 'They can’t both be true.') + '”');
       md.push('| `' + cid + '` | ' + (c.mark === 'ear' ? 'ear' : 'eye') + ' | ' + q(c.line) + ' | ' + (givenAt(cid).join(', ') || 'another chapter') + ' | ' + notes.join('; ') + ' |');
     });
     md.push('');

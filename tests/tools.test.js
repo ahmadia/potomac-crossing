@@ -314,3 +314,35 @@ test('storyboard.mjs --check-words: words for every name chapter 6’s spec adds
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+/* Chapter 7: the same, for every new name in chapter 7's spec (docs/chapters/07-the-counts-dont-lie.spec.md,
+ * section 4): the pile's two cameras round the back and their anchors, the tunnel, the tracks and the taps
+ * on the back row and the roots; the bridge's print camera, her paw over it, its tap and the comparison
+ * (`compare`, declared `[false, [24, 60]]`, the shape the story and the art use); the Hollow's comparison;
+ * Riffle's fish and Sprinkle's mist as cast extras. */
+test('storyboard.mjs --check-words: words for every name chapter 7’s spec adds to the art (the pile round the back, the print, the comparison, the taps, the fish and the mist); a name the spec never gave fails', () => {
+  const fs = require('node:fs'), os = require('node:os');
+  const TOOL = path.join(ROOT, 'tools/storyboard.mjs');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-words-'));
+  try {
+    const ch07 = {
+      sets: {
+        pile: { cams: ['rear', 'hole'], anchors: ['rear-1', 'rear-2', 'guard-1', 'guard-2', 'guard-3', 'brink', 'arch'], opts: { tunnel: [false, true], tracks: [false, true], tap: ['none', 'back', 'roots'] } },
+        bridge: { cams: ['print'], anchors: ['over'], opts: { tap: ['none', 'print'], compare: [false, [24, 60]] } },
+        hollow: { opts: { compare: [false, [24, 60]] } }
+      },
+      extras: { tap: ['fish', 'mist'] }
+    };
+    const run = (x) => { const f = path.join(tmp, 'more.json'); fs.writeFileSync(f, JSON.stringify(x)); return spawnSync(process.execPath, [TOOL, '--check-words', f], { encoding: 'utf8' }); };
+    const ok = run(ch07);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.match(ok.stdout, /^Every set, camera, anchor, option, pose, mood, effect, cast member and cast extra has words\.$/m);
+    // names nobody gave: a camera, an anchor, a tap on the pile and the bridge, a comparison that is no pair, a cast extra
+    const bad = run({ sets: { pile: { cams: ['tunnel'], anchors: ['rear-3'], opts: { tap: ['scale'] } }, bridge: { opts: { tap: ['drag'], compare: [true] } }, hollow: { opts: { compare: [[24]] } } }, extras: { tap: ['whiskers'] } });
+    assert.equal(bad.status, 1);
+    assert.deepEqual(bad.stderr.trim().split('\n').slice(1).map(l => l.trim()).sort(),
+      ['bridge option compare: true', 'bridge option tap: "drag"', 'cast extra tap: "whiskers"', 'hollow option compare: [24]', 'pile anchor rear-3', 'pile camera tunnel', 'pile option tap: "scale"'].sort());
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});

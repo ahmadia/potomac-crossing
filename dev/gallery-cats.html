@@ -719,6 +719,54 @@
       list.forEach(function (it) { h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:720px">' + A.countsPicture(it[1]) + '</div>'; });
       return h;
     }],
+    extras7: ['Chapter 7: the two new taps (Riffle’s string of fish, Sprinkle’s burp), and the checks at the tower', function (S) {
+      var look = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'she' };
+      var h = '<h3>tap: fish (Riffle in stand with his string: the toss Tap), tap: mist (Sprinkle’s burp: the HURP Tap); without the thing, no mark</h3><div class="row">';
+      h += cell(showTaps(A.character('riffle', { pose: 'stand', mood: 'happy', holds: 'string', tap: 'fish' })), 'stand · string · tap: fish', S * 1.3);
+      h += cell(showTaps(A.character('riffle', { pose: 'stand', mood: 'happy', holds: 'string', tap: 'fish', facing: 'left' })), 'stand ← · tap: fish', S * 1.3);
+      h += cell(showTaps(A.character('riffle', { pose: 'stand', mood: 'happy', tap: 'fish' })), 'stand · no string, no mark', S * 1.3);
+      h += cell(showTaps(A.character('sprinkle', { pose: 'burp', mood: 'wonder', mist: true, tap: 'mist' })), 'burp · mist · tap: mist', S * 1.7);
+      h += cell(showTaps(A.character('sprinkle', { pose: 'burp', mood: 'happy', mist: true, tap: 'mist', facing: 'left' })), 'burp ← · tap: mist', S * 1.7);
+      h += cell(showTaps(A.character('sprinkle', { pose: 'sit', mood: 'happy', tap: 'mist' })), 'sit · no mist, no mark', S * 1.7);
+      h += '</div><h3>for the tower: Waffles in pawup (waving), our cat’s taps on sit and pawup</h3><div class="row">';
+      h += cell(A.character('waffles', { pose: 'pawup', mood: 'proud', facing: 'left' }), 'waffles pawup · proud', S);
+      h += cell(A.character('waffles', { pose: 'peer', mood: 'solemn', facing: 'left' }), 'waffles peer · solemn', S);
+      [['sit', 'ears'], ['sit', 'paw'], ['pawup', 'ears'], ['pawup', 'paw']].forEach(function (it) { h += cell(showTaps(A.character('player', { pose: it[0], mood: 'happy', tap: it[1], look: look })), it[0] + ' · tap: ' + it[1], S); });
+      return h + '</div>';
+    }],
+    counts7: ['Counts pictures, chapter 7: the 6s’ cheeks (and faces), her whiskers on one cheek, the back row’s gaps, the nights, the sand at per 6', function (S) {
+      var look = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'she' };
+      var RIM = [{ who: 'clancat', variant: 1 }, { who: 'murmurchime' }, { who: 'clancat', variant: 3 }, { who: 'clancat', variant: 5 }, { who: 'grizzled' }];
+      var BED = [{ who: 'snorer' }, { who: 'snorer' }, { who: 'player' }, { who: 'player' }], ONE_CAT = [{ who: 'clancat', variant: 1 }, { who: 'clancat', variant: 1 }];
+      var list = [
+        ['her whiskers (thing: whisker, table 3): one cheek, Tallyheart’s; the top row glowing', { table: 3, groups: 2, per: 3, thing: 'whisker', who: [{ who: 'tallyheart' }], highlight: 0, totals: true, next: true, look: look }],
+        ['… tapped once: the top row, 3', { table: 3, groups: 2, per: 3, thing: 'whisker', who: [{ who: 'tallyheart' }], highlight: 3, totals: true, next: true, look: look }],
+        ['… kept: both rows, 3 and 6', { table: 3, groups: 2, per: 3, thing: 'whisker', who: [{ who: 'tallyheart' }], highlight: 6, totals: true, look: look }],
+        ['five cheeks (thing: whisker, who: the rim): each rim cat turns a cheek; two counted, the third glowing', { table: 6, groups: 5, per: 6, thing: 'whisker', who: RIM, highlight: 12, totals: true, next: true, look: look }],
+        ['2 × 6 (kind: cheeks, who: ONE_CAT): one clancat 1’s face, “one whole cat”', { table: 6, groups: 2, per: 6, kind: 'cheeks', thing: 'whisker', who: ONE_CAT, look: look }],
+        ['6 × 6 (lit: 30): five cheeks lit, the sixth not', { table: 6, groups: 6, per: 6, kind: 'cheeks', thing: 'whisker', highlight: 30, look: look }],
+        ['6 × 4 (kind: cheeks-top): every top row lit from the start', { table: 6, groups: 4, per: 6, kind: 'cheeks-top', thing: 'whisker', highlight: 0, look: look }],
+        ['6 × 8, cheeks-top, a right answer: every whisker lit', { table: 6, groups: 8, per: 6, kind: 'cheeks-top', thing: 'whisker', highlight: 48, look: look }],
+        ['bedtime (who: the grey tom, the grey tom, her, her): two faces, puffed; 12 counted', { table: 6, groups: 4, per: 6, thing: 'whisker', who: BED, highlight: 12, totals: true, next: true, look: look }],
+        ['one cheek (a Hollow round’s 6 × 1)', { table: 6, groups: 1, per: 6, kind: 'cheeks', thing: 'whisker', look: look }],
+        ['nine cheeks (6 × 9), lit to 33', { table: 6, groups: 9, per: 6, kind: 'cheeks', thing: 'whisker', highlight: 33, look: look }],
+        ['ten cheeks (10 × 6), all lit', { table: 6, groups: 10, per: 6, kind: 'cheeks', thing: 'whisker', highlight: 60, look: look }],
+        ['the back row (thing: gap): three pieces, four empty places, three pieces; two counted, the third glowing', { table: 1, groups: 4, per: 1, thing: 'gap', highlight: 2, totals: true, next: true }],
+        ['the twenty-four (kind: marks): six nights of four marks, in the sand', { table: 4, groups: 6, per: 4, kind: 'marks' }],
+        ['… the help: lit a night at a time (highlight 12)', { table: 4, groups: 6, per: 4, kind: 'marks', highlight: 12 }],
+        ['the sixty: six nights of ten marks, in the sand (highlight 20)', { table: 10, groups: 6, per: 10, kind: 'marks', highlight: 20 }],
+        ['the kept sixty: in the mud under the Old Bridge', { table: 10, groups: 6, per: 10, kind: 'marks', ground: 'mud' }],
+        ['a filler: one night of ten marks', { table: 10, groups: 1, per: 10, kind: 'marks' }]
+      ];
+      var h = '';
+      list.forEach(function (it) { h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:' + (it[1].groups > 5 || it[1].kind === 'marks' || it[1].thing === 'gap' ? 900 : 720) + 'px">' + A.countsPicture(it[1]) + '</div>'; });
+      [['the lesson’s help at per 6: two short rows of three a cheek (6 × 4, counted 9)', { groups: 4, per: 6, counted: 9 }],
+        ['… one cheek (6 × 1), all six', { groups: 1, per: 6, counted: 6 }],
+        ['… ten cheeks (10 × 6, counted 33)', { groups: 10, per: 6, counted: 33 }]].forEach(function (it) {
+        h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:560px">' + A.sand(it[1]) + '</div>';
+      });
+      return h;
+    }],
     sand: ['Sand tallies', function (S) {
       var h = '';
       [[3, 1, 2], [1, 5, 3], [6, 1, 6], [9, 1, 4], [1, 10, 7], [4, 2, 5]].forEach(function (g) {

@@ -77,6 +77,7 @@
 <script src="../app/story/ch04.js"></script>
 <script src="../app/story/ch05.js"></script>
 <script src="../app/story/ch06.js"></script>
+<script src="../app/story/ch07.js"></script>
 <script>
 (function () {
   'use strict';
@@ -192,6 +193,16 @@
       reeds: { opts: { pale: 'knees', pole: 'planted', frogs: 'sit', dragonfly: 'nose' }, cast: [c('player', 'raft-1', 'loaf', 'wonder')], fx: ['day'] },
       wisp: { opts: { pale: 'blink' }, cast: [c('wisp', 'reed', 'blink', 'happy', { facing: 'left' })], fx: ['day'] },
       draw: { opts: { drawing: 'herons' }, cast: [c('player', 'raft-1', 'crouch', 'wonder')], fx: ['day'] }
+    },
+    // chapter 7: the pile's two new cameras (round the back; the tunnel's mouth) and the bridge's (her paw over a print)
+    // (only cameras that are new: the pile's and the bridge's older cameras keep their plain panels above)
+    pile: {
+      rear: { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', tunnel: true }, cast: [c('player', 'rear-1', 'sit', 'wonder'), c('tallyheart', 'rear-2', 'sit', 'kind'),
+        c('clancat', 'guard-1', 'sit', 'neutral', { variant: 2 }), c('clancat', 'guard-2', 'sit', 'neutral', { variant: 4 }), c('clancat', 'guard-3', 'sit', 'neutral', { variant: 6 })], fx: ['dusk'] },
+      hole: { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big' }, cast: [c('player', 'brink', 'crouch', 'wonder')], fx: ['dusk'] }
+    },
+    bridge: {
+      print: { opts: { prints: true }, cast: [c('player', 'over', 'crouch', 'wonder', { reach: true })], fx: ['day'] }
     }
   };
   var EXTRA = [
@@ -331,7 +342,43 @@
       'chapter 6: the threes thing: her nest from the den, three under the moss, the grey tom asleep'],
     ['title', 'wide', { cast: [c('coil', 'wall', 'head', 'neutral', { facing: 'left' }), c('player', 'wall-2', 'sit', 'wonder')], fx: ['day'] }, 'chapter 6: Coil at a cat\u2019s anchor: his head smaller than a cat\u2019s (held to a third to three fifths of hers)'],
     ['title', 'wide', { cast: [c('sleet', 'wall', 'sit', 'proud', { facing: 'left' }), c('sprinkle', 'wall-2', 'sit', 'kind')], fx: ['day'] }, 'chapter 6: Sleet beside Sprinkle: about her size (his head 0.95 to 1.1 of hers)'],
-    ['title', 'wide', { cast: [c('sloshbank', 'wall', 'sit', 'stern', { facing: 'left' }), c('tallyheart', 'wall-2', 'sit', 'kind')], fx: ['day'] }, 'chapter 6: Sloshbank beside Tallyheart: bigger than she is (1.06 to 1.3 times as tall sitting)']
+    ['title', 'wide', { cast: [c('sloshbank', 'wall', 'sit', 'stern', { facing: 'left' }), c('tallyheart', 'wall-2', 'sit', 'kind')], fx: ['day'] }, 'chapter 6: Sloshbank beside Tallyheart: bigger than she is (1.06 to 1.3 times as tall sitting)'],
+    // chapter 7: the walk and the slip round the back (the Tap on the back row), round the back with the roots down
+    // (their Tap) and lifted, the guards past the front, the mouth close, the climber on the arch and the tracks, the moon
+    // at seven; the print's Tap, the sum in the mud and in the sand, the seventh claw mark, and six secrets under the moss
+    ['pile', 'rows', { opts: { rows: [10, 10, 10, { n: 10, gap: [3, 4, 5, 6] }], back: 'shadow', scale: 'behind', tap: 'back' }, cast: [c('tallyheart', 'crowd-3', 'sit', 'kind', { facing: 'left' }), c('player', 'pile-left', 'sit', 'wonder')], fx: ['morning'] },
+      'chapter 7: tap: \u2018back\u2019 on rows: the back row\u2019s band of shade is the Tap\u2019s target (an unpainted pc-tap; nothing is drawn)'],
+    ['pile', 'wide', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 7, tap: 'back' }, cast: [c('player', 'pile-left', 'sit', 'wonder'), c('tallyheart', 'pile-right', 'sit', 'kind', { facing: 'left' }),
+      c('clancat', 'crowd-1', 'sit', 'neutral', { variant: 2 }), c('clancat', 'crowd-2', 'sit', 'neutral', { variant: 4, facing: 'left' }), c('clancat', 'crowd-3', 'sit', 'neutral', { variant: 6, facing: 'left' })], fx: ['dusk'] },
+      'chapter 7: the slip round the back at dusk (tap: \u2018back\u2019 on wide, the back row and the earth behind it), the first guards settling in, moon: 7'],
+    ['pile', 'low', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 7 }, cast: [c('player', 'pile-left', 'sit', 'wonder'), c('tallyheart', 'beside', 'sit', 'kind', { facing: 'left' })], fx: ['dusk'] },
+      'chapter 7: moon: 7 through the arch at dusk (no change to the art: a little fatter and higher than chapter 6\u2019s)'],
+    ['pile', 'rear', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', tap: 'roots' }, cast: [c('player', 'rear-1', 'crouch', 'wonder'), c('tallyheart', 'rear-2', 'sit', 'kind'),
+      c('clancat', 'guard-1', 'sit', 'neutral', { variant: 1 }), c('clancat', 'guard-2', 'sit', 'neutral', { variant: 3 }), c('grizzled', 'guard-3', 'sit', 'neutral')], fx: ['dusk'] },
+      'chapter 7: rear, round the back: the low roots hanging over the heap\u2019s foot (tap: \u2018roots\u2019), nothing to see under them; the guards small past the front'],
+    ['pile', 'rear', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', tunnel: true }, cast: [c('player', 'rear-1', 'crouch', 'sniff')], fx: ['dusk'] },
+      'chapter 7: tunnel: true: the roots lifted back, and under them the round dark mouth of a small tunnel going down and in under the pile'],
+    ['pile', 'hole', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big' }, cast: [c('player', 'brink', 'crouch', 'sniff')], fx: ['dusk'] },
+      'chapter 7: hole: the mouth close, our cat at its brink (as wide as her shoulders, never as long as she is); the back row\u2019s backs along the top'],
+    ['pile', 'hole', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big' }, cast: [], fx: ['dusk'] }, 'chapter 7: hole with nobody: the mouth, its far end dark; the \u201cscale\u201d a glimmer beyond, clear of it'],
+    ['pile', 'wide', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 7, tracks: true }, cast: [c('player', 'arch', 'stand', 'wonder')], fx: ['dusk'] },
+      'chapter 7: the climber on top of the bramble arch (arch), and tracks: true: far off past the towers, two thin lines catching the last light'],
+    ['pile', 'wide', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', tracks: true }, cast: [c('player', 'arch', 'stand', 'proud')], fx: ['sunset'] }, 'chapter 7: the tracks at sunset'],
+    ['bridge', 'under', { opts: { prints: true, tap: 'print' }, cast: [c('player', 'mud', 'crouch', 'wonder')], fx: ['day'] },
+      'chapter 7: tap: \u2018print\u2019: the nearest of Sprinkle\u2019s big prints clear of her is the Tap\u2019s target (an unpainted pc-tap)'],
+    ['bridge', 'under', { opts: { prints: true, compare: [24, 60] }, cast: [c('player', 'mud', 'pawup', 'proud', { claws: true }), c('riffle', { x: 400, y: 940 }, 'stand', 'happy'), c('sprinkle', 'inside', 'sit', 'wonder', { facing: 'left' })], fx: ['day'] },
+      'chapter 7: compare: [24, 60] in the mud: a short line by 24, one two and a half times as long by 60, clear of every print and every cat'],
+    ['bridge', 'print', { opts: { prints: true }, cast: [c('player', 'over', 'crouch', 'happy', { reach: true, facing: 'right' })], fx: ['sunset'] }, 'chapter 7: print at sunset: her whole paw over the print, with room to spare'],
+    ['hollow', 'lesson', { opts: { marks: 7, glow: [true, false, false, false, false, false, true], compare: [24, 60] }, cast: [c('tallyheart', 'sand-left', 'sit', 'kind', { wink: true }), c('player', 'sand-right', 'sit', 'wonder', { facing: 'left' })], fx: ['morning'] },
+      'chapter 7: compare: [24, 60] in the sand between the two cats (the told path\u2019s sum)'],
+    ['hollow', 'sand', { opts: { marks: 7, compare: [24, 60] }, cast: [c('tallyheart', 'sand-left', 'sit', 'kind'), c('player', 'sand-right', 'sit', 'wonder', { facing: 'left' })], fx: ['morning'] }, 'chapter 7: the sum close'],
+    ['hollow', 'tree', { opts: { marks: 7, glow: [true, false, false, false, false, false, true] }, cast: [c('tallyheart', 'tree', 'stretch', 'proud')], fx: ['morning'] },
+      'chapter 7: marks: 7: SKRITCH, the seventh: the six shrink to four and three, the seventh beside the sixth (markSpots, as since chapter 1)'],
+    ['hollow', 'wide', { opts: { marks: 7, glow: [true, false, false, false, false, false, false] }, cast: [c('tallyheart', 'tree-far', 'sit', 'kind', { facing: 'left', size: 1.2 }), c('player', 'sunpatch-2', 'sit', 'proud')], fx: ['morning'] }, 'chapter 7: seven marks from across the hollow'],
+    ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'nose', hidden: true, bark: ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'prints-tracks', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel'] }, cast: [c('player', 'nest', 'lie', 'sleepy', { facing: 'right' })], fx: ['night'] },
+      'chapter 7: the most she can hold tonight: 24 cards, six under the moss (a corner showing for each), eighteen along the edge two deep, Waffles\u2019 piece in front'],
+    ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'nose', hidden: true, bark: ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel'] }, cast: [c('player', 'nest', 'lie', 'sleepy', { facing: 'left' })], fx: ['night'] },
+      'chapter 7: 18 cards, six under the moss, twelve along the edge, facing left (the row keeps to the side away from her head)']
   ];
 
   // ---- panels, rendered when they scroll into view

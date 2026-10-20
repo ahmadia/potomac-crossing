@@ -9,7 +9,9 @@
  * prints-pile, puddle-paws, otter-fox, fur, heron-no-moon, heron-shapes, prints-marsh,
  * prints-tracks, wisp-fox), and chapter 6's three (its spec, "3. The Case File": reed-pile, which lays
  * `tidy`'s own row down with one place empty, since the two lie touching; coil-diggers; sleet-den, with
- * the one fox). Cards the file lays touching show one thing drawn one way: one fox's
+ * the one fox), and chapter 7's four (its spec, "3. The Case File": waffles-no-moon, under heron-no-moon's
+ * own sky; my-count, the sum's two lines and their numbers; prints-sprinkle, one big print and one tiny;
+ * tunnel, coil-diggers' own mice with the tunnel's hatched mouth at the end of their ground). Cards the file lays touching show one thing drawn one way: one fox's
  * head wherever the fox is (`fox`), one heron's head (`heron`), one track (`TRACK`: Squall's), one
  * tiny print at one size (`prints`, `PRINT`), one kind of long low shape (`slink`), one "scale"
  * (`shard`). Whoever took the prey is never on a card: paws, prints, two shapes, and nothing more
@@ -567,6 +569,132 @@
     // dry: three short straight lines standing over it, fanned out, nothing coming down
     c.line('M145 150V136M130 154L123 142M160 154L167 142', { w: 0.85 });
     c.fine('M136 182h.1M152 186h.1M144 178h.1', { w: 1.1 });                            // dry leaves inside
+  } };
+
+  // ------------------------------------------------------------------ chapter 7: the pictures
+
+  // (docs/chapters/07-the-counts-dont-lie.spec.md, "3. The Case File": one ear, three eyes)
+
+  // Digits scratched with one claw, each in its own 10 x 16 box (x right, y down), drawn at (x, y),
+  // its top left, k its size: the numbers a card writes ("24" by a short line, "60" by a long one).
+  // (Every point is a pair, M, L and C only, so each one is moved to its place, as `at` places it.)
+  var DIGIT = {
+    0: 'M5 0C11.6 0 11.6 16 5 16C-1.6 16 -1.6 0 5 0Z',
+    2: 'M0.4 4C0.6 0.4 9.6 -0.6 9.8 4.2C10 7.6 3.6 11 0.2 16L10 16',
+    4: 'M7.4 16L7.4 0L0 11L10 11',
+    6: 'M9.2 1.6C6 -0.6 0.4 0.6 0.2 8.6C0 13.6 2.2 16 5 16C8 16 10 14 10 11C10 8 8 6.4 5.2 6.4C2.6 6.4 0.8 7.8 0.2 10'
+  };
+  function digits(c, str, x, y, k, w) {
+    String(str).split('').forEach(function (dg, i) {
+      var d = DIGIT[dg];
+      if (!d) return;
+      var P = at(x + i * 13.6 * k, y, k, 0);
+      c.line(d.replace(/(-?\d*\.?\d+) (-?\d*\.?\d+)/g, function (m0, a, b) { return P(+a, +b); }), w ? { w: w } : null);
+    });
+  }
+
+  // Waffles says there was NO moon on the storm night. (ear) Her head, front on, under heron-no-moon's
+  // own dark sky (clouds where the fox's card has its moon, nothing falling), since the three lie in one
+  // row: a flat face, round fluffy cheeks, two small ears in the fluff and her bow on the right one.
+  PICS['waffles-no-moon'] = { label: 'a fluffy cat’s head with a bow, under a dark sky: clouds, and no moon', draw: function (c) {
+    c.line(cloud(104, 104, 68) + cloud(30, 116, 56));
+    c.line('M76 68H176M72 78H100M28 86H92M98 112H176M112 121H176', { w: 0.8 });   // dark: no moon anywhere in it
+    // the fluff all round her face: a ring of soft bumps, fullest at the cheeks
+    var cx = 92, cy = 170, d = '', N0 = 14, i;
+    for (i = 0; i <= N0; i++) {
+      var a = Math.PI * 2 * i / N0 - Math.PI / 2, rx = 37 + 4 * Math.abs(Math.cos(a)), ry = 29, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry;
+      if (i === 0) d += 'M' + N(x) + ' ' + N(y);
+      else {
+        var am = a - Math.PI / N0, bx = cx + Math.cos(am) * (rx + 7), by = cy + Math.sin(am) * (ry + 6);
+        d += 'Q' + N(bx) + ' ' + N(by) + ' ' + N(x) + ' ' + N(y);
+      }
+    }
+    c.line(d + 'Z');
+    c.line('M66 147L68 129L82 141M118 147L116 129L102 141', { w: 0.9 });          // two small ears in the fluff
+    // her bow, on the right ear: two loops and the knot, two short tails
+    c.line('M119 133Q108 120 106 131Q107 140 119 133Q131 121 134 131Q132 141 119 133Z', { w: 0.85 });
+    c.line('M118 135l-4 8M120 135l5 7', { w: 0.75 });
+    // a flat face: big round eyes, a tiny nose right between them, a small mouth
+    c.line('M70 168a7.4 7.4 0 1 0 14.8 0a7.4 7.4 0 1 0 -14.8 0ZM99.2 168a7.4 7.4 0 1 0 14.8 0a7.4 7.4 0 1 0 -14.8 0Z', { w: 0.9 });
+    c.dot(78.6, 168.6, { w: 1.7 });
+    c.dot(105.4, 168.6, { w: 1.7 });
+    c.line('M88.6 176.6H95.4L92 180Z', { w: 0.8 });
+    c.line('M92 180Q90 185 86 184M92 180Q94 185 98 184', { w: 0.75 });
+    c.fine('M60 176L46 173M60 181L47 184M124 176L138 173M124 181L137 184', { w: 0.6 });   // whiskers
+  } };
+
+  // My count: twenty-four gone in six nights; a dragon would take sixty. (eye) The panel's own
+  // comparison: two straight lines one above the other, starting together, the long one two and a half
+  // times the short one, "24" scratched by the short line and "60" by the long one.
+  var MY_COUNT = { x: 30, k: 1.8, line: 76, short: 40, long: 100, rows: [104, 156] };
+  PICS['my-count'] = { label: 'a short line and a long one, 24 and 60', draw: function (c) {
+    var M = MY_COUNT;
+    [['24', M.short], ['60', M.long]].forEach(function (r, i) {
+      var y = M.rows[i];
+      digits(c, r[0], M.x, y - 8 * M.k, M.k, 0.9);
+      c.line('M' + N(M.line) + ' ' + N(y) + 'H' + N(M.line + r[1]), { w: 1.25 });
+    });
+  } };
+
+  // Sprinkle's prints are huge; the thief's are tiny. (eye) One of her big prints, pointing up the bark:
+  // a broad pad, five long toes fanned like a hand, a long claw beyond each (the print the Old Bridge's
+  // mud holds, app/art/sets/bridge.js); and beside it one tiny print, drawn as prints-marsh draws them.
+  var BIG_PRINT = { x: 84, y: 160, L: 120, fan: [-0.82, -0.41, 0, 0.41, 0.82] };
+  PICS['prints-sprinkle'] = { label: 'one big print with five long claws, and a tiny print beside it', draw: function (c) {
+    var B = BIG_PRINT;
+    function P(u, v) { return N(B.x + v * B.L) + ' ' + N(B.y - u * B.L); }
+    // the pad: a rounded heel, a little broader toward the toes
+    var pad = '', i, k;
+    for (k = 0; k <= 16; k++) {
+      var a = Math.PI * 2 * k / 16, ca = Math.cos(a);
+      pad += (k ? 'L' : 'M') + P(-0.2 + ca * (ca > 0 ? 0.15 : 0.13), Math.sin(a) * (0.17 + (ca > 0 ? 0.04 : 0)));
+    }
+    c.line(pad + 'Z');
+    var toes = '', claws = '';
+    for (i = 0; i < 5; i++) {
+      var f = B.fan[i], cu = Math.cos(f), cv = Math.sin(f), r0 = i === 0 || i === 4 ? 0.21 : 0.26, toe = '';
+      for (k = 0; k <= 10; k++) {
+        var t = Math.PI * 2 * k / 10, al = r0 + Math.cos(t) * 0.11, ac = Math.sin(t) * 0.05;
+        toe += (k ? 'L' : 'M') + P(-0.05 + cu * al - cv * ac, cv * al + cu * ac);
+      }
+      toes += toe + 'Z';
+      // the claw: a long slash beyond the toe, pointing on along it
+      claws += 'M' + P(-0.05 + cu * (r0 + 0.16), cv * (r0 + 0.16)) + 'L' + P(-0.05 + cu * (r0 + 0.38), cv * (r0 + 0.38));
+    }
+    c.line(toes, { w: 0.85 });
+    c.line(claws, { w: 1.1 });
+    // the thief's: one tiny print beside it, at the size every tiny print is drawn
+    prints(c, [[154, 178, 0]], PRINT);
+    c.fine('M70 196h28M142 196h24', { w: 0.6 });                                        // the mud
+  } };
+
+  // A tunnel under the back of the pile, too small for a dragon. (eye) Coil's row of mice on the
+  // ground, exactly as coil-diggers draws them (the two lie touching), and at the left end of the
+  // ground the tunnel: its mouth a small flat oval in the ground, hatched close inside so it reads
+  // dark, two lines going down from it and in under the ground beneath the mice, and a few thin root
+  // lines arching over the mouth. Nothing in it, nothing coming out. (Plainly not sleet-den's den: no
+  // arch standing on the ground, no dry lines over it.)
+  var TUNNEL = { cx: 46, cy: 158, rx: 17, ry: 6.4 };
+  PICS.tunnel = { label: 'a row of mice on the ground, and a tunnel going down under them, its mouth hatched dark, roots over it', draw: function (c) {
+    var T = TUNNEL, hatch = '', i;
+    [104, 132, 160].forEach(function (x) { mouse(c, x, 150, 1.5, 'straight'); });
+    c.line('M22 156H27M67 156H176', { w: 0.8 });                                         // the ground, broken by the mouth
+    c.line('M' + N(T.cx - T.rx) + ' ' + N(T.cy) + 'a' + N(T.rx) + ' ' + N(T.ry) + ' 0 1 0 ' + N(2 * T.rx) + ' 0a' + N(T.rx) + ' ' + N(T.ry) + ' 0 1 0 ' + N(-2 * T.rx) + ' 0Z');
+    // hatched close inside: short slanting strokes, each from edge to edge of the oval
+    for (i = -7; i <= 7; i++) {
+      var x0 = T.cx + i * 2.6, s = 0.55, pts = [];
+      // the line x = x0 + s * (y - cy), cut by the oval
+      var A = s * s / (T.rx * T.rx) + 1 / (T.ry * T.ry), Bq = 2 * s * (x0 - T.cx) / (T.rx * T.rx), Cq = (x0 - T.cx) * (x0 - T.cx) / (T.rx * T.rx) - 1, D = Bq * Bq - 4 * A * Cq;
+      if (D <= 0) continue;
+      [-1, 1].forEach(function (sg) { var dy = (-Bq + sg * Math.sqrt(D)) / (2 * A) * 0.82; pts.push([x0 + s * dy, T.cy + dy]); });
+      if (Math.abs(pts[1][1] - pts[0][1]) > 1.4) hatch += 'M' + N(pts[0][0]) + ' ' + N(pts[0][1]) + 'L' + N(pts[1][0]) + ' ' + N(pts[1][1]);
+    }
+    c.line(hatch, { w: 0.6 });
+    // going down, and in, under the mice
+    c.line('M31 162L118 197M60 163L126 186', { w: 0.85 });
+    // the bramble's roots, arching low over the mouth, thin and wandering, a rootlet or two
+    c.line('M20 124C34 116 54 120 63 135C66 140 67 146 66 151M28 136C38 132 47 136 51 145M34 112C52 104 74 110 82 128C84 134 84 140 82 145', { w: 0.7 });
+    c.line('M42 119l-3 -7M57 125l5 -5M74 116l4 -6M39 133l-4 -5', { w: 0.55 });
   } };
 
   // ------------------------------------------------------------------ public

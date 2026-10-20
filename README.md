@@ -10,11 +10,12 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-18):** chapters 1 to 6 are built as a static web app (`index.html`, `app/`; the
+**Status (2026-10-20):** chapters 1 to 7 are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04). Chapter 6, *The Snake in the Stones*,
-shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`.
+shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`; chapter 7, *The Counts
+Don’t Lie*, 2026-10-20.
 
 ## Docs
 
@@ -26,8 +27,8 @@ shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`.
 - [`docs/chapters/01-through-the-glass.md`](docs/chapters/01-through-the-glass.md): chapter 1,
   drafted as the actual game text.
 - [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
-  the Old Bridge, 04 The Glittering Scale, 05 Riffle's River, 06 The Snake in the Stones), chapters 2
-  to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
+  the Old Bridge, 04 The Glittering Scale, 05 Riffle's River, 06 The Snake in the Stones, 07 The Counts Don’t
+  Lie), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
   steering calls, the budget and the names, written before drafting), its **story** (what she
   reads), and its **spec** (flags, Counts sets, cards, art needs and build notes, written once the
   story is final).
@@ -332,6 +333,77 @@ Each is Aron's to reverse.
     stop in chapters 1 to 5: nothing changes for them.
   - *The length:* about 22 minutes on the plain path and 25 with Sleet; 16 typed answers, 17 with
     Sleet; 136 frames, about 100 in a reading and up to 114 with Sleet.
+
+- **Chapter 7's brief** (2026-10-20; `docs/chapters/07-the-counts-dont-lie.brief.md`, each call with
+  its reason). In short:
+  1. The day: Waffles at dawn, the sixth count (guarded, and robbed anyway: twenty-four in six
+     nights), the 3s warm-up and the 6s, the sum with Tallyheart, the bridge, the tunnel at dusk.
+  2. The 6s picture keeps decision 42's "whiskers on one cheek" as a close-up: six whiskers in two
+     rows of three, "six is two threes". The game's cats are drawn with two whiskers a side, so the
+     close-up is where you can count them, and no live drawing changes. The 6s are taught as double
+     the 3s, and "you already know most of the sixes" (only 6 × 4, 6 × 6, 6 × 7 and 6 × 8 are new).
+  3. The sum is 4 × 6 = 24 against 10 × 6 = 60 (the brief's 6 × 10 turned round, so both read "a
+     night's count, for six nights"), typed after the lesson. Only the told path's
+     Tallyheart knows Sprinkle eats ten fish a meal, so on the kept path the sixty is worked with
+     Riffle; "A warrior who knows her Counts can't be fooled." is Tallyheart's on both.
+  4. Waffles is the third witness to the moon (no moon, not a sliver): two witnesses against the fox.
+  5. FLEW against can't-fly is linked for everyone (Tallyheart told, Riffle kept), and Sprinkle's big
+     prints are set beside the thief's tiny ones. Nobody says weasel.
+  6. The tunnel is found at dusk behind the back row; nobody goes in. No optional scene this chapter,
+     no new cast, no new place.
+
+- **Chapter 7's spec** (2026-10-20; `docs/chapters/07-the-counts-dont-lie.spec.md`, section 9, has
+  all 29 calls (the 29th, integration round 1) with their reasons). The ones worth knowing:
+  - *FLEW is linked by a new flag, `ch7Flew`*, not by setting chapter 4's `ch4CaughtFly` for
+    everyone: every reread of chapters 4 and 5 reads exactly as before, and "I KNEW it!" stays a
+    noticing cat's. One line of shipped code changes (the Case File link also reads `ch7Flew`).
+  - *Waffles' card is laid beside the two moon cards* (Patience's and the fox's); no card is
+    "answered" yet: judging the case is chapter 10's.
+  - *The tunnel card touches Coil's* ("Coil felt them. Now I've seen where."). The four new cards
+    are under the moss on every path but Waffles'.
+  - *The twenty-four's help hops by fours* (a night at a time), so that one answer is filed under the
+    4s until chapter 8 teaches them.
+  - *The comparison is drawn to scale*, a short line for 24 and a long one for 60, with the numbers.
+  - *The storyboards of chapters 4 to 6 change one phrase* ("two corners showing" under the moss
+    was already wrong for chapter 6): words for an illustrator only, nothing in the game.
+
+- **Chapter 7's build review, integration round 1** (2026-10-20; the reviewers' findings in
+  `~/potomac-crossing-work/ch07/review.json`). The ones worth knowing:
+  - *Sprinkle's print, close up, is drawn as big as the wide shots draw it* (about four-tenths of a cat's
+    height, as big as a heron's foot), her paw held over its heel pad and the five toes and claws fanned
+    out beyond it, toward us: at the spec's first size, her paw about half its length, the print hid under
+    her paw and its claws read as her own. The spec's "her paw about half the print's length" became
+    "about a fifth".
+  - *The told path's tunnel screen is two panels*: her "So THAT'S why…" first, then Tallyheart's "And I
+    SAT here. Right beside it!" with the choice. On one panel her balloon's tail ran through Tallyheart's
+    balloon, so the page joined the two whispers as one speaker. One more panel on the told path (81 or 82).
+  - *One story line changed*: on the told path under the bridge she says "Four a night, for six nights:
+    twenty-four." (it was "Twenty-four gone in six nights."), so Sprinkle's "Only FOUR a night?" answers a
+    number she has just heard, as on the kept path.
+  - *Her book's FLEW sentence names both claims* ("…so Reynard's story that the dragon FLEW can't be
+    true."): its "they" could be read as Sprinkle and Reynard.
+  - *The 6s lesson still never notices speed*: every one of its ten facts has a right line of its own, so
+    the engine's "Quick as a pounce!" can only play on a filler. Kept, and written down in the spec's known
+    issues: dropping 5 × 6's own line ("Thirty! You hopped that one already.") would change the story to
+    win one speed line. Chapter 8 should leave a fact or two without its own right line.
+
+- **Chapter 7 as built** (2026-10-20; the spec's sections 5, 7 and 9 have the detail). Where the
+  frames went past the spec, each small:
+  - *Tallyheart sits across the nook* on every told-path panel under the bridge (at the spec's spot
+    she sat on top of our cat), as chapter 6's last fix had her.
+  - *Some lines became panels of their own*, so captions come before the balloons they answer and
+    no panel holds five boxes: "Sorry, Coil," the old tom's pinecone, the bedtime recap.
+  - *The tunnel's two whispers are two panels* (one balloon tail ran through the other balloon).
+  - *Sprinkle's print is drawn true to size* (about five of her paws long), her paw over its heel pad
+    and its five claws fanning out past it: "Your whole paw fits inside, with room to spare."
+  - *One story line changed*: on the told path Tallyheart now says "Four a night, for six nights:
+    twenty-four" before Sprinkle's "Only FOUR a night?"
+  - *The tunnel is left open* (the roots still lifted; on the told path Tallyheart sits across it),
+    for chapter 8 to follow.
+  - *The storyboard tool* now says truly how a question with its own words is timed; that corrects
+    one line in chapter 5's storyboard (words for an illustrator, nothing in the game).
+  - *The length*: about 20 minutes, 15 typed answers, 108 frames, about 81 a reading told and 85
+    kept.
 
 ## Open questions, waiting on Aron
 

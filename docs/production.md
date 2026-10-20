@@ -27,6 +27,12 @@ all**, with no session-limit stop, in one day. 136 frames (about 100 a reading, 
 Sleet), about 22 minutes plain and 25 with the optional scene, 13 confirmed review findings and 2 in
 the final review, 1042 tests. Chapters 1 to 5 stayed byte-identical (674 frames compared).
 
+**Chapter 7** (2026-10-20), the second on this plan: the text about 5.7M (with the same extra check
+of round 2's math), the build about 7.2M, and 0.4M for `docs/continuity.md`: **about 13.3M**, again
+with no session-limit stop. 108 frames (about 81 a reading told, 85 kept), about 20 minutes, 9
+confirmed review findings and 2 in the final review, 1143 tests; chapters 1 to 6 pinned by
+fingerprints and a golden fixture that now also runs with every chapter loaded.
+
 Chapter 1 was 98 frames and a 387-line text. The engine has grown from 841 to 2,933 lines, the page
 code from 1,635 to 3,109, the character art from 1,195 to 5,792, and `docs/build.md` to 1,254 lines.
 The suite takes about 100 seconds.

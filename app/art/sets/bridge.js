@@ -93,6 +93,24 @@
  *   No `near`, no `beside`. `train: true` shakes grit down in front of the wall; `drips` as ever; the
  *   evening light as in `back`. Nobody's spot covers the gap or Coil's head (tests/set-bridge.test.js).
  *
+ * Chapter 7 (docs/chapters/07-the-counts-dont-lie.spec.md, section 4, the bridge row): every option off by
+ * default and the camera additional, so chapters 2 to 6 draw as they did.
+ *   `tap: 'print'` (on `under`, with `prints: true`): the Tap's target, an unpainted <rect class="pc-tap"
+ *   data-tap="print"> on the nearest of her big prints that lies wholly in the picture and clear of the spot
+ *   at `mud` (where she crouches, looking down at it); first in `keep`.
+ *   `compare: [24, 60]` (on `under`): the sum scratched in the open mud right of `mud`, in the kit's
+ *   compareLines (the hollow's drawing): a short line by 24, one two and a half times as long by 60, on a
+ *   patch of smoothed mud; clear of the drag marks, every print and the spots at `mud`, `inside` and
+ *   { x: 400, y: 940 }; in `keep`. <g data-art="compare" data-nums data-box aria-label>.
+ *   `wing: true` (on `back`; final review): Sprinkle's drooping wing, where her `wings` pose at `dragon` holds
+ *   it out low toward `back-right`, goes in `keep` (WING_KEEP), so no balloon covers the evidence that she
+ *   can't fly (the FLY panels); nothing is drawn, and off it is exactly as before.
+ *   Camera `print`, its own composition: at cat height, close on the mud, one of her big prints in front
+ *   (<g data-art="print">, its lit rim <g data-art="print-rim"> drawn after her shadows), the drag marks'
+ *   edge along the right. Anchor `over`: our cat crouched with `reach: true`, her paw over the print's heel
+ *   pad, its toes and claws fanned out beyond toward us (the spot is where the paw hangs, `air` and `elev`,
+ *   as the marsh's `raft-edge`); the set lays her feet line just above the print and draws her shadows.
+ *
  * The dark is mysterious and a little sad, never scary: cool blues with faint shapes of stones and
  * mud in them, soft rounded shapes, a warm rim of daylight at its edges, and gentle round eyes.
  * The rocks are drawn in the `over` layer, so a custom spot `{ x, y, z: 'behind' }` just behind
@@ -824,12 +842,26 @@
     fl += path(dots, mix(c.dark3, '#A09682', 0.25), { opacity: 0.55 });
     if (o.drag !== false) fl += dragMarks(S, U_MARKS, 220, 30, { lip: mix(c.mudLt, c.dark3, 0.5), bed: mix(c.mudWet, c.dark1, 0.3), deep: mix(c.mudDk, c.dark0, 0.45) });
     // chapter 3: Sprinkle's own prints beside them, big, five long claws each
-    if (o.prints === true) fl += printsAlong(S, U_MARKS, 220, 30, { lip: mix(c.mudLt, c.dark4, 0.35), deep: mix(c.mudDk, c.dark0, 0.6), fs: 0.5, size: 0.82, gap: 0.55, step: 0.09, t0: 0.14, t1: 0.92 });
+    if (o.prints === true) fl += printsAlong(S, U_MARKS, U_PRINTS.w0, U_PRINTS.w1, { lip: mix(c.mudLt, c.dark4, U_PRINTS.lipK), deep: mix(c.mudDk, c.dark0, 0.6), fs: U_PRINTS.fs, size: U_PRINTS.size, gap: U_PRINTS.gap, step: U_PRINTS.step, t0: U_PRINTS.t0, t1: U_PRINTS.t1 });
     fl += path(bs, c.dark2) + stroke(bsh, c.dark4, 2, { opacity: 0.5 });
     // the dark gathers toward the back and the right; daylight warms the mud by the water
     fl += path('M-10 470H1610V1010H-10Z', S.linU([[0, c.dark0, 0], [0.4, c.dark0, 0.2], [1, c.dark0, 0.6]], 420, 1000, 1300, 520));
     fl += ell(240, 940, 480, 170, S.radU([[0, c.warm, 0.32], [1, c.warm, 0]], 240, 940, 480));
     back += g(fl, { 'clip-path': fClip });
+    // chapter 7: the sum scratched in the open mud at the front (`compare`), and the Tap on the nearest print
+    if (o.compare) {
+      var cmp = K.compareLines ? K.compareLines(S, { nums: o.compare, x: U_COMPARE.x, y: U_COMPARE.y, w: U_COMPARE.w, size: U_COMPARE.size, gap: U_COMPARE.gap,
+        groove: mix(c.mudDk, '#0A0F1C', 0.45), shine: mix(c.mudLt, '#FFF1D8', 0.55), patch: mix(c.mudLt, c.dark3, 0.3), word: 'mud' }) : null;
+      if (cmp) { back += cmp.svg; (S.keep = S.keep || []).push(cmp.box); }
+    }
+    if (o.tap === 'print' && o.prints === true) {
+      var tp = tapPrint(S);
+      if (tp) {
+        var tb = tp.box;
+        back += rect(tb[0], tb[1], tb[2] - tb[0], tb[3] - tb[1], 'none', { 'class': 'pc-tap', 'data-tap': 'print', 'pointer-events': 'none' });
+        (S.keep = S.keep || []).unshift({ x: tb[0] - 4, y: tb[1] - 4, w: tb[2] - tb[0] + 8, h: tb[3] - tb[1] + 8 });
+      }
+    }
     var ev = evening(S), ec = ev ? eveCol(S, ev) : null, eo = ev === 'gold' ? 1 : 0.55;
     if (ev) {
       // evening: the low light comes in long from the open side, in bands across the floor toward the back
@@ -878,6 +910,10 @@
 
   var B_MARKS = [[640, 1040], [720, 880], [880, 760], [1010, 690]];
 
+  // where Sprinkle's hurt wing lies when she opens her wings (`wings`) at `dragon` on `back`: from her back to
+  // its tip, above her tail (measured off the drawing: her figure spans x 808 to 1434; the drooping wing x 1040
+  // to 1434, y 640 to 770)
+  var WING_KEEP = { x: 1040, y: 630, w: 400, h: 150 };
   function drawBack(S) {
     var p = S.pal, o = S.opts, c = cols(S), back = '', front = '', r = rng(701), i, x, y;
     back += rect(-10, -10, 1620, 1020, S.linU([[0, c.dark1], [0.45, c.dark0], [1, mix(c.dark2, c.mudDk, 0.2)]], 0, 0, 0, 1000));
@@ -928,6 +964,9 @@
     back += g(fl, { 'clip-path': S.clip('brbfloor', path(fd, '#fff')) });
     // chapter 6: the bridge's stone leg beside the nook, big old fitted stones, Coil's gap low in it
     if (o.stones === true) back += backLeg(S, c);
+    // chapter 7, `wing: true`: Sprinkle's drooping wing (her right, at `dragon`, held out low toward
+    // `back-right`) is what the panel is about, so the lettering keeps off it; nothing is drawn
+    if (o.wing === true) (S.keep = S.keep || []).push({ x: WING_KEEP.x, y: WING_KEEP.y, w: WING_KEEP.w, h: WING_KEEP.h });
     // the beam overhead, warm daylight along its lower edge from the way she came in
     back += path(quad([[-10, -10], [1610, -10], [1610, 86], [-10, 122]]), S.linU([[0, c.dark2], [1, c.dark1]], 0, 0, 0, 122));
     back += path(quad([[-10, 104], [1610, 72], [1610, 92], [-10, 128]]), c.dark2);
@@ -1705,6 +1744,150 @@
     return { back: back, over: '', front: front };
   }
 
+  // ------------------------------------------------------------------ chapter 7: her paw over a print, the Tap on one, the sum in the mud
+
+  // The box [x0, y0, x1, y1] of each print printsAlong lays (the same walk, the same order, the same
+  // prints), with its middle and length: so a Tap can be put on one, and the sum kept clear of them all.
+  function printBoxes(P, w0, w1, o) {
+    var out = [], side = 1;
+    for (var t = o.t0; t <= o.t1 + 1e-6; t += o.step) {
+      var q = along(P, t), w = lerp(w0, w1, t), L = w * o.size, off = side * (w * 0.5 + L * o.gap);
+      if (L < 8) break;
+      var cx = q.x + q.nx * off, cy = q.y + q.ny * off + L * 0.05 * side, pr = printD(cx, cy, L, q.tx, q.ty, o.fs), b = [1e9, 1e9, -1e9, -1e9];
+      ((pr.pad + pr.claws).match(/-?\d+(\.\d+)?/g) || []).forEach(function (v, i) {
+        v = +v;
+        if (i % 2) { b[1] = Math.min(b[1], v); b[3] = Math.max(b[3], v); } else { b[0] = Math.min(b[0], v); b[2] = Math.max(b[2], v); }
+      });
+      out.push({ box: b, x: cx, y: cy, L: L, t: t });
+      side = -side;
+    }
+    return out;
+  }
+  // `under`'s prints (drawUnder lays them so), and the one the Tap is on (`tap: 'print'`): the nearest
+  // that lies wholly in the picture and clear of the spot at `mud` (where she crouches, looking down at
+  // it: a print under her would hide the thing to touch)
+  var U_PRINTS = { lipK: 0.35, w0: 220, w1: 30, fs: 0.5, size: 0.82, gap: 0.55, step: 0.09, t0: 0.14, t1: 0.92 };
+  function tapPrint(S) {
+    var a = (S.anchorMap || {}).mud, clear = a ? [a.x - a.h * 0.5, a.y - a.h * 0.6, a.x + a.h * 0.55, a.y + 4] : null, list = printBoxes(U_MARKS, U_PRINTS.w0, U_PRINTS.w1, U_PRINTS);
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i].box;
+      if (b[0] < 8 || b[1] < 8 || b[2] > 1592 || b[3] > 992) continue;
+      if (clear && b[0] < clear[2] && b[2] > clear[0] && b[1] < clear[3] && b[3] > clear[1]) continue;
+      return list[i];
+    }
+    return null;
+  }
+
+  // `compare: [24, 60]` on `under` (the kept path's sum, spec section 4): two lines scratched in the open
+  // mud at the front, right of `mud`, the short one by 24 and the long one, two and a half times as long,
+  // by 60 (the kit's compareLines, the hollow's drawing). Clear of the drag marks and every print beside
+  // them, of the spots at `mud` and `inside` and of Riffle's at { x: 400, y: 940 }, and short of the
+  // clods of mud in the near right corner. As high and as big as that leaves room for (digits 42 tall, the
+  // group about y 855–955), well off the panel's bottom edge, so the kept path's sum reads as plainly as the
+  // told path's in the sand.
+  var U_COMPARE = { x: 990, y: 856, w: 320, size: 42, gap: 10 };
+
+  /* `print` (chapter 7, its own composition, as `wall` is): at cat height, close on the mud under the
+   * bridge. One of Sprinkle's big prints in front (five long claws: the print `prints: true` lays, as big
+   * as a heron's foot), the drag marks' edge along the right side, the mud running back into the dark,
+   * the daylight and the river at the open side far off at the left. `over`: our cat crouched at the
+   * print's far edge with `reach: true`, her near forepaw held just over its broad heel pad, the pad
+   * showing all round her paw and the five toes and long claws fanned out beyond it, toward us, clear of
+   * her leg. The print is as big as the wide shots draw it (about four-tenths of her sitting height, as
+   * big as a heron's foot), so her paw is about a fifth of its length: the marsh's measure turned round,
+   * with room to spare. The spot is where her paw hangs, as the marsh's `raft-edge` is: the set puts the
+   * line her feet are on (the cat drawing's `reach.edge`) on the mud just above the print, and draws her
+   * shadow there and her paw's on the print. */
+  // PR: where the print lies (its heel-to-toe line through x, y), which way it points (toward us and a
+  // little right, away from her foreleg, which comes down from the upper left), how the mud is
+  // foreshortened; `over` (below, in the anchors): her paw's spot, so the paw hangs over the heel pad's
+  // middle and the line her feet are on lies along the print's far edge
+  var PR = { x: 1069, y: 818, tx: 0.25, ty: 1, fs: 0.7, h: 1040, paw: 4.6 };
+  // the print's length: her paw (the cat drawing's reach.r, at her size here) about a fifth of it
+  function printLen(S) {
+    var a = (S.anchorMap || {}).over, h = a ? a.h : PR.h, k = h / 200, r = 8.2;
+    try {
+      var c = typeof art.character === 'function' && !art.character.placeholder ? art.character('player', { pose: 'crouch', reach: true, look: S.look || {} }) : null;
+      if (c && c.reach && c.reach.r > 0) { r = c.reach.r; k = h / (c.h || 200); }
+    } catch (e) { /* the plain measure */ }
+    return r * 2 * k * PR.paw;
+  }
+  var P_FLOOR = 'M-10 318Q500 300 1000 306Q1300 310 1610 300V1010H-10Z';
+  var P_MARKS = [[1760, 1060], [1530, 860], [1420, 560], [1330, 316]];
+  function drawPrint(S) {
+    var p = S.pal, o = S.opts, c = cols(S), back = '', front = '', r = rng(1701), i, x, y;
+    back += rect(-10, -10, 1620, 1020, S.linU([[0, c.dark1], [0.6, c.dark0], [1, c.dark0]], 0, 0, 0, 330));
+    // far off at the left, the open side: daylight between two stone legs, a sliver of the brown river
+    var side = 'M-10 120L330 168L330 312L-10 326Z';
+    var day = K.sky(S, -10, 100, 360, 160, { sun: [40, 140], sunR: 260 }) + riverWater(S, c, -10, 250, 350, 330, { key: 'prw', lines: 12, swirls: 3, debris: 1, seed: 1702, size: 0.5 });
+    day += rect(-10, 100, 360, 240, S.linU([[0, c.dark0, 0], [0.5, c.dark0, 0.25], [1, c.dark0, 0.7]], 0, 0, 340, 0));
+    back += g(day, { 'clip-path': S.clip('prside', path(side, '#fff')) });
+    back += stoneFace(S, [[150, 140], [214, 150], [214, 318], [150, 320]], { rows: 6, per: 1, seed: 1703, col: mix(c.dark3, c.stoneDk, 0.3), dk: c.dark1, lt: c.dark4, mortar: c.dark1, rim: c.dark4, rimOp: 0.5, lw: 2 });
+    // the deck's beams overhead, running back into the dark
+    back += path('M-10 -10H1610V96Q800 128 -10 112Z', S.linU([[0, c.dark2], [1, c.dark1]], 0, 0, 0, 120));
+    back += stroke('M-10 112Q800 128 1610 96', c.warm, 4, { opacity: 0.35 });
+    // the mud: wet and dark at the back, lit warm toward the front and the open side
+    back += path(P_FLOOR, S.linU([[0, mix(c.dark2, c.mudWet, 0.3)], [0.35, mix(c.dark3, c.mudWet, 0.45)], [1, mix(c.mud, c.dark3, 0.35)]], 0, 300, 0, 1000));
+    var fClip = S.clip('prfloor', path(P_FLOOR, '#fff')), fl = '', dots = '', st = '', sth = '';
+    for (i = 0; i < 80; i++) { x = r() * 1600; y = 330 + Math.pow(r(), 0.9) * 670; dots += blob(x, y, 2 + (y - 300) * 0.02 + r() * 4, 1.4 + (y - 300) * 0.011, 6, r, 0.3, 0.3); }
+    fl += path(dots, mix(c.mudDk, c.dark1, 0.3), { opacity: 0.45 });
+    // the drag marks' edge, along the right side
+    if (o.drag !== false) fl += dragMarks(S, P_MARKS, 520, 70, { lip: mix(c.mudLt, c.dark3, 0.45), bed: mix(c.mudWet, c.dark1, 0.3), deep: mix(c.mudDk, c.dark0, 0.4) });
+    [[260, 930, 34], [1180, 412, 18], [470, 470, 22], [130, 640, 26]].forEach(function (q) {
+      st += blob(q[0], q[1], q[2], q[2] * 0.6, 9, r, 0.2, 0.3);
+      sth += 'M' + n(q[0] - q[2] * 0.6) + ' ' + n(q[1] - q[2] * 0.4) + 'q' + n(q[2] * 0.6) + ' ' + n(-q[2] * 0.25) + ' ' + n(q[2] * 1.2) + ' 0';
+    });
+    fl += path(st, mix(c.dark2, c.mudDk, 0.4), { stroke: c.dark0, 'stroke-width': 3, 'stroke-linejoin': 'round' }) + stroke(sth, c.dark4, 2, { opacity: 0.4 });
+    // the daylight from the open side warms the near mud
+    fl += rect(-10, 300, 1620, 720, S.radU([[0, c.warm, 0.34], [0.6, c.warm, 0.1], [1, c.warm, 0]], 200, 1000, 1100));
+    fl += path(P_FLOOR, S.linU([[0, c.dark0, 0.55], [0.3, c.dark0, 0.15], [1, c.dark0, 0]], 0, 300, 0, 800));
+    back += g(fl, { 'clip-path': fClip });
+    var ev = evening(S);
+    if (ev) {
+      var ec = eveCol(S, ev), eo = ev === 'gold' ? 1 : 0.55;
+      back += ell(160, 900, 760, 320, S.radU([[0, ec, 0.34 * eo], [1, ec, 0]], 160, 900, 760), { style: 'mix-blend-mode:screen' });
+    }
+    // the print: one of hers, big, its toes toward us
+    var L = printLen(S), pr = printD(PR.x, PR.y, L, PR.tx, PR.ty, PR.fs), lift = n(Math.max(2, L * 0.03));
+    var lip = mix(c.mudLt, '#EADBBE', 0.35), deep = mix(c.mudDk, '#0A0F1C', 0.6);
+    back += g(path(pr.pad, lip, { opacity: 0.75, transform: 'translate(0 ' + lift + ')' }) + path(pr.pad, deep, { opacity: 0.92 }) +
+      path(pr.claws, lip, { opacity: 0.65, transform: 'translate(0 ' + lift + ')' }) + path(pr.claws, deep), { 'data-art': 'print' });
+    var pb = [1e9, 1e9, -1e9, -1e9];
+    ((pr.pad + pr.claws).match(/-?\d+(\.\d+)?/g) || []).forEach(function (v, j) { v = +v; if (j % 2) { pb[1] = Math.min(pb[1], v); pb[3] = Math.max(pb[3], v); } else { pb[0] = Math.min(pb[0], v); pb[2] = Math.max(pb[2], v); } });
+    (S.keep = S.keep || []).push({ x: pb[0] - 6, y: pb[1] - 6, w: pb[2] - pb[0] + 12, h: pb[3] - pb[1] + 12 });
+    // our cat at `over`: her shadow along the line her feet are on, just above the print, and her paw's on it
+    var m = null;
+    (S.cast || []).forEach(function (cm) { if (cm && cm.at === 'over' && !m) m = cm; });
+    var a = (S.anchorMap || {}).over;
+    if (m && a && typeof art.character === 'function' && !art.character.placeholder) {
+      var ch = null;
+      try {
+        var co = { pose: m.pose || 'crouch', mood: m.mood || 'neutral', facing: m.facing || a.face || 'right' };
+        if (m.reach != null) co.reach = m.reach;
+        if (m.who === 'player' || !m.who) { co.look = S.look || {}; if (co.look.sex) co.sex = co.look.sex; }
+        ch = art.character(m.who || 'player', co);
+      } catch (e) { ch = null; }
+      if (ch && ch.w > 0 && ch.h > 0) {
+        var k = a.h / 200 * (m.size > 0 ? +m.size : 1), X = function (u) { return a.x + (u - ch.w / 2) * k; }, Y = function (v) { return a.y + (v - ch.h) * k; };
+        var rc = ch.reach, lipY = rc ? Y(rc.edge) : a.y, sh = ell(a.x - 20 * k, lipY - 1, a.h * 0.36, Math.max(3, a.h * 0.034), S.pal.shade, { opacity: 0.3 });
+        if (rc) {
+          var pwx = X(rc.x), pwy = Y(rc.y), pwr = rc.r * k;
+          sh += ell(pwx, Math.max(pwy + pwr * 0.9, (pb[1] + pb[3]) / 2 + pwr * 0.5), pwr * 1.15, pwr * 0.4, S.pal.shade, { opacity: 0.3, 'data-art': 'paw-shadow' });
+        }
+        back += g(sh, { 'data-art': 'over-shadow' });
+      }
+    }
+    // the pressed edge all round it catches the light, drawn after her shadows so it reads all round her
+    // paw: the print's outline, lit, wherever the paw does not hang
+    var rimW = n(Math.max(3, L * 0.018));
+    back += g(path(pr.pad + pr.claws, 'none', { stroke: lip, 'stroke-width': rimW, 'stroke-linejoin': 'round', opacity: 0.9 }), { 'data-art': 'print-rim' });
+    if (o.drips !== false) back += drip(S, 640, 110, 520, 5, 0.6, c.drop, c.dark4) + drip(S, 1380, 100, 380, 4.4, 1.6, c.drop, c.dark4);
+    if (o.train) back += grit(S, 60, 1540, 110, 380, 22, 1704, mix(c.dark4, '#FFFFFF', 0.2));
+    front += g(path(blob(-30, 1012, 190, 50, 10, rng(1705), 0.25, 0.3), mix(c.dark1, c.mudDk, 0.3)), { filter: S.shadow('m') });
+    S.weatherClip = S.clip('prrain', path(side, '#fff'));
+    return { back: back, over: '', front: front };
+  }
+
   // ------------------------------------------------------------------ the set
 
   function draw(S) {
@@ -1713,6 +1896,7 @@
     if (S.comp === 'back') return drawBack(S);
     if (S.comp === 'paws') return drawPaws(S);
     if (S.comp === 'wall') return drawWall(S);
+    if (S.comp === 'print') return drawPrint(S);
     return drawBank(S);
   }
 
@@ -1725,7 +1909,9 @@
       back: { box: [0, 0, 1600], comp: 'back' },
       paws: { box: [0, 0, 1600], comp: 'paws' },
       // chapter 6: Coil's close beats, its own composition (sharing `back`'s anchor names)
-      wall: { box: [0, 0, 1600], comp: 'wall' }
+      wall: { box: [0, 0, 1600], comp: 'wall' },
+      // chapter 7: close on one of Sprinkle's prints in the mud, her paw held over it
+      print: { box: [0, 0, 1600], comp: 'print' }
     },
     anchors: {
       // the riverbank; `rock` and `edge` also show here, small, at the dark's mouth
@@ -1758,15 +1944,25 @@
       wall: {
         gap: A(W_LEG.gap.x, Math.round(footOf(W_LEG.face, W_LEG.gap.x)), 370, 'right'), 'back-left': A(740, 958, 430, 'left'), 'back-right': A(1110, 948, 418, 'left'),
         dragon: A(1560, 1100, 320, 'left', { z: 'behind' })
-      }
+      },
+      // chapter 7: `over`, our cat crouched at the print's far edge with `reach: true`, her near forepaw held
+      // over its heel pad. As the marsh's `raft-edge`, the spot is where the paw hangs (her feet are on the mud
+      // above it, the line the cat drawing calls `reach.edge`), so it is `air` and `elev` to scenes.js and the
+      // set draws her shadows itself; its height is her size in this close shot. No spot of Tallyheart's.
+      print: { over: A(775, 799, PR.h, 'right', { air: true, elev: true }) }
     },
     opts: { train: [false, true], eyes: ['none', 'open', 'blink', 'sprinkle'], drag: [true, false], drips: [true, false],
       pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true],
       // chapter 5: the little forepaws drawn in the mud (`back`)
       mudPaws: [0, 6, 7],
       // chapter 6: the stone leg beside the nook, with Coil's gap (`back`; `wall` always has it)
-      stones: [false, true] },
-    defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false }
+      stones: [false, true],
+      // chapter 7: the Tap on the nearest of her prints (`under`, with `prints: true`), and the sum scratched in
+      // the mud (`under`: a list of two numbers, compared by value as the pile's rows; the kit's compareLines)
+      tap: ['none', 'print'], compare: [false, [24, 60]],
+      // chapter 7 (final review): the lettering keeps off Sprinkle's drooping wing (`back`, her `wings` at `dragon`)
+      wing: [false, true] },
+    defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false, tap: 'none', compare: false, wing: false }
   });
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;

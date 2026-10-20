@@ -19,6 +19,9 @@ const OPTS = ['pairs', 'lit', 'dug', 'vole'];
 const CH4_OPTS = ['rows', 'back', 'scale', 'glint'];
 const CH5_OPTS = ['prints', 'swept'];                       // chapter 5: tiny prints in the dug earth; the earth swept flat
 const CH6_OPTS = ['moon'];                                  // chapter 6: the moon's age in evenings, in the sky of `wide` and `low`
+const CH7_CAMS = ['rear', 'hole'];                          // chapter 7: round the back; close on the tunnel's mouth
+const CH7_ANCHORS = ['arch', 'rear-1', 'rear-2', 'guard-1', 'guard-2', 'guard-3', 'brink'];
+const CH7_OPTS = ['tap', 'tunnel', 'tracks'];               // chapter 7: the Taps' targets, the tunnel found, the tracks far off
 const WHO = ['tallyheart', 'player', 'grizzled', 'clancat', 'glintstar', 'snorer', 'mutterer'];
 
 // ---------------------------------------------------------------- helpers
@@ -97,9 +100,9 @@ function specRow() {
 test('vocab: the pile set lists exactly the cameras, anchors and options of the contract', () => {
   const v = art.vocab.sets.pile;
   assert.ok(v, 'PC.art.vocab.sets.pile');
-  assert.deepEqual([...v.cams].sort(), [...CAMS, ...CH4_CAMS, ...CH5_CAMS].sort());
-  assert.deepEqual([...v.anchors].sort(), [...ANCHORS, ...CH5_ANCHORS].sort());
-  assert.deepEqual(Object.keys(v.opts).sort(), [...OPTS, ...CH4_OPTS, ...CH5_OPTS, ...CH6_OPTS].sort());
+  assert.deepEqual([...v.cams].sort(), [...CAMS, ...CH4_CAMS, ...CH5_CAMS, ...CH7_CAMS].sort());
+  assert.deepEqual([...v.anchors].sort(), [...ANCHORS, ...CH5_ANCHORS, ...CH7_ANCHORS].sort());
+  assert.deepEqual(Object.keys(v.opts).sort(), [...OPTS, ...CH4_OPTS, ...CH5_OPTS, ...CH6_OPTS, ...CH7_OPTS].sort());
   const spec = specRow();
   for (const c of spec.cams) assert.ok(v.cams.includes(c), 'camera ' + c + ' from build.md');
   for (const a of spec.anchors) assert.ok(v.anchors.includes(a), 'anchor ' + a + ' from build.md');
@@ -553,8 +556,8 @@ test('chapter 4: build.md names the five new cameras and the options, and the se
   assert.deepEqual(v.opts.back, ['none', 'shadow']);
   assert.deepEqual(v.opts.scale, [false, true, 'behind']);
   assert.deepEqual(v.opts.glint, [false, true]);
-  assert.deepEqual(info.defaults, { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false, moon: false },
-    'nothing of chapter 4 (or 5, or 6: no moon) by default; no `rows`: the pile is in pairs');
+  assert.deepEqual(info.defaults, { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false, moon: false, tap: 'none', tunnel: false, tracks: false },
+    'nothing of chapter 4 (or 5, or 6: no moon; or 7: no Tap, no tunnel, no tracks) by default; no `rows`: the pile is in pairs');
   // anchors: rows and gap have the pile's own names (chapter 5 adds `behind`); the three close-ups have none
   assert.deepEqual(Object.keys(info.anchors.rows).sort(), ['behind', 'beside', 'crowd-1', 'crowd-2', 'crowd-3', 'pile-left', 'pile-right']);
   assert.deepEqual(Object.keys(info.anchors.gap).sort(), ['behind', 'beside', 'pile-left', 'pile-right']);
@@ -1703,4 +1706,251 @@ test('chapter 6: whatever chapter 6 puts at the pile renders, uses the vocabular
     }
   }
   t.diagnostic(frames.length + ' frames at the pile, ' + moons + ' with the moon');
+});
+
+// ================================================================ chapter 7 (docs/chapters/07-the-counts-dont-lie.spec.md, section 4, the pile row)
+
+const NIGHT7 = { rows: NIGHT, scale: 'behind', dug: 'big' };
+const SPEC7 = path.join(ROOT, 'docs/chapters/07-the-counts-dont-lie.spec.md');
+const tapsOf = (svg) => [...svg.matchAll(/<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="([\d.]+)" height="([\d.]+)" fill="none" class="pc-tap" data-tap="(\w+)" pointer-events="none"\/>/g)]
+  .map((m) => ({ x0: +m[1], y0: +m[2], x1: +m[1] + +m[3], y1: +m[2] + +m[4], name: m[5] }));
+const mouthOf = (svg) => { const m = /<g data-art="mouth" data-box="([^"]+)"/.exec(svg); return m ? m[1].split(' ').map(Number) : null; };
+const rootsOf = (svg) => { const m = /<g data-art="roots" data-lifted="(true|false)"/.exec(svg); return m ? m[1] === 'true' : null; };
+// the box of a group's ellipses only (the pieces' soft shadows lie in world units; the pieces themselves are
+// drawn in their own turned frames), and where the "scale" lies (its shadow on the earth) as a box
+const ellBox = (markup) => boxOf((markup.match(/<ellipse\b[^>]*>/g) || []).join(''));
+const scaleBox = (svg) => { const s = scaleOn(svg); return [s.cx - s.rx * 1.6, s.cy - s.rx * 1.1, s.cx + s.rx * 1.6, s.cy + s.ry * 2]; };
+const meets7 = (p, q, pad) => p[0] < q[2] + (pad || 0) && p[2] > q[0] - (pad || 0) && p[1] < q[3] + (pad || 0) && p[3] > q[1] - (pad || 0);
+// a keep area (percent of the panel) that holds this world box
+const keeps = (r, b) => { const vb = viewBox(r.svg); return r.keep.some((k) => vb[0] + k.x / 100 * vb[2] <= b.x0 + 0.5 && vb[1] + k.y / 100 * vb[3] <= b.y0 + 0.5 && vb[0] + (k.x + k.w) / 100 * vb[2] >= b.x1 - 0.5 && vb[1] + (k.y + k.h) / 100 * vb[3] >= b.y1 - 0.5); };
+// where a cast member lands at anchor `a` (cats.js's own boxes, at the size scenes.js gives it): [x0, y0, x1, y1]
+function bodyAt(m, a) {
+  const o = { pose: m.pose || 'sit', mood: m.mood || 'neutral', facing: m.facing || a.face || 'right' };
+  if (m.variant) o.variant = m.variant;
+  if (m.who === 'player') { o.look = LOOK; o.sex = LOOK.sex; }
+  const ch = art.character(m.who, o), ref = art.character('clancat', { pose: 'sit', variant: 1 }).h, s = a.h * (m.size > 0 ? m.size : 1) / ref;
+  const W = (b) => [a.x + (b.x0 - ch.w / 2) * s, a.y + (b.y0 - ch.h) * s, a.x + (b.x1 - ch.w / 2) * s, a.y + (b.y1 - ch.h) * s];
+  return { body: W(ch.bounds || { x0: 0, y0: 0, x1: ch.w, y1: ch.h }), head: W(ch.headBox) };
+}
+
+test('chapter 7: the spec names the pile\'s new cameras, anchors and options, and the set has them all, each declared (PC.art.vocab), every one off by default', () => {
+  const md = fs.readFileSync(SPEC7, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**Option `tap: \'none\' \\| \'back\' \\| \'roots\'`** (default `\'none\'`)', '**Camera `rear`**, a composition of its own (`comp: \'rear\'`', 'Anchors **`rear-1`**', '**`rear-2`**',
+    '**`guard-1`**, **`guard-2`**, **`guard-3`**', '**Option `tunnel: true`** (default false; on `rear`)', '**Camera `hole`** (`comp: \'hole\'`)', 'Anchor **`brink`**', '**Option `tracks: true`** (default false; on `wide`, at dusk or sunset only)', '**Anchor `arch`** on `wide`'])
+    assert.ok(md.includes(want), 'the spec says: ' + want);
+  const v = art.vocab.sets.pile, info = art.sceneInfo('pile');
+  for (const cam of CH7_CAMS) { assert.ok(v.cams.includes(cam), cam); assert.equal(info.cams[cam].comp, cam, cam + ': a composition of its own'); assert.deepEqual([info.cams[cam].x, info.cams[cam].y, info.cams[cam].w], [0, 0, 1600]); }
+  for (const a of CH7_ANCHORS) assert.ok(v.anchors.includes(a), 'anchor ' + a);
+  assert.deepEqual(v.opts.tap, ['none', 'back', 'roots']);
+  assert.deepEqual(v.opts.tunnel, [false, true]);
+  assert.deepEqual(v.opts.tracks, [false, true]);
+  assert.equal(v.opts.moon, 'number', '`moon: 7` needs no change: a number');
+  for (const cam of ['wide', 'low']) {
+    const r = renderP(cam, Object.assign({ moon: 7 }, NIGHT7), [], ['dusk']);
+    assert.equal((r.svg.match(/data-prop="waxing-moon" data-age="7"/g) || []).length, 1, cam + ': the seventh evening\'s moon at dusk');
+  }
+  assert.deepEqual([info.defaults.tap, info.defaults.tunnel, info.defaults.tracks], ['none', false, false], 'off by default');
+  assert.deepEqual(Object.keys(info.anchors.rear), ['rear-1', 'rear-2', 'guard-1', 'guard-2', 'guard-3']);
+  assert.deepEqual(Object.keys(info.anchors.hole), ['brink']);
+  assert.ok(info.anchors.main.arch && info.anchors.main.arch.elev, '`arch` on wide, up on the bramble arch');
+  assert.ok(!info.anchors.low.arch && !info.anchors.rows.arch, '`arch` only on the main composition');
+  // every older anchor where it was (chapters 2 to 6 stand on them)
+  assert.deepEqual([info.anchors.main['pile-left'], info.anchors.main.beside, info.anchors.main.behind].map((a) => [a.x, a.y, a.h]), [[300, 896, 258], [985, 856, 236], [566, 732, 132]]);
+});
+
+test('chapter 7: every new camera renders with a cast at each of its anchors, with every option, in every light; every new option on every older camera renders, and off is nothing at all', () => {
+  const lights = [['dusk'], ['sunset'], ['night'], ['morning'], ['day']];
+  for (const cam of CH7_CAMS) {
+    const ats = Object.keys(art.sceneInfo('pile').anchors[cam]);
+    for (const fx of lights) for (const opts of [NIGHT7, Object.assign({ tunnel: true, tap: 'roots' }, NIGHT7), Object.assign({ tap: 'roots' }, NIGHT7), { rows: FOURTH, dug: true, scale: true }, {}, { rows: 3, tunnel: 'x', tap: 7 }]) {
+      const cast = ats.map((at, i) => ({ who: ['player', 'tallyheart', 'clancat', 'clancat', 'grizzled'][i % 5], at, pose: at === 'brink' ? 'crouch' : 'sit', mood: 'wonder', variant: i + 1 }));
+      const scene = { set: 'pile', cam, opts, cast, fx }, r = art.render(scene, { look: LOOK });
+      checkRender(r, scene, cam + ' ' + JSON.stringify(opts) + ' ' + fx);
+      r.heads.forEach((h, i) => assert.ok(h, cam + ': ' + ats[i] + ' in sight'));
+    }
+  }
+  // older cameras: the new options are nothing where they do not belong, and off is nothing at all everywhere
+  for (const cam of [...CAMS, ...CH4_CAMS, ...CH5_CAMS]) for (const base of [{}, { pairs: 7, dug: true }, NIGHT7, { rows: FOURTH, back: 'shadow', scale: 'behind' }]) for (const fx of [['morning'], ['dusk']]) {
+    const plain = renderP(cam, base, [], fx).svg;
+    assert.ok(same5(renderP(cam, Object.assign({ tap: 'none', tunnel: false, tracks: false }, base), [], fx).svg, plain), cam + ' ' + JSON.stringify(base) + ': off is nothing');
+    assert.ok(same5(renderP(cam, Object.assign({ tunnel: true, tap: 'roots' }, base), [], fx).svg, plain), cam + ': no tunnel and no roots out front');
+    if (cam !== 'wide') assert.ok(same5(renderP(cam, Object.assign({ tracks: true }, base), [], fx).svg, plain), cam + ': tracks only on wide');
+    if (cam !== 'rows' && cam !== 'wide') assert.ok(same5(renderP(cam, Object.assign({ tap: 'back' }, base), [], fx).svg, plain), cam + ': the back row\'s Tap only on rows and wide');
+  }
+  // tracks only at dusk or sunset
+  for (const fx of [['morning'], ['day'], ['night']]) assert.ok(same5(renderP('wide', Object.assign({ tracks: true }, NIGHT7), [], fx).svg, renderP('wide', NIGHT7, [], fx).svg), 'no tracks ' + fx);
+});
+
+test('chapter 7: `tap: \'back\'` on `rows` and `wide`: one unpainted pc-tap rect on the back row (the band of shade under `back: \'shadow\'`, else the row and the earth behind it), first in keep; nothing else changes', () => {
+  for (const [cam, base] of [['rows', { rows: FOURTH, back: 'shadow', scale: 'behind' }], ['rows', NIGHT7], ['wide', NIGHT7], ['wide', { rows: FOURTH, back: 'shadow', scale: 'behind' }]]) for (const fx of [['morning'], ['dusk']]) {
+    const r = renderP(cam, Object.assign({ tap: 'back' }, base), [], fx), plain = renderP(cam, base, [], fx), T = tapsOf(r.svg);
+    checkRender(r, { cast: [] }, cam + ' tap back');
+    assert.equal(T.length, 1, cam + ': one target');
+    assert.equal(T[0].name, 'back');
+    assert.ok(same5(r.svg.replace(/<rect[^>]*class="pc-tap"[^>]*\/>/, ''), plain.svg), cam + ': unpainted, and the only change');
+    assert.ok(keeps(r, T[0]) && keeps({ svg: r.svg, keep: r.keep.slice(0, 1) }, T[0]), cam + ': first in keep');
+    // over the back row: the row's own keep box (the last of the rows, from the front) lies inside it, give or take
+    // (the back row's line: its pieces' soft shadows on the earth, the band's two ends under the shade)
+    const g = base.back === 'shadow' ? one(r.svg, 'band') : groupsNamed(r.svg, 'row').find((q) => /data-row="3"/.test(q));
+    const back = boxOf((g.match(/<ellipse\b[^>]*opacity="0.3"\/>/g) || []).join(''));
+    assert.ok(back.x0 >= T[0].x0 - 2 && back.x1 <= T[0].x1 + 2 && back.y1 > T[0].y0 && back.y1 < T[0].y1 + 2, cam + ': on the back row, the whole of it: ' + [back.x0, back.y1].map(Math.round) + ' in ' + [T[0].x0, T[0].y0, T[0].x1, T[0].y1].map(Math.round));
+    if (base.back !== 'shadow') {
+      const dug = boxOf(one(r.svg, 'dug'));
+      assert.ok(T[0].y0 <= dug.y0 + 2, cam + ': and the earth behind it');
+    }
+    assert.equal(tapsOf(plain.svg).length, 0, 'none without it');
+  }
+});
+
+test('chapter 7: `rear`, round the back at dusk: the rows from behind (the back row nearest), the dug earth heaped, the low roots over its foot hiding the mouth until `tunnel: true` lifts them; the "scale" a glimmer, well clear of the mouth; no sky, no moon', () => {
+  const down = renderP('rear', NIGHT7, [], ['dusk']), up = renderP('rear', Object.assign({ tunnel: true }, NIGHT7), [], ['dusk']);
+  for (const r of [down, up]) checkRender(r, { cast: [] }, 'rear');
+  assert.equal(mouthOf(down.svg), null, 'the roots down: no mouth to be seen');
+  assert.equal(rootsOf(down.svg), false);
+  const M = mouthOf(up.svg);
+  assert.ok(M, '`tunnel: true`: the mouth');
+  assert.equal(rootsOf(up.svg), true, 'the roots lifted');
+  assert.ok(keeps(up, { x0: M[0], y0: M[1], x1: M[2], y1: M[3] }), 'the mouth kept clear of the lettering');
+  // the rows from behind: four, the back row (the pile's row 3) nearest, every piece turned the other way
+  const rows = groupsNamed(up.svg, 'row').filter((g) => /data-from="behind"/.test(g));
+  assert.equal(rows.length, 4, 'four rows');
+  const B = rows.map((g) => ({ row: +/data-row="(\d)"/.exec(g)[1], box: ellBox(g) }));
+  assert.deepEqual(B.map((b) => b.row), [0, 1, 2, 3], 'drawn far to near: the front row first');
+  for (let i = 1; i < 4; i++) assert.ok(B[i].box.y1 > B[i - 1].box.y1 && B[i].box.w > B[i - 1].box.w, 'each row nearer is lower and wider');
+  assert.ok(B[3].box.y1 < M[1], 'the rows beyond the mouth');
+  // the "scale" behind the back row, a glimmer, well clear of the mouth (never in it or beside it)
+  for (const r of [down, up]) {
+    const sb = scaleBox(r.svg), sc = scaleOn(r.svg), mw = M[2] - M[0];
+    assert.ok(!meets7(sb, M, mw * 0.5), 'the "scale" well clear of the mouth');
+    assert.ok(Math.hypot(sc.cx - (M[0] + M[2]) / 2, sc.cy - (M[1] + M[3]) / 2) > mw * 1.5, 'nowhere beside it');
+    assert.ok(sc.cy < B[3].box.y1 + 60 && sc.cy > B[3].box.y1, 'on the bare earth behind the back row: ' + sc.cy + ' / ' + B[3].box.y1);
+    assert.equal(groupsNamed(r.svg, 'glimmer').length, 1, 'a glimmer');
+  }
+  // the dug earth, the mouth at its foot; no sky (the arch overhead), so no moon, whatever a frame says
+  const dug = boxOf(one(up.svg, 'dug'));
+  assert.ok(M[3] > dug.y1 - 40 && M[0] > dug.x0 && M[2] < dug.x1, 'the mouth at the heap\'s foot');
+  assert.ok(same5(renderP('rear', Object.assign({ tunnel: true, moon: 7 }, NIGHT7), [], ['dusk']).svg, up.svg), 'no moon round the back');
+  assert.ok(!/data-prop="waxing-moon"/.test(up.svg));
+  // the roots' Tap (`tap: 'roots'`), only while they are down
+  const t = renderP('rear', Object.assign({ tap: 'roots' }, NIGHT7), [], ['dusk']), T = tapsOf(t.svg);
+  assert.equal(T.length, 1);
+  assert.equal(T[0].name, 'roots');
+  assert.ok(same5(t.svg.replace(/<rect[^>]*class="pc-tap"[^>]*\/>/, ''), down.svg), 'unpainted');
+  const roots = boxOf(one(t.svg, 'roots'));
+  assert.ok(roots.cx > T[0].x0 && roots.cx < T[0].x1 && T[0].y1 >= roots.y1 - 4 && T[0].x0 <= roots.x0 + 10 && T[0].x1 >= roots.x1 - 10, 'on the low roots, the whole of them: ' + [roots.x0, roots.y0, roots.x1, roots.y1].map(Math.round) + ' / ' + [T[0].x0, T[0].y0, T[0].x1, T[0].y1]);
+  assert.ok(keeps({ svg: t.svg, keep: t.keep.slice(0, 1) }, T[0]), 'first in keep');
+  assert.equal(tapsOf(renderP('rear', Object.assign({ tap: 'roots', tunnel: true }, NIGHT7), [], ['dusk']).svg).length, 0, 'lifted, there are no roots to tap');
+  assert.equal(tapsOf(renderP('rear', Object.assign({ tap: 'back' }, NIGHT7), [], ['dusk']).svg).length, 0, 'no back row to tap from behind it');
+});
+
+test('chapter 7: round the back, nobody covers the mouth: our cat at `rear-1` left of it facing right, Tallyheart at `rear-2` right of it facing left, in any pose they take; the guards small past the front row, drawn behind the rows, side-on', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('pile').anchors.rear, M = mouthOf(renderP('rear', Object.assign({ tunnel: true }, NIGHT7), [], ['dusk']).svg);
+  assert.equal(A['rear-1'].face, 'right');
+  assert.equal(A['rear-2'].face, 'left');
+  assert.ok(A['rear-1'].x < M[0] && A['rear-2'].x > M[2], 'one each side of it');
+  for (const [at, who] of [['rear-1', 'player'], ['rear-2', 'tallyheart'], ['rear-2', 'player'], ['rear-1', 'clancat']]) {
+    for (const pose of ['sit', 'crouch', 'stand', 'walk', 'loaf', 'lie']) for (const facing of ['right', 'left']) {
+      const b = bodyAt({ who, pose, facing, variant: 1 }, A[at]);
+      assert.ok(!meets7(b.body, M), who + ' at ' + at + ' (' + pose + ', ' + facing + ') stays off the mouth: ' + b.body.map(Math.round) + ' / ' + M);
+    }
+  }
+  // the mouth: about as wide as our cat's shoulders there, never as wide as she is long
+  const me = bodyAt({ who: 'player', pose: 'crouch' }, A['rear-1']), mw = M[2] - M[0];
+  assert.ok(mw > 0.7 * (me.head[2] - me.head[0]) && mw < 1.3 * (me.head[2] - me.head[0]), 'as wide as her shoulders: ' + mw + ' / ' + (me.head[2] - me.head[0]).toFixed(1));
+  assert.ok(mw < 0.6 * (me.body[2] - me.body[0]), 'much too small for a dragon: not as wide as she is long');
+  // the guards: small, past the front row, behind every row; side-on, as every cat is drawn
+  const cast = [{ who: 'player', at: 'rear-1', pose: 'crouch' }, { who: 'tallyheart', at: 'rear-2' }, { who: 'clancat', at: 'guard-1', variant: 2 }, { who: 'clancat', at: 'guard-2', variant: 4 }, { who: 'clancat', at: 'guard-3', variant: 6 }];
+  const r = renderP('rear', Object.assign({ tunnel: true }, NIGHT7), cast, ['dusk']);
+  checkRender(r, { cast }, 'rear with everyone');
+  const front = groupsNamed(r.svg, 'row').filter((g) => /data-row="0"/.test(g)).map(ellBox)[0], firstRow = r.svg.indexOf('<g data-art="row"');
+  for (const g of ['guard-1', 'guard-2', 'guard-3']) {
+    const a = A[g];
+    assert.equal(a.z, 'behind', g + ': drawn behind the rows');
+    assert.ok(a.h < A['rear-1'].h * 0.25, g + ': small, far off');
+    assert.ok(a.y < front.y1 && a.y > front.y1 - 40, g + ': just past the front row');
+    assert.ok(a.face === 'left' || a.face === 'right', g + ': side-on');
+  }
+  const guardAt = (a) => r.svg.indexOf('translate(' + a.x + ' ' + a.y + ')');
+  for (const g of ['guard-1', 'guard-2', 'guard-3']) assert.ok(guardAt(A[g]) > 0 && guardAt(A[g]) < firstRow, g + ' is drawn before the rows, so they stand in front of it');
+  assert.ok(r.heads.every(Boolean), 'all five in sight');
+});
+
+test('chapter 7: `hole`, close on the mouth: the roots always lifted, the round dark hole going down and in, the back row\'s backs along the top edge, the "scale" a glimmer beyond, never in or beside the mouth; our cat at `brink` crouched at its edge, the mouth as wide as her shoulders', { skip: !art.character && 'no cats.js' }, () => {
+  for (const opts of [NIGHT7, Object.assign({ tunnel: false, tap: 'roots' }, NIGHT7), Object.assign({ tunnel: true }, NIGHT7)]) {
+    const r = renderP('hole', opts, [], ['dusk']);
+    checkRender(r, { cast: [] }, 'hole');
+    assert.ok(same5(r.svg, renderP('hole', NIGHT7, [], ['dusk']).svg), 'tunnel and tap mean nothing here');
+  }
+  const r = renderP('hole', NIGHT7, [], ['dusk']), M = mouthOf(r.svg), mw = M[2] - M[0];
+  assert.ok(M, 'the mouth');
+  assert.equal(rootsOf(r.svg), true, 'the roots lifted');
+  assert.equal(tapsOf(r.svg).length, 0);
+  assert.ok(keeps(r, { x0: M[0], y0: M[1], x1: M[2], y1: M[3] }), 'kept clear of the lettering');
+  // going down and in: darker rings inside it, each smaller and higher, its far end darkest
+  const rings = [...one(r.svg, 'mouth').matchAll(/<ellipse cx="([\d.]+)" cy="([\d.]+)" rx="([\d.]+)" ry="([\d.]+)" fill="(#[0-9a-f]{6})"/g)].map((m) => ({ cy: +m[2], rx: +m[3], fill: m[5] }));
+  const lum = (h) => { const v = parseInt(h.slice(1), 16); return 0.3 * (v >> 16) + 0.59 * ((v >> 8) & 255) + 0.11 * (v & 255); };
+  const inner = rings.filter((q) => q.rx < (mw / 2) + 0.5);
+  assert.ok(inner.length >= 5, 'the opening and the rings in it');
+  for (let i = 1; i < inner.length; i++) { assert.ok(inner[i].rx < inner[i - 1].rx + 0.01 && inner[i].cy <= inner[i - 1].cy + 0.01, 'in: smaller and higher'); assert.ok(lum(inner[i].fill) <= lum(inner[i - 1].fill) + 0.5, 'and darker'); }
+  // the back row's backs along the top edge; the "scale" beyond, clear of the mouth
+  const rows = groupsNamed(r.svg, 'row').filter((g) => /data-from="behind"/.test(g)).map(ellBox);
+  assert.equal(rows.length, 1, 'the back row alone');
+  assert.ok(rows[0].y1 < 200 && rows[0].w > 1000, 'along the top edge, across the panel');
+  const sb = scaleBox(r.svg), sc = scaleOn(r.svg);
+  assert.ok(!meets7(sb, M, mw * 0.5) && Math.hypot(sc.cx - (M[0] + M[2]) / 2, sc.cy - (M[1] + M[3]) / 2) > mw * 1.5, 'the "scale" beyond, never in or beside the mouth');
+  assert.ok(sc.cy > rows[0].y1 && sc.cy < M[1], 'on the earth between the back row and the heap');
+  // our cat at its brink, crouched, facing it; never on it; the mouth her shoulders' width, not her length
+  const a = art.sceneInfo('pile').anchors.hole.brink;
+  assert.equal(a.face, 'right');
+  for (const pose of ['crouch', 'sit', 'loaf', 'lie', 'stand']) for (const facing of ['right', 'left']) {
+    const b = bodyAt({ who: 'player', pose, facing }, a);
+    assert.ok(!meets7(b.body, M), pose + ', ' + facing + ': off the mouth: ' + b.body.map(Math.round) + ' / ' + M);
+  }
+  const me = bodyAt({ who: 'player', pose: 'crouch' }, a), head = me.head[2] - me.head[0], len = me.body[2] - me.body[0];
+  assert.ok(M[0] - me.body[2] > 0 && M[0] - me.body[2] < 90, 'at its edge, her nose a little short of it: ' + (M[0] - me.body[2]).toFixed(1));
+  assert.ok(mw > 0.8 * head && mw < 1.25 * head, 'as wide as her shoulders: ' + mw + ' / ' + head.toFixed(1));
+  assert.ok(mw < 0.6 * len, 'never as wide as she is long: ' + mw + ' / ' + len.toFixed(1));
+  const withHer = renderP('hole', NIGHT7, [{ who: 'player', at: 'brink', pose: 'crouch', mood: 'sniff' }], ['dusk']);
+  checkRender(withHer, { cast: [{}] }, 'hole, brink');
+  assert.ok(withHer.heads[0] && withHer.heads[0].x > 0 && withHer.heads[0].x < 100, 'her face in the panel');
+  // one hole only: this close, the heap's two soft dips (each with a pale root arc over it) would read as two
+  // more holes beside the mouth, so `hole` leaves them out; `rear`, a step back, keeps them, as every older
+  // camera does (their dug earth is pinned by the fingerprints)
+  const dug = (cam) => one(renderP(cam, NIGHT7, [], ['dusk']).svg, 'dug');
+  const ells = (gm) => (gm.match(/<ellipse /g) || []).length, arcs = (gm) => (gm.match(/<path d="[^"]+" fill="none" stroke=/g) || []).length;
+  assert.deepEqual([ells(dug('hole')), arcs(dug('hole'))], [1, 0], 'the hole\'s heap: its dark foot, no dips, no root arcs');
+  assert.deepEqual([ells(dug('rear')), arcs(dug('rear'))], [3, 1], 'round the back, the heap as the wide shots draw it');
+});
+
+test('chapter 7: `tracks: true` on `wide` at dusk or sunset: far off, low over the hedge between the towers, two bright rails on a dark bed with sleepers across it, catching the last light, readable on an iPad page; and `arch`: on top of the bramble arch, standing, big enough to see', { skip: !art.character && 'no cats.js' }, () => {
+  for (const fx of [['dusk'], ['sunset']]) {
+    const r = renderP('wide', Object.assign({ tracks: true, moon: 7 }, NIGHT7), [{ who: 'player', at: 'arch', pose: 'stand', mood: 'wonder' }], fx);
+    checkRender(r, { cast: [{}] }, 'wide tracks ' + fx);
+    const g = one(r.svg, 'tracks'), lines = (/<path d="((?:M[\d.]+ [\d.]+L[\d.]+ [\d.]+)+)" fill="none"/.exec(g) || [])[1];
+    assert.ok(lines, 'drawn ' + fx);
+    const segs = lines.match(/M[\d.]+ [\d.]+L[\d.]+ [\d.]+/g).map((s) => s.match(/[\d.]+/g).map(Number));
+    assert.equal(segs.length, 2, 'two lines');
+    // (the hedge's top is at about y 540 there)
+    segs.forEach((q) => { assert.ok(q[2] - q[0] > 250, 'long'); assert.ok(Math.max(q[1], q[3]) < 525 && Math.min(q[1], q[3]) > 440, 'low at the horizon, over the hedge'); });
+    assert.ok(Math.abs(segs[1][1] - segs[0][1]) >= 10 && Math.abs(segs[1][1] - segs[0][1]) < 20, 'two rails, apart enough to read as two and close enough to be far off');
+    assert.ok(segs[1][2] - segs[1][0] > 400 && segs[0][0] < 920, 'long, and starting near the middle of the panel, right of the climber');
+    // readable at iPad size (the panel about 680 px wide): rails at least 5 wide, each over a soft glow; a
+    // dark bed under them, nearly opaque; sleepers across the bed, a filled shape of their own
+    const sw = [...g.matchAll(/fill="none" stroke="[^"]+" stroke-width="([\d.]+)"/g)].map(m => +m[1]);
+    assert.ok(sw.length === 2 && Math.min(...sw) >= 5 && Math.max(...sw) > Math.min(...sw), 'the rails at least 5 wide, over a wider glow: ' + sw);
+    const bed = /<path d="M[^"]*Z" fill="[^"]+" opacity="([\d.]+)"/.exec(g);
+    assert.ok(bed && +bed[1] >= 0.85, 'a dark bed under the rails');
+    const quads = [...g.matchAll(/<path d="((?:M[\d.]+ [\d.]+L[\d.]+ [\d.]+L[\d.]+ [\d.]+L[\d.]+ [\d.]+Z)+)" fill="[^"]+"/g)].map(m => m[1].split('Z').filter(Boolean).length);
+    assert.deepEqual([quads.length, quads[0]], [2, 1], 'the bed, one shape, under the sleepers');
+    assert.ok(quads[1] >= 15, 'sleepers across the bed: ' + quads[1]);
+    assert.ok(keeps(r, boxOf(g)), 'kept clear of the lettering');
+    assert.ok(r.heads[0], 'the climber in sight');
+    assert.ok(r.svg.indexOf('data-art="tracks"') < r.svg.indexOf('data-prop="waxing-moon"') || r.svg.indexOf('data-prop="waxing-moon"') > 0, 'with the seventh evening\'s moon');
+  }
+  // `arch`: up on the arch over the pile, as big as a cat by the back row (at 108 she was a speck on an iPad
+  // page: final review), smaller than one at the front
+  const A = art.sceneInfo('pile').anchors.main, a = A.arch;
+  assert.ok(a.elev && a.h >= A['crowd-2'].h * 0.9 && a.h < A['pile-left'].h * 0.75, 'up on the arch, big enough to see: ' + a.h);
+  assert.ok(a.x > 335 && a.x < 905 && a.y < 548 - 80, 'over the arch\'s mouth, on top of it');
+  assert.equal(a.face, 'right', 'looking out toward the tracks');
 });

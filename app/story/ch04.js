@@ -1657,14 +1657,17 @@
 
     // Her Case File: every card that exists by the end of chapter 4, in the order she can get them.
     // A card's picture is its own id (app/art/cards.js). `fox-flew` is answered by `cant-fly`
-    // (stored for chapter 10); the two are drawn touching only once she has made the link herself.
+    // (stored for chapter 10); the two are drawn touching only once she has made the link herself:
+    // a noticing cat at the border (`ch4CaughtFly`), or anyone at chapter 7's Old Bridge, where she
+    // sees Sprinkle try to fly (`ch7Flew`; chapter 7 never sets `ch4CaughtFly`). `not` over two keys
+    // matches when either flag is true (E.matches reads false as unset).
     cards: {
       'four-a-night': { mark: 'eye', line: 'Four gone every night.' },
       tidy: { mark: 'eye', line: 'The thief leaves the pile tidy.' },
       'dug-earth': { mark: 'eye', line: 'Freshly dug earth behind the pile.' },
       scale: { mark: 'eye', line: 'The ‘scale’ is smooth, like glass.' },
       'fox-flew': { mark: 'ear', line: 'The fox says it FLEW.', answers: ['cant-fly'],
-        link: { when: { ch4CaughtFly: true }, line: 'They can’t both be true.' } },
+        link: { when: { not: { ch4CaughtFly: false, ch7Flew: false } }, line: 'They can’t both be true.' } },
       'fox-moon': { mark: 'ear', line: 'The fox says the MOON was out on the storm night.' },
       // given on the roof; her file shows it only once the roof scene is finished
       'squall-shapes': { mark: 'ear', line: 'Squall says two skinny shapes carry something to the tracks.', when: { foundSquall: true } },

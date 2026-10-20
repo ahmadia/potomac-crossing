@@ -32,6 +32,11 @@ Every call takes the chapter's base args. Chapter 6's are:
 }
 ```
 
+From chapter 7 on, also pass `model`, the last chapter made on this plan, whose voice, spec and
+frames the agents follow (without it they follow chapter 5): for chapter 7, `"model": { "n": 6,
+"storyFile": "app/story/ch06.js", "test": "tests/story-ch06.test.js", "spec": "chapter 6's spec
+(docs/chapters/06-the-snake-in-the-stones.spec.md)" }`.
+
 The work directory is outside the repo on purpose: drafts, renders and results are not the record,
 and a chapter's phases span several sessions. Agents write only there and to the files a phase names.
 

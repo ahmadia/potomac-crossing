@@ -76,6 +76,27 @@
  *   (never by day or in the morning); each evening a little fatter, bigger and higher, so chapter 7's
  *   `moon: 7` needs no change here. <g data-prop="waxing-moon" data-age="n">, in `keep`.
  *
+ *   Chapter 7 (docs/chapters/07-the-counts-dont-lie.spec.md, section 4): every option off by default and every
+ *   camera and anchor additional, so chapters 2 to 6 draw as they did.
+ *   tap: 'back'   (`rows`, `wide`, with rows) the Tap's target on the back row: an unpainted
+ *                 <rect class="pc-tap" data-tap="back">, the band of shade under `back: 'shadow'`, else the
+ *                 back row and the earth behind it; first in `keep`. Nothing is painted.
+ *   tap: 'roots'  (`rear`, while `tunnel` is false) the same on the low roots.
+ *   rear          round the back at cat height (its own composition): the rows from behind, the back row
+ *                 nearest, the dug earth heaped, the low roots over its foot, the "scale" a glimmer on the
+ *                 bare earth (left of the middle: the world turned round), the camp at dusk through the
+ *                 arch's open front; no sky, so no moon. Anchors `rear-1` (left of the mouth, facing right),
+ *                 `rear-2` (right of it, facing left), `guard-1..3` (small, past the front row, z: 'behind':
+ *                 the rows are drawn in `over`, so the guards stand behind them).
+ *   tunnel: true  (`rear`) the roots lifted back, parted like a curtain, and under them the mouth: round
+ *                 and dark, going down and in under the pile (<g data-art="mouth" data-box="x0 y0 x1 y1">).
+ *   hole          close on the mouth (its own composition): the roots always lifted, the back row's backs
+ *                 along the top edge, the "scale" beyond; anchor `brink` (our cat crouched at its edge, the
+ *                 mouth as wide as her shoulders). Takes rows, scale and dug; tunnel and tap mean nothing here.
+ *   tracks: true  (`wide`, at dusk or sunset) the train tracks far off over the hedge, in the last light: a
+ *                 dark bed, its sleepers, two bright rails (<g data-art="tracks">, in `keep`). Anchor `arch`
+ *                 on `wide`: on top of the bramble arch, standing, facing right (the climber's look).
+ *
  *   PC.art.prey({ kind: 'mouse' | 'vole' | 'fish', lit, seed, facing?, part? }) -> { svg, w, h }:
  *   (the pile itself draws no fish; `fish` stays drawable only in case Aron rules to keep a few,
  *   traded from the otters, which the text would then have to say at the pile)
@@ -337,7 +358,9 @@
   // `big` (chapter 3, two nights on, "the dug earth behind the pile is bigger"): the same patch
   // spread wider and heaped higher, a crest of fresh, darker earth turned up on top of the old, a
   // second soft dip where it has fallen in, and crumbs scattered further.
-  function dugEarth(S, cx, base, w, k, seed, big) {
+  // `noDips` (chapter 7's `hole` only): no soft dips and no pale root arcs over them; close up on the heap
+  // they read as two more holes beside the real mouth. Every other caller draws them as it always has.
+  function dugEarth(S, cx, base, w, k, seed, big, noDips) {
     if (big) { w *= 1.22; k *= 1.2; }
     var r = rng(seed), p = S.pal, soil = mix('#7A5638', p.shade, 0.18), soilLt = mix('#A27A55', p.rim, 0.12), soilDk = mix('#4E3524', p.shade, 0.2);
     var lumps = '', tops = '', crumbs = '', i;
@@ -350,12 +373,12 @@
       tops += path(blob(lx - rx * 0.15, ly - ry * 0.35, rx * 0.6, ry * 0.42, 7, r, 0.3, 0.3), soilLt, { opacity: 0.8 });
     }
     // a soft dip at the back where the earth has fallen in (a careful eye might wonder)
-    lumps += ell(cx + w * 0.22, y0 - 18 * k, 34 * k, 10 * k, soilDk, { opacity: 0.9 });
+    if (!noDips) lumps += ell(cx + w * 0.22, y0 - 18 * k, 34 * k, 10 * k, soilDk, { opacity: 0.9 });
     for (i = 0; i < 26; i++) {
       var side = i % 2 ? 1 : -1, cxx = cx + side * (w * 0.42 + r() * w * 0.2), cyy = base - r() * 50 * k;
       crumbs += path(blob(cxx, cyy, (4 + r() * 7) * k, (3 + r() * 4) * k, 6, r, 0.3, 0.3), r() < 0.5 ? soil : soilLt);
     }
-    var roots = stroke('M' + n(cx - w * 0.3) + ' ' + n(y0 - 6 * k) + 'q' + n(10 * k) + ' ' + n(-16 * k) + ' ' + n(26 * k) + ' ' + n(-12 * k) +
+    var roots = noDips ? '' : stroke('M' + n(cx - w * 0.3) + ' ' + n(y0 - 6 * k) + 'q' + n(10 * k) + ' ' + n(-16 * k) + ' ' + n(26 * k) + ' ' + n(-12 * k) +
       'M' + n(cx + w * 0.36) + ' ' + n(y0 - 2 * k) + 'q' + n(-6 * k) + ' ' + n(-14 * k) + ' ' + n(-20 * k) + ' ' + n(-14 * k), mix('#C9A27A', p.shade, 0.2), 2.4 * k);
     if (!big) return lumps + tops + roots + crumbs;
     var r2 = rng(seed + 57), fresh = mix('#5C3F2A', p.shade, 0.16), freshLt = mix('#8C6646', p.rim, 0.12), more = '', moreTops = '', far = '';
@@ -367,7 +390,7 @@
       moreTops += path(blob(fx - frx * 0.2, fy - fry * 0.4, frx * 0.5, fry * 0.36, 7, r2, 0.3, 0.3), freshLt, { opacity: 0.75 });
     }
     // a second dip, at the left, where it has fallen in too
-    more += ell(cx - w * 0.26, y0 - 14 * k, 30 * k, 9 * k, soilDk, { opacity: 0.9 });
+    if (!noDips) more += ell(cx - w * 0.26, y0 - 14 * k, 30 * k, 9 * k, soilDk, { opacity: 0.9 });
     // crumbs thrown further out
     for (i = 0; i < 22; i++) {
       var sd2 = i % 2 ? 1 : -1, fcx = cx + sd2 * (w * 0.46 + r2() * w * 0.14), fcy = base - r2() * 40 * k;
@@ -464,6 +487,8 @@
       { x: 860, w: 150, top: 200, base: 640, far: 0.55, cap: 'step' }, { x: 1030, w: 110, top: 300, base: 640, far: 0.7 },
       { x: 1180, w: 130, top: 150, base: 640, far: 0.5, cap: 'spire' }, { x: 340, w: 150, top: 120, base: 640, far: 0.5 }
     ]);
+    // chapter 7: the train tracks far off, low at the horizon, catching the last light (`tracks: true`)
+    back += farTracks(S);
     back += g(K.towers(S, [
       { x: 1350, w: 150, top: 60, base: 660, far: 0.25, cap: 'round' }, { x: 1480, w: 200, top: -20, base: 660, far: 0.12, cap: 'slant' },
       { x: -40, w: 230, top: -20, base: 660, far: 0.15, cap: 'step' }
@@ -536,6 +561,8 @@
       var rp = rowsPile(S, MAINROWS, rows, 7, 0);
       back += rp.dug + g(rp.svg, wet ? null : { filter: pileTint(S) });
       keepBoxes(S, rp.boxes);
+      // chapter 7: the slip round the back, from the wide shot: the Tap is on the back row
+      if (o.tap === 'back') back += tapRect(S, 'back', rp.backBox);
     } else {
       if (o.dug) back += dugEarth(S, MAIN.cx, MAIN.base - 36, 420, 0.9, 421, o.dug === 'big');
       var pile = pileSvg(S, MAIN.cx, MAIN.base, MAIN.pw, 7), vole = o.vole ? looseVole(S, MAIN.vole[0], MAIN.vole[1], MAIN.pw * MAIN.vole[2]) : null;
@@ -900,7 +927,22 @@
       if (o.glint === true) out.svg += sunShaft(S, top[0], spot.y, spot.u * 30) + glintSvg(S, top[0], top[1], Math.max(16, spot.u * 44), Math.max(G.hit || 80, spot.u * 90));
       out.boxes.push(sc ? sc.box : { x: top[0] - 30, y: top[1] - 30, w: 60, h: 60 });
     }
+    // chapter 7: the back row's box, for the walk round the back (`tap: 'back'`): the band of shade under
+    // `back: 'shadow'`, else the back row and the strip of earth behind it (the dug earth, when there is any)
+    if (back) {
+      var bn = Math.max(back.n, 10), bx0 = G.cx - bn * back.sp / 2, bx1 = G.cx + bn * back.sp / 2, by0 = back.y - back.h * 2.2, by1 = back.y + back.h * 0.35;
+      if (shadow) { bx0 = G.cx - back.sp * 5; bx1 = G.cx + back.sp * 5; by0 = back.y - back.h * 2.5; by1 = back.y + back.h * 0.45; }
+      else if (out.earth) { by0 = Math.min(by0, out.earth.y - out.earth.h * 0.3); bx0 = Math.min(bx0, out.earth.x); bx1 = Math.max(bx1, out.earth.x + out.earth.w); }
+      out.backBox = { x: bx0, y: by0, w: bx1 - bx0, h: by1 - by0 };
+    }
     return out;
+  }
+  // The Tap's target (chapter 7): an unpainted rect of class pc-tap named `data-tap` (as the marsh's and the
+  // dug earth's), first in keep, so the page's glow and the lettering both find it. Nothing is painted.
+  function tapRect(S, name, b) {
+    if (!b) return '';
+    (S.keep = S.keep || []).unshift({ x: b.x - 4, y: b.y - 4, w: b.w + 8, h: b.h + 8 });
+    return rect(b.x, b.y, b.w, b.h, 'none', { 'class': 'pc-tap', 'data-tap': name, 'pointer-events': 'none' });
   }
 
   // ------------------------------------------------------------------ rows and gap (under the arch, from the front)
@@ -966,6 +1008,8 @@
     var rp = rowsPile(S, ROWS, rowList(o) || rowList({ rows: MORNING }), 7, 0);
     back += rp.dug + g(rp.svg, wet ? null : { filter: pileTint(S) });
     keepBoxes(S, rp.boxes);
+    // chapter 7: the walk (and the slip) round the back: the Tap is on the back row
+    if (o.tap === 'back') back += tapRect(S, 'back', rp.backBox);
     var avoid = avoidBoxes(S, 16);
     front += g(K.tufts(S, 0, 1600, 985, 1014, 22, 619, p.grassNear, p.grassLight, 2.4) +
       K.fernClump(S, 1670, 1044, 300, { seed: 620, count: 5, spread: 1.3, lean: -0.55, avoid: avoid }) +
@@ -1282,7 +1326,240 @@
     return { back: back, over: '', front: '' };
   }
 
+  // ================================================================== chapter 7: round the back, the tunnel's mouth
+
+  /* (docs/chapters/07-the-counts-dont-lie.spec.md, section 4, the pile row.) Behind the back row the
+   * world is the one the front cameras show, turned round: the bare earth with the "scale" on it, then
+   * the dug earth heaped up, and at the heap's far foot (the side away from the pile, which only shows from
+   * behind) the low roots of the bramble arch, and under them, once found, the mouth of a small tunnel.
+   * Seen from behind, left and right swap: the "scale" lies left of the middle, the fountain far off left.
+   *
+   * `rear`: at cat height behind the heap, looking back over it toward the pile's front and the camp.
+   *   Nearest, the low roots arching over the ground at the heap's foot (hanging down over the mouth, so
+   *   nothing shows under them, until `tunnel: true` has them lifted back and the mouth shows, round and
+   *   dark, going down and in under the pile); the heap; the bare earth and the "scale", a glimmer; the
+   *   rows from behind, the back row nearest; past them the camp at dusk through the arch's open front.
+   *   The arch is overhead, so there is no sky (and no moon). Its rows, heap, roots and mouth are in the
+   *   `over` layer, so the guards at `guard-1..3` (z: 'behind') stand past the front row, behind all of it.
+   * `hole`: close on the mouth from behind, at cat height: the roots lifted, the round dark hole at the
+   *   heap's foot going down and in, its far end dark; the back row's backs along the top edge, the
+   *   "scale" a glimmer beyond, well clear of the mouth. `tunnel` and `tap` mean nothing here.
+   */
+  var REAR = { G: { cx: 800, y0: 566, k0: 0.46, yh: 360, a: 0.22, behind: 0.55 }, open: [286, 1314, 326, 474],
+    heap: { cx: 800, base: 872, w: 600, k: 1.9 }, mouth: { x: 800, y: 848, rx: 70, ry: 44 }, roots: { x0: 572, x1: 1028, y0: 766, y1: 902, k: 1 } };
+  var HOLE = { G: { cx: 800, y0: 150, k0: 1.06, yh: -400, a: 0.2, behind: 0.62 }, heap: { cx: 800, base: 980, w: 1540, k: 5.2 },
+    mouth: { x: 806, y: 862, rx: 100, ry: 66 }, roots: { x0: 650, x1: 970, y0: 670, y1: 904, k: 2.3 } };
+
+  // A piece seen from behind the row: as rowPiece draws it, turned the other way.
+  function rowPieceL(kind, seed, part, x, y, k) {
+    var spec = PREY[kind], p1 = art.prey({ kind: kind, seed: seed, facing: 'left', part: part });
+    return p1.svg ? '<g transform="' + tr(x - (spec.bw + M * 2) * k / 2, y - (spec.bh + M) * k, k) + '">' + p1.svg + '</g>' : '';
+  }
+  // The rows from behind (`rear`, `hole`): the back row nearest (depth 0), the front row furthest; each
+  // place where the front cameras have it, mirrored, the same piece in it. `only`: the back row alone.
+  function rowsBehind(S, G, rows, seed, only) {
+    var R = rows.length, s = '', boxes = [], from = only ? R - 1 : 0;
+    for (var r = from; r < R; r++) {
+      var rw = rows[r], q = depthGeo(G, R - 1 - r), marks = '', shadows = '', bodies = '', j;
+      for (j = 0; j < rw.n; j++) {
+        var x = G.cx - (j - (rw.n - 1) / 2) * q.sp;
+        if (rw.gap.indexOf(j) >= 0) { marks += placeMark(S, x, q.y, q.sp); continue; }
+        shadows += ell(x, q.y - 1, q.sp * 0.45, q.sp * 0.075, S.pal.shade, { opacity: 0.3 });
+        bodies += rowPieceL(placeKind(r, j), seed + r * 16 + j, 'body', x, q.y, q.k);
+      }
+      s += g(g(marks, { 'data-art': 'places' }) + shadows + bodies, { 'data-art': 'row', 'data-row': r, 'data-from': 'behind' });
+      if (rw.n) boxes.unshift({ x: G.cx - rw.n * q.sp / 2, y: q.y - PREY.mouse.bh * q.k - M * q.k, w: rw.n * q.sp, h: PREY.mouse.bh * q.k + M * q.k });
+    }
+    return { svg: s, boxes: boxes };
+  }
+  // The "scale" where it lies behind the row (`scale: 'behind'`), seen from behind: on the bare earth,
+  // left of the middle, a small flat glimmer.
+  function scaleBehind(S, G, R) {
+    var bd = depthGeo(G, -(G.behind || 0.5)), sc = scaleSmall(S, { x: G.cx - bd.sp * 1.7, y: bd.y, u: bd.k, lean: -1, flat: true });
+    return { svg: sc.svg + glintSvg(S, sc.top[0], sc.top[1], Math.max(7, bd.k * 26), 0), box: sc.box };
+  }
+
+  // The tunnel's mouth: round and dark, set into the heap's foot, going down and in under the pile. An
+  // overhang of the dug earth over it, the opening (a little taller than a hole in flat ground would be:
+  // it is in the heap's face), inside it the wall falling away ring after ring, darker as it goes, to
+  // its far end, dark; a spill of loose earth at its lip, lit along the near edge. Nothing in it.
+  // M: { x, y, rx, ry } (the opening's middle and half-sizes).
+  function tunnelMouth(S, M0, key) {
+    var c = soilCols(S), p = S.pal, x = M0.x, y = M0.y, rx = M0.rx, ry = M0.ry, s = '', i;
+    var black = mix('#0E0907', p.shade, 0.25), wall = mix(c.dk, '#1A110C', 0.35);
+    // the earth round it, and the overhang of dug earth arching over its top
+    s += ell(x, y - ry * 0.15, rx * 1.42, ry * 1.32, c.soil);
+    s += path('M' + n(x - rx * 1.32) + ' ' + n(y + ry * 0.1) + 'C' + n(x - rx * 1.3) + ' ' + n(y - ry * 1.55) + ' ' + n(x + rx * 1.3) + ' ' + n(y - ry * 1.55) + ' ' + n(x + rx * 1.32) + ' ' + n(y + ry * 0.1) +
+      'C' + n(x + rx * 1.06) + ' ' + n(y - ry * 1.12) + ' ' + n(x - rx * 1.06) + ' ' + n(y - ry * 1.12) + ' ' + n(x - rx * 1.32) + ' ' + n(y + ry * 0.1) + 'Z', c.lt, { opacity: 0.8 });
+    // the opening, and the wall going down and in: each ring smaller and a little higher, darker
+    s += ell(x, y, rx, ry, wall);
+    for (i = 1; i <= 4; i++) {
+      var t = i / 4.4;
+      s += ell(x + rx * 0.05 * t, y - ry * 0.26 * t, rx * (1 - 0.6 * t), ry * (1 - 0.58 * t), mix(wall, black, 0.3 + t * 0.7));
+    }
+    s += ell(x + rx * 0.08, y - ry * 0.3, rx * 0.32, ry * 0.3, black);                          // its far end, dark
+    s += stroke('M' + n(x - rx * 0.98) + ' ' + n(y - ry * 0.05) + 'Q' + n(x - rx * 0.9) + ' ' + n(y - ry * 0.9) + ' ' + n(x - rx * 0.2) + ' ' + n(y - ry * 0.98), c.lt, Math.max(1.4, ry * 0.07), { opacity: 0.35 });
+    // the spill of loose earth at its lip, the near edge catching what light there is, a few crumbs
+    s += path('M' + n(x - rx * 1.2) + ' ' + n(y + ry * 0.55) + 'Q' + n(x) + ' ' + n(y + ry * 0.48) + ' ' + n(x + rx * 1.2) + ' ' + n(y + ry * 0.55) +
+      'Q' + n(x + rx * 0.6) + ' ' + n(y + ry * 1.25) + ' ' + n(x) + ' ' + n(y + ry * 1.22) + 'Q' + n(x - rx * 0.6) + ' ' + n(y + ry * 1.25) + ' ' + n(x - rx * 1.2) + ' ' + n(y + ry * 0.55) + 'Z', c.soil);
+    s += stroke('M' + n(x - rx * 0.98) + ' ' + n(y + ry * 0.42) + 'Q' + n(x) + ' ' + n(y + ry * 1.18) + ' ' + n(x + rx * 0.98) + ' ' + n(y + ry * 0.42), c.lip, Math.max(1.6, ry * 0.09), { opacity: 0.8 });
+    var r = rng(K.seedOf(key || 'mouth')), crumbs = '';
+    for (i = 0; i < 10; i++) crumbs += blob(x + (r() - 0.5) * rx * 2.6, y + ry * (1.1 + r() * 0.45), (2 + r() * 4) * rx / 70, (1.4 + r() * 2.4) * rx / 70, 6, r, 0.3, 0.3);
+    s += path(crumbs, c.lt, { opacity: 0.85 });
+    return g(s, { 'data-art': 'mouth', 'data-box': [x - rx, y - ry, x + rx, y + ry].map(function (v) { return Math.round(v); }).join(' ') });
+  }
+
+  // The low roots of the bramble arch over the heap's foot (B: { x0, x1, y0, y1 }: where they reach, the
+  // ground at y1; k: their weight at this distance). Down (`lifted` false): gnarled woody roots sagging low
+  // across the ground and a curtain of fine rootlets hanging from them to the earth, dark under them, so
+  // nothing there can be made out. Lifted: the same roots pushed up and back, arching wide over the ground,
+  // their rootlets swinging short, and the earth under them open.
+  var ROOTS = [[0.02, 0.98, 0.5, 0.02], [0.1, 0.86, 0.62, -0.05], [0.0, 0.7, 0.38, 0.06], [0.3, 1.0, 0.44, -0.04], [0.18, 0.62, 0.7, 0.03], [0.44, 0.96, 0.66, 0.0]];
+  function bramblRoots(S, B, lifted, seed, k) {
+    k = k || 1;
+    var p = S.pal, r = rng(seed), w = B.x1 - B.x0, hgt = B.y1 - B.y0, cx = (B.x0 + B.x1) / 2, woody = '', thin = '', hair = '', i;
+    var wood = mix('#5E4A3A', p.shade, 0.3), woodLt = mix('#A88E70', p.rim, 0.2), hairC = mix('#8E7A62', p.shade, 0.3);
+    ROOTS.forEach(function (L, j) {
+      // lifted, they are parted like a curtain and pushed up and back: each root loops up from its own side
+      // and comes down on the heap's face beside the opening, the left ones to the left, the right ones to the right
+      var a = B.x0 + w * L[0], b = B.x0 + w * L[1], foot = B.y1 - (j % 3) * 5 * k;
+      if (lifted) {
+        var left = j % 2 === 0, span = w * (0.46 + L[2] * 0.16), out = w * (0.14 + L[0] * 0.4);
+        a = left ? B.x0 - out : B.x1 + out - span;
+        b = a + span;
+      }
+      var peak = lifted ? B.y0 + hgt * (0.3 + L[2] * 0.36) : B.y1 - hgt * (0.18 + L[2] * 0.42), lean = L[3] * w * (lifted ? 0.4 : 1);
+      var c1 = [a + (b - a) * 0.08 + lean, peak + (foot - peak) * (lifted ? -0.3 : -0.25)], c2 = [b - (b - a) * 0.1 + lean, peak + (foot - peak) * (lifted ? -0.32 : -0.22)];
+      var d = 'M' + n(a) + ' ' + n(foot) + 'C' + n(c1[0]) + ' ' + n(c1[1]) + ' ' + n(c2[0]) + ' ' + n(c2[1]) + ' ' + n(b) + ' ' + n(foot);
+      if (j < 4) woody += d; else thin += d;
+      // the rootlets: fine hairs from the root (to the ground while it hangs low, short once lifted)
+      for (var t = 0.1; t < 0.92; t += (lifted ? 0.09 : 0.035) + r() * 0.03) {
+        var q = K.bez3([a, foot], c1, c2, [b, foot], t), len = lifted ? (8 + r() * 14) * k : Math.max(8 * k, foot - q[1] + (2 + r() * 8) * k);
+        hair += 'M' + n(q[0]) + ' ' + n(q[1]) + 'q' + n((r() - 0.5) * 12 * k) + ' ' + n(len * 0.5) + ' ' + n((r() - 0.5) * 9 * k) + ' ' + n(len);
+      }
+    });
+    var s = '';
+    // down: the dark under them, so nothing under them shows
+    if (!lifted) s += ell(cx, B.y1 - hgt * 0.22, w * 0.46, hgt * 0.32, mix('#140D0A', p.shade, 0.4), { opacity: 0.75 }) + ell(cx, B.y1 - 4 * k, w * 0.5, 18 * k, p.shade, { opacity: 0.4 });
+    s += stroke(hair, hairC, 2 * k, { opacity: lifted ? 0.65 : 0.9 });
+    s += stroke(woody + thin, mix(wood, '#000000', 0.3), 15 * k, { transform: 'translate(' + n(2 * k) + ' ' + n(3 * k) + ')', opacity: 0.4 }) +
+      stroke(woody, wood, 13 * k) + stroke(thin, wood, 8 * k) + stroke(woody + thin, woodLt, 3 * k, { transform: 'translate(' + n(-2 * k) + ' ' + n(-3 * k) + ')', opacity: 0.55 });
+    // a few of the bramble's leaves caught on them
+    var lv = '';
+    for (i = 0; i < 6; i++) lv += leafD(B.x0 + w * (0.1 + r() * 0.8), (lifted ? B.y0 - hgt * 0.2 : B.y1 - hgt * 0.55) + r() * hgt * 0.3, (18 + r() * 8) * k, r() * 6.28, 7 * k);
+    s += path(lv, mix(p.leaf, p.shade, 0.3), { opacity: 0.9 });
+    return g(s, { 'data-art': 'roots', 'data-lifted': lifted ? 'true' : 'false' });
+  }
+
+  // The inside of the arch from its back end: the canopy overhead, a leg each side, the far end open on
+  // the camp at dusk (`open`: x0, x1, the canopy's edge there, the camp's ground), the packed-earth
+  // floor running back to us, darker as it comes, lit from the open front.
+  function archFromBehind(S, O, seed) {
+    var p = S.pal, r = rng(seed), wet = S.tod === 'morning' || S.tod === 'day', s = '', i;
+    var deep = mix(p.leaf, p.shade, 0.7), glow = p.sun || p.glow;
+    // through the open front: the camp, no sky (the canopy hangs down to the hedge's top)
+    s += rect(O[0] - 40, O[2] - 40, O[1] - O[0] + 80, O[3] - O[2] + 80, S.linU([[0, mix(p.haze, p.leaf, 0.35)], [1, mix(p.glow, p.grassFar, 0.5)]], 0, O[2], 0, O[3]));
+    s += path(mound(O[0] - 40, O[1] + 40, O[3] - 26, O[2] + 10, 12, rng(seed + 1), 0.3, 0.25, 0.3), p.leaf) +
+      path(mound(O[0] - 40, O[1] + 40, O[3] - 18, O[2] + 46, 10, rng(seed + 2), 0.3, 0.25, 0.3), p.leafMid, { opacity: 0.8 });
+    s += rect(O[0] - 40, O[3] - 34, O[1] - O[0] + 80, 60, S.lin('pilerearcamp', [[0, p.grassFar], [1, p.grass]]));
+    // the fountain's edge far off at the left, and a few ferns
+    s += ell(O[0] + 150, O[3] - 26, 130, 13, p.stoneLight) + ell(O[0] + 150, O[3] - 22, 112, 8, mix(p.stoneDark, p.sand, 0.3)) + rect(O[0] + 20, O[3] - 26, 260, 16, p.stone, { opacity: 0.9 });
+    s += K.fernClump(S, O[1] - 160, O[3] - 18, 70, { seed: seed + 3, count: 5 }) + K.fernClump(S, O[0] + 380, O[3] - 20, 56, { seed: seed + 4, count: 4 });
+    s += ell((O[0] + O[1]) / 2, O[3] - 20, (O[1] - O[0]) * 0.5, 40, glow, { opacity: 0.28 });
+    // the canopy overhead (its far edge low over the opening), the two legs
+    var edge = [], x;
+    for (x = 1660; x >= -60; x -= 70) edge.push([x, (x < O[0] || x > O[1] ? O[3] - 20 : O[2]) + Math.sin(x * 0.011) * 14 + (r() - 0.5) * 16]);
+    var canopy = [[-60, -60], [1660, -60]].concat(edge);
+    var legL = [[-60, 180], [O[0] * 0.6, 260], [O[0] + 10, O[2] + 30], [O[0] - 20, O[3] + 40], [O[0] * 0.7, 760], [O[0] * 0.5, 1060], [-60, 1060]];
+    var legR = legL.map(function (q) { return [1600 - q[0], q[1]]; }).reverse();
+    // the floor: packed earth, lit from the open front, dark toward us at the back of the arch
+    s += path('M-10 ' + n(O[3] - 4) + 'Q800 ' + n(O[3] - 14) + ' 1610 ' + n(O[3] - 4) + 'V1010H-10Z', S.lin('pilerearfloor', [[0, mix(p.wood, glow, 0.3)], [0.25, mix(p.wood, p.shade, 0.35)], [1, mix(p.wood, p.shade, 0.7)]]));
+    s += ell((O[0] + O[1]) / 2, O[3] + 30, (O[1] - O[0]) * 0.46, 70, glow, { opacity: 0.18 });
+    var lv = '';
+    for (i = 0; i < 22; i++) lv += leafD(40 + r() * 1520, O[3] + 20 + r() * (980 - O[3]), 14 + r() * 10, r() * 6.28, 5.5);
+    s += path(lv, mix('#C98A45', p.shade, 0.35), { opacity: 0.6 });
+    var arch = brambleMass(S, legL, 60, 600, [6, 0], seed + 5, wet) + brambleMass(S, legR, 1540, 600, [-6, 0], seed + 6, wet) + brambleMass(S, canopy, 800, 80, [0, 6], seed + 7, wet);
+    s += g(arch, { filter: S.shadow('l') });
+    // the deep shade of the back of the arch, where we are
+    s += rect(-10, -10, 1620, 1020, S.radU([[0, deep, 0], [0.62, deep, 0.12], [1, deep, 0.62]], 800, O[3], 1050));
+    return s;
+  }
+
+  function drawRear(S) {
+    var p = S.pal, o = S.opts, back = '', over = '', front = '', C = REAR, rows = rowList(o) || rowList({ rows: [10, 10, 10, 10] }), R = rows.length;
+    back += archFromBehind(S, C.open, 1811);
+    // the rows from behind, the back row nearest; the "scale" a glimmer on the bare earth behind them
+    var rb = rowsBehind(S, C.G, rows, 7, false), sc = o.scale === 'behind' && R ? scaleBehind(S, C.G, R) : null;
+    over += g(rb.svg, { filter: pileTint(S) });
+    keepBoxes(S, rb.boxes);
+    if (sc) { over += sc.svg; keepBoxes(S, [sc.box]); }
+    // the dug earth heaped up, its far foot toward us
+    if (o.dug) over += g(dugEarth(S, C.heap.cx, C.heap.base, C.heap.w, C.heap.k, 1838, o.dug === 'big'), { 'data-art': 'dug' });
+    else over += ell(C.heap.cx, C.heap.base - 22, C.heap.w * 0.4, 30, soilCols(S).soil, { opacity: 0.85 });
+    // the roots, and under them (once she has lifted them) the tunnel's mouth
+    var lifted = o.tunnel === true;
+    if (lifted) over += tunnelMouth(S, C.mouth, 'rear');
+    over += bramblRoots(S, C.roots, lifted, 1841, C.roots.k);
+    if (lifted) keepBoxes(S, [{ x: C.mouth.x - C.mouth.rx, y: C.mouth.y - C.mouth.ry, w: C.mouth.rx * 2, h: C.mouth.ry * 2 }]);
+    else if (o.tap === 'roots') over += tapRect(S, 'roots', { x: C.roots.x0, y: C.roots.y0, w: C.roots.x1 - C.roots.x0, h: C.roots.y1 - C.roots.y0 + 16 });
+    front += g(K.tufts(S, 0, 1600, 984, 1014, 20, 1842, mix(p.grassNear, p.shade, 0.4), mix(p.grassLight, p.shade, 0.4), 2.2), { filter: S.shadow('m') });
+    S.weatherClip = S.clip('pilenorain', rect(0, 0, 0, 0, '#fff'));
+    return { back: back, over: over, front: front };
+  }
+
+  function drawHole(S) {
+    var p = S.pal, o = S.opts, back = '', over = '', front = '', C = HOLE, rows = rowList(o) || rowList({ rows: [10, 10, 10, 10] }), R = rows.length, i;
+    var deep = mix(p.leaf, p.shade, 0.72), c = soilCols(S);
+    // the arch's shade at the top, the bare earth behind the back row's backs, the back row along the top edge
+    back += rect(-10, -10, 1620, 300, S.linU([[0, mix(deep, p.shade, 0.3)], [1, deep]], 0, 0, 0, 280));
+    back += leafTex(S, 0, 1600, -20, 90, 40, 40, 1851, mix(p.leaf, p.shade, 0.6), 0.8);
+    back += path('M-10 120Q800 104 1610 120V1010H-10Z', S.linU([[0, mix(p.wood, p.shade, 0.5)], [1, mix(p.wood, p.shade, 0.3)]], 0, 110, 0, 320));
+    var rb = rowsBehind(S, C.G, rows, 7, true), sc = o.scale === 'behind' && R ? scaleBehind(S, C.G, R) : null;
+    back += g(rb.svg, { filter: pileTint(S) });
+    keepBoxes(S, rb.boxes);
+    if (sc) { back += sc.svg; keepBoxes(S, [sc.box]); }
+    // the dug earth: a low wall of it filling the picture, the mouth at its foot
+    // (no dips or root arcs this close: only the one real mouth reads as a hole)
+    back += g(dugEarth(S, C.heap.cx, C.heap.base, C.heap.w, C.heap.k, 1858, o.dug !== false, true), { 'data-art': 'dug' });
+    back += path('M-10 900Q400 880 800 888Q1200 896 1610 884V1010H-10Z', mix(p.wood, p.shade, 0.45));
+    var cr = '', r = rng(1859);
+    for (i = 0; i < 40; i++) cr += blob(r() * 1600, 900 + r() * 100, 4 + r() * 9, 2.5 + r() * 5, 6, r, 0.3, 0.3);
+    back += path(cr, c.soil, { opacity: 0.8 });
+    back += tunnelMouth(S, C.mouth, 'hole');
+    back += bramblRoots(S, C.roots, true, 1861, C.roots.k);
+    keepBoxes(S, [{ x: C.mouth.x - C.mouth.rx, y: C.mouth.y - C.mouth.ry, w: C.mouth.rx * 2, h: C.mouth.ry * 2 }]);
+    // the shade of the arch over all of it
+    back += rect(-10, -10, 1620, 1020, S.radU([[0, deep, 0], [0.7, deep, 0.15], [1, deep, 0.55]], 820, 760, 1000));
+    S.weatherClip = S.clip('pilenorain', rect(0, 0, 0, 0, '#fff'));
+    return { back: back, over: over, front: front };
+  }
+
+  // `tracks: true` (on `wide`, at dusk or sunset): far off past the towers, low at the horizon, the train
+  // tracks catching the last light (the climber's look from the top of the arch). Drawn to read on an iPad
+  // page, where the panel is about 680 px wide (final review: two hairlines there were missed): a dark bed,
+  // the sleepers across it, and two bright rails, each with a soft glow, running from near the middle of the
+  // panel, right of the climber, off behind the tallest tower; a little narrower and higher as they go.
+  var TRACKS = { x0: 880, x1: 1352, y: [494, 472], gap: [16, 12], sleepers: 22 };
+  function farTracks(S) {
+    if (S.opts.tracks !== true || !(S.tod === 'dusk' || S.tod === 'golden')) return '';
+    var p = S.pal, T = TRACKS, light = mix(p.sun || p.glow, '#FFFFFF', 0.6), dark = mix(p.shade, '#000000', 0.5), d = '', i;
+    for (i = 0; i < 2; i++) d += 'M' + n(T.x0) + ' ' + n(T.y[0] + i * T.gap[0]) + 'L' + n(T.x1) + ' ' + n(T.y[1] + i * T.gap[1]);
+    var bed = poly([[T.x0, T.y[0] - 6], [T.x1, T.y[1] - 5], [T.x1, T.y[1] + T.gap[1] + 6], [T.x0, T.y[0] + T.gap[0] + 8]], dark, { opacity: 0.92 });
+    // the sleepers: short dark bars across the bed, one filled shape (no stroke, so the rails stay the
+    // group's first stroked path), a little closer together as the tracks recede
+    var sl = '', N = T.sleepers;
+    for (i = 0; i <= N; i++) {
+      var t = Math.pow(i / N, 0.9), x = T.x0 + (T.x1 - T.x0) * t, y0 = T.y[0] + (T.y[1] - T.y[0]) * t, gp = T.gap[0] + (T.gap[1] - T.gap[0]) * t, w = 4.6 - 1.4 * t;
+      sl += 'M' + n(x - w / 2) + ' ' + n(y0 - 4) + 'L' + n(x + w / 2) + ' ' + n(y0 - 4) + 'L' + n(x + w / 2) + ' ' + n(y0 + gp + 4) + 'L' + n(x - w / 2) + ' ' + n(y0 + gp + 4) + 'Z';
+    }
+    (S.keep = S.keep || []).push({ x: T.x0 - 6, y: T.y[1] - 12, w: T.x1 - T.x0 + 12, h: T.y[0] + T.gap[0] - T.y[1] + 24 });
+    return g(bed + path(sl, mix(p.wood || p.shade, p.shade, 0.3)) +
+      stroke(d, light, 8, { opacity: 0.22 }) + stroke(d, light, 5), { 'data-art': 'tracks' });
+  }
+
   function draw(S) {
+    if (S.comp === 'rear') return drawRear(S);
+    if (S.comp === 'hole') return drawHole(S);
     if (S.comp === 'low') return drawLow(S);
     if (S.comp === 'rows') return drawRows(S);
     if (S.comp === 'gap') return drawGap(S);
@@ -1306,7 +1583,10 @@
       through: { box: [0, 0, 1600], comp: 'through' },
       mirror: { box: [0, 0, 1600], comp: 'mirror' },
       // chapter 5
-      'gap-close': { box: [0, 0, 1600], comp: 'gapclose' }
+      'gap-close': { box: [0, 0, 1600], comp: 'gapclose' },
+      // chapter 7: round the back, and close on the tunnel's mouth (compositions of their own)
+      rear: { box: [0, 0, 1600], comp: 'rear' },
+      hole: { box: [0, 0, 1600], comp: 'hole' }
     },
     anchors: {
       main: {
@@ -1314,7 +1594,10 @@
         'crowd-1': A(140, 838, 228), 'crowd-2': A(1080, 742, 180, 'left'), 'crowd-3': A(1385, 948, 284, 'left'),
         'fountain-edge': A(1490, 764, 245, 'left', { elev: true }),
         // chapter 5: behind the back row (z: 'behind' also keeps it out of the depth a spot of its own gets)
-        behind: A(566, 732, 132, 'left', { z: 'behind' })
+        behind: A(566, 732, 132, 'left', { z: 'behind' }),
+        // chapter 7: on top of the bramble arch over the pile, standing (the climber's look out): as big as
+        // a cat by the back row (`crowd-2`), so she reads on an iPad page (final review: at 108 she was a speck)
+        arch: A(735, 424, 172, 'right', { elev: true })
       },
       low: {
         'pile-left': A(180, 946, 396), beside: A(1305, 914, 376, 'left'), 'pile-right': A(1458, 932, 396, 'left'),
@@ -1333,7 +1616,16 @@
       gap: { 'pile-left': A(200, 998, 430), 'pile-right': A(1400, 998, 430, 'left'), beside: A(1160, 998, 400, 'left'),
         behind: A(680, 474, 236, 'left', { z: 'behind' }) },
       // the three close-ups of the "scale", and chapter 5's of the dug earth: no faces in them
-      scale: {}, through: {}, mirror: {}, gapclose: {}
+      scale: {}, through: {}, mirror: {}, gapclose: {},
+      // chapter 7, round the back: our cat left of the mouth facing it (`rear-1`), Tallyheart's spot right of
+      // it facing back (`rear-2`, where she sat the first watch); neither stands on the mouth or hides it.
+      // The guards small past the front row, side-on, facing out over the camp, drawn behind the rows.
+      rear: {
+        'rear-1': A(436, 964, 380), 'rear-2': A(1172, 958, 380, 'left'),
+        'guard-1': A(560, 478, 74, 'left', { z: 'behind' }), 'guard-2': A(812, 474, 72, 'right', { z: 'behind' }), 'guard-3': A(1060, 478, 74, 'right', { z: 'behind' })
+      },
+      // close on the mouth: our cat crouched at its edge, facing it (the mouth as wide as her shoulders)
+      hole: { brink: A(424, 958, 470) }
     },
     // `rows` lists its usual values (each a list: compare by value); the set draws any list of up to five rows
     opts: { pairs: 'number', lit: 'number', dug: [true, false, 'big'], vole: [true, false],
@@ -1342,8 +1634,11 @@
       // chapter 5: the dug earth with tiny prints in it, and swept flat
       prints: [false, true], swept: [false, true],
       // chapter 6: the moon's age in evenings (`wide` and `low`, at night, dusk or sunset)
-      moon: 'number' },
-    defaults: { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false, moon: false }
+      moon: 'number',
+      // chapter 7: the Tap's target (the back row on `rows` and `wide`; the low roots on `rear`), the tunnel found
+      // (`rear`: the roots lifted, its mouth under them), the train tracks far off (`wide`, dusk or sunset)
+      tap: ['none', 'back', 'roots'], tunnel: [false, true], tracks: [false, true] },
+    defaults: { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false, moon: false, tap: 'none', tunnel: false, tracks: false }
   });
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;

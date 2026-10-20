@@ -1129,9 +1129,9 @@ function finishedCat(stories, over) {
   return cat;
 }
 
-test('version 0.6.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 and 6 add none)', () => {
-  assert.equal(E.VERSION, '0.6.0 (chapter 6, 2026-10-18)');
-  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 and 6 store nothing new');
+test('version 0.7.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 7 add none)', () => {
+  assert.equal(E.VERSION, '0.7.0 (chapter 7, 2026-10-20)');
+  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 7 store nothing new (chapter 7’s ch7Flew is a flag)');
   assert.equal(E.STORAGE_KEY, 'potomac-crossing.v1');
   assert.deepEqual(E.newSave(), { version: 2, cats: [], current: null, settings: { readAloud: false, bigText: false } });
   const c = E.blankCat({ now: 5, id: 'x' });
@@ -4021,7 +4021,7 @@ test('the Case File’s screen: two groups, each in the order found; the claims 
   const cat = start4(cat4(st4, { specialty: 'friends' }), st4);
   read4(cat, st4);
   assert.equal(E.caseFile(cat, list).links.length, 0);
-  cat.flags.ch4CaughtFly = true;   // chapter 7 sets it for everyone else
+  cat.flags.ch4CaughtFly = true;   // (chapter 7 never sets it: it sets its own ch7Flew, which the link reads too)
   assert.deepEqual(E.caseFile(cat, list).links[0].cards.map(c => c.id), ['cant-fly', 'fox-flew']);
   // what "neighbours" means, on made-up files: side by side on a wide screen (three across), one above the other on a narrow one (two across)
   const file = (eyes, ears) => ({ groups: [{ mark: 'eye', cards: eyes.map(id => ({ id })) }, { mark: 'ear', cards: ears.map(id => ({ id })) }], links: [] });
@@ -4716,9 +4716,28 @@ test('chapters 1 to 4 play exactly as they did before chapter 5’s engine: ever
   const S = realStories();
   assert.equal(GOLDEN4.engine, '0.4.0 (chapter 4, 2026-10-10)', 'recorded with the engine chapter 4 shipped with');
   assert.equal(GOLDEN4.runs.length, SCRIPTS4.length);
-  const got = golden4Runs(E, [S.ch01, S.ch02, S.ch03, S.ch04]);
+  // Chapter 7 (its spec, section 7, item 2 (a′)): this golden hashes every card's link as chapter 4 wrote it,
+  // `when` and all, and chapter 7 widened `fox-flew`'s to either flag. So the readings run with that one
+  // condition as chapter 4 shipped it (set back, and restored in the finally), and never re-recorded; and
+  // at every frame of every reading the two conditions agree, so setting it back hides nothing.
+  const link = S.ch04.cards['fox-flew'].link, now7 = link.when, then4 = { ch4CaughtFly: true };
+  assert.deepEqual(now7, { not: { ch4CaughtFly: false, ch7Flew: false } });
+  const caseFile = E.caseFile;
+  let checked = 0, got, nows;
+  link.when = then4;
+  E.caseFile = function (cat) {
+    assert.equal(E.matches(then4, cat), E.matches(now7, cat), 'at ' + (cat && cat.chapter) + ' ' + (cat && cat.frame) + ': chapter 4’s condition and chapter 7’s draw the same link');
+    checked++;
+    return caseFile.apply(E, arguments);
+  };
+  // (digested inside: the records hold the card definitions' own link objects)
+  try { got = golden4Runs(E, [S.ch01, S.ch02, S.ch03, S.ch04]); nows = got.map(r => golden4Compact(r.run)); } finally { link.when = now7; E.caseFile = caseFile; }
+  assert.equal(S.ch04.cards['fox-flew'].link.when, now7, 'set back as it is');
+  const frames4 = got.reduce((n, r) => n + Object.values(r.run.frames).reduce((m, f) => m + f.length, 0), 0);
+  assert.ok(checked >= frames4 && frames4 > 2000, 'checked at every frame: ' + checked + ' of ' + frames4);
+  assert.ok(got.some(r => r.run.cat.flags.ch4CaughtFly) && got.some(r => !r.run.cat.flags.ch4CaughtFly), 'with the flag and without it');
   got.forEach((r, i) => {
-    const now = golden4Compact(r.run), then = GOLDEN4.runs[i].run, name = GOLDEN4.runs[i].name;
+    const now = nows[i], then = GOLDEN4.runs[i].run, name = GOLDEN4.runs[i].name;
     assert.equal(r.name, name);
     assert.deepEqual(now.frames, then.frames, name + ': the same frames, in the same order');
     Object.keys(then.shown).forEach(ch => {
@@ -6072,5 +6091,188 @@ test('chapter 6’s words in the grown-ups corner: foundSleet, for a she-cat and
   assert.equal(E.fill(W.foundSleet.true, tom), W.foundSleet.true, 'nothing in it changes for a tom');
   assert.deepEqual([W.foundSquall.true, W.foundPuddle.true, W.foundWisp.true], ['found Squall on the tower roof (later chapters remember)', 'found Puddle under the ferry raft (later chapters remember)', 'found Wisp in the heron’s reeds (later chapters remember)']);
   assert.ok(!PC.ui.quietFlags.foundSleet, 'listed among what she did');
-  assert.deepEqual(Object.keys(W).slice(-1), ['foundSleet'], 'chapter 6 adds one flag');
+  // (chapter 7's ch7Flew comes after it)
+  assert.deepEqual(Object.keys(W).slice(Object.keys(W).indexOf('foundWisp') + 1, Object.keys(W).indexOf('ch7Flew')), ['foundSleet'], 'chapter 6 adds one flag');
+});
+
+/* ================================================================ chapter 7 (the words: docs/build.md, "Chapter 7")
+ * No engine key and no new behaviour; the one new flag, `ch7Flew`, sticky, set on the FLEW screen at the
+ * Old Bridge on every path; chapter 4's `fox-flew` link reads it beside `ch4CaughtFly` (spec section 1). */
+test('chapter 7’s words in the grown-ups corner: ch7Flew, for a she-cat and a tom; ch4CaughtFly’s words as they were; no new speaker, voice or face', () => {
+  require('../app/ui.js');
+  const W = PC.ui.flagWords;
+  assert.deepEqual(W.ch7Flew, { 'true': 'saw Sprinkle try to fly at the Old Bridge: the fox’s “flew” can’t be true (later chapters remember)' });
+  const tom = E.blankCat({}); tom.look.sex = 'tom';
+  assert.equal(E.fill(W.ch7Flew.true, tom), W.ch7Flew.true, 'nothing in it changes for a tom');
+  assert.deepEqual(W.ch4CaughtFly, { 'true': 'caught the fox’s “flew”: Sprinkle can’t fly (later chapters remember)' }, 'chapter 4’s flag means what it always meant');
+  assert.ok(!PC.ui.quietFlags.ch7Flew, 'listed among what she did');
+  assert.deepEqual(Object.keys(W).slice(-1), ['ch7Flew'], 'chapter 7 adds one flag');
+  // no new speaker or face hidden: the speakers' names are chapter 6's (the golden below reads every label and voice of chapters 1 to 6)
+  assert.deepEqual(Object.keys(PC.ui.speakers.NAMES), ['tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth', 'riffle', 'otter', 'dog',
+    'sprinkle', 'murmurchime', 'reynard', 'squall', 'patience', 'puddle', 'wisp', 'coil', 'sloshbank', 'sleet', 'reedclan']);
+  assert.equal(PC.ui.speakers.faceHidden({ who: 'coil', name: 'Coil' }, { who: 'coil', pose: 'stone' }), true, 'Coil’s “Quietly,” from the stones, as chapter 6 has it');
+});
+
+/* Chapters 1 to 6 as they shipped (spec section 7, item 2): ten whole readings recorded from the shipped
+ * chapter-6 tree in a process of its own (tests/fixtures/make-ch06-golden.js), compared digest by digest
+ * with today's tree; then every one of those readings' cats reading chapters 4 and 5 again with `ch7Flew`
+ * and without; then the link's truth table. Today's runs are made once and shared. */
+const G6 = require('./fixtures/make-ch06-golden.js');
+const GOLDEN6 = require('./fixtures/ch06-golden.json');
+let NOW6 = null;
+function now6() {
+  if (NOW6) return NOW6;
+  const PC7 = require('./_load.js').load();
+  require('../app/ui.js');
+  const ctx = G6.context(PC7);
+  NOW6 = { PC: PC7, ctx, runs: G6.SCRIPTS6.map(s => G6.run6(ctx, s)) };
+  return NOW6;
+}
+
+test('chapters 1 to 6 play and render exactly as they shipped: every frame and what it shows (its scene and its drawing, its captions and what Read to me says, its balloons with their labels and voices, its options, its card and its drawing, her whole Case File with every card drawn, the pages she taps), every skip-count tap by tap, every question, picture, line and help hop by hop, the Hollow, the book, the grown-ups corner and the cat, for ten readings and a reread (tests/fixtures/ch06-golden.json)', () => {
+  assert.equal(GOLDEN6.engine, '0.6.0 (chapter 6, 2026-10-18)', 'recorded with the engine chapter 6 shipped with');
+  assert.equal(GOLDEN6.runs.length, G6.SCRIPTS6.length);
+  const { runs } = now6();
+  runs.forEach((r, i) => {
+    const now = G6.compact6(r), then = GOLDEN6.runs[i].run, name = GOLDEN6.runs[i].name;
+    assert.equal(r.name, name);
+    assert.deepEqual(now.readings.map(x => x.chapter), then.readings.map(x => x.chapter), name + ': the same readings');
+    then.readings.forEach((R, k) => {
+      const N = now.readings[k], where = name + ', reading ' + (k + 1) + ' (' + R.chapter + ')';
+      assert.deepEqual(N.frames, R.frames, where + ': the same frames, in the same order');
+      assert.deepEqual(N.picked, R.picked, where + ': the same choices');
+      const a = N.shown.split(' '), b = R.shown.split(' ');
+      b.forEach((h, n) => assert.equal(a[n], h, where + ': what ' + R.frames[n] + ' shows (its scene and drawing, captions, balloons and their labels, options, its card, her Case File, its skip-count tap by tap, the page she taps); `node tests/fixtures/make-ch06-golden.js --diff DIR` writes it whole'));
+      assert.deepEqual(N.lessons, R.lessons, where + ': every lesson, question by question (its pictures and their drawings, its words, its result, its whole help hop by hop)');
+    });
+    assert.deepEqual(now.hollow, then.hollow, name + ': the Training Hollow, its rounds and its lines');
+    assert.deepEqual([now.book, now.corner, now.extra, now.cat, now.flags, now.status], [then.book, then.corner, then.extra, then.cat, then.flags, then.status],
+      name + ': her book and its dragonets, the grown-ups corner, her cards and her file, the cat at the end, the flags, the status');
+  });
+  // the readings cover what chapters 1 to 6 can make of a cat, and none holds chapter 7's flag (no live save does)
+  const flags = runs.map(r => r.end.flags);
+  assert.ok(flags.every(f => !('ch7Flew' in f)));
+  assert.deepEqual([...new Set(runs.map(r => r.readings[0].picked.find(p => p.startsWith('f014:'))))].sort(), ['f014:0', 'f014:1', 'f014:2', 'f014:3', 'f014:4'], 'every specialty');
+  assert.deepEqual([...new Set(flags.map(f => f.worry))].sort(), ['shiny', 'small', 'talk', 'water'], 'every worry');
+  for (const k of ['ch3Told', 'foundSquall', 'ch4CaughtFly', 'ch5Roof', 'foundPuddle', 'foundWisp', 'foundSleet']) {
+    assert.ok(flags.some(f => f[k] === true) && flags.some(f => f[k] !== true), k + ': with it and without it');
+  }
+  assert.deepEqual([...new Set(flags.map(f => f.ch2Path))].sort(), ['bridge', 'river']);
+  assert.deepEqual([...new Set(flags.map(f => f.ch5First))].sort(), ['heron', 'otters']);
+  assert.ok(flags.some(f => !f.foundSquall && !f.ch5Roof), '“Not today” twice');
+  const reread = runs.find(r => r.readings.length > 6);
+  assert.deepEqual(reread.readings.map(x => x.chapter), ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch01', 'ch04', 'ch05']);
+  assert.ok(reread.end.flags.ch4CaughtFly === true && reread.end.flags.specialty === 'climbing', 'caught FLEW as a noticing cat, then a climber');
+  assert.ok(runs.every(r => r.readings.some(x => Object.keys(x.lessons).length)), 'every reading has its lessons');
+  assert.ok(runs.some(r => r.readings.some(x => Object.values(x.lessons).some(rows => rows.some(rw => !rw.res.correct)))), 'and misses');
+});
+
+/* The page hands the engine every story it has loaded (ui.js: `stories()` is `PC.story`), not chapters 1 to
+ * 6 alone. So the same ten readings again, chapters 1 to 6 read as before but every loaded story handed to
+ * the engine everywhere else (the scenes, the cards, the Case File, the lessons, the Hollow, the book, the
+ * status): what chapters 1 to 6 show must not move, whatever chapters come after them. Only what is about
+ * the chapter after chapter 6 may: chapter 6's teaser in her book is built and leads to chapter 7 (its words
+ * as they were), and the hub offers chapter 7 instead of “coming soon”. Chapters 8 to 10 leave even those
+ * as they are, so any other difference here is a later chapter changing an earlier one. */
+test('chapters 1 to 6 with every loaded story handed to the engine, as the page does: every reading (frame by frame, every lesson) and every Hollow round, the corner, her cards and file and the cat exactly as shipped; only chapter 6’s teaser (built, leading to chapter 7) and the hub’s next chapter move', () => {
+  const { PC: PC7, ctx, runs } = now6();
+  const E7 = PC7.engine, six = G6.CH.map(id => PC7.story[id]);
+  const later = E7.chapters(PC7.story).filter(s => !G6.CH.includes(s.id));
+  assert.equal(later[0] && later[0].id, 'ch07', 'chapter 7 is loaded after chapter 6');
+  assert.deepEqual(E7.chapters(PC7.story).slice(0, 6).map(s => s.id), G6.CH, 'chapters 1 to 6 first, in order');
+  // the drawings are shared with the first pass (memoized by what is drawn, which no list touches)
+  const all = Object.assign({}, ctx, { read: six, list: PC7.story });
+  G6.SCRIPTS6.forEach((s, i) => {
+    const r = G6.run6(all, s), now = G6.compact6(r), then = GOLDEN6.runs[i].run, base = runs[i], name = GOLDEN6.runs[i].name;
+    assert.equal(G6.compact6(base).book, then.book, name + ': the first pass is the golden');
+    assert.deepEqual(now.readings, then.readings, name + ': every reading, frame by frame and every lesson, as shipped');
+    assert.deepEqual(now.hollow, then.hollow, name + ': the Training Hollow, its rounds and its lines, as shipped');
+    assert.deepEqual([now.corner, now.extra, now.cat, now.flags, now.status], [then.corner, then.extra, then.cat, then.flags, then.status],
+      name + ': the grown-ups corner, her cards and her file, the cat at the end (her status too), the flags');
+    // her book: every page and dragonet as shipped; chapter 6's teaser, its words as they were, now built and leading on
+    const drop = (b) => Object.assign({}, b, { teaser: null });
+    assert.deepEqual(drop(r.book), drop(base.book), name + ': her book but the teaser');
+    assert.deepEqual([base.book.teaser.built, base.book.teaser.next], [false, null], name + ': as shipped, chapter 6 was the last');
+    assert.deepEqual(r.book.teaser, Object.assign({}, base.book.teaser, { built: true, next: 'ch07' }), name + ': chapter 6’s teaser leads to chapter 7, nothing else in it moves');
+    // the hub: chapter 7 up next instead of “coming soon”
+    const p6 = E7.progress(r.end, six), pAll = E7.progress(r.end, PC7.story);
+    assert.deepEqual([E7.upNext(r.end, six), p6.next, p6.soon && p6.soon.built], [null, null, false], name + ': with chapters 1 to 6, nothing next but the teaser');
+    assert.deepEqual([E7.upNext(r.end, PC7.story).id, pAll.next.id, pAll.soon, pAll.latest.id], ['ch07', 'ch07', null, 'ch06'], name + ': with every chapter, chapter 7 is next');
+  });
+});
+
+test('after chapter 7: every one of those cats, with ch7Flew, reads chapters 4 and 5 again exactly as she would without it (every frame and its drawing, every line, the card under each panel, every lesson, her book’s recaps and dragonet pages, the cat); her Case File differs only by FLEW and can’t-fly touching over “They can’t both be true.”, and only for a cat who did not catch FLEW at the border', () => {
+  const { PC: PC7, ctx, runs } = now6();
+  const E7 = PC7.engine, list = G6.CH.map(id => PC7.story[id]);
+  const full = Object.assign({}, ctx, { full: true });
+  const noDrawn = (file) => { const F = clone(file); F.groups.concat(F.links).forEach(g => g.cards.forEach(c => { if (c.link) delete c.link.drawn; })); return F; };
+  let widened = 0, same = 0, frames = 0;
+  runs.forEach((r, i) => {
+    const s = G6.SCRIPTS6[i], name = r.name;
+    const cats = [clone(r.end), clone(r.end)];
+    cats[1].flags.ch7Flew = true;
+    const read = cats.map(cat => {
+      const out = [], clock = { t: 5e6 };
+      ['ch04', 'ch05'].forEach(ch => G6.readChapter(full, cat, PC7.story[ch], s, s[ch] || {}, s.pick || {}, clock, out));
+      return out;
+    });
+    const caught = r.end.flags.ch4CaughtFly === true;
+    read[0].forEach((R, k) => {
+      const N = read[1][k];
+      assert.deepEqual(N.frames, R.frames, name + ': ' + R.chapter + ', the same frames');
+      assert.deepEqual(N.lessons, R.lessons, name + ': ' + R.chapter + ', the same lessons');
+      R.shown.forEach((a, n) => {
+        const b = N.shown[n], where = name + ': ' + R.chapter + ' ' + R.frames[n];
+        frames++;
+        const strip = (x) => Object.assign({}, x, { file: null, fileArt: null });
+        assert.deepEqual(strip(b), strip(a), where + ': all she sees but her Case File');
+        assert.deepEqual([...b.fileArt].sort(), [...a.fileArt].sort(), where + ': the same cards drawn in her file');
+        const holds = ['fox-flew', 'cant-fly'].every(id => a.file.groups.concat(a.file.links).some(g => g.cards.some(c => c.id === id)));
+        if (caught || !holds) { assert.deepEqual(b.file, a.file, where + ': her Case File, the same'); same++; return; }
+        // without the catch: the two touch across the groups, first among the links, over the line; nothing else moves
+        const A0 = noDrawn(a.file), B0 = noDrawn(b.file);
+        assert.deepEqual(B0.links[0].cards.map(c => c.id), ['cant-fly', 'fox-flew'], where);
+        assert.equal(B0.links[0].line, 'They can’t both be true.', where);
+        assert.deepEqual(B0.links.slice(1), A0.links, where + ': the other links as they were');
+        assert.ok(!A0.links.some(L => L.cards.some(c => c.id === 'fox-flew' || c.id === 'cant-fly')), where + ': without the flag they lie apart');
+        assert.deepEqual(B0.groups, A0.groups.map(g => Object.assign({}, g, { cards: g.cards.filter(c => c.id !== 'fox-flew' && c.id !== 'cant-fly') })), where + ': they leave their groups, and nothing else does');
+        assert.deepEqual(Object.assign({}, B0, { groups: null, links: null }), Object.assign({}, A0, { groups: null, links: null }), where + ': the title and the count');
+        widened++;
+      });
+    });
+    // her book (every chapter's recap and every dragonet page) and the cat
+    const books = cats.map(cat => { const b = E7.buildFullBook(cat, list); return clone({ title: b.title, pages: b.pages, dragonets: b.dragonets, teaser: b.teaser }); });
+    assert.deepEqual(books[1], books[0], name + ': her book, the same');
+    const fl = clone(cats[1].flags); delete fl.ch7Flew;
+    assert.deepEqual(fl, cats[0].flags, name + ': the flags, but ch7Flew');
+    assert.deepEqual(Object.assign({}, cats[1], { flags: null }), Object.assign({}, cats[0], { flags: null }), name + ': the cat, but her flags');
+  });
+  assert.ok(frames > 2000 && widened > 1000 && same > 500, frames + ' frames: ' + widened + ' with the link widened, ' + same + ' the same');
+});
+
+test('chapter 4’s FLEW link is drawn exactly when ch4CaughtFly or ch7Flew is true (a table of every combination, through E.caseFile and E.cards)', () => {
+  const { PC: PC7, runs } = now6();
+  const E7 = PC7.engine, list = G6.CH.map(id => PC7.story[id]);
+  assert.deepEqual(PC7.story.ch04.cards['fox-flew'].link, { when: { not: { ch4CaughtFly: false, ch7Flew: false } }, line: 'They can’t both be true.' });
+  const base = runs.find(r => !r.end.flags.ch4CaughtFly).end;
+  const vals = [true, false, undefined];
+  let n = 0;
+  for (const a of vals) for (const b of vals) {
+    const cat = clone(base);
+    delete cat.flags.ch4CaughtFly; delete cat.flags.ch7Flew;
+    if (a !== undefined) cat.flags.ch4CaughtFly = a;
+    if (b !== undefined) cat.flags.ch7Flew = b;
+    const want = a === true || b === true, F = E7.caseFile(cat, list), name = JSON.stringify({ ch4CaughtFly: a, ch7Flew: b });
+    const flew = F.links.filter(L => L.cards.some(c => c.id === 'fox-flew'));
+    assert.deepEqual(flew.map(L => [L.cards.map(c => c.id), L.line]), want ? [[['cant-fly', 'fox-flew'], 'They can’t both be true.']] : [], name);
+    assert.equal(E7.fileNeighbours(F, 'cant-fly', 'fox-flew'), want || E7.fileNeighbours(Object.assign({}, F), 'cant-fly', 'fox-flew'), name);
+    assert.equal(E7.matches(E7.cards(cat, list).find(c => c.id === 'fox-flew').link.when, cat), want, name);
+    // without chapter 7's flag, exactly as chapter 4 shipped it
+    if (b === undefined) assert.equal(E7.matches({ ch4CaughtFly: true }, cat), want, name);
+    n++;
+  }
+  assert.equal(n, 9);
+  // a cat who has not yet been given both cards has nothing to draw, flag or not
+  const early = clone(base); early.cards = early.cards.filter(c => c.id !== 'cant-fly'); early.flags.ch7Flew = true;
+  assert.ok(!E7.caseFile(early, list).links.some(L => L.cards.some(c => c.id === 'fox-flew')));
 });

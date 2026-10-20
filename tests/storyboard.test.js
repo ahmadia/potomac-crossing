@@ -158,7 +158,8 @@ test('it prints chapter 4’s keys: the Case File’s cards, a card a frame give
     assert.match(md, /laid out in rows\)\. Camera: wide[^\n]*Also: three rows of ten, running back under the brambles; the back row is a dark band in the brambles’ shadow: no gap, no dug earth and no “scale” can be made out\./);
     assert.match(md, /Also: three rows of ten, running back under the brambles; the back row has four empty places side by side, right in its middle \(three pieces, the gap, three pieces\); a bigger patch of soft, lumpy, dug-up earth behind the pile; the “scale” in the gap, leaning on the next piece; the sun reaches the “scale”: it glitters\./);
     assert.match(md, /four rows of ten, running back under the brambles; the “scale” where it was found, on the bare earth behind the back row: a small glint under the brambles/);
-    assert.match(md, /her Case File along the mossy edge of her nest: a piece of bark for each card she holds, overlapping like roof tiles; two of the pieces of bark under the moss, two corners showing/);
+    // (chapter 7: the hidden cards in words that never count them: chapter 4 hides two, chapter 6 three, chapter 7 six)
+    assert.match(md, /her Case File along the mossy edge of her nest: a piece of bark for each card she holds, overlapping like roof tiles; her secret cards under the moss, a corner showing for each/);
     assert.match(md, /a curl of pale bark falling from the trunk/);
     assert.match(md, /\*\*Shows only if\*\* not \(ch3Told is true and foundSquall is false or not set\); otherwise the page turns straight on to h02\./);
     // her book
@@ -407,11 +408,113 @@ test('its words for chapter 6’s art and keys: the wall’s far end, the dream,
     assert.match(md, /  - \*\*Sleet\*\*: “My roll call AGAIN! Seven of us, three HEREs each\. How many HEREs\?”/);
     assert.match(md, /\*\*Then she taps the forepaw Sleet holds up\*\* \(one tap; the forepaw glows, and a tap anywhere else makes it wiggle\): its five claws light and a big 5 grows over them\.[^\n]*which does not show the number\./);
     assert.match(md, /\*\*Set for good:\*\* `foundSleet: true`/);
-    // the den's hidden words stay chapter 4's (the spec's section 7, item 12)
-    assert.match(md, /Also: two of the pieces of bark under the moss, two corners showing\./);
+    // the den's hidden words: chapter 4's until chapter 7 made them count-free (its spec, section 6)
+    assert.match(md, /Also: her secret cards under the moss, a corner showing for each\./);
+    assert.doesNotMatch(md, /two corners showing/);
     // Sleet's page, in his own puff
     assert.match(md, /\*\*A dragonet page:\*\* Sleet \(`sleet`\), found in this chapter by a reader whose foundSleet is true \(the page is there only then\)\. Her book gains a page for Sleet \(drawn his chest puffed out, a grass seed falling off it\)/);
     assert.doesNotMatch(md, /\[object Object\]|undefined|Set: |Camera: (end|meet|walk|below|wall) |\bat (end-\d|reed-\d|star-\d|gap|grass|wall-3)\b/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('its words for chapter 7’s art and keys: round the back of the pile (`rear`, `hole`, the guards, the arch, the tracks), the tunnel and the roots, her paw over Sprinkle’s print, the comparison, the taps on the back row, the roots, the print, the fish and the mist; the cheeks (a `who` pair as one face), the nights of marks, the empty places, the whiskers on one cheek and the cheek kept, the sand at the 6s, a set’s own question; FLEW’s link read as an or, and every other `not` as it was', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-storyboard-'));
+  try {
+    const file = path.join(tmp, 'fx12.js');
+    const c = (who, pose, at, extra) => Object.assign({ who, pose, mood: 'happy', at, facing: 'left' }, extra || {});
+    const RIM = [{ who: 'clancat', variant: 1 }, { who: 'murmurchime' }, { who: 'clancat', variant: 3 }, { who: 'clancat', variant: 5 }, { who: 'grizzled' }];
+    const ROWS = [10, 10, 10, { n: 10, gap: [3, 4, 5, 6] }], FULL = [10, 10, 10, 10];
+    const story = { id: 'fx12', number: 12, title: 'Words', start: 'a', frames: {
+      a: { scene: { set: 'pile', cam: 'rows', opts: { rows: ROWS, back: 'shadow', scale: 'behind', tap: 'back' }, cast: [c('clancat', 'sit', 'pile-left', { variant: 3 })], fx: ['morning'] },
+        caption: ['The back row is still in the shadow.'], scratch: { tap: 'back', prompt: '**Tap** to walk round the back.', label: 'Walk round the back.', next: 'b' } },
+      b: { scene: { set: 'pile', cam: 'gap', opts: { rows: ROWS, scale: 'behind', dug: 'big' }, cast: [], fx: ['morning'] }, caption: ['Right in the middle of the back row: empty spaces.'],
+        skip: { table: 1, groups: 4, thing: 'gap', things: 'gaps', teacher: 'player', label: 'Count the next empty space.', prompt: '**Tap** the empty spaces.', carry: false, next: 'c' } },
+      c: { scene: { set: 'hollow', cam: 'lesson', cast: [c('tallyheart', 'sit', 'sand-left'), c('player', 'sit', 'sand-right')] }, caption: ['Up close, you can count her whiskers.'],
+        skip: { table: 3, groups: 2, who: [{ who: 'tallyheart' }], thing: 'whisker', things: 'whiskers', teacher: 'player', label: 'Count the next row of whiskers.', prompt: '**Tap** her whiskers.', keep: true, next: 'd' } },
+      d: { scene: { set: 'hollow', cam: 'lesson', cast: [c('tallyheart', 'sit', 'sand-left'), c('player', 'sit', 'sand-right')] }, say: [{ who: 'tallyheart', text: 'Six whiskers on one cheek.' }], next: 'e' },
+      e: { scene: { set: 'hollow', cam: 'wide', opts: { marks: 6, glow: 'auto' }, cast: [c('tallyheart', 'sit', 'tree-far')] }, say: [{ who: 'tallyheart', text: 'Touch each cheek.' }],
+        skip: { table: 6, groups: 5, who: RIM, thing: 'whisker', things: 'whiskers', teacher: 'tallyheart', label: 'Count the next cheek.', prompt: '**Tap** the cheeks.', carry: false, next: 'f' } },
+      f: { scene: { set: 'hollow', cam: 'lesson', opts: { marks: 7, glow: 'auto', compare: [24, 60] }, cast: [c('tallyheart', 'sit', 'sand-left', { wink: true }), c('player', 'sit', 'sand-right')] },
+        counts: { set: 'fx12-sixes', next: 'g', intro: false } },
+      g: { scene: { set: 'bridge', cam: 'under', opts: { prints: true, tap: 'print', compare: [24, 60] }, cast: [c('player', 'sit', 'mud'), c('riffle', 'stand', 'inside', { holds: 'string', tap: 'fish' }), c('sprinkle', 'burp', 'dragon', { mist: true, tap: 'mist' })] },
+        caption: ['Her prints are still in the mud.'], scratch: { tap: 'print', prompt: '**Tap** a print to hold your paw over it.', label: 'Hold your paw over a print.', next: 'h' } },
+      h: { scene: { set: 'bridge', cam: 'print', cast: [c('player', 'crouch', 'over', { reach: true })] }, caption: ['Room to spare.'], card: 'flew', next: 'i' },
+      i: { scene: { set: 'bridge', cam: 'under', opts: { prints: true }, cast: [c('riffle', 'stand', 'mud', { holds: 'string', tap: 'fish' })] }, say: [{ who: 'riffle', text: 'FISH!' }], scratch: { tap: 'fish', prompt: '**Tap** to toss her one.', label: 'Toss her a fish.', next: 'j' } },
+      j: { scene: { set: 'bridge', cam: 'under', opts: { prints: true }, cast: [c('sprinkle', 'burp', 'inside', { mist: true, tap: 'mist' })] }, sfx: 'HURP.', scratch: { tap: 'mist', prompt: '**Tap** the little cloud of mist.', label: 'Puff the mist away.', next: 'k' } },
+      k: { scene: { set: 'bridge', cam: 'under', opts: { prints: true }, cast: [c('riffle', 'hush', 'mud')] }, counts: { set: 'fx12-riffle', next: 'l' } },
+      l: { scene: { set: 'pile', cam: 'rear', opts: { rows: FULL, scale: 'behind', dug: 'big', tunnel: false, tap: 'roots' }, cast: [c('player', 'sit', 'rear-1', { facing: 'right' }), c('tallyheart', 'sit', 'rear-2'), c('clancat', 'sit', 'guard-1', { variant: 1 }), c('clancat', 'sit', 'guard-2', { variant: 3 }), c('clancat', 'sit', 'guard-3', { variant: 5 })], fx: ['dusk'] },
+        caption: ['The bramble roots hang low.'], scratch: { tap: 'roots', prompt: '**Tap** the bramble roots.', label: 'Lift the roots.', next: 'm' } },
+      m: { scene: { set: 'pile', cam: 'hole', opts: { rows: FULL, scale: 'behind', dug: 'big' }, cast: [c('player', 'crouch', 'brink', { mood: 'wonder' })], fx: ['dusk'] }, caption: ['A tunnel.'], next: 'n' },
+      n: { scene: { set: 'pile', cam: 'rear', opts: { rows: FULL, scale: 'behind', dug: 'big', tunnel: true }, cast: [c('player', 'sit', 'rear-1')], fx: ['dusk'] }, caption: ['The roots lifted.'], next: 'o' },
+      o: { scene: { set: 'pile', cam: 'wide', opts: { rows: FULL, dug: 'big', tracks: true, moon: 7 }, cast: [c('player', 'stand', 'arch')], fx: ['dusk'] }, caption: ['From the top of the arch.'],
+        when: { not: { foundPuddle: false, foundWisp: false } }, next: 'p' },
+      p: { scene: { set: 'hollow', cam: 'lesson', cast: [c('tallyheart', 'sit', 'sand-left'), c('player', 'sit', 'sand-right')] }, counts: { set: 'fx12-gone', next: 'q' } },
+      q: { scene: { set: 'den', cam: 'nest', opts: { bark: 'auto', hidden: true }, cast: [c('snorer', 'sit', 'sleeper-1'), c('player', 'sit', 'nest')], fx: ['night'] }, caption: ['He puffs out his cheeks. You puff out yours.'],
+        skip: { table: 6, groups: 4, who: [{ who: 'snorer' }, { who: 'snorer' }, { who: 'player' }, { who: 'player' }], thing: 'whisker', things: 'whiskers', teacher: 'player', label: 'Count the next cheek.', prompt: '**Tap** the cheeks.', next: 'r' } },
+      r: { scene: { set: 'den', cam: 'nest', cast: [c('snorer', 'sit', 'sleeper-1')], fx: ['night'] }, say: [{ who: 'snorer', text: 'TWENTY-FOUR?' }], next: 'z' },
+      z: { scene: { set: 'den', cam: 'nest', opts: { hidden: true } }, caption: ['The end.'], end: true }
+    }, cards: {
+      flew: { mark: 'ear', line: 'The fox says it FLEW.', answers: ['wing'], link: { when: { not: { ch4CaughtFly: false, ch7Flew: false } }, line: 'They can’t both be true.' } },
+      wing: { mark: 'eye', line: 'Sprinkle can’t fly.' }
+    }, counts: {
+      'fx12-sixes': { table: 6, thing: 'whisker', things: 'whiskers', unit: 'cheek', units: 'cheeks', teacher: 'tallyheart', ask: '{a} × {b}', picture: { kind: 'cheeks' }, label: 'Whiskers', hollowThings: 'sixes', prompt: 'How many whiskers?',
+        facts: [{ a: 2, b: 6, who: [{ who: 'clancat', variant: 1 }, { who: 'clancat', variant: 1 }], prompt: 'Two cheeks? That’s one whole cat.', retryPrompt: true },
+          { a: 6, b: 4, picture: { kind: 'cheeks-top' }, prompt: 'Four cheeks. Four threes on top.', retryPrompt: true }, { a: 5, b: 6 }],
+        praise: ['Two threes make a six!'], helpIntro: 'Close. Let’s hop it together.', done: 'That’s the sixes.' },
+      'fx12-gone': { table: 6, thing: 'piece', things: 'pieces', unit: 'night', units: 'nights', teacher: 'tallyheart', ask: '{a} × {b}', picture: { kind: 'marks' },
+        facts: [{ a: 4, b: 6, table: 4, prompt: [{ kind: 'caption', text: 'Four gone a night, for six nights. How many gone?' }], retryPrompt: true }],
+        help: 'picture', fillFrom: 'fx12-sixes', fillOrder: 'easiest', fillVoice: 'borrower', fillIntro: 'An easy one.', avoid: [[6, 6]], praise: [], done: null },
+      'fx12-riffle': { table: 10, thing: 'piece', things: 'pieces', unit: 'night', units: 'nights', teacher: 'riffle', ask: '{a} × {b}', picture: { kind: 'marks', ground: 'mud' },
+        facts: [{ a: 10, b: 6, prompt: [{ who: 'riffle', kind: 'whisper', text: 'Six nights. How many would she take?' }], retryPrompt: true }],
+        help: 'picture', helpIntro: 'Hop by tens! Ten, twenty…', praise: [], done: null }
+    }, book: { recap: [{ text: 'Seven.' }] } };
+    fs.writeFileSync(file, 'globalThis.PC = globalThis.PC || {}; PC.story = PC.story || {}; PC.story.fx12 = ' + JSON.stringify(story) + ';\nmodule.exports = PC;\n');
+    const md = generate(file, tmp);
+    // the walk round the back: the back row is what she taps, and the empty places one at a time
+    assert.match(md, /the back row is a dark band in the brambles’ shadow: no gap, no dug earth and no “scale” can be made out; the “scale” where it was found, on the bare earth behind the back row: a small glint under the brambles; the back row is what she taps\./);
+    assert.match(md, /\*\*Then she taps the back row of the pile\*\* \(one tap, on this scene\): it glows softly; a tap on it turns the page to b;/);
+    assert.match(md, /\*\*Then she counts the empty places\*\* \(the skip-count, by 1s\): the back row close up on the earth, its four empty pressed places among the pieces \(in play they take the panel\); 4 taps, one on each empty place in turn \(the next one glows; a tap anywhere else makes it wiggle\), each outlining it in gold and putting the next number under it and in her own balloon: 1, 2, 3, 4\. Nothing can be got wrong, and nothing is logged\. The last tap turns the page to c, which does not show the number\. The instruction under the panel: “Tap the empty spaces\.” For VoiceOver, a hidden button: “Count the next empty space\.”/);
+    // one cheek's whiskers at the 3s, kept on the page after it, and not on the skip that ends the run
+    assert.match(md, /\*\*Then she counts the whiskers on one cheek\*\* \(the skip-count, by 3s\): one cheek close up, Tallyheart’s, six whiskers in two rows of three \(in play it takes the panel\); 2 taps, a row at a time from the top[^\n]*each lighting its three whiskers and putting the running total beside it and in her own balloon: 3, 6\.[^\n]*The last tap turns the page to d, which shows the 6\. The cheek stays on the plain pages after it, both rows lit, 3 and 6 beside them\./);
+    assert.match(md, /### d · panel 4[^#]*\*\*The cheek stays:\*\* in place of this scene, the cheek from c, both rows of whiskers lit, 3 and 6 beside them; the balloons sit beside it\./);
+    assert.doesNotMatch(md.split('### e ·')[1].split('### f ·')[0], /stays:/, 'a skip-count draws its own picture: the kept cheek is not on it');
+    // the cheeks at the 6s: the rim's five, one each; at bedtime two faces, puffed round
+    assert.match(md, /\*\*Then she counts by 6s on the cheeks\*\* \(the skip-count\): five cheeks close up in a row, six whiskers on each, three on top and three below \(left to right: a cheek of a Clan cat \(coat 1\); a cheek of Murmurchime, the tortoiseshell warrior; a cheek of a Clan cat \(coat 3\); a cheek of a Clan cat \(coat 5\); a cheek of the grizzled old tom\); 5 taps, one on each cheek in turn[^\n]*adding its running total under it and in Tallyheart’s balloon: 6, 12, 18, 24, 30\./);
+    assert.match(md, /four cheeks close up in a row, six whiskers on each, three on top and three below \(left to right: the face of the snoring apprentice, its two cheeks puffed round; your face, its two cheeks puffed round\); 4 taps[^\n]*in her own balloon: 6, 12, 18, 24\. [^\n]*The last tap turns the page to r, which shows the 24\./);
+    // the lesson: cheeks, the doubling question's top rows, one cat's face, the sand at the 6s, its own question words
+    assert.match(md, /\*\*Then the Counts lesson\*\* `fx12-sixes` \(whiskers, cheeks close up, six whiskers on each: three on top, three below\): 2 × 6 \(drawn as the face of a Clan cat \(coat 1\), its two cheeks puffed round; its own question, kept on its retry\), 6 × 4 \(cheeks close up, six whiskers on each, every cheek’s top three lit from the start; its own question, kept on its retry\), 5 × 6\./);
+    assert.match(md, /a miss gets the sand count \(six marks for every cheek, scratched three and three: two short rows of three, one above the other\)/);
+    assert.match(md, /- Asking a question with no words of its own:\n  - \*\*Tallyheart\*\*: “How many whiskers\?”/);
+    assert.match(md, /- In the Training Hollow: its button reads “Whiskers · the 6s”, and Tallyheart calls it “sixes”\./);
+    // the nights of marks, in the sand and in the mud, lit a night at a time by whoever hops it
+    assert.match(md, /`fx12-gone` \(pieces, nights side by side, scratched in the sand, a cluster of short upright marks for each night and nothing else\): 4 × 6 \(from the 4s; its own question, kept on its retry\)\. She types each answer on the keypad; a miss gets the set’s own picture lit a night at a time, Tallyheart hopping it,/);
+    assert.match(md, /`fx12-riffle` \(pieces, nights side by side, scratched in the mud, a cluster of short upright marks for each night and nothing else\): 10 × 6 [^\n]*a miss gets the set’s own picture lit a night at a time, Riffle hopping it,/);
+    // the comparison, in the sand and in the mud
+    assert.match(md, /Also: 7 claw marks on the trunk; each claw mark glows if its Count glows in the Training Hollow; two straight lines scratched in the sand between them, the long one two and a half times as long as the short one: “24” by the short line and “60” by the long one\./);
+    assert.match(md, /Also: Sprinkle’s big five-claw prints in the mud beside the drag marks; the nearest of Sprinkle’s big prints is what she taps; two straight lines scratched in the open mud at the front, the long one two and a half times as long as the short one: “24” by the short line and “60” by the long one\./);
+    // the taps under the Old Bridge: the print, the fish, the mist
+    assert.match(md, /Riffle, the otter pup \(standing up on his hind legs, happy, inside the dark, facing left, a reed string of three fish hanging from one forepaw \(eyes shut, nothing through a fish\), the string of fish is what she taps\); Sprinkle, a Mistscale dragonet[^;]*\(burping a little cloud of mist, happy, in Sprinkle’s spot at the very back, facing left, a little cloud of mist, the little cloud of mist is what she taps\)/);
+    assert.match(md, /\*\*Then she taps the nearest of Sprinkle’s big prints\*\* \(one tap, on this scene\)/);
+    assert.match(md, /\*\*Then she taps the reed string of fish in Riffle’s paw\*\* \(one tap, on this scene\)/);
+    assert.match(md, /\*\*Then she taps Sprinkle’s little cloud of mist\*\* \(one tap, on this scene\)/);
+    // her paw over the print: the camera, the anchor, and the reach the other way round from the marsh's
+    assert.match(md, /Camera: at cat height, close on the mud: one of Sprinkle’s big prints in front \(five long claw marks, as big as a heron’s foot\), the drag marks’ edge at one side \(`print`\)\. Cast: you \(crouching, happy, crouched over the print, her near forepaw held just over its heel pad, facing left, one forepaw held out and down, touching nothing: just over the heel pad of one of Sprinkle’s big prints, the pad showing all round it and the five toes and long claws fanned out beyond, toward us, room to spare \(her paw about a fifth of its length\)\)\./);
+    assert.doesNotMatch(md, /over a tiny print in the mud/, 'the marsh’s reach is the marsh’s');
+    // round the back: its own place words, the roots tapped, the guards, then the mouth on `hole` and the tunnel uncovered
+    assert.match(md, /\*\*Scene\.\*\* Pile: round the back of the prey pile, under the bramble arch, at dusk \(the low roots of the arch, the dug earth heaped behind the back row, the back row seen from behind, the camp past the pile’s front; no sky\)\. Camera: round the back, at cat height, from behind the back row: [^\n]*\(`rear`\)\. Cast: you \(sitting, happy, round the back, left of the roots over the tunnel’s mouth, facing right\); Tallyheart \(sitting, happy, round the back, right of the roots over the tunnel’s mouth, facing left\); a Clan cat \(sitting, happy, small, past the rows at the pile’s front: a guard settling in, looking out over the camp, facing left, coat 1\); a Clan cat \(sitting, happy, small, past the rows at the pile’s front: a second guard settling in, facing left, coat 3\); a Clan cat \(sitting, happy, small, past the rows at the pile’s front: a third guard settling in, facing left, coat 5\)\.[^\n]*the low bramble roots are what she taps\./);
+    assert.match(md, /\*\*Then she taps the low bramble roots\*\* \(one tap, on this scene\)/);
+    assert.match(md, /\*\*Scene\.\*\* Pile: the tunnel’s mouth, round the back of the prey pile, at dusk \(the dug earth, the bramble roots lifted over it, the back row’s backs along the top\)\. Camera: close on the tunnel’s mouth from behind, at cat height: a round dark hole in the dug earth under the lifted roots, going down and in under the pile, its far end dark; much too small for a dragon, about as wide as a small cat’s shoulders \(`hole`\)\. Cast: you \(crouching, full of wonder, crouched at the very edge of the tunnel’s mouth, facing left\)\./);
+    assert.match(md, /the roots lifted back, and under them the round dark mouth of a small tunnel in the dug earth, going down and in under the pile\./);
+    // the climber on the arch, the tracks far off, the seventh moon
+    assert.match(md, /Cast: you \(standing, happy, standing on top of the bramble arch over the pile, as big as a cat by the back row, facing left\)\. Also: four rows of ten, running back under the brambles; a bigger patch of soft, lumpy, dug-up earth behind the pile; far off past the towers, low at the horizon, the train tracks catching the last light: two bright rails on a dark bed, the sleepers across it, running off behind the tallest tower; a crescent moon, a little fatter than last night’s\./);
+    // the den's secret cards, count-free
+    assert.match(md, /a piece of bark for each card she holds, overlapping like roof tiles; her secret cards under the moss, a corner showing for each\./);
+    // FLEW's link reads either flag, as an or; any other `not` reads as it always has (chapter 5's "found today")
+    assert.match(md, /\| `flew` \| ear \| The fox says it FLEW\. \| h \| answered by `wing` \(for chapter 10\); drawn touching them once ch4CaughtFly or ch7Flew is true: “They can’t both be true\.” \|/);
+    assert.match(md, /\*\*Shows only if\*\* not \(foundPuddle is false or not set and foundWisp is false or not set\); otherwise the page turns straight on to p\./);
+    assert.doesNotMatch(md, /\[object Object\]|undefined|Set: |Camera: (rear|hole|print) |\bat (rear-\d|guard-\d|brink|arch|over)\b|\b(tap|compare|tunnel|tracks): (true|false|"|\[)/, 'every new name has words: none prints as its bare id');
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -462,4 +565,19 @@ test('with no arguments the tool writes a storyboard for every chapter (run in a
   }
   const bad = spawnSync(process.execPath, [TOOL, path.join(ROOT, 'no-such-chapter.js')], { encoding: 'utf8' });
   assert.notEqual(bad.status, 0, 'a story file that is not there fails loudly');
+});
+
+test('a Counts frame that says none of its lines again (`intro: false`) is worded from its first fact, as the engine times it: the engine’s own words and timed on itself; its own words, read first, so only a miss counts; or a check, never timed (chapter 7 integration round 1: chapter 5’s bill row corrected too, a doc fix, not play)', () => {
+  const { load } = require('./_load.js');
+  const PC = load(), E = PC.engine, S = chapters.map(f => PC.story[path.basename(f, '.js')]);
+  const md = id => fs.readFileSync(path.join(ROOT, 'docs/storyboard', id + '.md'), 'utf8');
+  const row = (id, set) => (md(id).split('\n').find(l => l.includes('**Then the Counts lesson** `' + set + '`')) || '');
+  const ENGINE = 'it is asked in the engine’s own words, and timed on itself.', OWN = 'it is asked in its own words, read first, so only a miss there counts as hard.', CHECK = 'it is asked in its own words, and as a check it is never timed.';
+  const want = { 'ch05:ch05-tens': [ENGINE, 10, 7], 'ch05:ch05-bill': [OWN, 9, 2], 'ch06:ch06-nines': [ENGINE, 7, 9], 'ch07:ch07-pile': [CHECK, 3, 10], 'ch07:ch07-threes': [ENGINE, 7, 3], 'ch07:ch07-sixes': [OWN, 2, 6] };
+  for (const [k, [words, a, b]] of Object.entries(want)) {
+    const [id, set] = k.split(':'), r = row(id, set);
+    assert.ok(r.includes('None of this frame’s own lines is said again over the first question: ' + words), k + ': ' + r.slice(0, 120));
+    // and the engine agrees: a first question in its own words is read first (never timed); in the engine's, timed
+    assert.equal(E.readFirst({ set, a, b }, S, null, true), words !== ENGINE, k + ': read first');
+  }
 });

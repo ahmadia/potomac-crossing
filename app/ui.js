@@ -441,7 +441,10 @@
     foundPuddle: { 'true': 'found Puddle under the ferry raft (later chapters remember)' },
     foundWisp: { 'true': 'found Wisp in the heron’s reeds (later chapters remember)' },
     // chapter 6: set on the last screen of Sleet's scene, never unset
-    foundSleet: { 'true': 'found Sleet at the last post of the Barking Field (later chapters remember)' }
+    foundSleet: { 'true': 'found Sleet at the last post of the Barking Field (later chapters remember)' },
+    // chapter 7: set on the FLEW screen at the Old Bridge, every path, never unset (chapter 4's `fox-flew`
+    // link reads it beside ch4CaughtFly, so her Case File draws FLEW and can't-fly touching from then on)
+    ch7Flew: { 'true': 'saw Sprinkle try to fly at the Old Bridge: the fox’s “flew” can’t be true (later chapters remember)' }
   };
   UI.flagWords = FLAG_WORDS;
   // flags the engine keeps for itself: never listed among "what the choices say"

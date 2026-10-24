@@ -520,6 +520,155 @@ test('its words for chapter 7’s art and keys: round the back of the pile (`rea
   }
 });
 
+test('its words for chapter 8’s art and keys: the bank by the tracks (every camera, its anchors, the tunnel’s inside and the stash in place words of their own, the weeds, the holes, the stash and the glass tapped, the tight place, the worm), the Barking Field at night (its moon, the heap, the log, the wire, the ring, the fence top, the trail, the path tapped), the pile’s poke and the tunnel’s mouth tapped, the den’s half moon and her glass; Hail, Snip and Snatch in their own poses and moods, the cats’ run, the dogs lying down, Reynard’s trot, the raised tail, the leaf, the glass, the mouse; a tap mark another carries; one cat’s paws a pair at a time and kept, cats’ paws by fours, the field’s four animals, nights of marks two and two, the sand at the 4s; a card link’s own line for each partner', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-storyboard-'));
+  try {
+    const file = path.join(tmp, 'fx13.js');
+    const c = (who, pose, at, extra) => Object.assign({ who, pose, mood: 'happy', at, facing: 'left' }, extra || {});
+    const RIM = [{ who: 'clancat', variant: 1 }, { who: 'murmurchime' }, { who: 'clancat', variant: 3 }, { who: 'clancat', variant: 5 }, { who: 'grizzled' }];
+    const FIELD = [{ who: 'dog', variant: 1 }, { who: 'dog', variant: 2 }, { who: 'dog', variant: 3 }, { who: 'hail' }];
+    const FULL = [10, 10, 10, 10], T = text => ({ who: 'tallyheart', text });
+    const story = { id: 'fx13', number: 13, title: 'Words', start: 'a', names: { snip: 'A weasel', snatch: 'A weasel', hail: 'The speckled dragonet' }, frames: {
+      a: { scene: { set: 'hollow', cam: 'lesson', cast: [c('tallyheart', 'stand', 'sand-left'), c('player', 'sit', 'sand-right')], fx: ['morning'] }, say: [T('Count mine.')],
+        skip: { table: 2, groups: 2, who: [{ who: 'tallyheart' }], thing: 'paw', things: 'paws', teacher: 'player', label: 'Count the next pair of paws.', prompt: '**Tap** her paws.', keep: true, next: 'b' } },
+      b: { scene: { set: 'hollow', cam: 'lesson', cast: [c('tallyheart', 'stand', 'sand-left'), c('player', 'sit', 'sand-right')] }, say: [T('A four is two twos.')], next: 'c' },
+      c: { scene: { set: 'hollow', cam: 'wide', opts: { marks: 7, glow: 'auto' }, cast: [c('tallyheart', 'sit', 'tree-far')] }, say: [T('Hop by fours.')],
+        skip: { table: 4, groups: 5, who: RIM, thing: 'paw', things: 'paws', teacher: 'tallyheart', label: 'Count the next cat’s paws.', prompt: '**Tap** the cats as they go by.', carry: false, next: 'd' } },
+      d: { scene: { set: 'hollow', cam: 'lesson', opts: { marks: 7, glow: 'auto' }, cast: [c('tallyheart', 'sit', 'sand-left'), c('player', 'sit', 'sand-right')] }, counts: { set: 'fx13-fours', next: 'e', intro: false } },
+      e: { scene: { set: 'hollow', cam: 'sand', cast: [c('tallyheart', 'crouch', 'sand-left', { claws: true })] }, caption: ['Seven nights.'], counts: { set: 'fx13-gone', next: 'f' } },
+      f: { scene: { set: 'field', cam: 'dogs', opts: { moon: 8 }, cast: [c('dog', 'sit', 'dog-1', { variant: 1 }), c('dog', 'sit', 'dog-2', { variant: 2 }), c('dog', 'sit', 'dog-3', { variant: 3 }), c('hail', 'tilt', 'wire')], fx: ['night'] },
+        say: [{ who: 'hail', text: 'Want a riddle?' }], counts: { set: 'fx13-hail', next: 'g' } },
+      g: { scene: { set: 'pile', cam: 'rear', opts: { rows: FULL, scale: 'behind', dug: 'big', tunnel: true, tap: 'mouth' }, cast: [c('player', 'sit', 'rear-1', { facing: 'right' }), c('tallyheart', 'crouch', 'poke', { mood: 'laugh' })], fx: ['night'] },
+        caption: ['Her shoulders stick.'], scratch: { tap: 'mouth', prompt: '**Tap** to wriggle in.', label: 'Wriggle in.', next: 'h' } },
+      h: { scene: { set: 'tracks', cam: 'crawl', opts: { tight: true }, cast: [c('player', 'crouch', 'crawl-1', { facing: 'right' }), c('riffle', 'scramble', 'crawl-2', { facing: 'right', tap: 'paw' })] },
+        say: [{ who: 'riffle', kind: 'whisper', text: 'I’m stuck.' }], scratch: { tap: 'paw', prompt: '**Tap** to pull Riffle through.', label: 'Pull Riffle through.', next: 'i' } },
+      i: { scene: { set: 'tracks', cam: 'fork', opts: { worm: true }, cast: [c('player', 'crouch', 'fork-1', { mood: 'sniff' })], fx: ['day'] }, caption: ['Worms. Just worms.'], next: 'j' },
+      j: { scene: { set: 'tracks', cam: 'wide', opts: { moon: 8, tap: 'weeds' }, cast: [c('player', 'crouch', 'tunnel-end', { facing: 'right' }), c('tallyheart', 'sit', 'foot-2')] },
+        caption: ['Voices!'], scratch: { tap: 'weeds', prompt: '**Tap** to hide in the tall weeds.', label: 'Hide in the weeds.', next: 'k' } },
+      k: { scene: { set: 'tracks', cam: 'hide', opts: { moon: 8 }, cast: [c('player', 'crouch', 'weeds-1'), c('tallyheart', 'crouch', 'weeds-2', { tailUp: true, tap: 'tail' }), c('reynard', 'trot', 'rails'),
+        c('snip', 'peek', 'hole-1'), c('snatch', 'peek', 'hole-2', { holds: 'mouse' })] },
+        caption: ['The tip of her tail is sticking up.'], scratch: { tap: 'tail', prompt: '**Tap** the tail to pull it down.', label: 'Pull the tail down.', next: 'l' } },
+      l: { scene: { set: 'tracks', cam: 'holes', cast: [c('snatch', 'point', 'hole-1', { mood: 'shout', holds: 'mouse', holdAt: 'paws' }), c('snip', 'up', 'hole-2', { mood: 'stern' }), c('player', 'crouch', 'stash-mouth'), c('riffle', 'stand', 'watch', { tap: 'ears' })] },
+        say: [{ who: 'snip', name: 'Snip', text: 'Seven nights of it!' }, { who: 'snatch', text: 'A HUNDRED.' }], scratch: { tap: 'ears', prompt: '**Tap** to whisper in Riffle’s ear.', label: 'Whisper in Riffle’s ear.', next: 'm' } },
+      m: { scene: { set: 'tracks', cam: 'brag', opts: { moon: 8 }, cast: [c('reynard', 'chest', 'rails', { mood: 'laugh' }), c('snip', 'up', 'slope-1', { mood: 'laugh' }), c('snatch', 'up', 'slope-2')] },
+        caption: ['He laughs, a soft little yip.'], say: [{ who: 'reynard', text: 'Nobody saw a thing.' }], card: 'brag', next: 'n' },
+      n: { scene: { set: 'tracks', cam: 'stash', opts: { tap: 'glass' }, cast: [c('player', 'crouch', 'stash-in', { mood: 'sniff' })] }, caption: ['Proof.'], card: 'stash',
+        scratch: { tap: 'glass', prompt: '**Tap** to take one small piece.', label: 'Take one small piece.', next: 'o' } },
+      o: { scene: { set: 'tracks', cam: 'stash-close', cast: [c('player', 'crouch', 'near', { mood: 'wonder' })] }, say: [{ who: 'player', kind: 'whisper', text: 'It’s GLASS.' }], card: 'glass', next: 'p' },
+      p: { scene: { set: 'tracks', cam: 'holes', cast: [c('player', 'run', 'stash-mouth', { holds: 'leaf', holdAt: 'mouth', tap: 'paw' })] }, caption: ['GET THAT CAT!'], scratch: { tap: 'paw', prompt: '**Tap** to RUN!', label: 'Run!', next: 'q' } },
+      q: { scene: { set: 'field', cam: 'wide', opts: { moon: 8, tap: 'path' }, cast: [c('dog', 'lie', 'heap-1', { variant: 1, asleep: true }), c('dog', 'lie', 'heap-2', { variant: 2, asleep: true }), c('dog', 'lie', 'heap-3', { variant: 3, asleep: true }),
+        c('hail', 'peek', 'log'), c('player', 'walk', 'path-left', { facing: 'right' }), c('tallyheart', 'walk', 'path-right', { facing: 'right' })], fx: ['night', 'zzz'] },
+        caption: ['The Barking Field is silver in the moonlight.'], scratch: { tap: 'path', prompt: '**Tap** to slip past.', label: 'Slip past.', next: 'r' } },
+      r: { scene: { set: 'field', cam: 'wide', opts: { moon: 8 }, cast: [c('player', 'walk', 'fence-top', { facing: 'right' }), c('dog', 'jump', 'dog-1', { variant: 1 }), c('hail', 'run', 'ring-1'), c('dog', 'bounce', 'ring-2', { variant: 2 }), c('hail', 'bounce', 'ring-3'), c('dog', 'bounce', 'ring-4', { variant: 3 })], fx: ['night', 'motion'] },
+        caption: ['Round. And round.'], next: 's' },
+      s: { scene: { set: 'field', cam: 'dogs', opts: { moon: 8 }, cast: [c('snip', 'skid', 'trail-1'), c('snatch', 'run', 'trail-2', { holds: 'mouse' }), c('hail', 'bounce', 'wire')], fx: ['night'] },
+        say: [{ who: 'dog', variant: 1, name: 'The dogs', text: 'BYE, RUDE SQUIRRELS!' }], next: 't' },
+      t: { scene: { set: 'pile', cam: 'rear', opts: { rows: FULL, scale: 'behind', dug: 'big', tunnel: true }, cast: [c('player', 'crouch', 'rear-1', { facing: 'right', holds: 'leaf', holdAt: 'paws', tap: 'leaf' }), c('tallyheart', 'sit', 'rear-2')], fx: ['night'] },
+        caption: ['Through the hedge.'], scratch: { tap: 'leaf', prompt: '**Tap** to put down the glass.', label: 'Put down the glass.', next: 'u' } },
+      u: { scene: { set: 'pile', cam: 'rear', opts: { rows: FULL, scale: 'behind', dug: 'big', tunnel: true }, cast: [c('player', 'sit', { x: 1000, y: 960, h: 380 }, { facing: 'right', tailUp: true, mood: 'proud', holds: 'glass' }), c('riffle', 'scramble', 'rear-2', { tailUp: true })], fx: ['night'] },
+        caption: ['Your tail goes straight up.'], next: 'v' },
+      v: { scene: { set: 'den', cam: 'nest', opts: { weather: 'clear', moon: false, stone: 'auto', bark: 'auto', hidden: true, glass: true }, cast: [c('player', 'lie', 'nest')], fx: ['night'] }, caption: ['And under the moss, your glass.'], next: 'w' },
+      w: { scene: { set: 'den', cam: 'inside', opts: { moon: 8 }, cast: [c('snorer', 'lie', 'sleeper-1', { mood: 'sleepy' }), c('player', 'lie', 'nest')], fx: ['night'] }, caption: ['“Tonight it really IS the paw thing,” you say.'],
+        skip: { table: 4, groups: 2, who: [{ who: 'snorer' }, { who: 'player' }], thing: 'paw', things: 'paws', teacher: 'player', label: 'Count the next cat’s paws.', prompt: '**Tap** the paws.', next: 'x' } },
+      x: { scene: { set: 'den', cam: 'inside', cast: [c('snorer', 'lie', 'sleeper-1', { mood: 'sleepy' })], fx: ['night'] }, say: [{ who: 'snorer', text: 'EIGHT?' }], next: 'z' },
+      z: { scene: { set: 'den', cam: 'nest', opts: { hidden: true } }, caption: ['The end.'], end: true }
+    }, cards: {
+      flew: { mark: 'ear', line: 'The fox says it FLEW.' },
+      den: { mark: 'ear', line: 'Sleet says the fox talks about ‘a fine, dry den’.' },
+      piles: { mark: 'ear', line: 'Two piles robbed.' },
+      brag: { mark: 'ear', line: 'Reynard calls ‘It FLEW off’ his little story. He wants the dry den.',
+        link: { with: ['flew', 'den'], line: 'He said FLEW. Now he calls it a story.', lines: { den: 'The same fine, dry den.' } } },
+      stash: { mark: 'eye', line: 'The weasels have a stash: our prey, and ReedClan’s.', link: { with: ['piles'], line: 'Two piles robbed. One stash.' } },
+      glass: { mark: 'eye', line: 'A heap of glass in the weasels’ stash, just like the ‘scale’.' }
+    }, counts: {
+      'fx13-fours': { table: 4, thing: 'paw', things: 'paws', unit: 'cat', units: 'cats', teacher: 'tallyheart', ask: '{a} × {b}', label: 'Paws', hollowThings: 'fours', fillOrder: 'easiest', prompt: 'How many paws?',
+        facts: [{ a: 4, b: 4, prompt: 'Four cats. Front paws: eight. Back paws: eight more.', retryPrompt: true, right: [T('Sixteen!')], rightAgain: true, miss: 'Eight and eight: sixteen. There. We’ll come back to that one.', missLast: 'Eight and eight: sixteen.' },
+          [3, 4], { a: 4, b: 8, lit: 28, prompt: 'Eight cats.', retryPrompt: true }, { a: 8, b: 4, check: true }],
+        praise: ['Two twos make a four!'], helpIntro: 'Close. Let’s hop it together.', helpIntroFar: 'Let’s hop it together.', done: 'That’s the fours.' },
+      'fx13-gone': { table: 4, thing: 'piece', things: 'pieces', unit: 'night', units: 'nights', teacher: 'tallyheart', ask: '{a} × {b}', picture: { kind: 'marks', layout: 'pairs' },
+        facts: [{ a: 4, b: 7, prompt: [{ kind: 'caption', text: 'Four gone a night, for seven nights. How many gone?' }], retryPrompt: true }],
+        help: 'picture', fillFrom: 'fx13-fours', fillOrder: 'easiest', fillVoice: 'borrower', fillPicture: 'borrower', fillIntro: 'An easy one.', avoid: [[3, 4], [4, 4]], praise: [], done: null },
+      'fx13-hail': { table: 4, thing: 'paw', things: 'paws', unit: 'dog', units: 'dogs', teacher: 'hail', ask: '{a} × {b}', picture: { kind: 'dogs' }, who: FIELD,
+        facts: [{ a: 4, b: 4, prompt: [{ who: 'hail', text: 'How many paws go round and round this field?' }], retryPrompt: true }],
+        help: 'picture', helpIntro: 'Hop by fours! Four, eight…', fillFrom: 'fx13-fours', fillOrder: 'easiest', fillVoice: 'borrower', fillPicture: 'borrower', fillIntro: 'An easy one!', praise: [], done: null }
+    }, book: { recap: [{ text: 'Eight.' }], dragonet: { id: 'hail', name: 'Hail', when: { foundHail: true }, lines: ['White with grey speckles.'], pose: 'bounce' } } };
+    fs.writeFileSync(file, 'globalThis.PC = globalThis.PC || {}; PC.story = PC.story || {}; PC.story.fx13 = ' + JSON.stringify(story) + ';\nmodule.exports = PC;\n');
+    const md = generate(file, tmp);
+    const panel = id => md.split('\n### ' + id + ' · panel ')[1].split('\n### ')[0];
+    // one cat's paws, a pair at a time, kept on the page after it; the rim's paws by fours; the bedtime paws
+    assert.match(md, /\*\*Then she counts one cat’s paws, a pair at a time\*\* \(the skip-count, by 2s\): one cat close up, Tallyheart’s, side-on, standing, four paws plain at the bottom \(in play the cat takes the panel\); 2 taps, the front pair, then the back pair \(the next pair glows; a tap anywhere else makes it wiggle\), each lighting its two paws and putting the running total under it and in her own balloon: 2, 4\. Nothing can be got wrong, and nothing is logged\. The last tap turns the page to b, which shows the 4\. The cat stays on the plain pages after it, both pairs of paws lit, 2 and 4 under them\. The instruction under the panel: “Tap her paws\.” For VoiceOver, a hidden button: “Count the next pair of paws\.”/);
+    assert.match(panel('b'), /\*\*The count:\*\* the skip-count’s 4 \(from a\) shows big over the picture, in the times-table font\.\n\n\*\*The paws stay:\*\* in place of this scene, the cat from a, side-on, both pairs of paws lit, 2 and 4 under them; the balloons sit beside it\./);
+    assert.doesNotMatch(panel('c'), /stays?:/, 'the skip after it ends the kept run');
+    assert.match(md, /\*\*Then she counts by 4s on the cats’ paws\*\* \(the skip-count\): five cats side-on, standing, four paws each \(in play they take the panel\); 5 taps, one on each cat in turn \(the next one glows; a tap anywhere else makes it wiggle\), each lighting its four paws and putting its running total under it and in Tallyheart’s balloon: 4, 8, 12, 16, 20\. Nothing can be got wrong, and nothing is logged\. In the picture, left to right: a Clan cat \(coat 1\), Murmurchime, the tortoiseshell warrior, a Clan cat \(coat 3\), a Clan cat \(coat 5\), the grizzled old tom\. The last tap turns the page to d, which does not show the number\./);
+    assert.match(md, /\*\*Then she counts by 4s on the cats’ paws\*\* \(the skip-count\): two cats side-on, standing, four paws each \(in play they take the panel\); 2 taps, one on each cat in turn [^\n]*in her own balloon: 4, 8\. [^\n]*In the picture, left to right: the snoring apprentice, you\. The last tap turns the page to x, which shows the 8\./);
+    assert.match(panel('x'), /\*\*The count:\*\* the skip-count’s 8 \(from w\) shows big over the picture/);
+    // the 4s lesson: the table-4 cats, seven cats lit, its own lines after a miss, a check, the sand two and two
+    assert.match(md, /\*\*Then the Counts lesson\*\* `fx13-fours` \(paws, cats side-on, standing, four paws each, five to a row, lit a cat at a time\): 4 × 4 \(its own question, kept on its retry; its own lines after a right answer; its own lines after a right retry; its own lines after a miss\), 3 × 4, 4 × 8 \(its first seven cats’ paws lit as it is asked \(28\); its own question, kept on its retry\), 8 × 4 \(a check: a right one never makes the fact hard\)\./);
+    assert.match(md, /a miss gets the sand count \(four marks for every cat, scratched two and two with a gap between the pairs, hopped by fours from the first\)/);
+    assert.match(md, /- In the Training Hollow: its button reads “Paws · the 4s”, and Tallyheart calls it “fours”\./);
+    // the twenty-eight's marks two and two, lit a night at a time; Hail's riddle in the field's own four, Hail hopping it
+    assert.match(md, /`fx13-gone` \(pieces, nights side by side, scratched in the sand, each night’s short upright marks in pairs, two and two with a gap between, and nothing else\): 4 × 7 \(its own question, kept on its retry\)\. She types each answer on the keypad; a miss gets the set’s own picture lit a night at a time, Tallyheart hopping it,/);
+    assert.match(md, /`fx13-hail` \(paws, the animals of the set’s own cast side-on, standing, four paws each \(a dog’s paws marked so they light\), lit an animal at a time\): 4 × 4 \(its own question, kept on its retry\)\. Its picture has its own cast in the places, left to right: the huge shaggy dog, the spotty dog, the tiny dog \(mostly bark\), Hail, a Mistscale dragonet [^\n]*, the questions it lends included\. She types each answer on the keypad; a miss gets the set’s own picture lit an animal at a time, Hail hopping it by 4s,/);
+    assert.match(md, /- Asking 4 × 4:\n  - \*\*The speckled dragonet \(Hail\)\*\*: “How many paws go round and round this field\?”/);
+    // the pile round the back: Tallyheart at the mouth, the mouth tapped
+    assert.match(panel('g'), /Tallyheart \(crouching, laughing, crouched at the tunnel mouth’s right edge, the nose at its rim, the shoulders plainly wider than the mouth, facing left\)\. Also: [^\n]*the roots lifted back, and under them the round dark mouth of a small tunnel[^\n]*; the tunnel’s round dark mouth is what she taps\./);
+    assert.match(panel('g'), /\*\*Then she taps the tunnel’s round dark mouth\*\* \(one tap, on this scene\)/);
+    // the tunnel's inside: place words of its own, at night whatever the frame says; Riffle's paw is Riffle's
+    assert.match(panel('h'), /\*\*Scene\.\*\* Tracks: inside the weasels’ tunnel, under the Barking Field, at night \(dark earth walls close round, roots hanging from a low roof, a soft earth floor with faint tiny prints going both ways; dim blue-grey and readable, no light source; never frightening\)\. Camera: inside the tunnel, at cat height: [^\n]*\(`crawl`\)\. Cast: you \(crouching, happy, crawling at the front, facing right, where the roof just clears a sitting cat’s ears, facing right\); Riffle, the otter pup \(scrambling, happy, behind, at the left, partly cut off by the panel’s edge, facing right, the near forepaw is what she taps\)\. Also: the tunnel narrows at the back: an earth lip and roots drawn over the back half of whoever is there\./);
+    assert.match(panel('h'), /\*\*Then she taps Riffle’s near forepaw\*\* \(one tap, on this scene\)/);
+    assert.match(panel('i'), /Tracks: inside the weasels’ tunnel, under the Barking Field, at night \(/);
+    assert.match(panel('i'), /Camera: inside the tunnel where it splits in two: two dark ways, left and right, a root between them \(`fork`\)\. Cast: you \(crouching, sniffing, at the split, facing the way she sniffs, facing left\)\. Also: one pink worm poking out of the left way’s wall\./);
+    // the bank: its own words, its anchors, the half moon, the weeds tapped
+    assert.match(panel('j'), /\*\*Scene\.\*\* Tracks: the railway bank by the tracks, past the Barking Field: nobody’s land, the trains own it, at night \(a high grassy bank, [^\n]*\)\. Camera: wide: the whole bank from the tall weeds at its foot to the two rails along its top[^\n]*\(`wide`\)\. Cast: you \(crouching, happy, in the tunnel’s end hole at the bank’s foot, the hole’s lip over the back half: head and shoulders out, wriggling out, facing right\); Tallyheart \(sitting, happy, on the ground at the bank’s foot, beside the first, further right, facing left\)\. Also: a bright half moon, eight evenings old; the tall weeds at the bank’s foot are what she taps\./);
+    assert.match(panel('j'), /\*\*Then she taps the tall weeds at the bank’s foot\*\*/);
+    // in the weeds: the raised tail tapped is the friend's; the fox on the rails and the weasels at their holes as the weeds see them
+    assert.match(panel('k'), /Tallyheart \(crouching, happy, in the tall weeds at the bank’s foot, right: weeds drawn over her up to the eyes \(ears, eyes and the top of the head above\), facing left, the tail held straight up, its tip curled over, the raised tail’s tip is what she taps\); Reynard, the fox .*?\(trotting along on all fours, tail high, his smile on, happy, up on the tracks at the top of the bank, never bigger than a cat’s head in the weeds, facing left\); Snip, the weasel sister .*?\(head and shoulders out of a hole, the hole’s lip over the rest, happy, at the little hole up the bank, mid-distance, smaller than a cat’s head in the weeds, facing left\)/);
+    assert.match(panel('k'), /\(head and shoulders out of a hole, the hole’s lip over the rest, happy, at the second small hole up the bank, mid-distance, smaller than a cat’s head in the weeds, facing left, a mouse in the mouth \(eyes shut, its tail dangling\)\)/);
+    assert.match(panel('k'), /\*\*Then she taps the tip of Tallyheart’s tail, sticking straight up\*\*/);
+    // the holes close up: the weasels' poses and moods their own way, the mouse in his paws, Riffle's ears tapped, the labels
+    assert.match(panel('l'), /\(one forepaw out, pointing, squeaking, at the little hole, on the slope in front of it \(a weasel here about half a cat’s height\), facing left, a mouse held in the forepaws \(eyes shut, its tail dangling\)\)/);
+    assert.match(panel('l'), /\(sitting up tall on the hind legs, forepaws tucked: a weasel’s look-out, pouting, at the second small hole, just beside the little one and a little higher, on the slope in front of it, facing left\); you \(crouching, happy, crouched at the biggest hole, the head at its mouth \(the mouth about as wide as her shoulders\), facing left\); Riffle, the otter pup \(standing up on his hind legs, happy, a little way off at the left among the weeds, weeds over the legs: keeping watch, facing left, his small round ears are what she taps\)\./);
+    assert.match(panel('l'), /- \*\*Snip \(Snip\)\*\*: “Seven nights of it!”\n- \*\*A weasel \(Snatch\)\*\*: “A HUNDRED\.”/);
+    assert.match(panel('l'), /\*\*Then she taps Riffle’s small round ears\*\*/);
+    // the brag: the fox at a fox's size beside the weasels; the stash and its glass, in place words of their own
+    assert.match(panel('m'), /Camera: low angle up the bank from beside the holes: [^\n]*\(`brag`\)\. Cast: Reynard, the fox .*?\(a paw on his chest, laughing, on the rails at the top of the bank, against the moon and stars, at a fox’s size beside the weasels, facing left\); Snip, the weasel sister .*?\(sitting up tall on the hind legs, forepaws tucked: a weasel’s look-out, cheeky, at the foot of the slope, bottom left, looking up, facing left\)/);
+    assert.match(panel('n'), /\*\*Scene\.\*\* Tracks: inside the biggest hole in the bank: the weasels’ stash, at night \(a low earthen chamber with roots in its roof, [^\n]*\)\. Camera: inside the chamber, at cat height: [^\n]*\(`stash`\)\. Cast: you \(crouching, sniffing, at the chamber’s left edge, in from the mouth: head, shoulders and forepaws in the chamber, the rest cut off by the mouth’s rim, facing left\)\. Also: one small piece at the near edge of the heap of glass is what she taps\./);
+    assert.match(panel('n'), /\*\*Then she taps one small piece of glass at the heap’s near edge\*\*/);
+    assert.match(panel('o'), /Tracks: inside the biggest hole in the bank: the weasels’ stash, at night \([^\n]*Camera: close on the heap of glass in the stash: [^\n]*\(`stash-close`\)\. Cast: you \(crouching, full of wonder, the corner of her face and a forepaw at the panel’s left edge, drawn bigger than the panel, facing left\)\./);
+    // the RUN Tap: her front paw, mid-stride, the leaf in her mouth
+    assert.match(panel('p'), /you \(running flat out, body low and long, forelegs reaching, hind legs pushing, tail streaming behind, happy, crouched at the biggest hole, the head at its mouth \(the mouth about as wide as her shoulders\), facing left, the front paw, mid-stride, is what she taps, a leaf folded round something small, carried in the mouth\)/);
+    assert.match(panel('p'), /\*\*Then she taps her own front paw, mid-stride\*\*/);
+    // the Barking Field at night: silver, the heap asleep, Hail in the log, the path tapped; the fence top and the ring; the dogs' stretch of the path
+    assert.match(panel('q'), /\*\*Scene\.\*\* Field: the Barking Field from the path outside its tall wire fence, at night, silver in the moonlight \(a muddy square of grass\)\./);
+    assert.match(panel('q'), /the huge shaggy dog \(lying down, head on forepaws, happy, lying close to the others inside the fence, near it, behind the wire: the first of the heap, facing left, eyes shut: asleep\)/);
+    assert.match(panel('q'), /Hail, a Mistscale dragonet .*?\(head and shoulders up, the rest of her below, happy, at the hollow log’s mouth far inside the fence, the log’s near rim over the lower body: head and shoulders out, facing left\)/);
+    assert.match(panel('q'), /Also: a bright half moon, eight evenings old; the path ahead, the way to the tracks at the right, is what she taps\. Effects: night, sleepy zzz\./);
+    assert.match(panel('q'), /\*\*Then she taps the path ahead, the way to the tracks\*\*/);
+    assert.match(panel('r'), /you \(walking, happy, up on the fence’s top rail, in front of the wire, facing right\)/);
+    assert.match(panel('r'), /\(running flat out round the field, wings flapping a little, happy, running round the big circle in the field round the hollow log, inside the fence \(the first of four places on it, facing along the loop\), facing left\)/);
+    assert.match(panel('r'), /\(mid-hop, all four paws off the ground, wings half out, tail up, happy, on the big circle round the hollow log, the third place, facing left\)/);
+    assert.match(panel('s'), /\(skidding to a stop: front paws braced, the back end swinging round, happy, along the middle of the path, the nearer of two places, facing left\); Snatch, the weasel brother .*?\(bounding, the back arched, happy, along the middle of the path, the further of two places, facing left, a mouse in the mouth/);
+    assert.match(panel('s'), /\(mid-hop, all four paws off the ground, wings half out, tail up, happy, inside the fence, right up at the wire beside the dogs, facing left\)/);
+    assert.match(panel('s'), /- \*\*The dogs \(The shaggy dog\)\*\*: “BYE, RUDE SQUIRRELS!”/);
+    // home: the leaf at her paws tapped, then the glass open; the raised tails; the den's half moon and her glass
+    assert.match(panel('t'), /you \(crouching, happy, round the back, left of the roots over the tunnel’s mouth, facing right, a leaf folded round something small, at the front paws, the leaf is what she taps\)/);
+    assert.match(panel('t'), /\*\*Then she taps the leaf in her paws\*\*/);
+    assert.match(panel('u'), /you \(sitting, proud, at a spot of this frame’s own \(x 1000, y 960\), facing right, the tail held straight up, its tip curled over, the leaf open on the ground at the front paws, the small clear piece of glass on it shining\); Riffle, the otter pup \(scrambling, happy, round the back, right of the roots over the tunnel’s mouth, facing left, his thick rudder tail stuck straight up\)/);
+    assert.match(panel('v'), /Also: clear weather; no moon; Riffle’s lucky stone in her nest, right where she put it [^\n]*; her secret cards under the moss, a corner showing for each; her piece of glass in its leaf, tucked under the moss beside the corners of bark: the leaf’s tip and one small glint showing\./);
+    assert.match(panel('w'), /Also: a bright half moon, eight evenings old\./);
+    // the brag's two lines, each partner's own on the card row; a one-line link as it always was
+    assert.match(md, /\| `brag` \| ear \| Reynard calls ‘It FLEW off’ his little story\. He wants the dry den\. \| m \| drawn touching `flew` over “He said FLEW\. Now he calls it a story\.”, then `den` over “The same fine, dry den\.” \(its own line\), each from the moment she holds it and this one \|/);
+    assert.match(md, /\| `stash` \| eye \| The weasels have a stash: our prey, and ReedClan’s\. \| n \| drawn touching `piles` from the moment she holds both: “Two piles robbed\. One stash\.” \|/);
+    // Hail's page in her own pose
+    assert.match(md, /\*\*A dragonet page:\*\* Hail \(`hail`\), found in this chapter by a reader whose foundHail is true \(the page is there only then\)\. Her book gains a page for Hail \(drawn mid-hop, all four paws off the ground, wings half out, tail up\)/);
+    // the at-a-glance taps, every one in words
+    assert.match(md, /\| Other things she taps \| the tunnel’s round dark mouth \(g\), Riffle’s near forepaw \(h\), the tall weeds at the bank’s foot \(j\), the tip of Tallyheart’s tail, sticking straight up \(k\), Riffle’s small round ears \(l\), one small piece of glass at the heap’s near edge \(n\), her own front paw, mid-stride \(p\), the path ahead, the way to the tracks \(q\), the leaf in her paws \(t\) \|/);
+    assert.doesNotMatch(md, /\[object Object\]|undefined|Set: |Camera: (wide|hide|holes|brag|stash|stash-close|crawl|fork) \(|\bat (tunnel-end|foot-\d|hole-\d|rails|weeds-\d|stash-mouth|watch|slope-\d|stash-in|near|crawl-\d|fork-\d|poke|heap-\d|log|wire|ring-\d|fence-top|trail-\d)\b|\b(tap|tight|worm|glass|moon): (true|false|"|\[|\d)/, 'every new name has words: none prints as its bare id');
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
 test('its words cover the art’s whole vocabulary: every set (with its time of day), camera, anchor, option value, pose, mood, effect, cast member and cast extra', () => {
   const run = spawnSync(process.execPath, [TOOL, '--check-words'], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);

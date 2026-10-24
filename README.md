@@ -10,12 +10,12 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-20):** chapters 1 to 7 are built as a static web app (`index.html`, `app/`; the
+**Status (2026-10-24):** chapters 1 to 8 are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04). Chapter 6, *The Snake in the Stones*,
 shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`; chapter 7, *The Counts
-Don’t Lie*, 2026-10-20.
+Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24.
 
 ## Docs
 
@@ -28,7 +28,7 @@ Don’t Lie*, 2026-10-20.
   drafted as the actual game text.
 - [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
   the Old Bridge, 04 The Glittering Scale, 05 Riffle's River, 06 The Snake in the Stones, 07 The Counts Don’t
-  Lie), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
+  Lie, 08 The Night Trail), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
   steering calls, the budget and the names, written before drafting), its **story** (what she
   reads), and its **spec** (flags, Counts sets, cards, art needs and build notes, written once the
   story is final).
@@ -405,6 +405,68 @@ Each is Aron's to reverse.
   - *The length*: about 20 minutes, 15 typed answers, 108 frames, about 81 a reading told and 85
     kept.
 
+- **Chapter 8's brief** (2026-10-20; `docs/chapters/08-the-night-trail.brief.md`, each call with its
+  reason). In short:
+  1. The seventh night was robbed too (twenty-eight in seven nights, 4 × 7); on the told path
+     Tallyheart heard them and let them go, to follow them.
+  2. The route is the player's: through the tunnel (a small cat's way: told Tallyheart is too big and
+     goes round above ground to meet her; kept Riffle squeezes through) or round the Barking Field
+     at night (the dogs, and Hail, optional).
+  3. The weasel holes are in the railway embankment, which belongs to no Clan ("The trains own
+     it."), so nobody steps past the last post.
+  4. Her worry's brave moments: *small* in the tunnel, *shiny* at the stash's heap of glass. *Water*
+     moves to chapter 10's Moon Ferry, module-1's raft at night, so the open river stays never dark;
+     *talk* stays the Gathering's.
+  5. She knows the "scale" is tower glass: she lived behind glass all her life. Reynard's brag (the
+     dry den is his once the dragon is chased off) is overheard; he never sees her.
+  6. Snip and Snatch keep decision 21's names: "Snip-" is a Warriors name prefix (Snipkit), the same
+     kind of echo as Puddle, Sleet and Hail; Swipe is clear on both wikis if you'd rather. "Snatch" also
+     has an adult slang sense in English: asked before chapter 8 shipped, Aron kept it (2026-10-24; to a
+     child it means "grab"). A rename would touch only chapter 8's files: the story's words, the
+     speaker `snatch` in `app/ui.js`, its storyboard and the art's cast id.
+  7. On the kept path Tallyheart is waiting when she comes home, more worried than cross, as under
+     the bridge in chapter 2; the dragonet stays the player's secret until chapter 9 decides.
+
+- **Chapter 8's spec** (2026-10-21; `docs/chapters/08-the-night-trail.spec.md`, section 9 has every
+  call with its reason). One engine change, taken under decision 46: a Case File link may give each
+  card it touches its own line (`link.lines`), because the fox's brag touches both FLEW ("He said
+  FLEW. Now he calls it a story.") and the dry den ("The same fine, dry den."). It is a data key, not
+  a new interaction; no card of chapters 1 to 7 uses it, so every live Case File reads as before.
+  The trail's end is one new set, `tracks` (the railway bank, the weasel holes, the stash, and the
+  tunnel's inside as two of its cameras); the Barking Field gets a night look.
+
+- **Chapter 8's build, the review's round** (2026-10-21; the spec's section 7, items 14 and 15, and
+  section 9, calls 25 and 26). In short:
+  1. Chapter 8 opens on a title panel over her sleeping nest ("Chapter 8: The Night Trail"): the
+     start frame must show on both paths, and the story opens on a told screen and a kept one.
+  2. The tunnel's fork is a small cat's way: the roof low over her ears and two small doorway-shaped
+     ways, unequal, so it never looks like a face or a cavern watching her. No mentor's face is drawn
+     laughing with tears or hurt (Tallyheart's wry "Hmph." is a smile).
+  3. The friend is in the picture all the way round the Barking Field (the way past the dogs is told
+     and kept twins); the talk at home stays behind the pile, cutting to a close shot at the tunnel's mouth (`hole`).
+  4. Two rare filler slips are kept and pinned by tests, not fixed with an engine change: after three
+     misses Hail's riddle can lend its own 4 × 4 as "An easy one! Four dogs." (chapter 9's "Engine
+     needs" should take it up; "animals" instead of "dogs" would make the words always true), and after
+     two misses the warm-up can lend its own 2 × 6 as "One from yesterday." (true, and easy).
+
+- **Chapter 9's brief** (2026-10-24; `docs/chapters/09-featherlight.brief.md`, each call with its
+  reason). In short:
+  1. Five days (9 to 13), ending on the eve of the full moon, so chapter 10's Gathering is on the
+     full moon (the art's moon is full at about evening 14).
+  2. The thefts have stopped: Tallyheart knows the tunnel on both paths now and sits by it; the pile
+     stays whole. The tunnel is left open: it is evidence.
+  3. The kept path tells Tallyheart about Sprinkle early on: a medicine cat's remedy needs a grown-up.
+     From then on both paths know the same things.
+  4. Thymeleaf, the medicine cat, is a tom (module-1 does not say). Dew is renamed **Mizzle** (Dew is
+     an exact Warriors name; Mizzle is clear on both wikis), so Mizzle is no longer one of Puddle's
+     alternatives.
+  5. GroveClan's woods are the one new place, reached over the little bridge, not by raft (the otters'
+     ferry raft, and Puddle under it, are chapter 10's Moon Ferry). The reed root comes to the
+     ReedClan border, the river mint from the Holt by Riffle, and the dew from the tower roof, where a
+     cat who never met Squall meets him at last (chapter 4's scene again, as chapter 5 promised).
+  6. Sprinkle practises and lifts off for a few wingbeats; whether her wing holds is the Gathering's.
+     Glintstar is told everything on the last evening, and says the apprentice will speak.
+
 ## Open questions, waiting on Aron
 
 Nothing here blocks the chapter being built; each chapter's own questions are in its text, under
@@ -418,7 +480,8 @@ Nothing here blocks the chapter being built; each chapter's own questions are in
   (Hollypaw, Fernpaw, Stormpaw, Minnowpaw, Sedgepaw, Frostpaw) and "Moon" (Wings of Fire's
   Moonwatcher); "Ironsnakes" (Warriors' Thundersnake; Clankers?); "leaf-drop" (Warriors' leaf-fall);
   Dew (Warriors pairs Drizzle with Dew; before chapter 9 names her); Snip, one of the weasels
-  (Warriors has a Snipkit; before chapter 7 or 8 names them). From chapter 5's names check
+  (Warriors has a Snipkit; chapter 8 names Snip and Snatch on screen: kept, see chapter 8's brief, call
+  6). From chapter 5's names check
   (`docs/chapters/05-riffles-river.md`, "New names"): "skymonster," chapter 5's loudest Clan word
   (it follows Warriors' monster and water-monster pattern); "the Needle," world.md's word for the
   white monument, drawn in chapter 5 and still never on screen (Needle is a Wings of Fire dragon);
@@ -429,7 +492,7 @@ Nothing here blocks the chapter being built; each chapter's own questions are in
   Warriors wiki lists "Puddle" as a name prefix (Puddleshine) and "-puddle" as a suffix (Mudpuddle),
   the same class of echo as Snip. Chapter 5 puts "Puddle" on screen and on a page of her book for
   the first time. If you would rather change it: Slush, Mizzle, Slosh and Shower are clear on both
-  wikis (checked 2026-10-11; Slosh would now echo chapter 6's Sloshbank), and Riffle's slip ("Pud— PUDDLES. Raft puddles.") is rewritten around
+  wikis (checked 2026-10-11; Slosh would now echo chapter 6's Sloshbank, and Mizzle is chapter 9's dragonet), and Riffle's slip ("Pud— PUDDLES. Raft puddles.") is rewritten around
   the new name. **Sleet** (chapter 6, optional) is the same class: no page on either wiki, but the
   Warriors wiki's Names page lists "Sleet-" as a name prefix, from a post on the official *Warrior
   Cats* Instagram, with no cat in the books behind it (chapter 5's check found it; checked again

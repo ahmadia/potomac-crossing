@@ -48,6 +48,29 @@
  * clear; lying low it stands over his body and comes only to his chin in front of his face. Nobody there:
  * nothing, so chapter 4's panels are as they were. The fox is never drawn in his chapter.
  *
+ * Chapter 8 (docs/chapters/08-the-night-trail.spec.md, section 4, "The Barking Field at night"): every option off
+ * by default and every spot additional, so chapters 2 to 7 draw byte for byte as they did (fingerprints in
+ * tests/set-field.test.js, recorded from the shipped chapter 7 snapshot).
+ *   fx night      the night look, drawn by no earlier chapter: silver in the moonlight (the grass's light blades,
+ *                 the path and the wire catch a cool silver light; <g data-part="moonlight"> over the field and
+ *                 the path), the sky the night palette's deep blue with stars, the hollow log turned toward the
+ *                 path with its cut end lit so its dark mouth reads (on `dogs` nearer and bigger: `logNight`).
+ *                 A cat lying `flat` on the path at night lies in the grass at its edge: the path's near edge is
+ *                 grass from the left of the panel to just past her nose (<path data-part="grassy-edge">, under
+ *                 everyone), and chapter 6's grass over Sleet (grassOver) stands over her lower body, in the night's
+ *                 colours (<g data-part="path-grass">, in front of everyone).
+ *   moon: n      the moon n evenings old (the kit's waxingMoon, as over the pile), in the sky of `wide`, `dogs`
+ *                 and `fence`, at night or dusk only, in keep; 8 is a half moon, high.
+ *   tap: 'path'   the slip-past Tap's target on `wide`, `dogs` and `fence`: an unpainted <rect class="pc-tap"
+ *                 data-tap="path"> over the path ahead on the right (the way to the tracks), first in keep.
+ *   spots         (chapter 2's three cameras only, each `elev`, so nobody of chapters 2 to 7 moves) `heap-1`..`heap-3`
+ *                 (`wide`: the dogs asleep in a heap inside the fence), `log` (`wide`, `dogs`: at the log's open end;
+ *                 whoever is there gets its near rim over her lower body, <g data-part="log-cover">), `wire`
+ *                 (`dogs`, `fence`: a dragonet at the wire; bouncing on `dogs` she stretches it, in `fence` it opens
+ *                 round her face), `ring-1`..`ring-4` (`wide`: a big circle round the log), `fence-top` (`wide` only:
+ *                 on the top rail, in front of the wire), `trail-1`, `trail-2` (on the path: right of `path-right`
+ *                 on `wide`, along the middle on `dogs`). Home is to the left on every camera, the tracks to the right.
+ *
  * Registered with PC.art.defineSet (app/art/scenes.js); painters come from PC.art.kit.
  */
 (function (root) {
@@ -62,10 +85,12 @@
 
   var DOG_SPOTS = { 'dog-1': 1, 'dog-2': 1, 'dog-3': 1 };
   var BOUNCY = { jump: 1, bounce: 1 };
+  var CAP_PLAYER = { hail: 1, squall: 1 };
 
   // ------------------------------------------------------------------ colours from the palette
 
   function colors(S) {
+    if (S.tod === 'night') return moonColors(S);
     var p = S.pal, dark = S.tod === 'night' || S.tod === 'storm', sk = p.sky, top = sk[sk.length - 1];
     return {
       dim: dark ? 0.5 : (S.tod === 'dusk' || S.tod === 'sunset') ? 0.15 : 0,
@@ -74,7 +99,29 @@
       wire: mix(p.stoneDark, '#4E5A66', 0.5), wireHi: mix(p.rim, p.stoneLight, 0.35),
       metal: mix(p.stone, '#A9B3BD', 0.45), metalDark: mix(p.stoneDark, '#56626E', 0.5), metalLight: mix(p.stoneLight, '#FFFFFF', 0.35),
       path: mix(p.sand, p.stone, 0.45), pathDark: mix(p.sandDark, p.stoneDark, 0.5), pathLight: mix(p.sandLight, p.stoneLight, 0.5),
-      cloud: mix(top, '#FFFFFF', dark ? 0.12 : 0.85), cloudShade: mix(sk[2], '#FFFFFF', dark ? 0.04 : 0.5)
+      cloud: mix(top, '#FFFFFF', dark ? 0.12 : 0.85), cloudShade: mix(sk[2], '#FFFFFF', dark ? 0.04 : 0.5),
+      // (the grass tufts' light blades: the palette's own by day, as ever)
+      tuftHi: p.grassLight, night: false
+    };
+  }
+
+  // Chapter 8 (docs/chapters/08-the-night-trail.spec.md, section 4, "The Barking Field at night"): the night
+  // look, which no earlier chapter draws (chapters 2, 4 and 6 are all by day). "Silver in the moonlight": the
+  // grass's light blades, the path and the fence's wire catch a cool silver light, the puddles hold the sky,
+  // the hollow log's cut end is lit so its dark mouth reads; the sky is the night palette's deep blue with its
+  // stars (the kit's sky), and `moon` puts the half moon in it. Nothing here runs by day.
+  var SILVER = '#D6E0F0';
+  function moonColors(S) {
+    var p = S.pal, sk = p.sky, top = sk[sk.length - 1];
+    return {
+      dim: 0.3,
+      mud: mix(mix(p.wood, p.woodDark, 0.5), '#56627A', 0.25), mudDark: mix(p.woodDark, p.shade, 0.3), mudLight: mix(mix(p.wood, p.stone, 0.4), p.grassFar, 0.35),
+      water: mix(top, p.water, 0.35), waterHi: mix(SILVER, '#FFFFFF', 0.4),
+      wire: mix(p.stone, '#7A869C', 0.5), wireHi: mix(SILVER, '#FFFFFF', 0.3),
+      metal: mix(p.stoneLight, '#9AA6BA', 0.5), metalDark: mix(p.stoneDark, '#4E5A70', 0.4), metalLight: mix(SILVER, '#FFFFFF', 0.45),
+      path: mix(p.sand, p.stoneLight, 0.4), pathDark: mix(p.sandDark, p.stoneDark, 0.5), pathLight: mix(p.sandLight, SILVER, 0.55),
+      cloud: mix(top, SILVER, 0.22), cloudShade: mix(sk[2], top, 0.5),
+      tuftHi: mix(p.grassLight, SILVER, 0.55), night: true
     };
   }
   function toyCol(S, C, hex) { return mix(hex, S.pal.shade, C.dim); }
@@ -87,8 +134,29 @@
     return path(d, C.cloudShade, { opacity: 0.9 }) + path(d, C.cloud, { transform: 'translate(0 ' + n(-h * 0.14) + ')' });
   }
 
+  // Chapter 8: `moon: n`, the moon n evenings old (the pile's option and painter: the kit's waxingMoon, its lit
+  // side and shape by the art's clock), in the sky of `wide`, `dogs` and `fence` (in the last two behind the
+  // wire, as the sky is), at night or dusk only, and nowhere without a number (off by default: chapters 2, 4 and
+  // 6 have none). Each evening a little bigger and higher; the eighth's (`moon: 8`, a half moon) stands high,
+  // clear of the towers, the clouds, the plane and every head. In `keep`, so the lettering stays off it.
+  var MOON_AT = {
+    main: { x: 1286, y: 144, r: 34, dx: -14, dy: -10, dr: 4, rmax: 58 },
+    dogs: { x: 1296, y: 190, r: 30, dx: -14, dy: -10, dr: 4, rmax: 54 },
+    fence: { x: 956, y: 144, r: 26, dx: -14, dy: -10, dr: 4, rmax: 50 }
+  };
+  function moonAge(o) { var v = o ? o.moon : null; return typeof v === 'number' && isFinite(v) && v > 0 ? clamp(v, 1, 15) : 0; }
+  function fieldMoon(S) {
+    var age = moonAge(S.opts), M = MOON_AT[S.comp];
+    if (!age || !M || !(S.tod === 'night' || S.tod === 'dusk')) return '';
+    var e = clamp(age - 4, 0, 10), x = M.x + M.dx * e, y = Math.max(M.r + 8, M.y + M.dy * e), r = Math.min(M.rmax, M.r + M.dr * e);
+    (S.keep = S.keep || []).push({ x: x - r - 8, y: y - r - 8, w: 2 * r + 16, h: 2 * r + 16 });
+    return K.waxingMoon(S, x, y, r, Math.max(8, 38 - 3 * e), age);
+  }
+
   function skyAndCity(S, C, L) {
     var s = K.sky(S, 0, 0, 1600, L.sky, { sun: L.sun, sunR: L.sunR });
+    // chapter 8: the moon, behind the clouds, the plane and the towers (nothing unless a frame asks)
+    s += fieldMoon(S);
     if (S.tod !== 'storm') L.clouds.forEach(function (c) { s += cloud(S, C, c[0], c[1], c[2], c[3], c[4]); });
     if (L.plane) s += K.plane(S, L.plane[0], L.plane[1], L.plane[2], 'left');
     s += K.towers(S, L.towers);
@@ -194,7 +262,7 @@
     var rail = railH(S, C, -40, 1640, F.top, F.rail);
     s += g(posts + rail + caps, { filter: S.shadow('m') });
     // grass against the foot of the fence, outside
-    s += K.tufts(S, -20, 1620, F.base + F.verge * 0.15, F.base + F.verge * 0.85, F.tufts, F.seed, p.grassNear, p.grassLight, F.tuft);
+    s += K.tufts(S, -20, 1620, F.base + F.verge * 0.15, F.base + F.verge * 0.85, F.tufts, F.seed, p.grassNear, C.tuftHi, F.tuft);
     return s;
   }
 
@@ -323,10 +391,17 @@
   // end turned a little toward the path so the round dark opening shows. Nobody remarks on it
   // (a quiet plant for a later chapter). x, y: the middle of its foot on the ground; len, R: its
   // length and its radius.
+  // (Chapter 8, at night: the same log turned further toward the path, LOG_TURN, so its open end is nearly
+  // round and a dragonet in its mouth reads; its bark and its cut end lit silver, so the dark mouth stands out.)
+  var LOG_TURN = 0.8, LOG_CUT = 0.42;
+  function logColors(S, C) {
+    var p = S.pal;
+    if (C.night) return { bark: mix(p.woodLight, '#8E98AE', 0.35), barkDk: mix(p.woodDark, p.shade, 0.15), cut: mix(p.woodLight, SILVER, LOG_CUT), hollow: mix(p.woodDark, '#000000', 0.6) };
+    return { bark: mix(mix(p.wood, p.woodDark, 0.35), p.shade, C.dim), barkDk: mix(p.woodDark, p.shade, C.dim * 0.6 + 0.1), cut: mix(p.woodLight, p.shade, C.dim), hollow: mix(p.woodDark, '#000000', 0.55) };
+  }
   function hollowLog(S, C, x, y, len, R) {
-    var p = S.pal, x0 = x - len / 2, x1 = x + len / 2, top = y - R * 2, cy = y - R, ex = R * 0.46;
-    var bark = mix(mix(p.wood, p.woodDark, 0.35), p.shade, C.dim), barkDk = mix(p.woodDark, p.shade, C.dim * 0.6 + 0.1);
-    var cut = mix(p.woodLight, p.shade, C.dim), hollow = mix(p.woodDark, '#000000', 0.55), r = rng(Math.round(x * 3 + y));
+    var p = S.pal, x0 = x - len / 2, x1 = x + len / 2, top = y - R * 2, cy = y - R, ex = R * (C.night ? LOG_TURN : 0.46);
+    var LC = logColors(S, C), bark = LC.bark, barkDk = LC.barkDk, cut = LC.cut, hollow = LC.hollow, r = rng(Math.round(x * 3 + y));
     var s = ell(x + R * 0.3, y + R * 0.06, len * 0.56, R * 0.3, p.shade, { opacity: 0.3 });
     // the barrel: from the open end (an ellipse at x0) to a rounded far end at x1
     var body = 'M' + n(x0) + ' ' + n(top) + 'H' + n(x1 - ex) + 'A' + n(ex) + ' ' + n(R) + ' 0 0 1 ' + n(x1 - ex) + ' ' + n(y) + 'H' + n(x0) + 'Z';
@@ -339,7 +414,7 @@
     }
     s += stroke(grain, barkDk, Math.max(1, R * 0.08), { opacity: 0.55 });
     s += ell(x0 + len * 0.62, cy - R * 0.2, R * 0.2, R * 0.13, barkDk, { opacity: 0.7 });
-    s += stroke('M' + n(x0 + ex) + ' ' + n(top + R * 0.12) + 'H' + n(x1 - ex * 1.3), '#FFFFFF', Math.max(1, R * 0.1), { opacity: 0.25 });
+    s += stroke('M' + n(x0 + ex) + ' ' + n(top + R * 0.12) + 'H' + n(x1 - ex * 1.3), C.night ? SILVER : '#FFFFFF', Math.max(1, R * 0.1), { opacity: C.night ? 0.55 : 0.25 });
     // moss on its back
     s += path(blob(x0 + len * 0.42, top + R * 0.06, len * 0.16, R * 0.16, 8, r, 0.3, 0.3) + blob(x0 + len * 0.72, top + R * 0.1, len * 0.09, R * 0.12, 7, r, 0.3, 0.3), mix(p.moss, p.shade, C.dim));
     // the open end: the cut rim, a ring, and the dark round hollow inside
@@ -347,8 +422,39 @@
     s += ell(x0 + ex * 0.06, cy + R * 0.04, ex * 0.66, R * 0.7, hollow);
     s += ell(x0 + ex * 0.2, cy + R * 0.12, ex * 0.4, R * 0.46, '#000000', { opacity: 0.35 });
     // grass grown up round its foot
-    s += K.tufts(S, x0 - R * 0.6, x1 + R * 0.4, y - R * 0.1, y + R * 0.15, Math.max(4, Math.round(len / 18)), Math.round(x + y), p.grassNear, p.grassLight, Math.max(0.35, R / 40));
+    s += K.tufts(S, x0 - R * 0.6, x1 + R * 0.4, y - R * 0.1, y + R * 0.15, Math.max(4, Math.round(len / 18)), Math.round(x + y), p.grassNear, C.tuftHi, Math.max(0.35, R / 40));
     return s;
+  }
+
+  // Where the hollow log lies in this panel: the composition's own (by day, as ever), or at night its night
+  // log (`logNight`: on `dogs` nearer and bigger, so a dragonet's face in its mouth reads there).
+  function logOf(S, L) { return S.tod === 'night' && L.logNight ? L.logNight : L.log; }
+
+  // Chapter 8: anchor `log` (`wide`, `dogs`), at the hollow log's open end: whoever is there has the log's near
+  // rim drawn over her lower body, just after her (<g data-part="log-cover">), her head and shoulders out (a
+  // dragonet popping up out of it). Below her shoulders (a quarter of her head's height under her chin, kept
+  // inside the open end) the log is drawn again over her: the barrel, the cut rim, and the dark of the hollow,
+  // which takes her lower body into it softly; the grass at its foot in front. Nobody there: nothing.
+  function logCover(S, C, L) {
+    var a = (S.anchorMap || {}).log, m = null, lg = logOf(S, L);
+    (S.cast || []).forEach(function (c) { if (!m && c && c.at === 'log') m = c; });
+    if (!a || !m || !lg) return '';
+    var p = S.pal, x = lg[0], y = lg[1], len = lg[2], R = lg[3], x0 = x - len / 2, x1 = x + len / 2, top = y - R * 2, cy = y - R, ex = R * (C.night ? LOG_TURN : 0.46);
+    var H = a.h * (m.size > 0 ? +m.size : 1), est = castEstimate(S, m, a);
+    var head = est && est.head ? est.head : [a.x - H * 0.2, a.y - H, a.x + H * 0.2, a.y - H * 0.6];
+    var ys = clamp(head[3] + (head[3] - head[1]) * 0.25, cy - R * 0.35, cy + R * 0.55);
+    var LC = logColors(S, C), bark = LC.bark, barkDk = LC.barkDk, cut = LC.cut, hollow = LC.hollow;
+    var body = 'M' + n(x0) + ' ' + n(top) + 'H' + n(x1 - ex) + 'A' + n(ex) + ' ' + n(R) + ' 0 0 1 ' + n(x1 - ex) + ' ' + n(y) + 'H' + n(x0) + 'Z';
+    var s = path(body, S.lin('flog', [[0, mix(bark, p.rim, 0.25)], [0.45, bark], [1, barkDk]]));
+    // the cut rim and its ring, then the hollow: dark from a little below her shoulders down
+    s += ell(x0, cy, ex, R, cut) + ell(x0, cy, ex * 0.8, R * 0.84, 'none', { stroke: barkDk, 'stroke-width': n(Math.max(0.8, R * 0.05)), opacity: 0.5 });
+    s += ell(x0 + ex * 0.06, cy + R * 0.04, ex * 0.66, R * 0.7, S.linU([[0, hollow, 0], [0.5, hollow, 0.85], [1, hollow, 1]], 0, ys, 0, ys + R * 0.4));
+    // the lit lip along the bottom of the opening, so the rim reads as the near edge she is over (soft: a white
+    // dragonet's lower body must not read as wearing a hoop)
+    s += stroke('M' + n(x0 - ex * 0.62) + ' ' + n(cy + R * 0.5) + 'Q' + n(x0) + ' ' + n(cy + R * 0.86) + ' ' + n(x0 + ex * 0.62) + ' ' + n(cy + R * 0.5), mix(cut, '#FFFFFF', 0.25), Math.max(1, R * 0.05), { opacity: 0.4 });
+    var clip = S.clip('flogcover', rect(x0 - ex - 2, ys, x1 - x0 + ex + 4, y + R - ys + 2, '#fff'));
+    var grass = K.tufts(S, x0 - R * 0.6, x1 + R * 0.4, y - R * 0.1, y + R * 0.15, Math.max(4, Math.round(len / 18)), Math.round(x + y), p.grassNear, C.tuftHi, Math.max(0.35, R / 40));
+    return g(g(s, { 'clip-path': clip }) + grass, { 'data-part': 'log-cover', 'data-top': n(ys) });
   }
 
   function toy(S, C, t) {
@@ -369,16 +475,20 @@
     far += rect(-40, ftop - FF.h * 0.03, 1680, Math.max(2, FF.h * 0.05), C.metal, { opacity: 0.8 });
     for (var x = FF.step / 2; x < 1640; x += FF.step) far += rect(x - FF.h * 0.045, ftop - FF.h * 0.08, FF.h * 0.09, FF.h * 1.1, C.metal) + rect(x - FF.h * 0.045, ftop - FF.h * 0.08, FF.h * 0.03, FF.h * 1.1, C.metalLight, { opacity: 0.7 });
     s += g(far, { filter: S.shadow('s') });
-    s += K.tufts(S, -20, 1620, F.top + 4, F.base - 6, F.tufts, F.seed, p.grassNear, p.grassLight, F.tuft);
+    // chapter 8, at night: the moonlight lying silver over the grass, brightest far off
+    if (C.night) s += rect(-20, F.top - 4, 1640, F.base - F.top + 24, S.linU([[0, SILVER, 0.2], [0.55, SILVER, 0.08], [1, SILVER, 0.03]], 0, F.top, 0, F.base), { 'data-part': 'moonlight' });
+    s += K.tufts(S, -20, 1620, F.top + 4, F.base - 6, F.tufts, F.seed, p.grassNear, C.tuftHi, F.tuft);
     s += K.flowers(S, 0, 1600, F.top + 10, F.base - 20, Math.round(F.tufts / 9), F.seed + 1, '#FFF6EA');
     L.mud.forEach(function (m, i) { s += mudPatch(S, C, m[0], m[1], m[2], m[3], F.seed + 10 + i * 5); });
     (L.holes || []).forEach(function (h) { s += hole(S, C, h[0], h[1], h[2], h[3]); });
     L.puddles.forEach(function (m, i) { s += puddle(S, C, m[0], m[1], m[2], m[3], F.seed + 40 + i * 5); });
     s += prints(S, C, L.prints);
     // tufts along the mud's edges, nearer ones bigger
-    s += K.tufts(S, -20, 1620, F.base - (F.base - F.top) * 0.35, F.base, Math.round(F.tufts * 0.4), F.seed + 2, p.grassNear, p.grassLight, F.tuft * 1.1);
-    // the hollow log, far in, behind the wire like everything in the field
-    if (L.log) s += g(hollowLog(S, C, L.log[0], L.log[1], L.log[2], L.log[3]), { filter: S.shadow('s'), 'data-part': 'log' });
+    s += K.tufts(S, -20, 1620, F.base - (F.base - F.top) * 0.35, F.base, Math.round(F.tufts * 0.4), F.seed + 2, p.grassNear, C.tuftHi, F.tuft * 1.1);
+    // the hollow log, far in, behind the wire like everything in the field (chapter 8: at night, where the
+    // composition's night log lies, its open end turned toward the path, so whoever is in it reads)
+    var lg = logOf(S, L);
+    if (lg) s += g(hollowLog(S, C, lg[0], lg[1], lg[2], lg[3]), { filter: S.shadow('s'), 'data-part': 'log' });
     var toys = '';
     L.toys.forEach(function (t) { toys += toy(S, C, t); });
     s += g(toys, { filter: S.shadow('s') });
@@ -393,6 +503,8 @@
     s += rect(-20, L.fence.base - 6, 1640, P.top - L.fence.base + 30, S.lin('fverge', [[0, p.grass], [1, p.grassNear]]));
     var edge = 'M-20 ' + n(P.top + 8) + 'C300 ' + n(P.top - 6) + ' 700 ' + n(P.top + 14) + ' 1000 ' + n(P.top + 2) + 'S1500 ' + n(P.top - 4) + ' 1620 ' + n(P.top + 6);
     s += path(edge + 'V1020H-20Z', S.lin('fpath', [[0, C.pathLight], [0.35, C.path], [1, mix(C.path, C.pathDark, 0.35)]]));
+    // chapter 8, at night: the path silver in the moonlight, brightest along its far edge
+    if (C.night) s += path(edge + 'V1020H-20Z', S.linU([[0, SILVER, 0.3], [0.4, SILVER, 0.1], [1, SILVER, 0]], 0, P.top, 0, 1000), { 'data-part': 'moonlight' });
     s += stroke(edge, p.rim, 3 * P.k, { opacity: 0.55 });
     var a = '', b = '';
     for (var i = 0; i < P.grit; i++) {
@@ -444,6 +556,22 @@
     var out = [], bounces = [], noseDone = S.comp !== 'fence', cast = S.cast || [], AM = S.anchorMap || {};
     for (var i = 0; i < cast.length; i++) {
       var m = cast[i];
+      // chapter 8: whoever is at `wire` (Hail, bouncing up to the fence): on `dogs`, bouncing or jumping, she
+      // stretches it as a dog does (BOING); in `fence`, face to face with a cat on the path, her face pressed to
+      // it, the diamonds open round her face so it reads, and the lettering keeps off it
+      if (m && m.at === 'wire' && AM.wire) {
+        var wa = AM.wire, we = castEstimate(S, m, wa), wh = we && we.head ? we.head : [wa.x - wa.h * 0.2, wa.y - wa.h * 0.95, wa.x + wa.h * 0.2, wa.y - wa.h * 0.55];
+        var wc = [(wh[0] + wh[2]) / 2, (wh[1] + wh[3]) / 2], wr = Math.max(wh[2] - wh[0], wh[3] - wh[1]) / 2;
+        if (S.comp === 'fence') {
+          var fr = clamp(wr * 0.8, F.cell * 0.3, F.cell * 0.7);
+          out.push({ x: wc[0], y: wc[1], a: fr, s: fr * 1.75 });
+          (S.keep = S.keep || []).push({ x: wh[0], y: wh[1], w: wh[2] - wh[0], h: wh[3] - wh[1] });
+        } else if (BOUNCY[m.pose]) {
+          out.push({ x: wc[0], y: wc[1] + (wh[3] - wh[1]) * 0.6, a: F.cell * 0.42, s: F.cell * 2.2 });
+          bounces.push(wa.x);
+        }
+        continue;
+      }
       if (!m || m.who !== 'dog' || typeof m.at !== 'string' || !DOG_SPOTS[m.at] || !AM[m.at]) continue;
       var a = AM[m.at], h = headOf(m, a);
       if (!noseDone) {
@@ -624,6 +752,15 @@
     try { ch = fn(who, o); ref = fn('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }); } catch (e) { return null; }
     if (!ch || !ch.w || !ch.h || !ref || !ref.h) return null;
     var s = a.h * (m.size > 0 ? +m.size : 1) / ref.h, band = art.sizeBands && art.sizeBands[who];
+    // (chapter 8: a dragonet scenes.js holds to our cat's size, sitting no taller than she sits: Squall's
+    // rule, Hail's too. Only these two; nobody of chapters 2 to 7 stands at a spot that reads this.)
+    if (CAP_PLAYER[who]) {
+      try {
+        var tall = function (c) { return c && c.h ? c.h - (c.headBox ? c.headBox.y0 : 0) : 0; };
+        var me = tall(fn(who, { pose: 'sit', mood: 'neutral' })), pl = tall(fn('player', { pose: 'sit', mood: 'neutral', look: o.look || S.look || {} }));
+        if (me > 0 && pl > 0) s = Math.min(s, a.h / ref.h * pl / me);
+      } catch (e) { /* as it is */ }
+    }
     if (band) {
       var meas = function (w, pose) {
         var c = fn(w, { pose: pose, mood: 'neutral' }), hb = c && c.headBox;
@@ -649,7 +786,12 @@
     var a = (S.anchorMap || {}).grass, m = null;
     (S.cast || []).forEach(function (c) { if (!m && c && c.at === 'grass') m = c; });
     if (!a || !m) return '';
-    var H = a.h * (m.size > 0 ? +m.size : 1), est = castEstimate(S, m, a), px = B.post.x + B.post.w / 2 + 4;
+    return grassOver(S, G, a, m, B.post.x + B.post.w / 2 + 4, B.seed + 900 + Math.round(a.x), 'grass-cover');
+  }
+  // The blades of that grass over whoever `m` is at spot `a`: never left of `px`, its colours `G`, its own seed
+  // (chapter 6's for Sleet; chapter 8's for a cat lying flat on the path at night, below)
+  function grassOver(S, G, a, m, px, seed0, part) {
+    var H = a.h * (m.size > 0 ? +m.size : 1), est = castEstimate(S, m, a);
     var body = est ? est.body : [a.x - H * 0.6, a.y - H, a.x + H * 0.6, a.y], head = est && est.head ? est.head : [a.x - H * 0.2, a.y - H, a.x + H * 0.2, a.y - H * 0.6];
     var chinH = a.y - head[3], upright = chinH > H * 0.75, over = Math.max(H * 0.12, (a.y - body[1]) * 0.45);
     var m0 = H * 0.1, w0 = Math.max(1.6, H * 0.016), x0 = Math.max(px + w0 * 1.4, body[0] - H * 0.08, -40), x1 = Math.min(body[2] + H * 0.08, 1640);
@@ -659,7 +801,7 @@
       var t = upright ? Math.min(H * 0.34, chinH) : over;
       return x > head[0] - m0 && x < head[2] + m0 ? Math.min(t, chinH) : t;
     }
-    var r = rng(B.seed + 900 + Math.round(a.x)), a1 = '', b1 = '', c1 = '', heads = '', gap = Math.max(5, H * 0.03), top = a.y;
+    var r = rng(seed0), a1 = '', b1 = '', c1 = '', heads = '', gap = Math.max(5, H * 0.03), top = a.y;
     for (var x = x0; x < x1; x += gap * (0.55 + r() * 0.9)) {
       var tall = tallAt(x);
       // (in front of a chin that lies on the ground, no grass at all)
@@ -673,7 +815,7 @@
       if (seed) heads += K.leafD(x + lean, y - hh * 0.97, sh, -1.57 + (r() - 0.5) * 0.5, Math.max(1.2, H * 0.011));
     }
     return g(path(c1, G.dark, { opacity: 0.92 }) + path(a1, G.base) + path(b1, G.light, { opacity: 0.95 }) + path(heads, G.seed),
-      { 'data-part': 'grass-cover', 'data-top': n(top) });
+      { 'data-part': part, 'data-top': n(top) });
   }
 
   /* The border, drawn for one of its three compositions (L.border). Back to front: sky, trees and
@@ -759,6 +901,8 @@
       mud: [[830, 652, 360, 52], [800, 744, 770, 22], [250, 592, 140, 22], [1300, 590, 120, 18]],
       holes: [[1330, 640, 30, 8]],
       log: [706, 584, 134, 18],
+      // chapter 8: at night the log a little bigger, its open end turned toward the path (LOG_TURN)
+      logNight: [706, 588, 150, 21],
       puddles: [[700, 664, 88, 13], [1060, 700, 58, 9], [430, 746, 66, 8]],
       prints: [[560, 640, 1040, 668, 9, 1, 3], [180, 742, 640, 748, 8, 1.2, 5], [960, 742, 1440, 738, 8, 1.2, 9]],
       toys: [
@@ -784,6 +928,9 @@
       mud: [[780, 612, 430, 56], [800, 820, 820, 36], [1360, 548, 150, 22]],
       holes: [[300, 596, 40, 10]],
       log: [1004, 546, 150, 20],
+      // chapter 8: at night nearer and bigger, its open end in the gap between the spotty dog at `dog-2` and the
+      // tiny one at `dog-3`, so a dragonet's face in its mouth reads (and the log is clear of every dog's face)
+      logNight: [1190, 700, 320, 62],
       puddles: [[560, 622, 118, 17], [1150, 822, 84, 12], [240, 822, 76, 11]],
       prints: [[620, 590, 1120, 630, 9, 1.3, 13], [120, 820, 700, 826, 9, 1.8, 15], [880, 822, 1500, 816, 9, 1.8, 17]],
       toys: [
@@ -892,6 +1039,18 @@
     }
   };
 
+  // Chapter 8: `tap: 'path'` (on `wide`, `dogs` and `fence`): the slip-past Tap's target, an unpainted <rect
+  // class="pc-tap" data-tap="path"> (as the pile's and the marsh's) over the path ahead on the right, where the
+  // way to the tracks goes: right of a cat at `path-right` on `wide` and `fence`; on `dogs`, where `path-right`
+  // stands at the panel's right edge, the path between the two cats' spots. First in keep, so the lettering keeps
+  // off it. Nothing is painted, so a frame with it draws as it does without.
+  var TAP_PATH = { main: { x: 1236, y: 836, w: 364, h: 164 }, dogs: { x: 760, y: 898, w: 500, h: 102 }, fence: { x: 930, y: 858, w: 670, h: 142 } };
+  function tapRect(S, name, b) {
+    if (!b) return '';
+    (S.keep = S.keep || []).unshift({ x: b.x - 4, y: b.y - 4, w: b.w + 8, h: b.h + 8 });
+    return rect(b.x, b.y, b.w, b.h, 'none', { 'class': 'pc-tap', 'data-tap': name, 'pointer-events': 'none' });
+  }
+
   function draw(S) {
     var L = COMPS[S.comp] || COMPS.main, p = S.pal, C = colors(S), back = '', over = '', front = '';
     if (L.border) return drawBorder(S, L);
@@ -899,6 +1058,14 @@
     back += treeLine(S, L);
     back += field(S, C, L);
     back += pathway(S, C, L);
+    // chapter 8, at night: where a cat lies flat on the path, its near edge is grass (below)
+    var flats = C.night ? flatOnPath(S, L) : [];
+    if (flats.length) back += grassyEdge(S, C, L, flats);
+    // chapter 8: the slip-past Tap's target, the path ahead on the right (the way to the tracks)
+    if (S.opts.tap === 'path') back += tapRect(S, 'path', TAP_PATH[S.comp]);
+    // chapter 8: the hollow log's near rim over whoever is in its mouth, drawn just after her
+    var lc = logCover(S, C, L);
+    if (lc) S.covers.log = lc;
 
     // the near fence goes over everyone in the field
     var W = wirePushes(S, L.fence);
@@ -916,13 +1083,49 @@
     L.front.tufts.forEach(function (t, i) {
       for (var x = t[0]; x < t[1]; x += 70) {
         var x1 = Math.min(t[1], x + 70), hit = cats.some(function (c) { return x1 > c[0] && x < c[1]; });
-        if (!hit) front += K.tufts(S, x, x1, L.front.y0, L.front.y1, 4, 520 + i * 31 + Math.round(x), p.grassNear, p.grassLight, L.front.size);
+        if (!hit) front += K.tufts(S, x, x1, L.front.y0, L.front.y1, 4, 520 + i * 31 + Math.round(x), p.grassNear, C.tuftHi, L.front.size);
       }
     });
+    // ... and the grass over her lower body, in front of everyone
+    flats.forEach(function (q) { front += grassOver(S, nightGrass(S, C), q.a, q.m, -40, L.path.seed + 60 + Math.round(q.a.x), 'path-grass'); });
     return { back: back, over: g(over, { 'data-part': 'fence' }), front: g(front, { filter: S.shadow('s') }) };
   }
 
-  var B = { z: 'behind' };
+  // Chapter 8, at night: a cat lying flat on the path lies in the grass at its edge (“You drop flat in the grass.”).
+  // The path's near edge, from the left of the panel to just past the furthest nose, is grass (the verge's greens,
+  // tufts on it, under everyone), and grass stands over her lower body as Sleet's long grass stands over his
+  // (chapter 6's grassOver: about half as high as she lies, up to her chin in front of her face, never over her
+  // eyes), in front of everyone. Only at night, which no earlier chapter draws: chapters 2, 4 and 6 are untouched.
+  // Whoever lies `flat` at a spot on the path (a named one or one of the frame's own): [{ m, a }].
+  function flatOnPath(S, L) {
+    var out = [];
+    (S.cast || []).forEach(function (m) {
+      var a = m && m.pose === 'flat' ? (typeof m.at === 'string' ? (S.anchorMap || {})[m.at] : m.at) : null;
+      if (a && isFinite(a.x) && isFinite(a.y) && a.h > 0 && a.y > L.path.top) out.push({ m: m, a: a });
+    });
+    return out;
+  }
+  function nightGrass(S, C) {
+    var p = S.pal;
+    return { dark: mix(p.grassNear, p.shade, 0.35), base: p.grassNear, light: C.tuftHi, seed: mix(C.tuftHi, SILVER, 0.4) };
+  }
+  function grassyEdge(S, C, L, flats) {
+    var p = S.pal, P = L.path, r = rng(P.seed + 90), x1 = -40;
+    flats.forEach(function (q) {
+      var e = castEstimate(S, q.m, q.a), H = q.a.h;
+      x1 = Math.max(x1, (e ? Math.max(e.body[2], e.head ? e.head[2] : -40) : q.a.x + H * 0.6) + H * 0.15);
+    });
+    // its edge wanders, and runs down from the verge into the path toward the bottom of the panel
+    var top = P.top - 4, pts = [[-40, top], [x1 - 60, top]];
+    for (var y = top + 20; y <= 1030; y += 30) pts.push([x1 + (r() - 0.5) * 36 + (y - top) * 0.12, y]);
+    var d = 'M' + pts.map(function (q) { return n(q[0]) + ' ' + n(q[1]); }).join('L') + 'L-40 1030Z';
+    var s = path(d, S.lin('fgedge', [[0, p.grass], [1, p.grassNear]]), { 'data-part': 'grassy-edge' });
+    s += path(d, S.linU([[0, SILVER, 0.16], [1, SILVER, 0.04]], 0, P.top, 0, 1000));
+    for (var x = -20, i = 0; x < x1 + 20; x += 60, i++) s += K.tufts(S, x, Math.min(x + 60, x1 + 20), P.top + 10, 1000, 5, P.seed + 100 + i * 13, p.grassNear, C.tuftHi, 1.5);
+    return s;
+  }
+
+  var B = { z: 'behind' }, BE = { z: 'behind', elev: true }, E = { elev: true };
   art.defineSet('field', {
     label: 'the Barking Field', tod: 'day', draw: draw,
     cams: {
@@ -937,17 +1140,43 @@
       main: {
         'path-left': A(470, 918, 250), 'path-right': A(1050, 936, 262, 'left'),
         'dog-1': A(320, 752, 150, 'right', B), 'dog-2': A(800, 756, 152, 'left', B), 'dog-3': A(1290, 752, 150, 'left', B),
-        field: A(1160, 604, 84, 'left', B)
+        field: A(1160, 604, 84, 'left', B),
+        // chapter 8 (spec section 4, "The Barking Field at night"). Every new spot is `elev`: out of the depth a spot
+        // of its own gets and out of the first-free-spot pick, so every panel of chapters 2 to 7 places everyone
+        // exactly as before. The heap: three dogs lying close together inside the fence, near it, behind the wire,
+        // between the cats' two spots on the path
+        'heap-1': A(740, 750, 146, 'left', BE), 'heap-2': A(850, 758, 150, 'left', BE), 'heap-3': A(900, 760, 140, 'left', BE),
+        // at the hollow log's open end (its night place), far inside the fence: the log's rim over her lower body
+        log: A(631, 588, 78, 'left', BE),
+        // four spots in the field round the log for a big, silly circle: the near two running right, the far two
+        // running back left, each facing along the loop (1, 2, 3, 4 and round again). No face behind a post or
+        // another runner's face, and `ring-1` clear of the dogs at `dog-1`..`dog-3` (Hail runs off from there while
+        // they turn)
+        'ring-1': A(600, 670, 114, 'right', BE), 'ring-2': A(1160, 690, 122, 'right', BE), 'ring-3': A(1400, 614, 88, 'left', BE), 'ring-4': A(300, 608, 86, 'left', BE),
+        // on the fence's top rail (its top at y 243), between the first two posts, in front of the wire: a climber
+        // walking it right, the dogs at `dog-1`..`dog-3` jumping below her (wide only: on `dogs` the rail is at y 74);
+        // well left of the night sky's plane (at x 930), so it never flies into her face
+        'fence-top': A(330, 243, 200, 'right', E),
+        // on the path right of `path-right`, the way to the tracks: two weasels chasing the cats, who run left, home
+        'trail-1': A(1290, 934, 262, 'left', E), 'trail-2': A(1480, 930, 260, 'left', E)
       },
       dogs: {
         'path-left': A(150, 992, 300), 'path-right': A(1450, 996, 310, 'left'),
         'dog-1': A(400, 832, 225, 'right', B), 'dog-2': A(800, 836, 228, 'left', B), 'dog-3': A(1200, 832, 225, 'left', B),
-        field: A(1150, 562, 110, 'left', B)
+        field: A(1150, 562, 110, 'left', B),
+        // chapter 8: at the night log's open end, nearer and bigger here, so her face reads
+        log: A(1030, 700, 200, 'left', BE),
+        // inside, at the wire, beside the dogs: a dragonet's spot in the gap between `dog-2` and `dog-3`
+        wire: A(1010, 842, 228, 'left', BE),
+        // along the middle of the path (no room right of `path-right` here): the weasels alone on the path
+        'trail-1': A(700, 968, 286, 'left', E), 'trail-2': A(1050, 978, 292, 'left', E)
       },
       fence: {
         'path-left': A(330, 962, 300), 'path-right': A(720, 948, 290),
         'dog-1': A(1080, 786, 245, 'left', B), 'dog-2': A(1460, 770, 210, 'left', B), 'dog-3': A(560, 772, 175, 'right', B),
-        field: A(900, 534, 110, 'left', B)
+        field: A(900, 534, 110, 'left', B),
+        // chapter 8: inside, at the wire, face to face with a cat on the path at `path-left`
+        wire: A(640, 794, 255, 'left', BE)
       },
       // chapter 4. The fox sits past the post; the three in front are drawn over the four behind
       // them (z: 'behind') whatever the cast's order; the dogs are behind the wire that runs away.
@@ -990,7 +1219,9 @@
         grass: A(1260, 1010, 440, 'left', { elev: true })
       }
     },
-    opts: { foxTail: [false, true] }, defaults: {}
+    // chapter 8: `moon` (a number, the evening's age: night or dusk, where the camera shows sky) and the
+    // slip-past Tap's target on the path ahead (`tap: 'path'`), both off by default
+    opts: { foxTail: [false, true], moon: 'number', tap: ['none', 'path'] }, defaults: { tap: 'none' }
   });
 
   // for the tests: where each border composition puts the last post and the two runs of the fence
@@ -1000,6 +1231,19 @@
       var B = COMPS[k].border;
       if (B) out.border[k] = { post: { x: B.post.x, top: B.post.top, base: B.post.base, w: B.post.w }, left: { near: B.left.near.slice(), far: B.left.far.slice() },
         right: { near: B.right.near.slice(), far: B.right.far.slice() }, pathEnd: B.path.end.map(function (q) { return q.slice(); }), log: !!COMPS[k].log };
+    });
+    // chapter 8: chapter 2's three compositions as the night draws them: the log by day and by night (its open end
+    // turned LOG_TURN of its radius toward the path at night, 0.46 by day), the slip-past Tap's box, the near fence
+    // (its rail's middle `top`, its foot `base`, the rail's thickness, the posts), the path's top edge, the
+    // towers, the path's puddles ([cx, cy, rx, ry]), and where `moon: age` stands
+    out.logTurn = { day: 0.46, night: LOG_TURN };
+    out.night = {};
+    ['main', 'dogs', 'fence'].forEach(function (k) {
+      var L = COMPS[k], F = L.fence, M = MOON_AT[k];
+      out.night[k] = { log: (L.logNight || L.log).slice(), dayLog: L.log.slice(), tapPath: JSON.parse(JSON.stringify(TAP_PATH[k])),
+        fence: { top: F.top, base: F.base, rail: F.rail, cell: F.cell, posts: F.posts.slice() }, pathTop: L.path.top, towers: JSON.parse(JSON.stringify(L.towers)),
+        pathPuddles: L.path.puddles.map(function (q) { return q.slice(); }),
+        moon: function (age) { var e = clamp(age - 4, 0, 10); return { x: M.x + M.dx * e, y: Math.max(M.r + 8, M.y + M.dy * e), r: Math.min(M.rmax, M.r + M.dr * e) }; } };
     });
     return out;
   };

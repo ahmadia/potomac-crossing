@@ -346,3 +346,48 @@ test('storyboard.mjs --check-words: words for every name chapter 7’s spec adds
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+/* Chapter 8: the same, for every new name in chapter 8's spec (docs/chapters/08-the-night-trail.spec.md,
+ * section 4), with its option declarations exactly as the spec gives them: the new set `tracks` (its eight
+ * cameras, its anchors, `moon`, the three taps, `tight`, `worm`); the Barking Field at night (`moon`, the
+ * path tapped, the heap, the log, the wire, the ring, the fence top, the trail); the pile's `poke` and the
+ * tunnel's mouth tapped; the den's half moon and her glass; Hail, Snip and Snatch and every pose of theirs;
+ * the cats' run, the dogs' lie, Reynard's trot; the raised tail, the tail and the leaf tapped, the leaf, the
+ * glass and the mouse held. Riffle's taps (`ears`, `paw`) are names chapter 6 gave already. */
+test('storyboard.mjs --check-words: words for every name chapter 8’s spec adds to the art (the bank by the tracks and the tunnel’s inside, the field at night, the pile’s poke and mouth, the den’s half moon and glass, Hail, Snip and Snatch, the new poses and extras), declared as the spec has them; a name the spec never gave fails', () => {
+  const fs = require('node:fs'), os = require('node:os');
+  const TOOL = path.join(ROOT, 'tools/storyboard.mjs');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-words-'));
+  try {
+    const WEASEL = ['stand', 'up', 'run', 'skid', 'peek', 'point', 'curl'];
+    const ch08 = {
+      sets: {
+        tracks: { cams: ['wide', 'hide', 'holes', 'brag', 'stash', 'stash-close', 'crawl', 'fork'],
+          anchors: ['tunnel-end', 'foot-1', 'foot-2', 'hole-1', 'hole-2', 'rails', 'weeds-1', 'weeds-2', 'stash-mouth', 'watch', 'slope-1', 'slope-2', 'stash-in', 'near', 'crawl-1', 'crawl-2', 'fork-1', 'fork-2'],
+          opts: { moon: 'number', tap: ['none', 'weeds', 'stash', 'glass'], tight: [false, true], worm: [false, true] } },
+        field: { anchors: ['heap-1', 'heap-2', 'heap-3', 'log', 'wire', 'ring-1', 'ring-2', 'ring-3', 'ring-4', 'fence-top', 'trail-1', 'trail-2'], opts: { moon: 'number', tap: ['none', 'path'] } },
+        pile: { anchors: ['poke'], opts: { tap: ['none', 'back', 'roots', 'mouth'] } },
+        den: { opts: { moon: [false, true, 5, 8], glass: [false, true] } }
+      },
+      cast: ['hail', 'snip', 'snatch'],
+      poses: ['run'],
+      otherPoses: { hail: ['sit', 'stand', 'bounce', 'run', 'peek', 'pawup', 'tilt'], snip: WEASEL, snatch: WEASEL, dog: ['lie'], reynard: ['trot'], riffle: ['scramble'] },
+      extras: { tailUp: [true], tap: ['tail', 'leaf', 'ears', 'paw'], holds: ['leaf', 'glass', 'mouse'], holdAt: ['mouth', 'paws'], asleep: [true] }
+    };
+    const run = (x) => { const f = path.join(tmp, 'more.json'); fs.writeFileSync(f, JSON.stringify(x)); return spawnSync(process.execPath, [TOOL, '--check-words', f], { encoding: 'utf8' }); };
+    const ok = run(ch08);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.match(ok.stdout, /^Every set, camera, anchor, option, pose, mood, effect, cast member and cast extra has words\.$/m);
+    // names nobody gave: a camera, anchors, taps, a glass that is no flag, a tight place that is no flag, a cast member, poses, extras
+    const bad = run({
+      sets: { tracks: { cams: ['tunnel'], anchors: ['hole-3', 'sleeper'], opts: { tap: ['rails'], tight: ['very'] } }, field: { anchors: ['kennel'], opts: { tap: ['log'] } }, pile: { opts: { tap: ['hedge'] } }, den: { opts: { glass: ['heap'] } } },
+      cast: ['swipe'], otherPoses: { hail: ['spin'], snip: ['dig'] }, extras: { tap: ['mouse'], holds: ['shard'], tailUp: ['half'] }
+    });
+    assert.equal(bad.status, 1);
+    assert.deepEqual(bad.stderr.trim().split('\n').slice(1).map(l => l.trim()).sort(),
+      ['cast extra holds: "shard"', 'cast extra tailUp: "half"', 'cast extra tap: "mouse"', 'cast swipe', 'den option glass: "heap"', 'field anchor kennel', 'field option tap: "log"', 'pile option tap: "hedge"',
+        'pose dig', 'pose spin', 'tracks anchor hole-3', 'tracks anchor sleeper', 'tracks camera tunnel', 'tracks option tap: "rails"', 'tracks option tight: "very"'].sort());
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});

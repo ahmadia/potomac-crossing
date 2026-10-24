@@ -2170,6 +2170,11 @@
     return waxingMoon(S, x, y, r, Math.max(8, 38 - 3 * e), age);
   }
 
+  // Chapter 8: the den's moon by its age after chapter 5's, the ages later chapters give (`moon: 8`): drawn at night
+  // as at dusk, from outside over the towers and in the doorway's patch of sky. Chapter 5's 5 (dusk only) and
+  // chapter 4's `true` are left exactly as they were.
+  function denMoonAged(S) { return typeof S.opts.moon === 'number' && S.opts.moon >= 8; }
+
   // The same moon from inside the den, through the doorway: in the arch's patch of sky, above the
   // bushes and above the head of a cat sitting in the doorway, whole in the `inside` and `doorway`
   // cameras (the nest close-up looks the other way).
@@ -2186,7 +2191,10 @@
     back += sky(S, 0, 0, 1600, 760, { seed: 172, cloudy: cloudy, riverAt: { cx: 800, cy: 80, L: 2000, ang: -7, T: 72 } });
     // no moon unless a frame asks for one: her first night is a new moon (the case: "there was no
     // moon that night"), so Reynard's "by moonlight" is a lie a careful reader can catch
-    if (S.opts.moon && S.tod === 'night' && !cloudy) back += moon(S, 1330, 150, 44);
+    // chapter 8 on: an age past chapter 5's (`moon: 8`, the eighth evening's half moon) is drawn by its age at
+    // night as at dusk (chapter 5's `moon: 5` is drawn at dusk only, and `moon: true` as it always was)
+    if (denMoonAged(S) && (S.tod === 'night' || S.tod === 'dusk' || S.tod === 'sunset') && !cloudy) back += denMoon(S, S.opts.moon);
+    else if (S.opts.moon && S.tod === 'night' && !cloudy) back += moon(S, 1330, 150, 44);
     // chapter 4, the fourth evening: asked for at dusk (or sunset), the moon is the young one, thin
     // and low over the towers at the right (the only moon so far; by night it is the crescent above)
     // chapter 5 on: a number is the moon's age in evenings (5: a crescent a little fatter than that)
@@ -2286,9 +2294,17 @@
   // they always did)
   // (chapter 7: her own three eyes go under the moss too, on every path: the sum, Sprinkle's prints and the
   // tunnel. Six secrets, a corner showing for each; a file of chapters 4 to 6 holds none of them)
-  var BARK_SECRET = { 'sprinkle-scales': 1, 'cant-fly': 1, 'coil-diggers': 1, 'my-count': 1, 'prints-sprinkle': 1, tunnel: 1 }, BARK_MAX = 24;
+  // (chapter 8: the stash, the glass, the fox's brag and Hail's two shapes go under the moss too, on every path:
+  // the proof she keeps for the Gathering, and a dragonet's. Eight to ten secrets: the corners stand in layers of
+  // six, denBark. And room along the edge for chapters 9 and 10: BARK_MAX is 27, three courses of nine, a third
+  // course standing only past what a live save holds: more than BARK_THIRD.hidden along the edge with `hidden:
+  // true`, more than BARK_THIRD.open with it off, as chapter 4's bedtime frames have it)
+  var BARK_SECRET = { 'sprinkle-scales': 1, 'cant-fly': 1, 'coil-diggers': 1, 'my-count': 1, 'prints-sprinkle': 1, tunnel: 1,
+    stash: 1, glass: 1, 'fox-brag': 1, 'hail-shapes': 1 }, BARK_MAX = 27;
   // the most pieces one row holds (chapter 4's fullest); how much higher the course behind it stands (denBark)
   var BARK_ROW = 9, BARK_LIFT = 15;
+  // chapter 8: corners a layer (chapter 7's six), the most drawn (three layers); where a third course begins
+  var CORNER_LAYER = 6, CORNER_MAX = 18, BARK_THIRD = { hidden: 18, open: 24 };
   function barkRow(S) {
     var b = S.opts.bark, list;
     // (a list is her whole file, however long: the two under the moss are found in all of it, and
@@ -2313,12 +2329,14 @@
   }
   function denBark(S, x, y, k) {
     var R = barkRow(S);
-    if (!R.row.length && !R.hid) return '';
+    if (!R.row.length && !R.hid && !S.opts.glass) return '';
     // the side away from her head: the left, unless she lies facing left
     var m = null, a = S.anchorMap && S.anchorMap.nest, d = -1;
     (S.cast || []).forEach(function (c) { if (c && c.at === 'nest' && !m) m = c; });
     if (m && a && castPlan(S, m, a, refH()).face === 'left') d = 1;
-    var p = S.pal, rx = 140 * k, ry = 40 * k, cw = 38 * k, ch = cw * 1.2, r = rng(seedOf('bark' + R.row.length + ':' + R.hid)), cards = '', tucks = '', lights = '';
+    // (past six under the moss the first six, and the row, are drawn exactly as six would draw them: the
+    // layers behind them take what the random draws leave)
+    var p = S.pal, rx = 140 * k, ry = 40 * k, cw = 38 * k, ch = cw * 1.2, r = rng(seedOf('bark' + R.row.length + ':' + Math.min(R.hid, CORNER_LAYER))), cards = '', tucks = '', lights = '';
     // the middle of the rim's moss at xx: its bumps ring the lower half of the nest (nest())
     function rim(xx) { var u = clamp((xx - x) / (rx * 0.86), -1, 1); return y + Math.sqrt(1 - u * u) * ry * 0.98; }
     // a tuft of the rim's own moss over the foot of a piece, so it stands in the moss
@@ -2333,12 +2351,31 @@
     var T = (R.hid ? 86 - 8 * Math.min(1, Math.max(0, R.hid - 2)) : 112) * k, cGap = (R.hid > 3 ? 8 : R.hid > 2 ? (110 - (T / k + 9)) / (R.hid - 1) : 15) * k, nRow = R.row.length, step = nRow > 1 ? Math.min(15 * k, (T - cw) / (nRow - 1)) : 0, len = nRow ? cw + (nRow - 1) * step : 0, t0 = (T - len) / 2;
     function at(t) { return x + d * (118 * k - t); }
     var x0 = 1e9, x1 = -1e9, top = 1e9, i, total = nRow;
+    // Chapter 8: a third course, only past what a live save holds (BARK_THIRD: more than eighteen along the
+    // edge with `hidden: true`, more than twenty-four with it off): the row stands three deep, the oldest third
+    // highest (two lifts up), the middle third one lift up, the newest third in front where the one row stood;
+    // each course at most nine (BARK_MAX, 27), each half a step along from the one in front, staggered as roof
+    // tiles are, so no course is ever closer set than chapter 6's fullest (a step of 5).
+    if (nRow > (R.hid ? BARK_THIRD.hidden : BARK_THIRD.open)) {
+      var nTop = Math.floor(nRow / 3), nMid = Math.floor((nRow - nTop) / 2), nFr = nRow - nTop - nMid;
+      step = nFr > 1 ? Math.min(15 * k, (T - cw) / (nFr - 1)) : 0; len = cw + (nFr - 1) * step; t0 = (T - len) / 2;
+      var mStep = nMid > 1 ? Math.min(15 * k, (T - cw) / (nMid - 1)) : 0, mLen = cw + (nMid - 1) * mStep, m0 = t0 + (len - mLen) / 2 - (nMid === nFr ? mStep / 2 : 0);
+      var uStep = nTop > 1 ? Math.min(15 * k, (T - cw) / (nTop - 1)) : 0, uLen = cw + (nTop - 1) * uStep, u0 = m0 + (mLen - uLen) / 2 + (nTop === nMid ? uStep / 2 : 0);
+      [[0, nTop, u0, uStep, 2], [nTop, nMid, m0, mStep, 1]].forEach(function (c) {
+        for (var j = 0; j < c[1]; j++) {
+          var ux = at(c[2] + cw / 2 + j * c[3]), uy = rim(ux) + 2 * k - c[4] * BARK_LIFT * k;
+          cards += barkAt(R.row[c[0] + j], ux, uy, cw, d * 8 + (r() - 0.5) * 5, 0);
+          x0 = Math.min(x0, ux - cw * 0.75); x1 = Math.max(x1, ux + cw * 0.75); top = Math.min(top, uy - ch);
+        }
+      });
+      R.row = R.row.slice(nTop + nMid); nRow = nFr;
+    }
     // Chapter 5: a bigger file. One row holds nine pieces as chapter 4 stood them (its fullest row);
     // from the tenth the bark stands two deep, like two courses of roof tiles: the older half behind,
     // a little higher on the rim's inner lip and half a step along, their tops showing over the newer
     // half, which stands in front where the one row stood. Neither course is ever closer set than
     // chapter 4's row of nine until the file passes eighteen.
-    if (nRow > BARK_ROW) {
+    else if (nRow > BARK_ROW) {
       var nBack = Math.floor(nRow / 2), nFront = nRow - nBack;
       var bStep = nBack > 1 ? Math.min(15 * k, (T - cw) / (nBack - 1)) : 0;
       step = nFront > 1 ? Math.min(15 * k, (T - cw) / (nFront - 1)) : 0; len = cw + (nFront - 1) * step; t0 = (T - len) / 2;
@@ -2357,18 +2394,70 @@
       x0 = Math.min(x0, cx - cw * 0.75); x1 = Math.max(x1, cx + cw * 0.75); top = Math.min(top, cy - ch);
     }
     if (nRow) tuck(at(t0 + len) - d * 2 * k, rim(at(t0 + len)) + 3 * k, 9 * k);
-    for (i = 0; i < R.hid; i++) {
-      // pushed down under the moss, askew: one corner of each is left showing above it
-      var hx = at(T + 9 * k + i * cGap), hy = rim(hx) + 5 * k, rot = (i % 2 ? -1 : 1) * d * (16 + i * 10);
-      cards += g(path('M-15 3L-10 -19Q-8.5 -24.5 -3 -23.5L17 -16L14 3Z', BARK.under, { transform: 'translate(1 1.4)' }) +
+    function corner(hx, hy, rot) {
+      return g(path('M-15 3L-10 -19Q-8.5 -24.5 -3 -23.5L17 -16L14 3Z', BARK.under, { transform: 'translate(1 1.4)' }) +
         path('M-15 3L-10 -19Q-8.5 -24.5 -3 -23.5L17 -16L14 3Z', BARK.face, { stroke: BARK.edge, 'stroke-width': 1.3, 'stroke-linejoin': 'round' }) +
         stroke('M-5 -12h7M2 -6h6', BARK.grain, 1.1), { transform: tr(hx, hy, k * 0.92) + ' rotate(' + n(rot) + ')', 'data-bark': 'corner' });
+    }
+    var nHid = Math.min(R.hid, CORNER_MAX);
+    for (i = 0; i < Math.min(nHid, CORNER_LAYER); i++) {
+      // pushed down under the moss, askew: one corner of each is left showing above it
+      var hx = at(T + 9 * k + i * cGap), hy = rim(hx) + 5 * k, rot = (i % 2 ? -1 : 1) * d * (16 + i * 10);
+      cards += corner(hx, hy, rot);
       for (var j = -1; j <= 1; j++) tuck(hx + j * 10 * k, hy + (1 - Math.abs(j)) * 2 * k + (r() - 0.5) * 3 * k, (9 + r() * 3) * k);
       x0 = Math.min(x0, hx - 22 * k); x1 = Math.max(x1, hx + 22 * k); top = Math.min(top, hy - 26 * k);
     }
-    (S.keep = S.keep || []).push({ x: x0, y: top, w: x1 - x0, h: y + ry - top });
+    // Chapter 8: more than six under the moss. The seventh to twelfth make a second layer behind the first six,
+    // half a gap along (between them) and lifted on the rim's inner lip (BARK_LIFT, six tenths of it), the
+    // thirteenth to eighteenth a third layer the same way behind the second (half a gap along again: behind the
+    // first six); each layer is drawn before the one in front, its own moss at its foot, so every piece still
+    // shows a corner over the moss. Past eighteen no more are drawn (her file still holds them).
+    var behind = '';
+    for (var L = Math.ceil(nHid / CORNER_LAYER) - 1; L >= 1; L--) {
+      var lc = '', lt = '', ll = '';
+      for (j = 0; j < Math.min(CORNER_LAYER, nHid - L * CORNER_LAYER); j++) {
+        var lx = at(T + 9 * k + (j + (L % 2) * 0.5) * cGap), ly = rim(lx) + 5 * k - L * BARK_LIFT * 0.6 * k, lr = r();
+        lc += corner(lx, ly, ((j + L) % 2 ? -1 : 1) * d * (16 + j * 10));
+        lt += dot(lx + (lr - 0.5) * 4 * k, ly + 2 * k, (7 + lr * 2) * k); ll += dot(lx - 2 * k, ly, 3.5 * k);
+        x0 = Math.min(x0, lx - 22 * k); x1 = Math.max(x1, lx + 22 * k); top = Math.min(top, ly - 26 * k);
+      }
+      behind += g(lc, { filter: castTint(S) || null }) + path(lt, mix(p.moss, '#FFFFFF', 0.06)) + path(ll, mix(mix(p.moss, '#FFFFFF', 0.06), '#FFFFFF', 0.16), { opacity: 0.55 });
+    }
+    // Chapter 8: her piece of glass in its leaf (`glass: true`), tucked under the moss just past the corners
+    // (where the first would stand when nothing is hidden), on the same side: the leaf's tip and one glint showing
+    var glass = '', bottom = y + ry;
+    if (S.opts.glass) {
+      var gx = at(T + 9 * k + (R.hid ? (Math.min(R.hid, CORNER_LAYER) - 1) * cGap + 13 * k : 0)), gy = rim(gx) + 5 * k, gb = nestGlass(S, gx, gy, k, d);
+      glass = gb.svg;
+      x0 = Math.min(x0, gb.box[0]); x1 = Math.max(x1, gb.box[2]); top = Math.min(top, gb.box[1]); bottom = Math.max(bottom, gb.box[3]);
+    }
+    (S.keep = S.keep || []).push({ x: x0, y: top, w: x1 - x0, h: bottom - top });
     var moss = mix(p.moss, '#FFFFFF', 0.06);
-    return g(g(cards, { filter: castTint(S) || null }) + path(tucks, moss) + path(lights, mix(moss, '#FFFFFF', 0.16), { opacity: 0.55 }), { 'data-prop': 'nest-bark', 'data-count': total });
+    if (!total && !R.hid) return glass;
+    return g((behind ? g(behind, { 'data-bark': 'behind' }) : '') + g(cards, { filter: castTint(S) || null }) + path(tucks, moss) + path(lights, mix(moss, '#FFFFFF', 0.16), { opacity: 0.55 }), { 'data-prop': 'nest-bark', 'data-count': total }) + glass;
+  }
+
+  // Chapter 8: her piece of glass, wrapped in its leaf, pushed under the moss of her nest's front rim (`glass:
+  // true`): the leaf's tip poking up out of the moss, leaning away from the corners (dir: the way the row runs
+  // in), the glass's one corner showing at the leaf's lip with a glint on it, and moss over the rest. (x, y)
+  // the foot of it in the moss, k the nest's scale. -> { svg, box: [x0, y0, x1, y1] }
+  function nestGlass(S, x, y, k, dir) {
+    var p = S.pal, moss = mix(p.moss, '#FFFFFF', 0.06), lean = dir > 0 ? -1 : 1, ang = -Math.PI / 2 + lean * 0.62;
+    var leaf = mix(p.leafMid || p.leaf, '#9FD27A', 0.3), vein = mix(leaf, '#FFFFFF', 0.35), edge = mix(leaf, '#000000', 0.3);
+    var tipX = x + Math.cos(ang) * 30 * k, tipY = y + Math.sin(ang) * 30 * k;
+    var s = path(leafD(x, y + 2 * k, 31 * k, ang, 7.5 * k), leaf, { stroke: edge, 'stroke-width': n(1.2 * k) }) +
+      stroke('M' + n(x) + ' ' + n(y + 2 * k) + 'Q' + n(x + Math.cos(ang) * 16 * k + lean * 1.5 * k) + ' ' + n(y + Math.sin(ang) * 16 * k) + ' ' + n(tipX) + ' ' + n(tipY), vein, 1.1 * k, { opacity: 0.8 });
+    // the glass: a small clear corner at the leaf's lip, straight edged, a pale blue-green rim
+    var cx = x - lean * 9 * k, cy = y - 3 * k;
+    s += path('M' + n(cx - 6 * k) + ' ' + n(cy + 4 * k) + 'L' + n(cx - 1.5 * k) + ' ' + n(cy - 7 * k) + 'L' + n(cx + 5.5 * k) + ' ' + n(cy + 3 * k) + 'Z', '#DDF3EE',
+      { opacity: 0.85, stroke: '#9FD8CF', 'stroke-width': n(1.1 * k), 'stroke-linejoin': 'round' });
+    // moss over the rest of it: the leaf is under, only its tip and the glass's corner show
+    s += path(dot(x - lean * 2 * k, y + 5 * k, 8.5 * k) + dot(x + lean * 7 * k, y + 6 * k, 7 * k) + dot(cx - lean * 4 * k, cy + 9 * k, 7.5 * k), moss) +
+      path(dot(x - lean * 4 * k, y + 2 * k, 3.6 * k) + dot(x + lean * 5 * k, y + 3 * k, 3 * k), mix(moss, '#FFFFFF', 0.16), { opacity: 0.55 });
+    // and one glint on the glass
+    s += path(sparkleD(cx - 1 * k, cy - 3.5 * k, 5.5 * k), '#FFFFFF', { 'class': 'pcs-twk' });
+    var bx = [Math.min(x - 12 * k, cx - 9 * k, tipX - 6 * k), Math.min(tipY - 6 * k, cy - 10 * k), Math.max(x + 14 * k, cx + 9 * k, tipX + 6 * k), y + 14 * k];
+    return { svg: g(s, { 'data-prop': 'nest-glass' }), box: bx };
   }
 
   function drawDenInside(S) {
@@ -2378,7 +2467,8 @@
     var out = sky(S, 1180, 380, 420, 560, { seed: 192, starCount: 70, boltX: 0.5, boltH: 0.6, cloudy: cloudy });
     // chapter 5: the moon by its age (`moon: 5`), at dusk, hangs in the doorway's patch of sky too, over
     // whoever sits in the doorway (chapter 4's `moon: true` is seen from outside only, as it was)
-    if (typeof S.opts.moon === 'number' && S.opts.moon > 0 && (S.tod === 'dusk' || S.tod === 'sunset') && !cloudy) out += doorMoon(S, S.opts.moon);
+    // (chapter 8: `moon: 8`, by night too, over the cat in the doorway as she falls asleep)
+    if (typeof S.opts.moon === 'number' && S.opts.moon > 0 && (S.tod === 'dusk' || S.tod === 'sunset' || (S.tod === 'night' && denMoonAged(S))) && !cloudy) out += doorMoon(S, S.opts.moon);
     out += path(mound(1150, 1650, 760, 640, 8, rng(193), 0.3, 0.3, 0.3), p.leaf) + rect(1180, 740, 420, 200, S.lin('doorground', [[0, p.grassFar], [1, p.grassNear]]));
     out += tufts(S, 1200, 1600, 760, 900, 30, 194, p.grassNear, p.grassLight, 1);
     if (storm) out += path(blob(1400, 860, 120, 12, 8, rng(195), 0.2, 0.3), '#3A4A60', { opacity: 0.7 });
@@ -2468,7 +2558,7 @@
       var nn = nest(S, N[i][1], N[i][2], N[i][3], N[i][0] === 'nest');
       back += nn.back;
       // her own nest: her bark stands along its front rim (tufts of the moss hold it), her stone on the moss
-      S.covers[N[i][0]] = nn.front + (N[i][0] === 'nest' ? ((S.opts.bark || S.opts.hidden) ? denBark(S, N[i][1], N[i][2], N[i][3]) : '') + denStone(S, N[i][1], N[i][2], N[i][3]) : '');
+      S.covers[N[i][0]] = nn.front + (N[i][0] === 'nest' ? ((S.opts.bark || S.opts.hidden || S.opts.glass) ? denBark(S, N[i][1], N[i][2], N[i][3]) : '') + denStone(S, N[i][1], N[i][2], N[i][3]) : '');
     }
     if (storm) {
       // rain leaking through the roof: each drop falls from the leaves and fades (pcs-drip, as the
@@ -3365,8 +3455,11 @@
       // chapter 4's and a little higher (a number is the moon's age in evenings; later chapters add
       // theirs), from outside over the towers and from inside in the doorway's sky; and a bigger
       // file: from the tenth piece her bark stands two deep along the nest's edge (denBark)
-      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
-        bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true] }, defaults: { weather: 'clear' }
+      // chapter 8: moon: 8, the eighth evening's half moon, at night or dusk (denMoonAged), and glass: her piece
+      // of glass in its leaf under the moss of her nest, beside the corners (nestGlass); more under the moss and a
+      // third course along the edge are the bark's own (denBark), no new option
+      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
+        bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true], glass: [false, true] }, defaults: { weather: 'clear' }
     },
     sky: {
       label: 'the Sky River', tod: 'night', draw: drawSky,
@@ -3481,7 +3574,8 @@
   // fox's brush and a dragonet's wings don't count, and every pose is scaled as the sitting one is,
   // so neither changes size from one panel to the next. A `size` on the cast member can make either
   // smaller, never bigger than that.
-  var SIZE_CAP = { reynard: 'tallyheart', squall: 'player' };
+  // (chapter 8: Hail, a Mistscale dragonet about Squall's size, sitting no taller than our cat: Squall's rule)
+  var SIZE_CAP = { reynard: 'tallyheart', squall: 'player', hail: 'player' };
   function sitTall(S, who) {
     var memo = S.sitTall || (S.sitTall = {});
     if (memo[who] == null) {
@@ -3532,7 +3626,11 @@
     wisp: { ref: 'sprinkle', pose: 'blink', by: 'head', min: 0.7, max: 0.94 },
     coil: { ref: 'player', pose: 'head', by: 'head', min: 0.35, max: 0.6 },
     sleet: { ref: 'sprinkle', pose: 'sit', by: 'head', min: 0.95, max: 1.1 },
-    sloshbank: { ref: 'tallyheart', pose: 'sit', by: 'tall', min: 1.06, max: 1.3 }
+    sloshbank: { ref: 'tallyheart', pose: 'sit', by: 'tall', min: 1.06, max: 1.3 },
+    // Chapter 8's weasels, Snip and Snatch, "half your size": sitting up tall on their hind legs (`up`, a weasel's
+    // look-out, and what an unknown pose draws), half to two thirds as tall as our cat sits, measured against her
+    snip: { ref: 'player', pose: 'up', by: 'tall', min: 0.5, max: 0.65 },
+    snatch: { ref: 'player', pose: 'up', by: 'tall', min: 0.5, max: 0.65 }
   };
   function measure(S, who, pose, by) {
     var memo = S.measured || (S.measured = {}), key = who + ':' + pose + ':' + by;
@@ -3607,7 +3705,11 @@
   // and Sleet (Sprinkle's model). Neither has one where nothing of him lies on open ground: Coil as
   // a stone in his gap, Sleet hidden in the long grass or only his tail tip showing (a shadow there
   // would give him away).
-  var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1, coil: 1, sleet: 1 }, NO_SHADOW = { coil: { stone: 1 }, sleet: { hidden: 1, tail: 1 } };
+  // Chapter 8: Hail (Sprinkle's model: her shadow under her body, not her wings and tail) and the two weasels (under
+  // the long body, not the tail); none for any of them peeking out of a hole or a log (`peek`: the set draws the
+  // hole's lip, or the log's rim, over the rest of her), where a shadow on the ground in front would float.
+  var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1, coil: 1, sleet: 1, hail: 1, snip: 1, snatch: 1 },
+    NO_SHADOW = { coil: { stone: 1 }, sleet: { hidden: 1, tail: 1 }, hail: { peek: 1 }, snip: { peek: 1 }, snatch: { peek: 1 } };
   // Chapter 5's three have a shadow of that kind too, but only on ground that can take one: none at
   // an anchor a set marks `air: true` (a spot in the water, where the set draws its own rings), and
   // never under Puddle in the river, which is every pose the chapter gives him (a foot through the
@@ -4184,6 +4286,10 @@
   // a copy. measure(who, pose, by) / measure(ref, 'sit', by) is brought inside [min, max]; by 'tall'
   // is the drawing's h minus its head box's y0, by 'head' its head box's width and height averaged.
   art.sizeBands = JSON.parse(JSON.stringify(SIZE_BAND));
+  // Chapter 8: the pictures that go under the moss of her nest with `hidden: true` (BARK_SECRET, denBark), the
+  // live table: a later chapter's secret cards are added to it here in scenes.js, and the tests add stand-ins
+  // for a while, to see the layers of corners chapters 9 and 10 have room for (twelve, eighteen).
+  art.barkSecret = BARK_SECRET;
   // For the tests (chapter 6): the wall's end, by composition (the line where the stones stop, the
   // river's near edge, the wall, the reed bed, the trodden ground, the grass fringe in front), and the
   // dream's path of stars (its middle and half-width at x) and its towers far below.

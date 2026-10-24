@@ -22,6 +22,7 @@ const CH6_OPTS = ['moon'];                                  // chapter 6: the mo
 const CH7_CAMS = ['rear', 'hole'];                          // chapter 7: round the back; close on the tunnel's mouth
 const CH7_ANCHORS = ['arch', 'rear-1', 'rear-2', 'guard-1', 'guard-2', 'guard-3', 'brink'];
 const CH7_OPTS = ['tap', 'tunnel', 'tracks'];               // chapter 7: the Taps' targets, the tunnel found, the tracks far off
+const CH8_ANCHORS = ['poke'];                               // chapter 8: at the tunnel mouth's right edge (and `tap` gains 'mouth')
 const WHO = ['tallyheart', 'player', 'grizzled', 'clancat', 'glintstar', 'snorer', 'mutterer'];
 
 // ---------------------------------------------------------------- helpers
@@ -101,7 +102,7 @@ test('vocab: the pile set lists exactly the cameras, anchors and options of the 
   const v = art.vocab.sets.pile;
   assert.ok(v, 'PC.art.vocab.sets.pile');
   assert.deepEqual([...v.cams].sort(), [...CAMS, ...CH4_CAMS, ...CH5_CAMS, ...CH7_CAMS].sort());
-  assert.deepEqual([...v.anchors].sort(), [...ANCHORS, ...CH5_ANCHORS, ...CH7_ANCHORS].sort());
+  assert.deepEqual([...v.anchors].sort(), [...ANCHORS, ...CH5_ANCHORS, ...CH7_ANCHORS, ...CH8_ANCHORS].sort());
   assert.deepEqual(Object.keys(v.opts).sort(), [...OPTS, ...CH4_OPTS, ...CH5_OPTS, ...CH6_OPTS, ...CH7_OPTS].sort());
   const spec = specRow();
   for (const c of spec.cams) assert.ok(v.cams.includes(c), 'camera ' + c + ' from build.md');
@@ -1741,7 +1742,8 @@ test('chapter 7: the spec names the pile\'s new cameras, anchors and options, an
   const v = art.vocab.sets.pile, info = art.sceneInfo('pile');
   for (const cam of CH7_CAMS) { assert.ok(v.cams.includes(cam), cam); assert.equal(info.cams[cam].comp, cam, cam + ': a composition of its own'); assert.deepEqual([info.cams[cam].x, info.cams[cam].y, info.cams[cam].w], [0, 0, 1600]); }
   for (const a of CH7_ANCHORS) assert.ok(v.anchors.includes(a), 'anchor ' + a);
-  assert.deepEqual(v.opts.tap, ['none', 'back', 'roots']);
+  // (chapter 8 adds 'mouth' at the end, on purpose: spec section 4, the pile row)
+  assert.deepEqual(v.opts.tap, ['none', 'back', 'roots', 'mouth']);
   assert.deepEqual(v.opts.tunnel, [false, true]);
   assert.deepEqual(v.opts.tracks, [false, true]);
   assert.equal(v.opts.moon, 'number', '`moon: 7` needs no change: a number');
@@ -1750,7 +1752,8 @@ test('chapter 7: the spec names the pile\'s new cameras, anchors and options, an
     assert.equal((r.svg.match(/data-prop="waxing-moon" data-age="7"/g) || []).length, 1, cam + ': the seventh evening\'s moon at dusk');
   }
   assert.deepEqual([info.defaults.tap, info.defaults.tunnel, info.defaults.tracks], ['none', false, false], 'off by default');
-  assert.deepEqual(Object.keys(info.anchors.rear), ['rear-1', 'rear-2', 'guard-1', 'guard-2', 'guard-3']);
+  // (chapter 8 adds `poke` after them, on purpose)
+  assert.deepEqual(Object.keys(info.anchors.rear), ['rear-1', 'rear-2', 'guard-1', 'guard-2', 'guard-3', 'poke']);
   assert.deepEqual(Object.keys(info.anchors.hole), ['brink']);
   assert.ok(info.anchors.main.arch && info.anchors.main.arch.elev, '`arch` on wide, up on the bramble arch');
   assert.ok(!info.anchors.low.arch && !info.anchors.rows.arch, '`arch` only on the main composition');
@@ -1953,4 +1956,223 @@ test('chapter 7: `tracks: true` on `wide` at dusk or sunset: far off, low over t
   assert.ok(a.elev && a.h >= A['crowd-2'].h * 0.9 && a.h < A['pile-left'].h * 0.75, 'up on the arch, big enough to see: ' + a.h);
   assert.ok(a.x > 335 && a.x < 905 && a.y < 548 - 80, 'over the arch\'s mouth, on top of it');
   assert.equal(a.face, 'right', 'looking out toward the tracks');
+});
+
+// ================================================================ chapter 8: `poke`, `tap: 'mouth'`, the night round the back
+// docs/chapters/08-the-night-trail.spec.md, section 4 (the pile row) and section 7, item 2 (the fingerprints,
+// recorded once from the shipped chapter 7 snapshot)
+
+const SPEC8 = path.join(ROOT, 'docs/chapters/08-the-night-trail.spec.md');
+const NIGHT8 = { rows: NIGHT, scale: 'behind', dug: 'big' };
+const rear8 = () => art.sceneInfo('pile').anchors.rear;
+const lum8 = (h) => { const v = parseInt(h.slice(1), 16); return 0.3 * (v >> 16) + 0.59 * ((v >> 8) & 255) + 0.11 * (v & 255); };
+
+test('chapter 8: the spec names the pile\'s `poke`, `tap: \'mouth\'` and the night on `rear` and `hole`; the set has them, declared, off by default; every older spot where it was', () => {
+  const md = fs.readFileSync(SPEC8, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**Anchor `poke`** on `rear`', '**`tap: \'mouth\'`**', '**`night` on `rear` and `hole`**', 'its height `rear-2`\'s', 'never black'])
+    assert.ok(md.includes(want), 'the spec says: ' + want);
+  const v = art.vocab.sets.pile, info = art.sceneInfo('pile'), R = info.anchors.rear;
+  assert.ok(v.anchors.includes('poke') && R.poke, '`poke` on rear');
+  for (const comp of Object.keys(info.anchors)) if (comp !== 'rear') assert.ok(!info.anchors[comp].poke, comp + ': no poke');
+  assert.equal(R.poke.h, R['rear-2'].h, 'its height rear-2\'s');
+  assert.ok(R.poke.elev && R.poke.z !== 'behind' && R.poke.face === 'left', 'facing the mouth, in front of it, out of the depth sums and the first-free pick');
+  assert.deepEqual(v.opts.tap, ['none', 'back', 'roots', 'mouth']);
+  assert.equal(info.defaults.tap, 'none', 'no Tap target unless a frame asks');
+  assert.deepEqual(['rear-1', 'rear-2', 'guard-1', 'guard-2', 'guard-3'].map((k) => [R[k].x, R[k].y, R[k].h, R[k].face]),
+    [[436, 964, 380, 'right'], [1172, 958, 380, 'left'], [560, 478, 74, 'left'], [812, 474, 72, 'right'], [1060, 478, 74, 'right']]);
+  assert.deepEqual([info.anchors.hole.brink.x, info.anchors.hole.brink.y, info.anchors.hole.brink.h], [424, 958, 470]);
+});
+
+// Every pile frame of chapters 2 to 7, as the chapter 7 snapshot draws it: the frame's scene resolved with
+// E.resolveScene for a fixed cat, rendered with LOOK; sha1 (12 hex) of the markup with the per-render ids taken
+// out, the keep list and the heads. Recorded once from /Users/aron/potomac-crossing-work/ch08/shipped (engine
+// 0.7.0) in a node process of its own. Chapter 6's `wide` and `low` at night and chapter 7's dusk frames among them.
+const CH8_PILE_FINGERPRINT = {
+  'ch02:f026': '65b61015e604', 'ch02:f027': '611043434b33', 'ch02:f028': '9fd55913383d', 'ch02:f029': '4cd9245479fc',
+  'ch02:f031a': '412cc66456de', 'ch02:f031b': 'c85a910173d0', 'ch02:f032': '81d67c0aa92b',
+  'ch02:f033': '611043434b33', 'ch02:f034': '317057477d60', 'ch02:f035': '1c0f3f33339e', 'ch02:f036': '6d257400a132',
+  'ch02:f037': '7130959f0299', 'ch02:f041': '5f246f057b2b', 'ch02:f044': 'b295c35a10fc', 'ch02:f107': 'ec0fbf7fc553',
+  'ch03:f012': '8a7fc7cfe779', 'ch03:f013': 'b65cf356cfb6', 'ch03:f014': '569c1569000e',
+  'ch03:f090b': 'd145e7fa74cc', 'ch03:f098b': '241de74f2458', 'ch04:f019': '013b4291bde6',
+  'ch04:f020': '5e9a87366bc9', 'ch04:f021': '8f3b89278c1e', 'ch04:f022': 'cdc61316f2b7', 'ch04:f023': 'c9708e0e714e',
+  'ch04:f024': '7b7fc590fa08', 'ch04:f025': '2ee346f4483b', 'ch04:f026': '9aeef3efba7b', 'ch04:f028': 'd54f6841fe3d',
+  'ch04:f029a': 'd11a253992e2', 'ch04:f029b': '1b5d4e14a88b', 'ch04:f030': '189ce430a023',
+  'ch04:f031': 'd5f43c6bba0e', 'ch04:f111': '5df05e238004', 'ch05:f001': '5b004ec20095', 'ch05:f002': '6863f9670b02',
+  'ch05:f003': 'ac21e526a2ca', 'ch05:f004': 'ac21e526a2ca', 'ch05:f005': '3a1b59276e70', 'ch05:f006': '8a19c7743774',
+  'ch05:f007': 'd5a16c145715', 'ch05:f008': '65b10929dbf3', 'ch05:f009': '6cb83f3509b1', 'ch05:f010': 'aa0dc6227282',
+  'ch06:f001': 'a9454a77042a', 'ch06:f002': '8f18f5a0a29a', 'ch06:f003': 'ac21e526a2ca', 'ch06:f004': 'fdf1ac91189d',
+  'ch06:f107': 'e0d76b497b2f', 'ch06:f108': '55946189ea56', 'ch06:f109': '17166b6ce12e', 'ch06:f110': 'c44f05431c9e',
+  'ch06:f111': '7828dbd5f12b', 'ch06:f112': 'c99bc4ed519c', 'ch06:f113': '2172dc400e8e', 'ch06:f114': '8d3cab23eeb7',
+  'ch06:f115': '3146cf5e7647', 'ch06:f116': 'e8221690ff6d', 'ch06:f117': 'a476868dcce0', 'ch06:f118': '97b730d33186',
+  'ch07:f014': 'c1629e50c3f2', 'ch07:f015': '6a1acba0d34b', 'ch07:f016': 'ac21e526a2ca', 'ch07:f017': '1e8da37f3199',
+  'ch07:f018': '90e4dffa62d9', 'ch07:f019': '24cbd248111a', 'ch07:f020': '8019a42b6851', 'ch07:f021': '947d99ce9823',
+  'ch07:f022': '7b67f750178a', 'ch07:f077': 'c02be87644f1', 'ch07:f078': 'a5469ef07f69', 'ch07:f079': 'a9be20cf84bb',
+  'ch07:f080': '05e33991b742', 'ch07:f081': 'a6a85feb85ca', 'ch07:f082': '33c42a2ae029', 'ch07:f083': 'af81bc33897d',
+  'ch07:f084': '23b9b312f0aa', 'ch07:f085': '6da54d065b60', 'ch07:f086': '8e7cce050eed', 'ch07:f087': 'fee28354eb32',
+  'ch07:f088': '760b6ac5bdd2', 'ch07:f089a': 'c42b78420e64', 'ch07:f089b': '6da54d065b60',
+  'ch07:f090': '4a1f4c0f13c5', 'ch07:f091a': 'c42b78420e64', 'ch07:f091b': '6da54d065b60',
+  'ch07:f092': '4b4c44050ea3', 'ch07:f093': '0028bfda7953', 'ch07:f094': '0e6fbde8a328', 'ch07:f095': '4ac806de1aba',
+  'ch07:f096': 'b53e33daf6af'
+};
+const fpCat8 = () => { const c = PC.engine.blankCat({ id: 'fingerprint', now: 0, look: LOOK }); c.name = 'Pebble'; c.petname = 'Pebble'; return c; };
+function frameHash8(set, ids) {
+  const E = PC.engine, cat = fpCat8(), stories = ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07'].map((id) => PC.story[id]).filter(Boolean), out = {};
+  for (const id of ids) for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+    if (!f.scene || f.scene.set !== set) continue;
+    const r = art.render(E.resolveScene(f.scene, cat, stories), { look: LOOK });
+    out[id + ':' + fid] = crypto.createHash('sha1').update(r.svg.replace(/pcs?[0-9a-z]+-/g, '') + JSON.stringify(r.keep) + JSON.stringify(r.heads)).digest('hex').slice(0, 12);
+  }
+  return out;
+}
+
+test('chapter 8: every pile frame of chapters 2 to 7 draws exactly as the chapter 7 snapshot drew it (fingerprints)', () => {
+  const now = frameHash8('pile', ['ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07']);
+  assert.deepEqual(Object.keys(now).sort(), Object.keys(CH8_PILE_FINGERPRINT).sort(), 'the same frames visit the pile');
+  for (const [k, want] of Object.entries(CH8_PILE_FINGERPRINT)) assert.equal(now[k], want, k + ': drawn as it was');
+});
+
+// The sweeps (recorded once from the snapshot, in a process of its own, with exactly this code)
+const SWEEP_LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
+const sweepStrip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+// One hash per camera: every picture the pile drew before chapter 8 (every option chapters 2 to 7 gave it, in
+// the morning, at dusk and at night, but `rear` and `hole` at night, which chapter 8 draws for the first time),
+// empty and with someone at every spot of the camera.
+function pileSweep(art) {
+  const ROWS = { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 7 };
+  const OPTS = [{}, { pairs: 7, dug: true, lit: 3, vole: true }, ROWS, Object.assign({ tunnel: true, tap: 'roots' }, ROWS), Object.assign({ tap: 'back', back: 'shadow', tracks: true }, ROWS),
+    Object.assign({ tap: 'roots' }, ROWS), { rows: [10, 10, { n: 10, gap: [3, 4, 5, 6] }], dug: 'big', scale: true, glint: true }, { rows: [10, 10, 10, { n: 10, gap: [3, 4, 5, 6] }], scale: 'behind', dug: 'big', prints: true }];
+  const info = art.sceneInfo('pile'), out = {};
+  for (const cam of Object.keys(info.cams)) {
+    const spots = Object.keys(info.anchors[info.cams[cam].comp] || {}).filter((k) => k !== 'poke');
+    const cast = spots.map((at, i) => ({ who: ['player', 'tallyheart', 'grizzled', 'clancat'][i % 4], variant: 1 + (i % 3), pose: at === 'brink' ? 'crouch' : at === 'arch' ? 'stand' : 'sit', at }));
+    const h = crypto.createHash('sha1');
+    for (const fx of [['morning'], ['dusk'], ['night']]) {
+      if (fx[0] === 'night' && (cam === 'rear' || cam === 'hole')) continue;
+      for (const opts of OPTS) for (const c of [[], cast]) {
+        const r = art.render({ set: 'pile', cam, fx, opts, cast: c }, { look: SWEEP_LOOK });
+        h.update(sweepStrip(r.svg) + JSON.stringify(r.keep) + JSON.stringify(r.heads));
+      }
+    }
+    out[cam] = h.digest('hex').slice(0, 16);
+  }
+  return out;
+}
+// PC.art.prey, every kind, lit or not, each facing, each part, a few seeds; and its string of fish
+function preySweep(art) {
+  const h = crypto.createHash('sha1');
+  for (const kind of ['mouse', 'vole', 'fish', 'other']) for (const lit of [false, true]) for (const facing of ['right', 'left']) for (const part of [undefined, 'glow', 'body', 'spark']) for (const seed of [0, 1, 7, 23, 521]) {
+    const p = art.prey({ kind, lit, facing, part, seed });
+    h.update(JSON.stringify([p.svg, p.w, p.h, p.kind]));
+  }
+  for (const count of [1, 2, 3, 4, 5]) for (const len of [40, 60, 90]) h.update(art.prey.string({ count, len }));
+  return h.digest('hex').slice(0, 16);
+}
+
+test('chapter 8: every picture the pile drew before (every camera, every option chapters 2 to 7 gave it, morning, dusk and night but `rear` and `hole` at night), empty and with someone at every older spot, and PC.art.prey, are byte for byte the snapshot\'s', () => {
+  assert.deepEqual(pileSweep(art), {
+    'wide': 'bf157490f5ef8fec',
+    'low': 'be7f0c1adc8b97c5',
+    'close': '41d8639296c7205e',
+    'rows': 'f42f19dfbea26342',
+    'gap': 'f0cbb58f488ba8c9',
+    'scale': 'de80834e0ad3d91f',
+    'through': '545f968d618af166',
+    'mirror': 'd6838ab5cb525cd8',
+    'gap-close': 'e16d8bc99ea556c2',
+    'rear': 'f16a4a6b1cc7a824',
+    'hole': '18adccc4ad2ced1c'
+  }, 'recorded from the chapter 7 snapshot');
+  assert.equal(preySweep(art), '8574883cfcd2245e', 'PC.art.prey as chapter 7 drew it (the tracks set draws with it)');
+});
+
+test('chapter 8: `poke` on `rear`: a cat crouched there facing left has her nose at the tunnel mouth\'s right rim, her shoulders plainly wider than the mouth, her head clear of the mouth\'s Tap box; Riffle on all fours pokes his head at it', { skip: !art.character && 'no cats.js' }, () => {
+  const R = rear8(), a = R.poke;
+  const r0 = renderP('rear', Object.assign({ tunnel: true, tap: 'mouth' }, NIGHT8), [], ['night']), M = mouthOf(r0.svg), T = tapsOf(r0.svg)[0];
+  assert.ok(M && T && T.name === 'mouth', 'the mouth and its Tap box');
+  const tap = [T.x0, T.y0, T.x1, T.y1], mh = M[3] - M[1], cy = (M[1] + M[3]) / 2;
+  for (const mood of ['laugh', 'neutral', 'happy']) {
+    const t = bodyAt({ who: 'tallyheart', pose: 'crouch', mood, facing: 'left' }, a);
+    assert.ok(t.head[0] >= M[2] && t.head[0] - M[2] <= 14, 'Tallyheart (' + mood + '): her nose at the right rim: ' + (t.head[0] - M[2]).toFixed(1));
+    assert.ok(t.head[1] < cy && t.head[3] > cy, 'her head level with the mouth');
+    assert.ok(!meets7(t.head, tap), 'her head clear of the Tap box: ' + t.head.map(Math.round) + ' / ' + tap.map(Math.round));
+    assert.ok(t.head[3] - t.head[1] > 1.5 * mh && t.body[3] - t.body[1] > 2 * mh, 'her shoulders plainly wider than the mouth: ' + Math.round(t.body[3] - t.body[1]) + ' / ' + mh);
+  }
+  const f = bodyAt({ who: 'riffle', pose: 'scramble', facing: 'left' }, a);
+  assert.ok(f.head[0] >= M[2] && f.head[0] - M[2] <= 60 && !meets7(f.head, tap), 'Riffle: his nose near the rim, his head clear of the Tap box: ' + f.head.map(Math.round));
+  assert.ok(f.head[3] > M[1] && f.head[1] < M[3], 'Riffle: his head at the mouth\'s height');
+  assert.ok(f.body[3] - f.body[1] > 2 * mh, 'Riffle: plainly bigger than the mouth too');
+  // the told panel: Tallyheart at `poke`, our cat at `rear-1`, the Tap on the mouth (its glow lands on the mouth, not her face)
+  const cast = [{ who: 'tallyheart', at: 'poke', pose: 'crouch', mood: 'laugh' }, { who: 'player', at: 'rear-1', pose: 'sit', mood: 'happy' }];
+  for (const fx of [['night'], ['dusk']]) {
+    const r = renderP('rear', Object.assign({ tunnel: true, tap: 'mouth' }, NIGHT8), cast, fx);
+    checkRender(r, { cast }, 'rear, poke ' + fx);
+    const h = r.heads[0], hx = h.x * 16, hy = h.y * 10;
+    assert.ok(!(hx > tap[0] && hx < tap[2] && hy > tap[1] && hy < tap[3]), 'her face is not in the Tap box');
+    assert.ok(r.svg.indexOf('<g transform="translate(' + a.x + ' ' + a.y + ')') > r.svg.indexOf('data-art="mouth"'), 'in front of the mouth');
+  }
+  // the panel at the end of chapter 7 (nobody at `poke`) is untouched: the sweep above holds it
+});
+
+test('chapter 8: `tap: \'mouth\'`: on `rear` while `tunnel` is true and on `hole`, an unpainted pc-tap rect on the mouth\'s box, first in keep, the only change; nothing anywhere else (and `hole` still ignores `back` and `roots`)', () => {
+  for (const [cam, base] of [['rear', Object.assign({ tunnel: true }, NIGHT8)], ['hole', NIGHT8], ['hole', Object.assign({ tunnel: false }, NIGHT8)]]) for (const fx of [['night'], ['dusk']]) {
+    const r = renderP(cam, Object.assign({ tap: 'mouth' }, base), [], fx), plain = renderP(cam, base, [], fx), T = tapsOf(r.svg), M = mouthOf(r.svg);
+    checkRender(r, { cast: [] }, cam + ' tap mouth');
+    assert.equal(T.length, 1, cam + ': one target');
+    assert.equal(T[0].name, 'mouth');
+    assert.deepEqual([T[0].x0, T[0].y0, T[0].x1, T[0].y1].map(Math.round), M, cam + ': the mouth\'s own box');
+    assert.ok(same5(r.svg.replace(/<rect[^>]*class="pc-tap"[^>]*\/>/, ''), plain.svg), cam + ' ' + fx + ': unpainted, and the only change');
+    assert.ok(keeps({ svg: r.svg, keep: r.keep.slice(0, 1) }, T[0]), cam + ': first in keep');
+  }
+  // the roots down: no mouth to tap
+  assert.ok(same5(renderP('rear', Object.assign({ tap: 'mouth' }, NIGHT8), [], ['night']).svg, renderP('rear', NIGHT8, [], ['night']).svg), 'rear without the tunnel: nothing');
+  for (const t of ['back', 'roots']) assert.equal(tapsOf(renderP('hole', Object.assign({ tap: t }, NIGHT8), [], ['night']).svg).length, 0, 'hole ignores ' + t);
+  for (const cam of [...CAMS, ...CH4_CAMS, ...CH5_CAMS]) for (const base of [{}, NIGHT8, Object.assign({ tunnel: true }, NIGHT8)])
+    assert.ok(same5(renderP(cam, Object.assign({ tap: 'mouth' }, base), [], ['dusk']).svg, renderP(cam, base, [], ['dusk']).svg), cam + ': no mouth to tap here');
+});
+
+test('chapter 8: `rear` and `hole` at night: moonlit, readable, never black; the light through the arch is the moon\'s; the mouth still the darkest thing there; by dusk exactly as chapter 7 drew them, and every other camera at night as before', { skip: !art.character && 'no cats.js' }, () => {
+  for (const cam of ['rear', 'hole']) for (const opts of [Object.assign({ tunnel: true }, NIGHT8), NIGHT8, { rows: FOURTH, dug: true }]) {
+    const cast = cam === 'rear' ? [{ who: 'player', at: 'rear-1', pose: 'crouch', mood: 'wonder' }, { who: 'tallyheart', at: 'rear-2', pose: 'sit', mood: 'kind' }] : [{ who: 'player', at: 'brink', pose: 'crouch' }];
+    const r = renderP(cam, opts, cast, ['night']);
+    checkRender(r, { cast }, cam + ' at night');
+    r.heads.forEach((h, i) => assert.ok(h, cam + ': ' + cast[i].at + ' in sight'));
+    assert.equal(groupsNamed(r.svg, 'moonlit').length, 1, cam + ': the earth in the moon\'s light');
+    const M = /<filter id="[^"]*pilemoon"[^>]*>.*?values="([^"]+)"/.exec(r.svg)[1].trim().split(/\s+/).map(Number);
+    const map = (h) => { const v = parseInt(h.slice(1), 16), c = [(v >> 16) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255]; const o = [0, 1, 2].map((k) => Math.max(0, Math.min(1, M[k * 5] * c[0] + M[k * 5 + 1] * c[1] + M[k * 5 + 2] * c[2] + M[k * 5 + 4])) * 255); return 0.3 * o[0] + 0.59 * o[1] + 0.11 * o[2]; };
+    const L = [...one(r.svg, 'moonlit').matchAll(/fill="(#[0-9a-f]{6})"/g)].map((m) => map(m[1])).sort((p, q) => p - q);
+    assert.ok(L[L.length >> 1] >= 65 && L[L.length - 1] >= 100, cam + ': readable, never black: median ' + L[L.length >> 1].toFixed(0) + ', lightest ' + L[L.length - 1].toFixed(0));
+    // cool: the earth's warm brown (more red than blue by day) comes out bluer than red in the moon's light
+    const rgb = (c) => [0, 1, 2].map((k) => M[k * 5] * c[0] + M[k * 5 + 1] * c[1] + M[k * 5 + 2] * c[2] + M[k * 5 + 4]);
+    for (const c of [[0x7a, 0x56, 0x38], [0xa2, 0x7a, 0x55], [0x4e, 0x35, 0x24]].map((q) => q.map((x) => x / 255))) assert.ok(rgb(c)[2] >= rgb(c)[0], cam + ': a cool light on ' + c);
+    if (opts.tunnel || cam === 'hole') {
+      const far = [...one(r.svg, 'mouth').matchAll(/fill="(#[0-9a-f]{6})"/g)].map((m) => map(m[1]));
+      assert.ok(Math.min(...far) < L[L.length >> 2] * 0.5, cam + ': the mouth\'s far end stays dark: ' + Math.min(...far).toFixed(0));
+    }
+    // by dusk: none of it (chapter 7's panels are pinned by the sweep and the fingerprints)
+    assert.equal(groupsNamed(renderP(cam, opts, cast, ['dusk']).svg, 'moonlit').length, 0, cam + ': not at dusk');
+  }
+  // the light through the arch's open front: silver at night, the sunset's at dusk
+  const nightRear = renderP('rear', NIGHT8, [], ['night']).svg, duskRear = renderP('rear', NIGHT8, [], ['dusk']).svg;
+  assert.ok(/fill="#b8c8e6" opacity="0.2"/i.test(nightRear) && !/#b8c8e6/i.test(duskRear), 'rear: moonlight through the arch at night only');
+  for (const cam of [...CAMS, ...CH4_CAMS, ...CH5_CAMS]) assert.equal(groupsNamed(renderP(cam, NIGHT8, [], ['night']).svg, 'moonlit').length, 0, cam + ': at night as it was');
+});
+
+test('chapter 8: whatever chapter 8 puts at the pile renders, uses the vocabulary by value, puts `poke` and `tap: \'mouth\'` only where they belong (once the chapter is written)', (t) => {
+  const ch = PC.story && PC.story.ch08;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.scene.set === 'pile' && f.board !== 'STUB.') : [];
+  if (!frames.length) { t.diagnostic('chapter 8 has no frames at the pile yet'); return; }
+  const v = art.vocab.sets.pile, info = art.sceneInfo('pile');
+  for (const [id, f] of frames) {
+    const sc = f.scene, o = sc.opts || {};
+    assert.ok(v.cams.includes(sc.cam), id + ': camera ' + sc.cam);
+    for (const k of Object.keys(o)) assert.ok(k in v.opts, id + ': option ' + k);
+    if (o.tap != null) assert.ok(v.opts.tap.includes(o.tap), id + ': tap ' + o.tap);
+    if (o.tap === 'mouth') assert.ok((sc.cam === 'rear' && o.tunnel === true) || sc.cam === 'hole', id + ': the mouth\'s Tap on `rear` with the tunnel, or `hole`');
+    for (const m of sc.cast || []) if (typeof m.at === 'string') assert.ok(info.anchors[info.cams[sc.cam].comp][m.at], id + ': ' + m.at + ' is a spot of ' + sc.cam);
+    const r = art.render(sc, { look: LOOK });
+    checkRender(r, sc, 'ch08 ' + id);
+    r.heads.forEach((h, i) => assert.ok(h, id + ': ' + (sc.cast[i].who || '?') + ' in sight'));
+    if (f.scratch && f.scratch.tap === 'mouth') assert.equal(tapsOf(r.svg).filter((q) => q.name === 'mouth').length, 1, id + ': the wriggle-in Tap finds the mouth');
+  }
+  t.diagnostic(frames.length + ' frames at the pile');
 });

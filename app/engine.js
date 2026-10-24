@@ -27,7 +27,8 @@
  * with the scene redrawn as she taps, a forepaw in the mud for everyone found, the bedtime nines), a
  * page of questions she taps out of an otter (`ask`), cards that name the cards they touch
  * (`link.with`) and so lie three in a row, and a dragonet's own pose in her book (docs/build.md,
- * "Chapter 5 (v0.4)").
+ * "Chapter 5 (v0.4)"). Chapter 8 lets such a link give a partner a line of its own (`link.lines`), so
+ * one card can join two rows' ends over two different lines (docs/build.md, "Chapter 8 (v0.1)").
  *
  * Functions that change a cat change the object they are given (and return it or a result).
  * Nothing here reads the clock on its own: callers pass `now` (ms since epoch) where it matters,
@@ -39,7 +40,7 @@
   var PC = root.PC || (root.PC = {});
   var E = {};
 
-  E.VERSION = '0.7.0 (chapter 7, 2026-10-20)';
+  E.VERSION = '0.8.0 (chapter 8, 2026-10-21)';
   E.STORAGE_KEY = 'potomac-crossing.v1';   // the key stays: renaming it would strand every save
   E.SAVE_VERSION = 2;
   E.MAX_CATS = 4;
@@ -934,7 +935,14 @@
       if (!c.link || !E.matches(c.link.when, cat)) return;
       var line = typeof c.link.line === 'string' && c.link.line ? c.link.line : 'They can’t both be true.';
       if (Array.isArray(c.link.with)) {
-        c.link.with.forEach(function (id) { var p = by[id]; if (p && p.id !== c.id) touch(p, c, line); });
+        // chapter 8: `lines: { <partner id>: line }` gives a partner its own line (the brag touches FLEW
+        // over one line and Sleet's dry den over another); every other partner joins over `line`. No
+        // card of chapters 1 to 7 has `lines`, so every file of theirs lies as it did. The order of
+        // `with` is the order of the joins, and a row only grows at its ends (`touch`)
+        c.link.with.forEach(function (id) {
+          var p = by[id], own = isObj(c.link.lines) && typeof c.link.lines[id] === 'string' && c.link.lines[id] ? c.link.lines[id] : line;
+          if (p && p.id !== c.id) touch(p, c, own);
+        });
         return;
       }
       if (inLink[c.id]) return;
@@ -2869,6 +2877,15 @@
           if (!(Array.isArray(lw) && lw.length && lw.every(function (a) { return typeof a === 'string' && a; }))) errs.push('card ' + cid + ': link with is a list of card ids');
           else lw.forEach(function (a) { if (a === cid) errs.push('card ' + cid + ': link with names the card itself'); else if (!hasCard(a)) errs.push('card ' + cid + ': link with names an unknown card ' + a); });
         } else if (!(Array.isArray(c.answers) && c.answers.length)) errs.push('card ' + cid + ': link needs answers (the cards it is drawn touching), or with');
+        // chapter 8: a partner's own line, `lines: { <a card in with>: line }`, checked as `line` is
+        var ll = isObj(c.link) ? c.link.lines : null;
+        if (ll != null) {
+          if (!isObj(ll)) errs.push('card ' + cid + ': link lines is { <a card it touches>: its own line }');
+          else Object.keys(ll).forEach(function (k) {
+            if (!(Array.isArray(lw) && lw.indexOf(k) >= 0)) errs.push('card ' + cid + ': link lines names a card its with does not: ' + k);
+            if (typeof ll[k] !== 'string' || !ll[k].trim()) errs.push('card ' + cid + ': link lines for ' + k + ' needs its one line');
+          });
+        }
       }
     });
     if (story.names != null && !(isObj(story.names) && Object.keys(story.names).every(function (k) { return typeof story.names[k] === 'string' && story.names[k]; }))) {

@@ -50,10 +50,11 @@ const CATS = ['player', 'tallyheart', 'glintstar', 'waffles', 'grizzled', 'snore
 const FACINGS = ['left', 'right'];
 
 test('vocabulary lists the contract ids', () => {
-  assert.deepStrictEqual(A.vocab.cast, ['player', 'tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer',
+  // (chapter 8 appends hail, snip and snatch, and the cats' run: earlier ids never move, so these are prefixes)
+  assert.deepStrictEqual(A.vocab.cast.slice(0, 26), ['player', 'tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer',
     'mutterer', 'snorter', 'clancat', 'sparrow', 'moth', 'riffle', 'otter', 'dog', 'sprinkle', 'murmurchime', 'reynard', 'squall',
     'patience', 'puddle', 'wisp', 'coil', 'sloshbank', 'reedclan', 'sleet']);
-  assert.deepStrictEqual(A.vocab.poses, ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall',
+  assert.deepStrictEqual(A.vocab.poses.slice(0, 15), ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall',
     'stretch', 'peer', 'pawup', 'tummy', 'situp']);
   assert.deepStrictEqual(A.vocab.moods, ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh',
     'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn', 'sad', 'shy']);
@@ -311,7 +312,8 @@ test('chapter 2 vocabulary: otter and dog poses, variants (build.md v0.3)', () =
   // (chapter 5 appends seven otter poses: its own tests are at the end of this file)
   assert.deepStrictEqual(A.vocab.otherPoses.riffle.slice(0, OTTER_POSES.length), OTTER_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.otter.slice(0, OTTER_POSES.length), OTTER_POSES);
-  assert.deepStrictEqual(A.vocab.otherPoses.dog, DOG_POSES);
+  // (chapter 8 appends the dogs' lie)
+  assert.deepStrictEqual(A.vocab.otherPoses.dog.slice(0, DOG_POSES.length), DOG_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.tallone, ['stand', 'water', 'set-dish'], 'chapter 1 poses kept');
   // (chapter 6 adds ReedClan's four coats)
   assert.deepStrictEqual(A.vocab.variants, { clancat: [1, 2, 3, 4, 5, 6], otter: [1, 2, 3], dog: [1, 2, 3], reedclan: [1, 2, 3, 4] });
@@ -826,7 +828,8 @@ test('holds: Riffle’s lucky stone, smooth and nearly black with one white band
         assert.ok(h && h.what === 'stone' && h.x > 0 && h.x < 200 && h.y > 0 && h.y < 200 && h.r > 4, `${who}/${pose}: held box ${JSON.stringify(h)}`);
         assert.ok(r.bounds.x0 <= h.x - h.r + 3 && h.x + h.r - 3 <= r.bounds.x1 && h.y + h.r - 3 <= r.bounds.y1, `${who}/${pose}: the stone is inside the cat's box`);
         // on its feet it carries the stone in its mouth; otherwise it is at the front paws, on the ground
-        const onFeet = ['stand', 'walk', 'peer', 'stretch'].includes(pose);
+        // (chapter 8: running, too, it carries it in its mouth)
+        const onFeet = ['stand', 'walk', 'peer', 'stretch', 'run'].includes(pose);
         assert.strictEqual(h.at, onFeet ? 'mouth' : 'paws', `${who}/${pose}`);
         // (chapter 4: sitting up, no forepaw is on the ground: it is held up between the two raised forepaws)
         if (pose === 'situp') { assert.ok(h.y < 175 && h.y > r.head.y && h.y + h.r < r.bounds.y1 - 20, `${who}/${pose}: held up at the chest (${h.y})`); continue; }
@@ -1407,11 +1410,12 @@ test('chapters 1 to 3 are unchanged by chapter 4 (a fingerprint of Sprinkle, the
 
 test('chapter 4 vocabulary: reynard and squall and their poses, situp, Sprinkle’s three new poses (earlier ids never move)', () => {
   assert.deepStrictEqual(A.vocab.cast.slice(17, 19), ['reynard', 'squall']);
-  assert.deepStrictEqual(A.vocab.otherPoses.reynard, FOX_POSES);
+  // (chapter 8 appends Reynard's trot)
+  assert.deepStrictEqual(A.vocab.otherPoses.reynard.slice(0, FOX_POSES.length), FOX_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.squall, SQUALL_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.sprinkle.slice(16, 19), ['check', 'tailout', 'tailup']);
   assert.deepStrictEqual(A.vocab.otherPoses.sprinkle.slice(0, 16), DZ_POSES.slice(0, 16));
-  assert.strictEqual(A.vocab.poses[A.vocab.poses.length - 1], 'situp');
+  assert.strictEqual(A.vocab.poses[14], 'situp', 'situp is the fifteenth pose (chapter 8 appends run after it)');
   assert.ok(!('reynard' in A.vocab.variants) && !('squall' in A.vocab.variants), 'one fox, one Squall');
   A.vocab.otherPoses.reynard.push('nope');
   assert.deepStrictEqual(A.character('reynard', { pose: 'nope' }).head, A.character('reynard', { pose: 'sit' }).head, 'the published list is a copy; an unknown pose sits');
@@ -1495,7 +1499,7 @@ test('holds: a curl of pale bark, at the paws, in the mouth on her feet, by the 
     assert.strictEqual(barkAt(r.svg), 1, `${who}/${pose}: one piece of bark`);
     const h = r.held;
     assert.ok(h && h.what === 'bark' && h.r > 5 && h.x > 0 && h.x < 200 && h.y > 0 && h.y < 200, `${who}/${pose}: ${JSON.stringify(h)}`);
-    assert.strictEqual(h.at, ['stand', 'walk', 'peer', 'stretch'].includes(pose) ? 'mouth' : 'paws', `${who}/${pose}`);
+    assert.strictEqual(h.at, ['stand', 'walk', 'peer', 'stretch', 'run'].includes(pose) ? 'mouth' : 'paws', `${who}/${pose}`);
     assert.ok(r.bounds.x0 <= h.x - h.r + 3 && h.x + h.r - 3 <= r.bounds.x1, `${who}/${pose}: inside the cat's box`);
   }
   const svg = A.character('player', { pose: 'sit', look, holds: 'bark' }).svg, bark = svg.slice(svg.indexOf('<g class="pc-bark"'));
@@ -2190,7 +2194,7 @@ test('chapter 5 vocabulary: patience, puddle and wisp and their poses; the otter
   assert.deepStrictEqual(A.vocab.otherPoses.riffle.slice(11, 18), OTTER_POSES5);
   assert.deepStrictEqual(A.vocab.otherPoses.otter, A.vocab.otherPoses.riffle);
   assert.deepStrictEqual(A.vocab.otherPoses.sprinkle.slice(19), ['lookdown']);
-  assert.strictEqual(A.vocab.poses.length, 15, 'the cats have no new pose: what is new for them is an extra');
+  assert.strictEqual(A.vocab.poses.indexOf('situp'), 14, 'the cats have no new pose in chapter 5: what is new for them is an extra (chapter 8 appends run)');
   for (const k of ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach']) assert.ok(Array.isArray(A.vocab.extras[k]) && A.vocab.extras[k].length, 'extra ' + k);
   assert.deepStrictEqual(Object.keys(A.vocab.extras).slice(0, 9), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach']);
   assert.deepStrictEqual(A.vocab.extras.reach, [true]);
@@ -3434,16 +3438,17 @@ const tapsOf = (s) => (s.match(/class="pc-tap pc-tap-[a-z]+"/g) || []).map((x) =
 const ALL_LOOKS = Object.keys(FUR_BASES).map((fur, i) => ({ fur, marking: ['none', 'white-paws', 'white-chest', 'back-stripe', 'nose-splash'][i % 5], eyes: ['green', 'amber', 'blue', 'copper', 'odd'][i % 5], sex: i % 2 ? 'tom' : 'she' }));
 
 test('chapter 6 vocabulary: coil, sloshbank, reedclan and sleet (earlier ids never move); their poses; Riffle’s puff; the extras; ReedClan’s variants', () => {
-  assert.deepStrictEqual(A.vocab.cast.slice(-4), ['coil', 'sloshbank', 'reedclan', 'sleet']);
+  // (chapter 8 appends its cast, a pose, two taps, three holds and an extra after these: earlier ids never move)
+  assert.deepStrictEqual(A.vocab.cast.slice(22, 26), ['coil', 'sloshbank', 'reedclan', 'sleet']);
   assert.deepStrictEqual(A.vocab.otherPoses.coil, COIL_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.sleet, SLEET_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.riffle.slice(-1), ['puff']);
   assert.deepStrictEqual(A.vocab.otherPoses.otter, A.vocab.otherPoses.riffle);
-  assert.deepStrictEqual(A.vocab.poses, POSES6, 'the cats have no new pose (Sloshbank and ReedClan take every cat pose)');
-  assert.deepStrictEqual(Object.keys(A.vocab.extras), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach', 'starry', 'grass']);
+  assert.deepStrictEqual(A.vocab.poses.slice(0, 15), POSES6, 'the cats have no new pose (Sloshbank and ReedClan take every cat pose)');
+  assert.deepStrictEqual(Object.keys(A.vocab.extras).slice(0, 11), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach', 'starry', 'grass']);
   // (chapter 7 appends 'fish' and 'mist': earlier ids never move)
-  assert.deepStrictEqual(A.vocab.extras.tap, ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes', 'fish', 'mist']);
-  assert.deepStrictEqual(A.vocab.extras.holds, ['stone', 'pebble', 'vole', 'bark', 'fish', 'fish2', 'pole', 'pinecone', 'pebbles', 'string']);
+  assert.deepStrictEqual(A.vocab.extras.tap.slice(0, 11), ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes', 'fish', 'mist']);
+  assert.deepStrictEqual(A.vocab.extras.holds.slice(0, 10), ['stone', 'pebble', 'vole', 'bark', 'fish', 'fish2', 'pole', 'pinecone', 'pebbles', 'string']);
   assert.deepStrictEqual(A.vocab.extras.starry, [true]);
   assert.deepStrictEqual(A.vocab.extras.grass, [true]);
   assert.deepStrictEqual(A.vocab.variants.reedclan, [1, 2, 3, 4]);
@@ -3937,8 +3942,31 @@ test('dev/gallery-cats.html: chapter 6’s sections draw (Coil, Sleet, ReedClan,
 // paws of chapters 3 to 6, the sand at every per but chapter 7's (per 6 in clusters), and every cast
 // member, pose, mood and extra of chapters 1 to 6. If their art is ever changed on purpose, take a new
 // hash and say so.
+// Changed on purpose 2026-10-21 (chapter 8; the spec's section 7, item 2), and re-taken: (1) the sweep
+// reads chapter 7's vocabulary as constants (CAST7, POSES7, MOODS7, OP7 and the lists it pushes), never
+// A.vocab, which chapter 8 appends to (its run, the dogs' lie, Reynard's trot, Hail, Snip and Snatch
+// would otherwise join the sweep and move the hash with nothing of chapters 1 to 7 changed); (2) the
+// plain sand at per 4 left the sweep, exactly as per 6 did in chapter 7: chapter 8 draws four to a
+// group as two and two ("a four is two twos"), and no chapter before 8 draws per-4 sand in clusters (no
+// lesson of chapters 1 to 7 helps a 4s fact in the sand; the golden of chapters 1 to 7 proves it), while
+// the per-4 swipes, with and without `pair`, on every ground, stay in. The count and the hash below were
+// taken by running this function on the shipped snapshot's cats.js (~/potomac-crossing-work/ch08/shipped,
+// chapter 7 as it shipped) in a fresh process; the chapter 7 code gave 36,779 drawings and fe481193….
 function sweep7(A) {
   const out = [];
+  // chapter 7's vocabulary, as it shipped (constants: chapter 8 appends to A.vocab)
+  const CAST7 = ['player', 'tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth', 'riffle', 'otter', 'dog',
+    'sprinkle', 'murmurchime', 'reynard', 'squall', 'patience', 'puddle', 'wisp', 'coil', 'sloshbank', 'reedclan', 'sleet'];
+  const POSES7 = ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer', 'pawup', 'tummy', 'situp'];
+  const MOODS7 = ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn', 'sad', 'shy'];
+  const OTTER7 = ['stand', 'sit', 'scramble', 'swim', 'float', 'juggle', 'slide', 'hug', 'sun', 'dive', 'hush', 'whistle', 'groan', 'flip', 'hop', 'point', 'fall', 'slap', 'puff'];
+  const OP7 = { sparrow: ['perch', 'fluffed'], moth: ['fly'], tallone: ['stand', 'water', 'set-dish'], riffle: OTTER7, otter: OTTER7, dog: ['stand', 'jump', 'sit', 'bounce', 'howl'],
+    sprinkle: ['eyes', 'unfold', 'hide', 'sniff', 'sit', 'wings', 'flat', 'gulp', 'burp', 'pawsup', 'pawup', 'draw', 'touch', 'peek', 'curl', 'lie', 'check', 'tailout', 'tailup', 'lookdown'],
+    reynard: ['sit', 'comb', 'chest', 'think', 'lean', 'flap', 'slip', 'dash'], squall: ['hug', 'sit', 'roar', 'hiccup', 'halt', 'tall', 'point', 'snap', 'pawup'],
+    patience: ['stand', 'eye', 'shut', 'point', 'gulp', 'full', 'feather'], puddle: ['foot', 'head', 'log', 'sink', 'pawup', 'nostrils', 'sit'],
+    wisp: ['reed', 'blink', 'shh', 'draw', 'nod', 'flinch', 'gulp', 'pawup'], coil: ['stone', 'head', 'long', 'longer', 'still', 'listen', 'think', 'slide'],
+    sleet: ['hidden', 'tail', 'flat', 'point', 'call', 'puff', 'droop', 'sit', 'pawup'] };
+  const VARIANTS7 = { clancat: [1, 2, 3, 4, 5, 6], otter: [1, 2, 3], dog: [1, 2, 3], reedclan: [1, 2, 3, 4] }, CLAN7 = [1, 2, 3, 4, 5, 6];
   const s = (x) => String(x).replace(/pcs?[0-9a-z]+-/g, '');
   const LOOKS = [{ fur: 'calico', marking: 'white-chest', eyes: 'odd', sex: 'tom' }, { fur: 'ginger', marking: 'white-paws', eyes: 'amber', sex: 'she' },
     { fur: 'tortie', marking: 'none', eyes: 'green', sex: 'she' }, { fur: 'grey', marking: 'nose-splash', eyes: 'blue', sex: 'tom' }, { fur: 'brown-tabby', marking: 'back-stripe', eyes: 'copper', sex: 'she' }, undefined];
@@ -3979,13 +4007,13 @@ function sweep7(A) {
   // ----- the sand: every ground and style, per 1 to 10 (per 6 only where it is not chapter 7's: swipes and rows)
   for (const ground of [undefined, 'earth', 'mud', 'grit', 'log']) for (const style of [undefined, 'swipe']) for (const pair of [undefined, true])
     for (const [g, p, c] of [[4, 10, 20], [6, 5, 12], [9, 2, 4], [1, 1, 0], [6, 3, 9], [3, 4, 7], [2, 7, 9], [5, 8, 13], [2, 9, 9], [10, 10, 55], [7, 6, 20], [1, 6, 6]]) {
-      if (p === 6 && !style) continue;
+      if ((p === 6 || p === 4) && !style) continue;
       sd({ groups: g, per: p, counted: c, ground, style, pair });
     }
   for (const step of [undefined, 10, 2, 6]) for (const [g, p, c] of [[4, 10, 10], [2, 8, 6], [3, 10, 30], [2, 6, 12], [3, 6, 4]]) sd({ groups: g, per: p, counted: c, layout: 'rows', ground: 'earth', step });
   sd({ groups: 4, per: 10, counted: 40, style: 'swipe', pair: true, rubbed: 2 }); sd({ answers: [18, 36] }); sd({ groups: 5, per: 9, counted: 30, style: 'swipe', pair: true, tuck: true });
   // ----- the characters: every cat and every pose and mood, the extras of chapters 3 to 6 (with no new tap)
-  const POSES = A.vocab.poses.slice(), MOODS = A.vocab.moods.slice();
+  const POSES = POSES7.slice(), MOODS = MOODS7.slice();
   const CATS = ['player', 'tallyheart', 'glintstar', 'waffles', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'murmurchime', 'sloshbank', 'reedclan'];
   let k = 0;
   for (const who of CATS) for (const pose of POSES) for (const mood of MOODS) { k++; rec(A.character(who, { pose, mood, look: LOOKS[k % 6], variant: (k % 6) + 1, facing: k % 2 ? 'left' : 'right' })); }
@@ -3993,7 +4021,7 @@ function sweep7(A) {
     { moss: true, mist: true, squeeze: true }, { tuck: true }, { asleep: true, snail: true }, { snail: 'in', tap: 'nose' }, { buzz: true }, { dragonfly: true }, { glow: true }, { reach: true },
     { holds: 'pinecone', tap: 'pinecone' }, { holds: 'pinecone', holdAt: 'chin', asleep: true }, { tap: 'paw' }, { tap: 'ears' }, { starry: true }, { grass: true }, { tap: 'nothing', holds: 'nothing' }];
   for (const who of ['tallyheart', 'player', 'grizzled', 'murmurchime', 'clancat', 'waffles', 'snorer']) for (const pose of POSES) for (const ex of EX) { k++; rec(A.character(who, Object.assign({ pose, mood: MOODS[k % 16], look: LOOKS[k % 6], variant: 2, facing: k % 2 ? 'left' : 'right' }, ex))); }
-  const OP = A.vocab.otherPoses;
+  const OP = OP7;
   for (const [who, poses] of [['riffle', OP.riffle], ['otter', OP.otter], ['dog', OP.dog]]) for (const variant of [1, 2, 3]) for (const pose of poses) for (const mood of MOODS) { k++; rec(A.character(who, { pose, mood, variant, facing: k % 2 ? 'left' : 'right' })); }
   for (const pose of OP.riffle) for (const ex of [{ holds: 'pole', tap: 'pole' }, { holds: 'fish' }, { holds: 'fish2', tear: true }, { glow: true }, { holds: 'string' }, { holds: 'pebbles', tap: 'pebbles' }, { holds: 'pebbles', holdAt: 'paws' }, { tap: 'cheeks' }, { pebbles: 5, squeeze: true, mist: true }])
     for (const mood of ['happy', 'neutral', 'worried']) rec(A.character('riffle', Object.assign({ pose, mood }, ex)));
@@ -4006,7 +4034,7 @@ function sweep7(A) {
   for (const who of ['tallone', 'sparrow', 'moth']) for (const pose of ['stand', 'water', 'set-dish', 'perch', 'fluffed', 'fly']) for (const facing of ['left', 'right']) rec(A.character(who, { pose, facing }));
   rec(A.character('nobody', { pose: 'sit' })); rec(A.cat({ look: LOOKS[0], pose: 'walk', mood: 'happy' })); out.push(JSON.stringify(A.dragonfly({ asleep: true })), JSON.stringify(A.dragonfly()));
   for (const kind of ['mouse', 'vole', 'fish']) for (const lit of [false, true]) for (const part of [undefined, 'glow', 'body', 'spark']) out.push(JSON.stringify(A.preyFallback({ kind, lit, part, facing: lit ? 'left' : 'right' })));
-  out.push(JSON.stringify(A.vocab.cast), JSON.stringify(A.vocab.poses), JSON.stringify(A.vocab.moods), JSON.stringify(A.vocab.otherPoses), JSON.stringify(A.vocab.variants), JSON.stringify(A.vocab.clanVariants));
+  out.push(JSON.stringify(CAST7), JSON.stringify(POSES7), JSON.stringify(MOODS7), JSON.stringify(OP7), JSON.stringify(VARIANTS7), JSON.stringify(CLAN7));
   return out;
 }
 const CH7_SWEEP = new Promise((resolve) => {
@@ -4032,21 +4060,28 @@ const BASE7 = { c1: '#b5895b', murmurchime: '#3f3330', c3: '#f2dbb1', c5: '#fbf8
 // the six Clan coats' furs (cats.js CLAN), and their fills
 const CLAN_FURS = ['brown-tabby', 'black', 'cream', 'grey', 'calico', 'ginger'], CLAN_BASES = CLAN_FURS.map((f) => FUR_BASES[f].toLowerCase());
 
-test('chapter 7 vocabulary: no new cast, pose or mood; the taps gain fish and mist (earlier ids never move)', () => {
-  assert.deepStrictEqual(A.vocab.cast.slice(-4), ['coil', 'sloshbank', 'reedclan', 'sleet'], 'no new cast');
-  assert.deepStrictEqual(A.vocab.poses, POSES6, 'no new cat pose');
+test('chapter 7 vocabulary: no new cast, pose or mood; the taps gain fish and mist (earlier ids never move; chapter 8 appends after them)', () => {
+  // (updated for chapter 8, which appends its cast, the cats' run, two taps, three holds and `tailUp`
+  // after chapter 7's: chapter 7's own lists are the prefixes, unmoved; chapter 8's test is below)
+  assert.deepStrictEqual(A.vocab.cast.slice(22, 26), ['coil', 'sloshbank', 'reedclan', 'sleet'], 'no new cast in chapter 7');
+  assert.deepStrictEqual(A.vocab.cast.slice(26), ['hail', 'snip', 'snatch'], 'chapter 8’s three, after them');
+  assert.deepStrictEqual(A.vocab.poses.slice(0, 15), POSES6, 'no new cat pose in chapter 7');
+  assert.deepStrictEqual(A.vocab.poses.slice(15), ['run'], 'chapter 8’s run, after them');
   assert.deepStrictEqual(A.vocab.moods, MOODS6, 'no new mood');
   assert.deepStrictEqual(A.vocab.extras.tap.slice(0, 9), ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes']);
-  assert.deepStrictEqual(A.vocab.extras.tap.slice(9), ['fish', 'mist']);
-  assert.deepStrictEqual(Object.keys(A.vocab.extras), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach', 'starry', 'grass']);
+  assert.deepStrictEqual(A.vocab.extras.tap.slice(9, 11), ['fish', 'mist']);
+  assert.deepStrictEqual(A.vocab.extras.tap.slice(11), ['tail', 'leaf']);
+  assert.deepStrictEqual(Object.keys(A.vocab.extras), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach', 'starry', 'grass', 'tailUp']);
 });
 
 test('chapters 1 to 6 are unchanged by chapter 7 (every earlier Counts picture, sand tally and character, hashed against the shipped tree)', async () => {
   const r = await CH7_SWEEP;
   assert.ok(!r.err, 'the sweep ran: ' + (r.err && r.err.message) + ' ' + r.stderr);
   const got = JSON.parse(r.stdout);
-  assert.strictEqual(got.n, 36779, 'as many drawings as the shipped tree made');
-  assert.strictEqual(got.sha, 'fe4811937bad0059f9c5e75b645ac1921e74f353a482a55e65a8835443e46f90');
+  // (re-taken 2026-10-21 on chapter 7's shipped snapshot, see sweep7: the constants alone give chapter 7's
+  // 36,779 and fe481193… there; without the plain per-4 sand, ten fewer and the hash below)
+  assert.strictEqual(got.n, 36769, 'as many drawings as the shipped tree made');
+  assert.strictEqual(got.sha, '0b6f1e7d0e22906c729d06142b0e03245b8bb3c43a0df07360effdc4ed0775ae');
   // and here, in this process: the new keys are the only way in. Per 6 with no kind and no thing is
   // still chapter 1's pebble cats; another thing changes nothing; table 3 with the patrols' thing is
   // the patrols; table 1 with the tails' thing is the tails; a skip with no thing at per 6 too
@@ -4408,4 +4443,562 @@ test('dev/gallery-cats.html: chapter 7’s sections draw (the taps; the cheeks, 
     assert.ok(counts.includes('aria-label="' + label + '"'), 'the gallery shows: ' + label);
   assert.ok(count(counts, /class="pc-cheek pc-face"/g) >= 6, 'a face pair (2 × 6) and the bedtime faces');
   assert.ok(/pc-tap-fish"[^>]*>[^]*?stroke-dasharray/.test(run('?only=extras7').out) && /pc-tap-mist"[^>]*>[^]*?stroke-dasharray/.test(run('?only=extras7').out), 'the new taps are outlined in the gallery');
+});
+
+// ================================================================== chapter 8
+// The Night Trail (docs/chapters/08-the-night-trail.spec.md, section 4): Hail, the speckled dragonet;
+// Snip and Snatch, the weasels; the cats' run, `tailUp`, the leaf and the glass; Riffle's taps and
+// raised tail; the dogs lying down and asleep; Reynard's trot; and the Counts art: one cat's paws by
+// pairs, the field's four (`kind: 'dogs'`), the marks two and two, the sand at per 4.
+
+// Chapter 7's own Counts art and extras, unchanged by chapter 8: the sweep below, run on chapter 7's
+// shipped snapshot (~/potomac-crossing-work/ch08/shipped, its cats.js) in a fresh process of its own,
+// gave the count and the hash in the test; run here the same way, today's cats.js must give the same. It
+// covers the cheeks and `cheeks-top`, one to ten, with and without a `who` and the face rule; one cheek
+// at per 3; the back row's gaps; the nights' marks at per 1 to 10 without a `layout`, in the sand and the
+// mud; the sand at per 6 on every ground; Riffle's `tap: 'fish'`, Sprinkle's `tap: 'mist'`, and `asleep:
+// 'half'` on every cat in every pose. It reads chapter 7's vocabulary as constants. If any of this art is
+// ever changed on purpose, take a new hash and say so.
+function sweep8(A) {
+  const out = [];
+  const s = (x) => String(x).replace(/pcs?[0-9a-z]+-/g, '');
+  const LOOKS = [{ fur: 'calico', marking: 'white-chest', eyes: 'odd', sex: 'tom' }, { fur: 'ginger', marking: 'white-paws', eyes: 'amber', sex: 'she' },
+    { fur: 'tortie', marking: 'none', eyes: 'green', sex: 'she' }, { fur: 'grey', marking: 'nose-splash', eyes: 'blue', sex: 'tom' }, { fur: 'brown-tabby', marking: 'back-stripe', eyes: 'copper', sex: 'she' }, undefined];
+  const POSES7 = ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer', 'pawup', 'tummy', 'situp'];
+  const MOODS7 = ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn', 'sad', 'shy'];
+  const OTTER7 = ['stand', 'sit', 'scramble', 'swim', 'float', 'juggle', 'slide', 'hug', 'sun', 'dive', 'hush', 'whistle', 'groan', 'flip', 'hop', 'point', 'fall', 'slap', 'puff'];
+  const DZ7 = ['eyes', 'unfold', 'hide', 'sniff', 'sit', 'wings', 'flat', 'gulp', 'burp', 'pawsup', 'pawup', 'draw', 'touch', 'peek', 'curl', 'lie', 'check', 'tailout', 'tailup', 'lookdown'];
+  const CATS = ['player', 'tallyheart', 'glintstar', 'waffles', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'murmurchime', 'sloshbank', 'reedclan'];
+  const cp = (o) => out.push(s(A.countsPicture(o)));
+  const sd = (o) => out.push(s(A.sand(o)));
+  const rec = (r) => out.push(s(r.svg), JSON.stringify([r.w, r.h, r.head, r.headBox || null, r.bounds || null, r.held || null, r.chestTop || null]));
+  const c = (v) => ({ who: 'clancat', variant: v });
+  const RIM = [c(1), { who: 'murmurchime' }, c(3), c(5), { who: 'grizzled' }];
+  const WHO = [undefined, RIM, [c(1), c(1)], [{ who: 'snorer' }, { who: 'snorer' }, { who: 'player' }, { who: 'player' }],
+    [{ who: 'tallyheart' }, { who: 'tallyheart' }, c(3), c(3), c(3), { who: 'grizzled' }, { who: 'grizzled' }],
+    [{ who: 'player' }, { who: 'tallyheart' }, c(2), c(4), { who: 'reedclan', variant: 2 }, { who: 'sloshbank' }, { who: 'glintstar' }, { who: 'waffles' }, { who: 'mutterer' }, { who: 'snorter' }]];
+  let n = 0;
+  // the 6s' cheeks: a lesson's kind (cheeks, cheeks-top) or a skip's whiskers at per 6; one to ten, every who
+  for (const kind of ['cheeks', 'cheeks-top', undefined]) for (let g = 1; g <= 10; g++) for (const who of WHO) for (const hl of [0, 7, g * 6]) {
+    const o = { table: 6, per: 6, groups: g, highlight: hl, kind, who, look: LOOKS[n % 6], thing: 'whisker' };
+    if (n % 2) { o.totals = true; o.next = hl < g * 6; }
+    n++;
+    cp(o);
+  }
+  // one cheek, her whiskers (thing: whisker at per 3): its two rows the two groups
+  for (const who of [undefined, [{ who: 'tallyheart' }], [{ who: 'player' }], [c(1)], [{ who: 'grizzled' }], [{ who: 'reedclan', variant: 3 }]])
+    for (let hl = 0; hl <= 6; hl += 3) for (const fl of [{}, { totals: true, next: true }]) cp(Object.assign({ table: 3, per: 3, groups: 2, thing: 'whisker', who, highlight: hl, look: LOOKS[hl % 6] }, fl));
+  // the back row's empty places (thing: gap)
+  for (let g = 1; g <= 10; g++) for (const hl of [0, 1, g]) for (const fl of [{}, { totals: true, next: true }]) cp(Object.assign({ table: 1, per: 1, groups: g, thing: 'gap', highlight: hl }, fl));
+  // the nights' marks, without a layout: per 1 to 10, in the sand and the mud
+  for (const ground of [undefined, 'mud']) for (let per = 1; per <= 10; per++) for (const g of [1, 2, 6, 7, 10]) for (const hl of [0, per, g * per - 1, g * per]) cp({ table: per, per, groups: g, kind: 'marks', ground, highlight: hl });
+  // the sand at per 6: two short rows of three a group, on every ground
+  for (const ground of [undefined, 'earth', 'mud', 'grit', 'log']) for (let g = 1; g <= 10; g++) for (const cnt of [0, 3, 6, g * 6 - 1, g * 6]) sd({ groups: g, per: 6, counted: cnt, ground });
+  // the taps: Riffle's string of fish (tap: 'fish'), Sprinkle's burp (tap: 'mist'); without the thing, no mark
+  for (const pose of OTTER7) for (const holds of ['string', undefined]) for (const [mood, facing] of [['happy', 'right'], ['worried', 'left']]) rec(A.character('riffle', { pose, mood, facing, holds, tap: 'fish' }));
+  for (const pose of DZ7) for (const mist of [true, undefined]) rec(A.character('sprinkle', { pose, mood: mist ? 'wonder' : 'happy', facing: mist ? 'right' : 'left', mist, tap: 'mist' }));
+  // asleep: 'half' (our cat curling up to sleep): every cat, every pose, five moods
+  let k = 0;
+  for (const who of CATS) for (const pose of POSES7) for (const mood of ['kind', 'neutral', 'happy', 'sleepy', 'sad']) { k++; rec(A.character(who, { pose, mood, asleep: 'half', look: LOOKS[k % 6], variant: (k % 6) + 1, facing: k % 2 ? 'left' : 'right' })); }
+  out.push(JSON.stringify(MOODS7));
+  return out;
+}
+const CH8_SWEEP = new Promise((resolve) => {
+  const code = 'const PC = require(' + JSON.stringify(require('path').join(__dirname, '..', 'app', 'art', 'cats.js')) + ');\n' +
+    'const out = (' + sweep8.toString() + ')(PC.art);\n' +
+    'process.stdout.write(JSON.stringify({ n: out.length, sha: require("crypto").createHash("sha256").update(out.join("\\n")).digest("hex") }));';
+  require('child_process').execFile(process.execPath, ['-e', code], { maxBuffer: 1 << 20 }, (err, stdout, stderr) => resolve({ err, stdout, stderr }));
+});
+
+const HAIL_POSES = ['sit', 'stand', 'bounce', 'run', 'peek', 'pawup', 'tilt'];
+const WEASEL_POSES = ['stand', 'up', 'run', 'skid', 'peek', 'point', 'curl'];
+const LOOK8 = { fur: 'grey', marking: 'none', eyes: 'green', sex: 'she' };
+const glows = (s) => count(s, /fill="#ffb21f" opacity="\.45"/g);
+const tapAt = (svg, name) => { const m = svg.match(new RegExp('<g class="pc-tap pc-tap-' + name + '"><circle cx="([-\\d.]+)" cy="([-\\d.]+)" r="([\\d.]+)" fill="none"/></g>')); return m ? m.slice(1).map(Number) : null; };
+// a point in a drawing's own box: the group's matrix applied (every drawing is one <g transform="matrix(…)">)
+const inDrawing = (svg, q) => { const m = svg.match(/^<g transform="matrix\(([^)]+)\)">/)[1].split(',').map(Number); return [m[0] * q[0] + m[2] * q[1] + m[4], m[1] * q[0] + m[3] * q[1] + m[5]]; };
+const tallOf = (r) => r.h - r.headBox.y0;   // as scenes.js measures a newcomer: the top of the head box to the feet
+const noTeeth = (svg, label) => {
+  assert.ok(!/teeth|tooth|fang/i.test(svg), label + ': no teeth');
+  assert.ok(!/<path[^>]*fill="#fff(fff)?"/.test(svg), label + ': nothing white and shaped in it (no tooth)');
+};
+
+test('chapter 8 vocabulary: hail, snip and snatch after the rest; the cats’ run; the dogs’ lie; Reynard’s trot; the taps tail and leaf; holds leaf, glass and mouse; tailUp (earlier ids never move)', () => {
+  assert.deepStrictEqual(A.vocab.cast.slice(26), ['hail', 'snip', 'snatch']);
+  assert.deepStrictEqual(A.vocab.poses.slice(15), ['run']);
+  assert.deepStrictEqual(A.vocab.otherPoses.hail, HAIL_POSES);
+  assert.deepStrictEqual(A.vocab.otherPoses.snip, WEASEL_POSES);
+  assert.deepStrictEqual(A.vocab.otherPoses.snatch, WEASEL_POSES);
+  assert.deepStrictEqual(A.vocab.otherPoses.dog, DOG_POSES.concat(['lie']));
+  assert.deepStrictEqual(A.vocab.otherPoses.reynard, FOX_POSES.concat(['trot']));
+  assert.deepStrictEqual(A.vocab.otherPoses.riffle.slice(-1), ['puff'], 'Riffle has no new pose: no run, no walk (on all fours he scrambles)');
+  assert.deepStrictEqual(A.vocab.extras.tap.slice(11), ['tail', 'leaf']);
+  assert.deepStrictEqual(A.vocab.extras.holds.slice(10), ['leaf', 'glass', 'mouse']);
+  assert.deepStrictEqual(A.vocab.extras.tailUp, [true]);
+  assert.ok(!('eyeshine' in A.vocab.extras), 'no shining eyes: the night is the scene’s');
+  for (const who of ['hail', 'snip', 'snatch']) assert.ok(!(who in A.vocab.variants), 'one ' + who);
+  // an unknown pose: Hail sits (her book page is bounce); a weasel sits up (`up`)
+  assert.strictEqual(strip(A.character('hail', { pose: 'nope' }).svg), strip(A.character('hail', { pose: 'sit' }).svg));
+  for (const w of ['snip', 'snatch']) assert.strictEqual(strip(A.character(w, { pose: 'sit' }).svg), strip(A.character(w, { pose: 'up' }).svg));
+  // the published lists are copies
+  A.vocab.otherPoses.hail.push('nope');
+  assert.ok(!A.character('hail', { pose: 'nope' }).svg.includes('NaN'));
+  A.vocab.otherPoses.hail.pop();
+});
+
+test('chapter 7’s own Counts art and extras are unchanged by chapter 8 (the cheeks, one cheek, the gaps, the marks, the sand at per 6, fish, mist, half asleep: hashed against the shipped tree)', async () => {
+  const r = await CH8_SWEEP;
+  assert.ok(!r.err, 'the sweep ran: ' + (r.err && r.err.message) + ' ' + r.stderr);
+  const got = JSON.parse(r.stdout);
+  // taken 2026-10-21 by running sweep8 on chapter 7's shipped snapshot in a fresh process
+  assert.strictEqual(got.n, 3319, 'as many drawings as the shipped tree made');
+  assert.strictEqual(got.sha, '5fe4b9832bc7c252ece0120d7422e199950a0981a5221a7457636ee30e6a8ce7');
+  // and here: without a layout the marks are chapter 7's; a layout that is not chapter 8's changes nothing
+  for (const o of [{ table: 4, per: 4, groups: 6, kind: 'marks', highlight: 9 }, { table: 10, per: 10, groups: 6, kind: 'marks', ground: 'mud', highlight: 20 }, { table: 2, per: 2, groups: 7, kind: 'marks', ground: 'mud' }])
+    assert.strictEqual(strip(A.countsPicture(Object.assign({ layout: 'stacks' }, o))), strip(A.countsPicture(o)));
+  // chapter 8's new keys are the only way in: tailUp off, nothing to hold, a tap nobody draws, a dog awake
+  const base = A.character('tallyheart', { pose: 'sit', mood: 'kind' });
+  assert.strictEqual(strip(A.character('tallyheart', { pose: 'sit', mood: 'kind', tailUp: false, holds: 'nothing' }).svg), strip(base.svg));
+  assert.strictEqual(strip(A.character('dog', { variant: 2, pose: 'sit', asleep: false, tap: 'paw', tailUp: true }).svg), strip(A.character('dog', { variant: 2, pose: 'sit' }).svg), 'the dogs take no tap and no raised tail');
+  assert.strictEqual(strip(A.character('riffle', { pose: 'swim', tailUp: true }).svg), strip(A.character('riffle', { pose: 'swim' }).svg), 'in the water his tail stays where it is');
+  assert.strictEqual(strip(A.character('reynard', { pose: 'sit', tailUp: true, asleep: true }).svg), strip(A.character('reynard', { pose: 'sit' }).svg));
+});
+
+// ----- Hail
+
+test('every Hail pose x mood x facing renders inside her box (250 x 200), on the ground; ids unique; never toothy', () => {
+  for (const pose of HAIL_POSES) for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    const r = A.character('hail', { pose, mood, facing }), label = `hail/${pose}/${mood}/${facing}`;
+    checkResult(r, label);
+    checkIds(r.svg, label);
+    assert.strictEqual(r.w, 250); assert.strictEqual(r.h, 200);
+    inBox(r, label, 0.5);
+    assert.ok(r.bounds.y1 > 194 && r.bounds.y1 <= 200, label + ': her feet (or, in the air, the marks under her) on the ground line: ' + r.bounds.y1);
+    assert.ok(r.headBox && r.headBox.x0 >= 0 && r.headBox.x1 <= r.w + 0.5 && r.headBox.y0 >= 0, label + ': a head box');
+    noTeeth(r.svg, label);
+    assert.ok(r.svg.length < 60000, label + ': light (' + r.svg.length + ')');
+  }
+  // the poses are her own, and each is different
+  const seen = new Set(HAIL_POSES.map((pose) => strip(A.character('hail', { pose, mood: 'happy' }).svg)));
+  assert.strictEqual(seen.size, HAIL_POSES.length);
+  // ids differ between two drawings, so two Hails can share a panel
+  const a = idsOf(A.character('hail', { pose: 'sit' }).svg), b = idsOf(A.character('hail', { pose: 'sit' }).svg);
+  assert.ok(a.length && a.every((id) => !b.includes(id)));
+});
+
+test('Hail: white with grey speckles all over, pale grey ridges and wings, a creamy belly, big dark eyes with a big shine, soft lifted brows: plainly not Sleet, not Wisp, not Squall', () => {
+  const r = A.character('hail', { pose: 'sit', mood: 'neutral' }), svg = r.svg;
+  assert.ok(svg.includes('fill="#f6f4f0"'), 'her warm white');
+  assert.ok(count(svg, /<g class="pc-specks"/g) >= 5 && count(svg.split('class="pc-specks"').slice(1).join(''), /<circle /g) >= 25, 'speckles on her head, body, haunch, neck, tail and wings');
+  assert.ok(/class="pc-ridges"/.test(svg) && svg.includes('fill="#c8c9cf"'), 'pale grey ridges');
+  assert.ok(svg.includes('fill="#d9dbe0"'), 'pale grey wing membranes');
+  assert.ok(svg.includes('stop-color="#3e3138"') && svg.includes('stop-color="#1f171c"'), 'dark eyes');
+  // a big shine: bigger than Sleet's and Squall's
+  const shine = (s) => Math.max(...(s.match(/<circle cx="[-\d.]+" cy="[-\d.]+" r="([\d.]+)" fill="#fff"\/>/g) || []).map((x) => +x.match(/r="([\d.]+)"/)[1]));
+  assert.ok(shine(svg) > shine(A.character('squall', { pose: 'sit' }).svg) * 1.25, 'her shine is big');
+  // not Sleet (silver-white with blue-grey shade, blue eyes, bossy brows), not Squall (slate, yellow flecks), not Wisp (see-through)
+  for (const col of ['#e1e7ed', '#59687a', '#5f6c7e', '#f6d24e', '#f2efe4']) assert.ok(!svg.includes(col), 'not someone else’s colour: ' + col);
+  assert.ok(!/opacity="\.[0-6]\d*"><g/.test(svg.slice(0, 400)), 'no veil: she is solid');
+  // her brows are soft arcs, lifted, never the fierce straight little brows of her brother
+  const brows = svg.match(/<path class="pc-brows" d="([^"]+)"/)[1];
+  assert.ok(/Q/.test(brows), 'curved');
+  // her tail ends in a curl: it turns back on itself
+  assert.ok(r.bounds.x0 < 40, 'a long curly tail behind her');
+});
+
+test('Hail: about Squall’s size, sitting no taller than our cat; her paws (for the riddle’s picture) and her raised forepaw', () => {
+  const me = A.character('player', { pose: 'sit', mood: 'neutral', look: LOOK8 }), sq = A.character('squall', { pose: 'sit', mood: 'neutral' });
+  const sit = A.character('hail', { pose: 'sit', mood: 'neutral' });
+  assert.ok(tallOf(sit) <= tallOf(me), 'no taller than our cat sitting: ' + tallOf(sit) + ' / ' + tallOf(me));
+  assert.ok(tallOf(sit) / tallOf(sq) > 0.85 && tallOf(sit) / tallOf(sq) < 1.15, 'about Squall’s size');
+  // the bounce is in the air: her lowest paw well off the ground, the marks where she took off on it
+  const b = A.character('hail', { pose: 'bounce', mood: 'laugh' });
+  assert.ok(/q8,-5 16,0/.test(b.svg), 'the marks on the ground');
+  // pawup: her raised forepaw reported, five claws, lit: n lights n
+  for (let n = 0; n <= 5; n++) {
+    const r = A.character('hail', { pose: 'pawup', mood: 'wonder', lit: n });
+    assert.ok(r.paw && r.paw.x > r.head.x - 20 && r.paw.y < 160 && r.paw.r > 10, 'pawup reports the paw: ' + JSON.stringify(r.paw));
+    assert.strictEqual(count(r.svg, /class="pc-dclaws pc-lit"/g), n ? 1 : 0);
+    assert.strictEqual(count((r.svg.match(/class="pc-dclaws pc-lit"[^>]*>(.*?)<\/g>/) || ['', ''])[1], /<path /g), n);
+  }
+  assert.ok(!A.character('hail', { pose: 'sit' }).paw, 'only a raised paw is reported');
+});
+
+// ----- Snip and Snatch
+
+test('every Snip and Snatch pose x mood x facing renders inside the box (220 x 150), on the ground; ids unique; never a tooth, never a snarl', () => {
+  for (const who of ['snip', 'snatch']) for (const pose of WEASEL_POSES) for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    const r = A.character(who, { pose, mood, facing }), label = `${who}/${pose}/${mood}/${facing}`;
+    checkResult(r, label);
+    checkIds(r.svg, label);
+    assert.strictEqual(r.w, 220); assert.strictEqual(r.h, 150);
+    inBox(r, label, 0.5);
+    assert.ok(r.bounds.y1 > 144 && r.bounds.y1 <= 150, label + ': on the ground line: ' + r.bounds.y1);
+    noTeeth(r.svg, label);
+    // a mouth that opens is a small dark oval or grin with a pink tongue, nothing else in it
+    for (const m of r.svg.match(/class="pc-mouth"[^>]*/g) || []) assert.ok(/fill="(none|#6e2a35)"/.test(m), label + ': ' + m);
+    assert.ok(r.svg.length < 30000, label + ': light (' + r.svg.length + ')');
+  }
+  for (const who of ['snip', 'snatch']) {
+    const seen = new Set(WEASEL_POSES.map((pose) => strip(A.character(who, { pose, mood: 'neutral' }).svg)));
+    assert.strictEqual(seen.size, WEASEL_POSES.length, who + ': every pose its own');
+    const moods = new Set(A.vocab.moods.map((mood) => strip(A.character(who, { pose: 'up', mood }).svg)));
+    assert.strictEqual(moods.size, A.vocab.moods.length, who + ': every mood its own face');
+  }
+});
+
+test('Snip and Snatch: long thin bodies, short legs, round ears, bead eyes, thin brown fur like the tuft; Snip golden with a white bib and a pale tail tip, Snatch chestnut with a cream belly, a black tail tip and a round tummy', () => {
+  const rgbDist = (a, b) => { const p = rgbOf(a), q = rgbOf(b); return Math.sqrt((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2); };
+  const TUFT = '#8A5B38';   // crossing.js's FUR, the tuft on the raft's vine
+  const snip = A.character('snip', { pose: 'stand', mood: 'neutral' }).svg, snatch = A.character('snatch', { pose: 'stand', mood: 'neutral' }).svg;
+  assert.ok(snip.includes('fill="#a8743f"') && snatch.includes('fill="#7c4a29"'), 'their furs');
+  assert.ok(rgbDist('#a8743f', TUFT) < 70 && rgbDist('#7c4a29', TUFT) < 40, 'brown like the tuft');
+  assert.ok(lum('#a8743f') > lum('#7c4a29') + 20, 'Snip lighter, Snatch darker');
+  assert.ok(snip.includes('fill="#fdf9ef"') && snip.includes('fill="#f4e5c3"'), 'Snip: the white bib and chin, the pale tail tip');
+  assert.ok(snatch.includes('fill="#f1dfbb"') && snatch.includes('fill="#1d1513"'), 'Snatch: the cream belly, the black tail tip');
+  // long and low: on all fours a weasel is more than twice as long as it is tall
+  for (const who of ['snip', 'snatch']) {
+    const r = A.character(who, { pose: 'stand' }), b = r.bounds;
+    assert.ok((b.x1 - b.x0) > 2.2 * (b.y1 - b.y0), who + ': long and low ' + JSON.stringify(b));
+    assert.ok(/<circle cx="6" cy="-3.4" r="3.2" fill="#1/.test(r.svg), who + ': a black bead eye');
+  }
+  // Snatch's round tummy: his body is wider in the middle than Snip's, for its length
+  const mid = (who) => { const r = A.character(who, { pose: 'up' }), b = r.bounds; return (b.x1 - b.x0) / (b.y1 - b.y0); };
+  assert.ok(mid('snatch') > mid('snip'), 'a rounder Snatch');
+});
+
+test('Snip and Snatch are half our cat’s size (sitting up, inside scenes.js’s band, 0.5 to 0.65 of her), Snip a little smaller', () => {
+  const me = tallOf(A.character('player', { pose: 'sit', mood: 'neutral', look: LOOK8 }));
+  const snip = tallOf(A.character('snip', { pose: 'up', mood: 'neutral' })) / me, snatch = tallOf(A.character('snatch', { pose: 'up', mood: 'neutral' })) / me;
+  assert.ok(snip >= 0.52 && snip <= 0.63, 'Snip ' + snip);
+  assert.ok(snatch >= 0.52 && snatch <= 0.64, 'Snatch ' + snatch);
+  assert.ok(snip < snatch * 0.95, 'Snip a little smaller');
+});
+
+test('the weasels: holds mouse (PC.art.prey’s, eyes shut, its tail dangling) in the mouth, or held up in the forepaws sitting up; asleep and curl shut the eyes', () => {
+  for (const who of ['snip', 'snatch']) for (const pose of WEASEL_POSES) {
+    if (pose === 'curl' || pose === 'peek') continue;
+    const r = A.character(who, { pose, mood: 'happy', holds: 'mouse' });
+    assert.strictEqual(count(r.svg, /<g class="pc-mouse">/g), 1, `${who}/${pose}: one mouse`);
+    assert.ok(r.svg.includes('stroke="#c99a92"'), `${who}/${pose}: its tail dangling`);
+    assert.ok(r.held && r.held.what === 'mouse' && r.held.at === (pose === 'up' ? 'paws' : 'mouth'), `${who}/${pose}: ${JSON.stringify(r.held)}`);
+    assert.ok(r.held.x > 0 && r.held.x < r.w && r.held.y > 0 && r.held.y < r.h, `${who}/${pose}: held inside the box`);
+    if (r.held.at === 'mouth') assert.ok(Math.abs(r.held.x - r.head.x) < 30, `${who}/${pose}: at his mouth`);
+    // a mouthful: no mouth of the mood's under it
+    if (r.held.at === 'mouth') assert.ok(!/class="pc-mouth"/.test(r.svg), `${who}/${pose}: a mouthful`);
+  }
+  assert.strictEqual(A.character('snatch', { pose: 'up', holds: 'mouse', holdAt: 'mouth' }).held.at, 'mouth');
+  assert.strictEqual(A.character('snatch', { pose: 'stand', holds: 'mouse', holdAt: 'paws' }).held.at, 'paws', 'on all fours, at his forepaws on the ground');
+  assert.ok(!A.character('snatch', { pose: 'up', holds: 'fish' }).held, 'a weasel holds a mouse, nothing else');
+  // asleep: eyes shut whatever the mood; curled up, asleep (two tiny snores)
+  const bead = (s) => /<circle cx="6" cy="-3.4"/.test(s);
+  for (const mood of ['neutral', 'wonder', 'scared', 'shout']) {
+    assert.ok(bead(A.character('snip', { pose: 'up', mood }).svg));
+    assert.ok(!bead(A.character('snip', { pose: 'up', mood, asleep: true }).svg), 'asleep: ' + mood);
+    assert.ok(!bead(A.character('snatch', { pose: 'curl', mood }).svg), 'curl: ' + mood);
+  }
+  assert.ok(/class="pc-zz"/.test(A.character('snatch', { pose: 'curl' }).svg), 'two tiny snores');
+});
+
+// ----- the cats: run, tailUp, the leaf and the glass
+
+test('cats run (every cat, every mood, both facings): flat out, inside the box, eyes open; tap: paw marks the front paw', () => {
+  for (const who of CATS.concat(['sloshbank', 'reedclan'])) for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    const r = A.character(who, { pose: 'run', mood, facing, look: LOOK8, variant: 3 }), label = `${who}/run/${mood}/${facing}`;
+    checkResult(r, label);
+    inBox(r, label, 0.5);
+    // body low and long: wider than it is tall, its head forward
+    const b = r.bounds;
+    assert.ok((b.x1 - b.x0) > 1.25 * (b.y1 - b.y0), label + ': long ' + JSON.stringify(b));
+  }
+  // eyes open whatever the mood (sitting, happy and laugh and sleepy shut them)
+  for (const mood of ['happy', 'laugh', 'sleepy', 'proud']) {
+    assert.ok(!A.character('player', { pose: 'sit', mood, look: LOOK8 }).svg.includes('#8fca66'), mood + ' sitting: shut');
+    assert.ok(A.character('player', { pose: 'run', mood, look: LOOK8 }).svg.includes('#8fca66'), mood + ' running: open');
+  }
+  for (const facing of FACINGS) {
+    const r = A.character('tallyheart', { pose: 'run', mood: 'worried', facing, tap: 'paw' }), t = tapAt(r.svg, 'paw');
+    assert.ok(t, 'the RUN Tap');
+    const at = inDrawing(r.svg, t);
+    assert.ok(facing === 'right' ? at[0] > r.head.x - 10 : at[0] < r.head.x + 10, facing + ': her front paw, ahead under her head: ' + at);
+    assert.ok(at[1] > 170, facing + ': on the ground: ' + at);
+  }
+});
+
+test('tailUp: in sit, stand, crouch and walk the tail stands straight up, its tip curled over, above a crouching cat’s ears; tap: tail marks its tip, unpainted; no other pose changes', () => {
+  for (const who of ['player', 'tallyheart', 'clancat', 'waffles']) for (const pose of ['sit', 'stand', 'crouch', 'walk']) for (const facing of FACINGS) {
+    const plain = A.character(who, { pose, mood: 'neutral', facing, look: LOOK8 }), up = A.character(who, { pose, mood: 'neutral', facing, look: LOOK8, tailUp: true, tap: 'tail' });
+    const label = `${who}/${pose}/${facing}`;
+    checkResult(up, label);
+    inBox(up, label, 0.5);
+    assert.notStrictEqual(strip(up.svg), strip(plain.svg), label + ': drawn');
+    const t = tapAt(up.svg, 'tail');
+    assert.ok(t && t[2] >= 12, label + ': the tip marked');
+    assert.ok(/<g class="pc-tap pc-tap-tail"><circle [^>]*fill="none"\/><\/g>/.test(up.svg), label + ': unpainted');
+    const tip = inDrawing(up.svg, t);
+    // (crouching, above her ears, so it stands up out of the weeds; else above the middle of her head)
+    assert.ok(pose === 'crouch' ? tip[1] < up.headBox.y0 - 6 : tip[1] < up.head.y, label + ': the tip stands high (' + tip[1] + ' vs the ears at ' + up.headBox.y0 + ', the head at ' + up.head.y + ')');
+    assert.ok(facing === 'right' ? tip[0] < up.head.x : tip[0] > up.head.x, label + ': behind her');
+    // the cat herself is unchanged: the same head where it was
+    assert.deepStrictEqual(up.head, plain.head, label + ': her head unmoved');
+  }
+  for (const pose of ['lie', 'curl', 'loaf', 'fall', 'run', 'situp']) assert.strictEqual(strip(A.character('player', { pose, look: LOOK8, tailUp: true }).svg), strip(A.character('player', { pose, look: LOOK8 }).svg), pose + ': no change');
+  // "Your tail goes straight up." (sit, proud)
+  assert.ok(A.character('player', { pose: 'sit', mood: 'proud', tailUp: true, look: LOOK8 }).svg !== A.character('player', { pose: 'sit', mood: 'proud', look: LOOK8 }).svg);
+});
+
+test('holds: leaf (folded round her proof: in the mouth on her feet or running, at her forepaws sitting, crouching, lying) and glass (the leaf open at her forepaws, the clear piece shining: paws only); tap: leaf marks it', () => {
+  for (const who of ['player', 'tallyheart', 'clancat']) for (const pose of A.vocab.poses) for (const facing of FACINGS) {
+    const label = `${who}/${pose}/${facing}`;
+    for (const what of ['leaf', 'glass']) {
+      const r = A.character(who, { pose, mood: 'happy', facing, look: LOOK8, holds: what, tap: 'leaf' });
+      checkResult(r, label + ' ' + what);
+      if (pose === 'fall' || pose === 'tummy') { assert.ok(!r.held && !tapAt(r.svg, 'leaf'), label + ': nothing held'); continue; }
+      assert.strictEqual(count(r.svg, new RegExp('<g class="pc-' + what + '"', 'g')), 1, label + ': one ' + what);
+      const h = r.held, mouth = what === 'leaf' && ['stand', 'walk', 'peer', 'stretch', 'run'].includes(pose);
+      assert.ok(h && h.what === what && h.at === (mouth ? 'mouth' : 'paws'), label + ' ' + what + ': ' + JSON.stringify(h));
+      assert.ok(h.x > 0 && h.x < 200 && h.y > 0 && h.y < 200, label + ': inside the box');
+      if (!mouth && pose !== 'situp') assert.ok(h.y > 175, label + ' ' + what + ': on the ground (' + h.y + ')');
+      const t = tapAt(r.svg, 'leaf');
+      assert.ok(t, label + ' ' + what + ': tap: leaf');
+      const at = inDrawing(r.svg, t);
+      assert.ok(Math.abs(at[0] - h.x) < 1 && Math.abs(at[1] - h.y) < 1, label + ': the mark on it');
+    }
+  }
+  const g = A.character('player', { pose: 'crouch', holds: 'glass', look: LOOK8 }).svg;
+  assert.ok(/class="pc-glass-piece"/.test(g) && g.includes('#5aa99d'), 'the clear piece, its pale blue-green edge');
+  assert.strictEqual(A.character('player', { pose: 'stand', holds: 'glass', holdAt: 'mouth', look: LOOK8 }).held.at, 'paws', 'the glass is never carried in the mouth');
+  assert.strictEqual(A.character('player', { pose: 'sit', holds: 'leaf', holdAt: 'mouth', look: LOOK8 }).held.at, 'mouth', 'holdAt says where');
+  // a leaf in the mouth is a mouthful: no mood mouth
+  assert.ok(!A.character('player', { pose: 'run', mood: 'laugh', holds: 'leaf', look: LOOK8 }).svg.includes('#f2879a'), 'no open mouth round the leaf');
+});
+
+// ----- Riffle, the dogs, Reynard
+
+test('Riffle: tap: ears (both, unpainted), tap: paw (his near forepaw, in scramble), tailUp (his thick tail straight up) and tap: tail; no new pose', () => {
+  for (const pose of ['scramble', 'stand', 'sit', 'hop']) for (const facing of FACINGS) {
+    const label = `riffle/${pose}/${facing}`;
+    const ears = A.character('riffle', { pose, facing, tap: 'ears' });
+    assert.strictEqual(count(ears.svg, /<g class="pc-tap pc-tap-ears">(<circle [^>]*fill="none"\/>){2}<\/g>/g), 1, label + ': both ears');
+    const up = A.character('riffle', { pose, facing, mood: 'happy', tailUp: true, tap: 'tail' }), plain = A.character('riffle', { pose, facing, mood: 'happy' });
+    checkResult(up, label);
+    inBox(up, label, 0.5);
+    const t = tapAt(up.svg, 'tail');
+    assert.ok(t, label + ': the tail’s tip marked');
+    // (on all fours, as on the trail, it stands up above his back and head; sitting or standing, above his middle)
+    const ty = inDrawing(up.svg, t)[1];
+    assert.ok(pose === 'scramble' ? ty < plain.bounds.y0 + 10 : ty < up.bounds.y1 - (up.bounds.y1 - up.bounds.y0) * 0.3, label + ': standing up: ' + ty + ' vs ' + JSON.stringify(plain.bounds));
+  }
+  for (const facing of FACINGS) {
+    const r = A.character('riffle', { pose: 'scramble', mood: 'worried', facing, tap: 'paw' }), t = tapAt(r.svg, 'paw');
+    assert.ok(t, 'the pull-through Tap');
+    const at = inDrawing(r.svg, t);
+    assert.ok(facing === 'right' ? at[0] > r.head.x - 10 : at[0] < r.head.x + 10, facing + ': his forepaw, out in front: ' + at);
+    assert.ok(at[1] > r.h - 40, facing + ': on the ground');
+  }
+});
+
+test('the dogs: lie (lying down, head on forepaws, the paws past the chin) and asleep (eyes shut whatever the mood): the heap', () => {
+  for (const variant of [1, 2, 3]) for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    const r = A.character('dog', { variant, pose: 'lie', mood, facing }), label = `dog${variant}/lie/${mood}/${facing}`;
+    checkResult(r, label);
+    inBox(r, label, 0.5);
+    const st = A.character('dog', { variant, pose: 'stand', mood });
+    assert.ok((r.bounds.y1 - r.bounds.y0) < 0.75 * (st.bounds.y1 - st.bounds.y0), label + ': low');
+    assert.ok(r.head.y > r.h * 0.62, label + ': the head down');
+    // (a frightened or sorry dog lays its ears out sideways, past its paws: the paws are checked on a calm one)
+    if (/^(neutral|happy|sleepy|kind)$/.test(mood)) assert.ok(facing === 'right' ? r.bounds.x1 > r.headBox.x1 + 2 : r.bounds.x0 < r.headBox.x0 - 2, label + ': the forepaws out past the chin');
+    const z = A.character('dog', { variant, pose: 'lie', mood, facing, asleep: true });
+    assert.ok(!z.svg.includes('#fffdf8'), label + ': asleep, no eye open');
+  }
+  // (howling, a dog's eyes are shut already)
+  for (const pose of DOG_POSES.filter((p) => p !== 'howl')) assert.ok(A.character('dog', { variant: 1, pose }).svg.includes('#fffdf8') && !A.character('dog', { variant: 1, pose, asleep: true }).svg.includes('#fffdf8'), pose + ': asleep in any pose');
+});
+
+test('Reynard trots (on all fours along the tracks, his tail high, his smile on): inside his box, three-quarter view, never a tooth', () => {
+  const mouth = (svg) => (svg.match(/<path class="pc-fox-mouth" d="([^"]+)"[^>]*>/g) || []);
+  const tally = A.character('tallyheart', { pose: 'sit', mood: 'neutral' });
+  for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    const r = A.character('reynard', { pose: 'trot', mood, facing }), label = `reynard/trot/${mood}/${facing}`;
+    checkResult(r, label);
+    checkIds(r.svg, label);
+    inBox(r, label, 0.5);
+    const m = mouth(r.svg);
+    assert.strictEqual(m.length, 1, label + ': one mouth');
+    const d = m[0].match(/d="([^"]+)"/)[1], nums = d.match(/-?[\d.]+/g).map(Number);
+    assert.ok(/fill="none"/.test(m[0]) && nums[nums.length - 1] < 13 && /Q[^Q]+Q/.test(d), label + ': the smile on');
+    assert.ok(!/teeth|fang/i.test(r.svg), label);
+    assert.ok(tallOf(r) <= tallOf(tally) + 2, label + ': never taller than Tallyheart');
+  }
+  // his tail held high: its white tip above his back
+  const r = A.character('reynard', { pose: 'trot', mood: 'proud' }), tip = r.svg.match(/<path class="pc-fox-tip" d="M([-\d.]+),([-\d.]+)/);
+  assert.ok(tip, 'the white tip');
+  const sit = A.character('reynard', { pose: 'sit', mood: 'proud' });
+  assert.ok(r.bounds.y1 - r.bounds.y0 < (sit.bounds.y1 - sit.bounds.y0) * 1.05, 'on all fours, no taller than sitting');
+});
+
+// ----- the Counts art
+
+test('one cat’s paws, a pair at a time (thing: paw at per 2): Tallyheart side-on, the front pair the first group, the back pair the second; totals 2 and 4; the next pair glowing', () => {
+  const pic = (taps, o) => A.countsPicture(Object.assign({ table: 2, per: 2, groups: 2, highlight: taps * 2, totals: true, next: taps < 2, thing: 'paw', who: [{ who: 'tallyheart' }], look: LOOK7 }, o || {}));
+  for (let taps = 0; taps <= 2; taps++) {
+    const s = pic(taps);
+    checkSvgDoc(s, 'paws ' + taps);
+    checkIds(s, 'paws ' + taps);
+    assert.strictEqual(labelOf(s), 'One cat: two front paws and two back paws');
+    assert.strictEqual(glows(s), taps * 2, taps + ': a glow at each lit paw');
+    assert.deepStrictEqual(totals(s), [2, 4].slice(0, taps), taps + ': the running totals');
+    assert.strictEqual(nexts(s), taps < 2 ? 1 : 0, taps + ': the next pair glowing');
+    assert.ok(/#e8913a/i.test(s), 'Tallyheart’s ginger');
+  }
+  // the front pair first: she faces left (the review: facing right, her totals read "4 … 2"), so the first pair
+  // lit is the left-hand one, its 2 under it, the back pair glowing next on the right; 2 and 4 read left to right
+  const one = pic(1), gx = [...one.matchAll(/<circle cx="([\d.]+)" cy="[\d.]+" r="26" fill="#ffb21f"/g)].map((m) => +m[1]);
+  const two = +one.match(/<text class="pc-total" x="([\d.]+)"/)[1], nx = one.match(/<rect class="pc-next" x="([\d.]+)" y="[\d.]+" width="([\d.]+)"/).slice(1).map(Number);
+  assert.ok(Math.max(...gx) < nx[0], 'the front pair (on the left) lit, the back pair (on the right) glowing next: ' + gx + ' / ' + nx);
+  assert.ok(two > Math.min(...gx) - 1 && two < Math.max(...gx) + 1, 'the 2 under the front pair');
+  const zero = pic(0), n0 = zero.match(/<rect class="pc-next" x="([\d.]+)" y="[\d.]+" width="([\d.]+)"/).slice(1).map(Number);
+  assert.ok(n0[0] + n0[1] / 2 < 470 / 2, 'the first glow on the left: ' + n0);
+  const tx = [...pic(2).matchAll(/<text class="pc-total" x="([\d.]+)"[^>]*>(\d+)/g)].map((m) => [+m[1], +m[2]]);
+  assert.deepEqual(tx.slice().sort((a, b) => a[0] - b[0]).map((t) => t[1]), [2, 4], 'the totals read 2, 4 from left to right');
+  // all four paws show, apart: two pairs, each two paws
+  const all = pic(2), xs = [...all.matchAll(/<circle cx="([\d.]+)" cy="[\d.]+" r="26" fill="#ffb21f"/g)].map((m) => +m[1]).sort((a, b) => a - b);
+  assert.strictEqual(xs.length, 4);
+  assert.ok(xs[1] - xs[0] > 30 && xs[3] - xs[2] > 30 && xs[2] - xs[1] > 1.5 * Math.max(xs[1] - xs[0], xs[3] - xs[2]), 'four paws apart, two and two: ' + xs);
+  // per 2 with another thing is still chapter 2's ears; per 2 with paws in rows is the rows
+  assert.strictEqual(strip(A.countsPicture({ table: 2, groups: 2, highlight: 2, thing: 'ear' })), strip(A.countsPicture({ table: 2, groups: 2, highlight: 2 })));
+  assert.ok(!/One cat/.test(A.countsPicture({ table: 2, per: 2, groups: 3, thing: 'ear', who: [{ who: 'tallyheart' }] })));
+});
+
+test('the field’s four (kind: dogs): the table-4 tiles, the dogs by variant, Hail standing, a cat as the table-4 picture draws it; four paws each, lit an animal at a time; a who longer than groups draws its first', () => {
+  const FIELD = [{ who: 'dog', variant: 1 }, { who: 'dog', variant: 2 }, { who: 'dog', variant: 3 }, { who: 'hail' }];
+  for (let g = 1; g <= 4; g++) for (const hl of [0, 4, 6, g * 4]) {
+    const s = A.countsPicture({ table: 4, per: 4, groups: g, kind: 'dogs', who: FIELD, highlight: hl, totals: true, next: hl < g * 4, look: LOOK7 });
+    const label = g + ' animals, ' + hl;
+    checkSvgDoc(s, label);
+    checkIds(s, label);
+    assert.strictEqual(labelOf(s), g + (g === 1 ? ' animal, four paws' : ' animals, four paws each'));
+    assert.strictEqual(count(s, /<g class="pc-animal">/g), g, label + ': the first ' + g + ' of the field');
+    assert.strictEqual(glows(s), Math.min(hl, g * 4), label + ': a glow at every lit paw');
+    assert.deepStrictEqual(totals(s), [4, 8, 12, 16].slice(0, Math.floor(hl / 4)), label + ': totals');
+    assert.ok(s.length < 200000, label + ': ' + s.length);
+  }
+  const all = A.countsPicture({ table: 4, per: 4, groups: 4, kind: 'dogs', who: FIELD, highlight: 0 });
+  for (const col of ['#f4f0e7', '#fbfaf5', '#dda067', '#f6f4f0']) assert.ok(all.includes(col), 'shaggy, spotty, tiny and Hail: ' + col);
+  // each animal's four paws, in its own tile, left to right: four glows a tile when all are lit
+  const lit = A.countsPicture({ table: 4, per: 4, groups: 4, kind: 'dogs', who: FIELD, highlight: 16 });
+  lit.split('<g class="pc-animal">').slice(1).forEach((t, i) => assert.strictEqual(glows(t.split('</g></g>')[0] + '</g>'), 4, 'animal ' + i + ': four paws'));
+  // Hail stands on four feet stepped apart, so her four glows are four feet, not two blobs (the review: at 83.6
+  // and 94.4, 130.7 and 144.7, glow radius 17, a child could count 14); her forepaws resting, claws tucked
+  const hail = lit.split('<g class="pc-animal">')[4], hx = [...hail.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="17"/g)].map((m) => [+m[1], +m[2]]).sort((a, b) => a[0] - b[0]);
+  assert.strictEqual(hx.length, 4);
+  for (let i = 1; i < 4; i++) assert.ok(hx[i][0] - hx[i - 1][0] > 22, 'Hail\'s paws apart: ' + hx.map((q) => q[0].toFixed(1)));
+  assert.ok(Math.max(...hx.map((q) => q[1])) - Math.min(...hx.map((q) => q[1])) < 12, 'all four on the ground line: ' + hx.map((q) => q[1].toFixed(1)));
+  // a cat in the list is drawn as the table-4 picture draws it; with no who, Clan cats
+  assert.ok(A.countsPicture({ table: 4, per: 4, groups: 2, kind: 'dogs', who: [{ who: 'dog', variant: 2 }, { who: 'tallyheart' }] }).toLowerCase().includes('#e8913a'));
+  assert.strictEqual(count(A.countsPicture({ table: 4, per: 4, groups: 3, kind: 'dogs', highlight: 12 }), /<g class="pc-animal">/g), 3);
+  // without the kind, the table-4 picture is as it was (its dogs with no paw marks: pinned by sweep7)
+  assert.ok(!/pc-animal/.test(A.countsPicture({ table: 4, groups: 4, who: FIELD, highlight: 8 })));
+});
+
+test('marks two and two (kind: marks, layout: pairs): each night’s four in two pairs with a gap, lit in order a night at a time, in the sand or the mud; one to ten nights', () => {
+  for (const ground of [undefined, 'mud']) for (let g = 1; g <= 10; g++) for (const hl of [0, 4, 12, g * 4]) {
+    const s = A.countsPicture({ table: 4, per: 4, groups: g, kind: 'marks', layout: 'pairs', ground, highlight: hl });
+    checkSvgDoc(s, 'pairs ' + g);
+    assert.strictEqual(count(s, /class="pc-mark/g), g * 4);
+    assert.strictEqual(count(s, /class="pc-mark pc-lit"/g), Math.min(hl, g * 4), g + '/' + hl + ': lit in order');
+    assert.strictEqual(labelOf(s), g + (g === 1 ? ' night, 4 marks' : ' nights, 4 marks each') + ', two and two');
+  }
+  // the gap: within a night, the second and third marks are further apart than the first and second
+  const s = A.countsPicture({ table: 4, per: 4, groups: 1, kind: 'marks', layout: 'pairs' });
+  const xs = [...s.matchAll(/<path class="pc-mark" d="M([\d.]+),/g)].map((m) => +m[1]);
+  assert.ok(xs[2] - xs[1] > (xs[1] - xs[0]) * 1.5 && Math.abs((xs[3] - xs[2]) - (xs[1] - xs[0])) < 0.01, 'two and two: ' + xs);
+  // the twenty-eight: seven nights, two lines (four and three)
+  const t = A.countsPicture({ table: 4, per: 4, groups: 7, kind: 'marks', layout: 'pairs', highlight: 12 });
+  assert.strictEqual(count(t, /<g class="pc-night">/g), 7);
+  // chapter 7's twenty-four keeps its four in a row
+  const plain = A.countsPicture({ table: 4, per: 4, groups: 1, kind: 'marks' }), px = [...plain.matchAll(/<path class="pc-mark" d="M([\d.]+),/g)].map((m) => +m[1]);
+  assert.ok(Math.abs((px[2] - px[1]) - (px[1] - px[0])) < 0.01, 'without a layout, evenly in a row');
+});
+
+test('the sand at per 4: each group two and two (a pair, a gap, a pair), lit in order; one to ten groups; every other per and the swipes as before', () => {
+  for (const ground of [undefined, 'earth', 'mud']) for (let g = 1; g <= 10; g++) for (const c of [0, 2, 4, 7, g * 4]) {
+    const s = A.sand({ groups: g, per: 4, counted: Math.min(c, g * 4), ground });
+    checkSvgDoc(s, 'sand ' + g);
+    assert.strictEqual(count(s, /stroke="#e39a12"/g), Math.min(c, g * 4), g + '/' + c + ': lit');
+    assert.ok(/, two and two"/.test(s), 'its label');
+  }
+  const s = A.sand({ groups: 1, per: 4, counted: 0 }), xs = [...s.matchAll(/<path d="M([\d.]+),[\d.]+Q[^"]*" stroke="#9c7440"/g)].map((m) => +m[1]);
+  assert.strictEqual(xs.length, 4);
+  assert.ok(xs[2] - xs[1] > (xs[1] - xs[0]) * 1.5, 'a gap between the pairs: ' + xs);
+  // the 4s' help hops the groups: after the first hop exactly one group's four are lit, the first two marks first
+  const one = A.sand({ groups: 7, per: 4, counted: 4 });
+  assert.strictEqual(count(one, /stroke="#e39a12"/g), 4);
+  // swipes at per 4 are chapter 3's and 4's (pinned by sweep7)
+  assert.ok(!/two and two/.test(A.sand({ groups: 3, per: 4, counted: 7, style: 'swipe' })));
+});
+
+test('the 4s’ lesson picture is the table-4 picture as it was: four paws on every cat; lit: 28 lights exactly seven cats; ten cats in two rows of five', () => {
+  const s = A.countsPicture({ table: 4, groups: 8, highlight: 28, thing: 'paw', look: LOOK7 });
+  assert.strictEqual(glows(s), 28, 'seven cats’ paws');
+  assert.strictEqual(labelOf(s), '8 cats, 4 paws each');
+  const ten = A.countsPicture({ table: 4, groups: 10, highlight: 40, thing: 'paw', look: LOOK7 });
+  assert.strictEqual(glows(ten), 40);
+  const ys = new Set([...ten.matchAll(/<g transform="translate\([\d.]+,([-\d.]+)\) scale\(0.9\)">/g)].map((m) => m[1]));
+  assert.strictEqual(ys.size, 2, 'two rows');
+  // the rim's paws and the bedtime paws: table 4 with a who, as drawn today
+  const rim = A.countsPicture({ table: 4, per: 4, groups: 5, highlight: 8, totals: true, next: true, who: RIM7, thing: 'paw', look: LOOK7 });
+  assert.deepStrictEqual(totals(rim), [4, 8]);
+  assert.strictEqual(glows(rim), 8);
+  const bed = A.countsPicture({ table: 4, per: 4, groups: 2, highlight: 4, totals: true, next: true, who: [{ who: 'snorer' }, { who: 'player' }], thing: 'paw', look: LOOK7 });
+  assert.deepStrictEqual(totals(bed), [4]);
+});
+
+test('chapter 8’s pictures and drawings: unique ids on one page, every reference resolves, none heavy', () => {
+  const FIELD = [{ who: 'dog', variant: 1 }, { who: 'dog', variant: 2 }, { who: 'dog', variant: 3 }, { who: 'hail' }];
+  const pics = [A.countsPicture({ table: 2, per: 2, groups: 2, highlight: 2, totals: true, next: true, thing: 'paw', who: [{ who: 'tallyheart' }], look: LOOK7 }),
+    A.countsPicture({ table: 4, per: 4, groups: 4, kind: 'dogs', who: FIELD, highlight: 6, totals: true, next: true }),
+    A.countsPicture({ table: 4, per: 4, groups: 7, kind: 'marks', layout: 'pairs', highlight: 12 }), A.sand({ groups: 7, per: 4, counted: 13 })];
+  const chars = [A.character('hail', { pose: 'bounce' }), A.character('hail', { pose: 'peek' }), A.character('snip', { pose: 'point', mood: 'shout' }), A.character('snatch', { pose: 'up', holds: 'mouse' }),
+    A.character('player', { pose: 'run', holds: 'leaf', tap: 'paw', look: LOOK8 }), A.character('tallyheart', { pose: 'crouch', tailUp: true, tap: 'tail' }), A.character('player', { pose: 'crouch', holds: 'glass', tap: 'leaf', look: LOOK8 }),
+    A.character('riffle', { pose: 'scramble', tailUp: true, tap: 'paw' }), A.character('dog', { variant: 1, pose: 'lie', asleep: true }), A.character('reynard', { pose: 'trot', mood: 'proud' })];
+  const all = pics.join('') + chars.map((c) => c.svg).join('');
+  const ids = idsOf(all);
+  assert.strictEqual(new Set(ids).size, ids.length, 'every id on the page is its own');
+  for (const ref of all.match(/(?:url\(#|href="#)([^)"]+)/g) || []) assert.ok(ids.includes(ref.replace(/^(url\(#|href="#)/, '')), 'dangling ' + ref);
+  pics.forEach((s, i) => { checkSvgDoc(s, 'picture ' + i); assert.ok(s.length < 200000, 'picture ' + i + ': ' + s.length); });
+  chars.forEach((c, i) => assert.ok(c.svg.length < 60000, 'drawing ' + i + ': ' + c.svg.length));
+});
+
+test('dev/gallery-cats.html: chapter 8’s sections draw (Hail, the weasels, the extras, the Counts pictures), every pose of Hail, Snip and Snatch labelled', () => {
+  const fs = require('fs'), path = require('path'), vm = require('vm');
+  const dir = path.join(__dirname, '..', 'dev'), html = fs.readFileSync(path.join(dir, 'gallery-cats.html'), 'utf8');
+  const scripts = [...html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)];
+  const run = (search) => {
+    const els = {};
+    const el = (id) => els[id] || (els[id] = { id, innerHTML: '', value: id === 'size' ? '120' : '', options: [{ value: '120' }], add() {} });
+    const ctx = { URLSearchParams, document: { getElementById: el, body: { className: '' } }, location: { search } };
+    ctx.globalThis = ctx;
+    vm.createContext(ctx);
+    for (const m of scripts) vm.runInContext(m[1] ? fs.readFileSync(path.join(dir, m[1]), 'utf8') : m[2], ctx, { filename: m[1] || 'gallery-cats.html' });
+    return { out: els.out.innerHTML, nav: els.nav.innerHTML };
+  };
+  for (const [id, least] of [['hail', 30], ['weasels', 50], ['extras8', 24], ['counts8', 16]]) {
+    const page = run('?only=' + id);
+    assert.ok(page.nav.includes('href="?only=' + id + '"'), id + ' is in the menu');
+    assert.ok(new RegExp('<section id="' + id + '"><h2>[^<]*hapter 8').test(page.out), id + ': its section');
+    assert.ok(count(page.out, /<svg[ >]/g) >= least, id + ': ' + count(page.out, /<svg[ >]/g) + ' drawings');
+    assert.ok(!/NaN|undefined|\[object |Infinity/.test(page.out), id + ': every drawing drew');
+    assert.strictEqual(balanced(page.out.replace(/<small title="[^"]*">/g, '<small>')), null, id + ': well-formed');
+  }
+  const hail = run('?only=hail').out, weasels = run('?only=weasels').out;
+  for (const pose of A.vocab.otherPoses.hail) assert.ok(new RegExp('<small title="' + pose + ' · ').test(hail), 'hail: ' + pose);
+  for (const pose of WEASEL_POSES) assert.strictEqual(count(weasels, new RegExp('<small title="' + pose + ' · ' + { stand: 'neutral', up: 'happy', run: 'laugh', skid: 'scared', peek: 'wonder', point: 'shout', curl: 'sleepy' }[pose] + '">', 'g')), 2, 'snip and snatch: ' + pose);
+  const counts = run('?only=counts8').out;
+  for (const label of ['One cat: two front paws and two back paws', '4 animals, four paws each', '2 animals, four paws each', '7 nights, 4 marks each, two and two', '10 cats, 4 paws each', '7 groups of 4 scratches in the sand, two and two'])
+    assert.ok(counts.includes('aria-label="' + label + '"'), 'the gallery shows: ' + label);
+  const extras = run('?only=extras8').out;
+  for (const t of ['tail', 'leaf', 'paw', 'ears']) assert.ok(new RegExp('pc-tap-' + t + '"[^>]*>[^]*?stroke-dasharray').test(extras), 'the tap ' + t + ' is outlined in the gallery');
+  // the earlier sections still draw with the new poses in their lists (the cats’ run, the dogs’ lie, Reynard’s trot)
+  for (const id of ['poses', 'dogs', 'reynard']) assert.ok(!/undefined|NaN/.test(run('?only=' + id).out), id);
 });

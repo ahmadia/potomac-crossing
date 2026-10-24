@@ -70,6 +70,7 @@
 <script src="../app/art/sets/roof.js"></script>
 <script src="../app/art/sets/openriver.js"></script>
 <script src="../app/art/sets/marsh.js"></script>
+<script src="../app/art/sets/tracks.js"></script>
 <script src="../app/art/cards.js"></script>
 <script src="../app/story/ch01.js"></script>
 <script src="../app/story/ch02.js"></script>
@@ -78,6 +79,7 @@
 <script src="../app/story/ch05.js"></script>
 <script src="../app/story/ch06.js"></script>
 <script src="../app/story/ch07.js"></script>
+<script src="../app/story/ch08.js"></script>
 <script>
 (function () {
   'use strict';
@@ -203,6 +205,19 @@
     },
     bridge: {
       print: { opts: { prints: true }, cast: [c('player', 'over', 'crouch', 'wonder', { reach: true })], fx: ['day'] }
+    },
+    // chapter 8: the railway bank by the tracks (app/art/sets/tracks.js), always at night: the bank, the stash, the tunnel
+    tracks: {
+      wide: { opts: { moon: 8 }, cast: [c('player', 'tunnel-end', 'crouch', 'wonder'), c('tallyheart', 'foot-2', 'sit', 'happy', { facing: 'left' }), c('reynard', 'rails', 'trot', 'happy'),
+        c('snip', 'hole-1', 'peek', 'neutral'), c('snatch', 'hole-2', 'up', 'neutral', { holds: 'mouse' })], fx: ['night'] },
+      hide: { opts: { moon: 8 }, cast: [c('player', 'weeds-1', 'crouch', 'wonder'), c('tallyheart', 'weeds-2', 'crouch', 'worried', { facing: 'left', tailUp: true, tap: 'tail' }), c('reynard', 'rails', 'trot', 'happy'),
+        c('snip', 'hole-1', 'peek', 'neutral'), c('snatch', 'hole-2', 'peek', 'neutral')], fx: ['night'] },
+      holes: { opts: { tap: 'stash' }, cast: [c('player', 'stash-mouth', 'crouch', 'wonder'), c('tallyheart', 'watch', 'sit', 'kind'), c('snatch', 'hole-1', 'peek', 'neutral', { holds: 'mouse' }), c('snip', 'hole-2', 'up', 'shout')], fx: ['night'] },
+      brag: { opts: { moon: 8 }, cast: [c('reynard', 'rails', 'chest', 'laugh'), c('snip', 'slope-1', 'up', 'wonder'), c('snatch', 'slope-2', 'up', 'happy', { holds: 'mouse', holdAt: 'paws' })], fx: ['night'] },
+      stash: { opts: { tap: 'glass' }, cast: [c('player', 'stash-in', 'crouch', 'sniff')], fx: ['night'] },
+      'stash-close': { cast: [c('player', 'near', 'crouch', 'wonder')], fx: ['night'] },
+      crawl: { opts: { tight: true }, cast: [c('player', 'crawl-1', 'pawup', 'wonder', { tap: 'paw' }), c('riffle', 'crawl-2', 'scramble', 'worried', { tap: 'paw' })], fx: ['night'] },
+      fork: { opts: { worm: true }, cast: [c('player', 'fork-1', 'crouch', 'sniff', { facing: 'left' }), c('riffle', 'fork-2', 'scramble', 'happy', { facing: 'left' })], fx: ['night'] }
     }
   };
   var EXTRA = [
@@ -378,7 +393,39 @@
     ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'nose', hidden: true, bark: ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'prints-tracks', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel'] }, cast: [c('player', 'nest', 'lie', 'sleepy', { facing: 'right' })], fx: ['night'] },
       'chapter 7: the most she can hold tonight: 24 cards, six under the moss (a corner showing for each), eighteen along the edge two deep, Waffles\u2019 piece in front'],
     ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'nose', hidden: true, bark: ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel'] }, cast: [c('player', 'nest', 'lie', 'sleepy', { facing: 'left' })], fx: ['night'] },
-      'chapter 7: 18 cards, six under the moss, twelve along the edge, facing left (the row keeps to the side away from her head)']
+      'chapter 7: 18 cards, six under the moss, twelve along the edge, facing left (the row keeps to the side away from her head)'],
+    // chapter 8: the tracks set's options and its other spots (its cameras each have a panel above)
+    ['tracks', 'wide', { opts: { moon: 8, tap: 'weeds' }, cast: [c('player', 'foot-1', 'sit', 'wonder'), c('riffle', 'foot-2', 'stand', 'worried', { facing: 'left' })], fx: ['night'] },
+      'chapter 8: tap: \u2018weeds\u2019: the tall weeds along the foot are the hide Tap\u2019s target (an unpainted pc-tap); our cat and Riffle at foot-1 and foot-2'],
+    ['tracks', 'wide', { opts: { moon: 8 }, cast: [c('player', 'foot-1', 'sit', 'happy', { facing: 'left' }), c('riffle', 'tunnel-end', 'scramble', 'happy')], fx: ['night'] },
+      'chapter 8: Riffle wriggling out of the tunnel\u2019s end (the lip over his back half), our cat at foot-1'],
+    ['tracks', 'wide', { cast: [], fx: ['night'] }, 'chapter 8: the bank with nobody and no moon: six holes, faint tiny prints round every one, the tall weeds, the rails bright'],
+    ['tracks', 'hide', { cast: [c('player', 'weeds-1', 'sit', 'wonder'), c('riffle', 'weeds-2', 'scramble', 'worried', { facing: 'left', tailUp: true, tap: 'tail' }), c('reynard', 'rails', 'comb', 'proud')], fx: ['night'] },
+      'chapter 8: in the weeds up to the eyes; Riffle\u2019s tail sticking up (tap: \u2018tail\u2019); the fox far above, never bigger than a cat\u2019s head down here'],
+    ['tracks', 'holes', { cast: [c('player', 'stash-mouth', 'run', 'worried', { holds: 'leaf', holdAt: 'mouth', tap: 'paw', facing: 'left' }), c('riffle', 'watch', 'scramble', 'shout'),
+      c('snatch', 'hole-1', 'point', 'shout', { holds: 'mouse' }), c('snip', 'hole-2', 'point', 'shout')], fx: ['night'] }, 'chapter 8: the chase begins: GET THAT CAT! (the RUN Tap on her paw)'],
+    ['tracks', 'holes', { cast: [], fx: ['night'] }, 'chapter 8: the three holes close, nobody: the biggest a small cat\u2019s shoulders wide; prints round every hole'],
+    ['tracks', 'stash', { cast: [], fx: ['night'] }, 'chapter 8: the stash with nobody: the mouth\u2019s moonlight, the tidy rows (a third of them muddy), the heap of glass'],
+    ['tracks', 'stash-close', { cast: [], fx: ['night'] }, 'chapter 8: the glass close with nobody: one big piece in front (the heap is kept clear of lettering)'],
+    ['tracks', 'crawl', { cast: [c('player', 'crawl-1', 'crouch', 'laugh')], fx: ['night'] }, 'chapter 8: crawling, alone (the roof just clears a sitting cat\u2019s ears; tiny prints both ways)'],
+    ['tracks', 'fork', { cast: [c('player', 'fork-1', 'crouch', 'happy'), c('riffle', 'fork-2', 'scramble', 'happy', { facing: 'left' })], fx: ['night'] }, 'chapter 8: the fork without the worm, sniffing the right way'],
+    // chapter 8: the Barking Field at night, the pile's tunnel mouth, and her nest (sets owned elsewhere; the page is the tracks owner's)
+    ['field', 'wide', { opts: { moon: 8, tap: 'path' }, cast: [c('dog', 'heap-1', 'lie', 'sleepy', { variant: 1, asleep: true }), c('dog', 'heap-2', 'lie', 'sleepy', { variant: 2, asleep: true }), c('dog', 'heap-3', 'lie', 'sleepy', { variant: 3, asleep: true }),
+      c('hail', 'log', 'peek', 'happy'), c('player', 'path-left', 'walk', 'wonder'), c('tallyheart', 'path-right', 'walk', 'neutral')], fx: ['night'] },
+      'chapter 8: the Barking Field at night under the half moon: the dogs asleep in a heap, Hail at the log, tap: \u2018path\u2019 (the way to the tracks)'],
+    ['field', 'wide', { opts: { moon: 8 }, cast: [c('player', 'fence-top', 'walk', 'proud'), c('dog', 'dog-1', 'jump', 'shout', { variant: 1 }), c('dog', 'dog-2', 'jump', 'shout', { variant: 2 }), c('dog', 'dog-3', 'jump', 'shout', { variant: 3 })], fx: ['night'] },
+      'chapter 8: the climber along the fence top at night, the dogs jumping below her'],
+    ['field', 'dogs', { opts: { moon: 8, tap: 'path' }, cast: [c('hail', 'log', 'peek', 'happy'), c('dog', 'dog-1', 'jump', 'shout', { variant: 1 }), c('dog', 'dog-2', 'bounce', 'shout', { variant: 2 }), c('player', 'path-left', 'walk', 'wonder')], fx: ['night'] },
+      'chapter 8: the dogs at night, Hail\u2019s face at the log'],
+    ['pile', 'rear', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', tunnel: true, tap: 'mouth' }, cast: [c('player', 'rear-1', 'sit', 'wonder'), c('tallyheart', 'poke', 'crouch', 'laugh', { facing: 'left' }),
+      c('clancat', 'guard-1', 'sit', 'neutral', { variant: 2 }), c('clancat', 'guard-2', 'sit', 'neutral', { variant: 4 }), c('clancat', 'guard-3', 'sit', 'neutral', { variant: 6 })], fx: ['night'] },
+      'chapter 8: round the back at night: Tallyheart at poke, her nose at the mouth\u2019s rim, her shoulders too wide; tap: \u2018mouth\u2019 (the wriggle-in Tap)'],
+    ['pile', 'hole', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', tap: 'mouth' }, cast: [c('player', 'brink', 'crouch', 'wonder')], fx: ['night'] }, 'chapter 8: the mouth close at night, tap: \u2018mouth\u2019'],
+    ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'nose', hidden: true, glass: true, bark: ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'prints-tracks', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel', 'stash', 'glass', 'fox-brag', 'hail-shapes'] }, cast: [c('player', 'nest', 'lie', 'sleepy', { facing: 'right' })], fx: ['night'] },
+      'chapter 8: the fullest nest after chapter 8: 28 cards, ten under the moss (the corners in two layers), eighteen along the edge; her glass in its leaf (glass: true)'],
+    ['den', 'inside', { opts: { weather: 'clear', moon: 8, stone: 'nose', hidden: true, glass: true, bark: 'auto' }, cast: [c('grizzled', 'sleeper-1', 'lie', 'sleepy'), c('player', 'nest', 'curl', 'kind', { asleep: 'half' })], fx: ['night', 'zzz'] },
+      'chapter 8: moon: 8, the eighth evening\u2019s half moon in the doorway\u2019s sky; her glass under the moss'],
+    ['den', 'outside', { opts: { weather: 'clear', moon: 8 }, cast: [], fx: ['night'] }, 'chapter 8: moon: 8 over the rosebush at night']
   ];
 
   // ---- panels, rendered when they scroll into view

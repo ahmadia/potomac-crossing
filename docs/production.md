@@ -33,6 +33,12 @@ with no session-limit stop. 108 frames (about 81 a reading told, 85 kept), about
 confirmed review findings and 2 in the final review, 1143 tests; chapters 1 to 6 pinned by
 fingerprints and a golden fixture that now also runs with every chapter loaded.
 
+**Chapter 8** (2026-10-24), the biggest (a new place, three new characters, two routes, night
+art), planned as two build windows and done in one run: the text about 6.3M (with the check of round
+2's math), the build about 9.3M (six owners and a golden of chapters 1 to 7), 0.5M for continuity:
+**about 16.1M**, with no session-limit stop. 169 frames (about 85 to 103 a reading), about 21
+minutes, 22 to 24 with Hail, 13 confirmed review findings and 3 in the final review, 1295 tests.
+
 Chapter 1 was 98 frames and a 387-line text. The engine has grown from 841 to 2,933 lines, the page
 code from 1,635 to 3,109, the character art from 1,195 to 5,792, and `docs/build.md` to 1,254 lines.
 The suite takes about 100 seconds.

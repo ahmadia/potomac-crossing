@@ -22,6 +22,14 @@ const FRONT = ['lead', 'left', 'right'];
 const BACK = ['back-1', 'back-2', 'back-3', 'back-4'];
 // (chapter 6: `grass`, Sleet's spot in the long grass just past the post, in all three border cameras)
 const BORDER_ANCHORS = ['fox', ...FRONT, ...BACK, 'grass'];
+// chapter 8 (docs/chapters/08-the-night-trail.spec.md, section 4): the field at night's new spots, on chapter 2's
+// three compositions only (the border's three cameras unchanged)
+const CH8_SPOTS = {
+  main: ['heap-1', 'heap-2', 'heap-3', 'log', 'ring-1', 'ring-2', 'ring-3', 'ring-4', 'fence-top', 'trail-1', 'trail-2'],
+  dogs: ['log', 'wire', 'trail-1', 'trail-2'],
+  fence: ['wire']
+};
+const CH8_ANCHORS = [...new Set([...CH8_SPOTS.main, ...CH8_SPOTS.dogs, ...CH8_SPOTS.fence])];
 // what each border camera sees: the fox's close-up leaves the four at the back out
 const SEES = { border: ['fox', ...FRONT, ...BACK, ...DOGS, 'grass'], 'border-two': ['fox', ...FRONT, ...BACK, ...DOGS, 'grass'], 'border-fox': ['fox', ...FRONT, ...DOGS, 'grass'] };
 // the Clan at the border, as the text has them: Glintstar in front, Tallyheart and our cat at her
@@ -112,19 +120,21 @@ test('build.md: the field row of the chapter 2 table names exactly these cameras
   assert.ok(/by day/.test(cells[0]), 'by day');
 });
 
-test('PC.art.vocab lists the field set: chapter 2\'s cameras and anchors, the border\'s after them, one option', () => {
+test('PC.art.vocab lists the field set: chapter 2\'s cameras and anchors, the border\'s after them; the fox\'s tail, and chapter 8\'s moon and path Tap', () => {
   const v = art.vocab.sets.field;
   assert.ok(v, 'vocab.sets.field');
   assert.deepEqual(v.cams, [...CAMS, ...BORDER]);
-  assert.deepEqual(v.anchors.slice().sort(), [...ANCHORS, ...BORDER_ANCHORS].sort());
-  assert.deepEqual(v.opts, { foxTail: [false, true] });
+  assert.deepEqual(v.anchors.slice().sort(), [...new Set([...ANCHORS, ...BORDER_ANCHORS, ...CH8_ANCHORS])].sort());
+  // (chapter 8 adds `moon` and `tap` after chapter 4's `foxTail`, on purpose: spec section 4)
+  assert.deepEqual(v.opts, { foxTail: [false, true], moon: 'number', tap: ['none', 'path'] });
   const info = art.sceneInfo('field');
   assert.equal(info.label, 'the Barking Field');
-  assert.deepEqual(info.defaults, {}, 'no fox tail unless a frame asks');
-  // chapter 2's cameras each place all six of chapter 2's anchors, exactly as they did
+  assert.deepEqual(info.defaults, { tap: 'none' }, 'no fox tail, no moon and no Tap target unless a frame asks');
+  // chapter 2's cameras each place all six of chapter 2's anchors, exactly as they did, and chapter 8's (only those)
   for (const cam of CAMS) {
     const comp = info.cams[cam].comp;
-    assert.deepEqual(Object.keys(info.anchors[comp]).sort(), ANCHORS.slice().sort(), cam + ' (' + comp + ') has every chapter 2 anchor, and only those');
+    assert.deepEqual(Object.keys(info.anchors[comp]).sort(), [...ANCHORS, ...CH8_SPOTS[comp]].sort(), cam + ' (' + comp + ') has every chapter 2 anchor and chapter 8\'s, and only those');
+    assert.deepEqual(Object.keys(info.anchors[comp]).slice(0, ANCHORS.length), ANCHORS, cam + ': chapter 2\'s first, in their order (the first free spot is picked as before)');
   }
   // the border's cameras each have their own composition and place what they can see
   for (const cam of BORDER) {
@@ -780,7 +790,9 @@ test('chapter 6: the spec names `grass` in the border\'s three cameras, and the 
   const A = art.sceneInfo('field').anchors;
   for (const cam of BORDER) { assert.ok(A[cam].grass, cam + ': grass'); assert.equal(A[cam].grass.face, 'left', cam + ': he faces the Clan across the post'); assert.notEqual(A[cam].grass.z, 'behind', cam + ': in front of the fence that runs away'); }
   for (const comp of ['main', 'dogs', 'fence']) assert.ok(!A[comp].grass, comp + ': chapter 2\'s cameras do not see it');
-  assert.deepEqual(art.vocab.sets.field.opts, { foxTail: [false, true] }, 'no new option');
+  // chapter 6 added no option (chapter 8's `moon` and `tap` come after chapter 4's `foxTail`)
+  assert.deepEqual(Object.keys(art.vocab.sets.field.opts), ['foxTail', 'moon', 'tap']);
+  assert.deepEqual(art.vocab.sets.field.opts.foxTail, [false, true]);
 });
 
 test('chapter 6: chapter 2 and 4\'s frames are as they were: no `grass` in them, no grass cover, the spots of their own at the depth they had', () => {
@@ -929,4 +941,506 @@ test('chapter 6: the fox is never drawn at the last post in this chapter, and wh
     checkRender(r, sc, 'ch06 ' + id);
   }
   t.diagnostic(frames.length + ' frames at the Barking Field');
+});
+
+// ================================================================ chapter 8: the Barking Field at night
+// docs/chapters/08-the-night-trail.spec.md, section 4 ("Places", the field row; "The Barking Field at night")
+// and section 7, item 2 (the fingerprints, recorded once from the shipped chapter 7 snapshot)
+
+const crypto8 = require('crypto');
+const SPEC8 = path.join(ROOT, 'docs/chapters/08-the-night-trail.spec.md');
+const COMP8 = { wide: 'main', dogs: 'dogs', fence: 'fence' };
+const nRender = (cam, cast, opts, fx) => art.render({ set: 'field', cam, cast: cast || [], fx: fx || ['night'], opts: opts || {} }, { look: LOOK });
+const night8 = () => art.fieldInfo().night;
+const spots8 = (cam) => art.sceneInfo('field').anchors[COMP8[cam] || cam];
+const lum8 = (h) => { const v = parseInt(h.slice(1), 16); return 0.3 * (v >> 16) + 0.59 * ((v >> 8) & 255) + 0.11 * (v & 255); };
+const meets8 = (p, q, pad) => p[0] < q[2] + (pad || 0) && p[2] > q[0] - (pad || 0) && p[1] < q[3] + (pad || 0) && p[3] > q[1] - (pad || 0);
+const ref8 = () => art.character('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }).h;
+// A cast member's body and head where scenes.js draws it, in the world: the cats' units, a dog by its variant, the
+// size band PC.art.sizeBands holds a newcomer to (the weasels), and a dragonet held to our cat's size sitting
+// (Squall's rule, Hail's: SIZE_CAP in scenes.js).
+const charMemo8 = new Map();
+function char8(who, o) {
+  const k = who + JSON.stringify(o);
+  if (!charMemo8.has(k)) { const c = art.character(who, o); charMemo8.set(k, { w: c.w, h: c.h, bounds: c.bounds, headBox: c.headBox }); }
+  return charMemo8.get(k);
+}
+function boxes8(m, a) {
+  const facing = m.facing || a.face || 'right', o = { pose: m.pose || 'sit', mood: m.mood || 'neutral', facing };
+  if (m.variant != null) o.variant = m.variant;
+  if (m.who === 'player') { o.look = LOOK; o.sex = LOOK.sex; }
+  const ch = char8(m.who, o), R = char8('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }).h;
+  let s = a.h / R * (m.size || 1);
+  if (m.who === 'hail' || m.who === 'squall') {
+    const tall = (c) => c.h - (c.headBox ? c.headBox.y0 : 0);
+    s = Math.min(s, a.h / R * tall(char8('player', { pose: 'sit', mood: 'neutral', look: LOOK })) / tall(char8(m.who, { pose: 'sit', mood: 'neutral' })));
+  }
+  const band = art.sizeBands && art.sizeBands[m.who];
+  if (band) {
+    const meas = (w, pose) => { const c = char8(w, { pose, mood: 'neutral' }), hb = c.headBox; return band.by === 'head' ? ((hb.x1 - hb.x0) + (hb.y1 - hb.y0)) / 2 : c.h - hb.y0; };
+    const ratio = meas(m.who, band.pose) / meas(band.ref, 'sit');
+    s = s * Math.min(band.max, Math.max(band.min, ratio)) / ratio;
+  }
+  const W = (b) => [a.x + (b.x0 - ch.w / 2) * s, a.y + (b.y0 - ch.h) * s, a.x + (b.x1 - ch.w / 2) * s, a.y + (b.y1 - ch.h) * s];
+  return { body: W(ch.bounds || { x0: 0, y0: 0, x1: ch.w, y1: ch.h }), head: W(ch.headBox), s };
+}
+// the newcomers, once app/art/cats.js draws them (until then it draws a Clan cat for an id it does not know)
+const draws8 = (who) => art.vocab.cast.includes(who);
+const HAIL = draws8('hail') ? 'hail' : 'squall';
+const HAIL_POSES = draws8('hail') ? ['sit', 'stand', 'bounce', 'run', 'peek', 'pawup', 'tilt'] : ['sit', 'pawup', 'hug'];
+const WEASELS = ['snip', 'snatch'].filter(draws8);
+const WEASEL_POSES = WEASELS.length ? ['stand', 'up', 'run', 'skid', 'point', 'curl'] : ['sit'];
+const CAT_POSES = ['sit', 'walk', 'stand', ...(art.vocab.poses.includes('run') ? ['run'] : [])];
+// the log as it lies in this panel: [x, y, len, R] -> its open end's ellipse and its foot
+function logGeo8(lg, night) {
+  const ex = lg[3] * (night ? art.fieldInfo().logTurn.night : art.fieldInfo().logTurn.day);
+  return { x0: lg[0] - lg[2] / 2, x1: lg[0] + lg[2] / 2, cy: lg[1] - lg[3], R: lg[3], ex, foot: lg[1], top: lg[1] - 2 * lg[3] };
+}
+// a keep box (percent) in the world, on a 1600-wide camera
+const world8 = (k) => [k.x * 16, k.y * 10, (k.x + k.w) * 16, (k.y + k.h) * 10];
+
+test('chapter 8: the spec names the field\'s night, `moon`, `tap: \'path\'` and the new spots; the set has each on the cameras the spec gives it, the border\'s three unchanged', () => {
+  const md = fs.readFileSync(SPEC8, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**option `moon`**', '**option `tap: \'none\' \\| \'path\'`**', '`heap-1`, `heap-2`, `heap-3` (`wide`)', '`log` (`wide` and `dogs`)', '`wire` (`dogs` and `fence`)',
+    '`ring-1`…`ring-4` (`wide`)', '`fence-top` (`wide` only)', '`trail-1`, `trail-2`', 'silver in the moonlight', 'the border\'s three cameras unchanged'])
+    assert.ok(md.includes(want), 'the spec says: ' + want);
+  const A = art.sceneInfo('field').anchors;
+  for (const [comp, list] of Object.entries(CH8_SPOTS)) for (const k of list) {
+    assert.ok(A[comp][k], comp + ': ' + k);
+    assert.ok(A[comp][k].elev, comp + ': ' + k + ' is out of the depth sums and the first-free pick (`elev`), so nobody of chapters 2 to 7 moves');
+  }
+  for (const k of CH8_ANCHORS) for (const comp of Object.keys(A)) if (!(CH8_SPOTS[comp] || []).includes(k)) assert.ok(!A[comp][k] || ANCHORS.includes(k), comp + ': no ' + k);
+  for (const comp of BORDER) assert.deepEqual(Object.keys(A[comp]).sort(), SEES[comp].slice().sort(), comp + ': as chapter 6 left it');
+  // which side of the wire: in the field (behind it) or out on the path and on the rail (in front of it)
+  for (const [comp, list] of Object.entries(CH8_SPOTS)) for (const k of list) {
+    const inside = /^(heap|ring)-|^log$|^wire$/.test(k);
+    assert.equal(A[comp][k].z === 'behind', inside, comp + ': ' + k + (inside ? ' is inside the fence, behind the wire' : ' is outside it, in front of the wire'));
+  }
+  // every older spot exactly where it was
+  assert.deepEqual(['path-left', 'path-right', 'dog-1', 'dog-2', 'dog-3', 'field'].map((k) => [A.main[k].x, A.main[k].y, A.main[k].h, A.dogs[k].x, A.dogs[k].y, A.dogs[k].h, A.fence[k].x, A.fence[k].y, A.fence[k].h]),
+    [[470, 918, 250, 150, 992, 300, 330, 962, 300], [1050, 936, 262, 1450, 996, 310, 720, 948, 290], [320, 752, 150, 400, 832, 225, 1080, 786, 245],
+      [800, 756, 152, 800, 836, 228, 1460, 770, 210], [1290, 752, 150, 1200, 832, 225, 560, 772, 175], [1160, 604, 84, 1150, 562, 110, 900, 534, 110]]);
+});
+
+// Every field frame of chapters 2, 4 and 6 (all by day), as the chapter 7 snapshot draws it: the frame's scene
+// resolved with E.resolveScene for a fixed cat, rendered with LOOK; sha1 (12 hex) of the markup with the
+// per-render ids taken out, the keep list and the heads. Recorded once from
+// /Users/aron/potomac-crossing-work/ch08/shipped (engine 0.7.0) in a node process of its own.
+const CH8_FIELD_FINGERPRINT = {
+  'ch02:f052': '305b7005d9c8', 'ch02:f053': '11cbac433566', 'ch02:f054': 'dc62cdb35809', 'ch02:f055': '9cd9f1016a42',
+  'ch02:f056': 'c7fd3724cf50', 'ch02:f057': '681253e82c8a', 'ch02:f058': '8a318c2bb1cb', 'ch04:f033': '53c5bc847024',
+  'ch04:f034': '45b1bfe2e23a', 'ch04:f035a': '2c17abb3582e', 'ch04:f035b': '93d652b69e26',
+  'ch04:f036': 'ac1e5ff0abf4', 'ch04:f037': 'e4bf0377e530', 'ch04:f038': '85071d6cbfc9', 'ch04:f039': '15d08e08379e',
+  'ch04:f040': '211c08c46741', 'ch04:f041': '8ef01c21fc98', 'ch04:f042': '6ce8c5f3cfef', 'ch04:f043': '87c5cf3e064d',
+  'ch04:f044': '683f41497a20', 'ch04:f045a': '2a9fc48c4dc4', 'ch04:f045b': '13d5353c0294',
+  'ch04:f046': '6d9754879a36', 'ch04:f047': '86812e7a5f10', 'ch04:f048': '7cc6f6e88c1d', 'ch04:f049': '90f0578cf923',
+  'ch04:f050': '47369be47f29', 'ch04:f051': '6e0009cbad2b', 'ch04:f052': '22afb9e7e41d', 'ch04:f053': 'de31844d3c35',
+  'ch04:f054a': '3ff91589d805', 'ch04:f054b': 'e1eac7a86168', 'ch04:f055': 'fda23662917e',
+  'ch04:f056': '37837ce07db0', 'ch04:f057': '40509f6b6ad5', 'ch06:f044': '795e40943820', 'ch06:f045': '91f2d32b7696',
+  'ch06:f046': 'b29f297f7ec3', 'ch06:f047': 'e162ced2140d', 'ch06:f048': '7f9aee893efe',
+  'ch06:f049a': 'd5646c97574b', 'ch06:f049b': '481190d2fa02', 'ch06:f050a': '24803bdf40ae',
+  'ch06:f050b': '2eb778e42009', 'ch06:f051a': 'ae2d897b3810', 'ch06:f052a': 'fd84d136e796',
+  'ch06:f053a': '4b48636fd2c3', 'ch06:f054a': 'acf4e9986578', 'ch06:f055a': '42a259060fa9',
+  'ch06:f056a': 'e3c4f3b6e4e4', 'ch06:f057a': '5fe8d4370021', 'ch06:f058a': '05a623e54f3e',
+  'ch06:f059a': 'a2349c52f3c7', 'ch06:f060a': '3cebfd15784b', 'ch06:f061a': 'eee0e4afc407',
+  'ch06:f062a': 'ed664c4a7718', 'ch06:f063a': 'e41081094ab3', 'ch06:f064a': 'b3b1ab703d3c',
+  'ch06:f065a': '99114a19d687', 'ch06:f066a': 'ede023a4e7db', 'ch06:f067a': 'cdb511ffc358',
+  'ch06:f068a': '1439b52b7743'
+};
+const fpCat8 = () => { const c = PC.engine.blankCat({ id: 'fingerprint', now: 0, look: LOOK }); c.name = 'Pebble'; c.petname = 'Pebble'; return c; };
+function frameHash8(set, ids) {
+  const E = PC.engine, cat = fpCat8(), stories = ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07'].map((id) => PC.story[id]).filter(Boolean), out = {};
+  for (const id of ids) for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+    if (!f.scene || f.scene.set !== set) continue;
+    const r = art.render(E.resolveScene(f.scene, cat, stories), { look: LOOK });
+    out[id + ':' + fid] = crypto8.createHash('sha1').update(r.svg.replace(/pcs?[0-9a-z]+-/g, '') + JSON.stringify(r.keep) + JSON.stringify(r.heads)).digest('hex').slice(0, 12);
+  }
+  return out;
+}
+
+test('chapter 8: every field frame of chapters 2, 4 and 6 draws exactly as the chapter 7 snapshot drew it (fingerprints)', () => {
+  const now = frameHash8('field', ['ch02', 'ch04', 'ch06']);
+  assert.deepEqual(Object.keys(now).sort(), Object.keys(CH8_FIELD_FINGERPRINT).sort(), 'the same frames visit the field');
+  for (const [k, want] of Object.entries(CH8_FIELD_FINGERPRINT)) assert.equal(now[k], want, k + ': drawn as it was');
+});
+
+// The sweep (recorded once from the snapshot, in a process of its own, with exactly this code)
+const SWEEP_LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
+const sweepStrip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+// One hash per camera: every picture the field drew before chapter 8 (by day, morning, sunset and dusk, with and
+// without the fox's tail), empty and with someone at every spot chapters 2 to 7 knew, chapter 7's poses only.
+function fieldSweep(art) {
+  const SPOTS = {
+    wide: ['path-left', 'path-right', 'dog-1', 'dog-2', 'dog-3', 'field'], fence: ['path-left', 'path-right', 'dog-1', 'dog-2', 'dog-3', 'field'],
+    dogs: ['path-left', 'path-right', 'dog-1', 'dog-2', 'dog-3', 'field'],
+    border: ['fox', 'lead', 'left', 'right', 'back-1', 'back-2', 'back-3', 'back-4', 'dog-1', 'dog-2', 'dog-3', 'grass'],
+    'border-two': ['fox', 'lead', 'left', 'right', 'back-1', 'back-2', 'back-3', 'back-4', 'dog-1', 'dog-2', 'dog-3', 'grass'],
+    'border-fox': ['fox', 'lead', 'left', 'right', 'dog-1', 'dog-2', 'dog-3', 'grass']
+  };
+  const member = (at, i) => at.startsWith('dog-') ? { who: 'dog', variant: 1 + (i % 3), pose: ['bounce', 'jump', 'sit', 'stand', 'howl'][i % 5], at }
+    : at === 'fox' ? { who: 'reynard', pose: 'sit', at } : at === 'grass' ? { who: 'sleet', pose: 'sit', at } : at === 'field' ? { who: 'clancat', variant: 2, at }
+      : { who: ['player', 'tallyheart', 'glintstar', 'riffle'][i % 4], pose: ['sit', 'walk', 'stand'][i % 3], mood: ['happy', 'wonder', 'neutral'][i % 3], at };
+  const out = {};
+  for (const cam of Object.keys(SPOTS)) {
+    const h = crypto8.createHash('sha1');
+    for (const fx of [['day'], ['morning'], ['sunset'], ['dusk']]) for (const opts of [{}, { foxTail: true }]) for (const cast of [[], SPOTS[cam].map(member)]) {
+      const r = art.render({ set: 'field', cam, fx, opts, cast }, { look: SWEEP_LOOK });
+      h.update(sweepStrip(r.svg) + JSON.stringify(r.keep) + JSON.stringify(r.heads));
+    }
+    out[cam] = h.digest('hex').slice(0, 16);
+  }
+  return out;
+}
+
+test('chapter 8: every picture the field drew before, every camera by day, morning, sunset and dusk, empty and with someone at every older spot, is byte for byte the snapshot\'s; the new options off, or where they do not belong, are nothing at all', () => {
+  assert.deepEqual(fieldSweep(art), {
+    'wide': 'e9a96d74d12b4d6b',
+    'fence': '59907105162e47a6',
+    'dogs': '0fb6360d2a225b13',
+    'border': 'c6c223dcf7095081',
+    'border-two': '33166f1c8e06efd5',
+    'border-fox': '1cbabc611c73d386'
+  }, 'recorded from the chapter 7 snapshot');
+  for (const cam of [...CAMS, ...BORDER]) for (const fx of [['day'], ['dusk']]) {
+    const cast = cam.startsWith('border') ? [FOX, CLAN[1]] : [{ who: 'player', at: 'path-left', pose: 'walk' }, { who: 'dog', variant: 2, at: 'dog-2', pose: 'bounce' }];
+    const plain = bRender(cam, cast, fx), same = (opts, why) => assert.equal(strip(bRender(cam, cast, fx, opts).svg), strip(plain.svg), cam + ' ' + fx + ': ' + why);
+    same({ moon: false, tap: 'none' }, 'off is nothing');
+    for (const moon of [true, 0, 'x']) same({ moon }, 'a moon that is not a number of evenings draws none');
+    if (cam.startsWith('border')) { same({ tap: 'path' }, 'no path Tap at the border'); same({ moon: 8 }, 'no moon at the border'); }
+    if (fx[0] === 'day') same({ moon: 8 }, 'no moon by day');
+    assert.deepEqual(bRender(cam, cast, fx, { moon: false, tap: 'none' }).keep, plain.keep);
+  }
+  for (const cam of CAMS) for (const fx of [['morning'], ['sunset']]) assert.equal(strip(bRender(cam, [], fx, { moon: 8 }).svg), strip(bRender(cam, [], fx).svg), cam + ' ' + fx + ': no moon');
+});
+
+test('chapter 8: the field at night is silver in the moonlight: the grass, the path and the wire catch a cool silver light, the sky deep blue with stars; nothing of it by day or at dusk', () => {
+  const P = art.kit.PAL.night;
+  for (const cam of CAMS) {
+    const svg = nRender(cam).svg, day = bRender(cam).svg, dusk = bRender(cam, [], ['dusk']).svg;
+    checkRender({ svg, heads: [] }, { cast: [] }, cam + ' at night');
+    assert.equal(count(svg, /data-part="moonlight"/g), 2, cam + ': moonlight over the field and along the path');
+    assert.equal(count(day, /data-part="moonlight"/g) + count(dusk, /data-part="moonlight"/g), 0, cam + ': not by day or at dusk');
+    assert.ok(svg.includes(P.sky[0]) && count(svg, /class="pcs-twk"/g) >= 5, cam + ': the night sky, with stars');
+    // the wire: its highlight strand silver, light and cool
+    const fence = svg.slice(fenceAt(svg)), hi = /<path d="[^"]+" fill="none" stroke="(#[0-9a-f]{6})" stroke-width="[\d.]+"[^>]* opacity="0.6"/.exec(fence);
+    assert.ok(hi && lum8(hi[1]) > 200 && parseInt(hi[1].slice(5), 16) >= parseInt(hi[1].slice(1, 3), 16), cam + ': the wire catches a silver light: ' + (hi && hi[1]));
+    // the path: its moonlit edge light, its far side brightest
+    const stops = [...svg.matchAll(/<stop offset="[\d.]+" stop-color="(#[0-9a-f]{6})"\/>/g)].map((m) => lum8(m[1]));
+    assert.ok(Math.max(...stops) > 170, cam + ': a silver path: ' + Math.max(...stops).toFixed(0));
+    // the grass's light blades silver, the night palette's own mixed with it (never the dark teal alone)
+    assert.ok(!svg.includes('fill="' + P.grassLight + '"'), cam + ': the light blades are not the plain night green');
+  }
+});
+
+test('chapter 8: the hollow log at night: turned toward the path, its cut end lit and its mouth dark, so it reads; on `dogs` nearer and bigger, its open end between the dogs at `dog-2` and `dog-3`, clear of their faces; by day exactly where it was', () => {
+  const N = night8();
+  assert.deepEqual(N.main.dayLog, [706, 584, 134, 18]);
+  assert.deepEqual(N.dogs.dayLog, [1004, 546, 150, 20]);
+  assert.deepEqual(N.fence.dayLog, [1290, 474, 160, 22]);
+  for (const cam of CAMS) {
+    const comp = COMP8[cam], lg = N[comp].log, G = logGeo8(lg, true), svg = nRender(cam).svg;
+    const at = svg.indexOf('data-part="log"'), grp = svg.slice(svg.lastIndexOf('<g', at), svg.indexOf('data-part=', at + 20) > 0 ? svg.indexOf('data-part=', at + 20) : svg.length);
+    const ells = [...grp.matchAll(/<ellipse cx="([-\d.]+)" cy="([-\d.]+)" rx="([\d.]+)" ry="([\d.]+)" fill="(#[0-9a-f]{6})"/g)].map((m) => ({ cx: +m[1], cy: +m[2], rx: +m[3], ry: +m[4], fill: m[5] }));
+    const cut = ells.find((e) => Math.abs(e.cx - G.x0) < 0.2 && Math.abs(e.ry - G.R) < 0.2), hollow = ells.find((e) => Math.abs(e.ry - G.R * 0.7) < 0.2);
+    assert.ok(cut && hollow, cam + ': the open end and its hollow');
+    assert.ok(Math.abs(cut.rx / cut.ry - 0.8) < 0.02, cam + ': turned toward the path, nearly round: ' + (cut.rx / cut.ry).toFixed(2));
+    assert.ok(lum8(cut.fill) > 140 && lum8(hollow.fill) < lum8(cut.fill) * 0.3, cam + ': the cut end lit, the mouth dark: ' + cut.fill + ' / ' + hollow.fill);
+    // by day it is the old one, 0.46 of its radius turned
+    const dsvg = bRender(cam).svg, dG = logGeo8(N[comp].dayLog, false);
+    assert.ok(new RegExp('<ellipse cx="' + num(dG.x0) + '" cy="' + num(dG.cy) + '" rx="' + num(dG.ex) + '" ry="' + num(dG.R) + '"').test(dsvg), cam + ': by day, as ever');
+  }
+  // wide and fence: where it lies by day; dogs: nearer (lower in the panel) and much bigger, still inside the fence
+  assert.ok(Math.abs(N.main.log[0] - N.main.dayLog[0]) < 10 && Math.abs(N.main.log[1] - N.main.dayLog[1]) < 10, 'wide: the same place');
+  assert.deepEqual(N.fence.log, N.fence.dayLog);
+  const D = N.dogs.log, G = logGeo8(D, true);
+  assert.ok(D[3] >= 2.4 * N.dogs.dayLog[3] && D[1] > N.dogs.dayLog[1] + 100 && D[1] < N.dogs.fence.base - 100, 'dogs: nearer and bigger, inside the fence: ' + D);
+  const A = spots8('dogs'), mouth = [G.x0 - G.ex, G.cy - G.R, G.x0 + G.ex, G.cy + G.R];
+  for (const pose of art.vocab.otherPoses.dog) for (const v of [2, 3]) {
+    const b = boxes8({ who: 'dog', variant: v, pose }, A['dog-' + v]);
+    assert.ok(!meets8(b.head, mouth), 'dogs: the log\'s open end is clear of the dog at dog-' + v + ' (' + pose + '): ' + b.head.map(Math.round));
+  }
+});
+
+test('chapter 8: `log` (`wide`, `dogs`): at the night log\'s open end; whoever is there gets its near rim drawn over her lower body, just after her, head and shoulders out; on `dogs` her face is big enough to read; nobody there, nothing', () => {
+  const N = night8();
+  for (const cam of ['wide', 'dogs']) {
+    const a = spots8(cam).log, G = logGeo8(N[COMP8[cam]].log, true);
+    assert.ok(Math.abs(a.x - G.x0) <= G.ex * 0.3 && Math.abs(a.y - G.foot) <= G.R * 0.5, cam + ': at the open end');
+    for (const pose of HAIL_POSES) {
+      const cast = [{ who: HAIL, at: 'log', pose, mood: 'happy' }, { who: 'player', at: 'path-left' }, { who: 'tallyheart', at: 'path-right' }];
+      const r = nRender(cam, cast, { moon: 8 });
+      checkRender(r, { cast }, cam + ' ' + HAIL + ' ' + pose + ' at log');
+      assert.ok(r.heads[0], cam + ': her face in the panel (' + pose + ')');
+      assert.equal(count(r.svg, /data-part="log-cover"/g), 1, cam + ': one cover');
+      const me = drawnAt(r.svg, a), cov = r.svg.indexOf('data-part="log-cover"'), next = drawnAt(r.svg, spots8(cam)['path-left']);
+      assert.ok(me > 0 && cov > me && cov < fenceAt(r.svg) && cov < next, cam + ': drawn just after her, behind the wire');
+      const top = +/data-part="log-cover" data-top="([\d.]+)"/.exec(r.svg)[1], b = boxes8(cast[0], a);
+      assert.ok(top >= G.cy - G.R * 0.36 && top <= G.cy + G.R * 0.56, cam + ': the rim\'s top is inside the open end: ' + top);
+      assert.ok(top > b.head[1] + (b.head[3] - b.head[1]) * 0.5 || top >= G.cy + G.R * 0.55 - 0.1, cam + ' ' + pose + ': her head out over the rim: ' + top + ' head ' + b.head.map(Math.round));
+    }
+    // nobody there: no cover, at night or by day, with everyone else about
+    for (const fx of [['night'], ['day']]) assert.equal(count(nRender(cam, [{ who: 'player', at: 'path-left' }, { who: 'dog', at: 'dog-1', pose: 'sit' }], {}, fx).svg, /log-cover/g), 0, cam + ': no cover without her');
+  }
+  // big enough on `dogs` for her face to read (an iPad page is about 680 px across: 48 world units are 20 px), and
+  // far bigger than in the wide shot
+  const hd = (cam) => { const b = boxes8({ who: HAIL, pose: 'sit' }, spots8(cam).log).head; return b[3] - b[1]; };
+  assert.ok(hd('dogs') >= 48 && hd('dogs') >= 1.8 * hd('wide'), 'her face on `dogs`: ' + hd('dogs').toFixed(1) + ', in the wide shot ' + hd('wide').toFixed(1));
+  assert.equal(nRender('fence', [{ who: HAIL, at: 'log' }]).heads[0], null, 'fence: the log is out of this camera\'s spots');
+});
+
+test('chapter 8: `moon: 8` is the eighth evening\'s half moon, high in the sky of `wide`, `dogs` and `fence` (behind the wire in the two close ones), at night or dusk only; in keep; clear of the towers, the trees and every head; each evening bigger and higher', () => {
+  const N = night8();
+  for (const cam of CAMS) {
+    const comp = COMP8[cam], M = N[comp].moon(8);
+    for (const fx of [['night'], ['dusk']]) {
+      const r = nRender(cam, [], { moon: 8 }, fx);
+      assert.equal(count(r.svg, /data-prop="waxing-moon" data-age="8"/g), 1, cam + ' ' + fx + ': one moon');
+      if (cam !== 'wide') assert.ok(r.svg.indexOf('waxing-moon') < fenceAt(r.svg), cam + ': behind the wire');
+      const box = [M.x - M.r, M.y - M.r, M.x + M.r, M.y + M.r];
+      assert.ok(r.keep.map(world8).some((k) => k[0] <= box[0] + 1 && k[1] <= box[1] + 1 && k[2] >= box[2] - 1 && k[3] >= box[3] - 1), cam + ': kept clear of the lettering');
+    }
+    // a half moon (the terminator nearly straight), lit on the side the sun went down: the kit's waxingMoon
+    const svg = nRender(cam, [], { moon: 8 }).svg, g = svg.slice(svg.indexOf('data-prop="waxing-moon"'));
+    const arcs = [...g.matchAll(/A([\d.]+) ([\d.]+) 0 0 [01]/g)].map((m) => [+m[1], +m[2]]);
+    assert.ok(arcs.length >= 2 && arcs[1][0] <= arcs[0][0] * 0.12, cam + ': a half moon: ' + JSON.stringify(arcs.slice(0, 2)));
+    // high in the sky: over the trees, clear of every tower
+    const box = [M.x - M.r, M.y - M.r, M.x + M.r, M.y + M.r];
+    for (const t of N[comp].towers) assert.ok(!meets8(box, [t.x, t.top, t.x + t.w, t.base], 4), cam + ': clear of the tower at ' + t.x);
+    assert.ok(box[3] < { main: 428, dogs: 340, fence: 266 }[comp] - 60 && box[1] > 0, cam + ': high, well over the trees: ' + box.map(Math.round));
+    // the ninth evening's is bigger and higher (the art's clock): nothing to change in later chapters
+    const M9 = N[comp].moon(9);
+    assert.ok(M9.r > M.r && M9.y < M.y, cam + ': each evening bigger and higher');
+  }
+  // clear of every head in the panels that use it: the cats on the path, the climber on the rail, Hail in the log or at the wire
+  const casts = { wide: [[{ who: 'player', at: 'path-left', pose: 'walk' }, { who: 'tallyheart', at: 'path-right', pose: 'walk' }], [{ who: 'player', at: 'fence-top', pose: 'walk' }], [{ who: HAIL, at: 'ring-1', pose: 'sit' }, { who: HAIL, at: 'ring-3', pose: 'sit' }]],
+    dogs: [[{ who: HAIL, at: 'log', pose: 'sit' }, { who: HAIL, at: 'wire', pose: 'sit' }, { who: 'dog', variant: 1, at: 'dog-1', pose: 'jump' }]], fence: [[{ who: HAIL, at: 'wire', pose: 'sit' }, { who: 'player', at: 'path-left' }]] };
+  for (const [cam, list] of Object.entries(casts)) {
+    const M = N[COMP8[cam]].moon(8), box = [M.x - M.r, M.y - M.r, M.x + M.r, M.y + M.r];
+    for (const cast of list) for (const m of cast) assert.ok(!meets8(boxes8(m, spots8(cam)[m.at]).head, box, 8), cam + ': the moon is clear of ' + m.who + ' at ' + m.at);
+  }
+});
+
+test('chapter 8: `tap: \'path\'` on `wide`, `dogs` and `fence`: one unpainted pc-tap rect over the path ahead on the right (the way to the tracks), clear of the cats on the path, first in keep; nothing else changes; not at the border', () => {
+  const N = night8();
+  for (const cam of CAMS) for (const fx of [['night'], ['day']]) {
+    const comp = COMP8[cam], A = spots8(cam);
+    const cast = [{ who: 'player', at: 'path-left', pose: 'walk' }, { who: 'tallyheart', at: 'path-right', pose: 'walk' }];
+    const r = nRender(cam, cast, { tap: 'path' }, fx), plain = nRender(cam, cast, {}, fx);
+    const rects = r.svg.match(/<rect [^>]*class="pc-tap"[^>]*\/>/g) || [];
+    assert.equal(rects.length, 1, cam + ': one target');
+    assert.ok(/data-tap="path"/.test(rects[0]) && /fill="none"/.test(rects[0]) && /pointer-events="none"/.test(rects[0]), cam + ': named `path`, unpainted');
+    assert.equal(strip(r.svg.replace(rects[0], '')), strip(plain.svg), cam + ' ' + fx + ': the only change');
+    const T = N[comp].tapPath, box = [T.x, T.y, T.x + T.w, T.y + T.h];
+    const k = world8(r.keep[0]);
+    assert.ok(k[0] <= box[0] && k[1] <= box[1] && k[2] >= Math.min(1600, box[2]) - 0.5 && k[3] >= Math.min(1000, box[3]) - 0.5, cam + ': first in keep');
+    // on the path, toward the right: the way to the tracks (home is to the left)
+    assert.ok(box[1] >= N[comp].pathTop - 20 && box[3] >= 995 && (box[0] + box[2]) / 2 > 800, cam + ': on the path, on the right: ' + box);
+    // clear of a cat at either spot on the path, in every pose she walks, sits or runs in, facing either way
+    for (const pose of CAT_POSES) for (const facing of ['right', 'left']) for (const who of ['player', 'tallyheart']) {
+      const L = boxes8({ who, pose, facing }, A['path-left']).body, R = boxes8({ who, pose, facing }, A['path-right']).body;
+      assert.ok(box[0] >= L[2] - 2, cam + ': right of ' + who + ' (' + pose + ', ' + facing + ') at path-left');
+      if (cam !== 'dogs') assert.ok(box[0] >= R[2] - 2, cam + ': right of ' + who + ' (' + pose + ', ' + facing + ') at path-right: ' + Math.round(R[2]));
+      else assert.ok(box[2] <= R[0] + 2, 'dogs: left of ' + who + ' (' + pose + ', ' + facing + ') at path-right, at the panel\'s edge: ' + Math.round(R[0]));
+    }
+  }
+  assert.equal(count(nRender('wide').svg, /pc-tap/g), 0, 'none without it');
+});
+
+test('chapter 8: the heap (`heap-1`..`heap-3`, `wide`): three dogs lying close together inside the fence, near it, behind the wire, between the cats\' two spots; every face clear of the cats walking by; Good Boy sitting up at `heap-1` has his head clear of the other two', () => {
+  const A = spots8('wide'), F = night8().main.fence, H = ['heap-1', 'heap-2', 'heap-3'].map((k) => A[k]);
+  for (const a of H) {
+    assert.ok(a.y < F.base && a.y > F.base - 30 && a.z === 'behind', 'near the fence, inside it: ' + a.y);
+    assert.ok(a.x > A['path-left'].x && a.x < A['path-right'].x, 'between the cats\' spots: ' + a.x);
+  }
+  const xs = H.map((a) => a.x).sort((p, q) => p - q);
+  assert.ok(xs[1] - xs[0] <= 170 && xs[2] - xs[1] <= 170, 'close together: ' + xs);
+  const lying = [1, 2, 3].map((v) => ({ who: 'dog', variant: v, at: 'heap-' + v, pose: 'lie', asleep: true }));
+  const cats = [{ who: 'player', at: 'path-left', pose: 'walk', facing: 'right' }, { who: 'tallyheart', at: 'path-right', pose: 'walk', facing: 'right' },
+    { who: 'tallyheart', at: 'path-left', pose: 'walk', facing: 'right' }, { who: 'player', at: 'path-right', pose: 'walk', facing: 'right' }];
+  for (const d of lying) for (const c of cats) assert.ok(!meets8(boxes8(d, A[d.at]).head, boxes8(c, A[c.at]).head), d.at + ': the dog\'s face is clear of ' + c.who + ' at ' + c.at);
+  const r = nRender('wide', [...lying, cats[0], cats[1]], { moon: 8 }, ['night', 'zzz']);
+  checkRender(r, { cast: [...lying, cats[0], cats[1]] }, 'the heap');
+  for (const d of lying) { const i = drawnAt(r.svg, A[d.at]); assert.ok(i > 0 && i < fenceAt(r.svg), d.at + ': behind the wire'); }
+  const up = boxes8({ who: 'dog', variant: 1, pose: 'sit' }, A['heap-1']).head;
+  for (const d of lying.slice(1)) assert.ok(!meets8(up, boxes8(d, A[d.at]).body), 'Good Boy\'s head up, clear of the dog at ' + d.at);
+});
+
+test('chapter 8: `wire` (`dogs`, `fence`): inside, at the wire; on `dogs` beside the dogs, in the gap between `dog-2` and `dog-3`, and bouncing she stretches the wire; in `fence` face to face with a cat on the path at `path-left`, the diamonds open round her face, which the lettering keeps off', () => {
+  for (const cam of ['dogs', 'fence']) {
+    const a = spots8(cam).wire, F = night8()[COMP8[cam]].fence;
+    assert.ok(a.z === 'behind' && a.y < F.base && a.y > F.base - 20, cam + ': inside, at the wire: ' + a.y);
+  }
+  const D = spots8('dogs');
+  assert.ok(D.wire.x > D['dog-2'].x && D.wire.x < D['dog-3'].x, 'dogs: between dog-2 and dog-3');
+  for (const pose of HAIL_POSES) {
+    const me = boxes8({ who: HAIL, pose }, D.wire);
+    for (const v of [2, 3]) for (const dp of ['sit', 'stand', 'bounce']) assert.ok(!meets8(me.head, boxes8({ who: 'dog', variant: v, pose: dp }, D['dog-' + v]).head), 'dogs: her face (' + pose + ') clear of the dog at dog-' + v + ' (' + dp + ')');
+  }
+  const still = nRender('dogs', [{ who: HAIL, at: 'wire', pose: 'sit' }]).svg, empty = nRender('dogs').svg;
+  assert.equal(wireOf(still), wireOf(empty), 'dogs: sitting at the wire leaves it alone');
+  for (const pose of ['bounce', 'jump']) {
+    const svg = nRender('dogs', [{ who: HAIL, at: 'wire', pose }]).svg;
+    assert.ok(wireOf(svg).length > wireOf(empty).length && count(svg, /pcs-pulse/g) > count(empty, /pcs-pulse/g), 'dogs: ' + pose + ': BOING, the wire stretches and the rail rattles');
+  }
+  // fence: face to face with our cat on the path
+  const Fa = spots8('fence'), cat = { who: 'player', at: 'path-left', pose: 'sit', facing: 'right' };
+  assert.ok(Fa.wire.x > Fa['path-left'].x && Fa.wire.face === 'left', 'fence: right of her, facing her');
+  const her = boxes8({ who: HAIL, pose: 'sit' }, Fa.wire), mine = boxes8(cat, Fa['path-left']);
+  assert.ok(!meets8(her.body, mine.body), 'fence: not on top of each other');
+  assert.ok(her.head[0] - mine.head[2] < 260 && her.head[3] > mine.head[1] - 120, 'fence: face to face across the wire: ' + her.head.map(Math.round) + ' / ' + mine.head.map(Math.round));
+  const r = nRender('fence', [{ who: HAIL, at: 'wire', pose: 'sit' }, cat]), e = nRender('fence', [cat]);
+  const cx = (her.head[0] + her.head[2]) / 2, cy = (her.head[1] + her.head[3]) / 2, cell = night8().fence.fence.cell;
+  assert.ok(clearance(e.svg, cx, cy) < cell * 0.45 && clearance(r.svg, cx, cy) > cell * 0.3, 'fence: the wire opens round her face: ' + clearance(e.svg, cx, cy).toFixed(1) + ' -> ' + clearance(r.svg, cx, cy).toFixed(1));
+  assert.ok(r.keep.map(world8).some((k) => k[0] <= cx && k[2] >= cx && k[1] <= cy && k[3] >= cy), 'fence: the lettering keeps off her face');
+  assert.deepEqual(e.keep, [], 'and nothing without her');
+});
+
+test('chapter 8: `ring-1`..`ring-4` (`wide`): four spots round the log inside the fence, the near two running right and the far two back left; clear of the posts and of each other, and `ring-1` of the dogs at the wire', () => {
+  const A = spots8('wide'), N = night8().main, G = logGeo8(N.log, true), R = ['ring-1', 'ring-2', 'ring-3', 'ring-4'].map((k) => A[k]);
+  for (const a of R) assert.ok(a.z === 'behind' && a.y > 542 && a.y < N.fence.base - 40, 'inside the fence, in the field: ' + a.y);
+  assert.ok(R[0].y > G.foot && R[1].y > G.foot && R[0].face === 'right' && R[1].face === 'right' && R[0].x < R[1].x, 'the near two, nearer than the log, running right');
+  assert.ok(R[2].y < R[1].y && R[3].y < R[0].y && R[2].face === 'left' && R[3].face === 'left' && R[2].x > R[3].x, 'the far two running back left');
+  assert.ok(Math.min(R[0].x, R[3].x) < G.x0 && Math.max(R[1].x, R[2].x) > G.x1, 'round the log');
+  // whoever runs where, nobody's face is behind another's, or behind a post (each post 20 wide)
+  const runners = [{ who: 'dog', variant: 1, pose: 'bounce' }, { who: 'dog', variant: 2, pose: 'bounce' }, { who: 'dog', variant: 3, pose: 'bounce' }, ...HAIL_POSES.map((pose) => ({ who: HAIL, pose }))];
+  for (let i = 0; i < 4; i++) for (const p of runners) {
+    const h = boxes8(Object.assign({ facing: R[i].face }, p), R[i]).head;
+    for (const x of N.fence.posts) assert.ok(h[0] > x + 12 || h[2] < x - 12, 'ring-' + (i + 1) + ': ' + p.who + (p.variant || '') + ' ' + p.pose + '\'s face clear of the post at ' + x + ': ' + h.map(Math.round));
+  }
+  const heads = R.map((a) => runners.map((p) => boxes8(Object.assign({ facing: a.face }, p), a).head));
+  for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) runners.forEach((p, pi) => runners.forEach((q, qi) => {
+    assert.ok(!meets8(heads[i][pi], heads[j][qi]), 'ring-' + (i + 1) + ' (' + p.who + (p.variant || '') + ' ' + p.pose + ') and ring-' + (j + 1) + ' (' + q.who + (q.variant || '') + ' ' + q.pose + ')');
+  }));
+  for (const pose of HAIL_POSES) for (let v = 1; v <= 3; v++) for (const dp of art.vocab.otherPoses.dog) {
+    assert.ok(!meets8(boxes8({ who: HAIL, pose, facing: 'right' }, R[0]).head, boxes8({ who: 'dog', variant: v, pose: dp }, A['dog-' + v]).head), 'ring-1 (' + pose + ') clear of the dog at dog-' + v + ' (' + dp + ')');
+  }
+  const cast = [{ who: HAIL, at: 'ring-1', pose: 'sit' }, { who: 'dog', variant: 1, at: 'ring-2', pose: 'bounce' }, { who: 'dog', variant: 2, at: 'ring-3', pose: 'bounce' }, { who: 'dog', variant: 3, at: 'ring-4', pose: 'bounce' }];
+  const r = nRender('wide', cast, { moon: 8 }, ['night', 'motion']);
+  checkRender(r, { cast }, 'the circle');
+  r.heads.forEach((h, i) => { assert.ok(h, cast[i].at + ' in sight'); assert.ok(drawnAt(r.svg, A[cast[i].at]) < fenceAt(r.svg), cast[i].at + ': behind the wire'); });
+});
+
+test('chapter 8: `fence-top` on `wide` only: on the top rail between two posts, in front of the wire; a cat of h 180 to 220 walking it is inside the panel, the dogs jumping below her', () => {
+  const A = spots8('wide'), F = night8().main.fence, a = A['fence-top'];
+  assert.ok(a.h >= 180 && a.h <= 220, 'a cat of h 180 to 220: ' + a.h);
+  assert.ok(Math.abs(a.y - (F.top - F.rail / 2)) <= 2, 'standing on the rail: ' + a.y);
+  assert.equal(a.face, 'right', 'walking toward the tracks');
+  // the night sky's plane (wide's, at x 930, y 150, pinned by the day frames of chapters 2, 4 and 6) never at her
+  // nose: the review saw it fly into a climber's face at x 800
+  for (const pose of ['walk', 'stand']) assert.ok(boxes8({ who: 'player', pose, facing: 'right' }, a).body[2] < 930 - 200, pose + ': well left of the plane');
+  for (const who of ['player', 'tallyheart']) for (const pose of ['walk', 'stand', 'crouch', 'sit']) {
+    const b = boxes8({ who, pose, facing: 'right' }, a).body;
+    assert.ok(b[0] >= 0 && b[1] >= 0 && b[2] <= 1600 && b[3] <= 1000, who + ' ' + pose + ': inside the panel: ' + b.map(Math.round));
+    const i = F.posts.findIndex((p) => p > a.x);
+    assert.ok(i > 0 && b[0] > F.posts[i - 1] + 10 && b[2] < F.posts[i] - 10, who + ' ' + pose + ': between two posts');
+    for (let v = 1; v <= 3; v++) assert.ok(boxes8({ who: 'dog', variant: v, pose: 'jump' }, A['dog-' + v]).body[1] > a.y + 60, 'the dog at dog-' + v + ' jumps below her');
+  }
+  const cast = [{ who: 'player', at: 'fence-top', pose: 'walk' }, { who: 'dog', variant: 1, at: 'dog-1', pose: 'jump' }, { who: 'dog', variant: 2, at: 'dog-2', pose: 'jump' }, { who: 'dog', variant: 3, at: 'dog-3', pose: 'jump' }];
+  const r = nRender('wide', cast, { moon: 8, tap: 'path' });
+  checkRender(r, { cast }, 'on the fence top');
+  assert.ok(r.heads[0] && r.heads[0].y > 3 && r.heads[0].y < 50, 'her face in the panel, high up: ' + JSON.stringify(r.heads[0]));
+  assert.ok(drawnAt(r.svg, a) > fenceAt(r.svg), 'in front of the wire');
+  // not on `dogs` (its rail is at y 74: she would stand almost wholly above the panel) nor on `fence`
+  assert.equal(night8().dogs.fence.top, 74);
+  for (const cam of ['dogs', 'fence']) { assert.ok(!spots8(cam)['fence-top'], cam + ': no fence-top'); assert.equal(nRender(cam, [{ who: 'player', at: 'fence-top' }]).heads[0], null, cam + ': out of sight'); }
+});
+
+test('chapter 8: `trail-1`, `trail-2`: on `wide` on the path right of `path-right`, facing left (home); on `dogs` along the middle of the path, about x 700 and x 1050; the weasels there are inside the panel, in front of the wire', () => {
+  const W = spots8('wide'), D = spots8('dogs'), N = night8();
+  for (const k of ['trail-1', 'trail-2']) {
+    assert.ok(W[k].x > W['path-right'].x + 150 && W[k].y > N.main.pathTop && W[k].z !== 'behind' && W[k].face === 'left', 'wide: ' + k + ' on the path right of path-right, facing home');
+    assert.ok(D[k].y > N.dogs.pathTop && D[k].y < 1000 && D[k].z !== 'behind' && D[k].face === 'left', 'dogs: ' + k + ' on the path, facing home');
+  }
+  assert.ok(Math.abs(D['trail-1'].x - 700) <= 60 && Math.abs(D['trail-2'].x - 1050) <= 60, 'dogs: about x 700 and x 1050');
+  assert.ok(W['trail-1'].x < W['trail-2'].x, 'wide: one behind the other');
+  const who = WEASELS.length ? WEASELS : ['clancat'];
+  for (const cam of ['wide', 'dogs']) for (const w of who) for (const pose of WEASEL_POSES) {
+    const cast = [{ who: w, at: 'trail-1', pose, size: WEASELS.length ? 1 : 0.6 }, { who: w === 'snip' ? 'snatch' : w, at: 'trail-2', pose, size: WEASELS.length ? 1 : 0.6 }];
+    const r = nRender(cam, cast, { moon: 8 });
+    checkRender(r, { cast }, cam + ' weasels ' + pose);
+    for (let i = 0; i < 2; i++) {
+      const a = (cam === 'wide' ? W : D)['trail-' + (i + 1)], b = boxes8(cast[i], a).body;
+      assert.ok(r.heads[i] && b[0] >= 0 && b[2] <= 1600 && b[1] >= 0 && b[3] <= 1000.5, cam + ' ' + pose + ': trail-' + (i + 1) + ' inside the panel: ' + b.map(Math.round));
+      assert.ok(drawnAt(r.svg, a) > fenceAt(r.svg), cam + ': in front of the wire');
+    }
+  }
+});
+
+test('chapter 8: whatever chapter 8 puts at the Barking Field renders: at night, on chapter 2\'s cameras, every new spot on a camera that has it (once the chapter is written)', (t) => {
+  const ch = PC.story && PC.story.ch08;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.scene.set === 'field' && f.board !== 'STUB.') : [];
+  if (!frames.length) { t.diagnostic('chapter 8 has no frames at the Barking Field yet'); return; }
+  const v = art.vocab.sets.field, A = art.sceneInfo('field').anchors;
+  for (const [id, f] of frames) {
+    const sc = f.scene;
+    assert.ok(CAMS.includes(sc.cam), id + ': one of chapter 2\'s cameras: ' + sc.cam);
+    assert.ok((sc.fx || []).includes('night'), id + ': at night');
+    for (const k of Object.keys(sc.opts || {})) assert.ok(k in v.opts, id + ': option ' + k);
+    for (const m of sc.cast || []) if (typeof m.at === 'string') assert.ok(A[COMP8[sc.cam]][m.at], id + ': ' + m.at + ' is a spot of ' + sc.cam);
+    const r = art.render(sc, { look: LOOK });
+    checkRender(r, sc, 'ch08 ' + id);
+    r.heads.forEach((h, i) => assert.ok(h, id + ': ' + (sc.cast[i].who || '?') + ' in sight'));
+  }
+  t.diagnostic(frames.length + ' frames at the Barking Field');
+});
+
+// the grass drawn over a cat lying flat on the path at night, every group of it: its blades, as coverBlades reads them
+const meAt0 = (svg) => svg.indexOf('<g transform="translate(470 975)');
+function pathGrass8(svg) {
+  const out = [];
+  for (let at = svg.indexOf('data-part="path-grass"'); at >= 0; at = svg.indexOf('data-part="path-grass"', at + 1)) {
+    const g = svg.slice(svg.lastIndexOf('<g', at), svg.indexOf('</g>', at));
+    out.push((g.match(/M[-\d.]+ [-\d.]+Q[-\d.]+ [-\d.]+ [-\d.]+ [-\d.]+Q[-\d.]+ [-\d.]+ [-\d.]+ [-\d.]+Z/g) || []).map((b) => { const v = b.match(/[-\d.]+/g).map(Number); return [(v[0] + v[8]) / 2, v[1], Math.min(v[1], v[5])]; }));
+  }
+  return out;
+}
+
+test('chapter 8: at night a cat lying flat on the path lies in the grass at its edge (“You drop flat in the grass.”): over her lower body, up to her chin in front of her face and never over her eyes, in front of everyone; nothing for a cat who is not lying flat, and nothing by day', () => {
+  // chapter 8's sneak (f064/f065): our cat flat at a spot of the frame's own, the friend flat at `path-left`
+  const FLAT = { x: 470, y: 975, h: 285 }, PL = spots8('dogs')['path-left'];
+  const me = { who: 'player', pose: 'flat', mood: 'wonder', at: FLAT, facing: 'right' }, friend = { who: 'tallyheart', pose: 'flat', mood: 'solemn', at: 'path-left', facing: 'right' };
+  const dog = { who: 'dog', pose: 'stand', mood: 'sniff', at: 'dog-2', facing: 'left', variant: 2 };
+  const svg = nRender('dogs', [dog, friend, me], { moon: 8, tap: 'path' }).svg, grass = pathGrass8(svg);
+  assert.equal(grass.length, 2, 'grass over each of them');
+  // and the path's near edge is grass under them, from the left of the panel to just past her nose, short of the puddle
+  const edge = svg.match(/<path d="M-40 ([\d.]+)L([\d.]+) [\d.]+L([^"]+)"[^>]*data-part="grassy-edge"/);
+  assert.ok(edge, 'the grassy edge');
+  const xs = edge[3].split('L').map((q) => +q.split(' ')[0]).filter((x) => x > 0), nose = boxes8(me, FLAT).head[2];
+  assert.ok(Math.min(...xs) > nose && Math.max(...xs) < 670, 'past her nose (' + r1(nose) + '), short of the puddle at 670: ' + xs.map(r1).join(' '));
+  assert.ok(svg.indexOf('data-part="grassy-edge"') < meAt0(svg), 'under her');
+  // in front of everyone: after the cast
+  const meAt = svg.indexOf('<g transform="translate(' + num(FLAT.x) + ' ' + num(FLAT.y) + ')');
+  assert.ok(meAt > 0 && svg.indexOf('data-part="path-grass"') > meAt, 'drawn over her');
+  [[friend, PL], [me, FLAT]].forEach(([m, a], i) => {
+    const b = boxes8(m, a), blades = grass[i], H = a.h, chin = b.head[3];
+    assert.ok(blades.length > 10, m.who + ': long grass, not a few blades');
+    blades.forEach((q) => { if (q[0] > b.head[0] - H * 0.1 && q[0] < b.head[2] + H * 0.1) assert.ok(q[2] >= chin - 1, m.who + ': no blade over her face: tip ' + r1(q[2]) + ', chin ' + r1(chin)); });
+    blades.forEach((q) => assert.ok(q[0] > b.body[0] - H * 0.2 && q[0] < b.body[2] + H * 0.2, m.who + ': over her, not beside her'));
+    const tall = Math.max(...blades.map((q) => a.y - q[2]));
+    assert.ok(tall > (a.y - b.body[1]) * 0.35 && tall < (a.y - b.body[1]) * 0.5 + 1, m.who + ': about half as high as she lies: ' + r1(tall));
+  });
+  // nothing for a cat sitting, standing or crouching there; nothing by day or at dusk; nothing at the wire
+  for (const pose of ['sit', 'stand', 'crouch', 'walk']) assert.ok(!/path-grass|grassy-edge/.test(nRender('dogs', [Object.assign({}, me, { pose })]).svg), pose);
+  for (const fx of [['day'], ['dusk'], ['morning']]) for (const cam of CAMS) assert.ok(!/path-grass|grassy-edge/.test(nRender(cam, [Object.assign({}, me, { at: 'path-left' })], {}, fx).svg), cam + ' ' + fx[0] + ': by day as ever');
+  assert.equal(pathGrass8(nRender('dogs', [{ who: HAIL, pose: 'sit', at: 'wire', facing: 'left' }]).svg).length, 0, 'nobody lying flat, no grass');
+});
+
+test('chapter 8: our cat is dry on every page at the Barking Field: no cat of ours sits or lies on the path\'s puddle (“Neither way is wet.”), as chapter 8 places her', () => {
+  const ch = PC.story && PC.story.ch08;
+  const frames = ch && ch.frames ? Object.entries(ch.frames).filter(([, f]) => f.scene && f.scene.set === 'field') : [];
+  assert.ok(frames.length > 30);
+  const OURS = ['player', 'tallyheart', 'riffle'];
+  let n = 0;
+  for (const [id, f] of frames) {
+    const comp = COMP8[f.scene.cam], pools = night8()[comp].pathPuddles, A = spots8(f.scene.cam);
+    for (const m of f.scene.cast) {
+      if (!OURS.includes(m.who)) continue;
+      const a = typeof m.at === 'string' ? A[m.at] : m.at;
+      if (!a || a.y < night8()[comp].pathTop) continue;
+      const b = boxes8(m, a), feet = [b.body[0], a.y - a.h * 0.12, b.body[2], a.y + a.h * 0.02];
+      for (const [cx, cy, rx, ry] of pools) assert.ok(!meets8(feet, [cx - rx, cy - ry, cx + rx, cy + ry]), id + ': ' + m.who + ' at ' + JSON.stringify(m.at) + ' on the puddle at ' + cx);
+      n++;
+    }
+  }
+  assert.ok(n > 40, n + ' cats on the path');
 });

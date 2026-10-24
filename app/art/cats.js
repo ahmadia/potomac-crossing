@@ -160,6 +160,23 @@
  *   - sand at per 6: each group two short rows of three, one above the other (every other per as before).
  *   The game's cats keep two whiskers a side: six on a cheek exist only in these Counts close-ups.
  *
+ * Chapter 8 (docs/chapters/08-the-night-trail.spec.md, section 4). Everything is appended (cast, poses,
+ * extras: earlier ids never move) and off unless asked for, so chapters 1 to 7 draw as they did:
+ *   - `hail` (the speckled dragonet, Squall's size; 250 x 200): poses vocab.otherPoses.hail (sit, stand,
+ *     bounce, run, peek, pawup, tilt); `sit` is what an unknown pose draws. Every mood; `pawup` reports
+ *     `paw` and `lit: n` lights its claws. White with grey speckles, dark eyes, never toothy.
+ *   - `snip` and `snatch` (the weasels; 220 x 150): poses stand, up, run, skid, peek, point, curl; `up`
+ *     is what an unknown pose draws. Every mood; `holds: 'mouse'` (`holdAt: 'mouth' | 'paws'`, reported
+ *     as `held`), `asleep: true`. No teeth, ever.
+ *   - cats: the pose `run`; `tailUp: true` (sit, stand, crouch, walk: the tail straight up, its tip
+ *     curled; she is fitted to her box as with it down, so her size never changes) and `tap: 'tail'`;
+ *     `holds: 'leaf' | 'glass'` and `tap: 'leaf'`. Riffle: `tap: 'ears' | 'paw' | 'tail'`, `tailUp`.
+ *     The dogs: the pose `lie`, and `asleep: true`. Reynard: the pose `trot`.
+ *   - countsPicture: `thing: 'paw'` at per 2 (one cat's four paws, the front pair the first group, the
+ *     back pair the second); `kind: 'dogs'` (the table-4 tiles: dogs, Hail and cats, four paws each,
+ *     lit an animal at a time; a `who` longer than `groups` draws its first); `kind: 'marks'` with
+ *     `layout: 'pairs'` (each night's marks two and two). The sand at per 4: two and two a group.
+ *
  * `svg` is markup for a group (no outer <svg>) drawn in a local box 0..w x 0..h, with the
  * character's feet centred at (w/2, h). Every character is drawn facing right and mirrored for
  * facing left. Ids (clip paths, shapes) carry a module counter, so many characters can share
@@ -424,7 +441,8 @@
   };
   // chapter 3 appends 'pawup' (sitting, one forepaw raised) and 'tummy' (on her back, paws in the air);
   // chapter 4 'situp' (on the haunches, both forepaws raised, claws out: "We look like squirrels")
-  var CAT_POSES = ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer', 'pawup', 'tummy', 'situp'];
+  // chapter 8 'run' (flat out: the chase home)
+  var CAT_POSES = ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer', 'pawup', 'tummy', 'situp', 'run'];
   // 'solemn' is appended last so earlier indexes never move (deadpan dignity: level brows, half-lidded eyes, a straight mouth);
   // chapter 3 appends 'sad' (homesick: brows up, drooping lids, a wobbly mouth) and 'shy' (eyes down, a small smile, a blush)
   var MOODS = ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn', 'sad', 'shy'];
@@ -433,10 +451,11 @@
   // fox and Squall, the littlest dragonet; earlier ids never move
   // chapter 5 Patience the heron, and Sprinkle's brother Puddle and pale sister Wisp
   // chapter 6 Coil the water snake, the ReedClan speaker Sloshbank and the other ReedClan cats (by
-  // variant), and Sleet, the eldest dragonet
+  // variant), and Sleet, the eldest dragonet; chapter 8 Hail, the speckled dragonet, and Snip and
+  // Snatch, the weasels
   var CAST_IDS = ['player', 'tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth',
     'riffle', 'otter', 'dog', 'sprinkle', 'murmurchime', 'reynard', 'squall', 'patience', 'puddle', 'wisp',
-    'coil', 'sloshbank', 'reedclan', 'sleet'];
+    'coil', 'sloshbank', 'reedclan', 'sleet', 'hail', 'snip', 'snatch'];
   var OTHER_POSES = { sparrow: ['perch', 'fluffed'], moth: ['fly'], tallone: ['stand', 'water', 'set-dish'] };
 
   var PRESETS = {
@@ -629,7 +648,29 @@
         { leg: [[110, 135, 9], [137, 131, 6.5]], paw: [144, 125], up: true }],
       tail: 'wrap', front: { wrap: 1 },
       tails: { wrap: [[58, 184], [36, 199], [100, 200], [142, 186]], up: [[54, 178], [22, 172], [22, 106], [44, 100]],
-        down: [[54, 184], [38, 192], [28, 192], [20, 184]], out: [[53, 180], [32, 180], [20, 168], [18, 148]] } }
+        down: [[54, 184], [38, 192], [28, 192], [20, 184]], out: [[53, 180], [32, 180], [20, 168], [18, 148]] } },
+    // chapter 8: running flat out (the chase home): the body low and long, the forelegs reaching, the
+    // hind legs pushing off behind, the tail streaming out behind; her eyes open, whatever the mood
+    run: { hip: [56, 140, 21], chest: [114, 136, 23], head: [154, 110, 8], look: [0.6, 0], openEyes: true,
+      far: [{ leg: [[110, 148, 7.5], [150, 166, 5.5]], paw: [156, 167] }, { leg: [[54, 150, 8.5], [26, 176, 5.5]], paw: [21, 179] }],
+      near: [{ thigh: [60, 148, 16, 21, -40], leg: [[56, 158, 9], [20, 186, 6.5]], paw: [15, 190] }, { leg: [[122, 148, 9], [166, 184, 6.5]], paw: [172, 188] }],
+      tail: 'stream', moodTail: false,
+      tails: { stream: [[40, 134], [22, 126], [8, 122], [-6, 114]] } }
+  };
+  // chapter 8, not a pose of the vocabulary: `stand` with the near and far legs set a little apart, so
+  // all four paws show along the ground, two and two (one cat's paws counted by pairs: the Counts art's)
+  POSES.stand4 = { hip: [64, 130, 22], chest: [114, 128, 24], head: [148, 88, 0],
+    far: [{ leg: [[110, 142, 8], [110, 189, 6]], paw: [113, 191] }, { leg: [[58, 142, 9], [39, 189, 6]], paw: [42, 191] }],
+    near: [{ thigh: [66, 142, 16, 22, 4], leg: [[68, 150, 9], [63, 189, 6.5]], paw: [67, 191] }, { leg: [[122, 142, 9], [134, 189, 6.5]], paw: [138, 191] }],
+    tail: 'up', tails: POSES.stand.tails };
+  // chapter 8, `tailUp: true` (sit, stand, crouch, walk): the tail held straight up, its tip curled
+  // over toward her head, standing well above the ears of a crouching cat (Tallyheart's tail sticking
+  // up out of the weeds; "Your tail goes straight up."). `tap: 'tail'` marks its tip.
+  var TAIL_UP = {
+    sit: [[50, 176], [36, 138], [30, 70], [54, 60]],
+    stand: [[46, 124], [36, 90], [32, 44], [56, 36]],
+    walk: [[46, 126], [36, 92], [32, 46], [56, 38]],
+    crouch: [[54, 154], [42, 112], [38, 58], [62, 48]]
   };
 
   // chapter 5, `reach: true` on a crouching cat (her paw held over a tiny print in the marsh mud,
@@ -649,7 +690,7 @@
   };
 
   // poses whose head rests on top of the chest, so it follows a slim cat's lower chest down
-  var NECK_FOLLOWS = { sit: 1, lookup: 1, lie: 1, loaf: 1, stand: 1, walk: 1, peer: 1, stretch: 1, pawup: 1, situp: 1 };
+  var NECK_FOLLOWS = { sit: 1, lookup: 1, lie: 1, loaf: 1, stand: 1, walk: 1, peer: 1, stretch: 1, pawup: 1, situp: 1, stand4: 1 };
 
   var MOOD_TAIL = { happy: 'up', proud: 'up', wonder: 'up', laugh: 'up', shout: 'up', dreamy: 'wrap',
     kind: 'wrap', sleepy: 'wrap', worried: 'down', stern: 'out', sniff: 'out', sad: 'down', shy: 'wrap' };
@@ -789,6 +830,8 @@
     // chapter 7, `asleep: 'half'`: half asleep, heavy lids down to the middle of the eyes, sagging a little
     // (lidDrowsy; solemn's level lids read as deadpan), with the mood's own mouth and blush: our cat
     // curling up to sleep with a small smile (f103)
+    // chapter 8, running flat out (`run`): her eyes open, whatever the mood would shut them with
+    if (ctx.openEyes && (kind === 'arc' || kind === 'closed' || kind === 'squeeze')) kind = 'open';
     if (ctx.asleep) kind = ctx.asleep === 'half' ? 'lidDrowsy' : 'closed';
     if (ctx.squeeze) kind = 'squeeze';
     var exd = ff ? 17 : 15.5, eyY = ff ? 1 : -1, ek = ff ? 1.1 : 1;
@@ -1030,7 +1073,7 @@
   var STONE_RX = 10.5, STONE_GROUND = 189;
   var HOLD_AT = { paws: 1, mouth: 1, chin: 1, nose: 1 };
   // a cat on its feet carries the stone in its mouth; sitting or lying, it keeps it at its paws
-  var HOLD_MOUTH = { stand: 1, walk: 1, peer: 1, stretch: 1 };
+  var HOLD_MOUTH = { stand: 1, walk: 1, peer: 1, stretch: 1, run: 1 };
 
   function stoneSvg(R, c, k, rot, sx) {
     var inner = '<ellipse cx="0" cy="5.6" rx="12" ry="4" fill="#141218" opacity=".45"/>' +
@@ -1074,9 +1117,37 @@
       '<path d="M-7.6,-1.8h3.6M-2.4,1.2h4M-6.4,3h2.6M0.6,-2.6h2.4" stroke="' + BARK_COL.grain + '" stroke-width="1.1" stroke-linecap="round" fill="none"/>' +
       '<path d="M5.4,-5.3C9.4,-5.5 12,-2.8 11.8,0.9C11.6,3.6 9.6,5.2 6.8,5.2C9,3.4 9.4,0.6 8.4,-1.8C7.8,-3.4 6.8,-4.6 5.4,-5.3Z" fill="' + BARK_COL.lip + '" stroke="' + BARK_COL.lipEdge + '" stroke-width="1.2" stroke-linejoin="round"/></g>';
   }
+  // Chapter 8's held things. `holds: 'leaf'`: a green leaf folded over round something small (her
+  // proof), its midrib along the fold, the little bump of what is inside it, a stalk; about 30 long,
+  // centred on 0,0. `holds: 'glass'`: the same leaf opened flat on the ground, seen a little from
+  // above (its veins showing), and on it the small clear piece of tower glass: flat, straight-edged,
+  // a pale blue-green edge and two white glints, shining. About 40 wide. Flat, matte, no ids.
+  var LEAF_COL = { fill: '#79a24a', dark: '#5d8436', line: '#34521c', rib: '#b9d48a', vein: '#9fc06d', stalk: '#6b5a2c' };
+  function leafSvg(c, k, rot) {
+    return '<g class="pc-leaf" transform="translate(' + N(c[0]) + ',' + N(c[1]) + ') rotate(' + N(rot) + ') scale(' + N(k) + ')">' +
+      '<path d="M-15,1.4l-4.6,1.8" stroke="' + LEAF_COL.stalk + '" stroke-width="2" stroke-linecap="round"/>' +
+      '<path d="M-15.2,1.2C-11,-5.6 -2,-9.6 5,-8.6C10.6,-7.8 14.6,-4 16,0.6C11,3.6 2.6,5.4 -4.6,4.6C-9.6,4 -13.4,2.8 -15.2,1.2Z" fill="' + LEAF_COL.fill + '" stroke="' + LEAF_COL.line + '" stroke-width="1.5" stroke-linejoin="round"/>' +
+      '<path d="M-6.4,-4.8C-3.6,-9.4 3.4,-10.2 6,-6.2C3.4,-4.6 -2.6,-4 -6.4,-4.8Z" fill="' + LEAF_COL.dark + '" opacity=".75"/>' +
+      '<path d="M-14.4,1.4C-6,3.4 4,3.2 15.4,0.6" stroke="' + LEAF_COL.rib + '" stroke-width="1.3" fill="none" stroke-linecap="round"/>' +
+      '<path d="M-8,-1.8q2.4,-2.6 4.4,-0.4M2,-3.2q2.6,-2.4 4.6,0.2" stroke="' + LEAF_COL.vein + '" stroke-width="1" fill="none" stroke-linecap="round" opacity=".8"/></g>';
+  }
+  function glassLeafSvg(c, k, rot) {
+    return '<g class="pc-glass" transform="translate(' + N(c[0]) + ',' + N(c[1]) + ') rotate(' + N(rot) + ') scale(' + N(k) + ')">' +
+      '<path d="M-21,0.6l-4.2,1.4" stroke="' + LEAF_COL.stalk + '" stroke-width="2" stroke-linecap="round"/>' +
+      '<path d="M-21,0.4C-13,-6.8 4,-8 13.4,-5C18,-3.4 20.6,-1.2 21.4,0.6C18,4 8,6.6 -2,6.4C-10,6.2 -17.6,3.8 -21,0.4Z" fill="' + LEAF_COL.fill + '" stroke="' + LEAF_COL.line + '" stroke-width="1.5" stroke-linejoin="round"/>' +
+      '<path d="M-20,0.6C-8,0.8 8,0.4 21,0.6M-12,0.6l-3.4,-3.6M-12,0.8l-3,3.2M-3,0.6l-3,-4.6M-3,0.7l-2.6,4.2M6,0.6l-2.4,-4.4M6,0.6l-2,4" stroke="' + LEAF_COL.rib + '" stroke-width="1" fill="none" stroke-linecap="round" opacity=".85"/>' +
+      '<path class="pc-glass-piece" d="M-8.4,-1.4L4,-5.8L10,1.2L-2,4.6Z" fill="#dcf3ef" fill-opacity=".9" stroke="#5aa99d" stroke-width="1.4" stroke-linejoin="round"/>' +
+      '<path d="M-5.6,-1.2L3,-4.2M-0.4,2.6L6.6,0.4" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>' +
+      '<path d="M3.2,-9.6Q3.8,-6.4 7,-5.8Q3.8,-5.2 3.2,-2Q2.6,-5.2 -0.6,-5.8Q2.6,-6.4 3.2,-9.6Z" fill="#ffffff" stroke="#bfe6df" stroke-width=".7" stroke-linejoin="round"/>' +
+      '<circle cx="7.4" cy="1.2" r="1.2" fill="#ffffff"/></g>';
+  }
   // what a cat can hold, and how far each reaches from its middle (for the boxes)
   var HOLD_RX = { stone: STONE_RX, pebble: 9, vole: 23, bark: 12.5 };
+  HOLD_RX.leaf = 16; HOLD_RX.glass = 22;
+  var HOLD_RY = { leaf: 9, glass: 9 };
   function heldSvg(R, h, sx) {
+    if (h.what === 'leaf') return leafSvg(h.c, h.k, h.rot);
+    if (h.what === 'glass') return glassLeafSvg(h.c, h.k, h.rot);
     if (h.what === 'pebble') return pebbleSvg(R, h.c, h.k, h.rot, sx);
     if (h.what === 'vole') return voleSvg(h.c, h.k, h.rot, h.flip);
     if (h.what === 'bark') return barkSvg(h.c, h.k, h.rot);
@@ -1099,6 +1170,8 @@
     var tx = sp.flatFace ? 3 : 4, k = vole ? 1 : 1.3, rx = HOLD_RX[what];
     // chapter 6: the old tom's pinecone, placed by rules of its own
     if (what === 'pinecone') return pinePlace(at, P, hm, tx);
+    // chapter 8: her leaf, and the glass on it (at her forepaws only), by rules of their own
+    if (what === 'leaf' || what === 'glass') return leafPlace(what, what === 'glass' ? 'paws' : at, P, hm, tx);
     // a vole in the mouth sits on the mouth itself, its back just under the nose (a mouthful: the
     // mood's own mouth is not drawn, headSvg's mouthFull)
     if (at === 'mouth') return vole ? { what: what, rx: rx, at: at, c: [tx + 8, 20], k: 1, rot: -5 } : { what: what, rx: rx, at: at, c: [tx + 1, 22], k: 1, rot: -6 };
@@ -1214,6 +1287,31 @@
       fp = apply(hm, [tx, 30]);
     }
     return { what: 'pinecone', rx: PINE_RX, at: at, c: [fp[0] + (at === 'nose' ? 44 : 24), gy], k: k, rot: at === 'nose' ? 4 : -3 };
+  }
+
+  // Where her leaf goes (chapter 8): carried crosswise in the mouth (walking, standing, running);
+  // else lying on the ground in front of her forepaws (sitting, crouching, lying), or held up between
+  // them sitting up. The glass, the leaf opened flat, always lies on the ground at her forepaws.
+  function leafPlace(what, at, P, hm, tx) {
+    var glass = what === 'glass', rx = HOLD_RX[what];
+    if (at === 'mouth') return { what: what, rx: rx, at: at, c: [tx + 9, 21], k: 1, rot: -8 };
+    if (at === 'chin') {
+      var ch = apply(hm, [tx, 33]), low = Math.max(0, ch[1] - STONE_GROUND);
+      return { what: what, rx: rx, at: at, c: [ch[0] + 8 + low * 1.3, glass ? 191 : 190], k: 1, rot: 0 };
+    }
+    // (the forward-most forepaw on the ground: a paw up on a tree or a railing holds nothing)
+    var fp = null;
+    (P.near || []).concat(P.far || []).forEach(function (L) { if (L.paw && !L.up && L.paw[1] > 180 && (!fp || L.paw[0] > fp[0])) fp = L.paw; });
+    if (!fp) {
+      var ups = (P.near || []).concat(P.far || []).filter(function (L) { return L.paw && L.up; });
+      if (ups.length && !glass) {
+        var ux = 0, uy = 0;
+        ups.forEach(function (L) { ux += L.paw[0] / ups.length; uy += L.paw[1] / ups.length; });
+        return { what: what, rx: rx, at: at, c: [ux + 1, uy + 6], k: 0.9, rot: -6 };
+      }
+      fp = [apply(hm, [tx, 30])[0], 192];
+    }
+    return { what: what, rx: rx, at: at, c: [fp[0] + (glass ? 30 : 21) + (at === 'nose' ? 16 : 0), Math.min(192, fp[1]) - (glass ? 2.4 : 3.4)], k: glass ? 1.4 : 1.15, rot: glass ? 0 : -3 };
   }
 
   // ------------------------------------------------------------------ a whole cat
@@ -1381,6 +1479,11 @@
       if (mt && P.tails[mt]) mode = mt;
     }
     var TP = P.tails[mode];
+    // chapter 8, `tailUp: true`: straight up, its tip curled over (in the poses that have it; behind her).
+    // She is fitted to her box as she is with her tail down (below), so she is the same size, her head
+    // where it was, with her tail up or not (a big cat in a long pose is fitted by its width).
+    var tailUp = o.tailUp === true && TAIL_UP[pose] && o.reach !== true;
+    if (tailUp) { mode = 'straight'; TP = TAIL_UP[pose]; }
     var w0 = 6.6 * (sp.tailW || 1) * Math.sqrt(bulk), w1 = 4.6 * (sp.tailW || 1) * (mode === 'wrap' ? 0.8 : 1);
     var puff = puffed ? 2.1 : scared ? 1.55 : 1;
     var tw = function (t) {
@@ -1453,9 +1556,10 @@
     if (o.buzz) hctx.buzz = true;
     if (o.dragonfly) hctx.dragonfly = true;
     if (o.tap === 'nose' || o.tap === true || (o.tap == null && o.asleep && o.snail && o.snail !== 'in')) hctx.tap = true;
-    if (hold && (hold.what === 'vole' || hold.what === 'pinecone') && hold.at === 'mouth') hctx.mouthFull = true;
+    if (hold && (hold.what === 'vole' || hold.what === 'pinecone' || hold.what === 'leaf') && hold.at === 'mouth') hctx.mouthFull = true;
     // chapter 6, ReedClan's wet sheen on the head too
     if (sp.sheen) hctx.sheen = true;
+    if (P.openEyes) hctx.openEyes = true;
     var head = '<g transform="' + mStr(hm) + '">' + headSvg(R, sp, mood, hctx) + (hold && hold.at === 'mouth' ? heldSvg(R, hold, sx) : '') + '</g>';
 
     // ----- chapter 6, Sloshbank's wet belly (`wet`): the fur along it clumped in wet points, a few
@@ -1542,7 +1646,9 @@
     addPts(hb.map(function (q) { return apply(hm, q); }));
     // the held stone, in body coordinates (in the mouth it moves with the head)
     var heldC = hold ? (hold.at === 'mouth' ? apply(hm, hold.c) : hold.c) : null, heldR = hold ? hold.rx * hold.k * (hold.at === 'mouth' ? hsc : 1) : 0;
-    if (heldC) addPts([[heldC[0] - heldR - 2, heldC[1] - heldR], [heldC[0] + heldR + 2, heldC[1] + heldR]]);
+    // (chapter 8: a leaf lies flat, so it is not as tall as it is long)
+    var heldRy = hold && HOLD_RY[hold.what] ? HOLD_RY[hold.what] * hold.k * (hold.at === 'mouth' ? hsc : 1) : heldR;
+    if (heldC) addPts([[heldC[0] - heldR - 2, heldC[1] - heldRy], [heldC[0] + heldR + 2, heldC[1] + heldRy]]);
     var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     pts.forEach(function (q) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); });
     var mg = 3 + (scared || puffed ? 4.5 : 0) + (puffed ? 3 : 0) + (fl ? 3 : 0), sc = sp.scale || 1;
@@ -1552,6 +1658,14 @@
     var left = 100 + (x0 - mg - 100) * sc, right = 100 + (x1 + mg - 100) * sc, dx = 0;
     if (left < 0) dx = -left; else if (right > 200) dx = 200 - right;
     var M = mul(F === 1 ? [1, 0, 0, 1, 0, 0] : [-1, 0, 0, 1, 200, 0], mul(mT(100 + dx, 197), mul(mS(sc), mT(-100, -197 + dy))));
+    if (tailUp) {
+      // (chapter 8: placed exactly as with her tail down; the raised tail stays inside the box in every pose that has it)
+      var down = {}, dk;
+      for (dk in o) down[dk] = o[dk];
+      down.tailUp = false; down.tap = null;
+      var dm = buildCat(sp, down)._marks;
+      M = dm.M; sc = dm.scale;
+    }
     var hc = apply(M, apply(hm, [2, -4]));
     // boxes in the 200 x 200 box (after the fit and any mirroring): the head with its ears, ruff and
     // bow, and the whole cat. The scenes use them to frame close-ups and keep props off the face.
@@ -1569,6 +1683,9 @@
       if (tpaw) body += tapMark('paw', tpaw.paw[0], tpaw.paw[1] - (tpaw.up ? 2 : 1), 13 * Math.sqrt(lw) * (sp.pawK || 1));
     }
     if (o.tap === 'ears') body += tapMarks('ears', earMids(sp, mood, (P.earBias || 0) + oEar).map(function (q) { var e = apply(hm, q); return [e[0], e[1], 13 * (sp.earS || 1) * hsc]; }));
+    // ----- chapter 8: the leaf she holds (or the glass on it), and her tail's tip (raised with `tailUp`)
+    if (o.tap === 'leaf' && heldC && (hold.what === 'leaf' || hold.what === 'glass')) body += tapMark('leaf', heldC[0], heldC[1], heldR + 4);
+    if (o.tap === 'tail') { var ttip = tl.at(1), tq = add(ttip.p, ttip.t, -ttip.w * 0.6); body += tapMark('tail', tq[0], tq[1], 14); }
     // ----- chapter 6, the starry cat: a soft glow at her edge, a little see-through, small stars
     // inside her outline (the back, the chest, the haunch, the tail, the brow)
     if (sp.starry) {
@@ -1757,7 +1874,8 @@
   // chapter 6 appends 'puff' (cheeks puffed round, holding his breath, eyes wide: "All the way out")
   var OTTER_POSES = ['stand', 'sit', 'scramble', 'swim', 'float', 'juggle', 'slide', 'hug', 'sun', 'dive', 'hush',
     'whistle', 'groan', 'flip', 'hop', 'point', 'fall', 'slap', 'puff'];
-  var DOG_POSES = ['stand', 'jump', 'sit', 'bounce', 'howl'];
+  // chapter 8 appends 'lie' (lying down, head on forepaws: the heap of dogs asleep by the fence)
+  var DOG_POSES = ['stand', 'jump', 'sit', 'bounce', 'howl', 'lie'];
   OTHER_POSES.riffle = OTTER_POSES; OTHER_POSES.otter = OTTER_POSES; OTHER_POSES.dog = DOG_POSES;
   var OTTER_HEAD = [[0, -25], [-19, -23.5], [-30, -15], [-33.5, -1], [-29.5, 12.5], [-18, 21.5], [0, 25], [18, 21.5], [29.5, 12.5], [33.5, -1], [30, -15], [19, -23.5]];
   var DOG_HEAD = [[0, -30], [-21, -27.5], [-31, -15], [-33, 1], [-28, 17], [-15, 26], [0, 28.5], [15, 26], [28, 17], [33, 1], [31, -15], [21, -27.5]];
@@ -2176,6 +2294,20 @@
         near: [{ thigh: [-30, -92, 18, 22, 40], leg: [[-30, -80, 9], [-46, -58, 6.5]], paw: [-50, -54] }, { leg: [[34, -86, 9], [56, -64, 6.5]], paw: [60, -60] }],
         head: headAt(sp, 56, -140, -6), air: true
       };
+    },
+    // chapter 8: lying down, the body low along the ground, the hind leg tucked under, both forelegs
+    // stretched out in front and the head resting on them, chin down, the paws showing past it
+    lie: function (sp) {
+      var f = Math.max(0, sp.headS - 1) * 40;   // (a big head, the tiny dog's: the paws a little further out)
+      return {
+        neck: [[30, -34, 16], [42, -36, 15]],
+        torso: [[-36, -27, 24], [20, -29, 25]],
+        haunch: [-32, -24, 26, 18, -6],
+        tails: { up: [[-58, -20], [-76, -16], [-92, -16], [-104, -24]], down: [[-58, -14], [-72, -6], [-88, -4], [-102, -7]] },
+        far: [{ leg: [[24, -14, 8], [98 + f, -8, 6]], paw: [104 + f, -6] }],
+        near: [{ paw: [-8, -5] }, { leg: [[30, -12, 9], [108 + f, -7, 6.5]], paw: [115 + f, -6] }],
+        head: headAt(sp, 52, -34, 4)
+      };
     }
   };
 
@@ -2264,6 +2396,7 @@
     if (ctx.squeeze) kind = 'squeeze';           // chapter 3, `squeeze: true`: eyes squeezed shut
     if (ctx.howl && kind === 'open') kind = 'closed';
     if (ctx.puff && !ctx.squeeze) kind = 'wonder';   // chapter 6, holding his breath: eyes wide
+    if (ctx.asleep) kind = 'closed';                 // chapter 8, the dogs asleep in a heap (`asleep: true`)
     var ink = p.feat;
     s += beastEars(sp, mood, ctx, pts, lk);
     // collar or bandana behind the chin
@@ -2454,6 +2587,8 @@
     if (ctx.mist) { s += mistSvg(46, my0 + 2, 0.9); MIST_BOX.forEach(function (q) { pts.push([46 + q[0] * 0.9, my0 + 2 + q[1] * 0.9]); }); }
     // chapter 6, `tap: 'cheeks'`: his two cheeks marked for the page (puffed up in `puff`)
     if (ctx.tapCheeks) s += tapMarks('cheeks', ctx.puff ? [[-25, 13, 19], [25, 13, 19]] : [[-17, 10, 11], [17, 10, 11]]);
+    // chapter 8, `tap: 'ears'` (Riffle's small round ears: the whisper Tap)
+    if (ctx.tapEars) { var elow = mood === 'scared' || mood === 'worried' ? 6 : 0; s += tapMarks('ears', [[-26, -16 + elow, 12], [26, -16 + elow, 12]]); }
     return { svg: s, pts: pts };
   }
 
@@ -2643,6 +2778,10 @@
       var droop = scared || mood === 'worried' || mood === 'sleepy' || mood === 'solemn' || mood === 'sad';
       TP = P.tails[droop ? 'down' : 'up']; tw0 = 7 * Math.sqrt(bulk) * (sp.shaggy ? 1.3 : 1); tw1 = 4.4 * (sp.shaggy ? 1.6 : 1);
     }
+    // chapter 8, `tailUp: true` (Riffle's thick rudder tail stuck straight up, out of the weeds), on
+    // dry land; its tip, with `tap: 'tail'`
+    var tailUp = !dog && o.tailUp === true && P.tail && P.water == null;
+    if (tailUp) { var tb0 = TP[0]; TP = [tb0, [tb0[0] - 12, tb0[1] - 40], [tb0[0] - 10, tb0[1] - 84], [tb0[0] + 2, tb0[1] - 116]]; tw1 = Math.max(tw1, 7.5); }
     if (sp.tailL && sp.tailL !== 1) {
       var b0 = TP[0];
       TP = TP.map(function (q, i) { return i ? [b0[0] + (q[0] - b0[0]) * sp.tailL, b0[1] + (q[1] - b0[1]) * sp.tailL] : q; });
@@ -2677,6 +2816,8 @@
     if (P.roll && !o.squeeze) bctx.roll = true;
     if (P.puff) bctx.puff = true;
     if (!dog && o.tap === 'cheeks') bctx.tapCheeks = true;
+    if (!dog && o.tap === 'ears') bctx.tapEars = true;
+    if (dog && o.asleep) bctx.asleep = true;
     if (o.squeeze) bctx.squeeze = true;
     if (o.tear) bctx.tear = true;
     if (o.mist) bctx.mist = true;
@@ -2770,6 +2911,9 @@
       // chapter 7, `tap: 'fish'` (the toss Tap): the string marked for the page, its box, unpainted
       if (o.tap === 'fish') over += '<g class="pc-tap pc-tap-fish"><rect x="' + N(hf[0] - len6 * 0.36) + '" y="' + N(hf[1] - 2) + '" width="' + N(len6 * 0.72) + '" height="' + N(len6 * 0.96 + 9) + '" fill="none"/></g>';
     }
+    // chapter 8, Riffle's `tap: 'paw'` (his near forepaw: the pull-through Tap, in `scramble`) and `tap: 'tail'` (its tip)
+    if (!dog && o.tap === 'paw') { var th8 = handOf(P, 'near') || handOf(P, 'far'); if (th8) over += tapMark('paw', th8.paw[0], th8.paw[1], 13 * Math.sqrt(lw)); }
+    if (!dog && o.tap === 'tail') { var tt8 = tl.at(1), tq8 = add(tt8.p, tt8.t, -tt8.w * 0.5); over += tapMark('tail', tq8[0], tq8[1], 15); }
     (P.mud || []).forEach(function (md, i) {
       over += '<path d="' + blob(md[0], md[1], md[2], i + 2) + '" fill="#7a5638" stroke="#4e3420" stroke-width="' + N(1.2 * bk) + '"/>';
       addPts([[md[0] - md[2], md[1] - md[2]], [md[0] + md[2], md[1] + md[2]]]);
@@ -2854,7 +2998,7 @@
       head: { x: Math.round(hc[0] * 10) / 10, y: Math.round(hc[1] * 10) / 10 },
       headBox: boxOf(headPts.map(function (q5) { return apply(M, P.water != null ? [q5[0], Math.min(q5[1], P.water)] : q5); })),
       bounds: boxOf(pts.map(function (q6) { return apply(M, q6); })),
-      _marks: { M: M, scale: sc, ears: earsAt },
+      _marks: { M: M, scale: sc, ears: earsAt, paws: (P.far || []).concat(P.near || []).filter(function (L) { return L.paw; }).map(function (L) { return apply(M, L.paw); }) },
       held: fishHeld ? (function () { var c = apply(M, apply(hm, [0, 18])); return { what: fishHeld, at: 'mouth', x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10, r: Math.round(36 * sp.headS * sc * 10) / 10 }; })()
         : P.pole ? (function () { var c = apply(M, P.pole.grip); return { what: 'pole', at: 'paws', x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10, r: Math.round(8 * sc * 10) / 10 }; })()
         : heldAt6 ? (function () { var c = apply(M, heldAt6.c); return { what: held6.what, at: held6.at, x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10, r: Math.round(heldAt6.r * sc * 10) / 10 }; })() : undefined,
@@ -3038,7 +3182,7 @@
     var py = ly + r * 0.08 + (kind === 'lidShy' ? r * 0.3 : kind === 'lidHalf' ? r * 0.16 : kind === 'lidUp' ? -r * 0.2 : 0);
     var g = '<g clip-path="url(#' + ecl + ')"><use href="#' + eid + '" fill="url(#' + gid + ')"/>' +
       '<circle cx="' + N(lx) + '" cy="' + N(py) + '" r="' + N(pr) + '" fill="' + (DZ.pupil || '#1c1828') + '"/>' +
-      '<circle cx="' + N(lx - r * 0.3 * side) + '" cy="' + N(py - r * 0.3) + '" r="' + N(r * (kind === 'wonder' ? 0.27 : 0.22)) + '" fill="#fff"/>' +
+      '<circle cx="' + N(lx - r * 0.3 * side) + '" cy="' + N(py - r * 0.3) + '" r="' + N(r * (DZ.shine ? DZ.shine * (kind === 'wonder' ? 1.2 : 1) : kind === 'wonder' ? 0.27 : 0.22)) + '" fill="#fff"/>' +
       '<circle cx="' + N(lx + r * 0.24 * side) + '" cy="' + N(py + r * 0.3) + '" r="' + N(r * 0.09) + '" fill="#fff" opacity=".9"/>' +
       (kind === 'lidSad' ? '<path d="M' + N(-r * 0.7) + ',' + N(r * 0.66) + 'Q0,' + N(r * 0.98) + ' ' + N(r * 0.7) + ',' + N(r * 0.66) + '" stroke="#fff" stroke-width="' + N(r * 0.1) + '" fill="none" stroke-linecap="round" opacity=".8"/>' : '');
     var LB = DZ_LID[kind];
@@ -3492,7 +3636,8 @@
   // Laid out in his own units, the ground at y = 0 and his feet about x = 0, facing right; his box
   // is 300 x 230 in the cats' units, his feet centred on its bottom edge.
 
-  var FOX_POSES = ['sit', 'comb', 'chest', 'think', 'lean', 'flap', 'slip', 'dash'];
+  // chapter 8 appends 'trot' (along the tracks on all fours, his tail held high, smiling)
+  var FOX_POSES = ['sit', 'comb', 'chest', 'think', 'lean', 'flap', 'slip', 'dash', 'trot'];
   OTHER_POSES.reynard = FOX_POSES;
   var FOX_BOX = [300, 230], FOX_SCALE = 0.965;   // (the scale keeps his ear tips under Tallyheart's in every pose and mood)
   var FX = { base: '#e2632a', line: '#7b2d12', light: '#f6975a', cream: '#fbeed6', creamLine: '#cdab80', sock: '#352d2e', sockLine: '#151112', sockLight: '#5a5052',
@@ -3716,6 +3861,16 @@
         P.fore = [{ up: [[20, -46, 8.5], [42, -30, 6.5]], low: [[42, -30, 6.4], [66, -12, 5.4]], paw: [72.6, -7, 34], far: true, at: 'back' },
           { up: [[28, -48, 9], [54, -38, 7]], low: [[54, -38, 6.8], [84, -24, 5.8]], paw: [91, -20, 24] }];
         P.tail = [[[-56, -54], [-92, -64], [-130, -74], [-176, -70]]]; P.tailAt = 'back'; P.speed = true;
+        break;
+      case 'trot':
+        // chapter 8: trotting along the tracks, pleased with himself: on all fours, level, his head up,
+        // the near forepaw and the far hind paw lifted together, his brush held high in a sweep behind
+        P.hip = [-36, -62, 24]; P.chest = [22, -66, 22]; P.neck = [[30, -76, 15], [42, -98, 12.5]]; P.head = [52, -112, 3];
+        P.haunch = null; P.thigh = [-38, -58, 20, 26, 10];
+        P.hind = [{ foot: [[-36, -44, 7], [-28, -22, 5.6]], paw: [-23, -18, -24], far: true, at: 'back' }, { foot: [[-44, -48, 8], [-54, -10, 6.2]], paw: [-50, -5.8, 0] }];
+        P.fore = [{ up: [[14, -60, 8.5], [10, -34, 6.5]], low: [[10, -34, 6.4], [6, -10, 5.4]], paw: [10.6, -5.6, 0], far: true, at: 'back' },
+          { up: [[24, -58, 9], [40, -42, 7]], low: [[40, -42, 6.8], [38, -24, 5.8]], paw: [44, -21, -16] }];
+        P.tail = [[[-58, -66], [-88, -76], [-108, -98], [-112, -126]], [[-112, -126], [-114, -146], [-100, -162], [-84, -160]]]; P.tailAt = 'back';
         break;
     }
     return P;
@@ -4154,6 +4309,602 @@
     };
     if (P.pole) out.pole = { x: Wb / 2, w: Math.round(SQ_POLE_W * sc * 10) / 10 };
     if (pawAt) { var pc = apply(M, pawAt); out.paw = { x: Math.round(pc[0] * 10) / 10, y: Math.round(pc[1] * 10) / 10, r: Math.round(pawAt[2] * sc * 10) / 10 }; }
+    return out;
+  }
+
+  // ------------------------------------------------------------------ Hail (chapter 8)
+  // The little speckled dragonet in the hollow log in the Barking Field: a Mistscale on Sprinkle's
+  // model (her painters, as Squall and Sleet are drawn), little, about Squall's size (sitting, no
+  // taller than our cat). WHITE WITH GREY SPECKLES all over (round, like hailstones' shadows), pale
+  // grey ridges along her back, pale grey wing membranes folded small, a creamy belly, two soft horn
+  // nubs, big round DARK eyes with a big shine, eager brows (lifted: full of questions), and a bouncy
+  // curl at the end of her tail. Plainly not Sleet (silver-white, blue-grey shade, bold blue eyes under
+  // bossy brows) and not Wisp (see-through pale): she is solid, warm white, speckled, dark-eyed. Never
+  // toothy, never fierce. Her box is 250 x 200 in the cats' units, her feet centred on its bottom edge.
+  //   sit      what an unknown pose draws
+  //   stand    on all fours, side-on
+  //   bounce   mid-hop, all four paws off the ground, wings half out, tail up (BOING)
+  //   run      running flat out round the field, wings flapping a little
+  //   peek     head and shoulders up, forepaws on a rim (the log's near rim is the field's, over the rest)
+  //   pawup    one forepaw raised, curious ("Can I touch it?"); reports `paw`, `lit: n` lights its claws
+  //   tilt     her head tilted, full of questions
+  // Every mood, drawn her way (Sprinkle's). `tear`, `mist`, `squeeze` as her family's.
+  var HAIL_POSES = ['sit', 'stand', 'bounce', 'run', 'peek', 'pawup', 'tilt'];
+  OTHER_POSES.hail = HAIL_POSES;
+  var HL_BOX = [250, 200], HL_HS = 0.74, HLK = 0.56, HL_SCALE = 0.9;
+  var HL = { base: '#f6f4f0', line: '#7a7680', light: '#ffffff', belly: '#fbf3df', bellyLine: '#ddd2b8', ridge: '#c8c9cf', ridgeEdge: '#f0f1f3',
+    wing: '#d9dbe0', vein: '#b2b6bf', wingLine: '#8a8f99', claw: '#f8f2e4', clawLine: '#8b8478', nub: '#e2e0e4', pad: '#dedbe0', mouth: '#6a4652', nostril: '#8f8a94',
+    speck: '#aaa8b2', speckEdge: '#8d8a95', eye: ['#7c6c72', '#3e3138', '#1f171c'], pupil: '#100c0f', shine: 0.31 };
+  HL.shade = mix(HL.base, HL.line, 0.16); HL.far = mix(HL.base, HL.line, 0.12); HL.farShade = mix(HL.base, HL.line, 0.26); HL.wingFar = mix(HL.wing, HL.line, 0.14);
+  HL.feat = mix(HL.line, '#000', 0.3); HL.eyeInk = mix(HL.line, '#000', 0.35);
+
+  // her speckles: little round grey dots, a few bigger than the rest
+  function hlSpecks(list) {
+    var s = '';
+    list.forEach(function (f, i) { s += '<circle cx="' + N(f[0]) + '" cy="' + N(f[1]) + '" r="' + N(f[2] || (i % 3 ? 1.9 : 2.7)) + '"/>'; });
+    return s ? '<g class="pc-specks" fill="' + HL.speck + '" stroke="' + HL.speckEdge + '" stroke-width=".5">' + s + '</g>' : '';
+  }
+  // Her head, frontal like her family's, round as a baby's: her brows lifted and soft (eager: never
+  // the fierce little brows of her brother Squall), her eyes big, round and dark with a big shine.
+  var HL_BROW = { neutral: [-3, -1.6], happy: [-3.6, -1.8], dreamy: [-2, -1.2], wonder: [-5, -2.4], worried: [-6, 2.4], scared: [-7, 2.6], sleepy: [-1, 0],
+    laugh: [-3.6, -2], stern: [1.6, -1.6], kind: [-2.6, -1.2], proud: [-2.4, -2.4], sniff: [-2, -1], shout: [-5, -3], solemn: [-1, -1], sad: [-7, 3.6], shy: [-4, 1.6] };
+  function hlHead(R, mood, ctx) {
+    var s = '', pts = SQ_HEAD.slice(), ink = DZ.feat, kind = EYE_KIND[mood] || 'open';
+    if (kind === 'lidKind') kind = 'lidSoft';
+    if (ctx.squeeze) kind = 'squeeze';
+    var droop = mood === 'scared' || mood === 'sad' || mood === 'worried' ? 22 : mood === 'shy' ? 10 : 0;
+    [-1, 1].forEach(function (side) {
+      // little soft frills at the sides, pale grey, and the two nubs
+      s += '<g transform="translate(' + (side * 50) + ',-10) scale(' + N(side * 0.78) + ',0.78) rotate(' + droop + ')">' +
+        '<path d="M-2,-11Q14,-18 22,-7Q24,2 17,7Q8,11 -2,7Z" fill="' + DZ.wing + '" stroke="' + DZ.wingLine + '" stroke-width="2.2" stroke-linejoin="round"/>' +
+        '<path d="M2,-3L16,-8M2,2L16,2" stroke="' + DZ.vein + '" stroke-width="1.8" stroke-linecap="round"/></g>';
+      s += '<g transform="translate(' + (side * 18) + ',-40) rotate(' + (side * 14) + ')"><path d="M-7.6,6Q-8,-7.4 0,-11.6Q8,-7.4 7.6,6Z" fill="' + DZ.nub + '" stroke="' + DZ.line + '" stroke-width="2.2" stroke-linejoin="round"/>' +
+        '<path d="M-2.8,-4.6Q0,-7.2 2.8,-4.6" stroke="#ffffff" stroke-width="1.6" fill="none" opacity=".6"/></g>';
+      pts.push([side * 70, -22], [side * 70, -2], [side * 24, -54]);
+    });
+    var inner = '<ellipse cx="-13" cy="-25" rx="21" ry="7.4" transform="rotate(-10 -13 -25)" fill="' + DZ.light + '" opacity=".6"/>' +
+      '<path d="M-14,-31q7,-6 14,0q7,-6 14,0M-7,-37q7,-5 14,0" stroke="' + DZ.shade + '" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/>' +
+      hlSpecks([[-36, -20], [-44, -6, 1.8], [-24, -36], [-8, -42, 1.7], [30, -34], [41, -18], [46, -4, 1.8], [10, -40, 2]]);
+    s += R.part(crClosed(SQ_HEAD), { fill: DZ.base, dark: DZ.shade, line: DZ.line, sx: ctx.sx * 0.8, sy: -3.6, inner: inner, lw: 2.7 });
+    // the snout, creamy; two small nostrils
+    s += '<ellipse cx="0" cy="24" rx="29" ry="18" fill="' + DZ.belly + '"/><path d="M-24,31Q0,43 24,31" stroke="' + DZ.bellyLine + '" stroke-width="1.8" fill="none" opacity=".7"/>' +
+      '<g fill="' + DZ.nostril + '"><ellipse cx="-7" cy="15" rx="2.6" ry="1.9" transform="rotate(-20 -7 15)"/><ellipse cx="7" cy="15" rx="2.6" ry="1.9" transform="rotate(20 7 15)"/></g>';
+    // eyes: big, round and dark, a big shine in each
+    var er = 18, ex = 24, ey = -4, E = dzEyeDefs(R, er), look = ctx.look || [1, 0];
+    var ek = kind === 'wonder' ? 1.08 : kind === 'scared' ? 1.05 : 1;
+    [-1, 1].forEach(function (side) {
+      s += '<g transform="translate(' + N(side * ex) + ',' + ey + ') scale(' + N(side * ek) + ',' + N(ek) + ')">' + dzEye(kind, er, look, side, E.gid, E.eid, E.ecl) + '</g>';
+    });
+    // the eager brows: soft arcs, lifted
+    var br = HL_BROW[mood] || HL_BROW.neutral, shut = kind === 'arc' || kind === 'closed' || kind === 'squeeze', by = ey - er - 6 - (shut ? 1 : 0) - (kind === 'wonder' ? 1.6 : 0);
+    s += '<path class="pc-brows" d="M' + N(-ex + 9) + ',' + N(by + br[0]) + 'Q' + N(-ex) + ',' + N(by + Math.min(br[0], br[1]) - 3) + ' ' + N(-ex - 9) + ',' + N(by + br[1]) +
+      'M' + N(ex - 9) + ',' + N(by + br[0]) + 'Q' + N(ex) + ',' + N(by + Math.min(br[0], br[1]) - 3) + ' ' + N(ex + 9) + ',' + N(by + br[1]) +
+      '" stroke="' + DZ.line + '" stroke-width="3.4" stroke-linecap="round" fill="none"/>';
+    pts.push([0, by - 6]);
+    if (BLUSH[mood]) s += '<g fill="#f2a3b4" opacity=".42"><ellipse cx="-38" cy="17" rx="8" ry="4.6"/><ellipse cx="38" cy="17" rx="8" ry="4.6"/></g>';
+    // the mouth: the mood's (a squeak's round O, a laugh's open smile: never a tooth)
+    var mk = DZ_MOUTH[mood] || 'soft', my = 31, mo = '', st = ' stroke="' + ink + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"';
+    if (mk === 'o' || mk === 'big') {
+      var orx = mk === 'big' ? 9.6 : 5.6, ory = mk === 'big' ? 10.6 : 6;
+      mo += '<ellipse cx="0" cy="' + N(my + ory * 0.4) + '" rx="' + orx + '" ry="' + ory + '" fill="' + DZ.mouth + '"' + st + '/>' +
+        (mk === 'o' ? '' : '<ellipse cx="0" cy="' + N(my + ory * 0.95) + '" rx="' + N(orx * 0.6) + '" ry="' + N(ory * 0.4) + '" fill="#f08a9c"/>');
+      pts.push([0, my + ory * 1.5]);
+    } else if (mk === 'open') {
+      mo += '<path d="M-13,' + my + 'Q0,' + (my + 3) + ' 13,' + my + 'Q9.6,' + (my + 14) + ' 0,' + (my + 15) + 'Q-9.6,' + (my + 14) + ' -13,' + my + 'Z" fill="' + DZ.mouth + '"' + st + '/>' +
+        '<path d="M-6.6,' + (my + 10) + 'Q0,' + (my + 6.6) + ' 6.6,' + (my + 10) + 'Q3.8,' + (my + 14) + ' 0,' + (my + 14) + 'Q-3.8,' + (my + 14) + ' -6.6,' + (my + 10) + 'Z" fill="#f08a9c"/>';
+      pts.push([0, my + 16]);
+    } else {
+      var md = {
+        soft: 'M-8,' + my + 'Q0,' + (my + 5) + ' 8,' + my,
+        smile: 'M-13,' + (my - 2) + 'Q0,' + (my + 10) + ' 13,' + (my - 2),
+        wobsmile: 'M-12,' + (my - 1) + 'Q-8,' + (my + 4) + ' -4.6,' + (my + 3) + 'Q-2,' + (my + 2) + ' 0,' + (my + 5) + 'Q2,' + (my + 2) + ' 4.6,' + (my + 3) + 'Q8,' + (my + 4) + ' 12,' + (my - 1),
+        wavy: 'M-9,' + (my + 3) + 'Q-4.6,' + (my - 1) + ' 0,' + (my + 2) + 'Q4.6,' + (my + 5) + ' 9,' + (my + 1),
+        wobble: 'M-11,' + (my + 5) + 'Q-8,' + (my - 0.6) + ' -5.4,' + (my + 2.6) + 'Q-2.6,' + (my + 5.4) + ' 0,' + (my + 2.4) + 'Q2.6,' + (my + 5.4) + ' 5.4,' + (my + 2.6) + 'Q8,' + (my - 0.6) + ' 11,' + (my + 5),
+        flat: 'M-8,' + (my + 2) + 'Q0,' + (my + 0.6) + ' 8,' + (my + 2),
+        small: 'M-6.4,' + my + 'Q0,' + (my + 5) + ' 6.4,' + my
+      }[mk] || 'M-8,' + my + 'Q0,' + (my + 5) + ' 8,' + my;
+      mo += '<path d="' + md + '" fill="none"' + st + '/>';
+    }
+    s += mo;
+    if (mood === 'sniff') s += '<path d="M52,10q3,-3 6,0t6,0M55,19q3,-3 6,0t6,0M52,28q3,-3 6,0t6,0" stroke="' + ink + '" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/>';
+    if (mood === 'laugh') s += '<g fill="#9fd6f7" stroke="#5aa6d6" stroke-width="1"><path d="M42,3q3,4 0,6q-3,-2 0,-6Z"/><path d="M-42,3q3,4 0,6q-3,-2 0,-6Z"/></g>';
+    if (ctx.tilt) {
+      // a question in the air: two little curved marks beside her head
+      s += '<path d="M58,-44q6,-8 12,-2q4,6 -4,10l0,4M64,-22v1.6" stroke="' + ink + '" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".55"/>';
+      pts.push([74, -50], [74, -18]);
+    }
+    if (ctx.tear) { s += tearSvg(14, 8, 1.5); pts.push([21, 30]); }
+    if (ctx.mist) { s += mistSvg(56, my + 2, 1.3); MIST_BOX.forEach(function (q) { pts.push([56 + q[0] * 1.3, my + 2 + q[1] * 1.3]); }); }
+    return { svg: s, pts: pts };
+  }
+
+  // Her poses, in her own units (the ground at y = 0), laid out as Squall's are (SQ_SIT): hip and
+  // chest circles, a haunch, a neck and a tail (chains of Beziers, her tail ending in a bouncy curl),
+  // head [x, y, rot], two forelegs (the far one first), two hind feet, the wings' root `S` and states.
+  var HL_CURL = function (x, y, up) {
+    // the curl at the end of her tail, from (x, y): over and round, like a spring
+    var u = up ? -1 : 1;
+    return [[[x, y], [x - 14, y - 6 * u - 4], [x - 20, y - 26], [x - 6, y - 32]], [[x - 6, y - 32], [x + 6, y - 36], [x + 10, y - 22], [x + 1, y - 19]]];
+  };
+  var HL_SIT = { hip: [-14, -30, 28], chest: [6, -52, 23], haunch: [-18, -23, 27, 21, -12],
+    feet: [[-10, -3, 0, true], [2, -2, 0]], S: [-12, -60],
+    neck: [[[8, -64], [10, -72], [13, -80], [15, -86]]], neckW: [17, 15], head: [16, -98, 0],
+    tail: [[[-36, -16], [-58, -7], [-80, -6], [-96, -14]]].concat(HL_CURL(-96, -14)), tailW: [15, 4.4], tailFront: false,
+    arms: [{ top: [4, -50, 8], paw: [8, -4], rot: -10, far: true }, { top: [12, -48, 9], paw: [38, -3], rot: -8 }],
+    wings: { near: 'fold', far: 'fold' } };
+  function hlPose(pose) {
+    var P = {}, k;
+    for (k in HL_SIT) P[k] = HL_SIT[k];
+    switch (pose) {
+      case 'stand':
+        // on all fours, side-on: her chest up on straight forelegs, her neck up, her tail out behind and curled.
+        // Her four feet stand apart on the ground, each pair stepped (the far one of each pair behind the near
+        // one, and clear of it), and her forepaws rest plainly, claws tucked: the Counts pictures count them
+        P.hip = [-30, -46, 24]; P.chest = [22, -58, 22]; P.haunch = [-32, -36, 24, 23, -6];
+        P.feet = [[-60, -3, 0, true], [-25, -2, 0]]; P.S = [-10, -70];
+        P.neck = [[[30, -66], [36, -76], [41, -86], [44, -94]]]; P.head = [48, -108, 0];
+        P.arms = [{ top: [12, -56, 8], paw: [10, -4], rot: -10, far: true, claws: 'hold', rest: true }, { top: [28, -54, 9], paw: [46, -3], rot: -8, claws: 'hold', rest: true }];
+        P.tail = [[[-52, -46], [-72, -48], [-90, -52], [-102, -60]]].concat(HL_CURL(-102, -60, true)); break;
+      case 'bounce':
+        // BOING: mid-hop, every paw off the ground, the hind feet tucked, the forepaws out, wings half out, tail up
+        P.hip = [-28, -64, 24]; P.chest = [20, -70, 22]; P.haunch = [-30, -56, 24, 23, 18];
+        P.feet = [[-44, -34, 28, true], [-30, -30, 22]]; P.S = [-12, -84];
+        P.neck = [[[28, -78], [33, -88], [37, -98], [40, -106]]]; P.head = [44, -120, -6]; P.look = [1.2, -0.6];
+        P.arms = [{ top: [12, -68, 8], paw: [34, -44], rot: 40, far: true, free: true }, { top: [24, -66, 9], paw: [48, -42], rot: 28, free: true }];
+        P.tail = [[[-50, -68], [-66, -78], [-76, -96], [-74, -114]]].concat(HL_CURL(-74, -114, true));
+        P.wings = { near: 'stub', far: 'stub' }; P.hop = true; break;
+      case 'run':
+        // flat out round the field: stretched long, the forelegs reaching, the hind feet pushing off
+        // behind, her neck out, her wings flapping a little
+        P.hip = [-30, -36, 23]; P.chest = [24, -44, 22]; P.haunch = [-36, -28, 23, 22, 34];
+        P.feet = [[-62, -10, 26, true], [-50, -4, 14]]; P.S = [-10, -56];
+        P.neck = [[[34, -54], [42, -62], [50, -68], [56, -74]]]; P.head = [62, -86, 6]; P.look = [1.6, 0.2];
+        P.arms = [{ top: [16, -44, 8], paw: [52, -22], rot: 6, far: true, free: true }, { top: [28, -42, 9], paw: [66, -8], rot: 0, free: true }];
+        P.tail = [[[-52, -36], [-76, -38], [-98, -44], [-112, -56]]].concat(HL_CURL(-112, -56, true));
+        P.wings = { near: 'stub', far: 'stub' }; P.speed = true; break;
+      case 'peek':
+        // popped up out of the log: sitting up tall, both forepaws resting on its rim, leaning out
+        P.hip = [-10, -28, 26]; P.chest = [4, -58, 22]; P.haunch = [-14, -22, 25, 20, -14]; P.S = [-8, -66];
+        P.neck = [[[8, -70], [11, -78], [14, -86], [16, -92]]]; P.head = [18, -104, -4]; P.look = [1.4, -0.4];
+        P.arms = [{ top: [8, -58, 8], paw: [30, -50], rot: 4, far: true, claws: 'hold' }, { top: [16, -56, 9], paw: [44, -48], rot: 6, claws: 'hold' }];
+        P.tail = [[[-34, -14], [-50, -8], [-62, -10], [-70, -18]]]; P.tailW = [14, 5]; break;
+      case 'pawup':
+        // one forepaw raised, pads toward us, five claws out, curious ("Can I touch it?")
+        P.arms = [HL_SIT.arms[0], { top: [12, -50, 9], paw: [62, -70], rot: -84, up: true, raised: true }];
+        P.head = [12, -98, -6]; P.look = [1.6, -0.6]; break;
+      case 'tilt':
+        // her head tilted right over, full of questions
+        P.head = [18, -96, -24]; P.look = [1.2, -1]; P.tilt = true; break;
+    }
+    return P;
+  }
+
+  function buildHail(o) { o = o || {}; return withScales(HL, function () { return hailDraw(o); }); }
+  function hailDraw(o) {
+    var pose = HAIL_POSES.indexOf(o.pose) >= 0 ? o.pose : 'sit';
+    var mood = MOODS.indexOf(o.mood) >= 0 ? o.mood : 'neutral';
+    var F = o.facing === 'left' ? -1 : 1, R = new Ren(), P = hlPose(pose);
+    var sx = -2.4 * F, sy = -3.4, pts = [], body = '', pawAt = null, pawMarks = [];
+    function addPts(a) { pts = pts.concat(a); }
+
+    // ----- torso, belly, haunch, speckled all over
+    var hip = P.hip, chest = P.chest, tg = hull2(hip, chest, 8);
+    var ax = unit([chest[0] - hip[0], chest[1] - hip[1]]), spine = [ax[1], -ax[0]];
+    var tIn = '<path d="' + ellipseG(lerp(hip[0], chest[0], 0.55) - spine[0] * chest[2] * 0.55, lerp(hip[1], chest[1], 0.55) - spine[1] * chest[2] * 0.55,
+      (dist(hip, chest) / 2 + chest[2]) * 0.8, chest[2] * 0.62, deg(ax)).d + '" fill="' + DZ.belly + '"/>';
+    var bands = '';
+    for (var bi = 0; bi < 4; bi++) {
+      var bt = 0.2 + bi * 0.22, bcn = add(lerp2(hip, chest, bt), spine, -lerp(hip[2], chest[2], bt) * 0.62), bw2 = lerp(hip[2], chest[2], bt) * 0.5;
+      bands += 'M' + pt(add(bcn, ax, -bw2 * 0.15)) + 'q' + N(-spine[0] * bw2 * 0.5) + ',' + N(-spine[1] * bw2 * 0.5) + ' ' + N(-spine[0] * bw2) + ',' + N(-spine[1] * bw2);
+    }
+    tIn += '<path d="' + bands + '" stroke="' + DZ.bellyLine + '" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".8"/>' +
+      '<path d="M' + pt(add(add(hip, spine, hip[2] - 5), ax, 3)) + 'L' + pt(add(add(chest, spine, chest[2] - 5), ax, -3)) + '" stroke="' + DZ.light + '" stroke-width="4" stroke-linecap="round" opacity=".7"/>';
+    var sp0 = [];
+    [[-0.1, 0.55, 2.8], [0.12, 0.2], [0.25, 0.68], [0.4, 0.38, 2.9], [0.55, 0.72], [0.68, 0.12, 2.2], [0.82, 0.5], [0.98, 0.3, 2.6], [0.3, -0.1, 1.8], [0.62, 0.0, 1.8]].forEach(function (f) {
+      var c = add(lerp2(hip, chest, f[0]), spine, lerp(hip[2], chest[2], clamp(f[0], 0, 1)) * f[1]); sp0.push([c[0], c[1], f[2]]);
+    });
+    tIn += hlSpecks(sp0);
+    var torso = R.part(tg.d, { fill: DZ.base, dark: DZ.shade, line: DZ.line, sx: sx, sy: sy, inner: tIn, lw: 2.4 });
+    addPts(tg.pts);
+    var hg = ellipseG(P.haunch[0], P.haunch[1], P.haunch[2], P.haunch[3], P.haunch[4], 8);
+    var haunch = R.part(hg.d, { fill: DZ.base, dark: DZ.shade, line: mix(DZ.line, DZ.base, 0.25), lw: 2.2, sx: sx * 0.7, sy: sy * 0.7,
+      inner: '<path d="M' + N(P.haunch[0] - P.haunch[2] * 0.5) + ',' + N(P.haunch[1] - P.haunch[3] * 0.25) + 'q6,5 12,0q6,5 12,0" stroke="' + DZ.shade + '" stroke-width="1.6" fill="none" opacity=".6"/>' +
+        hlSpecks([[P.haunch[0] - P.haunch[2] * 0.3, P.haunch[1] - P.haunch[3] * 0.5, 2.4], [P.haunch[0] + P.haunch[2] * 0.25, P.haunch[1] - P.haunch[3] * 0.1, 1.8], [P.haunch[0] - P.haunch[2] * 0.05, P.haunch[1] + P.haunch[3] * 0.35, 2]]) });
+    addPts(hg.pts);
+    var spineTube = { at: function (u) { var c = lerp2(chest, hip, u), r = lerp(chest[2], hip[2], u); return { p: c, n: spine, w: r }; } };
+    var torsoRidges = ridgeRow(spineTube, 0.1, 1.02, 4, 0.25, function () { return 1; });
+
+    // ----- neck and tail (the tail ends in a bouncy curl)
+    var nw = P.neckW, neck = chainTube(P.neck, function (u) { return lerp(nw[0], nw[1], u); }, 6), throat = [];
+    neck.C.forEach(function (c) { throat.push(add(c.p, c.n, c.w * 0.5)); });
+    var neckSvg = R.part(neck.d, { fill: DZ.base, dark: DZ.shade, line: DZ.line, sx: sx * 0.7, sy: sy * 0.7, lw: 2.2,
+      inner: '<path d="M' + pt(throat[0]) + cr(throat) + '" stroke="' + DZ.belly + '" stroke-width="' + N(nw[1] * 0.9) + '" fill="none" stroke-linecap="round"/>' +
+        hlSpecks([lerp2(neck.C[1].p, neck.C[2].p, 0.5).concat([1.8]), add(neck.C[neck.C.length - 2].p, neck.C[neck.C.length - 2].n, -4).concat([2])]) });
+    addPts(neck.pts);
+    var tw = P.tailW, twf = function (u) { return lerp(tw[0], tw[1], Math.pow(u, 0.8)); }, TS = P.tail;
+    var tail = chainTube(TS, twf, 8), tlow = Math.max.apply(null, tail.pts.map(function (q) { return q[1]; }));
+    for (var ti = 0; ti < 3 && tlow > -1; ti++) {
+      var tdy = tlow + 1.5;
+      TS = TS.map(function (seg, si) { return seg.map(function (q, qi) { return [q[0], q[1] - (si === 0 && qi === 0 ? Math.min(tdy, 6) : tdy)]; }); });
+      tail = chainTube(TS, twf, 8);
+      tlow = Math.max.apply(null, tail.pts.map(function (q) { return q[1]; }));
+    }
+    var tsp = [];
+    [[0.3, 0.2], [0.48, -0.3], [0.64, 0.25]].forEach(function (f) { var a = tail.at(f[0]); tsp.push([a.p[0] + a.n[0] * a.w * f[1], a.p[1] + a.n[1] * a.w * f[1], 1.9]); });
+    var tailSvg = R.part(tail.d, { fill: DZ.base, dark: DZ.shade, line: DZ.line, sx: sx * 0.6, sy: sy * 0.6, lw: 2.2,
+      inner: (function () { var c = []; for (var q = 0; q <= 12; q++) { var a = tail.at(q / 12 * 0.6); c.push(add(a.p, a.n, -UPPER(a) * a.w * 0.5)); } return '<path d="M' + pt(c[0]) + cr(c) + '" stroke="' + DZ.belly + '" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".8"/>'; })() + hlSpecks(tsp) });
+    addPts(tail.pts);
+    var tailRidges = ridgeRow(tail, 0.08, 0.6, 5, 0.42, UPPER);
+
+    // ----- small wings, folded (half out when she bounces or runs)
+    var WK = 0.44, S = P.S;
+    var nearW = dzWing(P.wings.near, S, false, WK, 0.5), farW = dzWing(P.wings.far, add(S, [-8, -3]), true, WK, 0.5);
+    addPts(nearW.pts); addPts(farW.pts);
+    function wingSpecks(W) { var w = W.pts[1], f = []; W.pts.slice(3).forEach(function (t, i) { if (i < 3) f.push(lerp2(w, t, 0.62).concat([1.6])); }); return hlSpecks(f); }
+
+    // ----- forelegs and paws, hind feet
+    function armSvg(A) {
+      // (a resting forepaw: flat on the ground, its fingers close; `rest: true` with claws 'hold' keeps it so,
+      // claws tucked: Hail standing)
+      var rest = !A.up && !A.free && (A.rest === true || (A.claws !== 'hold' && A.claws !== 'one')), off = rest ? 12 * HLK / 1.2 : 0;
+      var top = [A.top[0], A.top[1], A.top[2]], end = [A.paw[0], A.paw[1] - off, A.top[2] * 0.66];
+      var dv = unit([end[0] - top[0], end[1] - top[1]]), pp = [-dv[1], dv[0]], len = dist(top, end);
+      if (Math.abs(dv[1]) < 0.5 ? pp[1] > 0 : pp[0] > 0) pp = [-pp[0], -pp[1]];
+      var el = A.elbow || add(lerp2(top, end, 0.46), pp, Math.min(7, len * 0.14)), elc = [el[0], el[1], A.top[2] * 0.82];
+      var g1 = hull2(top, elc, 6), g2 = hull2(elc, end, 6);
+      var pw = dzPaw(A.paw[0], A.paw[1] - off, rest ? 0 : A.rot, HLK, { far: A.far, pads: A.up, claws: A.claws, rest: rest, lit: A.raised ? clamp(o.lit === true ? 5 : intOr(o.lit, 0), 0, 5) : 0 });
+      addPts(g1.pts); addPts(g2.pts); addPts(pw.pts);
+      pawMarks.push(apply(mul(mT(A.paw[0], A.paw[1] - off), mul(mR(rest ? 0 : A.rot), mS(HLK))), [16, 0]));
+      if (A.raised) { var cc = apply(mul(mT(A.paw[0], A.paw[1]), mul(mR(A.rot), mS(HLK))), [26, 0]); pawAt = [cc[0], cc[1], 44 * HLK]; }
+      var o2 = { fill: A.far ? DZ.far : DZ.base, dark: A.far ? DZ.farShade : DZ.shade, line: DZ.line, sx: sx * 0.6, sy: sy * 0.6, lw: 2 };
+      return R.part(g1.d, o2) + R.part(g2.d, o2) + '<circle cx="' + N(el[0]) + '" cy="' + N(el[1]) + '" r="' + N(A.top[2] * 0.82 - 1.1) + '" fill="' + o2.fill + '"/>' + pw.svg;
+    }
+    var feet = P.feet.map(function (f) {
+      var fm = mul(mT(f[0], f[1]), mul(mR(f[2] || 0), mS(0.5)));
+      addPts([[f[0] - 14, f[1] - 10], [f[0] + 29, f[1] + 2]].map(function (q, i) { return i ? apply(fm, [57, 4]) : apply(fm, [-28, -22]); }));
+      pawMarks.push(apply(fm, [12, -6]));
+      return dzFoot(f[0], f[1], f[2], 0.5, f[3]);
+    });
+
+    // ----- the head
+    var hrot = P.head[2] + (HEAD_ROT[mood] || 0) * 0.6;
+    var hm = mul(mT(P.head[0], P.head[1]), mul(mR(hrot), mS(HL_HS)));
+    var hctx = { sx: sx, look: P.look || [1, 0], tilt: !!P.tilt };
+    if (o.squeeze) hctx.squeeze = true;
+    if (o.tear) hctx.tear = true;
+    if (o.mist) hctx.mist = true;
+    var hd = hlHead(R, mood, hctx);
+    var headPts = hd.pts.map(function (q) { return apply(hm, q); });
+    addPts(headPts);
+    var headSvg = '<g transform="' + mStr(hm) + '">' + hd.svg + '</g>';
+
+    // ----- assemble back to front
+    body += farW.svg + wingSpecks(farW);
+    if (!P.tailFront) body += ridgesSvg(tailRidges) + tailSvg;
+    body += armSvg(P.arms[0]);
+    body += feet[0];
+    body += ridgesSvg(torsoRidges) + torso + haunch + feet[1];
+    if (P.tailFront) body += ridgesSvg(tailRidges) + tailSvg;
+    body += nearW.svg + wingSpecks(nearW) + neckSvg;
+    body += headSvg;
+    body += armSvg(P.arms[1]);
+    if (P.hop) {
+      // BOING: she is in the air; little marks on the ground where she took off
+      body += '<path d="M-44,-1.6q8,-5 16,0M-6,-1.6q8,-5 16,0M-62,-3l-7,-5M30,-3l7,-5" stroke="' + DZ.line + '" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".5"/>';
+      addPts([[-70, -1], [38, -1]]);
+    }
+    if (P.speed) {
+      body += '<path d="M-150,-40h-26M-142,-56h-18M-156,-24h-14" stroke="' + DZ.line + '" stroke-width="2.2" stroke-linecap="round" opacity=".42"/>';
+      addPts([[-176, -56], [-142, -24]]);
+    }
+
+    // ----- fit: her feet (or, in the air, the marks under them) on the bottom line of her box
+    var Wb = HL_BOX[0], Hb = HL_BOX[1], g0 = 3, x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    pts.forEach(function (q) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); });
+    var lift = y1 > 0 ? y1 : 0, mg = 4;
+    y0 -= lift; y1 -= lift;
+    var sc = Math.min(HL_SCALE, (Wb - 2) / (x1 - x0 + 2 * mg), (Hb - g0 - 1) / (Math.max(0, y1) - (y0 - mg)));
+    var left = Wb / 2 + (x0 - mg) * sc, right = Wb / 2 + (x1 + mg) * sc, dx = 0;
+    if (left < 0) dx = -left; else if (right > Wb) dx = Wb - right;
+    var M = mul(F === 1 ? [1, 0, 0, 1, 0, 0] : [-1, 0, 0, 1, Wb, 0], mul(mT(Wb / 2 + dx, Hb - g0), mul(mS(sc), mT(0, -lift))));
+    var hc = apply(M, apply(hm, [0, 0]));
+    var out = {
+      svg: '<g transform="' + mStr(M) + '"><defs>' + R.defs + '</defs>' + body + '</g>', w: Wb, h: Hb,
+      head: { x: Math.round(hc[0] * 10) / 10, y: Math.round(hc[1] * 10) / 10 },
+      headBox: boxOf(headPts.map(function (q) { return apply(M, q); })),
+      bounds: boxOf(pts.map(function (q) { return apply(M, q); })),
+      // (the Counts pictures light her four paws: the two hind feet, then the two forepaws)
+      _marks: { M: M, scale: sc, paws: pawMarks.map(function (q) { return apply(M, q); }) }
+    };
+    if (pawAt) { var pc = apply(M, pawAt); out.paw = { x: Math.round(pc[0] * 10) / 10, y: Math.round(pc[1] * 10) / 10, r: Math.round(pawAt[2] * sc * 10) / 10 }; }
+    return out;
+  }
+
+  // ------------------------------------------------------------------ Snip and Snatch (chapter 8)
+  // The two weasels by the tracks, sister and brother: long thin bodies, short legs, small round ears,
+  // pointed noses, black bead eyes with a shine, short tails; thin brown fur, like the tuft caught on
+  // the raft's vine at the Crossing (crossing.js's FUR). Funny, greedy, quick, never cruel: small
+  // mouths, NO TEETH OR FANGS EVER, never a snarl. Snip (she) is a little smaller and lighter, golden-
+  // brown, with a white chin and bib down her front and a pale tail tip; the squeaky one (her mouth
+  // opens a little wider when she talks). Snatch (he) is darker chestnut, with a cream belly, a black
+  // tail tip and a round full tummy. Drawn side-on in profile (a pointed nose reads only so), facing
+  // right, mirrored for facing left. The box is 220 x 150 in the cats' units, the feet centred on its
+  // bottom edge; sitting `up`, the top of Snatch's head is about 88 above his feet (about 0.62 of our
+  // cat's, sitting, as scenes.js measures them) and Snip's about 80 (0.57): "half your size", inside
+  // scenes.js's SIZE_BAND (0.5 to 0.65), so the scenes draw them as drawn and Snip stays the smaller.
+  //   stand    on all fours, the long body low
+  //   up       sitting up tall on the hind legs, forepaws tucked: the look-out (what an unknown pose draws)
+  //   run      bounding, the back arched
+  //   skid     front paws braced, the back end swinging round, dust flying
+  //   peek     head and shoulders out of a hole (a set draws the hole's lip over the rest)
+  //   point    sitting up, one forepaw out, pointing: the squabble
+  //   curl     curled up asleep, the tail round the nose (eyes shut: "two tiny snores")
+  // Every mood, drawn their way (`shout` a squeak, `laugh` cheeky, `stern` a pout). Extras: `holds:
+  // 'mouse'` (PC.art.prey's mouse, eyes shut, its tail dangling: in the mouth, or at the forepaws
+  // sitting up: `holdAt: 'mouth' | 'paws'`, unset 'paws' sitting up and 'mouth' otherwise); `asleep:
+  // true` (eyes shut, whatever the mood). The result reports `held` for a mouse.
+  var WEASEL_POSES = ['stand', 'up', 'run', 'skid', 'peek', 'point', 'curl'];
+  OTHER_POSES.snip = WEASEL_POSES; OTHER_POSES.snatch = WEASEL_POSES;
+  var WZ_BOX = [220, 150];
+  var WEASELS = {
+    snip: { k: 0.77, tummy: 1, pal: { base: '#a8743f', line: '#4c3015', light: '#d6a86e', bib: '#fdf9ef', tip: '#f4e5c3', earIn: '#e6a79d', nose: '#2a1a14', ink: '#1d120d' }, bib: true },
+    snatch: { k: 0.85, tummy: 1.3, pal: { base: '#7c4a29', line: '#381f0f', light: '#a9744b', bib: '#f1dfbb', tip: '#1d1513', earIn: '#d79b8e', nose: '#1d1310', ink: '#140c09' }, belly: true }
+  };
+  function wzPal(src) {
+    var f = {}, k;
+    for (k in src) f[k] = src[k];
+    f.shade = mix(f.base, f.line, 0.2); f.far = mix(f.base, f.line, 0.22); f.farShade = mix(f.base, f.line, 0.36); f.fur = mix(f.base, f.line, 0.45);
+    return f;
+  }
+  // a leg: [top x, y, r], [end x, y, r], the paw [x, y]; `far` behind the body; `point` a forepaw held out pointing
+  function wzLeg(top, end, paw, far, extra) { var L = { top: top, end: end, paw: paw, far: !!far }, k; for (k in (extra || {})) L[k] = extra[k]; return L; }
+  function wzPose(pose) {
+    switch (pose) {
+      case 'stand': return {
+        body: [[-46, -22], [-22, -30], [6, -30], [26, -26]], bodyW: [11, 12, 10.5], tm: 0.45, haunch: [-40, -20, 13, 12, 0],
+        legs: [wzLeg([-36, -18, 5.4], [-33, -4, 3.8], [-31, -2.6], true), wzLeg([18, -22, 5], [21, -4, 3.6], [23, -2.6], true),
+          wzLeg([-44, -18, 6.2], [-46, -4, 4.2], [-44, -2.8]), wzLeg([24, -22, 5.6], [30, -4, 4], [32, -2.8])],
+        neck: [[[22, -28], [30, -33], [36, -38], [41, -42]]], neckW: [9.5, 8], head: [50, -46, 8],
+        tail: [[-54, -24], [-68, -27], [-80, -32], [-90, -38]], tailW: [5.6, 3.2] };
+      case 'run': return {
+        body: [[-40, -26], [-34, -56], [8, -62], [24, -40]], bodyW: [11, 12, 10.5], tm: 0.5, haunch: [-38, -28, 13, 12, 34],
+        legs: [wzLeg([-36, -24, 5.4], [-56, -10, 3.8], [-60, -7.6], true), wzLeg([20, -36, 5], [38, -16, 3.6], [42, -13], true),
+          wzLeg([-42, -26, 6.2], [-62, -5, 4.2], [-66, -3], false), wzLeg([26, -34, 5.6], [48, -7, 4], [52, -4.4])],
+        neck: [[[22, -40], [30, -43], [37, -45], [43, -47]]], neckW: [9.5, 8], head: [52, -48, 8],
+        tail: [[-46, -30], [-60, -36], [-73, -40], [-86, -40]], tailW: [5.6, 3.2], speed: true };
+      case 'skid': return {
+        body: [[-36, -34], [-20, -32], [4, -26], [22, -24]], bodyW: [11, 12, 10.5], tm: 0.45, haunch: [-34, -32, 13, 12, 22],
+        legs: [wzLeg([-30, -30, 5.4], [-44, -20, 3.8], [-48, -18.6], true), wzLeg([16, -22, 5], [34, -4, 3.6], [37, -2.6], true),
+          wzLeg([-36, -32, 6.2], [-52, -26, 4.2], [-56, -24.6]), wzLeg([22, -22, 5.6], [42, -4, 4], [45, -2.8])],
+        neck: [[[20, -26], [25, -32], [28, -38], [30, -44]]], neckW: [9.5, 8], head: [34, -54, -12],
+        tail: [[-44, -36], [-56, -46], [-62, -58], [-58, -70]], tailW: [5.6, 3.2], skid: true };
+      case 'peek': return {
+        body: [[0, 0], [0, -8], [2, -16], [4, -24]], chain: true, bodyW: [11, 11, 10.5], tm: 0.5,
+        legs: [wzLeg([4, -18, 5], [12, -7, 3.6], [14, -4.4], true), wzLeg([8, -18, 5.6], [20, -6, 4], [22, -3.6])],
+        neck: [[[4, -22], [6, -28], [8, -34], [10, -38]]], neckW: [9.5, 8], head: [14, -48, -2] };
+      case 'point': return {
+        body: [[-2, -12], [-2, -30], [2, -46], [6, -58]], bodyW: [13, 11.5, 10], tm: 0.42, haunch: [-4, -10, 14, 11, -10],
+        legs: [wzLeg([-6, -6, 5], [6, -3, 3.6], [8, -2.4], true), wzLeg([8, -50, 4.6], [16, -43, 3.4], [17, -41], true),
+          wzLeg([2, -6, 6], [14, -3, 4.2], [16, -2.6]), wzLeg([12, -51, 5.2], [34, -54, 3.6], [38, -54.6], false, { point: true })],
+        neck: [[[6, -56], [8, -62], [10, -68], [12, -72]]], neckW: [9, 8], head: [17, -82, -4], up: true,
+        tail: [[-10, -8], [-26, -4], [-38, -3], [-48, -6]], tailW: [5.6, 3.2] };
+      case 'curl': return {
+        body: [[[-16, -6], [-28, -20], [-20, -40], [-2, -40]], [[-2, -40], [16, -40], [26, -26], [20, -12]]], chain: true, bodyW: [13, 12.5, 10], tm: 0.5,
+        legs: [wzLeg([16, -12, 5], [24, -4, 3.6], [27, -3], false)],
+        head: [14, -14, 26], curl: true, asleep: true,
+        tail: [[-18, -6], [-4, 2], [22, 0], [36, -10]], tailW: [5.6, 3.4], tailFront: true };
+    }
+    // up: sitting up tall on the hind legs, forepaws tucked in front of the chest (the look-out)
+    return {
+      body: [[-2, -12], [-2, -30], [2, -46], [6, -58]], bodyW: [13, 11.5, 10], tm: 0.42, haunch: [-4, -10, 14, 11, -10],
+      legs: [wzLeg([-6, -6, 5], [6, -3, 3.6], [8, -2.4], true), wzLeg([8, -50, 4.6], [16, -43, 3.4], [17, -41], true),
+        wzLeg([2, -6, 6], [14, -3, 4.2], [16, -2.6]), wzLeg([12, -51, 5.2], [20, -42, 3.8], [21.6, -40])],
+      neck: [[[6, -56], [8, -62], [10, -68], [12, -72]]], neckW: [9, 8], head: [17, -82, -4], up: true,
+      tail: [[-10, -8], [-26, -4], [-38, -3], [-48, -6]], tailW: [5.6, 3.2] };
+  }
+  // the moods on a weasel's face: the eye ('bead', 'arc', 'shut', 'half', 'big', 'ring', 'down'), the
+  // brow (none, or [inner y, outer y] above the eye), the mouth, and how far the head turns
+  var WZ_MOOD = {
+    neutral: ['bead', null, 'w', 0], happy: ['arc', null, 'smile', -4], dreamy: ['half', null, 'smile', -6], wonder: ['big', [-2.6, -1], 'o', -4],
+    worried: ['bead', [-3, 1.6], 'wavy', 4], scared: ['ring', [-3.4, 1.6], 'o', 4], sleepy: ['shut', null, 'w', 7], laugh: ['arc', null, 'grin', -7],
+    stern: ['bead', [1.2, -1.2], 'pout', 2], kind: ['arc', null, 'smile', 0], proud: ['arc', null, 'smile', -10], sniff: ['bead', null, 'w', 4],
+    shout: ['big', [-2.4, -1.4], 'squeak', -6], solemn: ['half', [-0.4, -0.4], 'flat', -3], sad: ['down', [-3.4, 1.8], 'frown', 7], shy: ['down', null, 'small', 8]
+  };
+  var WZ_HEAD = 'M20,1C20,-2 16.4,-5 10.6,-8.2C4.6,-11.4 -4,-13.2 -10,-11.2C-15,-9.4 -17,-3 -16,3C-15,8 -10,10.4 -3,10.4C4.4,10.4 12,8.4 17,5.4C19,4.2 20,3 20,1Z';
+  function weaselHead(R, sp, mood, ctx) {
+    var p = sp.pal, s = '', pts = [[-17, -14], [21, -12], [21, 11], [-17, 11]], ink = p.ink;
+    var M = WZ_MOOD[mood] || WZ_MOOD.neutral, eye = ctx.asleep ? 'shut' : M[0];
+    // the far ear just showing behind, the near one round, on top at the back of the head
+    s += '<circle cx="-13" cy="-9.4" r="4.4" fill="' + p.far + '" stroke="' + p.line + '" stroke-width="1.5"/>';
+    s += '<circle cx="-7" cy="-11.6" r="5.2" fill="' + p.base + '" stroke="' + p.line + '" stroke-width="1.6"/><circle cx="-6.6" cy="-11" r="2.6" fill="' + p.earIn + '"/>';
+    pts.push([-12, -17.6], [-1.4, -17.2]);
+    var inner = '<path d="M17,5.4C12,8.4 4,10.4 -3,10.4C-8.6,10.4 -12.6,8.6 -14.6,5.4C-8,6.6 2,6.2 10,4.2C13,3.4 15.8,3.8 17,5.4Z" fill="' + p.bib + '"/>' +
+      '<ellipse cx="-2" cy="-7" rx="9" ry="2.6" transform="rotate(-12 -2 -7)" fill="' + p.light + '" opacity=".55"/>' +
+      '<path d="M-12,-5l2.6,1.2M-13,0l3,0.6M-9.6,-8.4l2.2,1.6" stroke="' + p.fur + '" stroke-width="1" stroke-linecap="round" opacity=".7"/>';
+    s += R.part(WZ_HEAD, { fill: p.base, dark: p.shade, line: p.line, sx: ctx.sx * 0.5, sy: -1.6, inner: inner, lw: 1.8 });
+    // the nose: a little black bead at the tip, a shine on it
+    s += '<ellipse cx="19.2" cy="0.6" rx="2.9" ry="2.3" fill="' + p.nose + '"/><circle cx="18.4" cy="-0.2" r=".8" fill="#ffffff" opacity=".7"/>';
+    // whiskers, fine
+    s += '<path d="M15,3.6L30,-1M15.4,4.6L31,4M15,5.6L28.6,9" stroke="' + p.light + '" stroke-width=".8" stroke-linecap="round" opacity=".85"/>';
+    pts.push([31, -2], [31, 9]);
+    // the eye: a black bead with a shine, or the mood's
+    var ex = 6, ey = -3.4;
+    if (eye === 'arc') s += '<path d="M' + N(ex - 3.6) + ',' + N(ey + 1) + 'Q' + ex + ',' + N(ey - 3.6) + ' ' + N(ex + 3.6) + ',' + N(ey + 1) + '" stroke="' + ink + '" stroke-width="1.8" fill="none" stroke-linecap="round"/>';
+    else if (eye === 'shut') s += '<path d="M' + N(ex - 3.6) + ',' + N(ey) + 'Q' + ex + ',' + N(ey + 2.8) + ' ' + N(ex + 3.6) + ',' + N(ey) + '" stroke="' + ink + '" stroke-width="1.7" fill="none" stroke-linecap="round"/>';
+    else {
+      var er = eye === 'big' ? 3.8 : eye === 'ring' ? 3.5 : 3.2, ly = eye === 'down' ? 0.9 : 0;
+      if (eye === 'ring') s += '<circle cx="' + ex + '" cy="' + ey + '" r="' + N(er + 1.6) + '" fill="#ffffff" stroke="' + ink + '" stroke-width=".9"/>';
+      s += '<circle cx="' + ex + '" cy="' + N(ey + ly) + '" r="' + N(er) + '" fill="' + ink + '"/><circle cx="' + N(ex - 1.1) + '" cy="' + N(ey + ly - 1.3) + '" r="' + N(er * 0.36) + '" fill="#ffffff"/>' +
+        '<circle cx="' + N(ex + 1.2) + '" cy="' + N(ey + ly + 1.2) + '" r="' + N(er * 0.15) + '" fill="#ffffff" opacity=".9"/>';
+      if (eye === 'half') s += '<path d="M' + N(ex - 4.4) + ',' + N(ey - 0.4) + 'Q' + ex + ',' + N(ey - 1.6) + ' ' + N(ex + 4.4) + ',' + N(ey - 0.4) + 'L' + N(ex + 4.4) + ',' + N(ey - 5) + 'L' + N(ex - 4.4) + ',' + N(ey - 5) + 'Z" fill="' + p.base + '" stroke="' + ink + '" stroke-width="1.2" stroke-linejoin="round"/>';
+      if (eye === 'down') s += '<path d="M' + N(ex - 4.2) + ',' + N(ey - 1.8) + 'Q' + ex + ',' + N(ey - 3.4) + ' ' + N(ex + 4.2) + ',' + N(ey - 0.8) + '" stroke="' + ink + '" stroke-width="1.2" fill="none" stroke-linecap="round"/>';
+    }
+    if (M[1] && eye !== 'shut') s += '<path d="M' + N(ex + 3.6) + ',' + N(ey - 6 + M[1][0]) + 'L' + N(ex - 3.4) + ',' + N(ey - 6 + M[1][1]) + '" stroke="' + ink + '" stroke-width="1.4" stroke-linecap="round" fill="none"/>';
+    if (BLUSH[mood]) s += '<ellipse cx="7" cy="4.6" rx="3.6" ry="2" fill="#ff8aa5" opacity=".42"/>';
+    // the mouth: small, under the snout; a squeak, a grin or an O open a little (Snip's a little
+    // wider), and inside only a dark mouth and a pink tongue: never a tooth
+    var mo = '', st = ' stroke="' + ink + '" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"', wide = sp.squeaky ? 1.25 : 1;
+    if (ctx.mouthFull) mo = '';
+    else if (M[2] === 'squeak' || M[2] === 'o') {
+      var rx = (M[2] === 'squeak' ? 2.4 : 1.8) * wide, ry = (M[2] === 'squeak' ? 3 : 2.2) * wide;
+      mo += '<ellipse class="pc-mouth" cx="13.6" cy="' + N(6.4 + ry * 0.4) + '" rx="' + N(rx) + '" ry="' + N(ry) + '" fill="#6e2a35"' + st + '/>';
+      if (M[2] === 'squeak') mo += '<ellipse cx="13.6" cy="' + N(6.4 + ry * 1.05) + '" rx="' + N(rx * 0.6) + '" ry="' + N(ry * 0.36) + '" fill="#ef8a9b"/>';
+      pts.push([13.6, 7 + ry * 2]);
+    } else if (M[2] === 'grin') {
+      mo += '<path class="pc-mouth" d="M17.4,4.6Q14.6,' + N(10.6 * wide) + ' 8,6.6Q12.6,6.8 17.4,4.6Z" fill="#6e2a35"' + st + '/><path d="M15,7.6Q12.6,9.6 10.4,7.6" stroke="#ef8a9b" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+    } else {
+      var md = { w: 'M17,5.2Q13.4,7.2 10,5.8', smile: 'M17.2,4.8Q13.4,8.6 9.4,5.4', wavy: 'M17,5.4Q15,7.4 13.4,6Q11.8,4.8 10,6.4', frown: 'M17,6.6Q13.4,4.4 10,6.8',
+        flat: 'M17,5.6L10.4,6', small: 'M16.6,5.2Q14,7.2 11.4,5.8', pout: 'M17,5.4Q15.6,8.4 13,7.4Q11.6,6.8 10.6,7.2' }[M[2]] || 'M17,5.2Q13.4,7.2 10,5.8';
+      mo += '<path class="pc-mouth" d="' + md + '" fill="none"' + st + '/>';
+    }
+    s += mo;
+    if (mood === 'sniff') s += '<path d="M24,-5q2,-2 4,0t4,0M25,1q2,-2 4,0t4,0" stroke="' + ink + '" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".6"/>';
+    if (mood === 'laugh') s += '<path d="M-1,-6q2,3 0,4q-2,-1 0,-4Z" fill="#9fd6f7" stroke="#5aa6d6" stroke-width=".7"/>';
+    if (mood === 'worried' || mood === 'scared') s += '<path d="M-3,-15q3,5 0,7q-3,-2 0,-7Z" fill="#bfe6fb" stroke="#5aa6d6" stroke-width=".8"/>';
+    return { svg: s, pts: pts, turn: M[3] };
+  }
+  // the mouse a weasel holds: PC.art.prey's (eyes shut), with its tail dangling
+  function wzMouse(c, wd, rot, tailDir) {
+    var r = rot * Math.PI / 180, back = [c[0] - Math.cos(r) * wd * 0.46, c[1] - Math.sin(r) * wd * 0.46];
+    var td = tailDir || [0, 1];
+    return '<g class="pc-mouse">' + '<path d="M' + pt(back) + 'q' + N(td[0] * 4 - 2) + ',' + N(td[1] * 8) + ' ' + N(td[0] * 2 + 1) + ',' + N(td[1] * 14) + 'q' + N(td[0] * 2 + 3) + ',' + N(td[1] * 5) + ' ' + N(td[0] * 3 - 1) + ',' + N(td[1] * 10) +
+      '" stroke="#c99a92" stroke-width="1.8" fill="none" stroke-linecap="round"/>' + preyHeld('mouse', c[0], c[1], wd, rot, 'right', 'pc-held') + '</g>';
+  }
+  function buildWeasel(who, o) {
+    o = o || {};
+    var sp = WEASELS[who] || WEASELS.snip, p = wzPal(sp.pal);
+    sp = { pal: p, k: sp.k, tummy: sp.tummy, bib: sp.bib, belly: sp.belly, squeaky: who === 'snip' };
+    var pose = WEASEL_POSES.indexOf(o.pose) >= 0 ? o.pose : 'up';
+    var mood = MOODS.indexOf(o.mood) >= 0 ? o.mood : 'neutral';
+    var F = o.facing === 'left' ? -1 : 1, R = new Ren(), P = wzPose(pose), sx = -1.8 * F, sy = -2.4, pts = [], body = '', over = '';
+    function addPts(a) { pts = pts.concat(a); }
+    var asleep = !!o.asleep || !!P.asleep;
+    var hold = o.holds === 'mouse' ? (o.holdAt === 'mouth' || o.holdAt === 'paws' ? o.holdAt : pose === 'up' ? 'paws' : 'mouth') : null;
+    if (hold === 'paws' && !P.up) hold = 'ground';
+
+    // ----- the long body: a capsule (or a chain, curled), the belly or bib along its underside, thin fur along its back
+    var bw = P.bodyW, tk = sp.tummy, wf = function (t) { var w = bodyW(bw, P.tm)(t); return w * (1 + (tk - 1) * Math.sin(Math.PI * clamp((t - 0.15) / 0.6, 0, 1)) * 0.5); };
+    var cap = P.chain ? chainTube(Array.isArray(P.body[0][0]) ? P.body : [P.body], function (u) { return wf(u); }, 10) : capsule(P.body, wf, 14);
+    var bat = cap.at;
+    var band = function (f, col, op) {
+      var outer = [], inn = [];
+      for (var i = 0; i <= 16; i++) { var t = i / 16, a = bat(t), fr = f(t); outer.push(add(a.p, a.n, a.w + 6)); inn.push(add(a.p, a.n, a.w * (1 - 2 * fr))); }
+      return '<path d="M' + pt(outer[0]) + cr(outer) + 'L' + pt(inn[16]) + cr(inn.slice().reverse()) + 'Z" fill="' + col + '"' + (op ? ' opacity="' + op + '"' : '') + '/>';
+    };
+    var bIn = band(function () { return 0.4; }, p.light, 0.35);
+    if (sp.belly) bIn += band(function (t) { return t < 0.08 ? 0 : 0.3 + 0.12 * Math.sin(Math.PI * clamp((t - 0.15) / 0.6, 0, 1)) * tk; }, p.bib);
+    if (sp.bib) bIn += band(function (t) { return t < 0.5 ? 0.06 * ss(t / 0.5) : 0.06 + 0.4 * ss((t - 0.5) / 0.32); }, p.bib);
+    var fur = '';
+    [0.18, 0.34, 0.5, 0.66, 0.82].forEach(function (t, i) { var a = bat(t), q = add(a.p, a.n, -a.w * 0.82); fur += 'M' + pt(q) + 'l' + N(-a.t[0] * 4 - a.n[0] * (i % 2 ? 2 : 3)) + ',' + N(-a.t[1] * 4 - a.n[1] * (i % 2 ? 2 : 3)); });
+    bIn += '<path d="' + fur + '" stroke="' + p.fur + '" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".7"/>';
+    var bodySvg = R.part(cap.d, { fill: p.base, dark: p.shade, line: p.line, sx: sx, sy: sy, inner: bIn, lw: 1.9 });
+    addPts(cap.pts);
+    var haunch = '';
+    if (P.haunch) {
+      var hg = ellipseG(P.haunch[0], P.haunch[1], P.haunch[2], P.haunch[3], P.haunch[4], 8);
+      haunch = R.part(hg.d, { fill: p.base, dark: p.shade, line: mix(p.line, p.base, 0.25), lw: 1.7, sx: sx * 0.7, sy: sy * 0.7,
+        inner: '<path d="M' + N(P.haunch[0] - P.haunch[2] * 0.4) + ',' + N(P.haunch[1] - P.haunch[3] * 0.4) + 'l3,1.6M' + N(P.haunch[0]) + ',' + N(P.haunch[1] - P.haunch[3] * 0.62) + 'l3,1.4" stroke="' + p.fur + '" stroke-width="1.1" stroke-linecap="round" opacity=".7"/>' });
+      addPts(hg.pts);
+    }
+    // ----- the neck (its throat the bib's colour), the short tail (its tip pale, or black)
+    var neckSvg = '';
+    if (P.neck) {
+      var nk = chainTube(P.neck, function (u) { return lerp(P.neckW[0], P.neckW[1], u); }, 6), thr = [];
+      nk.C.forEach(function (c) { thr.push(add(c.p, c.n, c.w * 0.62)); });
+      neckSvg = R.part(nk.d, { fill: p.base, dark: p.shade, line: p.line, sx: sx * 0.6, sy: sy * 0.6, lw: 1.8,
+        inner: '<path d="M' + pt(thr[0]) + cr(thr) + '" stroke="' + p.bib + '" stroke-width="' + N(P.neckW[1] * (sp.bib ? 0.95 : 0.7)) + '" fill="none" stroke-linecap="round"/>' });
+      addPts(nk.pts);
+    }
+    var tailSvg = '';
+    if (P.tail) {
+      var tlw = function (t) { return lerp(P.tailW[0], P.tailW[1], t); }, tl = tube(P.tail, tlw, 8), tip = tl.at(1);
+      var tipIn = '';
+      for (var q = 0.72; q <= 1.001; q += 0.07) { var ta = tl.at(Math.min(1, q)); tipIn += '<circle cx="' + N(ta.p[0]) + '" cy="' + N(ta.p[1]) + '" r="' + N(ta.w * 2.4) + '"/>'; }
+      tipIn = '<g fill="' + p.tip + '">' + tipIn + '<circle cx="' + N(tip.p[0] + tip.t[0] * 3) + '" cy="' + N(tip.p[1] + tip.t[1] * 3) + '" r="' + N(tip.w * 2.6) + '"/></g>';
+      tailSvg = R.part(tl.d, { fill: p.base, dark: p.shade, line: p.line, sx: sx * 0.5, sy: sy * 0.5, lw: 1.7, inner: tipIn });
+      addPts(tl.pts);
+    }
+    // ----- the legs, short, and the paws (a forepaw held out pointing: one claw-less toe forward)
+    var heldAt = null;
+    function legSvg(L) {
+      var g = hull2(L.top, L.end, 6), col = L.far ? p.far : p.base, dk = L.far ? p.farShade : p.shade;
+      var s2 = R.part(g.d, { fill: col, dark: dk, line: p.line, sx: sx * 0.4, sy: sy * 0.4, lw: 1.6 });
+      var pe = ellipseG(L.paw[0] + (L.point ? 1.5 : 0.8), L.paw[1], L.point ? 4.6 : 5.2, 3, L.point ? 0 : 0, 5);
+      s2 += '<path d="' + pe.d + '" fill="' + col + '" stroke="' + p.line + '" stroke-width="1.5"/>';
+      if (L.point) s2 += '<path d="M' + N(L.paw[0] + 4) + ',' + N(L.paw[1] - 0.6) + 'l6,-1.4" stroke="' + p.line + '" stroke-width="2.6" stroke-linecap="round"/><path d="M' + N(L.paw[0] + 4) + ',' + N(L.paw[1] - 0.6) + 'l6,-1.4" stroke="' + col + '" stroke-width="1.2" stroke-linecap="round"/>';
+      addPts(g.pts); addPts(pe.pts);
+      if (L.point) addPts([[L.paw[0] + 12, L.paw[1] - 3]]);
+      return s2;
+    }
+    var farLegs = '', nearLegs = '';
+    P.legs.forEach(function (L) { if (L.far) farLegs += legSvg(L); else nearLegs += legSvg(L); });
+    // ----- the head
+    var hd = weaselHead(R, sp, mood, { sx: sx, asleep: asleep, mouthFull: hold === 'mouth' });
+    var hrot = P.head[2] + (P.curl ? 0 : hd.turn);
+    var hm = mul(mT(P.head[0], P.head[1]), mR(hrot));
+    var headSvg = '<g transform="' + mStr(hm) + '">' + hd.svg + '</g>';
+    addPts(hd.pts.map(function (q2) { return apply(hm, q2); }));
+    // ----- the mouse: across the jaws, its tail dangling; or held up against the chest between the forepaws
+    var mouseSvg = '';
+    if (hold === 'mouth') {
+      var mc = apply(hm, [13, 8.6]);
+      mouseSvg = '<g transform="' + mStr(hm) + '">' + wzMouse([13, 8.6], 28, -4, [-0.2, 1]) + '</g>';
+      heldAt = mc; addPts([apply(hm, [-3, 2]), apply(hm, [29, 2]), apply(hm, [-3, 30]), apply(hm, [29, 16])]);
+    } else if (hold === 'paws') {
+      // (pointing, the near forepaw is busy: the mouse is in the far one, tucked)
+      var fp = P.legs.filter(function (L) { return L.top[1] < -30 && !L.point && (pose === 'point' ? L.far : !L.far); })[0] || P.legs[P.legs.length - 1];
+      var pc = [fp.paw[0] + 1, fp.paw[1] + 6];
+      mouseSvg = wzMouse(pc, 26, -72, [0.3, 1]);
+      heldAt = pc; addPts([[pc[0] - 10, pc[1] - 16], [pc[0] + 10, pc[1] + 30]]);
+    } else if (hold === 'ground') {
+      var gp = P.legs.filter(function (L) { return !L.far; }).reduce(function (a, L) { return !a || L.paw[0] > a.paw[0] ? L : a; }, null);
+      var gc = [gp.paw[0] + 18, -5];
+      mouseSvg = wzMouse(gc, 26, 0, [-1, 0.1]);
+      heldAt = gc; addPts([[gc[0] - 16, gc[1] - 8], [gc[0] + 14, 0]]);
+    }
+    // ----- assemble back to front
+    if (!P.tailFront) body += tailSvg;
+    body += farLegs + haunch + bodySvg + neckSvg + nearLegs;
+    if (P.tailFront) body += tailSvg;
+    if (hold === 'paws') body += mouseSvg;
+    body += headSvg;
+    if (hold === 'mouth' || hold === 'ground') body += mouseSvg;
+    if (P.curl && hold !== 'mouth') {
+      // two tiny snores: little z's drifting up
+      body += '<g class="pc-zz" fill="none" stroke="' + p.line + '" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity=".55"><path d="M30,-34h5l-5,5h5"/><path d="M38,-46h4l-4,4h4"/></g>';
+      addPts([[30, -48], [43, -28]]);
+    }
+    if (P.speed) { body += '<path d="M-100,-30h-20M-94,-42h-14M-104,-18h-12" stroke="' + p.line + '" stroke-width="1.8" stroke-linecap="round" opacity=".42"/>'; addPts([[-120, -42], [-94, -18]]); }
+    if (P.skid) {
+      // the braced front paws ploughing up dust, and the back end swinging round
+      body += '<g fill="#d8c7a4" stroke="#8e7a58" stroke-width="1.1" opacity=".85"><circle cx="54" cy="-5" r="4.6"/><circle cx="60" cy="-10" r="3.4"/><circle cx="49" cy="-11" r="2.8"/></g>' +
+        '<path d="M8,-1.4h22M-8,-1.4h10" stroke="' + p.line + '" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>' +
+        '<path d="M-62,-40q-10,10 -6,24M-70,-34q-8,8 -5,18" stroke="' + p.line + '" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".42"/>';
+      addPts([[64, -15], [-74, -40], [-74, -10]]);
+    }
+
+    // ----- fit: the feet centred on the bottom of the box, every weasel at the same scale (Snip a little smaller)
+    var Wb = WZ_BOX[0], Hb = WZ_BOX[1], g0 = 3, x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    pts.forEach(function (q3) { x0 = Math.min(x0, q3[0]); x1 = Math.max(x1, q3[0]); y0 = Math.min(y0, q3[1]); y1 = Math.max(y1, q3[1]); });
+    var lift = y1 > 0 ? y1 : 0, mg = 3;
+    y0 -= lift; y1 -= lift;
+    var sc = Math.min(sp.k, (Wb - 2) / (x1 - x0 + 2 * mg), (Hb - g0 - 1) / (Math.max(0, y1) - (y0 - mg)));
+    var cx0 = (x0 + x1) / 2, left = Wb / 2 + (x0 - cx0 * (P.up || P.curl || pose === 'peek' ? 0 : 1) - mg) * sc, dx = 0;
+    // (an animal on all fours is centred on its whole length; sitting up, on its feet)
+    var ox = P.up || P.curl || pose === 'peek' ? 0 : -cx0;
+    left = Wb / 2 + (x0 + ox - mg) * sc;
+    var right = Wb / 2 + (x1 + ox + mg) * sc;
+    if (left < 0) dx = -left; else if (right > Wb) dx = Wb - right;
+    var M = mul(F === 1 ? [1, 0, 0, 1, 0, 0] : [-1, 0, 0, 1, Wb, 0], mul(mT(Wb / 2 + dx, Hb - g0), mul(mS(sc), mT(ox, -lift))));
+    var hc = apply(M, apply(hm, [2, -1]));
+    var out = {
+      svg: '<g transform="' + mStr(M) + '"><defs>' + R.defs + '</defs>' + body + over + '</g>', w: Wb, h: Hb,
+      head: { x: Math.round(hc[0] * 10) / 10, y: Math.round(hc[1] * 10) / 10 },
+      headBox: boxOf(hd.pts.map(function (q4) { return apply(M, apply(hm, q4)); })),
+      bounds: boxOf(pts.map(function (q5) { return apply(M, q5); })),
+      _marks: { M: M, scale: sc }
+    };
+    if (heldAt) { var hcM = apply(M, heldAt); out.held = { what: 'mouse', at: hold === 'ground' ? 'paws' : hold, x: Math.round(hcM[0] * 10) / 10, y: Math.round(hcM[1] * 10) / 10, r: Math.round(15 * sc * 10) / 10 }; }
     return out;
   }
 
@@ -5011,6 +5762,9 @@
     else if (who === 'wisp') r = buildWisp(o);
     else if (who === 'coil') r = buildCoil(o);
     else if (who === 'sleet') r = buildSleet(o);
+    // chapter 8: Hail, the speckled dragonet; Snip and Snatch, the weasels
+    else if (who === 'hail') r = buildHail(o);
+    else if (who === 'snip' || who === 'snatch') r = buildWeasel(who, o);
     else r = buildCat(catSpec(PRESETS[who] || who === 'player' || who === 'clancat' || who === 'reedclan' ? who : 'clancat', o), o);
     // chapter 6: Sloshbank is bigger than Tallyheart, who already fills a cat's box, so his drawing
     // comes in a bigger box (BIG_BOX times a cat's: the scenes scale every box alike, by a cat's)
@@ -6276,10 +7030,13 @@
   // each a cluster of `per` short upright scratches (four in a row; ten as two rows of five), a clear
   // gap between nights and nothing else to count (no moon, no number); in the sand, or `ground: 'mud'`.
   // `highlight` lights the marks in order, a night at a time.
+  // (chapter 8, `layout: 'pairs'`: each night's marks scratched in pairs, a gap between the pairs:
+  // four are two and two. Without it the marks draw exactly as chapter 7's.)
   function marksPicture(o, groups, per) {
     var G = GROUNDS[o.ground] || GROUNDS.sand, n = clamp(groups, 1, 10), hl = clamp(intOr(o.highlight, 0), 0, n * per);
-    var SP = 17, LEN = 40, gap = 34, pad = 26, perRow = Math.min(per, 5), subRows = Math.ceil(per / perRow);
-    var cw = perRow * SP + 26, ch = subRows * (LEN + 12) + 18, perLine = n <= 6 ? n : Math.ceil(n / 2), lines = Math.ceil(n / perLine);
+    var pairs = o.layout === 'pairs', PG = pairs ? 14 : 0;
+    var SP = 17, LEN = 40, gap = 34, pad = 26, perRow = pairs ? (per <= 6 ? per : Math.ceil(per / 4) * 2) : Math.min(per, 5), subRows = Math.ceil(per / perRow);
+    var cw = perRow * SP + 26 + (pairs ? Math.floor((perRow - 1) / 2) * PG : 0), ch = subRows * (LEN + 12) + 18, perLine = n <= 6 ? n : Math.ceil(n / 2), lines = Math.ceil(n / perLine);
     var W = pad * 2 + perLine * cw + (perLine - 1) * gap, H = pad * 2 + lines * ch + (lines - 1) * 18, edge = [];
     for (var i = 0; i < 28; i++) {
       var a = Math.PI * 2 * i / 28, k = 0.97 + 0.03 * rand(i * 3 + 1), c = Math.cos(a), sn = Math.sin(a);
@@ -6293,7 +7050,7 @@
       var x0 = (W - (inLine * cw + (inLine - 1) * gap)) / 2 + (g % perLine) * (cw + gap), y0 = pad + line * (ch + 18), night = '';
       night += '<rect x="' + N(x0) + '" y="' + N(y0) + '" width="' + N(cw) + '" height="' + N(ch) + '" rx="18" fill="' + G.box + '" opacity=".55"/>';
       for (var j = 0; j < per; j++) {
-        var sx = x0 + 13 + SP / 2 + (j % perRow) * SP, sy = y0 + 12 + Math.floor(j / perRow) * (LEN + 12), on = g * per + j < hl;
+        var sx = x0 + 13 + SP / 2 + (j % perRow) * SP + (pairs ? Math.floor((j % perRow) / 2) * PG : 0), sy = y0 + 12 + Math.floor(j / perRow) * (LEN + 12), on = g * per + j < hl;
         var d1 = 'M' + N(sx + 4) + ',' + N(sy) + 'Q' + N(sx + 1) + ',' + N(sy + LEN / 2) + ' ' + N(sx - 4) + ',' + N(sy + LEN);
         if (on) night += '<path d="' + d1 + '" stroke="#ffd25e" stroke-width="13" stroke-linecap="round" fill="none" opacity=".55"/>';
         night += '<path class="pc-mark' + (on ? ' pc-lit' : '') + '" d="' + d1 + '" stroke="' + (on ? '#e39a12' : G.groove) + '" stroke-width="4.6" stroke-linecap="round" fill="none"/>' +
@@ -6301,8 +7058,82 @@
       }
       s += '<g class="pc-night">' + night + '</g>';
     }
-    var label = n + (n === 1 ? ' night, ' : ' nights, ') + per + (per === 1 ? ' mark' : ' marks') + (n === 1 ? '' : ' each');
+    var label = n + (n === 1 ? ' night, ' : ' nights, ') + per + (per === 1 ? ' mark' : ' marks') + (n === 1 ? '' : ' each') + (pairs && per > 1 ? (per === 4 ? ', two and two' : ', in pairs') : '');
     return svgDoc(W, H, label, s);
+  }
+
+  // ----- chapter 8: one cat's paws, a pair at a time (`thing: 'paw'` at per 2, no kind: "A four is two
+  // twos"). One big cat (who[0]: Tallyheart's ginger tabby; a Clan cat if there is none), side-on,
+  // standing, her four paws plain along the bottom: the FRONT PAIR is the first group and the BACK PAIR
+  // the second; `highlight` 2 lights the front pair, 4 all four; `totals` puts 2 and 4 under the pairs;
+  // `next` glows round the next pair to tap.
+  function pawPairsPicture(o) {
+    var hl = clamp(intOr(o.highlight, 0), 0, 4), TOT = o.totals ? 50 : 0, nextP = o.next && hl < 4 ? Math.floor(hl / 2) : -1;
+    // she faces left, so her front pair (counted first) is on the left and the glow, the lit pairs and their
+    // totals read 2, 4 from left to right, as every other counting picture does
+    var c = countsChar(o, 0, null, { pose: 'stand4', mood: hl >= 4 ? 'proud' : 'happy', facing: 'left' }, hl >= 4), b = c.bounds;
+    var W = 470, H = 330 + TOT, gY = 292, K = Math.min(2.1, (gY - 22) / (197 - b.y0), (W - 40) / (b.x1 - b.x0));
+    // a little left of centre, so the big number the page puts over the picture (ui.js drawBigNum: top centre, a
+    // tenth of the panel wide) stands clear of her ears
+    var ox = Math.max(20 - b.x0 * K, W / 2 - (b.x0 + b.x1) / 2 * K - 64), oy = gY - 197 * K;
+    var paws = c._marks.paws.slice(0, 4).sort(function (a, b) { return a[0] - b[0]; });   // the front pair first (on the left)
+    var at = function (q) { return [ox + q[0] * K, oy + q[1] * K]; };
+    var body = '<rect x="4" y="4" width="' + N(W - 8) + '" height="' + N(H - 8) + '" rx="22" fill="#e6efdc" stroke="#c4d6b6" stroke-width="3"/>';
+    body += '<ellipse cx="' + N(ox + (b.x0 + b.x1) / 2 * K) + '" cy="' + N(oy + 196 * K) + '" rx="' + N(72 * K) + '" ry="' + N(8 * K) + '" fill="#3f5a2e" opacity=".14"/>';
+    var glows = '', marks = '', tot = '';
+    [0, 1].forEach(function (pi) {
+      var a = at(paws[pi * 2]), b = at(paws[pi * 2 + 1]), lit = hl >= (pi + 1) * 2, mx = (a[0] + b[0]) / 2, gy = Math.max(a[1], b[1]);
+      if (pi === nextP) body += nextGlowSoft(Math.min(a[0], b[0]) - 34, gy - 46, Math.abs(a[0] - b[0]) + 68, 70, '.75');
+      if (lit) glows += glow(a[0], a[1], 26) + glow(b[0], b[1], 26);
+      marks += '<g class="pc-pair' + (lit ? ' pc-lit' : '') + '"><circle cx="' + N(a[0]) + '" cy="' + N(a[1]) + '" r="1" fill="none"/><circle cx="' + N(b[0]) + '" cy="' + N(b[1]) + '" r="1" fill="none"/></g>';
+      if (TOT && lit) tot += totalNum(mx, gy + 52, (pi + 1) * 2, false);
+    });
+    body += glows + '<g transform="translate(' + N(ox) + ',' + N(oy) + ') scale(' + K + ')">' + c.svg + '</g>' + marks + tot;
+    return svgDoc(W, H, 'One cat: two front paws and two back paws', body);
+  }
+
+  // ----- chapter 8, `kind: 'dogs'` (Hail's riddle: "Three dogs, and me. Four paws each!"): the table-4
+  // picture's tiles, each animal of `who` side-on, standing, its four paws lit in order an animal at a
+  // time. The dogs by variant (shaggy, spotty, tiny: big, middling and small, each fitted to its tile),
+  // with glows at their paws as a cat's; Hail standing, her two hind feet and two forepaws; a cat in the
+  // list as the table-4 picture draws it. A `who` longer than `groups` draws its first `groups`.
+  var DOG_TILE = { dog: [1, 0.86, 0.7], hail: 0.9 };
+  function dogsPicture(o, groups) {
+    var n = clamp(groups, 1, 10), t = 4, hl = clamp(intOr(o.highlight, 0), 0, t * n);
+    var TOT = o.totals ? 46 : 0, nextG = o.next ? Math.floor(hl / t) : -1;
+    var cols = Math.max(1, Math.min(5, n)), rows = Math.max(1, Math.ceil(n / 5));
+    var pad = 18, CW = 176, CH = 150, body = '', count = 0;
+    var W = pad * 2 + cols * CW, H = pad * 2 + rows * (CH + TOT);
+    for (var gi = 0; gi < n; gi++) {
+      var row = Math.floor(gi / 5), col = gi % 5, inRow = Math.min(5, n - row * 5);
+      var x0 = pad + (W - pad * 2 - inRow * CW) / 2 + col * CW, y0 = pad + row * (CH + TOT), g = '';
+      var litAll = hl >= (gi + 1) * t, e = o.who && o.who[gi];
+      if (gi === nextG) body += nextGlow(x0 + 8, y0 + 4, CW - 16, CH + TOT * 0.5 - 4);
+      g += '<ellipse cx="100" cy="196" rx="70" ry="8" fill="#3f5a2e" opacity=".14"/>';
+      var drawn, paws, mood = litAll ? 'happy' : (e && e.mood) || 'happy';
+      if (e && (e.who === 'dog' || e.who === 'hail')) {
+        var r = e.who === 'dog' ? buildBeast(beastSpec('dog', e), { pose: 'stand', mood: mood, variant: e.variant }) : buildHail({ pose: 'stand', mood: mood });
+        var bx = r.bounds || boxOf([[0, 0], [r.w, r.h]]), fit = Math.min(190 / (bx.x1 - bx.x0), 178 / (r.h - bx.y0));
+        var kk = fit * (e.who === 'dog' ? DOG_TILE.dog[clamp(intOr(e.variant, 1), 1, 3) - 1] : DOG_TILE.hail);
+        var cx = (bx.x0 + bx.x1) / 2, Mc = mul(mT(100 - cx * kk, 197 - r.h * kk), mS(kk));
+        drawn = '<g transform="' + mStr(Mc) + '">' + r.svg + '</g>';
+        paws = (r._marks.paws || []).slice(0, 4).map(function (q) { return apply(Mc, q); });
+      } else {
+        var c4 = countsChar(o, gi, null, { pose: 'stand', mood: 'happy' }, litAll);
+        drawn = c4.svg; paws = c4._marks.paws.slice(0, 4);
+      }
+      var pg = '';
+      paws.sort(function (a, b) { return a[0] - b[0]; }).forEach(function (pp) {
+        if (count < hl) pg += glow(pp[0], pp[1] - 3, 17);
+        count++;
+      });
+      g += '<g class="pc-animal">' + pg + drawn + '</g>';
+      body += cell(g, x0 - 2, y0 - 38, 0.9);
+      count = (gi + 1) * t;
+      if (TOT && litAll) body += totalNum(x0 + CW / 2, y0 + CH + 30, (gi + 1) * t, false);
+    }
+    var label = n + (n === 1 ? ' animal, four paws' : ' animals, four paws each');
+    return svgDoc(W, H, label, '<rect x="4" y="4" width="' + N(W - 8) + '" height="' + N(H - 8) + '" rx="22" fill="#e6efdc" stroke="#c4d6b6" stroke-width="3"/>' + body);
   }
 
   art.countsPicture = function (opts) {
@@ -6338,6 +7169,10 @@
     if (per === 6 && (o.kind === 'cheeks' || o.kind === 'cheeks-top' || (!o.kind && o.thing === 'whisker'))) return cheeksPicture(o, clamp(groups, 1, 10));
     if (per === 3 && !o.kind && o.thing === 'whisker') return oneCheekPicture(o, groups);
     if (!o.kind && o.thing === 'gap') return gapsPicture(o, groups);
+    // chapter 8: one cat's four paws, a pair at a time (`thing: 'paw'` at per 2, before the 2s' ears),
+    // and the field's four (`kind: 'dogs'`: dogs, Hail and cats, four paws each)
+    if (per === 2 && !o.kind && o.thing === 'paw' && o.layout !== 'rows') return pawPairsPicture(o);
+    if (o.kind === 'dogs') return dogsPicture(o, Math.max(1, groups));
     if (per === 5 && groups === 1 && Array.isArray(o.who) && o.who[0] && o.who[0].who === 'sleet' && o.layout !== 'rows' && o.kind !== 'prey') return sleetPawPicture(o, o.who[0]);
     if (per === 5 && groups === 1 && Array.isArray(o.who) && o.who[0] && (o.who[0].who === 'puddle' || o.who[0].who === 'wisp') && o.layout !== 'rows' && o.kind !== 'prey') return onePawPicture(o, o.who[0]);
     if (per === 5 && o.layout !== 'rows' && o.kind !== 'prey' && Array.isArray(o.who) && o.who.some(function (e) { return e && e.who; })) return whoPawsPicture(o, groups);
@@ -6656,15 +7491,16 @@
     } else {
       // (chapter 7: six to a group are two short rows of three, one above the other, the top row lit
       // first, "six is two threes"; every other `per` as before, rows of five)
-      var perRow = per === 6 ? 3 : Math.min(per, 5), subRows = Math.ceil(per / perRow);
-      var cw = perRow * SP + 26, ch = subRows * (LEN + 12) + 18;
+      // (chapter 8: four to a group are two and two, a pair, a gap and a pair, "a four is two twos")
+      var perRow = per === 6 ? 3 : Math.min(per, 5), subRows = Math.ceil(per / perRow), PG4 = per === 4 ? 16 : 0;
+      var cw = perRow * SP + 26 + PG4, ch = subRows * (LEN + 12) + 18;
       var cols = Math.max(1, Math.min(5, groups)), nrows = Math.max(1, Math.ceil(groups / 5)), idx = 0;
       W = pad * 2 + cols * cw + (cols - 1) * gap; H = pad * 2 + nrows * ch + (nrows - 1) * gap;
       for (var g = 0; g < groups; g++) {
         var row = Math.floor(g / 5), col = g % 5, inRow = Math.min(5, groups - row * 5);
         var x0 = (W - (inRow * cw + (inRow - 1) * gap)) / 2 + col * (cw + gap), y0 = pad + row * (ch + gap);
         boxes.push([x0, y0, cw, ch]);
-        for (var j = 0; j < per; j++) spots.push([x0 + 13 + SP / 2 + (j % perRow) * SP, y0 + 12 + Math.floor(j / perRow) * (LEN + 12), idx++, g]);
+        for (var j = 0; j < per; j++) spots.push([x0 + 13 + SP / 2 + (j % perRow) * SP + (PG4 && j % perRow >= 2 ? PG4 : 0), y0 + 12 + Math.floor(j / perRow) * (LEN + 12), idx++, g]);
       }
     }
     // the patch, a soft wobbly blob
@@ -6692,7 +7528,7 @@
       s += '<path d="' + d1 + '" stroke="' + (lit ? '#e39a12' : G.groove) + '" stroke-width="4.6" stroke-linecap="round" fill="none"/>' +
         '<path d="' + d1 + '" transform="translate(1.8,0)" stroke="' + (lit ? '#fff4c2' : G.shine) + '" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".9"/>';
     });
-    var label = rows ? groups + (groups === 1 ? ' row' : ' rows') + ' of ' + per + ' scratches in the ' + G.word : groups + ' groups of ' + per + ' scratches in the ' + G.word;
+    var label = rows ? groups + (groups === 1 ? ' row' : ' rows') + ' of ' + per + ' scratches in the ' + G.word : groups + ' groups of ' + per + ' scratches in the ' + G.word + (PG4 ? ', two and two' : '');
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + N(W) + ' ' + N(H) + '" role="img" aria-label="' + label + '">' + s + '</svg>';
   };
 
@@ -6796,16 +7632,20 @@
     riffle: OTTER_POSES.slice(), otter: OTTER_POSES.slice(), dog: DOG_POSES.slice(), sprinkle: SPRINKLE_POSES.slice(),
     reynard: FOX_POSES.slice(), squall: SQUALL_POSES.slice(),
     patience: HERON_POSES.slice(), puddle: PUDDLE_POSES.slice(), wisp: WISP_POSES.slice(),
-    coil: COIL_POSES.slice(), sleet: SLEET_POSES.slice() };
+    coil: COIL_POSES.slice(), sleet: SLEET_POSES.slice(),
+    hail: HAIL_POSES.slice(), snip: WEASEL_POSES.slice(), snatch: WEASEL_POSES.slice() };
   // chapter 5: the cast extras by name (a cast entry's own keys; `scenes.js` passes them through),
   // with the values each takes, for the gallery and the tools
   // (chapter 6: holds pinecone, pebbles and string; taps paw, ears, pinecone, pebbles, cheeks, stone
   // and eyes; `starry` on any cat; Sleet's `grass`)
   // (chapter 7: taps fish, Riffle's string, and mist, Sprinkle's burp; earlier ids never move)
   // (chapter 7 also: `asleep: 'half'`, half asleep, after chapter 5's `true`)
+  // (chapter 8: taps tail, a raised tail's tip, and leaf, her leaf or the glass on it; holds leaf, glass
+  // and mouse, Snatch's; `tailUp` on a cat or Riffle, after the rest)
   vocab.extras = { tuck: [true], asleep: [true, 'half'], snail: [true, 'in'], buzz: [true], dragonfly: [true], glow: [true],
-    tap: ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes', 'fish', 'mist'],
-    holds: ['stone', 'pebble', 'vole', 'bark', 'fish', 'fish2', 'pole', 'pinecone', 'pebbles', 'string'], reach: [true], starry: [true], grass: [true] };
+    tap: ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes', 'fish', 'mist', 'tail', 'leaf'],
+    holds: ['stone', 'pebble', 'vole', 'bark', 'fish', 'fish2', 'pole', 'pinecone', 'pebbles', 'string', 'leaf', 'glass', 'mouse'], reach: [true], starry: [true], grass: [true],
+    tailUp: [true] };
   vocab.clanVariants = [1, 2, 3, 4, 5, 6];
   // who takes a `variant`, and which: clancat 1-6 (coats), otter 1-3 (1 the old ferry otter), dog 1-3 (1 shaggy, 2 spotty, 3 tiny),
   // reedclan 1-4 (1 the ReedClan she-cat, 2 the young ReedClan tom, 3 and 4 two more marsh coats)

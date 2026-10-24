@@ -11,7 +11,10 @@
  * `tidy`'s own row down with one place empty, since the two lie touching; coil-diggers; sleet-den, with
  * the one fox), and chapter 7's four (its spec, "3. The Case File": waffles-no-moon, under heron-no-moon's
  * own sky; my-count, the sum's two lines and their numbers; prints-sprinkle, one big print and one tiny;
- * tunnel, coil-diggers' own mice with the tunnel's hatched mouth at the end of their ground). Cards the file lays touching show one thing drawn one way: one fox's
+ * tunnel, coil-diggers' own mice with the tunnel's hatched mouth at the end of their ground), and chapter 8's
+ * four (its spec, "3. The Case File": stash, tidy's own row under a low roof of earth; glass, a heap of the
+ * scale's own shards; fox-brag, the one fox beside the Old Bridge; hail-shapes, two of the shapes under a wire
+ * fence). Cards the file lays touching show one thing drawn one way: one fox's
  * head wherever the fox is (`fox`), one heron's head (`heron`), one track (`TRACK`: Squall's), one
  * tiny print at one size (`prints`, `PRINT`), one kind of long low shape (`slink`), one "scale"
  * (`shard`). Whoever took the prey is never on a card: paws, prints, two shapes, and nothing more
@@ -695,6 +698,100 @@
     // the bramble's roots, arching low over the mouth, thin and wandering, a rootlet or two
     c.line('M20 124C34 116 54 120 63 135C66 140 67 146 66 151M28 136C38 132 47 136 51 145M34 112C52 104 74 110 82 128C84 134 84 140 82 145', { w: 0.7 });
     c.line('M42 119l-3 -7M57 125l5 -5M74 116l4 -6M39 133l-4 -5', { w: 0.55 });
+  } };
+
+  // ------------------------------------------------------------------ chapter 8: the pictures
+
+  // (docs/chapters/08-the-night-trail.spec.md, "3. The Case File": two eyes and two ears. None shows a thief:
+  // a stash, a heap, a bridge, two shapes)
+
+  // The weasels have a stash: our prey, and ReedClan's. (eye) Tidy's own row, exactly as tidy and reed-pile lay
+  // it (the three lie in one row), inside a burrow: a low arched roof line of earth over it, its feet on the
+  // ground at both ends, crumbs of earth above it; two of the mice spotted with mud (ReedClan's, from by the
+  // marsh). Nothing hatched and no mouth going down (that is `tunnel`), and no place left empty.
+  var STASH = { roof: 'M30 180C30 112 172 112 172 180', earth: 'M24 180C22 96 180 96 178 180', muddy: [1, 3] };
+  PICS.stash = { label: 'a tidy row of mice under the low roof of a burrow, two of them muddy', draw: function (c) {
+    var R = TIDY_ROW;
+    tidyRow(c);
+    c.line(STASH.roof);
+    // mud: three dots on each muddy mouse, inside its dome
+    STASH.muddy.forEach(function (i) {
+      var x = R.x0 + i * R.step, P = at(x, R.y, R.k, 0);
+      c.line('M' + P(-2.8, -2.4) + 'h.1M' + P(0.6, -5.2) + 'h.1M' + P(2.6, -2) + 'h.1', { w: 1.3 });
+    });
+    // crumbs of earth in the roof, over the line
+    [[48, 120], [76, 105], [104, 98], [130, 104], [156, 118], [62, 108]].forEach(function (q) { c.dot(q[0], q[1], { w: 1.1 }); });
+    c.fine(STASH.earth, { w: 0.6 });                                                     // the earth's thickness, large
+    c.fine('M88 124v-6M116 124v-7', { w: 0.6 });                                         // a rootlet or two through the roof
+  } };
+
+  // A heap of glass in the weasels' stash, just like the 'scale'. (eye) Five of the scale card's own pieces
+  // (`shard`), small and lying every which way, one on another; each with the scale's two smooth strokes, and
+  // shine lines all round the heap.
+  var GLASS = [[70, 170, 0.42, -64], [126, 172, 0.44, 58], [98, 176, 0.4, 12], [84, 142, 0.4, -24], [116, 140, 0.42, 30]];
+  PICS.glass = { label: 'a heap of flat pieces like the scale, with shine lines', draw: function (c) {
+    var smooth = '';
+    GLASS.forEach(function (q) {
+      c.line(shard(q[0], q[1], q[2], q[3]));
+      var P = at(q[0], q[1], q[2], q[3]);
+      smooth += 'M' + P(-19, 12) + 'L' + P(-4, -11) + 'M' + P(-8, 24) + 'L' + P(10, -3);
+    });
+    c.line(smooth, { w: 0.8 });                                                          // smooth: the strokes that mean glass
+    c.line('M54 118L42 106M98 100L98 84M142 112L154 100M160 152L176 148M38 158L24 154M70 98L64 86M128 98L134 86', { w: 0.85 });   // shine
+    c.fine('M150 186l10 6M46 188l-10 6', { w: 0.7 });
+  } };
+
+  // Reynard calls 'It FLEW off' his little story. He wants the dry den. (ear) The one fox, unchanged (his smile is
+  // always on, and the cards laid touching show one fox drawn one way: this one touches fox-flew), and beside him
+  // the Old Bridge: a long flat deck on two stone legs, and under the deck between them a dark arch, hatched close
+  // (the dry den). The bridge carries the brag. Plainly not sleet-den (no round den mouth, no dry lines, no words
+  // curling from him) and not fox-flew (no wings).
+  var BRAG = { deck: [90, 180, 86, 93], legs: [[98, 110], [162, 174]], ground: 140, arch: { cx: 136, cy: 124, r: 26 } };
+  PICS['fox-brag'] = { label: 'the fox’s head, smiling, and the Old Bridge with a dark arch under it', draw: function (c) {
+    var B = BRAG, A = B.arch, hatch = '', i;
+    fox(c, 22, 122, 1);
+    // what he wants, above him to the right (where fox-flew has its wings and fox-moon its moon): the bridge,
+    // wider than it is tall, its deck long and flat
+    c.line('M' + B.deck[0] + ' ' + B.deck[2] + 'H' + B.deck[1]);
+    c.line('M' + B.deck[0] + ' ' + B.deck[3] + 'H' + B.deck[1], { w: 0.8 });
+    // two stone legs, a little wider at the foot
+    B.legs.forEach(function (l) { c.line('M' + l[0] + ' ' + B.deck[3] + 'L' + (l[0] - 2) + ' ' + B.ground + 'M' + l[1] + ' ' + B.deck[3] + 'L' + (l[1] + 2) + ' ' + B.ground); });
+    // under the deck between them, the arch, its top just under the deck
+    c.line('M' + B.legs[0][1] + ' ' + A.cy + 'A' + A.r + ' ' + A.r + ' 0 0 1 ' + B.legs[1][0] + ' ' + A.cy, { w: 0.9 });
+    // dark inside it (the dry den): hatched close, slanting, each stroke from the ground up to the arch or a leg
+    for (i = -8; i <= 16; i++) {
+      var x0 = B.legs[0][1] + i * 3.4, pts = [], y;
+      for (y = B.ground - 1.5; y >= A.cy - A.r; y -= 0.5) {
+        var x = x0 + 0.5 * (B.ground - 1.5 - y), inside = x > B.legs[0][1] + 1.2 && x < B.legs[1][0] - 1.2 && (y >= A.cy || Math.pow(x - A.cx, 2) + Math.pow(y - A.cy, 2) < Math.pow(A.r - 1.8, 2));
+        if (inside) pts.push([x, y]);
+      }
+      if (pts.length > 4) hatch += 'M' + N(pts[0][0]) + ' ' + N(pts[0][1]) + 'L' + N(pts[pts.length - 1][0]) + ' ' + N(pts[pts.length - 1][1]);
+    }
+    c.line(hatch, { w: 0.55 });
+    c.line('M96 ' + B.ground + 'H180', { w: 0.8 });                                       // the bank it stands on
+    c.fine('M101 104h6M101 122h6M165 108h6M165 126h6', { w: 0.6 });                       // a stone or two in its legs
+  } };
+
+  // Hail says two skinny shapes cross her field every night, toward the tracks. (ear) A wire fence, front on: a
+  // post and a row of four diamonds of wire, its bottom wire lifted where two long low shapes (`slink`, Squall's
+  // kind) squeeze under it, side by side and going the same way, the front one with something in its mouth. No
+  // track (that is squall-shapes).
+  var FENCE = { post: 164, top: 72, foot: 188, row: [52, 82, 112, 142], cy: 110, hw: 15, hh: 22 };
+  PICS['hail-shapes'] = { label: 'two long low shapes squeezing under a wire fence', draw: function (c) {
+    var F = FENCE, d = '';
+    c.line('M' + F.post + ' ' + F.top + 'V' + F.foot);                                  // the post
+    F.row.forEach(function (x) { d += 'M' + (x - F.hw) + ' ' + F.cy + 'L' + x + ' ' + (F.cy - F.hh) + 'L' + (x + F.hw) + ' ' + F.cy + 'L' + x + ' ' + (F.cy + F.hh) + 'Z'; });
+    c.line(d, { w: 0.85 });                                                              // four diamonds of wire
+    // the bottom wire, from the diamonds' feet to the post, lifted in a hump where the two squeeze under it
+    c.line('M30 150H44Q54 150 60 144Q70 136 92 136Q120 136 128 144Q134 150 144 150H164', { w: 0.85 });
+    c.line('M52 132L52 144M82 132L82 137M112 132L112 137M142 132L142 150', { w: 0.7 });   // the mesh, down to it
+    // two long low shapes under the hump, nose to the left, one beside the other, flat to the ground
+    c.line(slink(0, 0, 72, 5.6), { t: 'translate(58 154) rotate(-90)' });
+    c.line(slink(0, 0, 72, 5.6), { t: 'translate(66 172) rotate(-90)' });
+    // the front one carries something (a small round thing at its nose)
+    c.line('M54 172C54 166.6 63.6 165.6 65 171.6C65.6 177.4 54.6 178.2 54 172Z', { w: 0.85 });
+    c.line('M28 ' + F.foot + 'H176', { w: 0.8 });                                        // the field's ground
+    c.fine('M164 72l-6 -4M164 82l6 -4', { w: 0.6 });                                     // the wire tied to the post
   } };
 
   // ------------------------------------------------------------------ public

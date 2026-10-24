@@ -97,6 +97,16 @@
  *                 dark bed, its sleepers, two bright rails (<g data-art="tracks">, in `keep`). Anchor `arch`
  *                 on `wide`: on top of the bramble arch, standing, facing right (the climber's look).
  *
+ *   Chapter 8 (docs/chapters/08-the-night-trail.spec.md, section 4, the pile row): every option off by default and
+ *   every spot additional, so chapters 2 to 7 draw byte for byte as they did (fingerprints in tests/set-pile.test.js).
+ *   poke          (`rear`) at the tunnel mouth's right edge, rear-2's height: a cat crouched there facing left has
+ *                 her nose at the mouth's right rim, her shoulders plainly wider than it, her head clear of the
+ *                 mouth's Tap box (Tallyheart: "Her shoulders stick."; Riffle, on all fours, pokes his head in).
+ *   tap: 'mouth'  (`rear` while `tunnel` is true, and `hole`) the wriggle-in Tap's target: an unpainted
+ *                 <rect class="pc-tap" data-tap="mouth"> on the mouth's own box, first in keep.
+ *   night         `rear` and `hole` at night (only dusk until now): the light through the arch the moon's, the heap,
+ *                 roots and mouth in its cool light (<g data-art="moonlit">), readable, never black.
+ *
  *   PC.art.prey({ kind: 'mouse' | 'vole' | 'fish', lit, seed, facing?, part? }) -> { svg, w, h }:
  *   (the pile itself draws no fish; `fish` stays drawable only in case Aron rules to keep a few,
  *   traded from the otters, which the text would then have to say at the pile)
@@ -1455,17 +1465,18 @@
   // the camp at dusk (`open`: x0, x1, the canopy's edge there, the camp's ground), the packed-earth
   // floor running back to us, darker as it comes, lit from the open front.
   function archFromBehind(S, O, seed) {
-    var p = S.pal, r = rng(seed), wet = S.tod === 'morning' || S.tod === 'day', s = '', i;
-    var deep = mix(p.leaf, p.shade, 0.7), glow = p.sun || p.glow;
+    var p = S.pal, r = rng(seed), wet = S.tod === 'morning' || S.tod === 'day', s = '', i, night = S.tod === 'night';
+    // (chapter 8, at night: the light through the open front is the moon's, silver, where at dusk it is the sunset's)
+    var deep = mix(p.leaf, p.shade, 0.7), glow = night ? MOONLIGHT : p.sun || p.glow, campGlow = night ? MOONLIGHT : p.glow;
     // through the open front: the camp, no sky (the canopy hangs down to the hedge's top)
-    s += rect(O[0] - 40, O[2] - 40, O[1] - O[0] + 80, O[3] - O[2] + 80, S.linU([[0, mix(p.haze, p.leaf, 0.35)], [1, mix(p.glow, p.grassFar, 0.5)]], 0, O[2], 0, O[3]));
+    s += rect(O[0] - 40, O[2] - 40, O[1] - O[0] + 80, O[3] - O[2] + 80, S.linU([[0, mix(p.haze, night ? MOONLIGHT : p.leaf, 0.35)], [1, mix(campGlow, p.grassFar, 0.5)]], 0, O[2], 0, O[3]));
     s += path(mound(O[0] - 40, O[1] + 40, O[3] - 26, O[2] + 10, 12, rng(seed + 1), 0.3, 0.25, 0.3), p.leaf) +
       path(mound(O[0] - 40, O[1] + 40, O[3] - 18, O[2] + 46, 10, rng(seed + 2), 0.3, 0.25, 0.3), p.leafMid, { opacity: 0.8 });
     s += rect(O[0] - 40, O[3] - 34, O[1] - O[0] + 80, 60, S.lin('pilerearcamp', [[0, p.grassFar], [1, p.grass]]));
     // the fountain's edge far off at the left, and a few ferns
     s += ell(O[0] + 150, O[3] - 26, 130, 13, p.stoneLight) + ell(O[0] + 150, O[3] - 22, 112, 8, mix(p.stoneDark, p.sand, 0.3)) + rect(O[0] + 20, O[3] - 26, 260, 16, p.stone, { opacity: 0.9 });
     s += K.fernClump(S, O[1] - 160, O[3] - 18, 70, { seed: seed + 3, count: 5 }) + K.fernClump(S, O[0] + 380, O[3] - 20, 56, { seed: seed + 4, count: 4 });
-    s += ell((O[0] + O[1]) / 2, O[3] - 20, (O[1] - O[0]) * 0.5, 40, glow, { opacity: 0.28 });
+    s += ell((O[0] + O[1]) / 2, O[3] - 20, (O[1] - O[0]) * 0.5, 40, glow, { opacity: night ? 0.2 : 0.28 });
     // the canopy overhead (its far edge low over the opening), the two legs
     var edge = [], x;
     for (x = 1660; x >= -60; x -= 70) edge.push([x, (x < O[0] || x > O[1] ? O[3] - 20 : O[2]) + Math.sin(x * 0.011) * 14 + (r() - 0.5) * 16]);
@@ -1474,7 +1485,7 @@
     var legR = legL.map(function (q) { return [1600 - q[0], q[1]]; }).reverse();
     // the floor: packed earth, lit from the open front, dark toward us at the back of the arch
     s += path('M-10 ' + n(O[3] - 4) + 'Q800 ' + n(O[3] - 14) + ' 1610 ' + n(O[3] - 4) + 'V1010H-10Z', S.lin('pilerearfloor', [[0, mix(p.wood, glow, 0.3)], [0.25, mix(p.wood, p.shade, 0.35)], [1, mix(p.wood, p.shade, 0.7)]]));
-    s += ell((O[0] + O[1]) / 2, O[3] + 30, (O[1] - O[0]) * 0.46, 70, glow, { opacity: 0.18 });
+    s += ell((O[0] + O[1]) / 2, O[3] + 30, (O[1] - O[0]) * 0.46, 70, glow, { opacity: night ? 0.1 : 0.18 });
     var lv = '';
     for (i = 0; i < 22; i++) lv += leafD(40 + r() * 1520, O[3] + 20 + r() * (980 - O[3]), 14 + r() * 10, r() * 6.28, 5.5);
     s += path(lv, mix('#C98A45', p.shade, 0.35), { opacity: 0.6 });
@@ -1485,6 +1496,22 @@
     return s;
   }
 
+  // Chapter 8 (docs/chapters/08-the-night-trail.spec.md, section 4, the pile row): `rear` and `hole` at night
+  // (drawn only at dusk until now): moonlit, readable, never black. The light through the arch's open front is
+  // the moon's, silver (archFromBehind), and the heap, the roots and the mouth are drawn in its cool light: the
+  // warm earth turned to moonlit grey-blue, about as bright as by dusk, the mouth still the darkest thing there.
+  // By dusk, and in every other camera, nothing changes (chapter 6's `wide` and `low` at night are its own).
+  var MOONLIGHT = '#B8C8E6';
+  var MOON_EARTH = '0.42 0.30 0.08 0 0.02  0.24 0.44 0.12 0 0.03  0.20 0.36 0.30 0 0.08  0 0 0 1 0';
+  function moonlit(S, svg, C) {
+    if (S.tod !== 'night' || !svg) return svg;
+    var f = S.filter('pilemoon', '<feColorMatrix type="matrix" values="' + MOON_EARTH + '"/>');
+    // moonlight falling in from the open front, along the heap's crest
+    var h = C.heap, sheen = ell(h.cx, h.base - 64 * h.k, h.w * 0.62, 34 * h.k, MOONLIGHT, { opacity: 0.1 });
+    return g(svg, { 'data-art': 'moonlit', filter: f }) + sheen;
+  }
+  function mouthBox(M0) { return { x: M0.x - M0.rx, y: M0.y - M0.ry, w: M0.rx * 2, h: M0.ry * 2 }; }
+
   function drawRear(S) {
     var p = S.pal, o = S.opts, back = '', over = '', front = '', C = REAR, rows = rowList(o) || rowList({ rows: [10, 10, 10, 10] }), R = rows.length;
     back += archFromBehind(S, C.open, 1811);
@@ -1493,13 +1520,17 @@
     over += g(rb.svg, { filter: pileTint(S) });
     keepBoxes(S, rb.boxes);
     if (sc) { over += sc.svg; keepBoxes(S, [sc.box]); }
-    // the dug earth heaped up, its far foot toward us
-    if (o.dug) over += g(dugEarth(S, C.heap.cx, C.heap.base, C.heap.w, C.heap.k, 1838, o.dug === 'big'), { 'data-art': 'dug' });
-    else over += ell(C.heap.cx, C.heap.base - 22, C.heap.w * 0.4, 30, soilCols(S).soil, { opacity: 0.85 });
-    // the roots, and under them (once she has lifted them) the tunnel's mouth
+    // the dug earth heaped up, its far foot toward us; the roots, and under them (once she has lifted them) the
+    // tunnel's mouth (chapter 8: at night all three in the moon's cool light, `moonlit`)
+    var earth = '';
+    if (o.dug) earth += g(dugEarth(S, C.heap.cx, C.heap.base, C.heap.w, C.heap.k, 1838, o.dug === 'big'), { 'data-art': 'dug' });
+    else earth += ell(C.heap.cx, C.heap.base - 22, C.heap.w * 0.4, 30, soilCols(S).soil, { opacity: 0.85 });
     var lifted = o.tunnel === true;
-    if (lifted) over += tunnelMouth(S, C.mouth, 'rear');
-    over += bramblRoots(S, C.roots, lifted, 1841, C.roots.k);
+    if (lifted) earth += tunnelMouth(S, C.mouth, 'rear');
+    earth += bramblRoots(S, C.roots, lifted, 1841, C.roots.k);
+    over += moonlit(S, earth, C);
+    // chapter 8: the wriggle-in Tap's target, the mouth itself (`tap: 'mouth'`, once the tunnel is found)
+    if (lifted && o.tap === 'mouth') over += tapRect(S, 'mouth', mouthBox(C.mouth));
     if (lifted) keepBoxes(S, [{ x: C.mouth.x - C.mouth.rx, y: C.mouth.y - C.mouth.ry, w: C.mouth.rx * 2, h: C.mouth.ry * 2 }]);
     else if (o.tap === 'roots') over += tapRect(S, 'roots', { x: C.roots.x0, y: C.roots.y0, w: C.roots.x1 - C.roots.x0, h: C.roots.y1 - C.roots.y0 + 16 });
     front += g(K.tufts(S, 0, 1600, 984, 1014, 20, 1842, mix(p.grassNear, p.shade, 0.4), mix(p.grassLight, p.shade, 0.4), 2.2), { filter: S.shadow('m') });
@@ -1520,13 +1551,17 @@
     if (sc) { back += sc.svg; keepBoxes(S, [sc.box]); }
     // the dug earth: a low wall of it filling the picture, the mouth at its foot
     // (no dips or root arcs this close: only the one real mouth reads as a hole)
-    back += g(dugEarth(S, C.heap.cx, C.heap.base, C.heap.w, C.heap.k, 1858, o.dug !== false, true), { 'data-art': 'dug' });
-    back += path('M-10 900Q400 880 800 888Q1200 896 1610 884V1010H-10Z', mix(p.wood, p.shade, 0.45));
+    var earth = '';
+    earth += g(dugEarth(S, C.heap.cx, C.heap.base, C.heap.w, C.heap.k, 1858, o.dug !== false, true), { 'data-art': 'dug' });
+    earth += path('M-10 900Q400 880 800 888Q1200 896 1610 884V1010H-10Z', mix(p.wood, p.shade, 0.45));
     var cr = '', r = rng(1859);
     for (i = 0; i < 40; i++) cr += blob(r() * 1600, 900 + r() * 100, 4 + r() * 9, 2.5 + r() * 5, 6, r, 0.3, 0.3);
-    back += path(cr, c.soil, { opacity: 0.8 });
-    back += tunnelMouth(S, C.mouth, 'hole');
-    back += bramblRoots(S, C.roots, true, 1861, C.roots.k);
+    earth += path(cr, c.soil, { opacity: 0.8 });
+    earth += tunnelMouth(S, C.mouth, 'hole');
+    earth += bramblRoots(S, C.roots, true, 1861, C.roots.k);
+    back += moonlit(S, earth, C);
+    // chapter 8: the wriggle-in Tap's target (`tap: 'mouth'`); `back` and `roots` still mean nothing here
+    if (o.tap === 'mouth') back += tapRect(S, 'mouth', mouthBox(C.mouth));
     keepBoxes(S, [{ x: C.mouth.x - C.mouth.rx, y: C.mouth.y - C.mouth.ry, w: C.mouth.rx * 2, h: C.mouth.ry * 2 }]);
     // the shade of the arch over all of it
     back += rect(-10, -10, 1620, 1020, S.radU([[0, deep, 0], [0.7, deep, 0.15], [1, deep, 0.55]], 820, 760, 1000));
@@ -1622,7 +1657,12 @@
       // The guards small past the front row, side-on, facing out over the camp, drawn behind the rows.
       rear: {
         'rear-1': A(436, 964, 380), 'rear-2': A(1172, 958, 380, 'left'),
-        'guard-1': A(560, 478, 74, 'left', { z: 'behind' }), 'guard-2': A(812, 474, 72, 'right', { z: 'behind' }), 'guard-3': A(1060, 478, 74, 'right', { z: 'behind' })
+        'guard-1': A(560, 478, 74, 'left', { z: 'behind' }), 'guard-2': A(812, 474, 72, 'right', { z: 'behind' }), 'guard-3': A(1060, 478, 74, 'right', { z: 'behind' }),
+        // chapter 8: at the tunnel mouth's right edge, rear-2's height: a cat crouched here facing left has her nose
+        // at the mouth's right rim and her shoulders plainly wider than it ("Her shoulders stick."), her head just
+        // clear of the mouth's Tap box (so the wriggle-in glow lands on the mouth, not her face); Riffle on all
+        // fours (`scramble`) pokes his head at it. `elev`: out of the depth sums and of the first-free-spot pick
+        poke: A(1060, 958, 380, 'left', { elev: true })
       },
       // close on the mouth: our cat crouched at its edge, facing it (the mouth as wide as her shoulders)
       hole: { brink: A(424, 958, 470) }
@@ -1637,7 +1677,8 @@
       moon: 'number',
       // chapter 7: the Tap's target (the back row on `rows` and `wide`; the low roots on `rear`), the tunnel found
       // (`rear`: the roots lifted, its mouth under them), the train tracks far off (`wide`, dusk or sunset)
-      tap: ['none', 'back', 'roots'], tunnel: [false, true], tracks: [false, true] },
+      // chapter 8: 'mouth', the tunnel's mouth (`rear` while `tunnel` is true, and `hole`): the wriggle-in Tap
+      tap: ['none', 'back', 'roots', 'mouth'], tunnel: [false, true], tracks: [false, true] },
     defaults: { pairs: 8, lit: 0, dug: false, vole: false, back: 'none', scale: false, glint: false, prints: false, swept: false, moon: false, tap: 'none', tunnel: false, tracks: false }
   });
 

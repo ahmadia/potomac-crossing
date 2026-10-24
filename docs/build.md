@@ -1422,3 +1422,92 @@ twenty-four's Tallyheart crouches with `claws: true` as she scratches the sand. 
 - After chapter 7: every golden reading's cat, with `ch7Flew` and without, reads chapters 4 and 5 again;
   everything she sees is the same but her Case File, which gains FLEW and can't-fly touching, and only
   for a cat without `ch4CaughtFly`. A truth table checks the link over every combination of the two flags.
+
+## Chapter 8 (v0.1)
+
+Chapter 8, *The Night Trail*, is [`chapters/08-the-night-trail.md`](chapters/08-the-night-trail.md) (Draft v0.4,
+final), built in `app/story/ch08.js`. **Its spec, [`chapters/08-the-night-trail.spec.md`](chapters/08-the-night-trail.spec.md)
+(v0.2), is the build's contract**: the flag, the Counts sets, the cards, the art needs, the build notes and the
+names. One engine change, a card link's own line for each partner (the spec's "Engine needs", approved under
+decision 46 and recorded in the README); every Counts key is chapters 2 to 7's. One new place, `tracks`, and three
+new characters, Hail, Snip and Snatch. This section records the names and the words as built; the spec has the rest.
+
+**The flag**
+
+- `foundHail: true`, sticky, set on Hail's last screen in the Barking Field (a told and a kept twin, each with
+  `sets: { foundHail: true }` on the frame, never on an option; saying no to the log sets nothing). No route flag:
+  nothing after the weasel holes reads which way she went (the spec's section 1).
+- `PC.ui.flagWords.foundHail`: "found Hail in the hollow log in the Barking Field (later chapters remember)".
+
+**The engine's one change: a partner's own line (`link.lines`)**
+
+- In `E.caseFile`'s `link.with` branch, `link.lines: { <partner id>: line }` gives that partner its own line;
+  every other partner joins over `link.line` (or “They can’t both be true.”), and an empty or non-string entry
+  is no line. The joins are made in the order of `with`, and a row only grows at its ends (`touch` never merges
+  two rows), so the order matters: the brag's `with: ['fox-flew', 'sleet-den']` joins the FLEW row first and then
+  lays Sleet's den card at its end, a row of four for a cat who found Sleet (`cant-fly` — “They can’t both be
+  true.” — `fox-flew` — “He said FLEW. Now he calls it a story.” — `fox-brag` — “The same fine, dry den.” —
+  `sleet-den`); the other order leaves two rows apart. A link drawn by its `answers` reads no `lines`.
+- `E.checkStory` checks `lines` as it checks `line`: when present, an object whose every key is one of the
+  link's `with` and whose every value is a line ("card fox-brag: link lines is { <a card it touches>: its own
+  line }", "…link lines names a card its with does not: scale", "…link lines for sleet-den needs its one line").
+  Every chapter 1 to 7 story stays clean.
+- `E.cards` copies the link as it stands, `lines` included. No card of chapters 1 to 7 has `lines`, so every file
+  of every live save lies exactly as it did.
+- The page (`ui.js`) letters a row from its `lines`, as since chapter 5. A row of four (`cf-pair n4`) has three
+  joins: the first kept left (`j0`), the last kept right (`j1`), and the one between them centred (`jm`, the
+  line's own `text-align:center`; index.html styles no `jm`), so each line reads under its own join, in landscape
+  and portrait. A pair and a row of three are lettered as they were (`j0`, `j1`).
+- `E.VERSION = '0.8.0 (chapter 8, 2026-10-21)'`; the save stays version 2 and nothing new is stored.
+
+**Speakers and voices**
+
+- `PC.ui.speakers` names `hail` "Hail", `snip` "Snip" and `snatch` "Snatch", after chapter 6's. The chapter's
+  `names` (`snip` and `snatch` "A weasel", `hail` "The speckled dragonet") and a balloon's own `name` ("A white
+  head", "Snip", "Snatch", "Hail", "Good Boy", "Drop It", "The dogs") win, as before; the tiny dog keeps "The tiny
+  dog". Read to me (pitch, rate): Hail 1.5, 1.08 (bright and quick); Snip 1.65, 1.12 (squeaky); Snatch 1.35, 1.0
+  (a little lower, his mouth full). Nobody else's voice changes. No new `faceHidden` pose: every new pose shows a
+  face.
+
+**The art's new names** (the spec's section 4; every option off by default, every camera and anchor additional)
+
+- `tracks` (new, `sets/tracks.js`, always at night): cameras `wide`, `hide`, `holes` and `brag` on the bank,
+  `stash` and `stash-close` inside the biggest hole, `crawl` and `fork` inside the tunnel; anchors `tunnel-end`,
+  `foot-1`, `foot-2`, `hole-1`, `hole-2`, `rails`, `weeds-1`, `weeds-2`, `stash-mouth`, `watch`, `slope-1`,
+  `slope-2`, `stash-in`, `near`, `crawl-1`, `crawl-2`, `fork-1`, `fork-2`; options `moon` (a number),
+  `tap: 'none' | 'weeds' | 'stash' | 'glass'`, `tight` and `worm`.
+- `field`: the night (`fx: ['night']`), options `moon` (a number) and `tap: 'none' | 'path'`; anchors `heap-1` to
+  `heap-3`, `log`, `wire`, `ring-1` to `ring-4`, `fence-top` (`wide` only), `trail-1`, `trail-2`. At night a cat
+  lying `flat` on the path lies in the grass at its edge (the path's near edge grass to just past her nose,
+  `data-part="grassy-edge"`, and Sleet's grass over her lower body in the night's colours, `data-part="path-grass"`);
+  no option, and nothing by day. `tracks`' `crawl` and `fork`: solid dark earth over the roof, a lip along it.
+- `pile`: anchor `poke` (`rear`), `tap: 'mouth'` (`rear` with `tunnel`, and `hole`); `night` on `rear` and `hole`.
+- `den`: `moon: 8` (the half moon, at night or dusk) and `glass: true`; the nest's corners in layers of six past six
+  secrets and a third course of bark past eighteen along the edge (`BARK_MAX` 27; the spec's section 4).
+- Cast: `hail` (`sit`, `stand`, `bounce`, `run`, `peek`, `pawup`, `tilt`), `snip` and `snatch` (`stand`, `up`,
+  `run`, `skid`, `peek`, `point`, `curl`); the cats' `run`, the dogs' `lie` (and `asleep`), Reynard's `trot`.
+  Extras `tailUp: true`, `tap: 'tail' | 'leaf'` (Riffle's `tap: 'ears' | 'paw'` are chapter 6's names, on him
+  now), `holds: 'leaf' | 'glass' | 'mouse'`.
+- Counts art: one cat's paws a pair at a time (`thing: 'paw'` at per 2; she faces left, so her front pair, counted
+  first, is on the left and 2, 4 read left to right), `kind: 'dogs'` (the field's four, a set's own `who`; Hail
+  stands on four feet stepped apart, forepaws resting), marks with `layout: 'pairs'` (two and two), the sand at per 4 two and two.
+
+**Words (`tools/storyboard.mjs`)**: words for every name above, each printed only where a chapter uses it.
+The bank (`SETS.tracks`), the tunnel's inside (`TRACKS_TUNNEL`, for `crawl` and `fork`) and the stash
+(`TRACKS_STASH`, for `stash` and `stash-close`) are place words of their own, and every `tracks` camera has words
+in `SET_CAMS.tracks` (no global camera word is borrowed); the set is always at night (`TOD_FIXED`). The field at
+night reads "silver in the moonlight". An anchor may read differently through one camera (`CAM_ANCH`: the weasels'
+holes close up and from the weeds, the fox on the rails beside the weasels, the dogs' own stretch of the path).
+Hail's, the weasels' and the dogs' poses have words of their own (`HAIL_POSE`, `WEASEL_POSE`, `DOG_POSE`; Reynard's
+`trot` in `REYNARD_POSE`), and the weasels' moods are drawn their way (`WEASEL_MOOD`: a shout a squeak, a laugh
+cheeky, stern a pout). `moon: 8` is "a bright half moon, eight evenings old" (a number under eight reads as
+before). A one-tap frame's mark carried by somebody else is theirs (`TAP_WHO`: Riffle's small round ears, his near
+forepaw, the friend's raised tail) and her paw mid-run is her front paw (`TAP_SELF`); the tunnel's mouth, the path,
+the weeds, the biggest hole, the piece of glass and the leaf have words in `TAPS`. The skip-counts on paws: one
+cat's two pairs (the cat kept on the plain pages after it, both pairs lit, 2 and 4 under them) and cats by fours,
+a cat a tap; the 4s' lesson is the table-4 cats (no `kind`, `thing: 'paw'`), its `lit` counted in cats, its sand
+two and two; `kind: 'dogs'` is lit an animal at a time as its teacher hops it; nights of marks two and two. A card
+link's `lines` print on the card row, each partner with the line it joins over, in the order of `with`.
+`--check-words` passes with the spec's names and declarations added (`tests/tools.test.js`, with names the spec
+never gave failing). Chapters 1 to 7's storyboards regenerate byte for byte, and `ch08.md` was regenerated from
+the stub.

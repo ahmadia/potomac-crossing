@@ -2440,12 +2440,20 @@ test('book: title, chapter title, seven entries and 6 to 10 sentences on every p
   assert.equal(E.buildBook(ch06, told).chapter, 'Chapter 6: The Snake in the Stones', 'the pages before are as they were');
 });
 
-test('the teaser for chapter 8, curious and never scary, with no number; chapter 6’s for this one stands', () => {
+test('the teaser for chapter 8 (built now, and the hub offers it), curious and never scary, with no number; chapter 6’s for this one stands', () => {
   assert.deepEqual(story.teaser, { title: 'Chapter 8: The Night Trail', lines: ['Tomorrow night, a trail in the dark.', 'Where does that tunnel come out?'] });
   story.teaser.lines.forEach(l => assert.ok(words(l) <= 25, l));
   assert.doesNotMatch(story.teaser.lines.join(' '), /\d|twenty|sixty|weasel|thief|robbed|stolen|scary|monster/i, 'no number, no answer');
   const cat = E.blankCat({}); cat.name = 'Moon';
-  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'Chapter 8: The Night Trail', lines: story.teaser.lines, built: false, next: null }, 'chapter 8 is not built: coming soon');
+  // chapter 8 is in the game, built (2026-10-21; it was a stub while it was made): the hub offers it; read with
+  // chapters 1 to 7 only, it is still "coming soon". Its words stand as they shipped (the golden of chapters 1
+  // to 7 holds them), and chapter 8 keeps both its promises (tests/story-ch08.test.js, its teaser test)
+  assert.ok(PC.story.ch08, 'chapter 8 is in the game');
+  assert.ok(Object.values(PC.story.ch08.frames).every(f => !/^STUB\b/.test(f.board || '')), 'built: no stub frame is left');
+  assert.ok(Object.values(PC.story.ch08.frames).some(f => /So THAT’S where it comes out!/.test((f.caption || []).join(' '))), 'where the tunnel comes out');
+  assert.equal(E.chapterHeading(PC.story.ch08), story.teaser.title, 'the teaser’s title is chapter 8’s');
+  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'Chapter 8: The Night Trail', lines: story.teaser.lines, built: true, next: 'ch08' }, 'chapter 8 is in: the hub offers it');
+  assert.deepEqual(E.teaser(story, cat, STORIES), { title: 'Chapter 8: The Night Trail', lines: story.teaser.lines, built: false, next: null }, 'without it, coming soon');
   // the hook it carries on: somewhere, that tunnel comes out; tomorrow night, with Tallyheart or Riffle
   assert.match(T(F(/^Soon he’s snoring\./)), /Somewhere, that tunnel comes out\. Where\?$/);
   // chapter 6's teaser stands, its title this chapter's, and both its promises are kept
@@ -2453,7 +2461,7 @@ test('the teaser for chapter 8, curious and never scary, with no number; chapter
   assert.equal(E.chapterHeading(story), ch06.teaser.title);
   assert.match(T(PILE_COUNT), /Eighteen guards\. Let’s see if it worked\./);
   const done = reading({ specialty: 'sneaking' }, {}).cat, p = E.progress(done, PC.story);
-  assert.deepEqual([p.latest.id, p.soon && p.soon.title, E.status(done, PC.story)], ['ch07', 'Chapter 8: The Night Trail', 'Chapter 7 finished']);
+  assert.deepEqual([p.latest.id, p.next && p.next.id, p.soon, E.status(done, PC.story)], ['ch07', 'ch08', null, 'Chapter 7 finished']);
   const c6 = E.blankCat({}); c6.finished = { ch01: 1, ch02: 2, ch03: 3, ch04: 4, ch05: 5, ch06: 6 };
   assert.deepEqual([E.progress(c6, PC.story).next.id, E.chapterHeading(E.progress(c6, PC.story).next)], ['ch07', 'Chapter 7: The Counts Don’t Lie']);
 });

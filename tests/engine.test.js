@@ -1129,9 +1129,9 @@ function finishedCat(stories, over) {
   return cat;
 }
 
-test('version 0.7.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 7 add none)', () => {
-  assert.equal(E.VERSION, '0.7.0 (chapter 7, 2026-10-20)');
-  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 7 store nothing new (chapter 7’s ch7Flew is a flag)');
+test('version 0.8.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 8 add none)', () => {
+  assert.equal(E.VERSION, '0.8.0 (chapter 8, 2026-10-21)');
+  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 8 store nothing new (chapter 7’s ch7Flew and chapter 8’s foundHail are flags)');
   assert.equal(E.STORAGE_KEY, 'potomac-crossing.v1');
   assert.deepEqual(E.newSave(), { version: 2, cats: [], current: null, settings: { readAloud: false, bigText: false } });
   const c = E.blankCat({ now: 5, id: 'x' });
@@ -6106,9 +6106,11 @@ test('chapter 7’s words in the grown-ups corner: ch7Flew, for a she-cat and a 
   assert.equal(E.fill(W.ch7Flew.true, tom), W.ch7Flew.true, 'nothing in it changes for a tom');
   assert.deepEqual(W.ch4CaughtFly, { 'true': 'caught the fox’s “flew”: Sprinkle can’t fly (later chapters remember)' }, 'chapter 4’s flag means what it always meant');
   assert.ok(!PC.ui.quietFlags.ch7Flew, 'listed among what she did');
-  assert.deepEqual(Object.keys(W).slice(-1), ['ch7Flew'], 'chapter 7 adds one flag');
-  // no new speaker or face hidden: the speakers' names are chapter 6's (the golden below reads every label and voice of chapters 1 to 6)
-  assert.deepEqual(Object.keys(PC.ui.speakers.NAMES), ['tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth', 'riffle', 'otter', 'dog',
+  // (chapter 8's foundHail comes after it)
+  assert.deepEqual(Object.keys(W).slice(Object.keys(W).indexOf('foundSleet') + 1, Object.keys(W).indexOf('foundHail')), ['ch7Flew'], 'chapter 7 adds one flag');
+  // no new speaker or face hidden: the speakers' names are chapter 6's (the golden below reads every label and voice of chapters 1 to 6;
+  // chapter 8 appends its three after them)
+  assert.deepEqual(Object.keys(PC.ui.speakers.NAMES).slice(0, Object.keys(PC.ui.speakers.NAMES).indexOf('hail')), ['tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth', 'riffle', 'otter', 'dog',
     'sprinkle', 'murmurchime', 'reynard', 'squall', 'patience', 'puddle', 'wisp', 'coil', 'sloshbank', 'sleet', 'reedclan']);
   assert.equal(PC.ui.speakers.faceHidden({ who: 'coil', name: 'Coil' }, { who: 'coil', pose: 'stone' }), true, 'Coil’s “Quietly,” from the stones, as chapter 6 has it');
 });
@@ -6275,4 +6277,195 @@ test('chapter 4’s FLEW link is drawn exactly when ch4CaughtFly or ch7Flew is t
   // a cat who has not yet been given both cards has nothing to draw, flag or not
   const early = clone(base); early.cards = early.cards.filter(c => c.id !== 'cant-fly'); early.flags.ch7Flew = true;
   assert.ok(!E7.caseFile(early, list).links.some(L => L.cards.some(c => c.id === 'fox-flew')));
+});
+
+/* ================================================================ chapter 8 (the words: docs/build.md, "Chapter 8")
+ * One engine change (spec section 6, approved under decision 46 and recorded in the README): a card link
+ * may give a partner its own line, `link.lines: { <partner id>: line }`, over `link.line` for every other
+ * partner; E.checkStory checks it as it checks `line`. No card of chapters 1 to 7 has `lines`, so their
+ * files lie as they did (the golden of chapters 1 to 7 reads every one). The new flag `foundHail`, the
+ * three new speakers and their voices (spec sections 1, 5 and 6). */
+const CH8_CARDS = () => ({
+  stash: { mark: 'eye', line: 'The weasels have a stash: our prey, and ReedClan’s.', link: { with: ['reed-pile'], line: 'Two piles robbed. One stash.' } },
+  glass: { mark: 'eye', line: 'A heap of glass in the weasels’ stash, just like the ‘scale’.', link: { with: ['scale'], line: 'It’s not a scale. It’s GLASS.' } },
+  'fox-brag': { mark: 'ear', line: 'Reynard calls ‘It FLEW off’ his little story. He wants the dry den.',
+    link: { with: ['fox-flew', 'sleet-den'], line: 'He said FLEW. Now he calls it a story.', lines: { 'sleet-den': 'The same fine, dry den.' } } },
+  'hail-shapes': { mark: 'ear', line: 'Hail says two skinny shapes cross her field every night, toward the tracks.', when: { foundHail: true } }
+});
+// a mock chapter 8 holding the spec's four cards (section 3), beside the real chapters 1 to 7
+function mock8(cards) {
+  return { id: 'ch08', number: 8, title: 'The Night Trail', start: 'a', cards: cards || CH8_CARDS(),
+    frames: { a: { scene: { set: 'den', cam: 'nest' }, caption: ['Mice and voles, in tidy rows.'], card: 'stash', next: 'z' },
+      z: { scene: { set: 'den', cam: 'nest' }, caption: ['The end.'], end: true } } };
+}
+const CH1TO7 = ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07'];
+function list8(cards) { const st = realStories(); return CH1TO7.map(id => st[id]).concat([mock8(cards)]); }
+// a cat holding these cards in this order, each from the chapter that defines it, with these flags
+function holder8(list, ids, flags) {
+  const cat = E.blankCat({ now: 1, id: 'c8' });
+  Object.assign(cat.flags, flags || {});
+  ids.forEach((id, i) => { const ch = list.find(s => s.cards && s.cards[id]); assert.ok(ch, id); E.giveCard(cat, id, ch.id, 10 + i); });
+  return cat;
+}
+// every card of chapters 4 to 7 a cat who found Sleet (and not Squall, Puddle or Wisp) holds, in the chapters' order, then chapter 8's three
+const HELD7 = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes',
+  'reed-pile', 'sleet-den', 'coil-diggers', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel'];
+const HELD8 = HELD7.concat(['stash', 'glass', 'fox-brag']);
+const rows8 = (cat, list) => E.caseFile(cat, list).links.map(L => [L.cards.map(c => c.id).join(' — '), (L.lines || [L.line]).join(' | ')]);
+
+test('chapter 8’s engine change, the rows of spec section 3: can’t fly — FLEW — the brag — the den (each join over its own line), tidy — ReedClan’s pile — the stash, the scale — the glass; without `lines` the den’s join would read FLEW’s line', () => {
+  const list = list8();
+  const sleet = holder8(list, HELD8, { ch7Flew: true, foundSleet: true });
+  assert.deepEqual(rows8(sleet, list), [
+    ['cant-fly — fox-flew — fox-brag — sleet-den', 'They can’t both be true. | He said FLEW. Now he calls it a story. | The same fine, dry den.'],
+    ['waffles-no-moon — fox-moon — heron-no-moon', 'Two say no moon. Only the fox says moon. | One of them is wrong.'],
+    ['tidy — reed-pile — stash', 'Two piles. Both left tidy. | Two piles robbed. One stash.'],
+    ['coil-diggers — tunnel', 'Coil felt them. Now I’ve seen where.'],
+    ['scale — glass', 'It’s not a scale. It’s GLASS.']
+  ]);
+  const F = E.caseFile(sleet, list), brag = F.links[0];
+  assert.deepEqual([brag.line, brag.lines.length, brag.cards.length], ['They can’t both be true.', 3, 4], 'a row of four: a line for each join, the first its `line`');
+  assert.ok(E.fileNeighbours(F, 'fox-flew', 'fox-brag') && E.fileNeighbours(F, 'fox-brag', 'sleet-den') && !E.fileNeighbours(F, 'fox-flew', 'sleet-den') && !E.fileNeighbours(F, 'cant-fly', 'fox-brag'), 'only the cards side by side touch');
+  assert.deepEqual(F.groups.map(g => [g.mark, g.cards.map(c => c.id)]),
+    [['eye', ['four-a-night', 'dug-earth', 'sprinkle-scales', 'prints-pile', 'fur', 'my-count', 'prints-sprinkle']], ['ear', ['otter-fox', 'heron-shapes']]], 'every linked card leaves its group, and nothing else does');
+  // without Sleet's card: the brag ends the FLEW row; without ch7Flew (a reread oddity): FLEW starts it
+  const noSleet = holder8(list, HELD8.filter(id => id !== 'sleet-den'), { ch7Flew: true });
+  assert.deepEqual(rows8(noSleet, list)[0], ['cant-fly — fox-flew — fox-brag', 'They can’t both be true. | He said FLEW. Now he calls it a story.']);
+  const noFlew = holder8(list, HELD8, { foundSleet: true });
+  assert.deepEqual(rows8(noFlew, list).filter(r => /fox-brag/.test(r[0])), [['fox-flew — fox-brag — sleet-den', 'He said FLEW. Now he calls it a story. | The same fine, dry den.']]);
+  assert.ok(E.caseFile(noFlew, list).groups[0].cards.some(c => c.id === 'cant-fly'), 'can’t fly stays in its group');
+  const noFlewNoSleet = holder8(list, HELD8.filter(id => id !== 'sleet-den'), {});
+  assert.deepEqual(rows8(noFlewNoSleet, list).filter(r => /fox-brag/.test(r[0])), [['fox-flew — fox-brag', 'He said FLEW. Now he calls it a story.']]);
+  E.caseFile(noFlewNoSleet, list).links.filter(L => L.cards.length === 2).forEach(L => assert.deepEqual(Object.keys(L), ['cards', 'line'], 'a pair is { cards, line }, as chapter 4 made it'));
+  // the fallback the spec names (no `lines`): the den's join reads FLEW's words
+  const plain = CH8_CARDS(); delete plain['fox-brag'].link.lines;
+  const listP = list8(plain);
+  assert.deepEqual(rows8(holder8(listP, HELD8, { ch7Flew: true, foundSleet: true }), listP)[0],
+    ['cant-fly — fox-flew — fox-brag — sleet-den', 'They can’t both be true. | He said FLEW. Now he calls it a story. | He said FLEW. Now he calls it a story.']);
+  // Hail's card touches nothing, and is shown only with foundHail (as squall-shapes and sleet-den are)
+  const hail = holder8(list, HELD8.concat(['hail-shapes']), { ch7Flew: true, foundSleet: true, foundHail: true });
+  assert.deepEqual(rows8(hail, list), rows8(sleet, list));
+  assert.ok(E.caseFile(hail, list).groups[1].cards.some(c => c.id === 'hail-shapes'));
+  assert.ok(!E.cards(holder8(list, HELD8.concat(['hail-shapes']), {}), list).some(c => c.id === 'hail-shapes'));
+  // every card in a link is counted once, and none is lost
+  [sleet, noSleet, noFlew, noFlewNoSleet, hail].forEach(cat => {
+    const G = E.caseFile(cat, list), all = G.groups.reduce((a, g) => a.concat(g.cards), []).concat(G.links.reduce((a, l) => a.concat(l.cards), [])).map(c => c.id);
+    assert.deepEqual(all.slice().sort(), E.cards(cat, list).map(c => c.id).sort());
+    assert.equal(new Set(all).size, all.length);
+  });
+});
+
+test('chapter 8’s engine change: the order of `with` matters, as the spec says (FLEW first, so the brag joins the FLEW row before the den joins the brag; the other order leaves two rows apart, since a row never merges with another)', () => {
+  const swapped = CH8_CARDS(); swapped['fox-brag'].link.with = ['sleet-den', 'fox-flew'];
+  const list = list8(swapped), cat = holder8(list, HELD8, { ch7Flew: true, foundSleet: true }), F = E.caseFile(cat, list);
+  assert.deepEqual(rows8(cat, list).filter(r => /fox-flew|fox-brag/.test(r[0])), [['cant-fly — fox-flew', 'They can’t both be true.'], ['sleet-den — fox-brag', 'The same fine, dry den.']]);
+  assert.ok(!E.fileNeighbours(F, 'fox-flew', 'fox-brag'), 'the brag lies apart from FLEW');
+  // as the spec has it, the same cat gets the one row of four
+  assert.deepEqual(rows8(cat, list8()).filter(r => /fox-brag/.test(r[0])).map(r => r[0]), ['cant-fly — fox-flew — fox-brag — sleet-den']);
+});
+
+test('chapter 8’s engine change, a truth table: with `lines` and without, one partner and two, each partner held or not, `line` given or not; a partner’s own line wins, every other partner joins over `line` (or the default), and a key `with` does not name changes nothing', () => {
+  const DEF = 'They can’t both be true.';
+  let n = 0;
+  for (const W of [['p1'], ['p1', 'p2']]) for (const line of [undefined, 'Shared.']) {
+    const linesAll = [undefined, {}, { p1: 'Own one.' }, { stray: 'Not a partner.' }];
+    if (W.length === 2) linesAll.push({ p2: 'Own two.' }, { p1: 'Own one.', p2: 'Own two.' }, { p1: '', p2: 'Own two.' });
+    for (const lines of linesAll) for (const held of W.length === 2 ? [[], ['p1'], ['p2'], ['p1', 'p2']] : [[], ['p1']]) {
+      const link = { with: W }; if (line !== undefined) link.line = line; if (lines !== undefined) link.lines = lines;
+      const cards = { p1: { mark: 'eye', line: 'One.' }, p2: { mark: 'eye', line: 'Two.' }, c: { mark: 'ear', line: 'The claim.', link } };
+      const list = [mock8(cards)], cat = holder8(list, held.concat(['c']), {});
+      const own = id => (lines && typeof lines[id] === 'string' && lines[id]) || line || DEF;
+      const want = !held.length ? [] : held.length === 1 ? [[held[0] + ' — c', own(held[0])]] : [['p1 — c — p2', own('p1') + ' | ' + own('p2')]];
+      const name = JSON.stringify({ W, line, lines, held });
+      assert.deepEqual(rows8(cat, list), want, name);
+      const L = E.caseFile(cat, list).links[0];
+      if (L) assert.equal(L.line, own(held[0]), name + ': the row’s first line');
+      // E.cards still copies the link as it stands, `lines` included, for the page
+      assert.deepEqual(E.cards(cat, list).find(c => c.id === 'c').link, link, name);
+      n++;
+    }
+  }
+  assert.equal(n, 2 * 4 * 2 + 2 * 7 * 4);
+  // a link that names its partners by `answers` (chapter 4's) is drawn as it was, `lines` or not
+  const ans = { p1: { mark: 'eye', line: 'One.' }, c: { mark: 'ear', line: 'The claim.', answers: ['p1'], link: { line: 'Answered.', lines: { p1: 'Never read.' } } } };
+  assert.deepEqual(rows8(holder8([mock8(ans)], ['p1', 'c'], {}), [mock8(ans)]), [['p1 — c', 'Answered.']]);
+  // and a link whose `when` does not match draws nothing, `lines` or not
+  const off = { p1: { mark: 'eye', line: 'One.' }, c: { mark: 'ear', line: 'The claim.', link: { when: { seen: true }, with: ['p1'], lines: { p1: 'Own.' } } } };
+  assert.deepEqual(rows8(holder8([mock8(off)], ['p1', 'c'], {}), [mock8(off)]), []);
+  assert.deepEqual(rows8(holder8([mock8(off)], ['p1', 'c'], { seen: true }), [mock8(off)]), [['p1 — c', 'Own.']]);
+});
+
+test('chapter 8’s engine change: E.checkStory checks `lines` as it checks `line` (an object; every key one of the link’s `with`, every value a line); the mock chapter and every chapter 1 to 7 story are clean, and no card of chapters 1 to 7 has `lines`', () => {
+  const list = list8(), st = realStories();
+  assert.deepEqual(E.checkStory(mock8(), list), [], 'the spec’s four cards');
+  CH1TO7.forEach(id => {
+    assert.deepEqual(E.checkStory(st[id], list), [], id);
+    Object.entries(st[id].cards || {}).forEach(([cid, c]) => assert.ok(!(c.link && 'lines' in c.link), id + ' ' + cid + ': no lines'));
+  });
+  const bad = (lines, also) => { const cards = CH8_CARDS(); cards['fox-brag'].link.lines = lines; Object.assign(cards, also || {}); return E.checkStory(mock8(cards), list); };
+  const BAD_SHAPE = 'card fox-brag: link lines is { <a card it touches>: its own line }';
+  assert.deepEqual(bad('The same fine, dry den.'), [BAD_SHAPE], 'a line, not an object');
+  assert.deepEqual(bad(['The same fine, dry den.']), [BAD_SHAPE], 'a list, not an object');
+  assert.deepEqual(bad({ 'sleet-den': 'The same fine, dry den.', scale: 'Glass.' }), ['card fox-brag: link lines names a card its with does not: scale']);
+  assert.deepEqual(bad({ 'sleet-den': '' }), ['card fox-brag: link lines for sleet-den needs its one line']);
+  assert.deepEqual(bad({ 'sleet-den': '   ' }), ['card fox-brag: link lines for sleet-den needs its one line']);
+  assert.deepEqual(bad({ 'sleet-den': 7 }), ['card fox-brag: link lines for sleet-den needs its one line']);
+  assert.deepEqual(bad({ 'sleet-den': true, 'cant-fly': 'x' }), ['card fox-brag: link lines for sleet-den needs its one line', 'card fox-brag: link lines names a card its with does not: cant-fly']);
+  assert.deepEqual(bad({}), [], 'an empty object names nobody');
+  assert.deepEqual(bad(null), [], 'null is no lines');
+  assert.deepEqual(bad(undefined), [], 'no lines');
+  // a link drawn by its answers has no `with`, so any key of its `lines` is reported
+  const ansLines = { 'my-claim': { mark: 'ear', line: 'A claim.', answers: ['scale'], link: { line: 'Answered.', lines: { scale: 'Glass.' } } } };
+  assert.deepEqual(bad(undefined, ansLines), ['card my-claim: link lines names a card its with does not: scale']);
+});
+
+test('chapter 8’s words in the grown-ups corner and its speakers: foundHail, for a she-cat and a tom, and no route flag; Hail, Snip and Snatch named after chapter 7’s speakers, with their voices; every earlier voice as it was; no new face hidden', () => {
+  require('../app/ui.js');
+  const W = PC.ui.flagWords, Sp = PC.ui.speakers;
+  assert.deepEqual(W.foundHail, { 'true': 'found Hail in the hollow log in the Barking Field (later chapters remember)' });
+  const tom = E.blankCat({}); tom.look.sex = 'tom';
+  assert.equal(E.fill(W.foundHail.true, tom), W.foundHail.true, 'nothing in it changes for a tom');
+  assert.ok(!PC.ui.quietFlags.foundHail, 'listed among what she did');
+  assert.deepEqual(Object.keys(W).slice(-2), ['ch7Flew', 'foundHail'], 'chapter 8 adds one flag');
+  assert.ok(!('ch8Route' in W), 'the route is not recorded (spec section 1)');
+  assert.deepEqual(Object.keys(Sp.NAMES), ['tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth', 'riffle', 'otter', 'dog',
+    'sprinkle', 'murmurchime', 'reynard', 'squall', 'patience', 'puddle', 'wisp', 'coil', 'sloshbank', 'sleet', 'reedclan', 'hail', 'snip', 'snatch']);
+  assert.deepEqual([Sp.NAMES.hail, Sp.NAMES.snip, Sp.NAMES.snatch], ['Hail', 'Snip', 'Snatch']);
+  // the labels: the chapter's `names` until a balloon carries its own (spec section 5)
+  const names = { snip: 'A weasel', snatch: 'A weasel', hail: 'The speckled dragonet' };
+  const lab = (b, story) => Sp.label(b, { story, fill: t => t });
+  assert.deepEqual(['snip', 'snatch', 'hail'].map(who => lab({ who }, { names })), ['A weasel', 'A weasel', 'The speckled dragonet']);
+  assert.deepEqual([lab({ who: 'snip', name: 'Snip' }, { names }), lab({ who: 'snatch', name: 'Snatch' }, { names }), lab({ who: 'hail', name: 'Hail' }, { names }), lab({ who: 'hail', name: 'A white head' }, { names })],
+    ['Snip', 'Snatch', 'Hail', 'A white head']);
+  assert.deepEqual([lab({ who: 'dog', variant: 1, name: 'Good Boy' }, { names }), lab({ who: 'dog', variant: 2, name: 'Drop It' }, { names }), lab({ who: 'dog', variant: 3 }, { names }), lab({ who: 'dog', variant: 1, name: 'The dogs' }, { names })],
+    ['Good Boy', 'Drop It', 'The tiny dog', 'The dogs'], 'the dogs by their labels until their names (the tiny one keeps his)');
+  // Read to me: Hail bright and quick, Snip squeaky, Snatch a little lower, his mouth full
+  assert.deepEqual(['hail', 'snip', 'snatch'].map(w => [Sp.pitch(w), Sp.rate(w)]), [[1.5, 1.08], [1.65, 1.12], [1.35, 1.0]]);
+  const before = { tallyheart: [0.92, 0.95], glintstar: [0.85, 0.95], player: [1.2, 0.95], riffle: [1.5, 0.95], sprinkle: [1.38, 0.86], reynard: [0.8, 0.82], squall: [1.7, 1.02],
+    patience: [0.7, 0.8], puddle: [1.32, 1.05], wisp: [1.25, 0.95], coil: [0.72, 0.7], sloshbank: [0.62, 0.88], sleet: [1.45, 1.04], reedclan: [1.0, 0.95], clancat: [1.0, 0.95], murmurchime: [1.3, 0.95] };
+  Object.entries(before).forEach(([w, v]) => assert.deepEqual([Sp.pitch(w), Sp.rate(w)], v, w));
+  assert.deepEqual([1, 2, 3].map(v => Sp.pitch('dog', v)), [0.55, 0.95, 1.75], 'the dogs’ voices as they were');
+  // every new pose shows a face: no new faceHidden pose
+  const POSES8 = { hail: ['sit', 'stand', 'bounce', 'run', 'peek', 'pawup', 'tilt'], snip: ['stand', 'up', 'run', 'skid', 'peek', 'point', 'curl'], snatch: ['stand', 'up', 'run', 'skid', 'peek', 'point', 'curl'],
+    tallyheart: ['run'], player: ['run'], dog: ['lie'], reynard: ['trot'], riffle: ['scramble'] };
+  Object.entries(POSES8).forEach(([who, poses]) => poses.forEach(pose => assert.equal(Sp.faceHidden({ who, name: 'Somebody' }, { who, pose }), false, who + ' ' + pose)));
+  assert.equal(Sp.faceHidden({ who: 'sleet', name: 'The long grass' }, { who: 'sleet', pose: 'hidden' }), true, 'chapter 6’s as it was');
+});
+
+test('chapter 8’s Case File page: a row of four (the brag’s, for a cat who found Sleet) keeps each join’s line under its own join: the first kept left (`j0`), the last kept right (`j1`), the one between centred (`jm`); a pair and a row of three are lettered as they were', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const ui = fs.readFileSync(path.join(__dirname, '../app/ui.js'), 'utf8'), html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const m = /var side = function \(i\) \{ return (i === 0 \? 'j0' : i === joins\.length - 1 \? 'j1' : 'jm'); \};/.exec(ui);
+  assert.ok(m, 'ui.js names each join’s side');
+  const side = (joins, i) => eval(m[1]);   // the page's own expression, over a row's joins
+  const classes = n => Array.from({ length: n }, (_, i) => side(Array(n), i));
+  assert.deepEqual(classes(2), ['j0', 'j1'], 'a row of three: as chapter 5 lettered it (`j` + its index)');
+  assert.deepEqual(classes(3), ['j0', 'jm', 'j1'], 'a row of four');
+  assert.match(ui, /'<p class="cf-linkline ' \+ side\(i\) \+ '">'/);
+  // the page's CSS keeps j0 left and j1 right; nothing styles jm, so it takes the line's own centring
+  assert.match(html, /\.cf-linkline\{[^}]*text-align:center\}/);
+  assert.doesNotMatch(html, /\.jm\b[^{]*\{[^}]*text-align/, 'nothing moves the middle line off centre');
+  // and the engine hands the page the lines in order: the brag's row of four, three joins
+  const list = list8(), F = E.caseFile(holder8(list, HELD8, { ch7Flew: true, foundSleet: true }), list);
+  assert.deepEqual(classes(F.links[0].lines.length), ['j0', 'jm', 'j1']);
 });

@@ -201,7 +201,18 @@ Letter or A4.
   lesson, where a stray tap would leave a question (the bar's ‹ still works there). The game saves
   on every frame and resumes where she left off.
 - **Read to me** (off by default; she reads herself): speech synthesis reads captions and
-  balloons. **Bigger text** toggle.
+  balloons. **Bigger text** toggle. Where the screen has little room (an iPad held sideways 1132px
+  wide or narrower, or 800px tall or shorter, and taller than a phone's 500px; any screen held upright)
+  the words beside or under the picture are 1.14 times plain instead of 1.2, on tighter lines (1.25;
+  1.2 under 720px tall, Safari's tab bar showing) and in snugger boxes, so Back and Next share one row
+  (a longer row, as on a chapter's last two pages or a Counts page, still wraps upward, Back keeping
+  the bottom left) and
+  every button, option and keypad stays on the screen without scrolling; upright, the options keep
+  Bigger text's 54px, the stacked parts are a little closer, and so are the balloons under the
+  picture, in snugger balloons. On a skip-count, on any screen, its "Tap to…"
+  line sits beside Back while she counts. Nothing is sticky (a page of choices keeps Back under its
+  options), and the panel and its words, and every page without Bigger text, are unchanged (index.html,
+  "Bigger text where the screen has little room"; tests/aa-room.test.js).
 - **The Training Hollow**, once chapter 1 is done: practise the 1s again, any time. A full round
   earns a nest treasure (moss, a feather, a shell, a shiny pebble …) shown in **My nest**; the
   claw mark on the tree glows after three rounds without help.

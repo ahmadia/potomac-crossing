@@ -607,6 +607,50 @@ html.file-open,html.file-open body{overflow:hidden}
   /* a frame that gives her a card: the panel leaves room under it for the card and the buttons */
   .frame.solo.has-card .panel,.frame.solo.has-card .col{width:min(100%, calc((100dvh - var(--bar) - var(--st) - 252px) * 1.6))}
 }
+/* Bigger text where the screen has little room: an iPad held sideways that is narrow (the text column
+   under about 360px, where Back and Next at full Bigger text no longer fit side by side and wrap to two
+   rows) or short (Safari's toolbar on a 10.2-inch iPad leaves about 1080 x 720), and any screen held
+   upright (the picture's full width stands over the words). There the column's words are set a little
+   smaller (1.14 times plain, not 1.2; still clearly bigger than without Aa), on tighter lines, in
+   snugger boxes, and Back and Next keep one row, so every button stays on the screen without
+   scrolling. Only the words beside or under the picture change: the panel, the words in it and every
+   page without Aa are exactly as before. (Phones held sideways have their own block below.) */
+@media (orientation: portrait),
+       (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-width: 1132px),
+       (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 800px){
+  html.big .frame .col{font-size:calc(var(--fs) * 1.14);line-height:1.25}
+  html.big .frame .col-top{gap:8px}
+  html.big .frame .interact,html.big .frame .choices{gap:10px}
+  html.big .frame .caption{padding:.38em .62em}
+  html.big .frame .sb{padding:.42em .78em .46em}
+  html.big .frame .choice{padding-top:.22em;padding-bottom:.22em}
+  html.big .frame .next-row,html.big .frame .row.end{gap:10px}
+  html.big .frame .next-row .btn.big,html.big .frame .row.end .btn.big{padding:.25em .6em}
+  html.big .frame .cn-line{padding:.28em .62em .32em}
+}
+/* (an iPad held sideways under 720px tall: Safari with its tab bar showing leaves about 1080 x 700 on a
+   10.2-inch iPad; the column's lines a little closer still) */
+@media (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 719px){
+  html.big .frame .col{line-height:1.2}
+}
+/* (upright, the picture, the words and the buttons are stacked: a little less between them, the
+   options at least 54px tall, as Bigger text has them on an iPad held sideways, and the balloons
+   stacked under the picture a little closer and snugger: without them ch06 f100, four balloons over
+   two options, kept Back 18px below the screen of an 810 x 1080 iPad) */
+@media (orientation: portrait){
+  html.big .frame{gap:10px}
+  html.big .frame .choice{min-height:54px}
+  html.big .frame .stack{gap:8px}
+  html.big .frame .sb{padding:.34em .74em .38em}
+}
+/* Bigger text on a skip-count, on any screen: its count grows a line at a time as she taps (ch05
+   f049, with a caption and two balloons above it, ran Back below the screen even on a 1194 x 834
+   iPad), so its "Tap to…" line sits beside Back, not over it, and its balloons are a little closer */
+html.big .frame[data-kind="skip"] .interact:has(> .tapline:first-child + .next-row:last-child){flex-direction:row-reverse;align-items:center}
+html.big .frame[data-kind="skip"] .interact:has(> .tapline:first-child + .next-row:last-child) > .tapline{flex:1 1 0;min-width:0;margin:0;text-align:right;line-height:1.15}
+html.big .frame[data-kind="skip"] .interact:has(> .tapline:first-child + .next-row:last-child) > .next-row{flex:none}
+html.big .frame[data-kind="skip"] .col,html.big .frame[data-kind="skip"] .stack{gap:8px}
+html.big .frame[data-kind="skip"] .stack .sface{width:44px;height:44px}
 @media (orientation: landscape) and (min-width: 700px) and (max-height: 500px){
   :root{--bar:48px}
   .iconbtn{width:40px;height:40px}

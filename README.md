@@ -477,6 +477,28 @@ Each is Aron's to reverse.
   in ch04 f046 and the border-fox close-ups drawing by depth would hide a face. tests/set-pile.test.js
   holds the pile's `wide` camera to it. The small cases elsewhere (ch04 f043; ear tips, a tail and
   shadow edges in ch01, ch04 f028, ch06 f069 and ch07 f067) wait for a later batch.
+- **Bigger text fits the screen it is on** (2026-10-26, after Charlie's 10.2-inch iPad): with Aa on and
+  the iPad held sideways at 1080 x 720, Back and Next wrapped to two rows on 167 pages, and Back (Next
+  too on ch04 f085a, ch05 f031a, ch07 f050, ch08 f049, f087) ran below the screen on 16, and on ch05
+  f049 while she counts. The call is CSS alone, and Aa alone. Where the screen has little room (sideways
+  1132px wide or less or 800px tall or less; any screen upright) the words beside or under the picture
+  are 1.14 times plain, not 1.2 (25px where Aa off is 22), on tighter lines (1.2 under 720px tall) and
+  in snugger boxes; upright, options keep Aa's 54px and the balloons under the picture sit closer; on a
+  skip-count her "Tap to…" line sits beside Back. Why this one: of the designs measured it alone keeps
+  every control on the screen without touching the picture, and nothing changes with Aa off. Measured
+  in WebKit over every frame of chapters 1 to 8, every Taps page tapped through, every Counts keypad and
+  the other screens, at 13 iPad and phone sizes: with Aa on no button, option or key is below the screen
+  as each page opens (the look chooser's swatches, and the hub's, book's, nest's and Case File's lists,
+  scroll as before), except three left for a second round: ch04 f115 for a noticing cat (two cards
+  under the picture; Back and Next below at 1080 x 720 and 1133 x 744), a Counts page already counted
+  (Back, Count them again and Next stack, Back 1 to 5px under a 720 fold), and the Case File's last row
+  with Aa on (and its middle column breaking a long name mid-word);
+  with Aa off every page is as it was, box for box at every size and pixel for pixel at 1080 x 720 and
+  810 x 1080. Turned down: a smaller picture beside long pages (130 lines of layout code, a picture that
+  changes size page to page, ch06 f100 still cut) and a pinned button strip (it hides words, and a page
+  of choices keeps Back below, chapter 4's reason). Still cut, at sizes outside the 13: upright in Safari
+  (810 x 1010) Back on ch01 f014, ch04 f095 and ch06 f100 (f014 and f100 worse with Aa off), and at
+  1024 x 700 ch08 f087 by 16px. Upright choice pages want a portrait layout change, Aa off too: Aron's.
 
 ## Open questions, waiting on Aron
 

@@ -33,6 +33,12 @@
  *
  *   node tests/fixtures/make-ch07-golden.js --diff DIR   writes the whole of each run as today's tree plays
  *   it to DIR/now-N.json (with GOLDEN_ROOT at the snapshot: as that tree plays it, to DIR/then-N.json), to diff.
+ *
+ * Re-recorded 2026-10-25 for the depth hotfix (Charlie's bug, chapter 8 f030: a cat further back was
+ * drawn over a nearer cat's face). The copy of the snapshot had the cast lists of ch06 f004, f107, f109
+ * and ch07 f018, f021, f077, f079, f080, f081, f082 put back to front (the cat at `crowd-2` first), as
+ * the live tree has them; nothing else. Only those frames' `shown` digests and `recorded` moved.
+ * Record again the same way.
  * Not a test file.
  */
 'use strict';

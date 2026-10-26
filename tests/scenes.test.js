@@ -3584,6 +3584,8 @@ function ch7Fingerprint(PC, page, crypto, extras) {
 }
 // </ch7-fingerprint>
 
+// ('ch06/pile' recorded again on 2026-10-25 for the depth hotfix: ch06 f004, f107 and f109 list the cat at
+// `crowd-2` first, so the one further back is drawn under the nearer cats; tests/set-pile.test.js, the end)
 const CH7_FINGERPRINT = {
   'ch01/room': 'cf825a01bd38', 'ch01/tower': '2a616c069d47', 'ch01/garden': 'cf2137f8e9eb', 'ch01/camp': 'f40e5855d370',
   'ch01/hollow': 'c4abb94db607', 'ch01/den': '568f080f23ed', 'ch01/sky': 'b59ef7613441', 'ch01/river': '174102393782', 'ch02/den': '4f8a3a50cd3a',
@@ -3596,7 +3598,7 @@ const CH7_FINGERPRINT = {
   'ch04/title': '9f0b895c57ca', 'ch04/garden': '304a6894c4b3', 'ch04/tower': '93d27baac159', 'ch04/riverbank': '6844e41f92eb',
   'ch04/bridge': 'f7aa2d5c7e58', 'ch04/roof': 'ef460b3e5a7a', 'ch05/pile': 'a77a3e2e5fe4', 'ch05/hollow': '71c179b3e020',
   'ch05/tower': '85ca16331cc0', 'ch05/roof': '6a6e4ca36158', 'ch05/crossing': '7edbe5fab476', 'ch05/openriver': 'b9f739e462be',
-  'ch05/marsh': 'c92a1e88baaa', 'ch05/bridge': 'a90d977e115d', 'ch05/den': 'b910b0ab1c06', 'ch06/pile': 'c0561d0cae2b',
+  'ch05/marsh': 'c92a1e88baaa', 'ch05/bridge': 'a90d977e115d', 'ch05/den': 'b910b0ab1c06', 'ch06/pile': 'b52666f8502c',
   'ch06/hollow': '2a346b12ffab', 'ch06/title': '3378c0228d32', 'ch06/field': '8b96e3d40662', 'ch06/bridge': '575e6d26d8f5',
   'ch06/den': 'aa0000c75631', 'ch06/sky': '511b3bc100be', 'gallery/room/wide': '9ca5890994ac', 'gallery/room/cushion': '4b68d25db677',
   'gallery/room/glass': 'ce0ebb9cfddb', 'gallery/room/outside': '8fd28f7de379', 'gallery/tower/up': '41c1068decda',

@@ -1391,7 +1391,7 @@ test('staging, the Old Bridge (kept): the stone leg and Coil a stone at his gap;
 
 test('staging, dusk and round the back of the pile: the half moon high at dusk; then night, the roots lifted and the mouth open, the guards small at the front facing out; the friend at `rear-2` (Tallyheart at `poke` with her nose at the rim, Riffle at `poke` on all fours); the route chosen at the brink; the mouth the Tap only where she wriggles in', () => {
   assert.deepEqual([camOf(DUSK), frames[DUSK].scene.fx, frames[DUSK].scene.opts], ['pile/wide', ['dusk'], { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 8, tap: 'back' }]);
-  assert.deepEqual(castOf(DUSK, 'clancat').map(c => [c.at, c.facing]), [['beside', 'right'], ['crowd-2', 'right'], ['crowd-3', 'right']], 'the first guards facing out over the camp');
+  assert.deepEqual(castOf(DUSK, 'clancat').map(c => [c.at, c.facing]), [['crowd-2', 'right'], ['beside', 'right'], ['crowd-3', 'right']], 'the first guards facing out over the camp (the one further back drawn first, under the walker)');
   assert.deepEqual(DUSK && frames[DUSK].scene.cast.filter(c => c.who !== 'clancat').map(c => [c.who, c.at]), [['player', 'pile-left']], 'our cat alone near the pile');
   const rear = ids.filter(id => camOf(id) === 'pile/rear');
   rear.forEach(id => {

@@ -281,9 +281,9 @@
     f009: {
       // nobody is blamed: the guards look at their paws (`shy`), nobody is stern
       scene: S('pile', 'wide', PILE_GAP,
-        [c('glintstar', 'stand', 'kind', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'),
-         c('player', 'sit', 'wonder', 'pile-left', 'right'), c('clancat', 'sit', 'shy', 'beside', 'left', { variant: 2 }),
-         c('clancat', 'sit', 'shy', 'crowd-2', 'left', { variant: 4 }), c('grizzled', 'sit', 'sad', 'crowd-3', 'left', { holds: 'pinecone', holdAt: 'paws' })], ['morning']),
+        [c('clancat', 'sit', 'shy', 'crowd-2', 'left', { variant: 4 }), c('glintstar', 'stand', 'kind', 'fountain-edge', 'left'),
+         c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'), c('player', 'sit', 'wonder', 'pile-left', 'right'),
+         c('clancat', 'sit', 'shy', 'beside', 'left', { variant: 2 }), c('grizzled', 'sit', 'sad', 'crowd-3', 'left', { holds: 'pinecone', holdAt: 'paws' })], ['morning']),
       board: 'WIDE. The guards sit with their heads down, looking at their own paws, while Glintstar on the fountain’s edge speaks calmly to all of them; at the front the old tom clutches his pinecone and groans at the size of the number. The gap sits in the middle of the back row. Caption top left; her balloon level, his a groan.',
       caption: ['The guards look at their paws.'],
       say: [
@@ -525,7 +525,7 @@
     f030: {
       // written once: on the told path Tallyheart is already behind the back row
       scene: S('pile', 'wide', DUSK,
-        [c('clancat', 'walk', 'neutral', 'beside', 'right', { variant: 2 }), c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }),
+        [c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }), c('clancat', 'walk', 'neutral', 'beside', 'right', { variant: 2 }),
          c('clancat', 'sit', 'neutral', 'crowd-3', 'right', { variant: 3 }), c('player', 'stand', 'wonder', 'pile-left', 'right')], ['dusk']),
       board: 'WIDE, DUSK, THE TAP PICTURE. The sun is going down over the pile and the first guards pad out to their places round the front, all facing out over the camp; high in the sky a bright half moon is already out, and the camp begins to turn silver. Our cat stands alone at the left end of the rows. In play the back row glows softly; one tap slips our cat round behind it and turns the page. Captions top left.',
       caption: ['The sun goes down, and the first guards take their places, facing out.', 'High in the sky, the moon is already out: a bright half moon. The camp turns silver.'],

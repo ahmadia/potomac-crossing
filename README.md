@@ -467,6 +467,17 @@ Each is Aron's to reverse.
   6. Sprinkle practises and lifts off for a few wingbeats; whether her wing holds is the Gathering's.
      Glintstar is told everything on the last evening, and says the apprentice will speak.
 
+- **Casts are listed back to front where cats meet** (2026-10-25, the depth hotfix): Charlie found the
+  far grey guard drawn over the near black guard's face on chapter 8's f030. The art draws each layer
+  of a cast in the order it is listed, never by depth, so twelve live pile frames (ch06 f004, f107,
+  f109; ch07 f018, f021, f077, f079 to f082; ch08 f009, f030) now list the cat at `crowd-2` first, and
+  nothing else moved. A set fix (`crowd-2` drawn behind) was turned down, because it also rewrites
+  shipped frames that were already right (ch02 f026, f031a and f032) and moves a shadow edge in ch08
+  f005. A depth sort in the engine was turned down too: some overlaps are meant (ch05 f154, nose to ear), and
+  in ch04 f046 and the border-fox close-ups drawing by depth would hide a face. tests/set-pile.test.js
+  holds the pile's `wide` camera to it. The small cases elsewhere (ch04 f043; ear tips, a tail and
+  shadow edges in ch01, ch04 f028, ch06 f069 and ch07 f067) wait for a later batch.
+
 ## Open questions, waiting on Aron
 
 Nothing here blocks the chapter being built; each chapter's own questions are in its text, under

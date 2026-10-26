@@ -1987,6 +1987,8 @@ test('chapter 8: the spec names the pile\'s `poke`, `tap: \'mouth\'` and the nig
 // E.resolveScene for a fixed cat, rendered with LOOK; sha1 (12 hex) of the markup with the per-render ids taken
 // out, the keep list and the heads. Recorded once from /Users/aron/potomac-crossing-work/ch08/shipped (engine
 // 0.7.0) in a node process of its own. Chapter 6's `wide` and `low` at night and chapter 7's dusk frames among them.
+// The depth hotfix of 2026-10-25 (Charlie's bug, the last test in this file) moved ten, recorded again on the fixed tree:
+// ch06 f004, f107, f109 and ch07 f018, f021, f077, f079, f080, f081, f082 (the cat at `crowd-2` drawn first).
 const CH8_PILE_FINGERPRINT = {
   'ch02:f026': '65b61015e604', 'ch02:f027': '611043434b33', 'ch02:f028': '9fd55913383d', 'ch02:f029': '4cd9245479fc',
   'ch02:f031a': '412cc66456de', 'ch02:f031b': 'c85a910173d0', 'ch02:f032': '81d67c0aa92b',
@@ -2000,14 +2002,14 @@ const CH8_PILE_FINGERPRINT = {
   'ch04:f031': 'd5f43c6bba0e', 'ch04:f111': '5df05e238004', 'ch05:f001': '5b004ec20095', 'ch05:f002': '6863f9670b02',
   'ch05:f003': 'ac21e526a2ca', 'ch05:f004': 'ac21e526a2ca', 'ch05:f005': '3a1b59276e70', 'ch05:f006': '8a19c7743774',
   'ch05:f007': 'd5a16c145715', 'ch05:f008': '65b10929dbf3', 'ch05:f009': '6cb83f3509b1', 'ch05:f010': 'aa0dc6227282',
-  'ch06:f001': 'a9454a77042a', 'ch06:f002': '8f18f5a0a29a', 'ch06:f003': 'ac21e526a2ca', 'ch06:f004': 'fdf1ac91189d',
-  'ch06:f107': 'e0d76b497b2f', 'ch06:f108': '55946189ea56', 'ch06:f109': '17166b6ce12e', 'ch06:f110': 'c44f05431c9e',
+  'ch06:f001': 'a9454a77042a', 'ch06:f002': '8f18f5a0a29a', 'ch06:f003': 'ac21e526a2ca', 'ch06:f004': 'da92fa83ac9e',
+  'ch06:f107': '04e89498971c', 'ch06:f108': '55946189ea56', 'ch06:f109': 'ba3e0c03d7b7', 'ch06:f110': 'c44f05431c9e',
   'ch06:f111': '7828dbd5f12b', 'ch06:f112': 'c99bc4ed519c', 'ch06:f113': '2172dc400e8e', 'ch06:f114': '8d3cab23eeb7',
   'ch06:f115': '3146cf5e7647', 'ch06:f116': 'e8221690ff6d', 'ch06:f117': 'a476868dcce0', 'ch06:f118': '97b730d33186',
   'ch07:f014': 'c1629e50c3f2', 'ch07:f015': '6a1acba0d34b', 'ch07:f016': 'ac21e526a2ca', 'ch07:f017': '1e8da37f3199',
-  'ch07:f018': '90e4dffa62d9', 'ch07:f019': '24cbd248111a', 'ch07:f020': '8019a42b6851', 'ch07:f021': '947d99ce9823',
-  'ch07:f022': '7b67f750178a', 'ch07:f077': 'c02be87644f1', 'ch07:f078': 'a5469ef07f69', 'ch07:f079': 'a9be20cf84bb',
-  'ch07:f080': '05e33991b742', 'ch07:f081': 'a6a85feb85ca', 'ch07:f082': '33c42a2ae029', 'ch07:f083': 'af81bc33897d',
+  'ch07:f018': '67a7d714e609', 'ch07:f019': '24cbd248111a', 'ch07:f020': '8019a42b6851', 'ch07:f021': '4d54166e24c2',
+  'ch07:f022': '7b67f750178a', 'ch07:f077': '4ca2f093fecf', 'ch07:f078': 'a5469ef07f69', 'ch07:f079': '0d205dda7332',
+  'ch07:f080': '549ba3e2067b', 'ch07:f081': 'ba49249d24bc', 'ch07:f082': '99dfbca7f20c', 'ch07:f083': 'af81bc33897d',
   'ch07:f084': '23b9b312f0aa', 'ch07:f085': '6da54d065b60', 'ch07:f086': '8e7cce050eed', 'ch07:f087': 'fee28354eb32',
   'ch07:f088': '760b6ac5bdd2', 'ch07:f089a': 'c42b78420e64', 'ch07:f089b': '6da54d065b60',
   'ch07:f090': '4a1f4c0f13c5', 'ch07:f091a': 'c42b78420e64', 'ch07:f091b': '6da54d065b60',
@@ -2175,4 +2177,43 @@ test('chapter 8: whatever chapter 8 puts at the pile renders, uses the vocabular
     if (f.scratch && f.scratch.tap === 'mouth') assert.equal(tapsOf(r.svg).filter((q) => q.name === 'mouth').length, 1, id + ': the wriggle-in Tap finds the mouth');
   }
   t.diagnostic(frames.length + ' frames at the pile');
+});
+
+// ================================================================ the depth hotfix (2026-10-25): Charlie's bug
+// Charlie (a player) found it on chapter 8's f030, the pile at dusk: the sitting grey guard at `crowd-2`, further
+// back, was drawn over the face of the walking black guard at `beside`, nearer. scenes.js draws a layer's cast in
+// the order it is listed and never sorts by depth, so a cast is listed back to front wherever two cats meet. On the
+// pile's `wide` camera, for every pair of cats on the ground in the same layer where the one further back (its feet
+// higher up the panel) reaches the nearer one's head, the one further back is drawn first: its group comes first in
+// the markup. Twelve live frames had it the other way round, each now fixed by putting the `crowd-2` cat first.
+
+const DEPTH_FIXED = ['ch06:f004', 'ch06:f107', 'ch06:f109', 'ch07:f018', 'ch07:f021', 'ch07:f077', 'ch07:f079', 'ch07:f080', 'ch07:f081', 'ch07:f082', 'ch08:f009', 'ch08:f030'];
+
+test('the depth hotfix (Charlie\'s bug, ch08 f030): on the pile\'s `wide` camera a cat further back is never drawn over a nearer cat\'s head; the twelve frames that had it draw the cat at `crowd-2` first', { skip: !art.character && 'no cats.js' }, (t) => {
+  const E = PC.engine, cat = fpCat8(), A = art.sceneInfo('pile').anchors.main;
+  const stories = Object.keys(PC.story).sort().map((id) => PC.story[id]);
+  const met = new Set(), bad = [];
+  let frames = 0, pairs = 0;
+  for (const st of stories) for (const [fid, f] of Object.entries(st.frames)) {
+    if (!f.scene || f.scene.set !== 'pile' || f.scene.cam !== 'wide' || f.board === 'STUB.') continue;
+    frames++;
+    const sc = E.resolveScene(f.scene, cat, stories), r = art.render(sc, { look: LOOK });
+    const ground = (sc.cast || []).filter((m) => m && typeof m.at === 'string' && A[m.at] && !A[m.at].elev).map((m) => {
+      const a = A[m.at], at = r.svg.indexOf('<g transform="translate(' + a.x + ' ' + a.y + ')');
+      assert.ok(at >= 0, st.id + ' ' + fid + ': ' + m.who + ' drawn at `' + m.at + '`');
+      return { m, a, at, box: bodyAt(m, a) };
+    });
+    for (const near of ground) for (const far of ground) {
+      if (far.a.y >= near.a.y || (far.a.z || 'front') !== (near.a.z || 'front') || !meets7(far.box.body, near.box.head)) continue;
+      pairs++; met.add(st.id + ':' + fid);
+      if (far.at > near.at) bad.push(st.id + ' ' + fid + ': ' + far.m.who + ' at `' + far.m.at + '` is drawn over ' + near.m.who + '\'s head at `' + near.m.at + '`');
+    }
+  }
+  assert.deepEqual(bad, [], 'listed back to front where they meet');
+  for (const id of DEPTH_FIXED) assert.ok(met.has(id), id + ': the cat at `crowd-2` reaches a nearer cat\'s head, and is drawn first');
+  for (const id of DEPTH_FIXED) {
+    const [ch, fid] = id.split(':'), cast = PC.story[ch].frames[fid].scene.cast;
+    assert.equal(cast[0].at, 'crowd-2', id + ': the cat further back listed first');
+  }
+  t.diagnostic(frames + ' frames on `wide`, ' + pairs + ' pairs that meet');
 });

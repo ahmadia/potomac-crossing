@@ -1432,7 +1432,9 @@ test('the build review’s fixes (integration round 1): the pictures say what th
   // our cat: “Nobody is looking at you.”
   const duskWide = ids.filter(id => frames[id].scene.set === 'pile' && frames[id].scene.cam === 'wide' && frames[id].scene.fx.includes('dusk') && castOf(id, 'clancat').length);
   assert.equal(duskWide.length, 4);
-  duskWide.forEach(id => assert.deepEqual(castOf(id, 'clancat').map(c => [c.at, c.facing]), [['beside', 'right'], ['crowd-2', 'right'], ['crowd-3', 'right']], id));
+  // (listed back to front: the one at `crowd-2`, further back, is drawn first, under the guard at `beside`:
+  // the depth hotfix of 2026-10-25, Charlie's bug on chapter 8's f030, the same picture)
+  duskWide.forEach(id => assert.deepEqual(castOf(id, 'clancat').map(c => [c.at, c.facing]), [['crowd-2', 'right'], ['beside', 'right'], ['crowd-3', 'right']], id));
   // she leans to Tallyheart, behind her at the left end, to whisper
   const want = F(/I want to see the back\.$/), tal = castOf(want, 'tallyheart')[0], me = castOf(want, 'player')[0], A0 = A.sceneInfo('pile').anchors.main;
   assert.ok(A0[tal.at].x < A0[me.at].x && me.facing === 'left' && tal.facing === 'right', 'face to face');

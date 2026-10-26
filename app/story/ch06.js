@@ -203,9 +203,9 @@
 
     f004: {
       scene: S('pile', 'wide', PILE_GAP,
-        [c('glintstar', 'stand', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'),
+        [c('murmurchime', 'sit', 'stern', 'crowd-2', 'left'), c('glintstar', 'stand', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'),
          c('player', 'sit', 'worried', 'pile-left', 'right'), c('snorter', 'sit', 'proud', 'crowd-1', 'right'),
-         c('murmurchime', 'sit', 'stern', 'crowd-2', 'left'), c('grizzled', 'sit', 'sleepy', 'crowd-3', 'left', { holds: 'pinecone', holdAt: 'paws' })], ['morning']),
+         c('grizzled', 'sit', 'sleepy', 'crowd-3', 'left', { holds: 'pinecone', holdAt: 'paws' })], ['morning']),
       board: 'WIDE. Cats crowd in round the rows, and Glintstar rises on the fountain’s edge at the right, silver and still, to say the count out loud for the whole Clan. At the left the black-and-white apprentice puffs out his chest, quite sure he knows where the prey is going, and across the pile the little tortoiseshell warrior narrows her eyes and mutters her own idea. Glintstar’s balloon cool and level; his cheerful, the last word enormous; hers a mutter.',
       say: [
         { who: 'glintstar', text: 'Four more. Twenty pieces in five nights. Tonight, the pile gets proper guards.' },
@@ -1510,9 +1510,9 @@
 
     f107: {
       scene: S('pile', 'wide', EVE,
-        [c('glintstar', 'stand', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'),
+        [c('snorter', 'sit', 'proud', 'crowd-2', 'right'), c('glintstar', 'stand', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'),
          c('player', 'sit', 'wonder', 'pile-left', 'right'), c('murmurchime', 'sit', 'wonder', 'crowd-1', 'right'),
-         c('snorter', 'sit', 'proud', 'crowd-2', 'right'), c('grizzled', 'sit', 'scared', 'crowd-3', 'left')], ['sunset']),
+         c('grizzled', 'sit', 'scared', 'crowd-3', 'left')], ['sunset']),
       board: 'WIDE, SUNSET. The whole Clan sits in a ring round the prey pile in the orange light, forty pieces in four full rows, and Glintstar on the fountain’s edge gives them ReedClan’s news. The grizzled old tom throws up his paws, quite sure he knows who to blame. Caption top left; her balloon level; his outraged.',
       caption: ['At sunset, the whole Clan sits round the prey pile. Forty pieces, in four rows.'],
       say: [
@@ -1536,9 +1536,9 @@
     f109: {
       // her balloon is said again over the question; the right line is the old tom's
       scene: S('pile', 'wide', EVE,
-        [c('glintstar', 'sit', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'stand', 'kind', 'pile-right', 'left'),
+        [c('snorter', 'sit', 'wonder', 'crowd-2', 'right'), c('glintstar', 'sit', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'stand', 'kind', 'pile-right', 'left'),
          c('player', 'sit', 'wonder', 'pile-left', 'right'), c('murmurchime', 'sit', 'happy', 'crowd-1', 'right'),
-         c('snorter', 'sit', 'wonder', 'crowd-2', 'right'), c('grizzled', 'sit', 'sleepy', 'crowd-3', 'left')], ['sunset']),
+         c('grizzled', 'sit', 'sleepy', 'crowd-3', 'left')], ['sunset']),
       board: 'WIDE, SUNSET, THEN THE COUNTS. Tallyheart stands up by the rows and lays out the night for the whole Clan, sweeping one paw round the pile from sunset to sunrise. In the Counts picture six patrols of three walk along a path, none lit; after a miss she scratches three lines a patrol in the earth beside the pile and hops along them. Her balloon clear and practical; the keypad sits below the panel.',
       say: [{ who: 'tallyheart', text: 'Tonight, our guards do the same. Six patrols, one after another, sunset to sunrise. Three cats in every one.' }],
       counts: { set: 'ch06-guards', next: 'f110' }

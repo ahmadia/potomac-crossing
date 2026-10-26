@@ -337,9 +337,9 @@
 
     f018: {
       scene: S('pile', 'wide', PILE_GAP,
-        [c('glintstar', 'stand', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'),
+        [c('clancat', 'sit', 'shy', 'crowd-2', 'left', { variant: 4 }), c('glintstar', 'stand', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'),
          c('player', 'sit', 'worried', 'pile-left', 'right'), c('murmurchime', 'stand', 'shout', 'crowd-1', 'right'),
-         c('clancat', 'sit', 'shy', 'beside', 'left', { variant: 2 }), c('clancat', 'sit', 'shy', 'crowd-2', 'left', { variant: 4 }),
+         c('clancat', 'sit', 'shy', 'beside', 'left', { variant: 2 }),
          c('grizzled', 'sit', 'sad', 'crowd-3', 'left', { holds: 'pinecone', holdAt: 'paws' })], ['morning']),
       board: 'WIDE. Cats crowd round the rows in the morning light and the little tortoiseshell warrior bounces up indignantly at the left, sure she kept her eyes open all night, then admits to one tiny blink with a pinch of two claws. Glintstar stands silver and still on the fountain’s edge. Caption top left; her balloon loud, the last bit sheepish.',
       caption: ['Still tidy. Still the back.'],
@@ -370,9 +370,9 @@
 
     f021: {
       scene: S('pile', 'wide', PILE_GAP,
-        [c('glintstar', 'stand', 'kind', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'),
+        [c('clancat', 'sit', 'neutral', 'crowd-2', 'left', { variant: 4 }), c('glintstar', 'stand', 'kind', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'solemn', 'pile-right', 'left'),
          c('player', 'stand', 'wonder', 'pile-left', 'right'), c('murmurchime', 'sit', 'shy', 'crowd-1', 'right'),
-         c('clancat', 'sit', 'shy', 'beside', 'left', { variant: 2 }), c('clancat', 'sit', 'neutral', 'crowd-2', 'left', { variant: 4 }),
+         c('clancat', 'sit', 'shy', 'beside', 'left', { variant: 2 }),
          c('grizzled', 'sit', 'sad', 'crowd-3', 'left', { holds: 'pinecone', holdAt: 'paws' })], ['morning']),
       board: 'WIDE. Glintstar speaks from the fountain’s edge, calm and kind, to the guards as much as to anybody, and their heads come up a little; then our cat stands up at the front of the crowd and asks the one question nobody has an answer for. The gap sits in the middle of the back row. Her balloon level; our cat’s a puzzled shout.',
       say: [
@@ -1019,9 +1019,9 @@
 
     f077: {
       scene: S('pile', 'wide', EVE,
-        [c('glintstar', 'stand', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'proud', 'pile-right', 'left'),
+        [c('snorter', 'sit', 'wonder', 'crowd-2', 'right'), c('glintstar', 'stand', 'solemn', 'fountain-edge', 'left'), c('tallyheart', 'sit', 'proud', 'pile-right', 'left'),
          c('player', 'sit', 'proud', 'pile-left', 'right'), c('murmurchime', 'sit', 'wonder', 'crowd-1', 'right'),
-         c('snorter', 'sit', 'wonder', 'crowd-2', 'right'), c('grizzled', 'sit', 'sleepy', 'crowd-3', 'left')], ['sunset']),
+         c('grizzled', 'sit', 'sleepy', 'crowd-3', 'left')], ['sunset']),
       board: 'WIDE, SUNSET. The whole Clan sits in a ring round the prey pile in the orange light, forty pieces in four full rows again, and Glintstar on the fountain’s edge asks for the count; our cat answers out loud for everyone, steady and clear. Caption top left; her balloon level; our cat’s sure.',
       caption: ['At sunset, the Clan sits round the pile again. Forty pieces, in four rows.'],
       say: [
@@ -1052,7 +1052,7 @@
       // turns to Tallyheart, behind her at the left end, to whisper
       when: TOLD,
       scene: S('pile', 'wide', MOON,
-        [c('clancat', 'walk', 'neutral', 'beside', 'right', { variant: 2 }), c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }),
+        [c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }), c('clancat', 'walk', 'neutral', 'beside', 'right', { variant: 2 }),
          c('clancat', 'sit', 'neutral', 'crowd-3', 'right', { variant: 3 }), c('tallyheart', 'sit', 'kind', 'crowd-1', 'right'),
          c('player', 'sit', 'wonder', 'pile-left', 'left')], ['dusk']),
       board: 'WIDE, DUSK, THE TOLD PATH ONLY. The light is going over the pile; the first guards pad out to their places round the front, and over the towers the moon comes out, fatter than last night. At the left end of the rows our cat leans to Tallyheart and whispers. Caption top left; our cat’s balloon a whisper.',
@@ -1064,7 +1064,7 @@
     f080: {
       when: KEPT,
       scene: S('pile', 'wide', MOON,
-        [c('clancat', 'walk', 'neutral', 'beside', 'right', { variant: 2 }), c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }),
+        [c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }), c('clancat', 'walk', 'neutral', 'beside', 'right', { variant: 2 }),
          c('clancat', 'sit', 'neutral', 'crowd-3', 'right', { variant: 3 }),
          c('player', 'sit', 'wonder', 'pile-left', 'right')], ['dusk']),
       board: 'WIDE, DUSK, THE KEPT PATH ONLY. The light is going over the pile; the first guards pad out to their places round the front, and over the towers the moon comes out, fatter than last night. At the left end of the rows our cat sits alone, looking at the dark back row. One caption at the top.',
@@ -1075,7 +1075,7 @@
     f081: {
       when: TOLD,
       scene: S('pile', 'wide', merge(MOON, { tap: 'back' }),
-        [c('clancat', 'sit', 'neutral', 'beside', 'right', { variant: 2 }), c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }),
+        [c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }), c('clancat', 'sit', 'neutral', 'beside', 'right', { variant: 2 }),
          c('clancat', 'sit', 'neutral', 'crowd-3', 'right', { variant: 3 }), c('tallyheart', 'stand', 'wonder', 'crowd-1', 'right'),
          c('player', 'stand', 'wonder', 'pile-left', 'right')], ['dusk']),
       board: 'WIDE, DUSK, THE TOLD PATH ONLY, THE TAP PICTURE. Tallyheart’s ears shoot straight up and she gets to her feet beside our cat, ready; the guards face out over the camp and nobody looks round. In play the back row glows softly; one tap walks the two of them round behind it and turns the page. Caption top left; her balloon a low whisper.',
@@ -1087,7 +1087,7 @@
     f082: {
       when: KEPT,
       scene: S('pile', 'wide', merge(MOON, { tap: 'back' }),
-        [c('clancat', 'sit', 'neutral', 'beside', 'right', { variant: 2 }), c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }),
+        [c('clancat', 'sit', 'neutral', 'crowd-2', 'right', { variant: 4 }), c('clancat', 'sit', 'neutral', 'beside', 'right', { variant: 2 }),
          c('clancat', 'sit', 'neutral', 'crowd-3', 'right', { variant: 3 }),
          c('player', 'stand', 'wonder', 'pile-left', 'right')], ['dusk']),
       board: 'WIDE, DUSK, THE KEPT PATH ONLY, THE TAP PICTURE. The guards are still settling in round the front of the pile, close enough to call, all facing out over the camp; our cat gets up quietly at the left end of the rows. In play the back row glows softly; one tap slips our cat round behind it and turns the page. Captions top left, the last for a sneaking cat.',

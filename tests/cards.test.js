@@ -40,8 +40,10 @@ const IDS7 = CARDS7.map((c) => c[0]);
 // order: two eyes and two ears
 const CARDS8 = [['stash', 'eye'], ['glass', 'eye'], ['fox-brag', 'ear'], ['hail-shapes', 'ear']];
 const IDS8 = CARDS8.map((c) => c[0]);
+// Every card chapter 9 can give (its spec, "3. The Case File"): one, an ear
+const CARDS9 = [['mizzle-wing', 'ear']];
 // every drawing there is, with its card's mark
-const ALL = CARDS.concat(NEW5, CARDS6, CARDS7, CARDS8);
+const ALL = CARDS.concat(NEW5, CARDS6, CARDS7, CARDS8, CARDS9);
 const ALL_IDS = ALL.map((c) => c[0]);
 const MARK = Object.fromEntries(ALL);
 
@@ -271,7 +273,8 @@ test('every card, small and large, with either mark or none, is one well-formed 
       });
     });
   });
-  assert.equal(ALL_IDS.length, 29, 'chapter 4\'s nine, chapter 5\'s nine, chapter 6\'s three, chapter 7\'s four and chapter 8\'s four');
+  // (chapter 9: and its one, Mizzle's)
+  assert.equal(ALL_IDS.length, 30, 'chapter 4\'s nine, chapter 5\'s nine, chapter 6\'s three, chapter 7\'s four, chapter 8\'s four and chapter 9\'s one');
   assert.equal(seen.size, ALL_IDS.length * 3 * 2, 'no two of them are the same drawing');
 });
 
@@ -1707,4 +1710,93 @@ test('every fox on a card is the one fox, chapter 8\'s brag too: the same head i
   [false, true].forEach((big) => {
     assert.deepEqual(foxOf(ink('fox-brag', big)).map((p) => [p.d, p.t, p.sw]), foxOf(ink('fox-flew', big)).map((p) => [p.d, p.t, p.sw]), big ? 'large' : 'small');
   });
+});
+
+
+// ---------------------------------------------------------------- chapter 9 (docs/chapters/09-featherlight.spec.md, section 3)
+
+// Chapter 9: the twenty-nine pictures chapters 4 to 8 draw, the bare bark, the marks and the button, hashed by
+// ch7CardsFingerprint (above) once from the tree as chapter 8 shipped it (the snapshot of commit b6a8d4f taken before
+// chapter 9's build, in a process of its own) and kept here: chapter 9's one new drawing, and cant-fly's wing shared
+// with it (DROOP), change none of them.
+const CH9_CARDS_FINGERPRINT = {
+  'four-a-night': '45c750d3957b', 'tidy': 'fc2efda78f08', 'dug-earth': '8e93b4e90b29', 'scale': 'd962fdb2d98e',
+  'fox-flew': '8fb036a4d27a', 'fox-moon': '70d598dc4406', 'squall-shapes': '4f46e3f73822', 'sprinkle-scales': '224de7f2c416',
+  'cant-fly': '416b0cb4d7b4', 'prints-pile': 'd3d1f181dd8c', 'puddle-paws': 'ac7475f89891', 'otter-fox': '3658787972ed',
+  'fur': '371d1713fce9', 'heron-no-moon': 'dccd666795b8', 'heron-shapes': '4a589b653b5a', 'prints-marsh': '6645f9a01a24',
+  'prints-tracks': 'a37cab2d1152', 'wisp-fox': '0927c0ec4c8d', 'reed-pile': 'e7b3399ec178', 'coil-diggers': 'c3c996467193',
+  'sleet-den': '566c971305ef', 'waffles-no-moon': 'a4db5675b79c', 'my-count': '530956b0d85d', 'prints-sprinkle': '06964f56a967',
+  'tunnel': '36cc8eff14ec', 'stash': '2d8a20616e13', 'glass': '352ab8430316', 'fox-brag': '2b7e45114265',
+  'hail-shapes': 'f12fb843197e', '(blank)': '51d62b71318e', '(marks)': '5e066a58b7e8'
+};
+
+test('chapter 9: chapters 4 to 8\'s twenty-nine cards, the bare bark, the marks and the button are byte for byte what chapter 8 shipped', () => {
+  const pics = Object.keys(CH9_CARDS_FINGERPRINT).filter((k) => k[0] !== '(');
+  assert.equal(pics.length, 29);
+  assert.deepEqual(pics, CARDS.concat(NEW5, CARDS6, CARDS7, CARDS8).map((c) => c[0]), 'every card a cat could hold before chapter 9, in the order the chapters gave them');
+  const now = ch7CardsFingerprint(art, crypto, pics);
+  for (const k of Object.keys(CH9_CARDS_FINGERPRINT)) assert.equal(now[k], CH9_CARDS_FINGERPRINT[k], k + ' is the card chapter 8 shipped');
+  // the twenty-five chapter 8 pinned are the same numbers again
+  for (const k of Object.keys(CH8_CARDS_FINGERPRINT)) assert.equal(CH9_CARDS_FINGERPRINT[k], CH8_CARDS_FINGERPRINT[k], k);
+});
+
+test('one drawing for every card chapter 9 can give: the one in its spec\'s table (an ear), saying exactly what its spec says it shows', () => {
+  const md = fs.readFileSync(path.join(ROOT, 'docs/chapters/09-featherlight.spec.md'), 'utf8');
+  const sec = md.slice(md.indexOf('## 3. The Case File'), md.indexOf('## 4. Art needs'));
+  const rows = sec.split('\n').map((l) => /^\s*\|\s*`([a-z0-9-]+)`\s*\|\s*(eye|ear)\s*\|/.exec(l)).filter(Boolean).map((m) => [m[1], m[2]]);
+  assert.deepEqual(rows, CARDS9, 'this test\'s list is the spec\'s table, in its order, with its marks');
+  const p = art.cardPictures['mizzle-wing'];
+  assert.ok(p && typeof p.draw === 'function', 'a drawing for mizzle-wing');
+  assert.equal(p.label, 'the drooping wing under falling rain and a flash of lightning', 'the spec\'s words');
+  assert.ok(sec.replace(/\s+/g, ' ').includes('Label: "' + p.label + '"'), 'and they are the spec\'s label');
+  assert.equal(art.card({ picture: 'mizzle-wing', mark: 'ear' }).match(/aria-label="([^"]+)"/)[1], 'A piece of bark: ' + p.label + '; in its corner, an ear');
+  // once the chapter defines it, it is this, by id, with this mark, given only to a cat who found Mizzle
+  const nine = PC.story && PC.story.ch09 && PC.story.ch09.cards;
+  if (nine && nine['mizzle-wing']) {
+    assert.equal(nine['mizzle-wing'].mark, 'ear');
+    assert.ok(!nine['mizzle-wing'].picture || nine['mizzle-wing'].picture === 'mizzle-wing', 'drawn under its own id');
+  }
+});
+
+// a card's dark strokes, each { d, w } with the transform folded in as path data (the drawings here use none)
+const inkPaths = (id, big) => {
+  const pic = group(art.card({ picture: id, big }), 'pcc-pic'), dark = pic.slice(pic.lastIndexOf('<g stroke="#3A281E"'));
+  const sw = Number(/stroke-width="([\d.]+)"/.exec(dark)[1]);
+  return [...dark.matchAll(/<path d="([^"]+)"(?: transform="([^"]+)")?(?: stroke-width="([\d.]+)")?\/>/g)].map((m) => ({ d: m[1], t: m[2] || '', w: m[3] ? Number(m[3]) / sw : 1 }));
+};
+
+test('"Mizzle says Sprinkle\'s wing was hurt before the rain stopped": cant-fly\'s own drooping wing, stroke for stroke, smaller and lower on the bark; slanting rain over it and on both sides; one zigzag of lightning above, puddle-paws\' own flash; unlike cant-fly at a paw\'s size', () => {
+  for (const big of [false, true]) {
+    const sz = big ? ' (large)' : ' (small)';
+    const mine = inkPaths('mizzle-wing', big), droop = inkPaths('cant-fly', big);
+    // the wing: cant-fly's first stroke, every point taken to the same place smaller (one factor, one move)
+    const pts = (d) => (d.match(/-?\d*\.?\d+/g) || []).map(Number);
+    const a = pts(droop[0].d), b = pts(mine[0].d);
+    assert.equal(a.length, b.length, 'the same wing, point for point' + sz);
+    assert.equal(mine[0].d.replace(/[-\d.]+/g, '#'), droop[0].d.replace(/[-\d.]+/g, '#'), 'the same curves in the same order' + sz);
+    const kx = (b[2] - b[0]) / (a[2] - a[0]), ky = (b[3] - b[1]) / (a[3] - a[1]);
+    assert.ok(Math.abs(kx - ky) < 0.02 && kx > 0.55 && kx < 0.85, 'smaller, not stretched: ' + kx.toFixed(3) + ', ' + ky.toFixed(3) + sz);
+    for (let i = 0; i < a.length; i += 2) {
+      assert.ok(Math.abs(b[i] - (b[0] + (a[i] - a[0]) * kx)) < 0.2 && Math.abs(b[i + 1] - (b[1] + (a[i + 1] - a[1]) * kx)) < 0.2, 'point ' + i / 2 + ' in its place' + sz);
+    }
+    const top = (list) => Math.min(...list.filter((_, i) => i % 2).map(Number));
+    assert.ok(top(b) > top(a) + 25, 'lower: its top at ' + top(b) + ', cant-fly\'s at ' + top(a) + sz);
+    assert.equal(mine[0].w, droop[0].w, 'in the same weight' + sz);
+    // the rain: short straight strokes, all slanting the same way (down and to the left), above the wing and beside it
+    const rain = mine.filter((p) => /^(M[-\d.]+ [-\d.]+l-[\d.]+ [\d.]+)+$/.test(p.d.replace(/\s+(?=l)/g, '')));
+    assert.ok(rain.length >= 1, 'rain' + sz);
+    const drops = rain.flatMap((p) => [...p.d.matchAll(/M(-?[\d.]+) (-?[\d.]+)l(-[\d.]+) ([\d.]+)/g)].map((m) => [+m[1], +m[2], +m[3], +m[4]]));
+    assert.ok(drops.length >= 8, 'lines of rain: ' + drops.length + sz);
+    for (const d of drops) assert.ok(d[2] < 0 && d[3] > 0 && Math.abs(d[2] / d[3] - drops[0][2] / drops[0][3]) < 0.25, 'slanting together: ' + d + sz);
+    assert.ok(drops.some((d) => d[1] < top(b)), 'some over the wing' + sz);
+    assert.ok(drops.some((d) => d[0] < 60) && drops.some((d) => d[0] > 140), 'and on both sides of it' + sz);
+    // the flash: puddle-paws' own zigzag, the very stroke
+    const flash = inkPaths('puddle-paws', big).find((p) => p.d === 'M172 62L150 96H170L144 134');
+    assert.ok(flash, 'puddle-paws\' flash' + sz);
+    assert.ok(mine.some((p) => p.d === flash.d && p.w === flash.w && !p.t), 'one zigzag of lightning, puddle-paws\' own' + sz);
+    // at a paw's size: not cant-fly's drawing
+    assert.notEqual(group(art.card({ picture: 'mizzle-wing', big }), 'pcc-pic'), group(art.card({ picture: 'cant-fly', big }), 'pcc-pic'));
+  }
+  // cant-fly itself is as it was (its fingerprint, above), so the two read as one wing told twice
+  assert.equal(art.cardPictures['cant-fly'].label, 'a drooping wing');
 });

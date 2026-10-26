@@ -2188,8 +2188,12 @@ test('chapter 8: whatever chapter 8 puts at the pile renders, uses the vocabular
 // the markup. Twelve live frames had it the other way round, each now fixed by putting the `crowd-2` cat first.
 
 const DEPTH_FIXED = ['ch06:f004', 'ch06:f107', 'ch06:f109', 'ch07:f018', 'ch07:f021', 'ch07:f077', 'ch07:f079', 'ch07:f080', 'ch07:f081', 'ch07:f082', 'ch08:f009', 'ch08:f030'];
+// Chapter 9 (2026-10-26, its review): its montage, f112, took f030's staging and f030's old order, Charlie's bug again;
+// it lists the cat at `crowd-2` first too. Its only other `wide` frame, f004, has no pair that meets. (Chapter 9's
+// other sets and cameras are held to the same rule in tests/story-ch09.test.js, 'staging, depth'.)
+const DEPTH_FIXED9 = ['ch09:f112'];
 
-test('the depth hotfix (Charlie\'s bug, ch08 f030): on the pile\'s `wide` camera a cat further back is never drawn over a nearer cat\'s head; the twelve frames that had it draw the cat at `crowd-2` first', { skip: !art.character && 'no cats.js' }, (t) => {
+test('the depth hotfix (Charlie\'s bug, ch08 f030): on the pile\'s `wide` camera a cat further back is never drawn over a nearer cat\'s head, in every chapter; the twelve frames that had it, and chapter 9\'s f112, draw the cat at `crowd-2` first', { skip: !art.character && 'no cats.js' }, (t) => {
   const E = PC.engine, cat = fpCat8(), A = art.sceneInfo('pile').anchors.main;
   const stories = Object.keys(PC.story).sort().map((id) => PC.story[id]);
   const met = new Set(), bad = [];
@@ -2210,8 +2214,9 @@ test('the depth hotfix (Charlie\'s bug, ch08 f030): on the pile\'s `wide` camera
     }
   }
   assert.deepEqual(bad, [], 'listed back to front where they meet');
-  for (const id of DEPTH_FIXED) assert.ok(met.has(id), id + ': the cat at `crowd-2` reaches a nearer cat\'s head, and is drawn first');
-  for (const id of DEPTH_FIXED) {
+  assert.ok(PC.story.ch09 && stories.includes(PC.story.ch09), 'chapter 9 is checked too');
+  for (const id of DEPTH_FIXED.concat(DEPTH_FIXED9)) assert.ok(met.has(id), id + ': the cat at `crowd-2` reaches a nearer cat\'s head, and is drawn first');
+  for (const id of DEPTH_FIXED.concat(DEPTH_FIXED9)) {
     const [ch, fid] = id.split(':'), cast = PC.story[ch].frames[fid].scene.cast;
     assert.equal(cast[0].at, 'crowd-2', id + ': the cat further back listed first');
   }

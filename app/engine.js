@@ -40,7 +40,7 @@
   var PC = root.PC || (root.PC = {});
   var E = {};
 
-  E.VERSION = '0.8.0 (chapter 8, 2026-10-21)';
+  E.VERSION = '0.9.0 (chapter 9, 2026-10-26)';
   E.STORAGE_KEY = 'potomac-crossing.v1';   // the key stays: renaming it would strand every save
   E.SAVE_VERSION = 2;
   E.MAX_CATS = 4;

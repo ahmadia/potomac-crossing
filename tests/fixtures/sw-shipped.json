@@ -1,0 +1,5 @@
+[
+ {"commit": "b6a8d4f", "shipped": "2026-10-24", "what": "chapter 8", "cache": "potomac-crossing-v16", "assets": "d2d170b753cbff0f"},
+ {"commit": "83313a1", "shipped": "2026-10-26", "what": "the depth hotfix (Charlie's bug)", "cache": "potomac-crossing-v17", "assets": "58f761b938f2b1b8"},
+ {"commit": "2b52b6c", "shipped": "2026-10-26", "what": "bigger text fits the screen (Aa)", "cache": "potomac-crossing-v18", "assets": "896e7fd3e09af3ab"}
+]

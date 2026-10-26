@@ -788,8 +788,12 @@ test('the gallery: every tracks camera sampled with a cast and its options; the 
   assert.equal(hash(EXTRA.slice(0, 111)), 'c7db7dfcff0e', 'the first 111 extras untouched');
   const others = Object.assign({}, SAMPLES);
   delete others.tracks;
+  // chapter 9 (2026-10-25) appends SAMPLES.grove after tracks: set aside like tracks, every older set's
+  // samples still hash as chapter 8 shipped them
+  delete others.grove;
   assert.equal(hash(others), 'bd5a5d0d6b62', 'no other set\'s samples touched');
-  assert.equal(Object.keys(SAMPLES).pop(), 'tracks', 'SAMPLES.tracks last');
+  const keys = Object.keys(SAMPLES);
+  assert.equal(keys[keys.indexOf('tracks') + 1] === undefined || keys.slice(keys.indexOf('tracks') + 1).every((k) => ['grove'].includes(k)), true, 'SAMPLES.tracks last of chapter 8\'s, only later chapters\' sets after it');
   assert.deepEqual(Object.keys(SAMPLES.tracks), CAMS, 'a sample for every camera');
   for (const cam of CAMS) {
     const smp = SAMPLES.tracks[cam];
@@ -799,7 +803,10 @@ test('the gallery: every tracks camera sampled with a cast and its options; the 
     const sc = scene(cam, smp.opts, smp.cast, smp.fx);
     checkRender(art.render(sc, { look: LOOK }), sc, 'gallery ' + cam);
   }
-  const added = EXTRA.slice(111), opts = new Set(), spotsSeen = new Set();
+  // chapter 8's extras: the ones after chapter 7's 111, up to the first of a later chapter's (chapter 9 appends its own)
+  const later = EXTRA.findIndex((e, i) => i >= 111 && !/^chapter 8:/.test(e[3]));
+  const added = EXTRA.slice(111, later < 0 ? undefined : later), opts = new Set(), spotsSeen = new Set();
+  if (later >= 0) assert.ok(EXTRA.slice(later).every((e) => /^chapter (9|10):/.test(e[3])), 'only later chapters\' extras after chapter 8\'s');
   for (const e of added) {
     assert.ok(/^chapter 8:/.test(e[3]), 'a chapter 8 extra: ' + e[3]);
     if (e[0] !== 'tracks') continue;

@@ -71,6 +71,7 @@
 <script src="../app/art/sets/openriver.js"></script>
 <script src="../app/art/sets/marsh.js"></script>
 <script src="../app/art/sets/tracks.js"></script>
+<script src="../app/art/sets/grove.js"></script>
 <script src="../app/art/cards.js"></script>
 <script src="../app/story/ch01.js"></script>
 <script src="../app/story/ch02.js"></script>
@@ -80,6 +81,7 @@
 <script src="../app/story/ch06.js"></script>
 <script src="../app/story/ch07.js"></script>
 <script src="../app/story/ch08.js"></script>
+<script src="../app/story/ch09.js"></script>
 <script>
 (function () {
   'use strict';
@@ -105,6 +107,13 @@
   fakeChar.placeholder = true;
 
   // ---- a sample cast for every set x camera, modelled on how chapter 1 uses them
+  // (chapter 9: two of her files for the case laid out: 21 cards, and the fullest on a straight reading, 29, Mizzle's
+  // among them; and, appended to the extras, the fullest of all, 30, a reread cat's with Puddle's card too)
+  var CARDS29 = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh',
+    'prints-tracks', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel', 'stash', 'glass', 'fox-brag', 'hail-shapes', 'mizzle-wing'];
+  var CARDS30 = CARDS29.slice(0, 10).concat(['puddle-paws'], CARDS29.slice(10));
+  var CARDS21 = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'prints-marsh',
+    'reed-pile', 'coil-diggers', 'my-count', 'prints-sprinkle', 'tunnel', 'stash', 'glass', 'fox-brag'];
   function c(who, at, pose, mood, more) { var o = { who: who, at: at, pose: pose || 'sit', mood: mood || 'neutral' }; for (var k in more) o[k] = more[k]; return o; }
   var SAMPLES = {
     room: {
@@ -218,6 +227,16 @@
       'stash-close': { cast: [c('player', 'near', 'crouch', 'wonder')], fx: ['night'] },
       crawl: { opts: { tight: true }, cast: [c('player', 'crawl-1', 'pawup', 'wonder', { tap: 'paw' }), c('riffle', 'crawl-2', 'scramble', 'worried', { tap: 'paw' })], fx: ['night'] },
       fork: { opts: { worm: true }, cast: [c('player', 'fork-1', 'crouch', 'sniff', { facing: 'left' }), c('riffle', 'fork-2', 'scramble', 'happy', { facing: 'left' })], fx: ['night'] }
+    },
+    // chapter 9: GroveClan's woods (app/art/sets/grove.js), always the bright afternoon: the little bridge, the old trees, the old oak and its hollow
+    grove: {
+      bridge: { cast: [c('player', 'near-1', 'sit', 'wonder'), c('tallyheart', 'near-2', 'sit', 'kind'), c('riffle', 'span-2', 'stand', 'happy', { holds: 'mint', facing: 'left' })], fx: ['day'] },
+      wide: { cast: [c('player', 'edge-1', 'sit', 'wonder'), c('tallyheart', 'edge-2', 'sit', 'neutral'), c('riffle', 'edge-3', 'stand', 'happy', { holds: 'mint' }),
+        c('groveclan', 'elder', 'walk', 'stern', { variant: 1 }), c('groveclan', 'fern', 'sit', 'shy', { variant: 2 })], fx: ['day'] },
+      meet: { cast: [c('player', 'meet-1', 'sit', 'wonder'), c('tallyheart', 'meet-2', 'sit', 'proud'), c('riffle', 'meet-3', 'sit', 'happy', { holds: 'mint' }),
+        c('groveclan', 'elder', 'sit', 'kind', { variant: 1 }), c('groveclan', 'fern', 'sit', 'shy', { variant: 2 })], fx: ['day'] },
+      oak: { cast: [c('player', 'trunk', 'stretch', 'happy'), c('tallyheart', 'root-1', 'sit', 'kind'), c('riffle', 'root-2', 'sit', 'proud', { holds: 'mint' }), c('groveclan', 'elder', 'sit', 'neutral', { variant: 1 })], fx: ['day'] },
+      hollow: { cast: [c('mizzle', 'nook', 'curl', 'sleepy', { asleep: true }), c('player', 'lip', 'crouch', 'wonder')], fx: ['day', 'zzz'] }
     }
   };
   var EXTRA = [
@@ -425,7 +444,64 @@
       'chapter 8: the fullest nest after chapter 8: 28 cards, ten under the moss (the corners in two layers), eighteen along the edge; her glass in its leaf (glass: true)'],
     ['den', 'inside', { opts: { weather: 'clear', moon: 8, stone: 'nose', hidden: true, glass: true, bark: 'auto' }, cast: [c('grizzled', 'sleeper-1', 'lie', 'sleepy'), c('player', 'nest', 'curl', 'kind', { asleep: 'half' })], fx: ['night', 'zzz'] },
       'chapter 8: moon: 8, the eighth evening\u2019s half moon in the doorway\u2019s sky; her glass under the moss'],
-    ['den', 'outside', { opts: { weather: 'clear', moon: 8 }, cast: [], fx: ['night'] }, 'chapter 8: moon: 8 over the rosebush at night']
+    ['den', 'outside', { opts: { weather: 'clear', moon: 8 }, cast: [], fx: ['night'] }, 'chapter 8: moon: 8 over the rosebush at night'],
+    // chapter 9 (the places owner holds the page): the grove's cast and spots, the bank's practice, the roof's dew, and the
+    // other owners' new names (Thymeleaf's den, the case laid out, the thirteenth moon, the reed root, nine marks)
+    ['grove', 'bridge', { cast: [c('player', 'span-1', 'walk', 'wonder', { tap: 'paw' }), c('tallyheart', 'near-2', 'sit', 'kind'), c('riffle', 'span-2', 'stand', 'happy', { holds: 'mint', facing: 'left' })], fx: ['day'] },
+      'chapter 9: the cross Tap: our cat stepping onto the bridge at span-1 (tap: \u2018paw\u2019), Riffle waiting at span-2 with his mint'],
+    ['grove', 'bridge', { cast: [c('player', 'far', 'walk', 'happy'), c('riffle', 'span-2', 'stand', 'proud', { holds: 'mint' }), c('tallyheart', 'span-1', 'walk', 'neutral')], fx: ['day'] }, 'chapter 9: over the bridge: span-1, span-2, far'],
+    ['grove', 'oak', { cast: [c('player', 'moss', 'crouch', 'kind', { holds: 'leaf', holdAt: 'paws', tap: 'leaf' }), c('groveclan', 'elder', 'pawup', 'kind', { variant: 1 }), c('tallyheart', 'root-1', 'sit', 'neutral'), c('riffle', 'root-3', 'sit', 'happy')], fx: ['day'] },
+      'chapter 9: the silver moss: our cat crouched at moss, her leaf at her paws (tap: \u2018leaf\u2019); the elder pointing (pawup)'],
+    ['grove', 'oak', { cast: [c('player', 'root-2', 'crouch', 'kind', { holds: 'leaf', holdAt: 'paws' }), c('groveclan', 'elder', 'sit', 'happy', { variant: 1 }), c('groveclan', 'root-3', 'sit', 'shy', { variant: 2 })], fx: ['day'] },
+      'chapter 9: \u201cAnd, very politely, the oak.\u201d: our cat dipping her head to the trunk; the elder and the apprentice'],
+    ['grove', 'meet', { cast: [c('player', 'meet-1', 'sit', 'happy', { holds: 'leaf', holdAt: 'paws' }), c('tallyheart', 'meet-2', 'sit', 'kind'), c('riffle', 'meet-3', 'stand', 'happy'), c('groveclan', 'elder', 'stand', 'kind', { variant: 1 })], fx: ['day'] },
+      'chapter 9: \u201cThank you.\u201d: Riffle\u2019s paws empty, the mint in her leaf'],
+    ['grove', 'hollow', { cast: [c('mizzle', 'nook', 'yawn', 'sleepy', { asleep: 'half' }), c('player', 'lip', 'crouch', 'wonder')], fx: ['day'] }, 'chapter 9: Mizzle yawns (one eye open); our cat at lip, the rim behind her shoulders'],
+    ['grove', 'hollow', { cast: [c('mizzle', 'nook', 'wake', 'wonder'), c('player', 'lip', 'sit', 'kind')], fx: ['day'] }, 'chapter 9: Mizzle wide awake; our cat sitting up at lip'],
+    ['grove', 'hollow', { cast: [c('mizzle', 'nook', 'pawup', 'happy'), c('player', 'lip', 'crouch', 'happy', { holds: 'leaf', holdAt: 'paws', tap: 'leaf' })], fx: ['day'] },
+      'chapter 9: Mizzle points (the silver kind); the leaf Tap above the rim (tap: \u2018leaf\u2019)'],
+    ['grove', 'hollow', { cast: [c('mizzle', 'nook', 'sit', 'sleepy', { asleep: 'half' })], fx: ['day'] }, 'chapter 9: the nook, Mizzle sitting up drowsy, nobody at the lip'],
+    ['bridge', 'bank', { opts: { shallows: true, drag: false }, cast: [], fx: ['day'] }, 'chapter 9: shallows: true: the bright shallows and the strip of sand at the bridge\u2019s foot, nobody'],
+    ['bridge', 'bank', { opts: { shallows: true, drag: false }, cast: [c('sprinkle', 'run', 'hop', 'happy', { facing: 'left' }), c('player', 'run-2', 'sit', 'happy'),
+      c('tallyheart', 'watch-1', 'sit', 'kind'), c('riffle', 'watch-2', 'stand', 'happy'), c('thymeleaf', 'watch-3', 'sit', 'kind'), c('glintstar', 'watch-4', 'sit', 'neutral')], fx: ['day'] },
+      'chapter 9: Sprinkle hops at run, our cat at run-2 facing her; the friends watching at watch-1 \u2026 watch-4'],
+    ['bridge', 'bank', { opts: { shallows: true, drag: false }, cast: [c('sprinkle', 'run', 'flap', 'happy', { facing: 'left', tap: 'wing' }), c('player', 'run-2', 'sit', 'wonder')], fx: ['day'] }, 'chapter 9: Sprinkle flapping at run (her hurt wing lower); tap: \u2018wing\u2019'],
+    ['bridge', 'bank', { opts: { shallows: true, drag: false }, cast: [c('sprinkle', 'skim', 'glide', 'happy', { facing: 'left' }), c('player', 'run-2', 'sit', 'happy')], fx: ['day'] }, 'chapter 9: the low glide at skim, a faint shadow on the sand under her'],
+    ['bridge', 'bank', { opts: { shallows: true, drag: false }, cast: [c('sprinkle', 'air', 'fly', 'happy', { facing: 'left' }), c('player', 'watch-4', 'sit', 'happy', { tailUp: true }), c('tallyheart', 'watch-3', 'sit', 'proud')], fx: ['day'] },
+      'chapter 9: the lift at air: her paws off the sand, its soft shadow under her'],
+    ['bridge', 'bank', { opts: { shallows: true, drag: false }, cast: [c('sprinkle', 'paddle', 'splash', 'happy', { facing: 'left' }), c('player', 'run-2', 'pawup', 'happy', { tap: 'paw' })], fx: ['day'] }, 'chapter 9: splashing at paddle in the bright shallows; the clap Tap'],
+    ['roof', 'two', { opts: { dew: true }, cast: [c('squall', 'pole', 'roar', 'shout'), c('player', 'puddle', 'crouch', 'wonder', { holds: 'leaf', holdAt: 'paws' })], fx: ['morning'] }, 'chapter 9: dew: true at first light: the silver puddle and its beads; Squall roaring at the pole; our cat at puddle'],
+    ['roof', 'two', { opts: { dew: true, plane: true }, cast: [c('squall', 'pole', 'hidden', 'shout'), c('player', 'puddle', 'crouch', 'wonder', { holds: 'leaf', holdAt: 'paws' })], fx: ['morning'] }, 'chapter 9: the voice from behind the red light: Squall hidden (his tail tip and mist ring), plane: true'],
+    ['roof', 'wide', { opts: { dew: true }, cast: [c('squall', 'pole', 'roar', 'shout'), c('player', 'puddle', 'crouch', 'wonder', { holds: 'leaf', holdAt: 'paws' })], fx: ['morning'] }, 'chapter 9: the dew on the whole roof, our cat at puddle'],
+    ['roof', 'wide', { opts: { dew: true, plane: true }, cast: [c('squall', 'pole', 'hidden', 'shout'), c('player', 'puddle', 'crouch', 'wonder', { holds: 'leaf', holdAt: 'paws' })], fx: ['morning'] }, 'chapter 9: the dew, Squall hidden, plane: true'],
+    ['camp', 'herbs', { opts: { remedy: 'none' }, cast: [c('thymeleaf', 'herbs-1', 'sit', 'kind'), c('player', 'herbs-2', 'sit', 'wonder', { facing: 'left' }), c('tallyheart', 'herbs-3', 'sit', 'kind', { facing: 'left' }), c('spider', 'web', 'spin', 'happy')], fx: ['morning'] },
+      'chapter 9: Thymeleaf\u2019s den: drying leaves, the mixing stone, the spider spinning in her web'],
+    ['camp', 'herbs', { opts: { remedy: 'four' }, cast: [c('thymeleaf', 'herbs-1', 'pawup', 'kind', { glow: true }), c('player', 'herbs-2', 'sit', 'wonder', { facing: 'left' }), c('spider', 'web', 'wave', 'happy')], fx: ['morning'] },
+      'chapter 9: remedy: \u2018four\u2019: root, moss, mint and dew in a row; Thymeleaf counting (pawup, glowing); the spider waves'],
+    ['camp', 'herbs', { opts: { remedy: 'mixed' }, cast: [c('thymeleaf', 'herbs-1', 'crouch', 'happy', { holds: 'leaf' }), c('tallyheart', 'herbs-3', 'sit', 'proud', { facing: 'left' }), c('spider', 'web', 'spin', 'happy')], fx: ['morning'] },
+      'chapter 9: remedy: \u2018mixed\u2019: the pale green remedy in a curled leaf'],
+    ['den', 'case', { opts: { weather: 'clear', read: 0, glass: true, stone: 'auto', bark: CARDS21 }, cast: [c('player', 'case-1', 'crouch', 'wonder'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: the case laid out, read: 0, a 21-card file'],
+    ['den', 'case', { opts: { weather: 'clear', read: 0, glass: true, stone: 'auto', bark: CARDS29 }, cast: [c('player', 'case-1', 'crouch', 'wonder'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: read: 0, a 29-card file'],
+    ['den', 'case', { opts: { weather: 'clear', read: 3, glass: true, stone: 'auto', bark: CARDS21 }, cast: [c('player', 'case-1', 'crouch', 'wonder'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: read: 3 (three rows lit, the fourth glowing), 21 cards'],
+    ['den', 'case', { opts: { weather: 'clear', read: 3, glass: true, stone: 'auto', bark: CARDS29 }, cast: [c('player', 'case-1', 'crouch', 'wonder'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: read: 3, 29 cards'],
+    ['den', 'case', { opts: { weather: 'clear', read: 6, glass: true, stone: 'auto', bark: CARDS21 }, cast: [c('player', 'case-1', 'crouch', 'proud'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: read: 6, 21 cards'],
+    ['den', 'case', { opts: { weather: 'clear', read: 6, glass: true, stone: 'auto', bark: CARDS29 }, cast: [c('player', 'case-1', 'crouch', 'proud'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: read: 6, 29 cards'],
+    ['den', 'case', { opts: { weather: 'clear', read: 7, glass: true, stone: 'auto', bark: CARDS21 }, cast: [c('player', 'case-1', 'crouch', 'kind', { holds: 'leaf', holdAt: 'paws', tap: 'leaf' }), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' }), c('glintstar', 'case-3', 'walk', 'solemn', { facing: 'left' })], fx: ['night'] },
+      'chapter 9: read: 7, 21 cards: Glintstar stepping in at case-3; the leaf Tap'],
+    ['den', 'case', { opts: { weather: 'clear', read: 7, glass: true, stone: 'auto', bark: CARDS29 }, cast: [c('player', 'case-1', 'crouch', 'kind'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' }), c('glintstar', 'case-3', 'stand', 'kind', { facing: 'left' })], fx: ['night'] },
+      'chapter 9: read: 7, 29 cards (her count and Mizzle\u2019s card in row seven): Glintstar standing by the doorway\u2019s light'],
+    ['den', 'doorway', { opts: { weather: 'clear', moon: 13, stone: 'auto', hidden: true, glass: true, bark: CARDS29 }, cast: [c('player', 'nest', 'curl', 'sleepy', { asleep: true })], fx: ['night'] }, 'chapter 9: moon: 13, nearly round, in the doorway; eleven corners under the moss'],
+    ['den', 'inside', { opts: { weather: 'clear', moon: 13, stone: 'auto', hidden: true, glass: true, bark: CARDS29 }, cast: [c('player', 'nest', 'curl', 'kind', { asleep: 'half' })], fx: ['night', 'zzz'] }, 'chapter 9: moon: 13 from inside'],
+    ['den', 'outside', { opts: { weather: 'clear', moon: 13 }, cast: [], fx: ['night'] }, 'chapter 9: moon: 13 over the rosebush'],
+    ['title', 'end', { opts: { root: true, tap: 'root' }, cast: [c('player', 'end-1', 'sit', 'wonder', { holds: 'leaf', holdAt: 'paws' }), c('tallyheart', 'end-2', 'sit', 'kind')], fx: ['day'] }, 'chapter 9: root: true by day: the pale reed root and one wet pawprint on the dry stones; tap: \u2018root\u2019'],
+    ['title', 'end', { opts: { root: true, tap: 'root' }, cast: [c('player', 'end-1', 'sit', 'wonder', { holds: 'leaf', holdAt: 'paws' }), c('tallyheart', 'end-2', 'sit', 'kind')], fx: ['sunset'] }, 'chapter 9: the root at sunset (the wall\u2019s end in the late gold)'],
+    ['title', 'meet', { opts: { root: true, tap: 'root' }, cast: [c('player', 'end-1', 'sit', 'wonder'), c('tallyheart', 'end-2', 'sit', 'kind')], fx: ['sunset'] }, 'chapter 9: the root on meet, at sunset'],
+    ['hollow', 'tree', { opts: { marks: 9, glow: [false, false, false, false, false, false, false, false, true] }, cast: [c('tallyheart', 'tree', 'stretch', 'proud')], fx: ['morning'] }, 'chapter 9: marks: 9, the ninth glowing'],
+    ['hollow', 'wide', { opts: { marks: 9, glow: [false, false, false, false, false, false, false, false, true] }, cast: [c('tallyheart', 'tree-far', 'sit', 'kind', { size: 1.2 }), c('player', 'sunpatch-2', 'sit', 'happy')], fx: ['morning'] }, 'chapter 9: marks: 9 from across the Hollow'],
+    // (the review, 2026-10-26: the fullest file is 30, a reread cat's, both specialties' cards and Puddle's: its case, the stack 15 and 13, and its nest, nineteen along the edge in three courses)
+    ['den', 'case', { opts: { weather: 'clear', read: 3, glass: true, stone: 'auto', bark: CARDS30 }, cast: [c('player', 'case-1', 'crouch', 'wonder'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: read: 3, the fullest file, 30 cards (the stack 15)'],
+    ['den', 'case', { opts: { weather: 'clear', read: 7, glass: true, stone: 'auto', bark: CARDS30 }, cast: [c('player', 'case-1', 'crouch', 'kind'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: read: 7, 30 cards (the stack 13)'],
+    ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'auto', bark: CARDS30, hidden: true, glass: true }, cast: [c('player', 'nest', 'curl', 'kind', { asleep: 'half' })], fx: ['night'] }, 'chapter 9: bedtime with 30 cards: nineteen along the edge, three courses, eleven corners']
   ];
 
   // ---- panels, rendered when they scroll into view

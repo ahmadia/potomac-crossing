@@ -222,3 +222,49 @@ test('the page, chapter 5: the soft glow on a thing she taps and its small answe
   assert.match(ui, /foundPuddle: \{ 'true': 'found Puddle under the ferry raft \(later chapters remember\)' \},/);
   assert.match(ui, /foundWisp: \{ 'true': 'found Wisp in the heron’s reeds \(later chapters remember\)' \}/);
 });
+
+/* What is live, without git (chapter 9's landing review, 2026-10-26): chapter 9 and the depth hotfix were built
+ * side by side and both bumped CACHE to v17, so whichever shipped second would have left installed iPads on the
+ * first one's files, and a check against each worktree's own HEAD passed in both. tests/fixtures/sw-shipped.json
+ * is a ledger of every CACHE shipped since chapter 8, each with a digest of the bytes it cached (sha1 over every
+ * ASSETS entry's name and bytes in order, './' read as index.html; 16 hex), appended at every ship
+ * (docs/production.md, the shipping checklist's step 2). It travels with main, so a tree that lands second
+ * inherits the first ship's entry. The rule: a CACHE in the ledger still caches exactly what it shipped; any
+ * other CACHE is past every shipped one. */
+const SHIPPED = require('./fixtures/sw-shipped.json');
+function assetsDigest() {
+  const h = require('crypto').createHash('sha1');
+  for (const a of ASSETS) { h.update(a + '\0'); h.update(fs.readFileSync(path.join(ROOT, a === './' ? 'index.html' : a))); h.update('\0'); }
+  return h.digest('hex').slice(0, 16);
+}
+test('CACHE is past every shipped one (tests/fixtures/sw-shipped.json), or caches exactly the files it shipped with', (t) => {
+  const cache = /var CACHE = '([^']+)'/.exec(swSrc)[1], num = (c) => +(/^potomac-crossing-v(\d+)$/.exec(c) || [0, NaN])[1];
+  assert.ok(SHIPPED.length >= 2 && SHIPPED.every(e => /^[0-9a-f]{7,40}$/.test(e.commit) && /^[0-9a-f]{16}$/.test(e.assets) && num(e.cache) > 0), 'the ledger: commit, cache and digest for every ship');
+  assert.deepEqual(SHIPPED.map(e => num(e.cache)), SHIPPED.map(e => num(e.cache)).slice().sort((a, b) => a - b), 'in the order they shipped');
+  assert.ok(SHIPPED.some(e => e.commit === 'b6a8d4f' && e.cache === 'potomac-crossing-v16') && SHIPPED.some(e => e.commit === '83313a1' && e.cache === 'potomac-crossing-v17'), 'chapter 8 (v16) and the depth hotfix (v17)');
+  const now = assetsDigest(), same = SHIPPED.find(e => e.cache === cache), last = SHIPPED[SHIPPED.length - 1];
+  if (same) assert.equal(now, same.assets, cache + ' was shipped (' + same.commit + ') with other files: bump CACHE past ' + last.cache);
+  else assert.ok(num(cache) > num(last.cache), cache + ' is not past the shipped ' + last.cache + ' (' + last.commit + ')');
+  t.diagnostic(cache + ' caches ' + now + (same ? ' (as shipped in ' + same.commit + ')' : ': not shipped yet; at ship, append { commit, shipped, what, cache: \'' + cache + '\', assets: \'' + now + '\' }'));
+});
+
+/* Chapter 9's review (2026-10-26): its 7 × 8 and 8 × 7 helps end on the longest help line of any chapter, and with Aa
+ * on in landscape (1080 wide) “Got it!” could end below the screen, with nothing to scroll it in (its focus keeps the
+ * page still). The help's end brings it into view the way a long intro brings in the keypad; where it fits, nothing
+ * moves. Pinned as text, as above (the suite has no DOM). */
+test('the page, chapter 9: the end of a help brings “Got it!” into view when it is below the screen, as a long intro brings in the keypad', () => {
+  const ui = fs.readFileSync(path.join(ROOT, 'app/ui.js'), 'utf8');
+  const at = ui.indexOf('var finishHelp = function () {'), end = ui.indexOf('};', at);
+  assert.ok(at > 0 && end > at, 'the help\'s end');
+  const body = ui.slice(at, end);
+  assert.match(body, /\$\('lessonNext'\)\.hidden = false;\n[\s\S]*var gb = \$\('gotIt'\)\.getBoundingClientRect\(\)\.bottom, gvh = root\.innerHeight \|\| 0;\n\s+if \(gvh && gb > gvh\) root\.scrollBy\(0, gb - gvh \+ 8\);\n\s+\$\('gotIt'\)\.focus\(\{ preventScroll: true \}\);/);
+  assert.match(ui, /if \(vh && kb > vh\) root\.scrollBy\(0, kb - vh \+ 8\);/, 'as the keypad is brought in');
+});
+
+/* Chapter 9's ship (2026-10-26): f118 asks six pairs; with Aa on at 1080 x 720 the sixth pushed Back and Next
+ * below the screen, and Next is the only way on (a tap on the done picture does nothing). The ask's end brings
+ * Next into view as the help's end brings in “Got it!”; where it fits, nothing moves. Pinned as text. */
+test('the page, chapter 9: a finished ask brings Next into view when it is below the screen', () => {
+  const ui = fs.readFileSync(path.join(ROOT, 'app/ui.js'), 'utf8');
+  assert.match(ui, /if \(v\.done\) \{[\s\S]{0,200}var nb = \$\('nextBtn'\);\n\s+if \(nb\) \{\n\s+var nbb = nb\.getBoundingClientRect\(\)\.bottom, nvh = root\.innerHeight \|\| 0;\n\s+if \(nvh && nbb > nvh\) root\.scrollBy\(0, nbb - nvh \+ 8\);\n\s+nb\.focus\(\{ preventScroll: true \}\);/);
+});

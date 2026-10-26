@@ -111,6 +111,24 @@
  *   pad, its toes and claws fanned out beyond toward us (the spot is where the paw hangs, `air` and `elev`,
  *   as the marsh's `raft-edge`); the set lays her feet line just above the print and draws her shadows.
  *
+ * Chapter 9 (docs/chapters/09-featherlight.spec.md, section 4, "The sunny bank"): every option off by default and every
+ * anchor additional, so chapters 2 to 8 draw as they did (tests/set-bridge.test.js holds the fingerprints).
+ *   `shallows: true` (on `bank`): the water at the bank's edge bright and clear in the sun, pale green-gold over a sandy
+ *   bottom you can see (its ripples, pebbles and the sun's net of light), sparkles and small rings, fading softly into the
+ *   brown river beyond (<g data-art="shallows">); and a strip of soft pale sand along the edge (<g data-art="sand">),
+ *   tucked at the bridge's foot (the edge of its shadow lies over the strip's left end) and screened from the river path
+ *   by the reeds, which part along the sand and stand again past it. Never dark. The friends' corner reeds at the
+ *   bottom left are shorter with it, so whoever watches there shows; `reeds`' own cover is drawn only for someone there.
+ *   Anchors on `bank` (`main`): `run` (on the sand, mid-right: Sprinkle at heron size), `run-2` (on the sand left of
+ *   it, facing her), `skim` (between run and paddle at the water's edge, her paws just clear of the sand; elev, air),
+ *   `air` (above run, her paws about a third of a cat's height off the sand: the lift; elev, air), `paddle` (in the
+ *   shallows; air), `watch-1` … `watch-4` (the friends side by side on the bank at the left, in the edge of the bridge's
+ *   shadow, facing right). The set lays the shadows at the spots in the air: a soft one on the sand under whoever is at
+ *   `air` and a fainter one under `skim` (<g data-art="air-shadow">, "skim-shadow"), each only when someone is there
+ *   (scenes.js lays none at an `air` spot, and NO_SHADOW.sprinkle stops her own); whoever is at `paddle` has the bright
+ *   water laid back over her legs (her chest, splashing), its top a little wavy, rings and drops round her, nothing dark
+ *   in it (<g data-art="paddle">). PC.art.bridgeBankInfo() gives the tests the edge, the sand and the shallows.
+ *
  * The dark is mysterious and a little sad, never scary: cool blues with faint shapes of stones and
  * mud in them, soft rounded shapes, a warm rim of daylight at its edges, and gentle round eyes.
  * The rocks are drawn in the `over` layer, so a custom spot `{ x, y, z: 'behind' }` just behind
@@ -546,6 +564,210 @@
     return g(s + g(reeds, { 'clip-path': S.clip('brswimreeds', rect(a.x - h * 0.8, a.y - h * 0.7, h * 1.6, h * 1.05, '#fff')) }), { 'data-art': 'swim' });
   }
 
+  // ------------------------------------------------------------------ chapter 9: the sunny bank
+
+  // Chapter 9's spots on the bank (docs/chapters/09-featherlight.spec.md, section 4, "The sunny bank"): the
+  // practice on the strip of sand at the water's edge, the friends watching from the bank at the left, in the
+  // edge of the bridge's shadow. Their heights are the depth there (h about 0.8 (y - 580), as the others').
+  // `air` is above `run`, her paws a little more than her own leg's length off the sand (a third of a sitting
+  // cat's height there); `skim` at the water's edge, her paws just clear of the sand; `paddle` in the shallows.
+  var BANK9 = {
+    run: A(960, 884, 244, 'left'), 'run-2': A(700, 850, 222, 'right'),
+    skim: A(1135, 862, 236, 'left', { elev: true, air: true }),
+    air: A(960, 884 - Math.round(244 * 0.34), 244, 'left', { elev: true, air: true }),
+    paddle: A(1250, 860, 226, 'left', { air: true }),
+    'watch-1': A(165, 822, 196, 'right'), 'watch-2': A(300, 830, 200, 'right'), 'watch-3': A(435, 838, 204, 'right'), 'watch-4': A(570, 846, 208, 'right')
+  };
+  // the sand under each of the two spots in the air: where their shadows lie
+  var SAND_UNDER = { air: BANK9.run.y, skim: BANK9.skim.y + 10 };
+  // the strip of sand along the water's edge, from the bridge's foot (in the edge of its shadow) to where the
+  // reeds stand again and screen it from the river path; the shallows over the sand bottom just off it
+  var SAND9 = { x0: 520, x1: 1440 };
+  function shoalDepth(x) {
+    // how far out from the edge the bright shallows reach: little by the leg, wide round the practice
+    var t = clamp((x - SAND9.x0) / (SAND9.x1 - SAND9.x0), 0, 1);
+    return 22 + 108 * Math.sin(Math.PI * Math.pow(t, 0.8)) + 10 * Math.sin(x * 0.021);
+  }
+  function sandWidth(x) {
+    var t = clamp((x - SAND9.x0) / (SAND9.x1 - SAND9.x0), 0, 1);
+    return 10 + 44 * Math.sin(Math.PI * Math.pow(t, 0.75)) + 3 * Math.sin(x * 0.037);
+  }
+  function shoalCols(S) {
+    var p = S.pal;
+    return {
+      bed: mix('#F3E8C4', p.sandLight, 0.3), bedFar: mix('#DCE7BE', p.sandLight, 0.1), green: mix('#C2DFBA', p.sky[3], 0.12), blend: mix('#BCC59C', '#92704A', 0.12),
+      ripple: '#FFFDF2', pebble: mix('#E3D3A6', p.sand, 0.3), pebbleDk: mix('#BFA878', p.sandDark, 0.3),
+      sand: mix('#F6EACA', p.sandLight, 0.4), sandLt: '#FFF7E2', sandDamp: mix('#E2CFA0', p.sand, 0.3), sandDot: mix('#D9C391', p.sandDark, 0.2)
+    };
+  }
+  // The shallows (`shallows: true`): the water at the bank's edge bright and clear in the sun, pale green-gold
+  // over a sandy bottom you can see (its ripples and a few pebbles under the water), sun lines dancing on it,
+  // sparkles and small rings. It fades out into the brown river beyond. <g data-art="shallows">.
+  function shoalPoly(k) {
+    var top = [], bot = [];
+    for (var x = SAND9.x0 - 20; x <= SAND9.x1 + 20; x += 20) { top.push([x, yOn(EDGE, x) - shoalDepth(x) * k]); bot.unshift([x, yOn(EDGE, x) + 6]); }
+    return { d: smooth(top) + 'L' + pts(bot).slice(1) + 'Z', top: top };
+  }
+  function shallowsWater(S, c) {
+    var q = shoalCols(S), r = rng(901), s = '', i, x, y;
+    var clip = S.clip('brshoal', path(shoalPoly(0.86).d, '#fff'));
+    // the bed seen through the water, in soft bands: pale sand near the edge, a clear pale green further out,
+    // fading softly into the brown river (each band's edge blurred, so the water has no hard line in it)
+    var soft = path(shoalPoly(1).d, q.blend, { opacity: 0.55, filter: S.blur('brshoal1', 10) }) +
+      path(shoalPoly(0.84).d, q.green, { opacity: 0.85, filter: S.blur('brshoal2', 8) }) +
+      path(shoalPoly(0.6).d, q.bedFar, { opacity: 0.92, filter: S.blur('brshoal3', 6) }) +
+      path(shoalPoly(0.34).d, q.bed, { filter: S.blur('brshoal4', 4) });
+    var bed = '';
+    // ripples in the sand bottom and pebbles lying on it
+    var rip = '', peb = '', pebDk = '';
+    for (i = 0; i < 34; i++) {
+      x = SAND9.x0 + r() * (SAND9.x1 - SAND9.x0); y = yOn(EDGE, x) - r() * shoalDepth(x) * 0.8;
+      var L = 20 + r() * 40;
+      rip += 'M' + n(x) + ' ' + n(y) + 'q' + n(L / 4) + ' ' + n(-3) + ' ' + n(L / 2) + ' 0t' + n(L / 2) + ' 0';
+    }
+    for (i = 0; i < 16; i++) {
+      x = SAND9.x0 + 40 + r() * (SAND9.x1 - SAND9.x0 - 80); y = yOn(EDGE, x) - 6 - r() * shoalDepth(x) * 0.55;
+      var pr = 4 + r() * 6;
+      peb += blob(x, y, pr * 1.3, pr * 0.7, 7, r, 0.2, 0.25); pebDk += blob(x + 1, y + pr * 0.35, pr * 1.1, pr * 0.35, 6, r, 0.2, 0.2);
+    }
+    s += bed + stroke(rip, q.bedFar, 2.4, { opacity: 0.55 }) + path(pebDk, q.pebbleDk, { opacity: 0.45 }) + path(peb, q.pebble, { opacity: 0.85 });
+    // the sun's net of light on the sandy bottom (clear water over sand)
+    var net = '';
+    for (i = 0; i < 90; i++) {
+      x = SAND9.x0 + r() * (SAND9.x1 - SAND9.x0); y = yOn(EDGE, x) - 2 - r() * shoalDepth(x) * 0.8;
+      var cl = 10 + r() * 16, ca = r() * Math.PI;
+      net += 'M' + n(x - Math.cos(ca) * cl / 2) + ' ' + n(y - Math.sin(ca) * cl * 0.18) + 'Q' + n(x) + ' ' + n(y + (r() - 0.5) * 8) + ' ' + n(x + Math.cos(ca) * cl / 2) + ' ' + n(y + Math.sin(ca) * cl * 0.18);
+    }
+    s += stroke(net, '#FFFFFF', 1.6, { opacity: 0.4 });
+    // the sky in it, out where it is a little deeper
+    var sheen = '';
+    for (i = 0; i < 12; i++) { x = SAND9.x0 + 100 + r() * (SAND9.x1 - SAND9.x0 - 200); y = yOn(EDGE, x) - shoalDepth(x) * (0.55 + r() * 0.25); sheen += 'M' + n(x) + ' ' + n(y) + 'h' + n(30 + r() * 60); }
+    s += stroke(sheen, mix(S.pal.sky[3], '#FFFFFF', 0.5), 3, { opacity: 0.55 });
+    // the sun's lines on the water, dancing (the shared pcs-drift: still under reduced motion)
+    var sun = '', sun2 = '';
+    for (i = 0; i < 40; i++) {
+      x = SAND9.x0 + r() * (SAND9.x1 - SAND9.x0); y = yOn(EDGE, x) - 4 - r() * shoalDepth(x) * 0.95;
+      var w = 14 + r() * 34, a = 2 + r() * 3;
+      var wave = 'M' + n(x) + ' ' + n(y) + 'q' + n(w / 4) + ' ' + n(-a) + ' ' + n(w / 2) + ' 0t' + n(w / 2) + ' 0';
+      if (i % 3) sun += wave; else sun2 += wave;
+    }
+    s += g(stroke(sun, q.ripple, 2.6, { opacity: 0.7 }) + stroke(sun2, q.ripple, 1.6, { opacity: 0.55 }), { 'class': 'pcs-drift', style: 'animation-duration:14s' });
+    // a soft bright edge where the water laps the sand
+    var lap = [];
+    for (x = SAND9.x0; x <= SAND9.x1; x += 20) lap.push([x, yOn(EDGE, x) - 3]);
+    s += stroke(smooth(lap), '#FFFFFF', 3.4, { opacity: 0.75 });
+    // small rings, and sparkles where the sun catches it
+    var rings = '', sp = '';
+    for (i = 0; i < 7; i++) {
+      x = SAND9.x0 + 120 + r() * (SAND9.x1 - SAND9.x0 - 240); y = yOn(EDGE, x) - 14 - r() * shoalDepth(x) * 0.6;
+      var rx = 14 + r() * 16;
+      rings += 'M' + n(x - rx) + ' ' + n(y) + 'a' + n(rx) + ' ' + n(rx * 0.3) + ' 0 1 0 ' + n(rx * 2) + ' 0a' + n(rx) + ' ' + n(rx * 0.3) + ' 0 1 0 ' + n(-rx * 2) + ' 0';
+    }
+    s += stroke(rings, q.ripple, 1.8, { opacity: 0.6 });
+    for (i = 0; i < 14; i++) {
+      x = SAND9.x0 + 30 + r() * (SAND9.x1 - SAND9.x0 - 60); y = yOn(EDGE, x) - 6 - r() * shoalDepth(x) * 0.9;
+      sp += path(K.sparkleD(x, y, 5 + r() * 7), '#FFFFFF', { 'class': i % 2 ? 'pcs-glint' : 'pcs-twk', style: 'animation-delay:-' + (r() * 3).toFixed(1) + 's' });
+    }
+    s += sp;
+    return g(soft + g(s, { 'clip-path': clip }), { 'data-art': 'shallows' });
+  }
+  // The strip of soft pale sand along the edge, damp and a little darker where the water laps it, a few
+  // grains and shell-bits; it fades into the mud at both ends, and the edge of the bridge's shadow lies over
+  // its left end. <g data-art="sand">.
+  function sandStrip(S, c) {
+    var q = shoalCols(S), r = rng(931), top = [], bot = [], x, i, s = '';
+    for (x = SAND9.x0; x <= SAND9.x1; x += 20) { top.push([x, yOn(EDGE, x) + 1]); bot.unshift([x, yOn(EDGE, x) + sandWidth(x)]); }
+    var d = smooth(top) + 'L' + pts(bot).slice(1) + 'Z';
+    s += path(d, S.linU([[0, q.sandDamp], [0.25, q.sand], [1, q.sandLt]], 0, 800, 0, 920));
+    var dots = '', bits = '';
+    for (i = 0; i < 60; i++) {
+      x = SAND9.x0 + 30 + r() * (SAND9.x1 - SAND9.x0 - 60);
+      var y = yOn(EDGE, x) + 4 + r() * Math.max(2, sandWidth(x) - 8);
+      if (i % 5) dots += dot(x, y, 1.2 + r() * 1.6); else bits += blob(x, y, 3 + r() * 3, 1.8 + r() * 1.4, 6, r, 0.3, 0.3);
+    }
+    s += path(dots, q.sandDot, { opacity: 0.5 }) + path(bits, '#FFFFFF', { opacity: 0.7 });
+    // the damp line where the water reaches
+    var damp = [];
+    for (x = SAND9.x0 + 10; x <= SAND9.x1 - 10; x += 20) damp.push([x, yOn(EDGE, x) + 5 + Math.sin(x * 0.05) * 1.5]);
+    s += stroke(smooth(damp), q.sandDamp, 4, { opacity: 0.7 });
+    // the edge of the bridge's shadow over its left end
+    s += path(d, S.linU([[0, c.dark1, 0.42], [1, c.dark1, 0]], SAND9.x0, 0, SAND9.x0 + 140, 0));
+    return g(s, { 'data-art': 'sand' });
+  }
+
+  // Where a cast member at spot `a` is drawn (as scenes.js draws it: the cats' units, a sitting Clan cat's
+  // height to the spot's `h`), its body box in the world [x0, y0, x1, y1] and its head box; without the
+  // character drawings, a sitting cat's shape there.
+  var OWN9 = { who: 1, at: 1, pose: 1, mood: 1, variant: 1, facing: 1, size: 1, purr: 1, lift: 1, look: 1, sex: 1, taken: 1 };
+  function castEst9(S, m, a) {
+    var fn = art.character, who = m.who || 'clancat', face = m.facing || a.face || 'right', H = a.h * (m.size > 0 ? +m.size : 1), k;
+    var o = { pose: m.pose || 'sit', mood: m.mood || 'neutral', facing: face };
+    if (m.variant != null) o.variant = m.variant;
+    for (k in m) if (Object.prototype.hasOwnProperty.call(m, k) && !OWN9[k] && m[k] != null) o[k] = m[k];
+    if (who === 'player') { o.look = S.look || {}; if (o.look.sex) o.sex = o.look.sex; }
+    var ch = null, ref = null;
+    if (typeof fn === 'function' && !fn.placeholder) {
+      try { ch = fn(who, o); ref = fn('clancat', { pose: 'sit', mood: 'neutral', variant: 1 }); } catch (e) { ch = null; }
+    }
+    if (!ch || !(ch.w > 0) || !(ch.h > 0) || !ref || !(ref.h > 0)) return { body: [a.x - H * 0.42, a.y - H * 0.78, a.x + H * 0.42, a.y], head: [a.x - H * 0.2, a.y - H * 0.78, a.x + H * 0.2, a.y - H * 0.42] };
+    var s = H / ref.h, bb = ch.bounds || { x0: 0, y0: 0, x1: ch.w, y1: ch.h };
+    var hb = ch.headBox || { x0: ch.head.x - ch.w * 0.2, y0: ch.head.y - ch.h * 0.18, x1: ch.head.x + ch.w * 0.2, y1: ch.head.y + ch.h * 0.18 };
+    function W(b) { return [a.x + (b.x0 - ch.w / 2) * s, a.y + (b.y0 - ch.h) * s, a.x + (b.x1 - ch.w / 2) * s, a.y + (b.y1 - ch.h) * s]; }
+    return { body: W(bb), head: W(hb) };
+  }
+  function atSpot9(S, name) {
+    var cast = S.cast || [];
+    for (var i = 0; i < cast.length; i++) if (cast[i] && cast[i].at === name) return cast[i];
+    return null;
+  }
+  // The soft shadow on the sand under whoever is in the air at `air` (and a fainter one under `skim`): scenes.js
+  // lays none there (the spots are `air`), so the set lays it, as chapter 7's `over` does. Under her body as drawn,
+  // on the sand below her. Nothing when nobody is there.
+  function sandShadow(S, name) {
+    var m = atSpot9(S, name), a = BANK9[name];
+    if (!m) return '';
+    var b = castEst9(S, m, a).body, cx = (b[0] + b[2]) / 2, rx = (b[2] - b[0]) * (name === 'air' ? 0.28 : 0.3), ry = Math.max(7, a.h * 0.06), y = SAND_UNDER[name];
+    var op = name === 'air' ? 0.34 : 0.22;
+    return g(ell(cx, y, rx, ry, S.pal.shade, { opacity: op, filter: S.blur('brsand', 4) }), { 'data-art': name + '-shadow' });
+  }
+  // Whoever is at `paddle` sits in the bright shallows: the water laid back over her legs (her chest, sitting up
+  // in `splash`), its top a little wavy, rings round her and drops flying; nothing dark in it, ever (no shadow
+  // shows under the water). <g data-art="paddle">.
+  function paddleCover(S, m) {
+    var a = BANK9.paddle, q = shoalCols(S), e = castEst9(S, m, a), b = e.body, bh = b[3] - b[1], r = rng(951);
+    var deep = m.pose === 'splash' ? 0.34 : 0.22, top = a.y - bh * deep, x0 = b[0] - bh * 0.1, x1 = b[2] + bh * 0.1, bot = a.y + a.h * 0.3;
+    // a pool round her: its top a little wavy, its ends rounded down into the shallows (no straight side)
+    var dd = (x1 - x0) * 0.1, d = 'M' + n(x0) + ' ' + n(bot) + 'Q' + n(x0) + ' ' + n(top + 8) + ' ' + n(x0 + dd) + ' ' + n(top + 6), k = 6, i;
+    for (i = 0; i < k; i++) { var xa = lerp(x0 + dd, x1 - dd, i / k), xb = lerp(x0 + dd, x1 - dd, (i + 1) / k); d += 'Q' + n((xa + xb) / 2) + ' ' + n(top - 5 + (i % 2) * 8) + ' ' + n(xb) + ' ' + n(top + 6); }
+    d += 'Q' + n(x1) + ' ' + n(top + 8) + ' ' + n(x1) + ' ' + n(bot) + 'Z';
+    // the water stops at the edge: it never lies over the sand
+    var wet = [];
+    for (var x = -30; x <= 1640; x += 40) wet.push([x, yOn(EDGE, x) + 2]);
+    var edgeClip = S.clip('brpaddleedge', path(pts([[-30, 560]].concat(wet, [[1640, 560]])) + 'Z', '#fff'));
+    // (soft at its ends: a wide pool blurred, and over it a narrower one, so no edge shows on the river)
+    var inner = 'M' + n(x0 + dd * 2) + ' ' + n(bot) + 'Q' + n(x0 + dd * 2) + ' ' + n(top + 10) + ' ' + n(x0 + dd * 3) + ' ' + n(top + 8) + 'L' + n(x1 - dd * 3) + ' ' + n(top + 8) + 'Q' + n(x1 - dd * 2) + ' ' + n(top + 10) + ' ' + n(x1 - dd * 2) + ' ' + n(bot) + 'Z';
+    var water = path(d, S.linU([[0, q.green], [0.45, q.bedFar], [1, q.bed]], 0, top, 0, a.y + 10), { opacity: 0.8, filter: S.blur('brpaddle', 10) }) +
+      path(inner, S.linU([[0, q.green], [0.45, q.bedFar], [1, q.bed]], 0, top, 0, a.y + 10), { opacity: 0.9, filter: S.blur('brpaddle2', 3) });
+    var lines = '';
+    for (i = 0; i < 6; i++) { var lx = x0 + r() * (x1 - x0), ly = top + 10 + r() * (a.y - top - 10), lw = 20 + r() * 30; lines += 'M' + n(lx) + ' ' + n(ly) + 'q' + n(lw / 4) + ' -3 ' + n(lw / 2) + ' 0t' + n(lw / 2) + ' 0'; }
+    water += stroke(lines, q.ripple, 2, { opacity: 0.6 });
+    var s = g(water, { 'clip-path': edgeClip });
+    var cx = (b[0] + b[2]) / 2, w = (x1 - x0) / 2;
+    s += stroke('M' + n(x0 + w * 0.12) + ' ' + n(top + 4) + 'Q' + n(cx) + ' ' + n(top - 4) + ' ' + n(x1 - w * 0.12) + ' ' + n(top + 4), '#FFFFFF', Math.max(2, a.h * 0.014), { opacity: 0.9 });
+    [[0.62, 0.09, 0.8], [0.86, 0.13, 0.55], [1.08, 0.17, 0.32]].forEach(function (t) {
+      var rx = w * t[0], ry = w * t[1];
+      s += stroke('M' + n(cx - rx) + ' ' + n(top + 6) + 'A' + n(rx) + ' ' + n(ry) + ' 0 0 0 ' + n(cx + rx) + ' ' + n(top + 6), q.ripple, Math.max(1.4, a.h * 0.011), { opacity: t[2], 'stroke-dasharray': n(rx * 0.8) + ' ' + n(rx * 0.22) });
+    });
+    // drops flying up round her
+    var drops = '';
+    for (i = 0; i < (m.pose === 'splash' ? 9 : 4); i++) {
+      var side = i % 2 ? 1 : -1, dx = cx + side * w * (0.55 + r() * 0.5), dy = top - 10 - r() * bh * 0.35, dr = 3 + r() * 4;
+      drops += K.dropD(dx, dy, dr);
+    }
+    s += path(drops, '#F2FBFF', { opacity: 0.9 });
+    return g(s, { 'data-art': 'paddle' });
+  }
+
   function drawBank(S) {
     var p = S.pal, o = S.opts, c = cols(S), back = '', over = '', front = '', r = rng(401), i, x, y;
     // sky, soft clouds blowing away after the storm, an airplane drifting down toward the river
@@ -562,6 +784,9 @@
     // the river
     var water = riverWater(S, c, 0, 598, 1600, 1000, { key: 'bank', lines: 54, swirls: 20, debris: 8 });
     back += water;
+    // chapter 9: the bright shallows at the bridge's foot (`shallows: true`); off, nothing at all
+    var shoal = o.shallows === true ? shallowsWater(S, c) : '';
+    back += shoal;
     // the far legs, far to near, with the river and the far shore showing between them
     for (i = 4; i >= 1; i--) back += bankLeg(S, c, LEGS[i], i);
     // the dark space under the near end
@@ -620,6 +845,10 @@
       ground += dragMarks(S, BANK_MARKS, 74, 26, { lip: mix(c.mudWet, c.mudDk, 0.3), bed: mix(c.mud, c.mudLt, 0.2), deep: c.mudWet, scuffs: false });
     }
     back += g(ground, { 'clip-path': groundClip });
+    // chapter 9: the strip of soft sand along the water at the bridge's foot, and the soft shadows on it under
+    // whoever is in the air (`air`, `skim`: only when someone is there)
+    if (o.shallows === true) back += sandStrip(S, c);
+    back += sandShadow(S, 'air') + sandShadow(S, 'skim');
     // reeds standing along the water's edge (a gap where something came up out of the river)
     var spots = [];
     for (x = 570; x < 1650; x += 9 + r() * 10) {
@@ -627,21 +856,28 @@
       y = yOn(EDGE, x) + 4 + r() * 24;
       spots.push([x, y, (60 + r() * 60) * clamp((y - 640) / 240, 0.5, 1.2)]);
     }
+    // (chapter 9: along the sand they part, and stand again past it, screening the practice from the river path)
+    if (o.shallows === true) spots = spots.filter(function (q) { return q[0] < SAND9.x0 || q[0] > SAND9.x1 - 10; });
     var reeds = reedBed(S, c, spots, { seed: 415, lean: 0.25 });
     back += g(reeds, { filter: S.shadow('s') });
     // chapter 5: whoever swims alongside (`water`) sits in the river, beyond the reeds
     var swimmer = null;
     for (i = 0; i < (S.cast || []).length; i++) if (S.cast[i] && S.cast[i].at === 'water') { swimmer = S.cast[i]; break; }
-    if (swimmer) S.covers.water = swimCover(S, c, BANK_WATER, water, reeds, swimmer);
+    if (swimmer) S.covers.water = swimCover(S, c, BANK_WATER, water + shoal, reeds, swimmer);
+    // chapter 9: whoever paddles in the shallows
+    var paddler = atSpot9(S, 'paddle');
+    if (paddler) S.covers.paddle = paddleCover(S, paddler);
     // Riffle's rock at the shadow's edge
     over += g(rock(S, c, 492, 780, 124, 64, 416, { shadeLeft: 0.35 }), { filter: S.shadow('s') });
-    // reeds in front of a cat among the reeds
-    S.covers.reeds = flatReeds(S, c, [[950, 882, 40, -0.3], [980, 888, 46, -2.6], [1030, 884, 38, -0.5], [1060, 890, 30, 3.0], [920, 886, 32, 0.2]]) +
+    // reeds in front of a cat among the reeds (chapter 9: with the sand there, only when someone is at `reeds`)
+    if (o.shallows !== true || atSpot9(S, 'reeds')) S.covers.reeds = flatReeds(S, c, [[950, 882, 40, -0.3], [980, 888, 46, -2.6], [1030, 884, 38, -0.5], [1060, 890, 30, 3.0], [920, 886, 32, 0.2]]) +
       reedBed(S, c, [[904, 892, 74], [1092, 894, 70], [1112, 896, 56]], { seed: 417, lean: 0.4 });
     // framing reeds in the bottom corners
     var fr = [];
     for (i = 0; i < 26; i++) fr.push([-40 + r() * 170, 994 + r() * 20, 150 + r() * 170]);
     for (i = 0; i < 24; i++) fr.push([1460 + r() * 190, 994 + r() * 20, 140 + r() * 160]);
+    // (chapter 9: with the sand, the left corner's reeds are shorter, so the friends watching there show)
+    if (o.shallows === true) fr = fr.map(function (q) { return q[0] < 400 ? [q[0] - 20, q[1], q[2] * 0.62] : q; });
     front += g(reedBed(S, c, fr, { seed: 418, lean: 0.1, k: 2.6, w: 1.6 }), { filter: S.shadow('m') });
     return { back: back, over: over, front: front };
   }
@@ -1919,7 +2155,11 @@
         'bank-left': A(300, 930, 285), 'bank-right': A(1250, 936, 285, 'left'), reeds: A(1000, 880, 240, 'left'),
         rock: A(492, 722, 140, 'right', { elev: true }), edge: A(330, 772, 176, 'left'),
         // chapter 5: swimming alongside, in the river where the reeds part
-        water: BANK_WATER
+        water: BANK_WATER,
+        // chapter 9: the practice on the sand (`run`, `run-2`), in the air over it (`skim`, `air`), in the shallows
+        // (`paddle`), and the friends watching from the bank at the left (`watch-1` … `watch-4`)
+        run: BANK9.run, 'run-2': BANK9['run-2'], skim: BANK9.skim, air: BANK9.air, paddle: BANK9.paddle,
+        'watch-1': BANK9['watch-1'], 'watch-2': BANK9['watch-2'], 'watch-3': BANK9['watch-3'], 'watch-4': BANK9['watch-4']
       },
       // `sun-edge`: in the sun just out of the shadow, beside `sun` (a cat there and Tallyheart at
       // `sun` sit side by side: f097a, f100a, f101a); its height is the depth there
@@ -1961,9 +2201,21 @@
       // the mud (`under`: a list of two numbers, compared by value as the pile's rows; the kit's compareLines)
       tap: ['none', 'print'], compare: [false, [24, 60]],
       // chapter 7 (final review): the lettering keeps off Sprinkle's drooping wing (`back`, her `wings` at `dragon`)
-      wing: [false, true] },
-    defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false, tap: 'none', compare: false, wing: false }
+      wing: [false, true],
+      // chapter 9: the bright shallows and the strip of sand at the bridge's foot (`bank`)
+      shallows: [false, true] },
+    defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false, tap: 'none', compare: false, wing: false, shallows: false }
   });
+
+  // For the tests (chapter 9): the bank's water's edge (y at x), the strip of sand along it and the shallows off it
+  // ([top, bottom] at x, inside SAND9's x0 … x1), and where the shadows under `air` and `skim` lie.
+  art.bridgeBankInfo = function () {
+    return {
+      edgeAt: function (x) { return yOn(EDGE, x); }, sand: { x0: SAND9.x0, x1: SAND9.x1 },
+      sandAt: function (x) { return [yOn(EDGE, x), yOn(EDGE, x) + sandWidth(x)]; }, shoalAt: function (x) { return [yOn(EDGE, x) - shoalDepth(x), yOn(EDGE, x)]; },
+      shadowY: { air: SAND_UNDER.air, skim: SAND_UNDER.skim }
+    };
+  };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

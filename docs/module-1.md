@@ -107,7 +107,7 @@ does Mama count?"), and each can help with the case.
 | **Wisp** | so pale she's nearly see-through; silent | standing still in the Roaches Run reeds, copying Patience | waiting with Patience long enough (ch. 5) | saw the fox drop something glittering in the reeds |
 | **Sleet** | silver-white, the eldest; bold and bossy | the long grass of fox country, "spying on the enemy" | following the fox trail (ch. 6) | heard Reynard talk about "the dry den" |
 | **Hail** | white with grey speckles; bouncy, full of questions | a hollow log in the Barking Field, where the dogs think she's a strange dog | taking the Barking Field route (ch. 8) | leads the dogs in circles so you can slip past |
-| **Dew** (to be renamed before chapter 9: the books have a Dew) | pearly green; sweet and sleepy | an oak hollow in GroveClan's woods | gathering oak moss (ch. 9) | knows the moss that helps a dragon's wing |
+| **Mizzle** (was Dew, renamed by chapter 9's brief, call 11: the books have a Dew) | pearly green; sweet and sleepy | an oak hollow in GroveClan's woods | gathering oak moss (ch. 9) | knows the moss that helps a dragon's wing |
 
 Places she's been stay open between chapters, so a dragonet she missed can still be found,
 right up until the full moon. All seven get home at the end either way. The ones she found say
@@ -245,7 +245,7 @@ Her warrior name waits for a later module, and what she does this moon will be p
   gathers one ingredient from each territory: reed root from ReedClan, oak moss from GroveClan,
   river mint from the Holt, dew from the glass towers. Then she lays out her case file for the
   Gathering.
-- *Paths:* gathering the oak moss finds Dew, who knows the moss that helps a dragon's wing.
+- *Paths:* gathering the oak moss finds Mizzle, who knows the moss that helps a dragon's wing.
 - *Counts:* the 8s (a spider's legs: double the 4s), mixed. Story use: remedy doses.
 
 **10. The Gathering**
@@ -280,7 +280,7 @@ and 7s), as solid as possible through lots of exposure, in about 10–20% of her
 | 7 | 6s (whiskers on one cheek) | double the 3s; the Counts as evidence |
 | 8 | 4s (paws) | 4s and earlier |
 | 9 | 8s (a spider's legs) | double the 4s; remedy doses |
-| 10 | 7s (sunrises in a quarter-moon) | only 7 × 7 is new; the Moon Ferry Counts, every table |
+| 10 | 7s (a clutch of seven dragonets: decision 51) | only 7 × 7 is new; the Moon Ferry Counts, every table |
 | after 10 | none | the Warrior Counts (every pair to 10 × 10, 90% to pass), then the Warrior Ceremony |
 
 **A lesson** takes 2–3 minutes and 15–20 answers (chapter 1's, on the 1s alone, is shorter):

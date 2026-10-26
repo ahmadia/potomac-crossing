@@ -14,7 +14,8 @@
  * tunnel, coil-diggers' own mice with the tunnel's hatched mouth at the end of their ground), and chapter 8's
  * four (its spec, "3. The Case File": stash, tidy's own row under a low roof of earth; glass, a heap of the
  * scale's own shards; fox-brag, the one fox beside the Old Bridge; hail-shapes, two of the shapes under a wire
- * fence). Cards the file lays touching show one thing drawn one way: one fox's
+ * fence), and chapter 9's one (its spec, "3. The Case File": mizzle-wing, cant-fly's own drooping wing, smaller and lower,
+ * under rain and puddle-paws' own flash). Cards the file lays touching show one thing drawn one way: one fox's
  * head wherever the fox is (`fox`), one heron's head (`heron`), one track (`TRACK`: Squall's), one
  * tiny print at one size (`prints`, `PRINT`), one kind of long low shape (`slink`), one "scale"
  * (`shard`). Whoever took the prey is never on a card: paws, prints, two shapes, and nothing more
@@ -309,12 +310,18 @@
 
   // Sprinkle can't fly. (eye) A drooping wing: it hangs from the shoulder, low and half shut, its
   // tips on the ground. Never crooked or bent.
+  // (chapter 9: the one drooping wing, DROOP, which Mizzle's card scratches again, smaller and lower)
+  var DROOP = {
+    wing: 'M50 80C66 70 94 76 110 96C124 114 140 146 140 178Q126 168 118 194Q108 174 94 188Q86 146 54 114',
+    ribs: 'M110 96Q122 146 118 194M110 96Q104 146 94 188', shoulder: 'M50 80Q44 96 54 114', ground: 'M80 198H154',
+    wrist: 'M110 96Q112 88 119 88'
+  };
   PICS['cant-fly'] = { label: 'a drooping wing', draw: function (c) {
-    c.line('M50 80C66 70 94 76 110 96C124 114 140 146 140 178Q126 168 118 194Q108 174 94 188Q86 146 54 114');
-    c.line('M110 96Q122 146 118 194M110 96Q104 146 94 188', { w: 0.8 });
-    c.line('M50 80Q44 96 54 114', { w: 0.8 });
-    c.line('M80 198H154', { w: 0.8 });
-    c.fine('M110 96Q112 88 119 88', { w: 0.8 });                                         // the little hook at its wrist
+    c.line(DROOP.wing);
+    c.line(DROOP.ribs, { w: 0.8 });
+    c.line(DROOP.shoulder, { w: 0.8 });
+    c.line(DROOP.ground, { w: 0.8 });
+    c.fine(DROOP.wrist, { w: 0.8 });                                                     // the little hook at its wrist
   } };
 
   // ------------------------------------------------------------------ chapter 5: what its pictures are made of
@@ -792,6 +799,39 @@
     c.line('M54 172C54 166.6 63.6 165.6 65 171.6C65.6 177.4 54.6 178.2 54 172Z', { w: 0.85 });
     c.line('M28 ' + F.foot + 'H176', { w: 0.8 });                                        // the field's ground
     c.fine('M164 72l-6 -4M164 82l6 -4', { w: 0.6 });                                     // the wire tied to the post
+  } };
+
+  // ------------------------------------------------------------------ chapter 9's picture
+
+  // Absolute path data (M, L, H, V, C, Q) with every point taken to (ox + k (x - ax), oy + k (y - ay)): the same lines,
+  // smaller and moved, their weight untouched (a scaled transform would thin them).
+  function shrink(d, k, ax, ay, ox, oy) {
+    return d.replace(/([MLHVCQ])([^MLHVCQZz]*)/g, function (all, cmd, nums) {
+      var v = nums.match(/-?\d*\.?\d+/g) || [], out = [];
+      for (var i = 0; i < v.length; i++) {
+        var isX = cmd === 'H' ? true : cmd === 'V' ? false : i % 2 === 0;
+        out.push(N(isX ? ox + k * (+v[i] - ax) : oy + k * (+v[i] - ay)));
+      }
+      return cmd + out.join(' ');
+    });
+  }
+
+  // Mizzle says Sprinkle's wing was hurt before the rain stopped. (ear) cant-fly's own drooping wing (DROOP: one
+  // wing drawn one way), smaller and lower on the bark, under slanting lines of rain, with one zigzag of lightning
+  // above it (puddle-paws' own flash, the storm night's). At a paw's size the rain and the flash are what tell it
+  // from cant-fly.
+  var MIZZLE_WING = { k: 0.7, at: [97, 198], to: [86, 198] };
+  PICS['mizzle-wing'] = { label: 'the drooping wing under falling rain and a flash of lightning', draw: function (c) {
+    var M = MIZZLE_WING, sh = function (d) { return shrink(d, M.k, M.at[0], M.at[1], M.to[0], M.to[1]); };
+    c.line(sh(DROOP.wing));
+    c.line(sh(DROOP.ribs), { w: 0.8 });
+    c.line(sh(DROOP.shoulder), { w: 0.8 });
+    c.line('M44 198H150', { w: 0.8 });                                                   // the ground, under it
+    c.fine(sh(DROOP.wrist), { w: 0.8 });
+    // the rain, slanting down from the upper right, over the wing and on both sides of it
+    c.line('M100 66l-7 17M124 64l-7 17M78 92l-7 17M102 90l-7 17M126 88l-7 17M150 112l-7 17M162 146l-7 17M44 128l-7 17M150 170l-7 17', { w: 0.75 });
+    c.line('M172 62L150 96H170L144 134');                                                // the flash (puddle-paws')
+    c.fine('M64 70l-4 10M140 140l-4 10M58 160l-4 10', { w: 0.55 });                      // and a few more drops, large
   } };
 
   // ------------------------------------------------------------------ public

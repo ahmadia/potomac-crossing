@@ -13,7 +13,7 @@ const LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
 const CAMS = ['wide', 'pole', 'two', 'over', 'sky', 'paw'];   // build.md's order
 const COMP = { wide: 'main', pole: 'pole', two: 'two', over: 'over', sky: 'sky', paw: 'paw' };
 const ANCHORS = ['pole', 'beside', 'door'];
-const OPTS = { plane: [false, true], moth: [false, true], grit: ['none', 'paws'] };
+const OPTS = { plane: [false, true], moth: [false, true], grit: ['none', 'paws'], dew: [false, true] };   // (chapter 9: `dew`)
 const TOD = ['day', 'morning', 'sunset', 'dusk', 'night'];
 const FLOORED = ['wide', 'pole', 'two', 'over'];   // the cameras that see enough floor for the scratches
 const PLANED = ['wide', 'pole', 'two', 'sky'];     // the cameras that can show the airplane
@@ -122,15 +122,17 @@ test('PC.art.vocab lists the roof with its cameras, anchors and options; every c
   const v = art.vocab.sets.roof;
   assert.ok(v, 'vocab.sets.roof');
   assert.deepEqual(v.cams, CAMS);
-  assert.deepEqual(v.anchors.slice().sort(), ANCHORS.slice().sort());
+  // (chapter 9 adds `puddle`, on `wide` and `two` only: the spec's call; the three of chapter 4 are in every composition)
+  assert.deepEqual(v.anchors.slice().sort(), ANCHORS.concat(['puddle']).sort());
   assert.deepEqual(v.opts, OPTS);
   const si = art.sceneInfo('roof');
   assert.equal(si.label, 'the tallest tower’s roof');
-  assert.deepEqual(si.defaults, { grit: 'none' });
+  assert.deepEqual(si.defaults, { grit: 'none', dew: false });
   for (const cam of CAMS) {
     assert.equal(si.cams[cam].comp, COMP[cam], cam + ' has its own composition');
     assert.deepEqual([si.cams[cam].x, si.cams[cam].y, si.cams[cam].w], [0, 0, 1600], cam + ' looks at all of it');
-    assert.deepEqual(Object.keys(si.anchors[COMP[cam]]).sort(), ANCHORS.slice().sort(), cam + ' has every anchor: nobody a frame names is out of sight');
+    const want = ANCHORS.concat(cam === 'wide' || cam === 'two' ? ['puddle'] : []);
+    assert.deepEqual(Object.keys(si.anchors[COMP[cam]]).sort(), want.sort(), cam + ' has every anchor: nobody a frame names is out of sight');
   }
   assert.ok(Object.keys(si.anchors).every((c) => !Object.keys(si.anchors[c]).some((k) => /wall/.test(k))), 'no anchor at the wall');
 });
@@ -579,3 +581,159 @@ test('odd input never throws: unknown spots, custom spots, no character drawings
   const hug = squall('hug');
   if (hug) assert.ok(Math.abs(info().main.pole.w - hug.pole.w * spots('wide').pole.h / 200) < 0.5);
 });
+
+// ================================================================ chapter 9: the roof at first light, the dew
+// docs/chapters/09-featherlight.spec.md, section 4, "The roof at first light", and section 7, item 2 (the fingerprints, recorded
+// once from the shipped chapter 8 snapshot, commit b6a8d4f, engine 0.8.0, in a node process of its own; no test reads that tree)
+
+const crypto = require('crypto');
+const SPEC9 = path.join(ROOT, 'docs/chapters/09-featherlight.spec.md');
+const strip9 = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+const hash9 = (r) => crypto.createHash('sha1').update(strip9(r.svg) + JSON.stringify(r.keep) + JSON.stringify(r.heads)).digest('hex').slice(0, 12);
+const fpCat9 = () => { const c = PC.engine.blankCat({ id: 'fingerprint', now: 0, look: LOOK }); c.name = 'Pebble'; c.petname = 'Pebble'; return c; };
+// <fp9> (the recorder's code, as it ran on the snapshot)
+// every roof frame of chapters 4 and 5; with `hour`, chapter 4's run again at that hour, the hour first (as chapter 9's copy does)
+function frameHash9(ids, hour) {
+  const E = PC.engine, cat = fpCat9(), stories = ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07', 'ch08'].map((id) => PC.story[id]), out = {};
+  for (const id of ids) for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+    if (!f.scene || f.scene.set !== 'roof') continue;
+    let sc = E.resolveScene(f.scene, cat, stories);
+    if (hour) sc = Object.assign({}, sc, { fx: [hour].concat((sc.fx || []).filter((x) => ['day', 'morning', 'sunset', 'dusk', 'night'].indexOf(x) < 0)) });
+    out[id + ':' + fid + (hour ? '@' + hour : '')] = hash9(art.render(sc, { look: LOOK }));
+  }
+  return out;
+}
+// one hash per camera: every option chapters 4 and 5 gave the roof, in every light, empty and with someone at every older spot
+const ROOF_OPTS9 = [{}, { plane: true }, { moth: true, grit: 'paws' }, { plane: true, moth: true, grit: 'paws' }];
+function roofSweep9() {
+  const info = art.sceneInfo('roof'), out = {}, WHO = ['squall', 'player', 'tallyheart'];
+  for (const cam of Object.keys(info.cams)) {
+    const spots9 = Object.keys(info.anchors[info.cams[cam].comp] || {}).filter((k) => k !== 'puddle');
+    const cast = spots9.map((at, i) => ({ who: WHO[i % WHO.length], variant: 1 + (i % 3), pose: 'sit', at }));
+    const h = crypto.createHash('sha1');
+    for (const fx of [[], ['day'], ['morning'], ['sunset'], ['dusk'], ['night']]) for (const opts of ROOF_OPTS9) for (const c of [[], cast]) {
+      const r = art.render({ set: 'roof', cam, fx, opts, cast: c }, { look: LOOK });
+      h.update(strip9(r.svg) + JSON.stringify(r.keep) + JSON.stringify(r.heads));
+    }
+    out[cam] = h.digest('hex').slice(0, 16);
+  }
+  return out;
+}
+// </fp9>
+const CH9_ROOF_FRAMES = {
+  'ch04:f079a': '2ccee5352830', 'ch04:f080a': '6a3c47c96ac0', 'ch04:f081a': '03bdec674960', 'ch04:f082a': 'ca82e1cc4262',
+  'ch04:f083a': '2dcd7d372aae', 'ch04:f084a': '142c20114901', 'ch04:f085a': '947fc73a50ec', 'ch04:f086a': 'eece02974664',
+  'ch04:f087a': '786d152cd15e', 'ch04:f088a': 'e259fb105b12', 'ch04:f089a': '67b0681de070', 'ch05:f025a': '38ad418ab868',
+  'ch05:f026a': 'ff8e85930f94', 'ch05:f027a': 'aa6c9ce01d75', 'ch05:f028a': 'cb818d2c5ce8', 'ch05:f029a': '16f0c30b32e6',
+  'ch05:f030a': 'f8e7876adf02', 'ch05:f031a': '5fb6cfab3e56', 'ch05:f032a': '7cc2b5c588ae', 'ch05:f033a': 'b9df8983ba8c',
+  'ch05:f034a': '700b372ca6ca', 'ch05:f035a': '235c42b3bd69'
+};
+const CH9_ROOF_MORNING = {
+  'ch04:f079a@morning': 'a68d48529338', 'ch04:f080a@morning': 'b6e1ba07dec2', 'ch04:f081a@morning': 'c92c4353765e', 'ch04:f082a@morning': 'a9373f4c02eb',
+  'ch04:f083a@morning': 'a28d1567e3a4', 'ch04:f084a@morning': 'd05054886ce3', 'ch04:f085a@morning': '19a5fa3ba838', 'ch04:f086a@morning': '44d186ba7174',
+  'ch04:f087a@morning': '1d2f0fbb07ff', 'ch04:f088a@morning': '013d1a30f2f6', 'ch04:f089a@morning': 'f943add01588'
+};
+const CH9_ROOF_SWEEP = {
+  'wide': '7107b5b21f0e932d', 'pole': '7ad73cd032abef01',
+  'two': 'c1fe459704e67485', 'over': 'b30bf70ac22a891e',
+  'sky': '6db791d7b3e2ca64', 'paw': '8ec033f261bb0224'
+};
+
+const hasCats9 = typeof art.character === 'function' && !art.character.placeholder;
+// the whole of the first <g …> whose opening tag has `attr`, to its own closing tag
+function groupOf9(svg, attr) {
+  const i = svg.indexOf(attr);
+  if (i < 0) return '';
+  const start = svg.lastIndexOf('<g', i), tag = /<g[\s>]|<\/g>/g;
+  let depth = 0, t;
+  tag.lastIndex = start;
+  while ((t = tag.exec(svg))) { depth += t[0] === '</g>' ? -1 : 1; if (depth === 0) return svg.slice(start, tag.lastIndex); }
+  return '';
+}
+test('roof, chapter 9: every roof frame of chapters 4 and 5 draws exactly as the shipped chapter 8 drew it; chapter 4\'s run again at first light draws as the roof\'s morning always did (fingerprints)', { skip: !hasCats9 && 'no cats.js' }, () => {
+  const now = frameHash9(['ch04', 'ch05']);
+  assert.deepEqual(Object.keys(now).sort(), Object.keys(CH9_ROOF_FRAMES).sort(), 'the same frames visit the roof');
+  for (const [k, want] of Object.entries(CH9_ROOF_FRAMES)) assert.equal(now[k], want, k + ': drawn as it was');
+  const morning = frameHash9(['ch04'], 'morning');
+  for (const [k, want] of Object.entries(CH9_ROOF_MORNING)) assert.equal(morning[k], want, k + ': the roof\'s morning as it was');
+  assert.equal(Object.keys(morning).length, 11, 'chapter 4\'s eleven roof frames, the copy\'s');
+});
+
+test('roof, chapter 9: every camera, with every option chapters 4 and 5 gave it, in every light, empty and with someone at every older spot, is byte for byte the snapshot\'s', { skip: !hasCats9 && 'no cats.js' }, () => {
+  assert.deepEqual(roofSweep9(), CH9_ROOF_SWEEP, 'recorded from the chapter 8 snapshot');
+});
+
+test('roof, chapter 9: the spec names `dew` and `puddle`; `dew` is declared, off by default, and off draws exactly what it drew', () => {
+  const md = fs.readFileSync(SPEC9, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**Option `dew: true`** (default false; every camera that shows the rain puddle)', '**Anchor `puddle`** (`wide` and `two`)'])
+    assert.ok(md.includes(want), 'the spec says: ' + want);
+  for (const cam of CAMS) for (const opts of [{}, { plane: true, grit: 'paws' }]) for (const fx of [[], ['morning']]) {
+    assert.equal(strip(render(cam, Object.assign({ dew: false }, opts), [], fx).svg), strip(render(cam, opts, [], fx).svg), cam + ': off is nothing');
+  }
+});
+
+test('roof, chapter 9: `dew: true`: the rain puddle silver, pale and bright, with tiny beads of dew on the grit round it, in every camera that shows the puddle; on the floor only; never in the sky or the forepaw\'s close-up', () => {
+  const I = info(), lum9 = (h) => parseInt(h.slice(1, 3), 16) * 0.3 + parseInt(h.slice(3, 5), 16) * 0.59 + parseInt(h.slice(5, 7), 16) * 0.11;
+  for (const cam of CAMS) for (const fx of [['morning'], [], ['day']]) {
+    const r = render(cam, { dew: true }, [], fx), svg = r.svg, has = /data-part="puddle"/.test(svg);
+    checkRender(r, { cast: [] }, cam + ' dew ' + fx);
+    assert.equal(/data-part="dew"/.test(svg), has, cam + ': the dew wherever the puddle is');
+    if (!has) { assert.equal(strip(svg), strip(render(cam, {}, [], fx).svg), cam + ': no puddle, nothing'); continue; }
+    assert.ok(['wide', 'pole', 'two', 'over'].includes(cam), cam);
+    assert.ok(svg.indexOf('data-part="dew"') > svg.indexOf('data-part="puddle"'), cam + ': over the puddle');
+    const dew = groupOf9(svg, 'data-part="dew"');
+    const fills = [...dew.matchAll(/ fill="(#[0-9a-fA-F]{6})"/g)].map((m) => m[1]);
+    assert.ok(fills.length && fills.every((c) => lum9(c) >= 200), cam + ': silver, pale and bright: ' + fills.filter((c) => lum9(c) < 200).join(' '));
+    // the beads: many tiny drops on the grit round it, every one below the wall's foot, a few twinkling
+    const W = I[COMP[cam]].wall, beads = (dew.match(/a[\d.]+ [\d.]+ 0 1 0 /g) || []).length / 2;
+    assert.ok(beads > 30, cam + ': beads of dew: ' + beads);
+    const ys = [...dew.matchAll(/M([-\d.]+) ([-\d.]+)a/g)].map((m) => +m[2]);
+    assert.ok(ys.every((y) => y > W.foot), cam + ': on the floor, never on the wall');
+    assert.ok(/pcs-twk/.test(dew) && /pcs-glint/.test(dew), cam + ': catching the low sun');
+  }
+});
+
+test('roof, chapter 9: `puddle` (wide and two): a cat crouched at the puddle\'s edge, her leaf at her paws on its rim; clear of the pole\'s spot and of the wall; in the middle of the roof', { skip: !hasCats9 && 'no cats.js' }, () => {
+  const I = info();
+  for (const cam of ['wide', 'two']) {
+    const A = spots(cam), a = A.puddle, L = I[COMP[cam]], W = L.wall;
+    const pq = L.puddle, px0 = pq[0] - pq[2], py0 = pq[1] - pq[3], py1 = pq[1] + pq[3];
+    assert.ok(a.y - W.foot >= a.h * 0.25, cam + ': clear of the wall');
+    assert.equal(a.face, 'right', cam + ': facing the puddle');
+    if (cam === 'wide') assert.ok(a.x > 240 + 100 && a.x < 1360 - 100, 'wide: in the middle of the roof');
+    // her crouch: her leaf at her paws on the puddle's near rim, her body off it
+    const ch = art.character('player', { pose: 'crouch', mood: 'wonder', holds: 'leaf', holdAt: 'paws', facing: 'right', look: LOOK, sex: LOOK.sex }), ref = art.character('clancat', { pose: 'sit', mood: 'neutral', variant: 1 });
+    const k = a.h / ref.h, leaf = [a.x + (ch.held.x - ch.w / 2) * k, a.y + (ch.held.y - ch.h) * k, ch.held.r * k];
+    assert.ok(Math.abs(leaf[0] - px0) < leaf[2] * 2.5 && leaf[1] > py0 - leaf[2] && leaf[1] < py1 + leaf[2] * 2, cam + ': her leaf at the puddle\'s rim: ' + leaf.map(Math.round) + ' / ' + [px0, py0, py1].map(Math.round));
+    const body = [a.x + (ch.bounds.x0 - ch.w / 2) * k, a.y + (ch.bounds.y0 - ch.h) * k, a.x + (ch.bounds.x1 - ch.w / 2) * k, a.y];
+    assert.ok(body[0] < px0, cam + ': she crouches beside it, not in it');
+    // clear of the pole's spot: Squall there in any of his poses, the pole itself
+    const pole = A.pole, pw = L.pole.w;
+    assert.ok(body[0] > pole.x + pw * 3, cam + ': clear of the pole');
+    for (const pose of ['roar', 'hidden', 'sit', 'hug']) {
+      const r = render(cam, { dew: true }, [{ who: 'squall', at: 'pole', pose, mood: 'shout' }, { who: 'player', at: 'puddle', pose: 'crouch', mood: 'wonder', holds: 'leaf', holdAt: 'paws' }], ['morning']);
+      checkRender(r, { cast: [1, 2] }, cam + ' squall ' + pose);
+      assert.ok(r.heads[1] && r.heads[1].x > 3 && r.heads[1].x < 97 && r.heads[1].y > 3, cam + ': our cat\'s face in the panel');
+      if (pose !== 'hidden') assert.ok(r.heads[0] && Math.hypot((r.heads[0].x - r.heads[1].x) * 16, (r.heads[0].y - r.heads[1].y) * 10) > (r.heads[0].r + r.heads[1].r) * 16, cam + ' (' + pose + '): the two faces apart');
+    }
+  }
+  assert.ok(!spots('pole').puddle && !spots('over').puddle && !spots('sky').puddle && !spots('paw').puddle, 'only on wide and two (the spec)');
+  // (chapter 9's review, 2026-10-26) on `two`, the dew's camera, she is about Squall's size at the pole: the panel's
+  // co-subject beside him, never a small figure far back behind him
+  assert.ok(spots('two').puddle.h >= 0.85 * spots('two').pole.h, 'two: our cat at the puddle about his size: ' + spots('two').puddle.h + ' / ' + spots('two').pole.h);
+});
+
+test('roof, chapter 9: the dew\'s frames on `two` at first light read: the silver puddle and its beads, Squall at the pole roaring, and with `hidden` and `plane: true` his tail tip and mist ring (cats.js) and the airplane over the light', { skip: !hasCats9 && 'no cats.js' }, () => {
+  const roar = render('two', { dew: true }, [{ who: 'squall', at: 'pole', pose: 'roar', mood: 'shout' }, { who: 'player', at: 'puddle', pose: 'crouch', mood: 'wonder', holds: 'leaf', holdAt: 'paws' }], ['morning']);
+  assert.ok(/data-part="dew"/.test(roar.svg) && roar.heads[0] && roar.heads[1], 'roar: the dew, his face and hers');
+  const hid = render('two', { dew: true, plane: true }, [{ who: 'squall', at: 'pole', pose: 'hidden', mood: 'shout' }, { who: 'player', at: 'puddle', pose: 'crouch', mood: 'wonder', holds: 'leaf', holdAt: 'paws' }], ['morning']);
+  assert.ok(/data-part="dew"/.test(hid.svg) && /data-part="plane"/.test(hid.svg), 'hidden: the dew and the airplane');
+  assert.ok(hid.heads[0] && hid.heads[0].x > 0 && hid.heads[0].x < 100, 'his balloon\'s tail points at the tail tip and the mist ring (cats.js\'s headBox)');
+  if ((art.vocab.otherPoses.squall || []).includes('hidden')) {
+    const P = spots('two').pole, ch = art.character('squall', { pose: 'hidden', mood: 'shout', facing: 'right' });
+    assert.ok(ch.headBox && (ch.headBox.y1 - ch.headBox.y0) < ch.h, 'a headBox round the tail tip');
+    // at the pole's foot: the tip and the mist low by the pole, not a dragonet's face up at a cat's height
+    assert.ok(hid.heads[0].y * 10 > P.y - P.h * 0.9, 'low, by the pole\'s foot: ' + hid.heads[0].y);
+  }
+});
+

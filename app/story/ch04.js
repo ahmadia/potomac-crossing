@@ -1877,11 +1877,14 @@
         // only for a dragonet found in its own chapter: a cat who said "Not today" here and went up
         // in chapter 5 (`ch5Roof`, set with `foundSquall` by chapter 5's roof) reads on this page
         // that he was still roaring, and on chapter 5's that she found him
-        { when: { foundSquall: true, ch5Roof: false, not: { ch4CaughtFly: true } }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who roars at airplanes and hiccups.' },
-        { when: { foundSquall: true, ch5Roof: false, not: { ch4CaughtFly: true } }, text: 'Squall told {them} about two skinny shapes that go to the tracks every night. A thing to check.' },
-        { when: { foundSquall: true, ch5Roof: false, ch4CaughtFly: true }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who told {them} about two skinny shapes that go to the tracks every night.' },
+        { when: { foundSquall: true, ch5Roof: false, ch9Roof: false, not: { ch4CaughtFly: true } }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who roars at airplanes and hiccups.' },
+        { when: { foundSquall: true, ch5Roof: false, ch9Roof: false, not: { ch4CaughtFly: true } }, text: 'Squall told {them} about two skinny shapes that go to the tracks every night. A thing to check.' },
+        { when: { foundSquall: true, ch5Roof: false, ch9Roof: false, ch4CaughtFly: true }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who told {them} about two skinny shapes that go to the tracks every night.' },
         { when: { foundSquall: false }, text: 'On the roof of {their} old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.' },
         { when: { ch5Roof: true }, text: 'On the roof of {their} old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.' },
+        // (chapter 9's: `ch5Roof` too can be set when chapter 5's roof is read again from the middle of chapter
+        // 9's roof copy, so this line stands back for it and the page says "still roaring" once)
+        { when: { ch9Roof: true, ch5Roof: false }, text: 'On the roof of {their} old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.' },
 
         { text: 'Under the Old Bridge, Sprinkle looked herself over and said the scale wasn’t hers, and three friends made a thirty-claw promise.' },
         { text: 'That night there were forty in the rows, a moon as thin as a curl of bark, and a grey tom who fell asleep by fifty.' }

@@ -51,8 +51,17 @@
  * dogs lying down, Reynard's trot, the raised tail, the leaf and the glass in it, the mouse, a tap mark
  * someone else carries (Riffle's ears and paw, the friend's tail), one cat's paws a pair at a time and
  * cats' paws by fours, the field's four animals, nights of marks two and two, the sand at the 4s, and a
- * card link's own line for each partner (`lines`). Written for an illustrator, a grown-up reading along,
- * or anyone checking the chapter without playing it. No dependencies.
+ * card link's own line for each partner (`lines`). Chapter 9 on: GroveClan's woods (`grove`: the little
+ * bridge, the old trees, the elder's place, the old oak and the hollow in it, the oak and the hollow in place
+ * words of their own), Thymeleaf's den in the camp (`herbs`, the spider's web, the remedy), the case laid out
+ * on the den floor (`case`, a row lit a tap, `read`) under a nearly round moon (`moon: 13`), the reed root at
+ * the wall's end, the roof's dew at first light, the sunny shallows by the Old Bridge and the bank's new spots;
+ * Thymeleaf, Mizzle, GroveClan's cats by variant and the spider in their poses, Sprinkle in flight, Squall
+ * behind the pole, Riffle's mint, the wing and the root tapped, her own nose and tail tapped; the Counts
+ * pictures of spiders (and one spider's two sides), doses in rows of eight (drops, paw marks, marks), twigs of
+ * acorns, the sand at the 8s four and four; the questions somebody answers himself, and the rows of her case
+ * tapped out one by one. Written for an illustrator, a grown-up reading along, or anyone checking the chapter
+ * without playing it. No dependencies.
  */
 import { createRequire } from 'node:module';
 import { writeFileSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
@@ -88,17 +97,20 @@ const SETS = {
   openriver: ['the open river, out on the otters’ ferry raft', 'wide bright water, the Crossing’s own sunny blue, never dark; the Crossing’s rocks close behind, a few raft-lengths off; the glass towers standing on their heads in the water, the tallest with its red light; far across, a tall white needle of stone above the trees; the raft is four logs lashed with vines, riding low, with a long pole; nothing is ever drawn as a shape under it, and nobody but an otter or a dragonet is ever in the water'],
   marsh: ['the marsh, seen from the otters’ raft', 'still water behind a low bank, reeds taller than a cat, lily pads, mist low on the water, a mud flat beside the raft with shallow water over its edge, clear enough to show the bottom; among the pale reeds one reed is paler than the rest; our cat never leaves the raft: the mud is ReedClan’s'],
   // chapter 8: the trail's end, always at night, moonlit and silver, never black; nobody of the Clan on the rails
-  tracks: ['the railway bank by the tracks, past the Barking Field: nobody’s land, the trains own it', 'a high grassy bank, on its flat top the ballast, the sleepers and two long rails bright in the moonlight; along its face five or six holes (dark ovals with a lip of earth), faint tiny prints round every one, the biggest low on the right, a little one left of it, two more higher up, the tunnel’s end at the very foot at the left; tall weeds along the foot, taller than a sitting cat’s ears; dark earth and short grass in front; stars and the moon; moonlit and silver, never frightening']
+  tracks: ['the railway bank by the tracks, past the Barking Field: nobody’s land, the trains own it', 'a high grassy bank, on its flat top the ballast, the sleepers and two long rails bright in the moonlight; along its face five or six holes (dark ovals with a lip of earth), faint tiny prints round every one, the biggest low on the right, a little one left of it, two more higher up, the tunnel’s end at the very foot at the left; tall weeds along the foot, taller than a sitting cat’s ears; dark earth and short grass in front; stars and the moon; moonlit and silver, never frightening'],
+  // chapter 9: GroveClan's woods, over the little bridge, always by day: green and gold, never dark
+  grove: ['GroveClan’s woods, over the little bridge from the river path', 'a little old footbridge with low stone sides over a narrow channel of clear, bright water; very old, very tall trees, wide trunks and roots like arms, ferns, dappled green-gold light on soft ground; nothing frightening, never dark']
 };
 // the art's time of day for each set when fx names none, and how a set re-reads one (camp and
 // hollow draw sunset as the last golden light); the river and the sky are always night
 const SET_TOD = { room: 'sunset', tower: 'sunset', garden: 'sunset', camp: 'golden', hollow: 'golden', den: 'night', sky: 'night', river: 'night',
-  title: 'sunset', pile: 'morning', bridge: 'day', field: 'day', crossing: 'day', riverbank: 'day', roof: 'golden', openriver: 'day', marsh: 'day', tracks: 'night' };
+  title: 'sunset', pile: 'morning', bridge: 'day', field: 'day', crossing: 'day', riverbank: 'day', roof: 'golden', openriver: 'day', marsh: 'day', tracks: 'night', grove: 'day' };
 const TOD_MAP = { camp: { sunset: 'golden' }, hollow: { sunset: 'golden' }, pile: { sunset: 'golden' }, roof: { sunset: 'golden' } };
 const TOD_FIXED = { sky: 'night', river: 'night', tracks: 'night' };
 const TOD_WORDS = { morning: 'in the morning', day: 'by day', sunset: 'at sunset', dusk: 'at dusk', night: 'at night', golden: 'in the last golden light' };
 // a set's own words for a time of day (the roof's gold is the afternoon's)
-const SET_TOD_WORDS = { roof: { golden: 'in the gold of the afternoon' }, marsh: { day: 'in the afternoon light' },
+// (chapter 9: the roof by morning is first light, when the dew lies on its puddle; GroveClan's woods by day are the bright afternoon)
+const SET_TOD_WORDS = { roof: { golden: 'in the gold of the afternoon', morning: 'at first light' }, marsh: { day: 'in the afternoon light' }, grove: { day: 'in the bright afternoon' },
   // (the open river has two lights: the day, and the late gold of the way home)
   openriver: { sunset: 'in the late gold of the way home', dusk: 'in the late gold of the way home', night: 'in the late gold of the way home' },
   // (chapter 8: the Barking Field at night, drawn by no earlier chapter)
@@ -119,7 +131,12 @@ const PILE_HOLE = ['the tunnel’s mouth, round the back of the prey pile', 'the
 // chapter 8: the weasels' tunnel under the Barking Field, and the stash inside the biggest hole, each a composition of the bank's own
 const TRACKS_TUNNEL = ['inside the weasels’ tunnel, under the Barking Field', 'dark earth walls close round, roots hanging from a low roof, a soft earth floor with faint tiny prints going both ways; dim blue-grey and readable, no light source; never frightening'];
 const TRACKS_STASH = ['inside the biggest hole in the bank: the weasels’ stash', 'a low earthen chamber with roots in its roof, a shaft of moonlight from the mouth at the left; along the back, mice and voles in tidy rows (eyes shut, no blood), about a third of them with darker, muddy bellies and feet (ReedClan’s); beside them on the right a heap of tower glass: flat, clear, angular pieces with straight edges, glittering white and pale blue-green, the “scale”’s look'];
+// chapter 9: the old oak and the hollow high in it (GroveClan's woods), and Thymeleaf's den, a nook of the camp of its own
+const GROVE_OAK = ['the old oak in GroveClan’s woods', 'an enormous trunk furry with moss, green, gold and grey; low on its shaded north side a patch of soft silver moss; roots like arms at its foot; high in the trunk the hollow, a round opening, its inside a soft dusk-green, never black; bright afternoon light through the leaves'];
+const GROVE_HOLLOW = ['inside the hollow, high in the old oak', 'a snug round nook of old wood lined with soft moss, warm green-gold light through the opening at the left; a cosy nook, never a dark hole'];
+const HERBS = ['Thymeleaf’s den, a nook of the bramble dens at the camp’s edge', 'a curtain of drying leaves across the top (bunches of leaves and stems hung upside down from the brambles), more bunches along the walls, a ledge of stones with leaves laid out to dry, a flat mixing stone on the floor, and in the top corner a small web where a tiny spider lives; green, warm light through the leaves'];
 const SET_COMP = { title: { end: WALL_END, meet: WALL_END }, sky: { walk: DREAM, below: DREAM }, pile: { rear: PILE_REAR, hole: PILE_HOLE },
+  grove: { oak: GROVE_OAK, hollow: GROVE_HOLLOW }, camp: { herbs: HERBS },
   bridge: { wall: ['the Old Bridge’s stone leg, under the bridge beside Sprinkle’s nook', 'a wall of big old fitted stones, its foot on the dry floor, one dark gap low in it'] },
   tracks: { crawl: TRACKS_TUNNEL, fork: TRACKS_TUNNEL, stash: TRACKS_STASH, 'stash-close': TRACKS_STASH } };
 function setWords(sc) {
@@ -141,7 +158,11 @@ const CAMS = {
 };
 // camera names that mean something different in a particular set
 const SET_CAMS = {
-  den: { outside: 'outside the den, the rosebush from the front', inside: 'inside the den' },
+  den: { outside: 'outside the den, the rosebush from the front', inside: 'inside the den',
+    // chapter 9: the case laid out on the den floor
+    case: 'close, from a little above, on the den floor in front of her nest at night, the moonlight coming from the doorway out of frame; her nest at the back with its moss rolled back' },
+  // chapter 9: Thymeleaf's den
+  camp: { herbs: 'from just inside the den’s mouth, at cat height: the drying leaves at the left, the mixing stone on the floor, the little web high in the top corner' },
   tower: { up: 'looking up the tower, from the ground-floor window to a balcony nineteen floors up' },
   sky: { up: 'looking up, mostly sky',
     // chapter 6: the dream
@@ -196,7 +217,13 @@ const SET_CAMS = {
     stash: 'inside the chamber, at cat height: the mouth and its shaft of moonlight at the left, the tidy rows of prey along the back, the heap of glass on the right',
     'stash-close': 'close on the heap of glass in the stash: smooth, clear, flat pieces, the moonlight shining through them, one big piece in front',
     crawl: 'inside the tunnel, at cat height: the earth walls close round a crawling cat, just wide enough; the roof low, just clearing a sitting cat’s ears at the front, where roots hang down, and lower behind',
-    fork: 'inside the tunnel where it splits in two: two dark ways, left and right, a root between them' }
+    fork: 'inside the tunnel where it splits in two: two dark ways, left and right, a root between them' },
+  // chapter 9: every camera of GroveClan's woods in words of its own (the global `wide` and `meet` are other sets')
+  grove: { bridge: 'the approach: the river path’s near bank at the left, the little old footbridge (low stone sides, a worn flat top) over the narrow channel of clear, bright water, and on its far side the very old trees of the woods',
+    wide: 'wide, over the bridge: the bridge’s end small at the left, the woods rising across the panel, huge trunks, green-gold light, ferns; the visitors small under the trees',
+    meet: 'at cat height under the trees: the elder at the right, the visitors at the left',
+    oak: 'the old oak from its foot: the mossy trunk filling the panel, roots like arms at the bottom, the silver moss low on its shaded side, the round hollow high up',
+    hollow: 'inside the hollow, close: the mossy nook, the round opening at the left with the green-gold light coming in' }
 };
 const WHO = {
   player: 'you (the reader’s cat)', tallyheart: 'Tallyheart', glintstar: 'Glintstar', waffles: 'Princess Waffles',
@@ -220,7 +247,12 @@ const WHO = {
   // chapter 8
   hail: 'Hail, a Mistscale dragonet (little: about Squall’s size, no taller sitting than you; white with round grey speckles all over, like hailstones’ shadows, pale grey ridges along her back, pale grey wings folded small, a pale belly, two soft horn nubs, big round dark eyes with a big shine, eager brows, a bouncy curl in her tail; never toothy, never fierce)',
   snip: 'Snip, the weasel sister (long and thin, short legs, small round ears, a pointed nose, black bead eyes with a shine, thin fur like the tuft at the Crossing; the smaller of the two, light golden-brown with a white chin and bib, a pale tail tip; about half your size; funny and greedy, never cruel: no teeth ever shown)',
-  snatch: 'Snatch, the weasel brother (long and thin, short legs, small round ears, a pointed nose, black bead eyes with a shine, thin fur like the tuft at the Crossing; darker chestnut with a cream belly, a black tail tip and a round full tummy; about half your size; funny and greedy, never cruel: no teeth ever shown)'
+  snatch: 'Snatch, the weasel brother (long and thin, short legs, small round ears, a pointed nose, black bead eyes with a shine, thin fur like the tuft at the Crossing; darker chestnut with a cream belly, a black tail tip and a round full tummy; about half your size; funny and greedy, never cruel: no teeth ever shown)',
+  // chapter 9
+  thymeleaf: 'Thymeleaf, CrystalClan’s medicine cat (an old, calm tom: soft, long oatmeal-grey fur, a white chest and white paws, a little thin at the shoulders, a greyer muzzle, long white whiskers, bushy pale brows, green-gold eyes with a twinkle, and a sprig of mint tucked behind one ear)',
+  mizzle: 'Mizzle, the last dragonet (a Mistscale, little: sitting no taller than you; pearly green, pale green scales with a soft pearl sheen, a pale green-white belly, soft rounded ridges, small folded wings, two soft horn nubs, a short round snout, big sleepy eyes with heavy lids; sweet, never toothy)',
+  groveclan: 'a GroveClan cat (a woodland coat, dappled like sun through leaves)',
+  spider: 'a tiny garden spider (a small round smooth body, no hair, no fangs, two dot eyes and a little smile, four legs on each side, soft brown with a pale pattern on her back; friendly, never creepy, never crawling toward anyone)'
 };
 // otters and dogs by variant, as the game names them
 const VARIANT_WHO = {
@@ -228,7 +260,10 @@ const VARIANT_WHO = {
   dog: { 1: 'the huge shaggy dog', 2: 'the spotty dog', 3: 'the tiny dog (mostly bark)' },
   // chapter 6: ReedClan by coat, none of them hers or a Clan cat's
   reedclan: { 1: 'the ReedClan she-cat (sleek, dark grey-brown, a pale belly, calm amber eyes; mud to the elbows)', 2: 'the young ReedClan tom (lanky and sandy, big ears, eager; mud to the elbows)',
-    3: 'a ReedClan cat (smoky dark grey, mud to the elbows)', 4: 'a ReedClan cat (fawn, mud to the elbows)' }
+    3: 'a ReedClan cat (smoky dark grey, mud to the elbows)', 4: 'a ReedClan cat (fawn, mud to the elbows)' },
+  // chapter 9: GroveClan's two, by coat, unnamed (labels only)
+  groveclan: { 1: 'the GroveClan elder (a she-cat: a dappled grey-brown coat, the dapples like sun through leaves, a white muzzle, grey hairs at her ears; upright and sharp-eyed, hazel eyes, kind)',
+    2: 'the GroveClan apprentice (small, apprentice-sized: dappled fawn and cream, big eyes, a scrap of moss on one ear; shy)' }
 };
 const SPEAKER = {
   player: 'You', tallyheart: 'Tallyheart', glintstar: 'Glintstar', waffles: 'Princess Waffles', tallone: 'The Tall One',
@@ -237,12 +272,14 @@ const SPEAKER = {
   sprinkle: 'Sprinkle', murmurchime: 'Murmurchime', reynard: 'Reynard', squall: 'Squall',
   patience: 'Patience', puddle: 'Puddle', wisp: 'Wisp',
   coil: 'Coil', sloshbank: 'Sloshbank', reedclan: 'A ReedClan cat', sleet: 'Sleet',
-  hail: 'Hail', snip: 'Snip', snatch: 'Snatch'
+  hail: 'Hail', snip: 'Snip', snatch: 'Snatch',
+  thymeleaf: 'Thymeleaf', mizzle: 'Mizzle', groveclan: 'A GroveClan cat', spider: 'The spider'
 };
 const VARIANT_SPEAKER = {
   otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
   dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' },
-  reedclan: { 1: 'ReedClan she-cat', 2: 'Young ReedClan tom', 3: 'A ReedClan cat', 4: 'A ReedClan cat' }
+  reedclan: { 1: 'ReedClan she-cat', 2: 'Young ReedClan tom', 3: 'A ReedClan cat', 4: 'A ReedClan cat' },
+  groveclan: { 1: 'A GroveClan elder', 2: 'A GroveClan apprentice' }
 };
 const POSES = {
   sit: 'sitting', stand: 'standing', walk: 'walking', crouch: 'crouching', curl: 'curled up', loaf: 'tucked into a loaf',
@@ -278,15 +315,24 @@ const POSES = {
   call: 'head up, calling', puff: 'puffed out', droop: 'head low, tail drooping',
   // chapter 8: the cats' run (the chase), Hail's tilt, the weasels' look-out and skid, Reynard's trot, plainly (each character's own words are below)
   run: 'running flat out, body low and long, forelegs reaching, hind legs pushing, tail streaming behind', tilt: 'head tilted, full of questions',
-  up: 'sitting up tall on the hind legs, forepaws tucked', skid: 'skidding to a stop', trot: 'trotting along'
+  up: 'sitting up tall on the hind legs, forepaws tucked', skid: 'skidding to a stop', trot: 'trotting along',
+  // chapter 9: the spider's, Mizzle's and Sprinkle's new poses, plainly (each character's own words are below)
+  spin: 'spinning a thread', wave: 'one leg raised, waving', yawn: 'yawning', wake: 'wide awake',
+  glide: 'gliding, wings spread wide', splash: 'splashing in the water'
 };
 const OTTER_STAND = 'standing up on his hind legs';
-const SPRINKLE_POSE = { curl: 'curled up, her tail wrapped round whoever is beside her', flat: 'squeezed flat' };
+const SPRINKLE_POSE = { curl: 'curled up, her tail wrapped round whoever is beside her', flat: 'squeezed flat',
+  // chapter 9: Sprinkle practising, on the sunny bank (her hurt right wing a little lower than the good one; never a fall that hurts)
+  hop: 'a hop off the sand, all four paws up, wings half open', flap: 'both wings up, flapping hard, her hurt right wing a little lower and stiffer than the good one',
+  glide: 'gliding low, wings spread wide, paws tucked', fly: 'up in the air, both wings up mid-beat, paws off the ground, joyful',
+  splash: 'sitting up in the bright shallows, water to her chest, drops flying, laughing' };
 // a pose that means something of its own for the fox or the littlest dragonet
 const REYNARD_POSE = { sit: 'sitting very neatly',
   // chapter 8: along the tracks
   trot: 'trotting along on all fours, tail high, his smile on' };
-const SQUALL_POSE = { hug: 'sitting at the foot of the pole, forelegs and tail wrapped round it', pawup: 'one forepaw raised, five claws out' };
+const SQUALL_POSE = { hug: 'sitting at the foot of the pole, forelegs and tail wrapped round it', pawup: 'one forepaw raised, five claws out',
+  // chapter 9: out of sight behind the red light's pole (never his face)
+  hidden: 'out of sight behind the red light’s pole: nothing of him but the tip of his slate tail with its yellow flecks, curled round the pole’s foot, and a small ring of hiccup mist rising beside it' };
 // chapter 5: poses that mean something of their own for an otter, the heron or the two dragonets found here
 const OTTER_POSE = { point: 'pointing straight down', fall: 'falling over backwards',
   // chapter 6: Riffle holding his breath under the bridge
@@ -315,6 +361,10 @@ const WEASEL_POSE = { stand: 'on all fours, the long body low, side-on', up: 'si
   skid: 'skidding to a stop: front paws braced, the back end swinging round', peek: 'head and shoulders out of a hole, the hole’s lip over the rest', point: 'one forepaw out, pointing', curl: 'curled up small, nose to tail' };
 const WEASEL_MOOD = { shout: 'squeaking', laugh: 'cheeky', stern: 'pouting' };
 const DOG_POSE = { lie: 'lying down, head on forepaws' };
+// chapter 9: Mizzle's poses (sweet and sleepy, never toothy) and the spider's (tiny, friendly, never crawling toward anyone)
+const MIZZLE_POSE = { curl: 'curled up on the moss, her tail round her nose', yawn: 'head up, one eye open, a big round yawn (no teeth)', sit: 'sitting up, drowsy',
+  wake: 'sitting up straight, both eyes wide open, frills and ears up: wide awake for once', pawup: 'one forepaw raised, a claw pointing' };
+const SPIDER_POSE = { spin: 'in her corner on a few threads, spinning', wave: 'one front leg raised, waving' };
 const MOODS = {
   neutral: '', happy: 'happy', dreamy: 'dreamy', wonder: 'full of wonder', worried: 'worried', scared: 'scared', sleepy: 'sleepy',
   laugh: 'laughing', stern: 'stern', kind: 'kind', proud: 'proud', sniff: 'sniffing', shout: 'shouting', solemn: 'solemn',
@@ -366,6 +416,10 @@ const ANCH = {
 };
 // anchor names that mean something different in a particular set
 const SET_ANCH = { bridge: { beside: 'pressed against Sprinkle’s side',
+    // chapter 9: the sunny bank's new spots (the sand strip and the shallows at the bridge's foot)
+    run: 'on the strip of soft sand at the water’s edge, mid-right', 'run-2': 'on the sand just left of the first spot', skim: 'low over the sand’s edge by the water, paws just clear of the sand',
+    air: 'up in the air above the sand, paws a little more than her own leg’s length off it', paddle: 'in the bright shallows at the sand’s edge, the water over the legs, rings and drops all round',
+    'watch-1': 'on the bank at the left, watching, first', 'watch-2': 'on the bank at the left, watching, second', 'watch-3': 'on the bank at the left, watching, third', 'watch-4': 'on the bank at the left, watching, fourth',
     // chapter 6: Coil's place, in `back` and in `wall`
     gap: 'at the dark gap low in the stone wall',
     // chapter 7: in `print`, her paw over the print
@@ -401,7 +455,21 @@ const SET_ANCH = { bridge: { beside: 'pressed against Sprinkle’s side',
     'ring-3': 'on the big circle round the hollow log, the third place', 'ring-4': 'on the big circle round the hollow log, the fourth place',
     'fence-top': 'up on the fence’s top rail, in front of the wire',
     'trail-1': 'on the path, further along toward the tracks, the nearer of two places', 'trail-2': 'on the path, further along toward the tracks, the further of two places' },
-  roof: { beside: 'beside the pole' },
+  roof: { beside: 'beside the pole',
+    // chapter 9: at the rain puddle, clear of the pole's spot and of the wall
+    puddle: 'crouched at the rain puddle’s edge, clear of the pole and the wall' },
+  // chapter 9: GroveClan's woods (the visitors never past the bridge's end until the elder asks them in)
+  grove: { 'near-1': 'on the near bank at the bridge’s foot', 'near-2': 'on the near bank at the bridge’s foot, beside the first',
+    'span-1': 'on the little bridge, at its near end, stepping on', 'span-2': 'on the little bridge, further across', far: 'at the bridge’s far end, under the old trees',
+    'edge-1': 'at the bridge’s end, waiting to be asked in, first', 'edge-2': 'at the bridge’s end, waiting to be asked in, second', 'edge-3': 'at the bridge’s end, waiting to be asked in, third',
+    elder: 'at the right, the elder’s place', fern: 'behind the elder, half hidden by a fern: a face and ears showing',
+    'meet-1': 'under the trees at the left, nearest the elder', 'meet-2': 'under the trees at the left, beside the first', 'meet-3': 'under the trees at the left, furthest from the elder',
+    'root-1': 'at the old oak’s foot among the roots, first', 'root-2': 'at the old oak’s foot among the roots, second', 'root-3': 'at the old oak’s foot among the roots, third',
+    trunk: 'on the oak’s trunk partway up toward the hollow, climbing', moss: 'crouched low at the soft silver moss on the oak’s shaded north side',
+    nook: 'on the moss in the hollow', lip: 'at the hollow’s opening: head, shoulders and forepaws in, the rest cut off by the opening’s rim (below the forepaws)' },
+  // chapter 9: Thymeleaf's den in the camp (`herbs`), and the case laid out on the den floor (`case`)
+  camp: { 'herbs-1': 'among the drying leaves at the left', 'herbs-2': 'at the right of the den', 'herbs-3': 'at the right of the den, further right still', web: 'high in the den’s top corner, on the little web (a spot about the size of a cat’s forepaw)' },
+  den: { 'case-1': 'at the near left of the rows of bark', 'case-2': 'across the rows at the right', 'case-3': 'at the far side, standing by the doorway’s light' },
   // chapter 5: on the open river, `pole` is the poling spot and `beside` is in the water (an otter's place, or a dragonet's)
   openriver: { pole: 'at the poling spot, at the raft’s end', beside: 'in the water beside the raft' } };
 // chapter 8: an anchor that reads differently through one camera of a set (the weasels' holes close up, the weeds' view
@@ -410,7 +478,10 @@ const CAM_ANCH = {
   tracks: { holes: { 'hole-1': 'at the little hole, on the slope in front of it (a weasel here about half a cat’s height)', 'hole-2': 'at the second small hole, just beside the little one and a little higher, on the slope in front of it' },
     hide: { 'hole-1': 'at the little hole up the bank, mid-distance, smaller than a cat’s head in the weeds', 'hole-2': 'at the second small hole up the bank, mid-distance, smaller than a cat’s head in the weeds', rails: 'up on the tracks at the top of the bank, never bigger than a cat’s head in the weeds' },
     brag: { rails: 'on the rails at the top of the bank, against the moon and stars, at a fox’s size beside the weasels' } },
-  field: { dogs: { 'trail-1': 'along the middle of the path, the nearer of two places', 'trail-2': 'along the middle of the path, the further of two places' } }
+  field: { dogs: { 'trail-1': 'along the middle of the path, the nearer of two places', 'trail-2': 'along the middle of the path, the further of two places' } },
+  // chapter 9: the elder and the apprentice where each camera of GroveClan's woods puts them
+  grove: { wide: { elder: 'stepping out from between the trunks at the right' },
+    oak: { elder: 'beside the oak, at the right' } }
 };
 const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 // chapter 5: what a one-tap frame's `tap` is, in words
@@ -423,11 +494,18 @@ const TAPS = { nose: 'the old tom’s nose', earth: 'the freshly dug earth', fur
   mist: 'Sprinkle’s little cloud of mist',
   // chapter 8: the tunnel's mouth, the path past the dogs, the bank's weeds, the biggest hole, the piece of glass, the leaf
   mouth: 'the tunnel’s round dark mouth', path: 'the path ahead, the way to the tracks', weeds: 'the tall weeds at the bank’s foot', stash: 'the biggest hole’s mouth',
-  glass: 'one small piece of glass at the heap’s near edge', leaf: 'the leaf in her paws', tail: 'the tip of a tail sticking straight up' };
+  glass: 'one small piece of glass at the heap’s near edge', leaf: 'the leaf in her paws', tail: 'the tip of a tail sticking straight up',
+  // chapter 9: the reed root at the wall's end, Sprinkle's hurt wing
+  root: 'the long pale root on the dry stones', wing: 'Sprinkle’s hurt right wing' };
 // chapter 8: a tap mark somebody else carries is theirs (Riffle's ears, his near forepaw, the friend's tail); our cat's
 // forepaw mid-run is her front paw, not a raised one. Every tap of chapters 5 to 7 reads as it did.
-const TAP_WHO = { ears: w => w + '’s small round ears', paw: w => w + '’s near forepaw', tail: w => 'the tip of ' + w + '’s tail, sticking straight up' };
-const TAP_SELF = { paw: { run: 'her own front paw, mid-stride' } };
+// (chapter 9: a cat's ears are a cat's; only Riffle's are small and round)
+const TAP_WHO = { ears: (w, c) => w + (c && c.who !== 'riffle' ? '’s ears' : '’s small round ears'), paw: w => w + '’s near forepaw', tail: w => 'the tip of ' + w + '’s tail, sticking straight up' };
+const TAP_SELF = { paw: { run: 'her own front paw, mid-stride',
+  // chapter 9: stepping onto the little bridge
+  walk: 'her own front paw, mid-step' } };
+// chapter 9: a mark on our cat herself, in any pose: her own nose ("With your NOSE."), her own raised tail
+const TAP_MINE = { nose: 'her own nose', tail: 'the tip of her own tail, sticking straight up' };
 
 /* ------------------------------------------------------------------ helpers */
 const q = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
@@ -529,7 +607,8 @@ function castExtraWords(c, set) {
   if (c.holdAt && !c.holds) out.push('what is held goes ' + (AT[c.holdAt] || c.holdAt));
   if (c.tap === 'pinecone') out.push('the pinecone is what she taps');
   // (chapter 8: mid-run the paw she taps is the front one; Riffle's, scrambling, is his near forepaw)
-  if (c.tap === 'paw') out.push(c.pose === 'run' ? 'the front paw, mid-stride, is what she taps' : c.pose === 'scramble' ? 'the near forepaw is what she taps' : 'the raised forepaw is what she taps');
+  // (chapter 9: stepping onto the little bridge, the front paw mid-step)
+  if (c.tap === 'paw') out.push(c.pose === 'run' ? 'the front paw, mid-stride, is what she taps' : c.pose === 'scramble' ? 'the near forepaw is what she taps' : c.pose === 'walk' ? 'the front paw, mid-step, is what she taps' : 'the raised forepaw is what she taps');
   if (c.tap === 'ears') out.push(c.who === 'riffle' ? 'his small round ears are what she taps' : 'the ears are what she taps');
   if (c.tap === 'stone') out.push('the head, turned into the gap like one more stone of the wall, is what she taps');
   if (c.tap === 'eyes') out.push('the two round open eyes are what she taps');
@@ -541,12 +620,17 @@ function castExtraWords(c, set) {
   // chapter 8: the raised tail, the leaf with the glass folded in it (or open on the ground), Snatch's mouse
   if (c.tailUp === true) out.push(c.who === 'riffle' ? 'his thick rudder tail stuck straight up' : 'the tail held straight up, its tip curled over');
   if (c.tap === 'tail') out.push('the raised tail’s tip is what she taps');
-  if (c.holds === 'leaf') out.push((c.holdAt || (['stand', 'walk', 'run'].includes(c.pose) ? 'mouth' : 'paws')) === 'mouth' ? 'a leaf folded round something small, carried in the mouth' : 'a leaf folded round something small, at the front paws');
+  // (chapter 9: Thymeleaf's leaf holds the remedy)
+  if (c.holds === 'leaf' && c.who === 'thymeleaf') out.push((c.holdAt || (['stand', 'walk', 'run'].includes(c.pose) ? 'mouth' : 'paws')) === 'mouth' ? 'the remedy, pale green, curled in a leaf carried in the mouth' : 'the remedy, pale green, curled in a leaf at the front paws');
+  else if (c.holds === 'leaf') out.push((c.holdAt || (['stand', 'walk', 'run'].includes(c.pose) ? 'mouth' : 'paws')) === 'mouth' ? 'a leaf folded round something small, carried in the mouth' : 'a leaf folded round something small, at the front paws');
   if (c.holds === 'glass') out.push('the leaf open on the ground at the front paws, the small clear piece of glass on it shining');
   if (c.tap === 'leaf') out.push('the leaf is what she taps');
   if (c.holds === 'mouse') out.push(c.holdAt === 'paws' ? 'a mouse held in the forepaws (eyes shut, its tail dangling)' : 'a mouse in the mouth (eyes shut, its tail dangling)');
   if (c.starry) out.push('drawn in starlight: pale blue-white, a little see-through, small stars inside the outline, a soft glow at the edge, a kind face');
   if (c.grass) out.push('a tuft of long grass on the head, between the horn nubs');
+  // chapter 9: Riffle's river mint, Sprinkle's hurt wing tapped (the rub)
+  if (c.holds === 'mint') out.push(c.holdAt === 'mouth' ? 'a bunch of river mint as big as his head, carried in the mouth' : 'a bunch of river mint as big as his head, held in the forepaws');
+  if (c.tap === 'wing') out.push(c.who === 'sprinkle' ? 'her hurt right wing is what she taps' : 'the wing is what she taps');
   return out;
 }
 
@@ -567,8 +651,19 @@ function compareWords(set, v) {
     ' the short one: “' + lo + '” by the short line and “' + hi + '” by the long one';
 }
 
-/* A scene option in words; '' when it adds nothing to say (a default, or off). */
-function optWords(set, k, v, all) {
+/* A scene option in words; '' when it adds nothing to say (a default, or off). Chapter 9: the camera
+ * too, for an option that reads differently through one (the den's bark and glass on the case). */
+// chapter 9: the six rows of the case, in the order she reads them, and what is in each
+const CASE_ROWS = ['the moon', 'FLEW', 'the piles', 'the scale', 'the prints', 'the tunnel'];
+function readWords(v) {
+  if (v === 0) return 'no row lit yet; the first row (the moon) glows: the row she taps next';
+  if (Number.isInteger(v) && v > 0 && v < 6) return 'the first ' + numWord(v) + ' row' + (v === 1 ? '' : 's') + ' lit, the bark warm (' + CASE_ROWS.slice(0, v).join(', ').replace(/, ([^,]*)$/, ' and $1') +
+    '); the next row (' + CASE_ROWS[v] + ') glows: the row she taps next';
+  if (v === 6) return 'all six rows lit, the bark warm; nothing glowing';
+  if (v === 7) return 'all six rows lit, and a seventh laid out and lit below them, out of the face-down stack: her own count (`my-count`) and Mizzle’s card (`mizzle-wing`), each only if she holds it; nothing glowing';
+  return 'read: ' + JSON.stringify(v);
+}
+function optWords(set, k, v, all, cam) {
   if (k === 'door') return 'the door is ' + v;
   if (k === 'reflection') return v ? 'your reflection shows in the glass' : '';
   if (k === 'clan') return v ? 'tiny Clan cats in the garden' : '';
@@ -592,6 +687,9 @@ function optWords(set, k, v, all) {
   // the row of bark's own cards and blank pieces are said with the row itself (`bark`, below)
   if (k === 'cards' || k === 'blank') return '';
   if (k === 'bark') {
+    // (chapter 9: on the case, her bark is laid out on the floor in rows, not along the nest's edge)
+    if (set === 'den' && cam === 'case') return v === 'auto' ? 'her bark laid out on the floor in six rows, each piece face up, the pieces of a row touching: the moon (`waffles-no-moon`, `fox-moon`, `heron-no-moon`), FLEW (`cant-fly`, `fox-flew`, `fox-brag`, and `sleet-den` at its end if she holds it), the piles (`tidy`, `reed-pile`, `stash`), the scale (`scale`, `glass`), the prints (`prints-sprinkle`) and the tunnel (`coil-diggers`, `tunnel`); every other piece she holds stacked face down by the nest’s edge, unread' :
+      v ? numWord(+v) + ' piece' + (+v === 1 ? '' : 's') + ' of bark laid out on the floor' : '';
     if (set === 'den') return v === 'auto' ? 'her Case File along the mossy edge of her nest: a piece of bark for each card she holds, overlapping like roof tiles' :
       v ? numWord(+v) + ' piece' + (+v === 1 ? '' : 's') + ' of bark along the mossy edge of her nest' : '';
     if (v === 'row' && all && Array.isArray(all.cards)) return sandRowWords(all.cards, all.blank);
@@ -605,8 +703,10 @@ function optWords(set, k, v, all) {
   }
   if (k === 'weather') return v === 'storm' ? 'a storm outside' : v === 'cloudy' ? 'heavy cloud hides the stars, no rain' : 'clear weather';
   // (chapter 5: a number is a crescent of that many nights, drawn a little fatter than the night before's;
-  // chapter 8: the eighth evening's is a half moon, bright, and the night silver, not black)
-  if (k === 'moon') return typeof v === 'number' ? (v === 8 ? 'a bright half moon, eight evenings old' : v > 8 ? 'the moon, ' + v + ' evenings old' : 'a crescent moon, a little fatter than last night’s') : v ? 'a moon in the sky' : 'no moon';
+  // chapter 8: the eighth evening's is a half moon, bright, and the night silver, not black; chapter 9: the
+  // twelfth evening's more than half, the thirteenth's nearly round, the eve of the full moon)
+  if (k === 'moon') return typeof v === 'number' ? (v === 8 ? 'a bright half moon, eight evenings old' : v === 13 ? 'the moon nearly round, thirteen evenings old' :
+    v > 8 && v < 13 ? 'the moon more than half and growing, ' + numWord(v) + ' evenings old' : v > 8 ? 'the moon, ' + v + ' evenings old' : 'a crescent moon, a little fatter than last night’s') : v ? 'a moon in the sky' : 'no moon';
   if (k === 'drips') return set === 'den' ? (v ? 'sun spots and dripping leaves' : '') : (v ? 'water drips' : 'no drips');
   if (k === 'puddles') return v ? 'puddles everywhere' : '';
   if (k === 'rainFountain') return v ? 'the fountain is full of rain' : '';
@@ -682,6 +782,8 @@ function optWords(set, k, v, all) {
     v === 'mouth' ? 'the tunnel’s round dark mouth is what she taps' : v === 'path' ? 'the path ahead, the way to the tracks at the right, is what she taps' :
     v === 'weeds' ? 'the tall weeds at the bank’s foot are what she taps' : v === 'stash' ? 'the biggest hole’s mouth is what she taps' :
     v === 'glass' ? 'one small piece at the near edge of the heap of glass is what she taps' :
+    // chapter 9: the reed root at the wall's end
+    v === 'root' ? 'the long pale root on the dry stones is what she taps' :
     v === 'none' || !v ? '' : k + ': ' + JSON.stringify(v);
   if (k === 'swept') return v ? 'the dug earth swept flat by a tail: the prints are gone' : '';
   if (k === 'tuft') return v ? 'a tuft of thin brown fur caught in the raft’s vine' : '';
@@ -693,7 +795,17 @@ function optWords(set, k, v, all) {
   // chapter 8: the tunnel's tight place and its worm (the tracks), her glass in her nest (the den)
   if (k === 'tight') return v === true ? 'the tunnel narrows at the back: an earth lip and roots drawn over the back half of whoever is there' : v === false ? '' : k + ': ' + JSON.stringify(v);
   if (k === 'worm') return v === true ? 'one pink worm poking out of the left way’s wall' : v === false ? '' : k + ': ' + JSON.stringify(v);
+  // (chapter 9: on the case, her glass lies beside the rows, out of its hiding place)
+  if (k === 'glass' && set === 'den' && cam === 'case') return v === true ? 'her piece of glass in its leaf, lying open beside the rows, shining' : v === false ? '' : k + ': ' + JSON.stringify(v);
   if (k === 'glass' && set === 'den') return v === true ? 'her piece of glass in its leaf, tucked under the moss beside the corners of bark: the leaf’s tip and one small glint showing' : v === false ? '' : k + ': ' + JSON.stringify(v);
+  // chapter 9: Thymeleaf's remedy (the camp's `herbs`), the case's rows (the den's `case`), the reed root at the
+  // wall's end (the title), the dew on the roof's puddle, the sunny shallows by the Old Bridge
+  if (k === 'remedy') return v === 'four' ? 'on the mixing stone, the four things in a row: a long pale root, a roll of soft silver moss, a bunch of mint and a curled leaf holding dew drops' :
+    v === 'mixed' ? 'on the mixing stone, one curled leaf of pale green remedy, the stone smeared green' : v === 'none' || !v ? '' : k + ': ' + JSON.stringify(v);
+  if (k === 'read') return readWords(v);
+  if (k === 'root') return v === true ? 'a long, pale reed root lying along the dry stones at the wall’s end (never in the mud or the reeds), and beside it one wet pawprint, dark on the dry stone' : v === false ? '' : k + ': ' + JSON.stringify(v);
+  if (k === 'dew') return v === true ? 'the rain puddle silver with dew at first light, its surface pale and bright, tiny beads of dew on the grit round it catching the low sun' : v === false ? '' : k + ': ' + JSON.stringify(v);
+  if (k === 'shallows') return v === true ? 'the water at the bank’s edge bright and clear in the sun: pale green-gold over a sandy bottom you can see, sparkles and small rings, and a strip of soft pale sand along it, tucked at the bridge’s foot behind the reeds; never dark' : v === false ? '' : k + ': ' + JSON.stringify(v);
   return k + ': ' + JSON.stringify(v);
 }
 /* ------------------------------------------------------------------ one chapter */
@@ -808,6 +920,9 @@ function board(storyPath, outPath) {
     if (c.who === 'hail' && HAIL_POSE[c.pose]) return HAIL_POSE[c.pose];
     if ((c.who === 'snip' || c.who === 'snatch') && WEASEL_POSE[c.pose]) return WEASEL_POSE[c.pose];
     if (c.who === 'dog' && DOG_POSE[c.pose]) return DOG_POSE[c.pose];
+    // chapter 9
+    if (c.who === 'mizzle' && MIZZLE_POSE[c.pose]) return MIZZLE_POSE[c.pose];
+    if (c.who === 'spider' && SPIDER_POSE[c.pose]) return SPIDER_POSE[c.pose];
     return POSES[c.pose] || c.pose;
   }
   const extraWords = (c, set) => castExtraWords(c, set);
@@ -829,7 +944,7 @@ function board(storyPath, outPath) {
     });
     parts.push(cast.length ? 'Cast: ' + cast.join('; ') + '.' : 'No one in shot.');
     const o = sc.opts || {};
-    const opts = Object.keys(o).map(k => optWords(sc.set, k, o[k], o)).filter(Boolean);
+    const opts = Object.keys(o).map(k => optWords(sc.set, k, o[k], o, sc.cam)).filter(Boolean);
     if (opts.length) parts.push('Also: ' + opts.join('; ') + '.');
     const fx = (sc.fx || []).map(x => FX[x] || x);
     if (fx.length) parts.push('Effects: ' + fx.join(', ') + '.');
@@ -863,7 +978,7 @@ function board(storyPath, outPath) {
     const notes = [];
     if (x.table) notes.push('from the ' + x.table + 's');
     if (x.groups != null || x.per != null) notes.push('pictured as ' + (x.groups != null ? x.groups : '?') + ' × ' + (x.per != null ? x.per : '?'));
-    if (x.picture) notes.push(pictureWords(x.picture));
+    if (x.picture) notes.push(pictureWords(x.picture, set));
     // (chapter 7: in a cheeks picture its own cats are cheeks, a pair in a row one face)
     const cheeks = set && set.picture && /^cheeks/.test(set.picture.kind || '');
     if (Array.isArray(x.who) && x.who.length) notes.push(cheeks ? 'drawn as ' + cheekWords(x.who) : x.who.every(c => c && c.who === 'sprinkle') ? 'Sprinkle’s own forepaws in the picture' : 'its own cats in the picture');
@@ -882,7 +997,9 @@ function board(storyPath, outPath) {
     if (x.shows) notes.push('her answers scratched in the sand with its line');
     return x.a + ' × ' + x.b + (notes.length ? ' (' + notes.join('; ') + ')' : '');
   }
-  function pictureWords(p) {
+  // chapter 9: a dose's mark, by its set's `thing` (dew drops, rubs, flaps)
+  const DOSE_MARK = { drop: 'round dewdrops, each with a highlight', rub: 'small paw marks (a pad and four toes)', flap: 'short plain strokes' };
+  function pictureWords(p, set) {
     if (!p) return '';
     const grit = p.kind === 'grit' || (p.kind === 'mud' && p.ground === 'grit');
     // chapter 5: fish (in pairs, or on strings), the raft's logs from underneath, herons scratched in the mud
@@ -895,9 +1012,12 @@ function board(storyPath, outPath) {
       // chapter 8: the twenty-eight's marks two and two (`layout: 'pairs'`); the Barking Field's four animals
       p.kind === 'marks' && p.layout === 'pairs' ? 'nights side by side, scratched in the ' + (p.ground === 'mud' ? 'mud' : 'sand') + ', each night’s short upright marks in pairs, two and two with a gap between, and nothing else' :
       p.kind === 'marks' ? 'nights side by side, scratched in the ' + (p.ground === 'mud' ? 'mud' : 'sand') + ', a cluster of short upright marks for each night and nothing else' :
-      p.kind === 'dogs' ? 'the animals of the set’s own cast side-on, standing, four paws each (a dog’s paws marked so they light), lit an animal at a time' : null;
+      p.kind === 'dogs' ? 'the animals of the set’s own cast side-on, standing, four paws each (a dog’s paws marked so they light), lit an animal at a time' :
+      // chapter 9: Thymeleaf's doses in rows of eight, each row four and four; Mizzle's twigs of acorns
+      p.kind === 'dose' ? 'rows of eight ' + (DOSE_MARK[set && set.thing] || 'marks') + ', each row four and four with a gap, stacked top to bottom, lit a mark at a time' :
+      p.kind === 'acorns' ? 'short twigs side by side, each with a leaf or two and eight acorns in two clusters of four, lit an acorn at a time' : null;
     const bits = [five || (p.kind === 'prey' ? 'prey' : grit ? 'forepaws scratched in the roof’s grit' : p.kind === 'mud' ? 'forepaws drawn in the mud' : 'cats')];
-    if (p.layout === 'rows') bits.push('in rows');
+    if (p.layout === 'rows' && p.kind !== 'dose') bits.push('in rows');
     if (p.thought) bits.push('in a thought cloud');
     return bits.join(' ');
   }
@@ -912,7 +1032,9 @@ function board(storyPath, outPath) {
     if (!found) return '**Then the Counts lesson** `' + f.counts.set + '`, another chapter’s, run here as it is there (see that chapter’s storyboard). On to ' + f.counts.next + '.';
     const facts = (set.facts || []).map(x => factLabel(x, set)).join(', ');
     // (chapter 8: the paws of the 4s are the table-4 picture as drawn since chapter 1, no `kind`)
-    const pic = set.picture ? ', ' + pictureWords(set.picture) : set.thing === 'paw' ? ', cats side-on, standing, four paws each, five to a row, lit a cat at a time' : '';
+    // (chapter 9: the 8s' legs are spiders, from above, keyed on `thing: 'leg'`, no `kind`)
+    const pic = set.picture ? ', ' + pictureWords(set.picture, set) : set.thing === 'paw' ? ', cats side-on, standing, four paws each, five to a row, lit a cat at a time' :
+      set.thing === 'leg' ? ', spiders from above, eight legs each, four on each side, five to a row with space between, never touching, lit a leg at a time (a spider’s left four, then her right four)' : '';
     const out = ['**Then the Counts lesson** `' + f.counts.set + '`' + (own ? '' : ', another chapter’s, run here as it is there') + ' (' + (set.things || 'things') + pic + '): ' + facts + '.'];
     // a line the set's teacher says; in a set nobody speaks in (`teacher: 'caption'`), a caption
     const silent = set.teacher === 'caption', teacherSays = t => (silent ? '  - *Caption*: ' + t : '  - **' + (SPEAKER[set.teacher] || 'Tallyheart') + '**: “' + t + '”');
@@ -949,13 +1071,18 @@ function board(storyPath, outPath) {
     const missWords = set.help === 'picture' && marks ? 'a miss gets the set’s own picture lit a night at a time, ' + (set.helpCounter === 'you' ? 'the player keeping the count,' : (SPEAKER[set.teacher] || 'Tallyheart') + ' hopping it,') :
       // (chapter 8: the field's four animals light an animal at a time, their teacher hopping it by fours)
       set.help === 'picture' && set.picture && set.picture.kind === 'dogs' ? 'a miss gets the set’s own picture lit an animal at a time, ' + (SPEAKER[set.teacher] || 'Tallyheart') + ' hopping it by ' + (set.table || 4) + 's,' :
+      // (chapter 9: the doses light a row of eight at a time, the dew's in her own count (nobody speaks there), the remedy's in its teacher's; Mizzle's twigs a twig at a time)
+      set.help === 'picture' && set.picture && set.picture.kind === 'dose' ? 'a miss gets the set’s own picture lit a row at a time, ' + (set.teacher === 'caption' || set.helpCounter === 'you' ? 'the player keeping the count by eights,' : (SPEAKER[set.teacher] || 'Tallyheart') + ' counting it by eights,') :
+      set.help === 'picture' && set.picture && set.picture.kind === 'acorns' ? 'a miss gets the set’s own picture lit a twig at a time, ' + (SPEAKER[set.teacher] || 'Tallyheart') + ' hopping it by eights,' :
       set.help === 'picture' ? 'a miss gets the set’s own picture lit a group at a time, the player keeping the count,' :
       set.ground || set.helpCounter ? 'a miss gets the count scratched ' + (GROUND[set.ground] || 'on the sand') +
       (set.helpCounter === 'you' ? ', ' + (set.ground === 'log' ? 'the player scratching and keeping the count herself' : (SPEAKER[set.teacher] || 'the teacher') + ' swiping and the player keeping the count') : '') + ',' :
       set.table === 9 ? 'a miss gets the sand count in two steps (two swipes for every cat, hopped by tens; then one line rubbed out of every pair, stepping back by ones)' :
       set.table === 6 ? 'a miss gets the sand count (six marks for every ' + (set.unit || 'group') + ', scratched three and three: two short rows of three, one above the other)' :
       // (chapter 8: the 4s are scratched two and two, a gap between the pairs, and hopped by fours from the first)
-      set.table === 4 ? 'a miss gets the sand count (four marks for every ' + (set.unit || 'group') + ', scratched two and two with a gap between the pairs, hopped by fours from the first)' : 'a miss gets the sand count';
+      set.table === 4 ? 'a miss gets the sand count (four marks for every ' + (set.unit || 'group') + ', scratched two and two with a gap between the pairs, hopped by fours from the first)' :
+      // (chapter 9: the 8s are scratched four and four, a gap between the fours, and hopped by eights from the first)
+      set.table === 8 ? 'a miss gets the sand count (eight marks for every ' + (set.unit || 'group') + ', scratched four and four with a gap between the fours, hopped by eights from the first)' : 'a miss gets the sand count';
     out[0] += ' She types each answer on the keypad; ' + missWords + ' and comes back two questions later' +
       (set.fillFrom ? ' (the questions in between come from `' + set.fillFrom + '`' + (set.fillOrder === 'easiest' ? ', the easiest first' : '') +
         ', never a pair asked already while there is another, each asked ' + (set.fillPicture === 'borrower' ? 'as this lesson’s own question, in its picture and its voice' :
@@ -1084,6 +1211,19 @@ function board(storyPath, outPath) {
         (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) +
         (s.keep ? ' The running totals stay under the cats on the pages after it.' : '') + more;
     }
+    // chapter 9: one spider's legs a side at a time (the 4s: an eight is two fours), and spiders' legs by eights
+    if (s.thing === 'leg' && t === 4) {
+      return '**Then she counts one spider’s legs, a side at a time** (the skip-count, by 4s): one spider close up, from above, four legs on each side (in play she takes the panel); ' + g +
+        ' taps, ' + (g === 2 ? 'one side, then the other' : 'a side at a time') + ' (the next side glows; a tap anywhere else makes it wiggle), each lighting its four legs and putting the running total beside it and in ' + counter + ' balloon: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
+        (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) +
+        (s.keep ? ' The spider stays on the plain pages after it, both sides lit, ' + nums.replace(/, ([^,]*)$/, ' and $1') + ' beside them.' : '') + more;
+    }
+    if (s.thing === 'leg') {
+      return '**Then she counts by ' + t + 's on the spiders’ legs** (the skip-count): ' + numWord(g) + ' spiders from above, ' + numWord(t) + ' legs each, four on each side (in play they take the panel); ' + g +
+        ' taps, one on each spider in turn (the next one glows; a tap anywhere else makes it wiggle), each lighting her ' + numWord(t) + ' legs, four and four, and putting its running total under her and in ' + counter + ' balloon: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
+        (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) +
+        (s.keep ? ' The running totals stay under the spiders on the pages after it.' : '') + more;
+    }
     if (g === 1) {
       const whose = (s.who || []).map(c => SPEAKER[c.who] || whoWords(c)).join(', ');
       return '**Then she taps ' + (whose ? 'the forepaw ' + whose + ' holds up' : 'the one forepaw') + '** (one tap; the forepaw glows, and a tap anywhere else makes it wiggle): its ' + numWord(t) + ' claws light and a big ' + t + ' grows over them. Nothing can be got wrong, and nothing is logged.' +
@@ -1116,8 +1256,9 @@ function board(storyPath, outPath) {
    * member who carries it, when that is somebody other than our cat (TAP_WHO), or on her in a pose of its own (TAP_SELF). */
   function tapTarget(f) {
     const t = f.scratch.tap, c = ((f.scene && f.scene.cast) || []).find(m => m && m.tap === t);
-    if (c && c.who !== 'player' && TAP_WHO[t]) return TAP_WHO[t](SPEAKER[c.who] || whoWords(c));
+    if (c && c.who !== 'player' && TAP_WHO[t]) return TAP_WHO[t](SPEAKER[c.who] || whoWords(c), c);
     if (c && c.who === 'player' && TAP_SELF[t] && TAP_SELF[t][c.pose]) return TAP_SELF[t][c.pose];
+    if (c && c.who === 'player' && TAP_MINE[t]) return TAP_MINE[t];
     return TAPS[t] || 'the ' + q(t);
   }
   /* The pages she taps (chapter 4): the row of bark, her first tap on the one curl, the glint. */
@@ -1152,6 +1293,16 @@ function board(storyPath, outPath) {
     const a = f.ask, pairs = asList(a.pairs), n = pairs.length, who = SPEAKER[a.who] || a.who, to = SPEAKER[a.to] || a.to;
     const him = SHE[a.who] ? 'her' : 'him', his = SHE[a.who] ? 'her' : 'his';
     const opts = (f.scene && f.scene.opts) || {}, owed = Object.prototype.hasOwnProperty.call(opts, a.opt || 'owed');
+    const tail = (a.prompt ? ' The instruction under the panel: “' + q(a.prompt).replace(/\*\*/g, '') + '”' : '') + (a.label ? ' For VoiceOver, a hidden button: “' + q(a.label) + '”' : '');
+    const answer = a.to === 'player' ? 'your own answer in your balloon' : to + '’s answer in ' + (SHE[a.to] ? 'hers' : 'his');
+    // chapter 9: the rows of her case, tapped out one by one (`opt: 'read'`: the scene marks the next row, and the tap lights it)
+    if (a.opt === 'read') return '**Then she taps the rows of her case, one at a time** (' + numWord(n) + ' taps, on this scene, counting nothing): the next row of bark glows (the scene marks it; ' + who + ' does not glow); a tap on it letters ' + who + '’s next question in ' + his + ' balloon and ' + answer +
+      ', and lights that row (the scene’s `read` goes up by one, and the row after it glows); the pairs before stay under the panel, small, to read back. A tap anywhere else makes the glowing row hop. No number is shown, nothing can be got wrong, and nothing is logged. After the last one: Next → ' + a.next + '.' + tail +
+      '\n\n' + pairs.map((pr, i) => (i + 1) + '. **' + who + '**: “' + q(pr[0]) + '” **' + to + '**: “' + q(pr[1]) + '”').join('\n');
+    // chapter 9: an asker who answers himself (Thymeleaf naming his four things): two balloons of his own a tap
+    if (a.to === a.who) return '**Then she taps ' + who + ', once for each pair of ' + his + ' lines** (' + numWord(n) + ' taps, on this scene, counting nothing): ' + who + ' glows softly; a tap on ' + him + ' letters ' + his + ' next line in ' + his + ' balloon and the one after it in a second balloon of ' + his + ' own' +
+      (owed ? ', and adds one to what the scene shows' : ', and the scene stays as it is') + '; the pairs before stay under the panel, small, to read back. A tap anywhere else makes ' + him + ' hop. No number is shown, nothing can be got wrong, and nothing is logged. After the last one: Next → ' + a.next + '.' + tail +
+      '\n\n' + pairs.map((pr, i) => (i + 1) + '. **' + who + '**: “' + q(pr[0]) + '” then “' + q(pr[1]) + '”').join('\n');
     return '**Then she taps ' + who + ', once for each question** (' + numWord(n) + ' taps, on this scene, counting nothing): ' + who + ' glows softly; a tap on ' + him + ' letters ' + his + ' next question in ' + his + ' balloon and ' +
       (a.to === 'player' ? 'your own answer in your balloon' : to + '’s answer in ' + (SHE[a.to] ? 'hers' : 'his')) +
       (owed ? ', and adds one to what the scene shows is owed (a pair of fish in the thought cloud over the heron)' : ', and the scene stays as it is') + '; the pairs before stay under the panel, small, to read back. A tap anywhere else makes ' + him + ' hop. No number is shown, nothing can be got wrong, and nothing is logged. After the last one: Next → ' + a.next + '.' +
@@ -1362,7 +1513,9 @@ function board(storyPath, outPath) {
   // (chapter 5: a count as long as the cats it is for has no number of taps of its own; the tuck counts back)
   const skipTaps = sk => (sk.groups == null ? (asList(sk.who).filter(c => !c.when).length || 1) + ' to ' + asList(sk.who).length + ' taps, by ' : sk.groups + (sk.groups === 1 ? ' tap, by ' : ' taps, by ')) + (sk.tuck ? 'ones, back from ' + sk.groups * 10 : sk.table + 's');
   if (skips) md.push('| Skip-counts | ' + skips + ' (' + ids.filter(id => F[id].skip).map(id => skipTaps(F[id].skip)).join('; ') + ') |');
-  if (taps) md.push('| Other things she taps | ' + ids.filter(id => F[id].scratch || F[id].file || F[id].ask).map(id => (F[id].file ? 'her Case File' : F[id].ask ? (SPEAKER[F[id].ask.who] || F[id].ask.who) + '’s ' + numWord(asList(F[id].ask.pairs).length) + ' questions' :
+  // (chapter 9: the rows of her case, and an asker who answers himself)
+  const askTaps = a => (a.opt === 'read' ? 'the ' + numWord(asList(a.pairs).length) + ' rows of her case' : (SPEAKER[a.who] || a.who) + '’s ' + numWord(asList(a.pairs).length) + (a.to === a.who ? ' pairs of lines' : ' questions'));
+  if (taps) md.push('| Other things she taps | ' + ids.filter(id => F[id].scratch || F[id].file || F[id].ask).map(id => (F[id].file ? 'her Case File' : F[id].ask ? askTaps(F[id].ask) :
     F[id].scratch.tap ? (F[id].scratch.tap === 'glint' ? 'the glitter' : TAPS[F[id].scratch.tap] ? tapTarget(F[id]) : 'the ' + F[id].scratch.tap) :
     F[id].scratch.draws && !cardList(F[id].scratch.cards).length ? 'the bark' : 'a row of bark') + ' (' + id + ')').join(', ') + ' |');
   if (story.cards) md.push('| Case File cards | ' + Object.keys(story.cards).length + ' (' + Object.keys(story.cards).filter(k => story.cards[k].mark !== 'ear').length + ' eyes, ' + Object.keys(story.cards).filter(k => story.cards[k].mark === 'ear').length + ' ears) |');

@@ -11,15 +11,16 @@ export const meta = {
     { title: 'Spec review', detail: 'math and continuity critics, one editor' },
     { title: 'Build', detail: 'parallel owners of disjoint files, from the spec' },
     { title: 'Frames', detail: 'the story builder writes the chapter file' },
-    { title: 'Review', detail: 'visual x2, screens, Counts, paths, fidelity; a skeptic for each high or medium' },
-    { title: 'Integrate', detail: 'one owner of every file fixes the confirmed findings' },
-    { title: 'Final review', detail: 'regression and deploy (and a fresh-eyes play if asked); skeptics' },
+    { title: 'Review', detail: 'visual x2, screens, Counts, paths, fidelity; a skeptic for each high or medium; a completeness critic and its gap reviewers' },
+    { title: 'Integrate', detail: 'one owner of every file fixes the confirmed findings; an independent checker' },
+    { title: 'Final review', detail: 'regression, deploy and a fresh-eyes play (unless play: false); skeptics; a completeness critic' },
   ],
 }
 
 // args: { phase, n, ch, title, next, story, brief, spec, work, date, cleared?, lenses?, critics?, rounds?,
 //         owners? (build), buildFile? (frames), frames? (review), findingsFile?, round?, extra? (integrate),
-//         play? (final) }. Paths are relative to the repo, except `work` and the *File paths.
+//         extra? (spec, integrate), specLenses? (spec: more critics), reviewers? (review: more lenses), play? (final; on unless false), effort? (every agent; 'xhigh' by default) }. Paths are relative to
+//         the repo, except `work` and the *File paths.
 const a = args || {}
 const R = '/Users/aron/potomac-crossing'
 const W = a.work
@@ -53,6 +54,10 @@ const TEXT = `Read what the brief's "Read this, and only this" lists, and nothin
 const BUILD = `The final story is ${R}/${a.story}; the spec, ${R}/${a.spec}, is the build's contract together with docs/build.md (the frame, the art vocabulary, and the Counts keys as built in chapters 2 to ${a.n - 1}). The chapter is told with the engine as it is: no new engine key unless the spec's "Engine needs" lists it. Tools: Node via \`export PATH=~/.local/node/bin:$PATH\`; \`node --test\` from the repo root (the whole suite, about 30 seconds; it was green before this chapter began); \`node tools/frames.mjs ${a.ch} OUTDIR [frames]\` or \`--scene '<json>' OUTDIR NAME\` renders art to PNG through Quick Look; \`node tools/sheet.mjs OUT-%.png a.png b.png …\` makes contact sheets of six (use it; never write your own); \`node tools/shots.mjs OUTDIR ${a.ch}:f010 hub book file …\` takes real Safari screenshots, each target in a fresh short session (one Safari session at a time on this Mac: wait with \`pgrep -x safaridriver\`, never \`pgrep -f\`). Check flows, lines and timing in Node with the engine (\`require('./tests/_load.js').load()\`), not by tapping in Safari; what Read to me would say, through the engine. At most 30 looks at pictures; keep notes in your work dir as you go. Chapters 1 to ${a.n - 1} are live: they must look and play exactly as they do unless a change is deliberate and named.`
 
 const P = (...parts) => [NOTE, ORIENT, ...parts].join('\n\n')
+// Every agent runs at args.effort, 'xhigh' unless the orchestrator says otherwise (2026-10-25: until
+// then agents ran at whatever effort the session had).
+const EFFORT = a.effort || 'xhigh'
+const call = (prompt, opts) => agent(prompt, Object.assign({ effort: EFFORT }, opts))
 const j = x => JSON.stringify(x, null, 1)
 
 const STR = { type: 'string' }
@@ -64,7 +69,9 @@ const EDIT = { type: 'object', properties: { changed: STRS, skipped: { type: 'ar
   properties: { finding: STR, why: STR }, required: ['finding', 'why'] } }, version: STR }, required: ['changed', 'skipped', 'version'] }
 const FIND = { type: 'object', properties: { findings: { type: 'array', items: { type: 'object', properties: {
   severity: { type: 'string', enum: ['high', 'medium', 'low'] }, file: STR, where: STR, problem: STR, evidence: STR, fix: STR },
-  required: ['severity', 'file', 'where', 'problem', 'evidence', 'fix'] } } }, required: ['findings'] }
+  required: ['severity', 'file', 'where', 'problem', 'evidence', 'fix'] } }, checked: STRS }, required: ['findings', 'checked'] }
+const GAPS = { type: 'object', properties: { gaps: { type: 'array', items: { type: 'object', properties: { key: STR, prompt: STR },
+  required: ['key', 'prompt'] } } }, required: ['gaps'] }
 const VERDICT = { type: 'object', properties: { confirmed: { type: 'array', items: { type: 'object', properties: {
   index: { type: 'number' }, real: { type: 'boolean' }, reason: STR, severity: { type: 'string', enum: ['high', 'medium', 'low'] } },
   required: ['index', 'real', 'reason', 'severity'] } } }, required: ['confirmed'] }
@@ -75,18 +82,35 @@ const serious = list => list.filter(i => i.severity !== 'low')
 // A reviewer's high and medium findings go to its own skeptic; lows pass through unverified.
 async function verified(reviewers, phaseName, ctx) {
   const out = await pipeline(reviewers,
-    r => agent(P(ctx, r.prompt, 'Report only real problems, with evidence and the exact fix. Severity: high = broken, or against a ruling, the brief, the spec, the contract or the math; medium = clearly worse for Lissa; low = polish. Do not edit repo files.'),
+    r => call(P(ctx, r.prompt, 'Report only real problems, with evidence and the exact fix. Severity: high = broken, or against a ruling, the brief, the spec, the contract or the math; medium = clearly worse for Lissa; low = polish. In `checked`, list what you actually checked (each item a few words: the frames, paths, sets, screens or files, and how), so a completeness critic can see what nobody covered. Do not edit repo files.'),
       { label: `${phaseName === 'Review' ? 'review' : 'final'}:${r.key}`, phase: phaseName, schema: FIND }),
     (res, r) => {
       if (!res) return null
       const fs = serious(res.findings || []), lows = (res.findings || []).filter(f => f.severity === 'low')
-      if (!fs.length) return { key: r.key, kept: [], lows }
-      return agent(P(ctx, `YOU ARE A SKEPTIC. Try to REFUTE each finding from reviewer "${r.key}" by re-checking the evidence yourself. real=true only when you confirm it; adjust the severity.\n\n${j(fs.map((f, i) => ({ index: i, ...f })))}`),
+      const checked = res.checked || []
+      if (!fs.length) return { key: r.key, kept: [], lows, checked }
+      return call(P(ctx, `YOU ARE A SKEPTIC. Try to REFUTE each finding from reviewer "${r.key}" by re-checking the evidence yourself. real=true only when you confirm it; adjust the severity.\n\n${j(fs.map((f, i) => ({ index: i, ...f })))}`),
         { label: `verify:${r.key}`, phase: phaseName, schema: VERDICT })
-        .then(v => v ? { key: r.key, kept: (v.confirmed || []).filter(c => c.real).map(c => fs[c.index] && { ...fs[c.index], severity: c.severity }).filter(Boolean), lows } : null)
+        .then(v => v ? { key: r.key, kept: (v.confirmed || []).filter(c => c.real).map(c => fs[c.index] && { ...fs[c.index], severity: c.severity }).filter(Boolean), lows, checked } : null)
     })
   if (out.some(x => !x)) return null
-  return { kept: out.flatMap(x => x.kept), lows: out.flatMap(x => x.lows), byReviewer: out.map(x => ({ key: x.key, kept: x.kept.length, lows: x.lows.length })) }
+  return { kept: out.flatMap(x => x.kept), lows: out.flatMap(x => x.lows), byReviewer: out.map(x => ({ key: x.key, kept: x.kept.length, lows: x.lows.length })),
+    checked: out.map(x => ({ key: x.key, checked: x.checked })) }
+}
+
+// A completeness critic reads what every reviewer says it checked and names what nobody did; each gap
+// (at most four) gets a reviewer and a skeptic of its own. Returns the merged result, or null.
+async function withGaps(v, phaseName, ctx, what) {
+  const g = await call(P(ctx, `YOU ARE THE COMPLETENESS CRITIC for ${what}. Each reviewer says it checked:\n${j(v.checked)}\n\nAgainst the brief's steering calls and lesson kit, the spec (its Counts sets, Case File, Art needs, Build notes and section 10's ship list) and the story, and against everything chapters 1 to ${a.n - 1}'s players have that this change could break: what did nobody check, or check only thinly? Name at most four gaps that matter, most important first, each as a complete prompt for one more reviewer (what to check, and how: the engine in Node, renders, or Safari shots). An empty list only if the coverage is truly complete. Do not edit repo files.`),
+    { label: `${phaseName === 'Review' ? 'review' : 'final'}:gaps`, phase: phaseName, schema: GAPS })
+  if (!g) return null
+  const gaps = (g.gaps || []).slice(0, 4)
+  if ((g.gaps || []).length > 4) log(`completeness: ${g.gaps.length - 4} more gaps named and not run: ${g.gaps.slice(4).map(x => x.key).join(', ')}`)
+  if (!gaps.length) return { ...v, gaps: [] }
+  const more = await verified(gaps.map(x => ({ key: `gap-${x.key}`, prompt: x.prompt })), phaseName, ctx)
+  if (!more) return null
+  return { kept: v.kept.concat(more.kept), lows: v.lows.concat(more.lows), byReviewer: v.byReviewer.concat(more.byReviewer),
+    checked: v.checked.concat(more.checked), gaps: gaps.map(x => x.key) }
 }
 
 // ------------------------------------------------------------------ draft: two drafts, two judges, a synthesis
@@ -97,7 +121,7 @@ if (a.phase === 'draft') {
   ]
   const DRAFT = { type: 'object', properties: { path: STR, summary: STR, words: STR, names: STRS }, required: ['path', 'summary', 'words', 'names'] }
   phase('Draft')
-  const drafts = await parallel(LENSES.map(L => () => agent(P(TEXT, `You are a DRAFTER. YOUR LENS: ${L.brief}\n\nWrite a COMPLETE chapter ${a.n} story in the brief's format (every flag variant, the lesson, the optional scene, the ending, the closing *For us* block) to ${W}/text/draft-${L.key}.md (create the directory; write nowhere else). Hold the budget: measure the plain path and the optional scene in words. Return a summary, the words and minutes on every path, and every name you used that is not already in docs/continuity.md.`),
+  const drafts = await parallel(LENSES.map(L => () => call(P(TEXT, `You are a DRAFTER. YOUR LENS: ${L.brief}\n\nWrite a COMPLETE chapter ${a.n} story in the brief's format (every flag variant, the lesson, the optional scene, the ending, the closing *For us* block) to ${W}/text/draft-${L.key}.md (create the directory; write nowhere else). Hold the budget: measure the plain path and the optional scene in words. Return a summary, the words and minutes on every path, and every name you used that is not already in docs/continuity.md.`),
     { label: `draft:${L.key}`, phase: 'Draft', schema: DRAFT }).then(r => r && { ...r, key: L.key })))
   if (drafts.some(d => !d)) return stop('a drafter failed (session limit?): resume to rerun it')
 
@@ -105,7 +129,7 @@ if (a.phase === 'draft') {
   const fresh = [...new Set(drafts.flatMap(d => d.names || []))].filter(x => !cleared.includes(x))
   let names = { names: [] }
   if (fresh.length) {
-    names = await agent(P(`NAMES CHECK. Check each of these names, used by a draft of chapter ${a.n}, against both series: ${j(fresh)}. Use the method in the brief's "Names" section: curl https://warriors.fandom.com/api.php and https://wingsoffire.fandom.com/api.php (action=query&titles=NAME&redirects=1; list=allpages&apprefix=NAME; list=search&srsearch="NAME"), and read the Warriors wiki's Names page (action=parse&page=Names&prop=wikitext) for both halves of a compound name. A name is clear only when neither wiki has it as a page and neither half is on the Names page's prefix or suffix lists. Return each name with clear true or false and the evidence.`),
+    names = await call(P(`NAMES CHECK. Check each of these names, used by a draft of chapter ${a.n}, against both series: ${j(fresh)}. Use the method in the brief's "Names" section: curl https://warriors.fandom.com/api.php and https://wingsoffire.fandom.com/api.php (action=query&titles=NAME&redirects=1; list=allpages&apprefix=NAME; list=search&srsearch="NAME"), and read the Warriors wiki's Names page (action=parse&page=Names&prop=wikitext) for both halves of a compound name. A name is clear only when neither wiki has it as a page and neither half is on the Names page's prefix or suffix lists. Return each name with clear true or false and the evidence.`),
       { label: 'names-check', phase: 'Draft', schema: { type: 'object', properties: { names: { type: 'array', items: { type: 'object', properties: { name: STR, clear: { type: 'boolean' }, evidence: STR }, required: ['name', 'clear', 'evidence'] } } }, required: ['names'] } })
     if (!names) return stop('the names check failed (session limit?): resume to rerun it', { drafts })
   }
@@ -120,7 +144,7 @@ if (a.phase === 'draft') {
     `as Lissa (8), a Warriors fan reading alone on an iPad who loves Sprinkle and Riffle and wants to be a warrior, and as a children's comics editor: which she would love, laugh at and remember; panel-sized screens, economy, the voice of chapter ${M.n}, the jokes`,
   ]
   phase('Judge')
-  const judgements = await parallel(FOCUS.map((f, i) => () => agent(P(TEXT, `You are JUDGE ${i + 1}, judging ${f}. Read both drafts in full:\n${list}\n\nScore each out of 70 (fidelity, voice, readability, humor, adventure and mystery, the Counts, the budget: 10 each), name the base, and list specific grafts from the other (quote them). List the real problems in each.`),
+  const judgements = await parallel(FOCUS.map((f, i) => () => call(P(TEXT, `You are JUDGE ${i + 1}, judging ${f}. Read both drafts in full:\n${list}\n\nScore each out of 70 (fidelity, voice, readability, humor, adventure and mystery, the Counts, the budget: 10 each), name the base, and list specific grafts from the other (quote them). List the real problems in each.`),
     { label: `judge:${i + 1}`, phase: 'Judge', schema: JUDGE })))
   if (judgements.some(x => !x)) return stop('a judge failed (session limit?): resume to rerun it', { drafts })
   const tally = {}
@@ -128,7 +152,7 @@ if (a.phase === 'draft') {
   log('judge totals ' + JSON.stringify(tally))
 
   phase('Synthesize')
-  const synth = await agent(P(TEXT, `You are the SYNTHESIZER. Drafts:\n${list}\nJudges' verdicts:\n${j(judgements)}\nTotals: ${JSON.stringify(tally)}\nNames check of the drafts' new names: ${j(names.names)}\n\nRead both drafts in full. Build from the stronger base, graft in the best of the other, fix every problem the judges raised, keep one voice (chapter ${M.n}'s), and hold the budget (re-measure every path). Use no new name the check did not clear, and no name outside the brief's cleared list unless the check cleared it. Write the chapter to ${R}/${a.story} as "Draft v0.1 · ${a.date}". Return what you took from where, and the words and minutes on every path.`),
+  const synth = await call(P(TEXT, `You are the SYNTHESIZER. Drafts:\n${list}\nJudges' verdicts:\n${j(judgements)}\nTotals: ${JSON.stringify(tally)}\nNames check of the drafts' new names: ${j(names.names)}\n\nRead both drafts in full. Build from the stronger base, graft in the best of the other, fix every problem the judges raised, keep one voice (chapter ${M.n}'s), and hold the budget (re-measure every path). Use no new name the check did not clear, and no name outside the brief's cleared list unless the check cleared it. Write the chapter to ${R}/${a.story} as "Draft v0.1 · ${a.date}". Return what you took from where, and the words and minutes on every path.`),
     { label: 'synthesize', phase: 'Synthesize', schema: { type: 'object', properties: { took: STR, words: STR }, required: ['took', 'words'] } })
   if (!synth) return stop('the synthesizer failed (session limit?): resume to rerun it', { drafts, tally })
   return { phase: 'draft', drafts: drafts.map(d => ({ key: d.key, path: d.path, words: d.words, names: d.names })), tally, judgements, names: names.names, synth }
@@ -148,7 +172,7 @@ if (a.phase === 'critique') {
   const rounds = []
   while (round < ROUNDS && lenses.length) {
     round++
-    const found = await parallel(lenses.map(c => () => agent(P(TEXT, `You are an ADVERSARIAL CRITIC (round ${round}). Lens: ${c.lens}\nRead ${R}/${a.story} in full, with the brief. Report every real problem with its severity (high = breaks module-1, a steering call, the lesson kit, continuity, the budget or a standing rule; medium = clearly worse for Lissa, or off-voice; low = polish), where, and the exact fix. Taste is never high. Do not edit.`),
+    const found = await parallel(lenses.map(c => () => call(P(TEXT, `You are an ADVERSARIAL CRITIC (round ${round}). Lens: ${c.lens}\nRead ${R}/${a.story} in full, with the brief. Report every real problem with its severity (high = breaks module-1, a steering call, the lesson kit, continuity, the budget or a standing rule; medium = clearly worse for Lissa, or off-voice; low = polish), where, and the exact fix. Taste is never high. Do not edit.`),
       { label: `critic:${c.key}:r${round}`, phase: 'Critique', schema: ISSUES }).then(r => r && { key: c.key, issues: r.issues || [] })))
     if (found.some(x => !x)) return stop('a critic failed (session limit?): resume to rerun it', { round, rounds })
     const issues = found.flatMap(f => f.issues.map(i => ({ lens: f.key, ...i })))
@@ -156,7 +180,7 @@ if (a.phase === 'critique') {
     rounds.push({ round, issues: issues.length, serious: hard.length, byLens: found.map(f => ({ key: f.key, serious: serious(f.issues).length })) })
     log(`round ${round}: ${issues.length} issues, ${hard.length} high or medium`)
     if (!hard.length) { lastEdit = { lows: issues, skipped: [] }; break }
-    const edit = await agent(P(TEXT, `You are the EDITOR (round ${round}). Apply these findings to ${R}/${a.story} in place: every high and medium, and the lows that clearly help; skip a wrong one and say why. Keep the voice and the format; bump the draft version; keep the closing *For us* block true (re-measure every path).\n\nFindings:\n${j(issues)}\n\nReturn what you changed and what you skipped.`),
+    const edit = await call(P(TEXT, `You are the EDITOR (round ${round}). Apply these findings to ${R}/${a.story} in place: every high and medium, and the lows that clearly help; skip a wrong one and say why. Keep the voice and the format; bump the draft version; keep the closing *For us* block true (re-measure every path).\n\nFindings:\n${j(issues)}\n\nReturn what you changed and what you skipped.`),
       { label: `editor:r${round}`, phase: 'Critique', schema: EDIT })
     if (!edit) return stop('the editor failed (session limit?): resume to rerun it', { round, rounds })
     if (!edit.changed.length) return stop('the editor changed nothing: check its report', { round, rounds, edit })
@@ -172,26 +196,28 @@ if (a.phase === 'spec') {
   const SPEC = { type: 'object', properties: { spec: STR, owners: OWNERS, stubs: STRS, engineNeeds: STRS }, required: ['spec', 'owners', 'stubs', 'engineNeeds'] }
   phase('Spec')
   const known = a.known || 'none given'
-  const written = await agent(P(`You are the SPEC WRITER, the only agent who writes this chapter's spec. The story ${R}/${a.story} is final: do not change a word of it (if something in it cannot be built, say so in the spec's "For the orchestrator" list). Read the story, the brief, docs/continuity.md, docs/build.md (the contract: the frame, the art vocabulary, Counts and its keys as built in chapters 2 to ${a.n - 1}), app/engine.js where you need to see what a key does, the art vocabulary itself (\`export PATH=~/.local/node/bin:$PATH; node -e "const PC=require('./tests/_load.js').load(); console.log(JSON.stringify(PC.art.vocab))"\`), and, as the model of what a spec holds, ${M.spec}.
+  const written = await call(P(`You are the SPEC WRITER, the only agent who writes this chapter's spec. The story ${R}/${a.story} is final: do not change a word of it (if something in it cannot be built, say so in the spec's "For the orchestrator" list). Read the story, the brief, docs/continuity.md, docs/build.md (the contract: the frame, the art vocabulary, Counts and its keys as built in chapters 2 to ${a.n - 1}), app/engine.js where you need to see what a key does, the art vocabulary itself (\`export PATH=~/.local/node/bin:$PATH; node -e "const PC=require('./tests/_load.js').load(); console.log(JSON.stringify(PC.art.vocab))"\`), and, as the model of what a spec holds, ${M.spec}.
 
 Write ${R}/${a.spec}, headed "# Chapter ${a.n} spec: ${a.title}" and "*v0.1 · ${a.date}*", with: (1) Flags: each new flag, its values, where it is set, sticky or replaced, who reads it; (2) Counts sets, using only keys the engine has, every fact in order; (3) the Case File cards (id, mark, line as lettered, where given, to whom, links); (4) Art needs: every set, camera, anchor and option the screens need, marking what is new; the new cast with every pose and mood; Counts art; (5) Build notes, screen by screen where the build needs one; (6) Engine needs: what the engine lacks (expected: none; the brief allows at most one new interaction); (7) Known issues the text critics left: ${typeof known === 'string' ? known : j(known)}; (8) What chapter ${a.n + 1} inherits; (9) Calls made, each with its reason; (10) For the orchestrator.
 
-Then plan the parallel build. Owners each hold a disjoint set of files (a set file under app/art/sets/, app/art/scenes.js, app/art/cats.js, app/art/cards.js, the engine, UI and tools/storyboard.mjs words, and the tests and dev/gallery pages beside them), each with a brief that names exactly what to build from the spec. app/story/${a.ch}.js is the story builder's, later: it has no owner. Fewer owners is better: one for a file nothing new touches is waste. List every new file the orchestrator must stub before the build (a new set file, the story file). Return the spec path, the owners, the stubs and the engine needs.`),
+Then plan the parallel build. Owners each hold a disjoint set of files (a set file under app/art/sets/, app/art/scenes.js, app/art/cats.js, app/art/cards.js, the engine, UI and tools/storyboard.mjs words, and the tests and dev/gallery pages beside them), each with a brief that names exactly what to build from the spec. app/story/${a.ch}.js is the story builder's, later: it has no owner. Fewer owners is better: one for a file nothing new touches is waste. List every new file the orchestrator must stub before the build (a new set file, the story file). Return the spec path, the owners, the stubs and the engine needs.${a.extra ? `\n\nAlso, from the orchestrator: ${a.extra}` : ''}`),
     { label: 'spec-writer', phase: 'Spec', schema: SPEC })
   if (!written) return stop('the spec writer failed (session limit?): resume to rerun it')
 
   const LENSES = [
-    { key: 'math', lens: `THE COUNTS: every Counts set in ${R}/${a.spec} against the story's lesson and questions: each fact's arithmetic and order, both orders, the brief's lesson kit, about 16 typed answers on the plain path, and every key one the engine has and means what the spec says (app/engine.js, docs/build.md).` },
+    { key: 'math', lens: `THE COUNTS: every Counts set in ${R}/${a.spec} against the story's lesson and questions: each fact's arithmetic and order, both orders, the brief's lesson kit, the brief's count of typed answers on the plain path, and every key one the engine has and means what the spec says (app/engine.js, docs/build.md).` },
     { key: 'continuity', lens: `CONTINUITY AND FEASIBILITY: ${R}/${a.spec} against the story and docs/continuity.md: flags (names, values, sticky or replaced), cards, cast, places, what the next chapter inherits; every art key either in PC.art.vocab or listed as new; every engine key existing or listed under Engine needs; the owners disjoint and complete (every new thing has exactly one owner, and no file two). The owners: ${j(written.owners)}` },
   ]
+  // args.specLenses: more critics of the spec from the orchestrator, [{ key, lens }]
+  if (Array.isArray(a.specLenses)) LENSES.push(...a.specLenses.filter(c => c && c.key && c.lens))
   phase('Spec review')
-  const found = await parallel(LENSES.map(c => () => agent(P(`You are an ADVERSARIAL CRITIC of the chapter's spec. Lens: ${c.lens}\nReport every real problem with severity (high = the build would be wrong or impossible; medium = clearly worse; low = polish), where, and the exact fix. Do not edit.`),
+  const found = await parallel(LENSES.map(c => () => call(P(`You are an ADVERSARIAL CRITIC of the chapter's spec. Lens: ${c.lens}\nReport every real problem with severity (high = the build would be wrong or impossible; medium = clearly worse; low = polish), where, and the exact fix. Do not edit.`),
     { label: `spec-critic:${c.key}`, phase: 'Spec review', schema: ISSUES }).then(r => r && { key: c.key, issues: r.issues || [] })))
   if (found.some(x => !x)) return stop('a spec critic failed (session limit?): resume to rerun it', { written })
   const issues = found.flatMap(f => f.issues.map(i => ({ lens: f.key, ...i })))
   let owners = written.owners, edit = null
   if (serious(issues).length) {
-    edit = await agent(P(`You are the SPEC EDITOR. Apply these findings to ${R}/${a.spec} in place (every high and medium, the lows that clearly help; skip a wrong one and say why). Never change the story. Return what you changed and skipped, and the build owners as they now stand (all of them, revised where a finding asked).\n\nOwners:\n${j(owners)}\n\nFindings:\n${j(issues)}`),
+    edit = await call(P(`You are the SPEC EDITOR. Apply these findings to ${R}/${a.spec} in place (every high and medium, the lows that clearly help; skip a wrong one and say why). Never change the story. Return what you changed and skipped, and the build owners as they now stand (all of them, revised where a finding asked).\n\nOwners:\n${j(owners)}\n\nFindings:\n${j(issues)}`),
       { label: 'spec-editor', phase: 'Spec review', schema: { type: 'object', properties: { ...EDIT.properties, owners: OWNERS }, required: [...EDIT.required, 'owners'] } })
     if (!edit) return stop('the spec editor failed (session limit?): resume to rerun it', { written, issues })
     if (!edit.changed.length) return stop('the spec editor changed nothing: check its report', { written, issues, edit })
@@ -206,7 +232,7 @@ if (a.phase === 'build') {
   if (!Array.isArray(owners) || !owners.length) return stop('args.owners is missing: pass the owners from the spec phase\'s result')
   const REPORT = { type: 'object', properties: { files: STRS, built: STR, vocab: STR, tests: STR, open: STRS }, required: ['files', 'built', 'vocab', 'tests', 'open'] }
   phase('Build')
-  const builds = await parallel(owners.map(o => () => agent(P(BUILD, `You are one of ${owners.length} builders working IN PARALLEL in the same checkout. Edit ONLY the files you own: ${o.files.join(', ')}. Code against the spec and docs/build.md for what the others build, and report anything you need from another owner. Look at your art (renders; at most 30 looks; notes in ${W}/build-${o.key}/). Tests for everything new, in your own test files. Render a sample of chapters 1 to ${a.n - 1}'s frames that use your files before and after: byte-identical unless a change is deliberate and named. Return the structured report.\n\nYOUR PART (${o.key}): ${o.brief}`),
+  const builds = await parallel(owners.map(o => () => call(P(BUILD, `You are one of ${owners.length} builders working IN PARALLEL in the same checkout. Edit ONLY the files you own: ${o.files.join(', ')}. Code against the spec and docs/build.md for what the others build, and report anything you need from another owner. Look at your art (renders; at most 30 looks; notes in ${W}/build-${o.key}/). Tests for everything new, in your own test files. Render a sample of chapters 1 to ${a.n - 1}'s frames that use your files before and after: byte-identical unless a change is deliberate and named. Return the structured report.\n\nYOUR PART (${o.key}): ${o.brief}`),
     { label: `build:${o.key}`, phase: 'Build', schema: REPORT }).then(r => r && { key: o.key, ...r })))
   if (builds.some(b => !b)) return stop('a builder failed (session limit?): resume to rerun it', { done: builds.filter(Boolean).map(b => b.key) })
   return { phase: 'build', builds }
@@ -216,7 +242,7 @@ if (a.phase === 'build') {
 if (a.phase === 'frames') {
   if (!a.buildFile) return stop('args.buildFile is missing: the saved result of the build phase')
   phase('Frames')
-  const built = await agent(P(BUILD, `YOU ARE THE STORY BUILDER. The builders' reports are in ${a.buildFile}. You own app/story/${a.ch}.js (a stub: replace it), a new tests/story-${a.ch}.test.js, docs/storyboard/${a.ch}.md (generated), and the small changes to chapter ${a.n - 1} the spec asks for (its teaser, and its teaser test now that chapter ${a.n} exists). Cut the final story into graphic-novel frames exactly as ${M.storyFile} did chapter ${M.n} (read it in full: header, helpers, ids in reading order with letters for paths, captions then balloons, typographic quotes, a board on every frame, at most 50 words a frame, about 15 to 18 on average). Use only the art vocabulary (the spec and docs/build.md, verified against PC.art.vocab) and the engine keys as implemented (read app/engine.js): every screen, every flag combination, the optional scene, the cards on their frames, the Counts sets exactly as the spec has them, the book's recap (6 to 10 sentences on every path), dream and noDream, the teaser for chapter ${a.n + 1}${a.next ? ` ("${a.next}")` : ''}, and the closing frame in her nest. Tests: tests/story-${a.ch}.test.js modeled on ${M.test} and at least as strict, plus every test the spec's Build notes list. LOOK at every frame (node tools/frames.mjs ${a.ch} ${W}/frames/png, then tools/sheet.mjs; at most 30 looks) and fix composition until each panel reads as its board. Regenerate the storyboards (node tools/storyboard.mjs); run the whole suite (all green when you finish). Return the frame ids in reading order.`),
+  const built = await call(P(BUILD, `YOU ARE THE STORY BUILDER. The builders' reports are in ${a.buildFile}. You own app/story/${a.ch}.js (a stub: replace it), a new tests/story-${a.ch}.test.js, docs/storyboard/${a.ch}.md (generated), and the small changes to chapter ${a.n - 1} the spec asks for (its teaser, and its teaser test now that chapter ${a.n} exists). Cut the final story into graphic-novel frames exactly as ${M.storyFile} did chapter ${M.n} (read it in full: header, helpers, ids in reading order with letters for paths, captions then balloons, typographic quotes, a board on every frame, at most 50 words a frame, about 15 to 18 on average). Use only the art vocabulary (the spec and docs/build.md, verified against PC.art.vocab) and the engine keys as implemented (read app/engine.js): every screen, every flag combination, the optional scene, the cards on their frames, the Counts sets exactly as the spec has them, the book's recap (6 to 10 sentences on every path), dream and noDream, the teaser for chapter ${a.n + 1}${a.next ? ` ("${a.next}")` : ''}, and the closing frame in her nest. Tests: tests/story-${a.ch}.test.js modeled on ${M.test} and at least as strict, plus every test the spec's Build notes list. LOOK at every frame (node tools/frames.mjs ${a.ch} ${W}/frames/png, then tools/sheet.mjs; at most 30 looks) and fix composition until each panel reads as its board. Regenerate the storyboards (node tools/storyboard.mjs); run the whole suite (all green when you finish). Return the frame ids in reading order.`),
     { label: 'story-builder', phase: 'Frames', schema: { type: 'object', properties: { frames: STRS, notes: STR, tests: STR }, required: ['frames', 'notes', 'tests'] } })
   if (!built) return stop('the story builder failed (session limit?): resume to rerun it')
   log(`${built.frames.length} frames`)
@@ -236,9 +262,13 @@ if (a.phase === 'review') {
     { key: 'paths', prompt: `EVERY PATH: in Node with the real engine, play chapter ${a.n} from cats that finished chapters 1 to ${a.n - 1}, with every combination of the flags the chapter reads (from the spec), she-cat and tom, a player named "Murmur", the optional scene taken, refused and backed out of partway: render every caption, balloon, option and card with \`when\` as the UI does; check that no token is left unfilled, the tom's pronouns, each variant exactly when it should show, the sticky flags (set only at a scene's last frame; never unset), the cards on every path, Back through every path, the end reached, the book reading well on every path, the teaser; and that rereading an earlier chapter midway keeps her chapter ${a.n} place and her cards.` },
     { key: 'fidelity', prompt: `FIDELITY: app/story/${a.ch}.js against the final story, screen by screen and line by line, on every flag combination: every screen and line present, the wording faithful, nothing added that the story does not have (besides boards and agreed frame splits), choices, outcomes and flags, the cards (ids, pictures, lines, marks, where given), the Counts sets as the spec has them, the book true to what happened, the boards consistent with the story and the art, and the brief's steering calls.` },
   )
+  // args.reviewers: more lenses from the orchestrator, [{ key, prompt }], each with its own skeptic
+  if (Array.isArray(a.reviewers)) REVIEWERS.push(...a.reviewers.filter(r => r && r.key && r.prompt))
   phase('Review')
-  const v = await verified(REVIEWERS, 'Review', BUILD)
-  if (!v) return stop('a reviewer or its skeptic failed (session limit?): resume to rerun it')
+  const v0 = await verified(REVIEWERS, 'Review', BUILD)
+  if (!v0) return stop('a reviewer or its skeptic failed (session limit?): resume to rerun it')
+  const v = await withGaps(v0, 'Review', BUILD, `chapter ${a.n}'s build`)
+  if (!v) return stop('the completeness critic or a gap reviewer failed (session limit?): resume to rerun it')
   log(`${v.kept.length} confirmed (${v.kept.filter(f => f.severity === 'high').length} high), ${v.lows.length} low`)
   return { phase: 'review', ...v }
 }
@@ -248,26 +278,36 @@ if (a.phase === 'integrate') {
   if (!a.findingsFile) return stop('args.findingsFile is missing: the saved result of the review or final phase')
   const round = a.round || 1
   phase('Integrate')
-  const done = await agent(P(BUILD, `YOU ARE THE INTEGRATOR and own every file in the repo; nobody else is editing. Read the findings in ${a.findingsFile}: its "kept" list is confirmed, its "lows" are optional.${a.extra ? ` Also, from the orchestrator: ${a.extra}` : ''} Fix every confirmed finding end to end across files (the art, the story, the engine: wire both ends of every fix, so nothing lands on one side only), and the lows where cheap and clearly right. A test for each behaviour change; render and look at every frame you change (at most 30 looks; notes in ${W}/integrate-r${round}/). Do not change how chapters 1 to ${a.n - 1}'s live frames are lettered or drawn unless a finding requires it, and name every live frame that changes. Regenerate the storyboards; keep the whole suite green; make sure CACHE in sw.js is past the live value (git show HEAD:sw.js, read-only) and every script index.html loads is in ASSETS. Return how many confirmed findings you read, what you fixed (by finding), what you did not and why, the files you changed, the live frames that changed, and the suite result.`),
+  const done = await call(P(BUILD, `YOU ARE THE INTEGRATOR and own every file in the repo; nobody else is editing. Read the findings in ${a.findingsFile}: its "kept" list is confirmed, its "lows" are optional.${a.extra ? ` Also, from the orchestrator: ${a.extra}` : ''} Fix every confirmed finding end to end across files (the art, the story, the engine: wire both ends of every fix, so nothing lands on one side only), and the lows where cheap and clearly right. A test for each behaviour change; render and look at every frame you change (at most 30 looks; notes in ${W}/integrate-r${round}/). Do not change how chapters 1 to ${a.n - 1}'s live frames are lettered or drawn unless a finding requires it, and name every live frame that changes. Regenerate the storyboards; keep the whole suite green; make sure CACHE in sw.js is past the live value (the last entry of tests/fixtures/sw-shipped.json, and git show HEAD:sw.js, read-only; tests/sw.test.js checks the ledger) and every script index.html loads is in ASSETS. Return how many confirmed findings you read, what you fixed (by finding), what you did not and why, the files you changed, the live frames that changed, and the suite result.`),
     { label: `integrate:r${round}`, phase: 'Integrate', schema: { type: 'object', properties: {
       findings: { type: 'number' }, fixed: { type: 'array', items: { type: 'object', properties: { finding: STR, what: STR }, required: ['finding', 'what'] } },
       skipped: { type: 'array', items: { type: 'object', properties: { finding: STR, why: STR }, required: ['finding', 'why'] } },
       files: STRS, liveFramesChanged: STRS, suite: STR }, required: ['findings', 'fixed', 'skipped', 'files', 'liveFramesChanged', 'suite'] } })
   if (!done) return stop('the integrator failed (session limit?): resume to rerun it')
   if (done.findings > 0 && !done.files.length) return stop('the integrator changed no files: check its report', { done })
-  return { phase: 'integrate', round, ...done }
+  // An independent checker: each confirmed finding fixed and right, nothing broken by the fixes.
+  const check = await call(P(BUILD, `YOU ARE AN INDEPENDENT CHECKER of round ${round}'s fixes. The confirmed findings are the "kept" list in ${a.findingsFile}; the integrator's report:\n${j(done)}\n\nFor every confirmed finding, check it yourself (the engine in Node, the code, a render or a Safari shot where it is visual; at most 20 looks; notes in ${W}/integrate-r${round}-check/): is it fixed, and fixed right, on every path it touched? Then look for anything the fixes broke (a new bug, chapter ${a.n} drifting from its story or spec, chapters 1 to ${a.n - 1}'s live frames or flows changed without a name). Run the whole suite and report its totals. Do not edit repo files.`),
+    { label: `integrate:r${round}:check`, phase: 'Integrate', schema: { type: 'object', properties: {
+      results: { type: 'array', items: { type: 'object', properties: { finding: STR, landed: { type: 'boolean' }, evidence: STR }, required: ['finding', 'landed', 'evidence'] } },
+      broken: STRS, suite: STR }, required: ['results', 'broken', 'suite'] } })
+  if (!check) return stop('the checker failed (session limit?): resume to rerun it', { done })
+  const unlanded = (check.results || []).filter(r => !r.landed)
+  if (unlanded.length || (check.broken || []).length) log(`checker: ${unlanded.length} not landed, ${(check.broken || []).length} broken`)
+  return { phase: 'integrate', round, ...done, check, unlanded }
 }
 
 // ------------------------------------------------------------------ final: regression and deploy, verified
 if (a.phase === 'final') {
   const LENSES = [
     { key: 'regress', prompt: `REGRESSION against what is live (git HEAD, read-only: git show HEAD:path into ${W}/final-regress/, never a checkout in the repo): render every chapter 1 to ${a.n - 1} frame now and at HEAD and compare (any difference must be a deliberate, named fix); dump the lettering of every chapter 1 to ${a.n - 1} frame in Safari now and at HEAD at 1180x820 and 820x1180 and compare; run chapters 1 to ${a.n - 1}'s whole flows in the engine now and at HEAD on the same inputs; review the engine and UI diff for real bugs (saves and migration from live saves, Back, lessons, the hub, the book, the Hollow, gifts, the Case File, Read to me).` },
-    { key: 'deploy', prompt: `DEPLOY: sw.js precaches every file index.html loads, nothing is missing on disk, CACHE is past the live value (git show HEAD:sw.js); the service-worker tests pass; real saves written by HEAD's engine (a cat who finished chapter ${a.n - 1} with and without its optional scenes; one partway through chapter ${a.n - 1}; one mid-lesson) load in the new engine and in Safari (fresh short sessions on a localhost server: the hub offers chapter ${a.n}, the book keeps the earlier chapters with their dreams and dragonet pages, the nest keeps her treasures and Riffle's stone, the Case File keeps her cards) with no console errors; open every screen once in Safari and collect console errors; list every untracked file a commit must include.` },
+    { key: 'deploy', prompt: `DEPLOY: sw.js precaches every file index.html loads, nothing is missing on disk, CACHE is past the live value (the last entry of tests/fixtures/sw-shipped.json, not only this worktree's git show HEAD:sw.js: a tree built beside another ship reads a stale HEAD); the service-worker tests pass; real saves written by HEAD's engine (a cat who finished chapter ${a.n - 1} with and without its optional scenes; one partway through chapter ${a.n - 1}; one mid-lesson) load in the new engine and in Safari (fresh short sessions on a localhost server: the hub offers chapter ${a.n}, the book keeps the earlier chapters with their dreams and dragonet pages, the nest keeps her treasures and Riffle's stone, the Case File keeps her cards) with no console errors; open every screen once in Safari and collect console errors; list every untracked file a commit must include.` },
   ]
-  if (a.play) LENSES.push({ key: 'play', prompt: `FRESH-EYES PLAYTEST: play chapter ${a.n} as Lissa would on every path (walk it with the engine in Node, printing the lines in order) and look at every frame (render all; contact sheets with tools/sheet.mjs; at most 30 looks). As a parent and an editor: does each picture show what the words say? Anything confusing, ugly, broken, off-model or scary? A line that reads wrong, a joke that misfires, the new Count clear?` })
+  if (a.play !== false) LENSES.push({ key: 'play', prompt: `FRESH-EYES PLAYTEST: play chapter ${a.n} as Lissa would on every path (walk it with the engine in Node, printing the lines in order) and look at every frame (render all; contact sheets with tools/sheet.mjs; at most 30 looks). As a parent and an editor: does each picture show what the words say? Anything confusing, ugly, broken, off-model or scary? A line that reads wrong, a joke that misfires, the new Count clear?` })
   phase('Final review')
-  const v = await verified(LENSES, 'Final review', BUILD)
-  if (!v) return stop('a final reviewer or its skeptic failed (session limit?): resume to rerun it')
+  const v0 = await verified(LENSES, 'Final review', BUILD)
+  if (!v0) return stop('a final reviewer or its skeptic failed (session limit?): resume to rerun it')
+  const v = await withGaps(v0, 'Final review', BUILD, `chapter ${a.n}'s final review before it ships`)
+  if (!v) return stop('the completeness critic or a gap reviewer failed (session limit?): resume to rerun it')
   log(`${v.kept.length} confirmed, ${v.lows.length} low`)
   return { phase: 'final', ...v }
 }

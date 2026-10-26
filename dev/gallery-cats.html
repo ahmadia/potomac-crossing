@@ -56,11 +56,13 @@
   // chapter 3: Sprinkle's poses, each with a mood the text gives it
   var DZ_MOOD = { eyes: 'neutral', unfold: 'scared', hide: 'scared', sniff: 'sniff', sit: 'shy', wings: 'sad', flat: 'scared', gulp: 'happy',
     burp: 'wonder', pawsup: 'happy', pawup: 'sad', draw: 'sad', touch: 'kind', peek: 'shy', curl: 'kind', lie: 'neutral',
-    check: 'worried', tailout: 'shy', tailup: 'shy', lookdown: 'wonder' };
+    check: 'worried', tailout: 'shy', tailup: 'shy', lookdown: 'wonder',
+    // chapter 9: her first flights (her laugh is happy)
+    hop: 'happy', flap: 'stern', glide: 'happy', fly: 'happy', splash: 'happy' };
   // chapter 4: Reynard's and Squall's poses, each with a mood the text gives it
   var FOX_MOOD = { sit: 'neutral', comb: 'proud', chest: 'kind', think: 'dreamy', lean: 'solemn', flap: 'happy', slip: 'scared', dash: 'worried', trot: 'proud' };
-  var SQ_MOOD = { hug: 'worried', sit: 'neutral', roar: 'shout', hiccup: 'wonder', halt: 'stern', tall: 'proud', point: 'neutral', snap: 'happy', pawup: 'proud' };
-  var HOLDS_POLE = { hug: 1, roar: 1, halt: 1 };
+  var SQ_MOOD = { hug: 'worried', sit: 'neutral', roar: 'shout', hiccup: 'wonder', halt: 'stern', tall: 'proud', point: 'neutral', snap: 'happy', pawup: 'proud', hidden: 'shout' };
+  var HOLDS_POLE = { hug: 1, roar: 1, halt: 1, hidden: 1 };
   // chapter 5: Puddle's and Wisp's poses, each with a mood the text gives it (Patience has one mood, level)
   var PD_MOOD = { foot: 'happy', head: 'happy', log: 'proud', sink: 'worried', pawup: 'happy', nostrils: 'neutral', sit: 'happy' };
   var WS_MOOD = { reed: 'neutral', blink: 'neutral', shh: 'shy', draw: 'neutral', nod: 'kind', flinch: 'neutral', gulp: 'happy', pawup: 'kind' };
@@ -70,6 +72,10 @@
   // chapter 8: Hail's and the weasels' poses, each with a mood the story gives it
   var HAIL_MOOD = { sit: 'happy', stand: 'wonder', bounce: 'laugh', run: 'happy', peek: 'shout', pawup: 'wonder', tilt: 'neutral' };
   var WEASEL_MOOD = { stand: 'neutral', up: 'happy', run: 'laugh', skid: 'scared', peek: 'wonder', point: 'shout', curl: 'sleepy' };
+  // chapter 9: Thymeleaf's poses (the story's), Mizzle's and the spider's, each with a mood the story gives it
+  var THYME_MOOD = { sit: 'kind', stand: 'happy', walk: 'kind', crouch: 'sniff', pawup: 'proud', lookup: 'wonder' };
+  var MIZZLE_MOOD = { curl: 'sleepy', yawn: 'sleepy', sit: 'neutral', wake: 'wonder', pawup: 'kind' };
+  var SPIDER_MOOD = { spin: 'happy', wave: 'happy' };
   // the marks to tap are unpainted (the page glows them): the gallery outlines them so they can be seen
   function showTaps(r) { return { svg: r.svg.replace(/(<g class="pc-tap pc-tap-[a-z]+">)([\s\S]*?)(<\/g>)/g, function (m, a, b, c) { return a + b.replace(/fill="none"/g, 'fill="none" stroke="#e8504a" stroke-width="2.4" stroke-dasharray="5 4"') + c; }), w: r.w, h: r.h }; }
   // what she is seen against: the marsh's reeds, the open river (so a see-through Wisp and a Puddle up to his chin can be judged)
@@ -871,6 +877,120 @@
         ['… one cat (4 × 1), all four', { groups: 1, per: 4, counted: 4 }],
         ['… ten cats (10 × 4, counted 22)', { groups: 10, per: 4, counted: 22 }]].forEach(function (it) {
         h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:560px">' + A.sand(it[1]) + '</div>';
+      });
+      return h;
+    }],
+    thymeleaf: ['Thymeleaf (chapter 9): CrystalClan’s medicine cat, every cat pose and mood; his mint, his brows, his twinkle', function (S) {
+      var h = '<h3>the story’s poses (crouch over his mixing stone; pawup counting his four things, claws out); holds: leaf (the remedy)</h3><div class="row">';
+      ['sit', 'stand', 'walk', 'crouch', 'pawup', 'lookup'].forEach(function (p) { h += cell(A.character('thymeleaf', { pose: p, mood: THYME_MOOD[p], claws: p === 'pawup' }), p + ' · ' + THYME_MOOD[p], S * 1.3); });
+      [[{ pose: 'sit', mood: 'kind', holds: 'leaf' }, 'sit · holds leaf'], [{ pose: 'walk', mood: 'happy', holds: 'leaf', facing: 'left' }, 'walk · leaf ←'], [{ pose: 'pawup', mood: 'proud', claws: true, glow: true }, 'pawup · glow']].forEach(function (it) {
+        h += cell(A.character('thymeleaf', it[0]), it[1], S * 1.3);
+      });
+      h += '</div><h3>every cat pose (a cat: every one draws)</h3><div class="row">';
+      V.poses.forEach(function (p) { h += cell(A.character('thymeleaf', { pose: p, mood: THYME_MOOD[p] || POSE_MOOD[p] }), p, S); });
+      h += '</div><h3>every mood (sit); never laugh in the story (no grown cat is drawn in tears)</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('thymeleaf', { pose: 'sit', mood: m }), m, S); });
+      var stage = '', k = 0.9, x = 20;
+      function put(r) { stage += '<g transform="translate(' + x + ',' + (230 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; x += r.w * k * 0.82; }
+      [A.character('thymeleaf', { pose: 'sit', mood: 'kind' }), A.character('grizzled', { pose: 'sit', mood: 'stern', facing: 'left' }), A.character('glintstar', { pose: 'sit', mood: 'kind', facing: 'left' }),
+        A.character('waffles', { pose: 'sit', mood: 'happy', facing: 'left' }), A.character('player', { pose: 'sit', mood: 'wonder', facing: 'left', look: { fur: 'grey', marking: 'white-chest', eyes: 'green', sex: 'tom' } }),
+        A.character('player', { pose: 'sit', mood: 'happy', facing: 'left', look: { fur: 'cream', marking: 'white-paws', eyes: 'green', sex: 'tom' } })].forEach(put);
+      return h + '</div><h3>one scale: Thymeleaf; plainly not the grizzled old tom, Glintstar, Waffles, or a grey or cream player’s cat</h3><div class="stage"><svg viewBox="0 0 ' + Math.round(x + 60) + ' 240" width="100%">' + stage + '</svg></div>';
+    }],
+    grove: ['GroveClan (chapter 9): the elder and the apprentice, every pose, their woodland coats (dappled)', function (S) {
+      var h = '';
+      [[1, 'the elder: dappled grey-brown, a white muzzle, grey at her ears, hazel eyes'], [2, 'the apprentice: small, dappled fawn and cream, big eyes, a scrap of moss on one ear']].forEach(function (b) {
+        h += '<h3>groveclan ' + b[0] + ', ' + b[1] + ': every cat pose</h3><div class="row">';
+        V.poses.forEach(function (p) { h += cell(A.character('groveclan', { variant: b[0], pose: p, mood: b[0] === 2 ? 'shy' : POSE_MOOD[p] }), p, S * (b[0] === 2 ? 0.9 : 1)); });
+        h += '</div><h3>groveclan ' + b[0] + ': every mood (sit)</h3><div class="row">';
+        V.moods.forEach(function (m) { h += cell(A.character('groveclan', { variant: b[0], pose: 'sit', mood: m }), m, S * (b[0] === 2 ? 0.9 : 1)); });
+        h += '</div>';
+      });
+      var stage = '', k = 0.9, x = 20;
+      function put(r) { stage += '<g transform="translate(' + x + ',' + (230 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; x += r.w * k * 0.82; }
+      [A.character('groveclan', { variant: 1, pose: 'sit', mood: 'kind' }), A.character('groveclan', { variant: 2, pose: 'sit', mood: 'shy' }), A.character('reedclan', { variant: 1, pose: 'sit', facing: 'left' }),
+        A.character('reedclan', { variant: 3, pose: 'sit', facing: 'left' }), A.character('reedclan', { variant: 4, pose: 'sit', facing: 'left' }), A.character('clancat', { variant: 1, pose: 'sit', facing: 'left' }),
+        A.character('player', { pose: 'sit', mood: 'wonder', facing: 'left', look: { fur: 'brown-tabby', marking: 'none', eyes: 'green', sex: 'she' } }), A.character('tallyheart', { pose: 'sit', mood: 'proud', facing: 'left' })].forEach(put);
+      return h + '<h3>one scale: the elder, the apprentice (our cat’s size), three ReedClan coats, a CrystalClan cat, a brown tabby player, Tallyheart</h3><div class="stage"><svg viewBox="0 0 ' + Math.round(x + 60) + ' 240" width="100%">' + stage + '</svg></div>';
+    }],
+    mizzle: ['Mizzle (chapter 9): the last dragonet, every pose, every mood, at one scale', function (S) {
+      var h = '<h3>every pose (her mood in the story); curl is what an unknown pose draws</h3><div class="row">';
+      V.otherPoses.mizzle.forEach(function (p) { h += cell(A.character('mizzle', { pose: p, mood: MIZZLE_MOOD[p] }), p + ' · ' + MIZZLE_MOOD[p], S * 1.5); });
+      h += '</div><h3>asleep: true (eyes shut; the zzz is the scene’s), asleep: ’half’; facing left; pawup lit</h3><div class="row">';
+      [[{ pose: 'curl', asleep: true }, 'curl · asleep'], [{ pose: 'sit', asleep: true }, 'sit · asleep'], [{ pose: 'sit', asleep: 'half', mood: 'happy' }, 'sit · half asleep'],
+        [{ pose: 'curl', mood: 'sleepy', facing: 'left' }, 'curl ←'], [{ pose: 'wake', mood: 'happy', facing: 'left' }, 'wake ←'], [{ pose: 'pawup', mood: 'kind', lit: 1 }, 'pawup · lit 1']].forEach(function (it) {
+        h += cell(A.character('mizzle', it[0]), it[1], S * 1.5);
+      });
+      h += '</div><h3>every mood (sit; neutral is her resting face, sleepy is half asleep)</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('mizzle', { pose: 'sit', mood: m }), m, S * 1.2); });
+      var k = 0.62, stage = '<svg viewBox="0 0 1100 230" width="100%" style="max-width:1100px">';
+      function put(r, x) { stage += '<g transform="translate(' + (x - r.w * k / 2) + ',' + (220 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; }
+      put(A.character('player', { pose: 'sit', mood: 'wonder', look: { fur: 'grey', marking: 'none', eyes: 'green', sex: 'she' } }), 90);
+      put(A.character('mizzle', { pose: 'sit', mood: 'neutral', facing: 'left' }), 240);
+      put(A.character('mizzle', { pose: 'wake', mood: 'happy', facing: 'left' }), 400);
+      put(A.character('hail', { pose: 'sit', mood: 'happy', facing: 'left' }), 560);
+      put(A.character('squall', { pose: 'sit', mood: 'neutral', facing: 'left' }), 720);
+      put(A.character('wisp', { pose: 'blink', mood: 'kind', facing: 'left' }), 930);
+      stage += '</svg>';
+      return h + '</div><h3>one scale: our cat, Mizzle sitting and wide awake, Hail, Squall, Wisp</h3><div class="stage">' + stage + '</div>';
+    }],
+    spider: ['The spider (chapter 9): one tiny garden spider in Thymeleaf’s den, spinning and waving', function (S) {
+      var h = '<h3>her two poses, both facings, a few moods</h3><div class="row">';
+      [[{ pose: 'spin' }, 'spin · happy'], [{ pose: 'wave' }, 'wave · happy'], [{ pose: 'wave', facing: 'left' }, 'wave ←'], [{ pose: 'spin', mood: 'wonder' }, 'spin · wonder'], [{ pose: 'spin', mood: 'sleepy' }, 'spin · sleepy']].forEach(function (it) {
+        h += cell(A.character('spider', it[0]), it[1], S * 1.2);
+      });
+      h += '</div><h3>every mood (spin): friendly in all of them</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('spider', { pose: 'spin', mood: m }), m, S * 0.9); });
+      // at a cat's scale: her body about the size of a cat's forepaw
+      var k = 1.2, stage = '<svg viewBox="0 0 520 260" width="100%" style="max-width:520px">', c = A.character('player', { pose: 'pawup', mood: 'happy', look: { fur: 'grey', marking: 'none', eyes: 'green', sex: 'she' } }), sp = A.character('spider', { pose: 'wave' });
+      stage += '<g transform="translate(40,' + (250 - c.h * k) + ') scale(' + k + ')">' + c.svg + '</g><g transform="translate(330,' + (250 - sp.h * k) + ') scale(' + k + ')">' + sp.svg + '</g></svg>';
+      return h + '</div><h3>at a cat’s scale (her box 64 x 56): our cat waving back</h3><div class="stage">' + stage + '</div>';
+    }],
+    extras9: ['Chapter 9: Sprinkle’s first flights and her sore wing to tap, Squall hidden behind the pole, Riffle’s mint', function (S) {
+      var h = '<h3>Sprinkle: hop (lifted in her box), flap (the sore right wing lower and stiffer), glide, fly (the lift), splash (her box’s bottom is the waterline)</h3><div class="row">';
+      ['hop', 'flap', 'glide', 'fly', 'splash'].forEach(function (p) { h += cell(on(p === 'splash' ? waterBg : function (w, hh) { return ''; }, A.character('sprinkle', { pose: p, mood: DZ_MOOD[p] })), p + ' · ' + DZ_MOOD[p], S * 1.7); });
+      h += '</div><h3>facing left (her right wing is still the sore one)</h3><div class="row">';
+      ['hop', 'flap', 'glide', 'fly', 'splash'].forEach(function (p) { h += cell(A.character('sprinkle', { pose: p, mood: 'happy', facing: 'left' }), p + ' ←', S * 1.7); });
+      h += '</div><h3>tap: wing (the rub Tap: her sore right wing, wherever it is)</h3><div class="row">';
+      [[{ pose: 'sit', mood: 'kind' }, 'sit'], [{ pose: 'lie', mood: 'happy', facing: 'left' }, 'lie ←'], [{ pose: 'wings', mood: 'happy' }, 'wings'], [{ pose: 'flap', mood: 'stern' }, 'flap'], [{ pose: 'fly', mood: 'happy', facing: 'left' }, 'fly ←']].forEach(function (it) {
+        h += cell(showTaps(A.character('sprinkle', Object.assign({ tap: 'wing' }, it[0]))), it[1] + ' · tap: wing', S * 1.7);
+      });
+      h += '</div><h3>Squall: hidden (his flecked tail tip round the pole’s foot, a ring of hiccup mist; never his face), with pole: true and without; hug for scale</h3><div class="row">';
+      [[{ pose: 'hidden', pole: true }, 'hidden · pole'], [{ pose: 'hidden', pole: true, facing: 'left' }, 'hidden · pole ←'], [{ pose: 'hidden' }, 'hidden'], [{ pose: 'hug', pole: true, mood: 'worried' }, 'hug · pole']].forEach(function (it) {
+        h += cell(A.character('squall', it[0]), it[1], S * 1.7);
+      });
+      h += '</div><h3>Riffle: holds: mint (a bunch from the Holt as big as his head: in his forepaws standing or sitting; in his mouth on all fours)</h3><div class="row">';
+      [[{ pose: 'stand', mood: 'happy' }, 'stand · mint'], [{ pose: 'sit', mood: 'proud' }, 'sit · mint'], [{ pose: 'scramble', mood: 'happy' }, 'scramble · mint (mouth)'], [{ pose: 'stand', holdAt: 'mouth', mood: 'happy', facing: 'left' }, 'stand · mint (mouth) ←'],
+        [{ pose: 'hop', mood: 'laugh' }, 'hop · mint']].forEach(function (it) {
+        h += cell(A.character('riffle', Object.assign({ holds: 'mint' }, it[0])), it[1], S * 1.3);
+      });
+      return h + '</div>';
+    }],
+    counts9: ['Counts pictures, chapter 9: the spiders, one spider’s two sides, the doses, the acorns, the sand at per 8', function (S) {
+      var ONE = { table: 4, per: 4, groups: 2, thing: 'leg', who: [{ who: 'spider' }], totals: true };
+      var list = [
+        ['one spider (thing: leg at table 4, a who of one spider): her left side glowing', Object.assign({ highlight: 0, next: true }, ONE)],
+        ['… tapped once: her left four, 4', Object.assign({ highlight: 4, next: true }, ONE)],
+        ['… both sides, 4 and 8', Object.assign({ highlight: 8 }, ONE)],
+        ['five spiders in the sand (the skip): 8, 16, 24 counted, the fourth glowing', { table: 8, per: 8, groups: 5, thing: 'leg', highlight: 24, totals: true, next: true }],
+        ['the lesson: ten spiders, eight legs each, unlit', { table: 8, per: 8, groups: 10, thing: 'leg', highlight: 0 }],
+        ['7 × 8 lit leg by leg (highlight 29: three spiders and her left four and a leg)', { table: 8, per: 8, groups: 7, thing: 'leg', highlight: 29 }],
+        ['the dew: four rows of eight drops, four and four', { table: 8, per: 8, groups: 4, kind: 'dose', layout: 'rows', thing: 'drop', highlight: 0 }],
+        ['… the help, a row at a time (highlight 16, the third row glowing)', { table: 8, per: 8, groups: 4, kind: 'dose', layout: 'rows', thing: 'drop', highlight: 16, next: true, totals: true }],
+        ['the rubs: three rows of eight paw marks', { table: 8, per: 8, groups: 3, kind: 'dose', layout: 'rows', thing: 'rub', highlight: 11 }],
+        ['the flaps: eight rows of eight marks', { table: 8, per: 8, groups: 8, kind: 'dose', layout: 'rows', thing: 'flap', highlight: 24 }],
+        ['a filler of 8 × 5 in the rows: five rows', { table: 8, per: 8, groups: 5, kind: 'dose', layout: 'rows', thing: 'rub', highlight: 0 }],
+        ['Mizzle’s sleepy question: six twigs, eight acorns each', { table: 8, per: 8, groups: 6, kind: 'acorns', highlight: 0 }],
+        ['… the help, a twig at a time (highlight 16)', { table: 8, per: 8, groups: 6, kind: 'acorns', highlight: 16, totals: true, next: true }],
+        ['… a filler of 2 × 8: two twigs', { table: 8, per: 8, groups: 2, kind: 'acorns', highlight: 3 }]
+      ];
+      var h = '';
+      list.forEach(function (it) { h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:' + (it[1].groups > 5 || it[1].kind === 'dose' ? 900 : 720) + 'px">' + A.countsPicture(it[1]) + '</div>'; });
+      [['the lesson’s help at per 8: four and four a spider (7 × 8, counted 20)', { groups: 7, per: 8, counted: 20 }],
+        ['… one spider (8 × 1), all eight', { groups: 1, per: 8, counted: 8 }],
+        ['… ten spiders (10 × 8, counted 44)', { groups: 10, per: 8, counted: 44 }],
+        ['chapter 2’s check, two rows of eight in the earth, as it was', { groups: 2, per: 8, counted: 6, layout: 'rows', ground: 'earth' }]].forEach(function (it) {
+        h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:720px">' + A.sand(it[1]) + '</div>';
       });
       return h;
     }],

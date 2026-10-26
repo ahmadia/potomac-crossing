@@ -669,6 +669,148 @@ test('its words for chapter 8’s art and keys: the bank by the tracks (every ca
   }
 });
 
+test('its words for chapter 9’s art and keys: GroveClan’s woods (every camera, its anchors, the oak and the hollow in place words of their own, the elder by camera), Thymeleaf’s den and the remedy, the case laid out and its rows lit a tap, the moon at 12 and 13, the root at the wall’s end at sunset, the roof’s dew at first light, the shallows and the bank’s spots; Thymeleaf, Mizzle, GroveClan by variant and the spider in their poses, Sprinkle in flight, Squall behind the pole, the mint, the wing, her own nose and tail, a cat’s ears; one spider’s two sides, spiders by eights, the spiders, the doses, the acorns, the sand at the 8s; an asker who answers himself; a recap line read only with ch9Roof; Mizzle’s page', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-storyboard-'));
+  try {
+    const file = path.join(tmp, 'fx14.js');
+    const c = (who, pose, at, extra) => Object.assign({ who, pose, mood: 'happy', at, facing: 'left' }, extra || {});
+    const T = text => ({ who: 'tallyheart', text }), TH = text => ({ who: 'thymeleaf', text });
+    const CASE = { weather: 'clear', stone: 'auto', bark: 'auto', glass: true };
+    const DOSE = { table: 8, unit: 'row', units: 'rows', ask: '{a} × {b}', picture: { kind: 'dose', layout: 'rows' }, help: 'picture',
+      fillFrom: 'fx14-eights', fillOrder: 'easiest', fillVoice: 'borrower', fillPicture: 'borrower', fillIntro: 'An easy one.', praise: [], done: null };
+    const story = { id: 'fx14', number: 14, title: 'Words', start: 'a', names: { mizzle: 'The sleepy dragonet' }, frames: {
+      a: { scene: { set: 'hollow', cam: 'sand', cast: [c('tallyheart', 'crouch', 'sand-left', { claws: true })], fx: ['morning'] }, say: [T('Hop by eights.')],
+        skip: { table: 8, groups: 5, thing: 'leg', things: 'legs', teacher: 'tallyheart', label: 'Count the next spider’s legs.', prompt: '**Tap** the spiders.', carry: false, next: 'b' } },
+      b: { scene: { set: 'camp', cam: 'herbs', opts: { remedy: 'four' }, cast: [c('thymeleaf', 'sit', 'herbs-1', { facing: 'right', mood: 'kind' }), c('player', 'sit', 'herbs-2'), c('tallyheart', 'sit', 'herbs-3'), c('spider', 'wave', 'web')], fx: ['morning'] },
+        caption: ['A tiny spider waves a leg at you.'],
+        skip: { table: 4, groups: 2, who: [{ who: 'spider' }], thing: 'leg', things: 'legs', teacher: 'player', label: 'Count the next four legs.', prompt: '**Tap** her legs.', next: 'c' } },
+      c: { scene: { set: 'camp', cam: 'herbs', opts: { remedy: 'mixed' }, cast: [c('thymeleaf', 'pawup', 'herbs-1', { facing: 'right', glow: true }), c('spider', 'spin', 'web')], fx: ['morning'] }, say: [TH('A wing is a wing.')],
+        ask: { who: 'thymeleaf', to: 'thymeleaf', prompt: '**Tap** his claws.', label: 'Hear the next thing.', pairs: [['Reed root, from ReedClan.', 'It holds it all together.'], ['Oak moss, from GroveClan.', 'It calms the hurt.']], next: 'd' } },
+      d: { scene: { set: 'hollow', cam: 'lesson', opts: { marks: 8, glow: 'auto' }, cast: [c('tallyheart', 'sit', 'sand-left'), c('player', 'sit', 'sand-right')], fx: ['morning'] }, counts: { set: 'fx14-eights', next: 'e', intro: false } },
+      e: { scene: { set: 'grove', cam: 'bridge', cast: [c('player', 'walk', 'span-1', { facing: 'right', tap: 'paw' }), c('riffle', 'stand', 'span-2', { holds: 'mint' }), c('tallyheart', 'sit', 'near-2', { facing: 'right' })], fx: ['day'] },
+        caption: ['Riffle is waiting on the bridge.'], scratch: { tap: 'paw', prompt: '**Tap** to cross.', label: 'Cross the bridge.', next: 'f' } },
+      f: { scene: { set: 'grove', cam: 'wide', cast: [c('player', 'sit', 'edge-1', { facing: 'right' }), c('groveclan', 'walk', 'elder', { variant: 1 }), c('groveclan', 'sit', 'fern', { variant: 2, mood: 'shy' })], fx: ['day'] },
+        say: [{ who: 'groveclan', text: 'CrystalClan.' }], next: 'g' },
+      g: { scene: { set: 'grove', cam: 'oak', cast: [c('player', 'crouch', 'moss', { holds: 'leaf', holdAt: 'paws', tap: 'leaf' }), c('groveclan', 'pawup', 'elder', { variant: 1 }), c('riffle', 'sit', 'root-2', { mood: 'proud', holds: 'mint' })], fx: ['day'] },
+        caption: ['You gather the soft silver moss.'], scratch: { tap: 'leaf', prompt: '**Tap** to roll it in a leaf.', label: 'Roll the moss in a leaf.', next: 'h' } },
+      h: { scene: { set: 'grove', cam: 'hollow', cast: [c('mizzle', 'curl', 'nook', { asleep: true }), c('player', 'crouch', 'lip', { facing: 'right' })], fx: ['day', 'zzz'] }, sfx: 'Zzz… snrk.',
+        say: [{ who: 'mizzle', text: 'Want a sleepy question?' }], counts: { set: 'fx14-mizzle', next: 'i' } },
+      i: { scene: { set: 'title', cam: 'end', opts: { root: true, tap: 'root' }, cast: [c('player', 'sit', 'end-1', { facing: 'right', holds: 'leaf' }), c('tallyheart', 'sit', 'end-2', { facing: 'right' })], fx: ['sunset'] },
+        caption: ['A long, pale root on the dry stones.'], scratch: { tap: 'root', prompt: '**Tap** to take the root.', label: 'Take the root.', next: 'j' } },
+      j: { scene: { set: 'tower', cam: 'up', opts: { chime: true, light: true }, cast: [c('player', 'sit', 'foot', { tap: 'nose' }), c('waffles', 'peer', 'railing', { mood: 'shout' })], fx: ['morning'] },
+        say: [{ who: 'waffles', text: 'With your NOSE.' }], scratch: { tap: 'nose', prompt: '**Tap** to ride up.', label: 'Ride up.', next: 'k' } },
+      k: { scene: { set: 'roof', cam: 'two', opts: { dew: true, plane: true }, cast: [c('player', 'crouch', 'puddle', { holds: 'leaf', holdAt: 'paws' }), c('squall', 'hidden', 'pole')], fx: ['morning'] },
+        caption: ['Eight drops a day, for four days, to the full moon.'], say: [{ who: 'squall', name: 'A voice', text: 'AND STAY OUT, giant dragon!' }], sfx: 'Hic!', counts: { set: 'fx14-dew', next: 'l' } },
+      l: { scene: { set: 'bridge', cam: 'back', opts: { prints: true, stones: true }, cast: [c('player', 'sit', 'back-left'), c('sprinkle', 'wings', 'dragon', { tap: 'wing' }), c('thymeleaf', 'crouch', 'beside', { holds: 'leaf', mood: 'kind' })], fx: ['day'] },
+        say: [TH('Hello, wing. Let’s mend you.')], scratch: { tap: 'wing', prompt: '**Tap** to rub the remedy in.', label: 'Rub the remedy in.', next: 'm' } },
+      m: { scene: { set: 'bridge', cam: 'back', opts: { prints: true, stones: true }, cast: [c('thymeleaf', 'sit', 'beside'), c('sprinkle', 'sit', 'dragon')], fx: ['day'] }, say: [TH('Eight rubs, three times a day.')], counts: { set: 'fx14-rubs', next: 'n' } },
+      n: { scene: { set: 'bridge', cam: 'bank', opts: { shallows: true, drag: false }, cast: [c('sprinkle', 'glide', 'skim'), c('riffle', 'stand', 'watch-1', { facing: 'right' }), c('player', 'sit', 'watch-2', { facing: 'right' })], fx: ['day'] },
+        caption: ['A run along the bank, a glide…'], next: 'o' },
+      o: { scene: { set: 'bridge', cam: 'bank', opts: { shallows: true, drag: false }, cast: [c('sprinkle', 'splash', 'paddle'), c('player', 'pawup', 'run-2', { tap: 'paw' })], fx: ['day'] }, sfx: 'SPLASH!',
+        caption: ['Up she pops, laughing.'], scratch: { tap: 'paw', prompt: '**Tap** to clap.', label: 'Clap.', next: 'p' } },
+      p: { scene: { set: 'bridge', cam: 'bank', opts: { shallows: true, drag: false }, cast: [c('sprinkle', 'flap', 'run'), c('player', 'sit', 'watch-1', { facing: 'right', tailUp: true })], fx: ['day'] },
+        caption: ['Harder. HARDER…'], next: 'p2' },
+      p2: { scene: { set: 'bridge', cam: 'bank', opts: { shallows: true, drag: false }, cast: [c('player', 'sit', 'watch-1', { facing: 'right', tailUp: true, tap: 'tail' }), c('sprinkle', 'hop', 'run')], fx: ['day'] },
+        caption: ['Cheer!'], scratch: { tap: 'tail', prompt: '**Tap** to cheer!', label: 'Cheer!', next: 'q' } },
+      q: { scene: { set: 'bridge', cam: 'bank', opts: { shallows: true, drag: false }, cast: [c('sprinkle', 'fly', 'air')], fx: ['day'] }, caption: ['…and she LIFTS.'], next: 'r' },
+      r: { scene: { set: 'pile', cam: 'wide', opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 12 }, cast: [c('tallyheart', 'walk', 'behind')], fx: ['dusk'] }, caption: ['Every evening, a rounder moon.'], next: 's' },
+      s: { scene: { set: 'den', cam: 'case', opts: Object.assign({ read: 0 }, CASE), cast: [c('player', 'crouch', 'case-1', { facing: 'right' }), c('tallyheart', 'sit', 'case-2')], fx: ['night'] },
+        caption: ['You lay out your bark, row by row.'],
+        ask: { who: 'tallyheart', to: 'player', opt: 'read', prompt: '**Tap** each row.', label: 'Read the next row.', pairs: [['The moon?', 'Only the fox says moon.'], ['The fox’s little story?', 'He says it FLEW.']], next: 't' } },
+      t: { scene: { set: 'den', cam: 'case', opts: Object.assign({ read: 3 }, CASE), cast: [c('tallyheart', 'sit', 'case-2', { tap: 'ears' })], fx: ['night'] }, caption: ['Whisper it.'], scratch: { tap: 'ears', prompt: '**Tap** to whisper it.', label: 'Whisper it.', next: 'u' } },
+      u: { scene: { set: 'den', cam: 'case', opts: Object.assign({ read: 7 }, CASE), cast: [c('glintstar', 'walk', 'case-3'), c('tallyheart', 'sit', 'case-2')], fx: ['night'] }, caption: ['Soon Glintstar steps into the den.'], next: 'v' },
+      v: { scene: { set: 'den', cam: 'doorway', opts: { weather: 'clear', moon: 13, stone: 'auto', bark: 'auto', hidden: true, glass: true } , fx: ['night'] }, caption: ['Tomorrow, it’s full.'], next: 'z' },
+      z: { scene: { set: 'den', cam: 'nest', opts: { hidden: true } }, caption: ['The end.'], end: true }
+    }, cards: {}, counts: {
+      'fx14-eights': { table: 8, thing: 'leg', things: 'legs', unit: 'spider', units: 'spiders', teacher: 'tallyheart', ask: '{a} × {b}', label: 'Spiders’ legs', hollowThings: 'eights', fillOrder: 'easiest', prompt: 'How many legs?',
+        facts: [{ a: 2, b: 8, prompt: 'Two spiders. How many legs?', retryPrompt: true }, [8, 3], { a: 7, b: 8, prompt: 'Seven spiders.', retryPrompt: true, miss: 'Fifty-six. There.', missLast: 'Fifty-six.' }, { a: 8, b: 7, check: true }],
+        praise: ['Two fours make an eight!'], helpIntro: 'Close. Let’s hop it together.', helpIntroFar: 'Let’s hop it together.', done: 'That’s the eights.' },
+      'fx14-mizzle': { table: 8, thing: 'acorn', things: 'acorns', unit: 'twig', units: 'twigs', teacher: 'mizzle', ask: '{a} × {b}', picture: { kind: 'acorns' },
+        facts: [{ a: 6, b: 8, prompt: [{ who: 'mizzle', text: 'How many… acorns…' }], retryPrompt: true }],
+        help: 'picture', helpIntro: 'Hop by eights! Eight, sixteen…', fillFrom: 'fx14-eights', fillOrder: 'easiest', fillVoice: 'borrower', fillPicture: 'borrower', fillIntro: 'An easy one…', avoid: [[6, 8], [7, 8]], praise: [], done: null },
+      'fx14-dew': Object.assign({}, DOSE, { thing: 'drop', things: 'drops', teacher: 'caption', againIntro: 'The drops again.',
+        facts: [{ a: 8, b: 4, prompt: [{ kind: 'caption', text: 'How many drops must you gather?' }], retryPrompt: true }], helpIntro: 'You count them, a row at a time: eight, sixteen…' }),
+      'fx14-rubs': Object.assign({}, DOSE, { thing: 'rub', things: 'rubs', teacher: 'thymeleaf',
+        facts: [{ a: 3, b: 8, prompt: [{ kind: 'caption', text: 'How many rubs a day?' }], retryPrompt: true }], helpIntro: 'Let’s count them together.' }),
+      'fx14-flaps': Object.assign({}, DOSE, { thing: 'flap', things: 'flaps', teacher: 'thymeleaf',
+        facts: [{ a: 8, b: 8, prompt: [{ kind: 'caption', text: 'How many flaps a day?' }], retryPrompt: true }], helpIntro: 'Let’s count them together.' })
+    }, book: { recap: [{ text: 'Eight.' }, { when: { ch9Roof: true }, text: 'On the roof of {their} old tower, {name}paw found Squall.' }, { when: { foundSquall: true, ch5Roof: false, ch9Roof: false }, text: 'Found him here.' }],
+      dragonet: { id: 'mizzle', name: 'Mizzle', when: { foundMizzle: true }, pose: 'yawn', lines: ['Pearly green, sweet and sleepy.'] } } };
+    // (the flaps' set has no frame of its own here: it is printed only where a frame runs it)
+    story.frames.m2 = { scene: { set: 'bridge', cam: 'back', cast: [c('thymeleaf', 'sit', 'beside')], fx: ['day'] }, say: [TH('And practice. Eight times a day.')], counts: { set: 'fx14-flaps', next: 'n' } };
+    story.frames.m.counts.next = 'm2';
+    fs.writeFileSync(file, 'globalThis.PC = globalThis.PC || {}; PC.story = PC.story || {}; PC.story.fx14 = ' + JSON.stringify(story) + ';\nmodule.exports = PC;\n');
+    const md = generate(file, tmp);
+    const panel = id => md.split('\n### ' + id + ' · panel ')[1].split('\n### ')[0];
+    // the five spiders by eights; one spider's two sides
+    assert.match(panel('a'), /\*\*Then she counts by 8s on the spiders’ legs\*\* \(the skip-count\): five spiders from above, eight legs each, four on each side \(in play they take the panel\); 5 taps, one on each spider in turn \(the next one glows; a tap anywhere else makes it wiggle\), each lighting her eight legs, four and four, and putting its running total under her and in Tallyheart’s balloon: 8, 16, 24, 32, 40\. Nothing can be got wrong, and nothing is logged\. The last tap turns the page to b, which does not show the number\. The instruction under the panel: “Tap the spiders\.” For VoiceOver, a hidden button: “Count the next spider’s legs\.”/);
+    assert.match(panel('b'), /\*\*Then she counts one spider’s legs, a side at a time\*\* \(the skip-count, by 4s\): one spider close up, from above, four legs on each side \(in play she takes the panel\); 2 taps, one side, then the other \(the next side glows; a tap anywhere else makes it wiggle\), each lighting its four legs and putting the running total beside it and in her own balloon: 4, 8\. Nothing can be got wrong, and nothing is logged\. The last tap turns the page to c, which shows the 8\./);
+    // Thymeleaf's den: place words of its own, its anchors, the remedy, the spider in her corner
+    assert.match(panel('b'), /\*\*Scene\.\*\* Camp: Thymeleaf’s den, a nook of the bramble dens at the camp’s edge, in the morning \(a curtain of drying leaves across the top [^\n]*a small web where a tiny spider lives; green, warm light through the leaves\)\. Camera: from just inside the den’s mouth, at cat height: [^\n]*\(`herbs`\)\. Cast: Thymeleaf, CrystalClan’s medicine cat \(an old, calm tom: [^\n]*a sprig of mint tucked behind one ear\) \(sitting, kind, among the drying leaves at the left, facing right\); you \(sitting, happy, at the right of the den, facing left\); Tallyheart \(sitting, happy, at the right of the den, further right still, facing left\); a tiny garden spider \([^\n]*four legs on each side[^\n]*\) \(one front leg raised, waving, happy, high in the den’s top corner, on the little web \(a spot about the size of a cat’s forepaw\), facing left\)\. Also: on the mixing stone, the four things in a row: a long pale root, a roll of soft silver moss, a bunch of mint and a curled leaf holding dew drops\./);
+    assert.match(panel('c'), /\(in her corner on a few threads, spinning,/);
+    assert.match(panel('c'), /Also: on the mixing stone, one curled leaf of pale green remedy, the stone smeared green\./);
+    // an asker who answers himself: two balloons of his own a tap
+    assert.match(panel('c'), /\*\*Then she taps Thymeleaf, once for each pair of his lines\*\* \(two taps, on this scene, counting nothing\): Thymeleaf glows softly; a tap on him letters his next line in his balloon and the one after it in a second balloon of his own, and the scene stays as it is; [^\n]*After the last one: Next → d\. The instruction under the panel: “Tap his claws\.” For VoiceOver, a hidden button: “Hear the next thing\.”\n\n1\. \*\*Thymeleaf\*\*: “Reed root, from ReedClan\.” then “It holds it all together\.”\n2\. \*\*Thymeleaf\*\*: “Oak moss, from GroveClan\.” then “It calms the hurt\.”/);
+    // the 8s: spiders, the sand four and four
+    assert.match(md, /\*\*Then the Counts lesson\*\* `fx14-eights` \(legs, spiders from above, eight legs each, four on each side, five to a row with space between, never touching, lit a leg at a time \(a spider’s left four, then her right four\)\): 2 × 8 \(its own question, kept on its retry\), 8 × 3, 7 × 8 \(its own question, kept on its retry; its own lines after a miss\), 8 × 7 \(a check: a right one never makes the fact hard\)\./);
+    assert.match(md, /`fx14-eights`[^\n]*a miss gets the sand count \(eight marks for every spider, scratched four and four with a gap between the fours, hopped by eights from the first\) and comes back two questions later/);
+    assert.match(md, /- In the Training Hollow: its button reads “Spiders’ legs · the 8s”, and Tallyheart calls it “eights”\./);
+    // GroveClan's woods: every camera in words of its own, the anchors, the elder by camera, the apprentice by coat, the mint
+    assert.match(panel('e'), /\*\*Scene\.\*\* Grove: GroveClan’s woods, over the little bridge from the river path, in the bright afternoon \(a little old footbridge [^\n]*never dark\)\. Camera: the approach: [^\n]*\(`bridge`\)\. Cast: you \(walking, happy, on the little bridge, at its near end, stepping on, facing right, the front paw, mid-step, is what she taps\); Riffle, the otter pup \(standing up on his hind legs, happy, on the little bridge, further across, facing left, a bunch of river mint as big as his head, held in the forepaws\); Tallyheart \(sitting, happy, on the near bank at the bridge’s foot, beside the first, facing right\)\./);
+    assert.match(panel('e'), /\*\*Then she taps her own front paw, mid-step\*\*/);
+    assert.match(panel('f'), /Camera: wide, over the bridge: [^\n]*\(`wide`\)\. Cast: you \(sitting, happy, at the bridge’s end, waiting to be asked in, first, facing right\); the GroveClan elder \(a she-cat: [^\n]*\) \(walking, happy, stepping out from between the trunks at the right, facing left\); the GroveClan apprentice \(small, apprentice-sized: [^\n]*\) \(sitting, shy \(eyes down, a small smile\), behind the elder, half hidden by a fern: a face and ears showing, facing left\)\./);
+    assert.match(panel('f'), /- \*\*A GroveClan elder\*\*: “CrystalClan\.”/);
+    assert.match(panel('g'), /\*\*Scene\.\*\* Grove: the old oak in GroveClan’s woods, in the bright afternoon \(an enormous trunk furry with moss, [^\n]*\)\. Camera: the old oak from its foot: [^\n]*\(`oak`\)\. Cast: you \(crouching, happy, crouched low at the soft silver moss on the oak’s shaded north side, facing left, a leaf folded round something small, at the front paws, the leaf is what she taps\); the GroveClan elder [^\n]*\(one forepaw raised, happy, beside the oak, at the right, facing left\); Riffle, the otter pup \(sitting, proud, at the old oak’s foot among the roots, second, facing left, a bunch of river mint as big as his head, held in the forepaws\)\./);
+    // the hollow: place words of its own; Mizzle asleep, by the chapter's name; her acorns, Mizzle hopping them
+    assert.match(panel('h'), /\*\*Scene\.\*\* Grove: inside the hollow, high in the old oak, in the bright afternoon \(a snug round nook of old wood lined with soft moss, [^\n]*never a dark hole\)\. Camera: inside the hollow, close: [^\n]*\(`hollow`\)\. Cast: Mizzle, the last dragonet \([^\n]*pearly green[^\n]*\) \(curled up on the moss, her tail round her nose, happy, on the moss in the hollow, facing left, eyes shut: asleep\); you \(crouching, happy, at the hollow’s opening: head, shoulders and forepaws in, the rest cut off by the opening’s rim \(below the forepaws\), facing right\)\. Effects: daylight, sleepy zzz\./);
+    assert.match(panel('h'), /- \*\*The sleepy dragonet \(Mizzle\)\*\*: “Want a sleepy question\?”/);
+    assert.match(md, /`fx14-mizzle` \(acorns, short twigs side by side, each with a leaf or two and eight acorns in two clusters of four, lit an acorn at a time\): 6 × 8 \(its own question, kept on its retry\)\. She types each answer on the keypad; a miss gets the set’s own picture lit a twig at a time, Mizzle hopping it by eights, and comes back two questions later/);
+    // the root at the wall's end at sunset, tapped
+    assert.match(panel('i'), /Title: the old stone wall’s far end above the river, where its stones stop and tall reeds begin: the border with ReedClan, at sunset[^\n]*Also: a long, pale reed root lying along the dry stones at the wall’s end \(never in the mud or the reeds\), and beside it one wet pawprint, dark on the dry stone; the long pale root on the dry stones is what she taps\./);
+    assert.match(panel('i'), /\*\*Then she taps the long pale root on the dry stones\*\*/);
+    // her own nose
+    assert.match(panel('j'), /\*\*Then she taps her own nose\*\*/);
+    // the roof at first light: the dew, the puddle, Squall behind the pole as "A voice"; the dew's drops, her own count
+    assert.match(panel('k'), /\*\*Scene\.\*\* Roof: the roof of the tallest tower, flat and wide, at first light \([^\n]*\)\. Camera: two at the same height, by the pole \(`two`\)\. Cast: you \(crouching, happy, crouched at the rain puddle’s edge, clear of the pole and the wall, facing left, a leaf folded round something small, at the front paws\); Squall, the littlest dragonet [^\n]*\(out of sight behind the red light’s pole: nothing of him but the tip of his slate tail with its yellow flecks, curled round the pole’s foot, and a small ring of hiccup mist rising beside it, happy, at the foot of the pole, facing left\)\. Also: the rain puddle silver with dew at first light, [^\n]*catching the low sun; an airplane passing well above the roof\./);
+    assert.match(panel('k'), /- \*\*A voice \(Squall\)\*\*: “AND STAY OUT, giant dragon!”/);
+    assert.match(md, /`fx14-dew` \(drops, rows of eight round dewdrops, each with a highlight, each row four and four with a gap, stacked top to bottom, lit a mark at a time\): 8 × 4 \(its own question, kept on its retry\)\. She types each answer on the keypad; a miss gets the set’s own picture lit a row at a time, the player keeping the count by eights, and comes back two questions later/);
+    // under the Old Bridge: the wing tapped, Thymeleaf's remedy in its leaf; the rubs and the flaps in his count
+    assert.match(panel('l'), /\(wings open, the right one drooping, half open, happy, in Sprinkle’s spot at the very back, facing left, her hurt right wing is what she taps\); Thymeleaf, [^\n]*\(crouching, kind, pressed against Sprinkle’s side, facing left, the remedy, pale green, curled in a leaf at the front paws\)/);
+    assert.match(panel('l'), /\*\*Then she taps Sprinkle’s hurt right wing\*\*/);
+    assert.match(md, /`fx14-rubs` \(rubs, rows of eight small paw marks \(a pad and four toes\), each row four and four with a gap, stacked top to bottom, lit a mark at a time\): 3 × 8 [^\n]*a miss gets the set’s own picture lit a row at a time, Thymeleaf counting it by eights,/);
+    assert.match(md, /`fx14-flaps` \(flaps, rows of eight short plain strokes, each row four and four/);
+    // the sunny bank: the shallows, Sprinkle in flight at the new spots, the clap, her own tail
+    assert.match(panel('n'), /Cast: Sprinkle, a Mistscale dragonet [^\n]*\(gliding low, wings spread wide, paws tucked, happy, low over the sand’s edge by the water, paws just clear of the sand, facing left\); Riffle, the otter pup \(standing up on his hind legs, happy, on the bank at the left, watching, first, facing right\); you \(sitting, happy, on the bank at the left, watching, second, facing right\)\. Also: the water at the bank’s edge bright and clear in the sun: [^\n]*never dark; no drag marks\./);
+    assert.match(panel('o'), /\(sitting up in the bright shallows, water to her chest, drops flying, laughing, happy, in the bright shallows at the sand’s edge, the water over the legs, rings and drops all round, facing left\); you \(one forepaw raised, happy, on the sand just left of the first spot, facing left, the raised forepaw is what she taps\)/);
+    assert.match(panel('p'), /\(both wings up, flapping hard, her hurt right wing a little lower and stiffer than the good one, happy, on the strip of soft sand at the water’s edge, mid-right, facing left\)/);
+    assert.match(panel('p2'), /\(a hop off the sand, all four paws up, wings half open, happy,/);
+    assert.match(panel('p2'), /\*\*Then she taps the tip of her own tail, sticking straight up\*\*/);
+    assert.match(panel('q'), /\(up in the air, both wings up mid-beat, paws off the ground, joyful, happy, up in the air above the sand, paws a little more than her own leg’s length off it, facing left\)/);
+    // the pile's moon at twelve; the den's at thirteen
+    assert.match(panel('r'), /Also: four rows of ten, running back under the brambles; [^\n]*the moon more than half and growing, twelve evenings old\./);
+    assert.match(panel('v'), /Also: clear weather; the moon nearly round, thirteen evenings old; /);
+    // the case: its camera, its anchors, the bark laid out, the glass beside the rows, a row lit a tap
+    assert.match(panel('s'), /\*\*Scene\.\*\* Den: the apprentices’ den under an enormous rosebush, at night\. Camera: close, from a little above, on the den floor in front of her nest at night, [^\n]*its moss rolled back \(`case`\)\. Cast: you \(crouching, happy, at the near left of the rows of bark, facing right\); Tallyheart \(sitting, happy, across the rows at the right, facing left\)\. Also: no row lit yet; the first row \(the moon\) glows: the row she taps next; clear weather; Riffle’s lucky stone in her nest, right where she put it [^\n]*; her bark laid out on the floor in six rows, each piece face up, the pieces of a row touching: the moon \(`waffles-no-moon`, `fox-moon`, `heron-no-moon`\), FLEW \(`cant-fly`, `fox-flew`, `fox-brag`, and `sleet-den` at its end if she holds it\), [^\n]*unread; her piece of glass in its leaf, lying open beside the rows, shining\./);
+    assert.match(panel('s'), /\*\*Then she taps the rows of her case, one at a time\*\* \(two taps, on this scene, counting nothing\): the next row of bark glows \(the scene marks it; Tallyheart does not glow\); a tap on it letters Tallyheart’s next question in her balloon and your own answer in your balloon, and lights that row \(the scene’s `read` goes up by one, and the row after it glows\); [^\n]*A tap anywhere else makes the glowing row hop\.[^\n]*After the last one: Next → t\. The instruction under the panel: “Tap each row\.” For VoiceOver, a hidden button: “Read the next row\.”\n\n1\. \*\*Tallyheart\*\*: “The moon\?” \*\*You\*\*: “Only the fox says moon\.”/);
+    assert.match(panel('t'), /Also: the first three rows lit, the bark warm \(the moon, FLEW and the piles\); the next row \(the scale\) glows: the row she taps next;/);
+    assert.match(panel('t'), /\*\*Then she taps Tallyheart’s ears\*\*/, 'a cat’s ears are a cat’s');
+    assert.match(panel('u'), /Glintstar \(walking, happy, at the far side, standing by the doorway’s light, facing left\)[^\n]*Also: all six rows lit, and a seventh laid out and lit below them, out of the face-down stack: her own count \(`my-count`\) and Mizzle’s card \(`mizzle-wing`\), each only if she holds it; nothing glowing;/);
+    // the bedtime den keeps its words: bark along the nest's edge, the glass under the moss
+    assert.match(panel('v'), /her Case File along the mossy edge of her nest[^\n]*her piece of glass in its leaf, tucked under the moss/);
+    // the at-a-glance taps
+    assert.match(md, /\| Other things she taps \| Thymeleaf’s two pairs of lines \(c\), her own front paw, mid-step \(e\), the leaf in her paws \(g\), the long pale root on the dry stones \(i\), her own nose \(j\), Sprinkle’s hurt right wing \(l\), her own raised forepaw \(o\), the tip of her own tail, sticking straight up \(p2\), the two rows of her case \(s\), Tallyheart’s ears \(t\) \|/);
+    // the book: a line read only with ch9Roof, the three "found" lines' ch9Roof false; Mizzle's page in her own pose
+    assert.match(md, /- \(if ch9Roof is true\) On the roof of \{their\} old tower, \{name\}paw found Squall\./);
+    assert.match(md, /- \(if foundSquall is true and ch5Roof is false or not set and ch9Roof is false or not set\) Found him here\./);
+    assert.match(md, /\*\*A dragonet page:\*\* Mizzle \(`mizzle`\), found in this chapter by a reader whose foundMizzle is true \(the page is there only then\)\. Her book gains a page for Mizzle \(drawn head up, one eye open, a big round yawn \(no teeth\)\)/);
+    assert.doesNotMatch(md, /\[object Object\]|undefined|Set: |Camera: (bridge|wide|meet|oak|hollow|herbs|case) \(|\bat (near-\d|span-\d|far|edge-\d|elder|fern|meet-\d|root-\d|trunk|moss|nook|lip|herbs-\d|web|case-\d|puddle|run|run-2|skim|air|paddle|watch-\d)\b|(?<![-\w])(remedy|read|root|dew|shallows|tap|moon): (true|false|"|\[|\d)/, 'every new name has words: none prints as its bare id');
+    assert.doesNotMatch(md, /\b(spin|wave|yawn|wake|glide|splash|hidden),/, 'no pose prints as its bare name');
+    assert.doesNotMatch(md, /small round ears/, 'only Riffle’s ears are small and round');
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
 test('its words cover the art’s whole vocabulary: every set (with its time of day), camera, anchor, option value, pose, mood, effect, cast member and cast extra', () => {
   const run = spawnSync(process.execPath, [TOOL, '--check-words'], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);

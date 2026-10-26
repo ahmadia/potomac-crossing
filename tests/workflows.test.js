@@ -130,13 +130,16 @@ test('chapter.js review and final: only high and medium findings go to a skeptic
       { severity: 'low', file: 'a', where: 'f3', problem: 'p3', evidence: 'e', fix: 'f' },
     ] };
   };
-  const { result, calls } = await run(Object.assign({ phase: 'review', frames: ['f1', 'f2'] }, BASE), reply);
-  assert.equal(calls.filter(c => c.opts.label.startsWith('review:')).length, 6);
+  const gapsNone = (p, o) => /:gaps$/.test(o.label) ? { gaps: [] } : reply(p, o);
+  const { result, calls } = await run(Object.assign({ phase: 'review', frames: ['f1', 'f2'] }, BASE), gapsNone);
+  assert.equal(calls.filter(c => c.opts.label.startsWith('review:') && c.opts.label !== 'review:gaps').length, 6);
   assert.equal(result.kept.length, 6, 'one confirmed finding per reviewer');
   assert.ok(result.kept.every(f => f.problem === 'p1' && f.severity === 'medium'));
   assert.equal(result.lows.length, 6);
-  const fin = await run(Object.assign({ phase: 'final' }, BASE), reply);
-  assert.equal(fin.calls.filter(c => c.opts.label.startsWith('final:')).length, 2, 'regression and deploy, no playtest unless asked');
+  const fin = await run(Object.assign({ phase: 'final' }, BASE), gapsNone);
+  assert.deepEqual(fin.calls.filter(c => /^final:(?!gaps)/.test(c.opts.label)).map(c => c.opts.label), ['final:regress', 'final:deploy', 'final:play'], 'the playtest runs unless play: false');
+  const noPlay = await run(Object.assign({ phase: 'final', play: false }, BASE), gapsNone);
+  assert.equal(noPlay.calls.filter(c => /^final:(?!gaps)/.test(c.opts.label)).length, 2);
 });
 
 test('chapter.js: no prompt carries an unfilled ${…}, and args.model names the chapter the agents follow', async () => {
@@ -150,4 +153,59 @@ test('chapter.js: no prompt carries an unfilled ${…}, and args.model names the
   }
   const { calls } = await run(Object.assign({ phase: 'draft', model }, BASE, { cleared: ['x'] }));
   assert.ok(calls.some(c => c.opts.label === 'judge:2' && /the voice of chapter 6/.test(c.prompt)), 'the second judge hears chapter 6');
+});
+
+test('chapter.js: every agent runs at args.effort, xhigh by default', async () => {
+  for (const [phase, extra] of Object.entries(PHASES)) {
+    const { calls } = await run(Object.assign({ phase }, BASE, extra));
+    for (const c of calls) assert.equal(c.opts.effort, 'xhigh', `${c.opts.label}: xhigh`);
+    const high = await run(Object.assign({ phase, effort: 'high' }, BASE, extra));
+    for (const c of high.calls) assert.equal(c.opts.effort, 'high', `${c.opts.label}: args.effort`);
+  }
+});
+
+test('chapter.js review: the completeness critic sees what each reviewer checked, and each gap (at most four) gets a reviewer and a skeptic', async () => {
+  const gaps = Array.from({ length: 6 }, (_, i) => ({ key: `g${i}`, prompt: `check gap ${i}` }));
+  const { result, calls } = await run(Object.assign({ phase: 'review', frames: ['f1', 'f2'] }, BASE), (p, o) => {
+    if (o.label === 'review:gaps') return { gaps };
+    if (o.label.startsWith('verify:')) return { confirmed: [{ index: 0, real: true, reason: 'seen', severity: 'high' }] };
+    return { findings: [{ severity: 'high', file: 'a', where: o.label, problem: 'p', evidence: 'e', fix: 'f' }], checked: [`what ${o.label} checked`] };
+  });
+  const critic = calls.find(c => c.opts.label === 'review:gaps');
+  assert.ok(/what review:counts checked/.test(critic.prompt) && /what review:visual-1 checked/.test(critic.prompt));
+  assert.deepEqual(calls.filter(c => /^review:gap-/.test(c.opts.label)).map(c => c.opts.label), ['review:gap-g0', 'review:gap-g1', 'review:gap-g2', 'review:gap-g3']);
+  assert.equal(calls.filter(c => /^verify:gap-/.test(c.opts.label)).length, 4);
+  assert.equal(result.kept.length, 6 + 4);
+  assert.deepEqual(result.gaps, ['g0', 'g1', 'g2', 'g3']);
+  const failed = await run(Object.assign({ phase: 'review', frames: ['f1'] }, BASE), (p, o) => o.label === 'review:gaps' ? null : fake(o.schema));
+  assert.match(failed.result.stopped, /completeness critic/);
+});
+
+test('chapter.js integrate: an independent checker reads the integrator\'s report, and what did not land is returned', async () => {
+  const { result, calls } = await run(Object.assign({ phase: 'integrate', findingsFile: '/tmp/x.json' }, BASE), (p, o) => {
+    if (/:check$/.test(o.label)) return { results: [{ finding: 'a', landed: true, evidence: 'e' }, { finding: 'b', landed: false, evidence: 'e' }], broken: [], suite: '10/10' };
+    return { findings: 2, fixed: [{ finding: 'a', what: 'fixed it' }], skipped: [], files: ['app/ui.js'], liveFramesChanged: [], suite: 'green' };
+  });
+  const check = calls.find(c => c.opts.label === 'integrate:r1:check');
+  assert.ok(check && /fixed it/.test(check.prompt) && /\/tmp\/x\.json/.test(check.prompt));
+  assert.deepEqual(result.unlanded.map(r => r.finding), ['b']);
+  const failed = await run(Object.assign({ phase: 'integrate', findingsFile: '/tmp/x.json' }, BASE), (p, o) => /:check$/.test(o.label) ? null : { findings: 1, fixed: [], skipped: [], files: ['a'], liveFramesChanged: [], suite: 'g' });
+  assert.match(failed.result.stopped, /checker failed/);
+});
+
+test('chapter.js review: args.reviewers adds lenses, each with its own skeptic', async () => {
+  const { calls } = await run(Object.assign({ phase: 'review', frames: ['f1'], reviewers: [{ key: 'continuity', prompt: 'CONTINUITY: check it' }] }, BASE), (p, o) => {
+    if (o.label === 'review:gaps') return { gaps: [] };
+    return fake(o.schema);
+  });
+  const r = calls.find(c => c.opts.label === 'review:continuity');
+  assert.ok(r && /CONTINUITY: check it/.test(r.prompt));
+  assert.ok(calls.some(c => c.opts.label === 'verify:continuity'));
+});
+
+test('chapter.js spec: args.extra reaches the writer and args.specLenses adds critics', async () => {
+  const { calls } = await run(Object.assign({ phase: 'spec', extra: 'CODE AGAINST THE BRANCH', specLenses: [{ key: 'pick', lens: 'THE CARD PICK' }] }, BASE));
+  assert.ok(/Also, from the orchestrator: CODE AGAINST THE BRANCH/.test(calls.find(c => c.opts.label === 'spec-writer').prompt));
+  assert.deepEqual(calls.filter(c => /^spec-critic:/.test(c.opts.label)).map(c => c.opts.label), ['spec-critic:math', 'spec-critic:continuity', 'spec-critic:pick']);
+  assert.ok(!calls.some(c => /about 16 typed answers/.test(c.prompt)));
 });

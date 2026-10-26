@@ -15,7 +15,9 @@
  * a lesson nobody speaks in (captions), cards lying three in a row in her Case File, and a dragonet
  * drawn in its own pose in her book. Chapter 8 adds a row of four in her Case File (the middle join's
  * line centred between the first, kept left, and the last, kept right), three speakers and their
- * voices (Hail, Snip, Snatch), and the corner's words for `foundHail`.
+ * voices (Hail, Snip, Snatch), and the corner's words for `foundHail`. Chapter 9 adds three speakers
+ * and their voices (Thymeleaf, Mizzle, GroveClan's cats by variant) and the corner's words for
+ * `foundMizzle` and `ch9Roof`; nothing else on the page changes.
  *
  * Loads in Node without a DOM (it only exports the pure layout helpers there).
  */
@@ -361,29 +363,38 @@
     coil: 'Coil', sloshbank: 'Sloshbank', sleet: 'Sleet', reedclan: 'A ReedClan cat',
     // chapter 8: Hail is "The speckled dragonet" (the chapter's `names`) until "I'm Hail!"; the weasels
     // are "A weasel" until the caption tells them apart, and their balloons carry `name` from then on
-    hail: 'Hail', snip: 'Snip', snatch: 'Snatch'
+    hail: 'Hail', snip: 'Snip', snatch: 'Snatch',
+    // chapter 9: Thymeleaf from his first balloon (Tallyheart has just said his name); Mizzle is "The
+    // sleepy dragonet" (the chapter's `names`) until "I'm Mizzle."; GroveClan's cats by variant, unnamed
+    thymeleaf: 'Thymeleaf', mizzle: 'Mizzle', groveclan: 'A GroveClan cat'
   };
   // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
   var VARIANT_NAMES = {
     otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
     dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' },
     // chapter 6: the she-cat never speaks; 3 and 4 are the watchers' two more marsh coats
-    reedclan: { 1: 'ReedClan she-cat', 2: 'Young ReedClan tom', 3: 'A ReedClan cat', 4: 'A ReedClan cat' }
+    reedclan: { 1: 'ReedClan she-cat', 2: 'Young ReedClan tom', 3: 'A ReedClan cat', 4: 'A ReedClan cat' },
+    // chapter 9: labels only, never names (the brief, call 11); the apprentice never speaks; no variant reads as 1
+    groveclan: { 1: 'A GroveClan elder', 2: 'A GroveClan apprentice' }
   };
   var PITCH = { waffles: 1.45, tallyheart: 0.92, glintstar: 0.85, grizzled: 0.6, player: 1.2, snorer: 1.1, mutterer: 1.3, snorter: 1.15, clancat: 1.0, tallone: 1.0,
     riffle: 1.5, otter: 1.05, dog: 0.9, sprinkle: 1.38, murmurchime: 1.3, reynard: 0.8, squall: 1.7,
     patience: 0.7, puddle: 1.32, wisp: 1.25,
     coil: 0.72, sloshbank: 0.62, sleet: 1.45, reedclan: 1.0,
-    hail: 1.5, snip: 1.65, snatch: 1.35 };
-  var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 }, reedclan: { 2: 1.12 } };
+    hail: 1.5, snip: 1.65, snatch: 1.35,
+    thymeleaf: 0.82, mizzle: 1.35 };
+  var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 }, reedclan: { 2: 1.12 }, groveclan: { 1: 0.78 } };
   // Sprinkle is shy: a little slower than everyone else's 0.95. Reynard is slow and smooth; Squall
   // is high and loud (as loud as the voice goes), and in a hurry. Chapter 5: Patience is low and
   // slow; Puddle is bright and quick, a little out of breath. Chapter 6: Coil is low and very slow
   // (every word on its own); Sloshbank low and slow, a big stern tom; Sleet high, quick and loud (the
   // voice's full volume, as everyone's); the young ReedClan tom a little high (VARIANT_PITCH). Chapter 8:
-  // Hail bright and quick; Snip squeaky and quicker still; Snatch a little lower, his mouth full of mouse
+  // Hail bright and quick; Snip squeaky and quicker still; Snatch a little lower, his mouth full of mouse.
+  // Chapter 9: Thymeleaf low, warm and slow; Mizzle sweet and sleepy, slow; GroveClan's elder old and slow
+  // (VARIANT_PITCH; the rate takes no variant, so it is every GroveClan cat's: the apprentice never speaks)
   var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02, patience: 0.8, puddle: 1.05, coil: 0.7, sloshbank: 0.88, sleet: 1.04,
-    hail: 1.08, snip: 1.12, snatch: 1.0 };
+    hail: 1.08, snip: 1.12, snatch: 1.0,
+    thymeleaf: 0.85, mizzle: 0.82, groveclan: 0.86 };
   function pitchOf(who, variant) {
     var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
     return v || PITCH[who] || 1;
@@ -454,7 +465,13 @@
     // link reads it beside ch4CaughtFly, so her Case File draws FLEW and can't-fly touching from then on)
     ch7Flew: { 'true': 'saw Sprinkle try to fly at the Old Bridge: the fox’s “flew” can’t be true (later chapters remember)' },
     // chapter 8: set on the last screen of Hail's scene in the Barking Field, never unset (no flag records the route)
-    foundHail: { 'true': 'found Hail in the hollow log in the Barking Field (later chapters remember)' }
+    foundHail: { 'true': 'found Hail in the hollow log in the Barking Field (later chapters remember)' },
+    // chapter 9: set on the last screen of Mizzle's scene in the old oak, and on the last frame of chapter 4's
+    // roof scene run again for a cat who meets Squall here (with foundSquall, as chapter 5's ch5Roof); never unset.
+    // (`ch3Told` false above stays as it is: after chapter 9 Tallyheart knows on both paths, but the words
+    // describe the chapter 3 choice, and the goldens pin them: chapter 9's spec, section 7, item 16)
+    foundMizzle: { 'true': 'found Mizzle in the old oak in GroveClan’s woods (later chapters remember)' },
+    ch9Roof: { 'true': 'met Squall in chapter 9: the roof, offered again ({their} book says so on chapter 9’s page)' }
   };
   UI.flagWords = FLAG_WORDS;
   // flags the engine keeps for itself: never listed among "what the choices say"
@@ -1756,7 +1773,16 @@
       lastTap = now();
       var v = draw(true);
       speakItems([{ text: fill(v.pair[0]), who: v.who }, { text: fill(v.pair[1]), who: v.to }]);
-      if (v.done) { var nb = $('nextBtn'); if (nb) nb.focus({ preventScroll: true }); }
+      if (v.done) {
+        // (chapter 9's f118: six pairs with Aa on can leave Next below the screen, the only way on; bring it in as
+        // the help's end brings in "Got it!")
+        var nb = $('nextBtn');
+        if (nb) {
+          var nbb = nb.getBoundingClientRect().bottom, nvh = root.innerHeight || 0;
+          if (nvh && nbb > nvh) root.scrollBy(0, nbb - nvh + 8);
+          nb.focus({ preventScroll: true });
+        }
+      }
     }
     function hop() {
       if (halo) { halo.classList.remove('hop'); void halo.offsetWidth; halo.classList.add('hop'); return; }
@@ -2601,6 +2627,10 @@
         showQ(typed, 'right');
         speakItems([{ text: hp.a + ' times ' + hp.b + ' is ' + hp.answer + '. ' + line, who: teacher }]);
         $('lessonNext').hidden = false;
+        // (chapter 9's review: the longest help line, 7 × 8's, can leave “Got it!” below the screen with Aa on in
+        // landscape: bring it into view, as the keypad is brought in for a long intro; nothing moves where it fits)
+        var gb = $('gotIt').getBoundingClientRect().bottom, gvh = root.innerHeight || 0;
+        if (gvh && gb > gvh) root.scrollBy(0, gb - gvh + 8);
         $('gotIt').focus({ preventScroll: true });
       };
       // The count is the teaching moment, so it always runs step by step (with Reduce Motion

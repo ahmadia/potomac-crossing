@@ -2396,6 +2396,65 @@ function recapFor(flags) {
   return story.book.recap.filter(r => E.matches(r.when, { flags }));
 }
 
+/* Chapter 9 offers the roof once more to a cat who never met Squall (`ch9Roof`, set with `foundSquall` on the
+ * roof scene's last frame, as chapter 5's `ch5Roof`): this page then says he was still roaring, never that she
+ * found him here (chapter 9's spec, section 5, "The edit to chapter 4's page"). The truth table of the four
+ * flags: a ch9Roof cat reads "still roaring", once; every other cat reads exactly the lines she read before
+ * chapter 9 (the page as it was is this one with chapter 9's line taken out and its `ch9Roof: false` keys
+ * taken off). `ch9Roof` is only ever set with `foundSquall`. It can stand beside `ch5Roof` (chapter 9's review,
+ * 2026-10-26): a cat who goes up chapter 9's roof, goes back to camp from the middle of its copy and reads chapter 5
+ * again is offered chapter 5's roof (she has not met him yet), and finishing chapter 9's copy then sets `ch9Roof`
+ * too. Her page reads as a chapter 5 roof cat's, "still roaring" once (chapter 9's line takes `ch5Roof: false`). */
+test('book: chapter 9’s ch9Roof, a truth table of foundSquall, ch5Roof, ch9Roof and ch4CaughtFly: a cat who met Squall in chapter 9 reads “still roaring” on this page, once; every other cat exactly as before', () => {
+  const b = story.book;
+  // the page before chapter 9: the new line out, the new keys off
+  const before = b.recap.filter(r => !(r.when && r.when.ch9Roof === true)).map(r => {
+    if (!r.when || !('ch9Roof' in r.when)) return r;
+    const w = Object.assign({}, r.when); delete w.ch9Roof; return { when: w, text: r.text };
+  });
+  assert.equal(before.length, b.recap.length - 1, 'one line added');
+  assert.ok(before.every(r => !r.when || !('ch9Roof' in r.when)));
+  const page = (recap, flags) => recap.filter(r => E.matches(r.when, { flags })).map(r => r.text);
+  const ROAR = 'On the roof of {their} old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.';
+  let n = 0, roof9 = 0, both = 0;
+  for (const foundSquall of [true, false, undefined]) for (const ch5Roof of [true, false, undefined]) for (const ch9Roof of [true, false, undefined]) for (const ch4CaughtFly of [true, false, undefined]) {
+    // the states a cat can be in: each roof flag is set with foundSquall, and never both
+    if ((ch5Roof === true || ch9Roof === true) && foundSquall !== true) continue;
+    const flags = { ch3Told: true };
+    [['foundSquall', foundSquall], ['ch5Roof', ch5Roof], ['ch9Roof', ch9Roof], ['ch4CaughtFly', ch4CaughtFly]].forEach(([k, v]) => { if (v !== undefined) flags[k] = v; });
+    const now = page(b.recap, flags), all = now.join(' '), name = JSON.stringify(flags);
+    if (ch9Roof === true && ch5Roof === true) {
+      both++;
+      assert.equal(now.filter(t => t === ROAR).length, 1, name + ': still roaring, once');
+      assert.deepEqual(now, page(before, flags), name + ': as a cat who met him on chapter 5\'s roof');
+    } else if (ch9Roof === true) {
+      roof9++;
+      assert.doesNotMatch(all, /Squall|two skinny shapes/, name + ': not found on this page');
+      assert.equal(now.filter(t => t === ROAR).length, 1, name + ': still roaring, once');
+      assert.equal(now.length, 9 + (ch4CaughtFly === true ? 1 : 0), name);
+      // exactly the lines of a cat who never found him, in the same places
+      const never = Object.assign({}, flags); delete never.ch9Roof; never.foundSquall = false;
+      assert.deepEqual(now, page(b.recap, never), name + ': as a cat who has not met him');
+    } else assert.deepEqual(now, page(before, flags), name + ': exactly as before chapter 9');
+    n++;
+  }
+  assert.equal(n, 51, 'every state a cat can be in (each flag true, false or unset)');
+  assert.equal(roof9, 6, 'a ch9Roof cat: ch5Roof false or unset, ch4CaughtFly true, false or unset');
+  assert.equal(both, 3, 'and with ch5Roof too, ch4CaughtFly true, false or unset');
+  // the words, for a tom and a she-cat, through the engine
+  const tom = E.blankCat({}); tom.name = 'Fern'; tom.look.sex = 'tom';
+  tom.flags = { specialty: 'climbing', worry: 'small', ch2Path: 'river', ch3Told: true, foundSquall: true, ch9Roof: true };
+  const p = E.buildBook(story, tom);
+  assert.equal(p.recap.length, 9);
+  assert.ok(p.recap.includes('On the roof of his old tower, Sprinkle’s littlest brother is still roaring, and hiccuping.'));
+  assert.ok(!p.recap.some(l => /Squall/.test(l)));
+  // the line chapter 9 added is chapter 5's own, word for word, and sits right after it
+  const i5 = b.recap.findIndex(r => r.when && r.when.ch5Roof === true), i9 = b.recap.findIndex(r => r.when && r.when.ch9Roof === true);
+  assert.equal(i9, i5 + 1);
+  assert.equal(b.recap[i9].text, b.recap[i5].text);
+  assert.deepEqual(b.recap[i9].when, { ch9Roof: true, ch5Roof: false }, 'and stands back for a cat with both roofs (chapter 5\'s line says it)');
+});
+
 test('book: title, chapter title, a 6–10 sentence recap on every combination, and Squall’s page only for a cat who found him', () => {
   const b = story.book;
   assert.equal(b.title, '{name}paw’s First Moon');
@@ -2406,8 +2465,8 @@ test('book: title, chapter title, a 6–10 sentence recap on every combination, 
     assert.ok(typeof r.text === 'string' && r.text.trim(), 'recap ' + i);
     if (r.when) Object.keys(r.when).forEach(k => {
       if (k === 'not') return Object.keys(r.when.not).forEach(kk => assert.ok(FLAGS4[kk], 'recap ' + i + ': not ' + kk));
-      // (and `ch5Roof`, chapter 5's flag for a cat who met Squall there: this page must not say she met him here)
-      assert.ok(FLAGS4[k] || k === 'ch5Roof', 'recap ' + i + ': a chapter 4 recap line reads only chapter 4’s two flags and chapter 5’s ch5Roof, not ' + k);
+      // (and `ch5Roof` and `ch9Roof`, chapter 5's and chapter 9's flags for a cat who met Squall there: this page must not say she met him here)
+      assert.ok(FLAGS4[k] || k === 'ch5Roof' || k === 'ch9Roof', 'recap ' + i + ': a chapter 4 recap line reads only chapter 4’s two flags, chapter 5’s ch5Roof and chapter 9’s ch9Roof, not ' + k);
     });
     assert.match(r.text, /[.!?”’]$/, 'recap ' + i + ' is a whole sentence');
     assert.ok(words(r.text) <= 30, 'recap ' + i + ' is short: ' + words(r.text));
@@ -2444,7 +2503,10 @@ test('book: title, chapter title, a 6–10 sentence recap on every combination, 
     assert.match(all, /found Squall, the littlest dragonet/, JSON.stringify(flags));
     assert.doesNotMatch(all, /still roaring/, JSON.stringify(flags));
   });
-  assert.deepEqual(b.recap.filter(r => r.when && 'ch5Roof' in r.when).map(r => [r.when.foundSquall, r.when.ch5Roof]), [[true, false], [true, false], [true, false], [undefined, true]]);
+  assert.deepEqual(b.recap.filter(r => r.when && 'ch5Roof' in r.when).map(r => [r.when.foundSquall, r.when.ch5Roof]), [[true, false], [true, false], [true, false], [undefined, true], [undefined, false]]);
+  // (chapter 9: the same for its `ch9Roof`, the roof offered once more: the three "found" lines take ch9Roof: false, and one line reads it,
+  // standing back for a cat with both roofs, whose chapter 5 line says it: the review, 2026-10-26)
+  assert.deepEqual(b.recap.filter(r => r.when && 'ch9Roof' in r.when).map(r => [r.when.foundSquall, r.when.ch5Roof, r.when.ch9Roof]), [[true, false, false], [true, false, false], [true, false, false], [undefined, false, true]]);
   // the text's proposed sentences, word for word
   const all = b.recap.map(r => r.text);
   ['On {name}paw’s third morning, the pile lay in rows of ten, and a gap showed in a heartbeat: four more pieces gone, twelve in three nights.',

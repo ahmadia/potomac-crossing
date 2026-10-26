@@ -10,12 +10,12 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-24):** chapters 1 to 8 are built as a static web app (`index.html`, `app/`; the
+**Status (2026-10-26):** chapters 1 to 9 are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04). Chapter 6, *The Snake in the Stones*,
 shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`; chapter 7, *The Counts
-Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24.
+Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24; chapter 9, *Featherlight*, 2026-10-26.
 
 ## Docs
 
@@ -28,7 +28,7 @@ Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24.
   drafted as the actual game text.
 - [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
   the Old Bridge, 04 The Glittering Scale, 05 Riffle's River, 06 The Snake in the Stones, 07 The Counts Don’t
-  Lie, 08 The Night Trail), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
+  Lie, 08 The Night Trail, 09 Featherlight), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
   steering calls, the budget and the names, written before drafting), its **story** (what she
   reads), and its **spec** (flags, Counts sets, cards, art needs and build notes, written once the
   story is final).
@@ -148,6 +148,21 @@ Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24.
     most about 2,000 words (chapter 5's was 1,965, about 22 minutes), and its one optional scene,
     Sleet's, up to about 300 words, with room for a full riddle. The kids are enjoying chapters 3
     to 5, and chapter 6 is built on the current plan.
+48. **The Warrior Counts** (Aron, 2026-10-24): every pair up to 10 × 10 once, so 3 × 7 and 7 × 3 are
+    one pair (55 questions, each pair shown in a random order), in **one sitting**; she passes with 90%
+    (50 of 55 right). A missed question still gets the sand's help but counts against the 90%. If she
+    doesn't pass, she can **try again whenever she likes**, and Tallyheart, warm about it, points her
+    to the Training Hollow for the tricky ones. Built and tested as its own piece before chapter 10's
+    build.
+49. **The Warrior Counts' three open questions** (Aron, 2026-10-24; `docs/warrior-counts.md`): she
+    hears her number only when it is good news (on a pass, and on a not-yet only at 45 or more right
+    or when better than last time); after passing she may quietly sit it again for a clean sweep, which
+    never changes her pass; the whole Clan watches her first sitting, and after that only Glintstar,
+    Tallyheart and {Murmur}chime, with the Clan running in for a pass.
+50. **The finale may run to about 30 minutes** (Aron, 2026-10-24): chapter 10's plain path up to about
+    2,700 words, so the case and the goodbyes get room; it stays one chapter (decision 8's ten).
+51. **The 7s are a clutch of seven** (Aron, 2026-10-24; amends 42): the seven dragonets of Sprinkle's
+    clutch, not "sunrises in a quarter-moon", which echoes the books' "quarter moon".
 
 ## Claude's calls under decision 46
 
@@ -156,7 +171,7 @@ Each is Aron's to reverse.
 - **Fog is Wisp** (2026-10-10): Warriors has a cat named Fog. Wisp is in neither series and suits
   the pale, silent sister in the reeds. Puddle, Hail and Sleet keep their names (the books have
   only longer names such as Puddleshine and Hailstar, never those exact names). Dew, an exact
-  Warriors name, is renamed before chapter 9 names her; she is no longer "the tiniest" (Squall is
+  Warriors name, is renamed Mizzle (chapter 9's brief, call 11); she is no longer "the tiniest" (Squall is
   the littlest of the clutch).
 - **The thefts go on, four every night** (2026-10-10): chapter 5 opens on the fourth count
   (sixteen gone), chapter 6 sets the guards, and chapter 7's sum is six nights: twenty-four gone
@@ -466,6 +481,95 @@ Each is Aron's to reverse.
      cat who never met Squall meets him at last (chapter 4's scene again, as chapter 5 promised).
   6. Sprinkle practises and lifts off for a few wingbeats; whether her wing holds is the Gathering's.
      Glintstar is told everything on the last evening, and says the apprentice will speak.
+  7. Words checked by the draft's names check and kept (2026-10-24): *Thymeleaf* (module-1's; the
+     whole name is clear on both wikis, its "-leaf" is a Warriors suffix, as Tallyheart's "-heart" is;
+     Thyme, Leaf and Grove are humans in Wings of Fire's Dragonslayer, the class of world.md's Reed- and
+     Crystal-, so Thymeleaf and GroveClan stand (the brief's "neither half on the Warriors Names page" is
+     wrong for "-leaf"); thyme is a Warriors medicine herb); *medicine cat* (the Warriors term for the healer, in world.md
+     and module-1 from the start, a shared Clan convention like apprentice and elder); *the Moon Ferry*
+     (module-1's; plain words); *sage* (the herb, lower case only; checked, not used); *featherlight* (the title's word,
+     never a name).
+
+- **Chapter 9's spec** (2026-10-24; `docs/chapters/09-featherlight.spec.md`, section 9 has all 26
+  calls with their reasons). No engine change: the engine's version moves and the save stays version
+  2. In short:
+  1. Two sticky flags, `foundMizzle` and `ch9Roof`, and no choice flag: chapter 10 reads no choice of
+     this chapter. Chapter 4's page reads `ch9Roof`, so a cat who meets Squall here reads on chapter 4's page
+     that he is still roaring, and her find on chapter 9's.
+  2. The roof is chapter 4's own frames, copied, every hour first light (the story's "here by first
+     light"), so the climb is never by day under a dawn sky.
+  3. Mizzle's riddle is 6 × 8. The sand at per 8 is four and four ("an eight is two fours"), as
+     chapter 8 did for per 4; no shipped frame draws the plain per-8 sand.
+  4. Chapter 8's inherited filler slip (Hail's riddle lending its own 4 × 4 after three misses) is
+     met by chapter 9's data, not an engine change, which would change chapter 8's live readings.
+  5. The case is laid out on a new den camera, `case`, a row lighting at each tap; the cards come
+     from the file by picture, so a Sleet cat's den card lies at FLEW's end as in her file.
+  6. One new place, GroveClan's woods (`grove`, five cameras); Thymeleaf's den is a camera of the camp.
+     The reed root, the dew's puddle and the sunny shallows are options of their sets, off by default.
+  7. Squall unmet is a tail tip labelled "A voice", so he stays unmet until he says his name.
+
+- **Chapter 9 as built** (2026-10-25; `app/story/ch09.js`'s header has each call). Where the frames
+  went past the spec, each small:
+  - *140 frames*, about 95 to 120 a reading (under the brief's 130), 15 to 17 typed answers.
+  - *Squall's label is "The little dragon"* until he says his name, as chapter 5 has it.
+  - *Thymeleaf sits at a spot of his own under the bridge*, at Sprinkle's chest: at the bridge's
+    usual spot he was hidden behind Tallyheart, ears only. Two more spots moved for the same reason
+    (the sneaking cat, the little bridge).
+  - *The ninth claw mark's close-up is empty*, as in chapters 6 to 8: her mentor's stretch covered it.
+  - *A speaker with a second paragraph only some cats read* gets one balloon written twice by
+    `when`, so a panel never holds two balloons from one speaker (Riffle's Hail line, Mizzle's nap
+    line and her "five", our cat's Mizzle line at the case).
+  - *Her book's page is one sentence an entry*, 7 to 10 sentences on every path: the spec's
+    proposal ran to 15 with both scenes.
+  - *The review's round* (2026-10-26, landed on the depth hotfix): while Sprinkle's wings are open under
+    the bridge (f095 to f100, one move) Tallyheart sits by the wall facing in, chapter 7's spot, because
+    across the nook she sat in front of the hurt wing the rub Tap glows on; Thymeleaf sits a little nearer
+    the front where Sprinkle's peek or her claws came down on his head (f093, f095); Riffle flops on his
+    back a little in from the hedge, so his face stays in the panel (f007); her sore wing shows behind the
+    good one when both are raised (the far wing had been drawn inside the near one); at the dew our cat
+    crouches at the puddle about Squall's size, the panel's co-subject beside him; the montage lists the
+    far guard first (f112, Charlie's bug again), and so do the little bridge and the woods' edge (f037,
+    f039, f040), with a test on every camera chapter 9 draws; Sprinkle is listed first where the speed
+    lines trail her (f114; f106's glide draws its own, and its streaks, which ran behind our cat, are
+    gone); the case's ask has two captions, so a tap shows four boxes, never five; Sloshbank's
+    almost-smile is `kind`, not a grin; and seven boards now say what the art draws (sitting, not
+    standing or a paw up). Chapter 4's page says "still roaring" once for a cat with both roofs (chapter
+    5's read again from the middle of chapter 9's copy). The fullest file is 30 cards (a reread cat with
+    both specialties' cards), nineteen along the edge in three courses; the docs said 29. After a long
+    help the page brings "Got it!" into view if it is below the screen (7 × 8's help with Aa on), as it
+    already brings in the keypad; where it fits, nothing moves.
+  - *Shipped* (2026-10-26, CACHE v19, on the Aa fix): the case's ask (f118) brings Next into view after
+    its sixth pair, and with Aa on its list of pairs asked sits a little closer, so Next is on the screen
+    at 1080 x 720. Left for the next round, each confirmed by the final review and small: Thymeleaf reads
+    a little small under the bridge (f089 to f100; a spot at h 340 is the proposed fix); Sprinkle's lift
+    off the sand (f115) wants her a little higher with a darker shadow; with nine Counts the Training
+    Hollow's last button (the 8s) and My nest sit below the screen at 1080 x 720 (the page scrolls); and
+    the Aa fix's three leftovers (ch04 f115 for a noticing cat, an already-counted Counts page, the
+    Case File's last row), whose second round was stopped half built in ~/potomac-crossing-hotfix.
+  - *CACHE knows what is live*: `tests/fixtures/sw-shipped.json` lists every shipped `CACHE` with a
+    digest of what it cached (v16, chapter 8; v17, the depth hotfix), and `tests/sw.test.js` fails until
+    `CACHE` is past the last; a ship appends its own entry (production.md, step 2). Chapter 9 and the
+    hotfix had both bumped to v17, which would have stranded installed iPads on whichever shipped first.
+
+- **The Warrior Counts' design** (2026-10-24; `docs/warrior-counts.md`, its section 9 has every call):
+  taken from the hub once chapter 10 is finished, in chapter 3's scene at the fountain; 10 × 10 always
+  last, as Murmurpaw's was; no clock, no score on screen, four paw prints filling as she goes; a miss
+  gets the sand once and is not asked again; a paused sitting can be picked up within two hours, and
+  practising in the Hollow or a chapter lesson in between sets it aside, so she starts fresh.
+
+- **Chapter 10's brief** (2026-10-24; `docs/chapters/10-the-gathering.brief.md`, each call with its
+  reason). In short:
+  1. Every one of Reynard's claims can be answered by a card every player holds on every path; nothing
+     needs `my-count` or an optional card. A wrong pick gets a gentle nudge and another try.
+  2. Water's brave moment is the Moon Ferry at night (moonlit silver-blue, never dark); talk's is her
+     answering Reynard out loud. Puddle can be found under the ferry raft, if he wasn't before.
+  3. The foxes are chased off by every Clan standing together: no fighting, nobody hurt. The prey
+     comes home from the stash.
+  4. The Mistscales are huge, gentle and misty, never frightening; Sprinkle flies to her Mama; the
+     dragonets she found say goodbye by name, the others are shapes in the mist.
+  5. Glintstar honours her; she is still {name}paw; Tallyheart says the name will come when she
+     passes the Warrior Counts, which the hub offers from then on.
+  6. Leaders and grown Mistscales stay unnamed (labels and "Mama").
 
 - **Casts are listed back to front where cats meet** (2026-10-25, the depth hotfix): Charlie found the
   far grey guard drawn over the near black guard's face on chapter 8's f030. The art draws each layer
@@ -505,14 +609,13 @@ Each is Aron's to reverse.
 Nothing here blocks the chapter being built; each chapter's own questions are in its text, under
 "For Aron to confirm".
 
-- **The Warrior Counts, for chapter 10:** whether 3 × 7 and 7 × 3 are one pair or two (55 questions
-  or 100); one sitting or a few rounds; a missed question still gets the sand but counts against
-  the 90%; and she can try again from the Training Hollow whenever she likes.
+- ~~**The Warrior Counts, for chapter 10**~~: answered by decision 48 (2026-10-24): 55 pairs, one
+  sitting, try again anytime. The design is `docs/warrior-counts.md`.
 - **Names and words that may still echo the books**: the Training Hollow (ThunderClan's training
   hollow; the Claw Tree Hollow?); chapter 1's Clan-name ideas, which make Warriors apprentice names
   (Hollypaw, Fernpaw, Stormpaw, Minnowpaw, Sedgepaw, Frostpaw) and "Moon" (Wings of Fire's
   Moonwatcher); "Ironsnakes" (Warriors' Thundersnake; Clankers?); "leaf-drop" (Warriors' leaf-fall);
-  Dew (Warriors pairs Drizzle with Dew; before chapter 9 names her); Snip, one of the weasels
+  ~~Dew~~ (renamed Mizzle by chapter 9's brief, call 11, 2026-10-24); Snip, one of the weasels
   (Warriors has a Snipkit; chapter 8 names Snip and Snatch on screen: kept, see chapter 8's brief, call
   6). From chapter 5's names check
   (`docs/chapters/05-riffles-river.md`, "New names"): "skymonster," chapter 5's loudest Clan word

@@ -1522,3 +1522,86 @@ link's `lines` print on the card row, each partner with the line it joins over, 
 `--check-words` passes with the spec's names and declarations added (`tests/tools.test.js`, with names the spec
 never gave failing). Chapters 1 to 7's storyboards regenerate byte for byte, and `ch08.md` was regenerated from
 the stub.
+
+## Chapter 9 (v0.1)
+
+Chapter 9, *Featherlight*, is [`chapters/09-featherlight.md`](chapters/09-featherlight.md) (Draft v0.4, final),
+built in `app/story/ch09.js`. **Its spec, [`chapters/09-featherlight.spec.md`](chapters/09-featherlight.spec.md)
+(v0.2), is the build's contract**: the flags, the Counts sets, the card, the art needs, the build notes and the
+names. **No engine change** (the spec's "Engine needs": none; chapter 8's inherited filler need is met by the
+sets' data, decided under decision 46 and recorded in the README): every key is chapters 1 to 8's. One new place,
+`grove`, and new cast: Thymeleaf, Mizzle, GroveClan's two cats (by variant, unnamed) and the spider. This section
+records the names and the words as built; the spec has the rest.
+
+**The flags**
+
+- `foundMizzle: true`, sticky, on Mizzle's last screen in the oak's hollow (on the frame, never on an option;
+  saying no to the hollow sets nothing). `ch9Roof: true`, sticky, with `foundSquall: true` on the last frame of
+  chapter 4's roof scene run again for a cat who never met Squall (as chapter 5's `ch5Roof`; the two are never
+  both true). No choice flag.
+- `PC.ui.flagWords`: `foundMizzle` "found Mizzle in the old oak in GroveClan’s woods (later chapters remember)";
+  `ch9Roof` "met Squall in chapter 9: the roof, offered again ({their} book says so on chapter 9’s page)"; both
+  last in the corner. **`ch3Told` false keeps its words** ("kept Sprinkle’s secret: only Riffle knows too"),
+  though they no longer hold after chapter 9's kept path tells Tallyheart: they describe the chapter 3 choice,
+  and the goldens pin them (the spec's section 7, item 16). `tests/engine.test.js` pins the string, with a note
+  saying why; do not "fix" it.
+- **Chapter 4's page** (`app/story/ch04.js`, `book.recap`, the one edit to shipped story code): its three
+  "found Squall" lines take `ch9Roof: false` beside their `ch5Roof: false`, and a new line after chapter 5's
+  reads `{ when: { ch9Roof: true } }`: "On the roof of {their} old tower, Sprinkle’s littlest brother is still
+  roaring, and hiccuping." No live save holds `ch9Roof`, so the page reads as it did for every one of them
+  (`tests/story-ch04.test.js` runs the truth table of `foundSquall`, `ch5Roof`, `ch9Roof` and `ch4CaughtFly`).
+  Chapter 5's page needs nothing.
+
+**Engine and UI**
+
+- `E.VERSION = '0.9.0 (chapter 9, 2026-10-26)'`; the save stays version 2 and nothing new is stored.
+- `PC.ui.speakers` names `thymeleaf` "Thymeleaf", `mizzle` "Mizzle" and `groveclan` "A GroveClan cat", after
+  chapter 8's, with `VARIANT_NAMES.groveclan` `{ 1: 'A GroveClan elder', 2: 'A GroveClan apprentice' }` (no
+  variant reads as 1). The chapter's `names` (`mizzle` "The sleepy dragonet", until "I’m Mizzle.") and a
+  balloon's own `name` (Squall's "A voice" from behind the pole) win, as before. Read to me (pitch, rate):
+  Thymeleaf 0.82, 0.85 (low, warm and slow); Mizzle 1.35, 0.82 (sweet and sleepy, slow); the elder 0.78
+  (`VARIANT_PITCH.groveclan[1]`), 0.86 (`RATE.groveclan`: the rate takes no variant, so it is every GroveClan
+  cat's; the apprentice never speaks). Nobody else's voice changes. No new `faceHidden` pose: Squall's `hidden`
+  is a name `NO_FACE_POSES` has had since chapter 6.
+
+**The art's new names** (the spec's section 4; every option off by default, every camera and anchor additional)
+
+- `grove` (new, `sets/grove.js`, always by day, "the bright afternoon"): cameras `bridge`, `wide`, `meet`, `oak`
+  and `hollow`; anchors `near-1`, `near-2`, `span-1`, `span-2`, `far` (`bridge`), `edge-1` to `edge-3`, `elder`,
+  `fern` (`wide`, and `elder` and `fern` on `meet` and `oak` too), `meet-1` to `meet-3` (`meet`), `root-1` to
+  `root-3`, `trunk`, `moss` (`oak`), `nook`, `lip` (`hollow`); no options.
+- `camp`: camera `herbs` (Thymeleaf's den, a composition of its own), anchors `herbs-1` to `herbs-3` and `web`,
+  option `remedy: 'none' | 'four' | 'mixed'`.
+- `den`: camera `case` (the case laid out on the floor), anchors `case-1` to `case-3`, option `read` (a number,
+  0 to 7: the rows lit, the next one glowing, the seventh row at 7), and `moon: 13` (nearly round).
+- `title`: options `root` and `tap: 'none' | 'root'`. `roof`: option `dew`, anchor `puddle`. `bridge`: option
+  `shallows` (`bank`), anchors `run`, `run-2`, `skim`, `air`, `paddle`, `watch-1` to `watch-4`.
+- Cast: `thymeleaf` (a cat's poses), `mizzle` (`curl`, `yawn`, `sit`, `wake`, `pawup`), `groveclan` (variants 1
+  and 2, a cat's poses), `spider` (`spin`, `wave`); Sprinkle's `hop`, `flap`, `glide`, `fly`, `splash` and `tap:
+  'wing'`; Squall's `hidden`; Riffle's `holds: 'mint'`.
+- Counts art: spiders (`thing: 'leg'`, no `kind`: the 8s, eight legs each, four a side), one spider's two sides
+  (`thing: 'leg'` at table 4 with a `who` of one spider), `kind: 'dose'` (rows of eight, four and four, the mark
+  by the set's `thing`: `drop`, `rub`, `flap`), `kind: 'acorns'` (twigs, eight acorns each), the plain sand at per
+  8 four and four.
+
+**Words (`tools/storyboard.mjs`)**: words for every name above, each printed only where a chapter uses it.
+GroveClan's woods (`SETS.grove`), the old oak (`GROVE_OAK`), the hollow (`GROVE_HOLLOW`) and Thymeleaf's den
+(`HERBS`, the camp's `herbs`) are place words of their own, and every `grove` camera has words in
+`SET_CAMS.grove`; the elder's spot reads differently on `wide` and `oak` (`CAM_ANCH.grove`). The roof by morning
+is "at first light" (`SET_TOD_WORDS`; no shipped roof frame is drawn by morning). `optWords` takes the camera
+too, so on the den's `case` her bark is laid out on the floor in six rows by card (the rest stacked face down)
+and her glass lies beside them; every other den camera keeps its words. `read` names the rows lit and the one
+glowing (`CASE_ROWS`); `moon: 12` is "more than half and growing", `moon: 13` "nearly round, thirteen evenings
+old" (no shipped frame has a moon past 8). Mizzle's and the spider's poses have words of their own
+(`MIZZLE_POSE`, `SPIDER_POSE`), Sprinkle's flight is in `SPRINKLE_POSE` and Squall's tail tip behind the pole in
+`SQUALL_POSE`; Thymeleaf's leaf holds the remedy; Riffle's mint is a cast extra. The taps: the root and the wing
+(`TAPS`), her own nose and raised tail in any pose (`TAP_MINE`), her front paw mid-step (`TAP_SELF`), and a cat's
+ears are a cat's (`TAP_WHO`: only Riffle's are small and round). The skip-counts on legs: one spider's two sides
+by 4s, spiders by 8s, four and four; the 8s' lesson is spiders (`thing: 'leg'`), its sand four and four, hopped by
+eights; the doses are rows of eight drops, paw marks or strokes lit a row at a time (in her own count when nobody
+speaks, else in the teacher's); the acorns light a twig at a time as Mizzle hops them. An `ask` whose asker
+answers himself (Thymeleaf's four things) letters two balloons of his a tap; an `ask` with `opt: 'read'` (the
+case) is tapped on the glowing row, each tap lighting it. A recap line that reads `ch9Roof` prints its condition
+as any other. `--check-words` passes with the spec's names and declarations added (`tests/tools.test.js`, with
+names the spec never gave failing). Chapters 1 to 8's storyboards regenerate byte for byte but for `ch04.md`'s
+book rows (the recap edit), and `ch09.md` was regenerated from the stub.

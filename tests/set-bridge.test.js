@@ -100,7 +100,8 @@ test('bridge: defaults are day, no train, no eyes, drag marks and drips on; chap
   const info = art.sceneInfo('bridge');
   // (chapter 5's `mudPaws` is off too: 0; chapter 6's `stones` too: chapters 3 to 5's back has no leg; chapter 7's
   // Tap, sum and wing kept clear too)
-  assert.deepEqual(info.defaults, { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false, tap: 'none', compare: false, wing: false });
+  // (chapter 9's `shallows` off too: chapters 2 to 8's bank is as it was)
+  assert.deepEqual(info.defaults, { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false, tap: 'none', compare: false, wing: false, shallows: false });
   const plain = render('back', {}).svg, none = render('back', { eyes: 'none', drag: true, drips: true, train: false }).svg;
   assert.equal(strip(plain).length, strip(none).length, 'an empty opts is the defaults');
 });
@@ -1484,3 +1485,253 @@ test('bridge, chapter 7 (final review): `wing: true` on `back` keeps the letteri
     for (const id of Object.keys(st.frames)) { const sc = st.frames[id].scene; if (sc && sc.set === 'bridge') assert.ok(!sc.opts || sc.opts.wing === undefined, ch + ' ' + id); }
   }
 });
+
+// ================================================================ chapter 9: the sunny bank
+// docs/chapters/09-featherlight.spec.md, section 4, "The sunny bank", and section 7, item 2 (the fingerprints, recorded once
+// from the shipped chapter 8 snapshot, commit b6a8d4f, engine 0.8.0, in a node process of its own; no test reads that tree)
+
+const SPEC9 = path.join(ROOT, 'docs/chapters/09-featherlight.spec.md');
+const LOOK9 = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
+const strip9 = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+const hash9 = (r) => crypto.createHash('sha1').update(strip9(r.svg) + JSON.stringify(r.keep) + JSON.stringify(r.heads)).digest('hex').slice(0, 12);
+const fpCat9 = () => { const c = PC.engine.blankCat({ id: 'fingerprint', now: 0, look: LOOK9 }); c.name = 'Pebble'; c.petname = 'Pebble'; return c; };
+// <fp9> (the recorder's code, as it ran on the snapshot)
+function frameHash9(set, ids) {
+  const E = PC.engine, cat = fpCat9(), stories = ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07', 'ch08'].map((id) => PC.story[id]), out = {};
+  for (const id of ids) for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+    if (!f.scene || f.scene.set !== set) continue;
+    out[id + ':' + fid] = hash9(art.render(E.resolveScene(f.scene, cat, stories), { look: LOOK9 }));
+  }
+  return out;
+}
+// one hash per camera: the options chapters 2 to 8 gave the bridge (and the defaults), by day, at sunset and at dusk, empty and
+// with someone at every spot chapters 2 to 8 had there (chapter 9's are left out)
+const NEW9 = ['run', 'run-2', 'skim', 'air', 'paddle', 'watch-1', 'watch-2', 'watch-3', 'watch-4'];
+const BRIDGE_OPTS9 = [{}, { drag: false }, { prints: true }, { prints: true, branch: true, eyes: 'sprinkle' }, { train: true, eyes: 'open', drips: false },
+  { eyes: 'blink', pebble: 'out' }, { pebble: 'paws' }, { pawsIn: true, hop: true }, { pawsIn: 'both', hop: 2 }, { mudPaws: 7, prints: true }, { stones: true, prints: true, wing: true },
+  { prints: true, tap: 'print', compare: [24, 60] }];
+function bridgeSweep9() {
+  const info = art.sceneInfo('bridge'), out = {}, WHO = ['player', 'tallyheart', 'riffle', 'clancat'];
+  for (const cam of Object.keys(info.cams)) {
+    const spots = Object.keys(info.anchors[info.cams[cam].comp] || {}).filter((k) => NEW9.indexOf(k) < 0);
+    const cast = spots.map((at, i) => ({ who: WHO[i % WHO.length], variant: 1 + (i % 3), pose: 'sit', at }));
+    const h = crypto.createHash('sha1');
+    for (const fx of [['day'], ['sunset'], ['dusk']]) for (const opts of BRIDGE_OPTS9) for (const c of [[], cast]) {
+      const r = art.render({ set: 'bridge', cam, fx, opts, cast: c }, { look: LOOK9 });
+      h.update(strip9(r.svg) + JSON.stringify(r.keep) + JSON.stringify(r.heads));
+    }
+    out[cam] = h.digest('hex').slice(0, 16);
+  }
+  return out;
+}
+// </fp9>
+const CH9_BRIDGE_FRAMES = {
+  'ch02:f046': 'e9eafc479251', 'ch02:f047': 'c9b7c912c293', 'ch02:f048': '158e63a90631', 'ch02:f049': '6243893f9c17',
+  'ch02:f050': '8775c2b9ced5', 'ch02:f051': 'ad149c634186', 'ch02:f081': 'b3477c244f8e', 'ch02:f082': '5d25dda404c8',
+  'ch02:f083': '4363f34e03dc', 'ch02:f084': '451253ec317c', 'ch02:f085a': 'c48185bdb2ac', 'ch02:f086a': 'dda46453e815',
+  'ch02:f087a': 'e7feca6b3ad5', 'ch02:f088a': '048734ca2fa7', 'ch02:f089a': '774e9f6d19ee', 'ch02:f090a': '1435fd60e2d2',
+  'ch02:f091a': 'd9d8e7d2ea79', 'ch02:f092a': '206d7885ea9a', 'ch02:f093a': '1435fd60e2d2', 'ch02:f094a': '0c2ee18a34a0',
+  'ch02:f095a': 'a061c74f6ecf', 'ch02:f096a': '2acbe8c1f41f', 'ch02:f097a': '15b0089f6fd2', 'ch02:f098a': '07aee339a4a5',
+  'ch02:f099a': '167cd5ff848b', 'ch02:f100a': '33f6cfb5e434', 'ch02:f101a': 'c537c54bf345', 'ch03:f040': 'b4044c591f3f',
+  'ch03:f041': 'e71795064abc', 'ch03:f042': '7df8795947b9', 'ch03:f043': '484ab3e2697a', 'ch03:f044a': 'fe1923d70b81',
+  'ch03:f044b': '55ea5a3c0c4e', 'ch03:f045': '49a3962d9635', 'ch03:f046': '8602376ec39a', 'ch03:f047': '6317a4fd348d',
+  'ch03:f048': '3dc744d71ded', 'ch03:f049': '28909bd90b47', 'ch03:f050': '5a121fca8a40', 'ch03:f051': '18297508a961',
+  'ch03:f052': '33be8fccb268', 'ch03:f053': '208d8989bb39', 'ch03:f054': '98017e0c30de', 'ch03:f055': 'bd83b4ecbbb6',
+  'ch03:f056': '1156f183349e', 'ch03:f057': '2f8d56c25f37', 'ch03:f058b': '07d906bed660', 'ch03:f059': 'e6f7b5c428cc',
+  'ch03:f060': 'a509456c48e6', 'ch03:f061': '541e570a1e22', 'ch03:f062': '52fd7ee67daf', 'ch03:f063': '3a6ecb0f23f8',
+  'ch03:f064': '7bbc3aa5b4bb', 'ch03:f065': 'b44bde6a802b', 'ch03:f066': '7eb763e1c832', 'ch03:f067': 'de0543629710',
+  'ch03:f068': 'b8cb3f06b02a', 'ch03:f069': '05c997e2e7bc', 'ch03:f070': 'f2f7122bb9ed', 'ch03:f071': '2d8255a8ed58',
+  'ch03:f072': '649089420d54', 'ch03:f073': '3818a0650418', 'ch03:f074': '7cdab54046f0', 'ch03:f075': '9662c13e40af',
+  'ch03:f076': '9ea6f3353304', 'ch03:f077': '3ae2cef9c370', 'ch03:f078': 'af67e5e3812a', 'ch03:f079': 'dc9777cabc99',
+  'ch03:f080': 'c6c2218aa556', 'ch03:f081': 'eb56d8d2eb6d', 'ch03:f082': '29906acb3078', 'ch03:f083': 'b389e750df75',
+  'ch03:f084': '0e614c20fee2', 'ch03:f085': '6f5bd89ff379', 'ch03:f086': '94f046aae9d2', 'ch03:f087a': 'bc48a9f467dc',
+  'ch03:f087b': 'eb4da4db86e9', 'ch03:f088b': 'a10bfad7d4ab', 'ch03:f089b': 'f765436a4d4d', 'ch03:f091a': 'a5247c9de5b9',
+  'ch03:f092a': '0f602f3a622d', 'ch03:f093a': '4eb447f7e55f', 'ch03:f094a': 'ec640bcae091', 'ch03:f095a': '1ede3164f751',
+  'ch03:f096a': 'fcf2fa4af127', 'ch03:f097a': 'e82ad3ecd9ae', 'ch03:f099b': '537627956887', 'ch03:f100b': '2314c83a196a',
+  'ch03:f101b': 'aad5fcb20716', 'ch04:f078b': '76b9b30584a6', 'ch04:f090': 'b7aa06640565', 'ch04:f091': '6b61d408cb9c',
+  'ch04:f092': '9014352981ce', 'ch04:f093': '102f63094bd4', 'ch04:f094': 'da16c230a4f4', 'ch04:f095': '92f329499054',
+  'ch04:f096a': '9c0dee3b25f3', 'ch04:f096b': '2cd7ee1ab3d7', 'ch04:f097': '83651a325c66', 'ch04:f098': 'b40bc10fa649',
+  'ch04:f099': 'ac4dc48a38ca', 'ch04:f100': '04f81ecd7c2b', 'ch04:f101': 'bcf85e57d8d8', 'ch04:f102': '3fc10675d0f4',
+  'ch04:f103': 'd177399168d6', 'ch04:f104': 'd356c11e34d7', 'ch04:f105': '778814c7fec6', 'ch04:f106': 'fc8ecbcf5843',
+  'ch04:f107': 'b867b337f135', 'ch04:f108': '60b3ecc872ec', 'ch04:f109': 'cd27c17f1f47', 'ch04:f110': 'd9ad3f6782e9',
+  'ch05:f140': 'f9cd8ebccf33', 'ch05:f141': 'ec275380643d', 'ch05:f142': '7066663fe480', 'ch05:f143': '927db6f1bfaa',
+  'ch05:f144': '4a2f02baa1ea', 'ch05:f145': 'a855e2472d17', 'ch05:f146': '98b1c388a513', 'ch05:f147': '9862212fe6d2',
+  'ch05:f148': 'a69f6a61737b', 'ch05:f149': '14bdeff80d2c', 'ch05:f150': '2b79ab37872d', 'ch05:f151': '2ffe6bfda723',
+  'ch06:f069': '349519ed274e', 'ch06:f070': 'f2932aafb779', 'ch06:f071': '9a394d5bdf7b', 'ch06:f072': '72889499ed5f',
+  'ch06:f073': '91587420b639', 'ch06:f074': 'b68667727197', 'ch06:f075': '4ea420e36c53', 'ch06:f076': '78ba645a5de6',
+  'ch06:f077': '90e38b7a6cfd', 'ch06:f078': '39875ff68610', 'ch06:f079': '60b3e8778c60', 'ch06:f080': '68436e03a7df',
+  'ch06:f081': 'b23236695419', 'ch06:f082': '21cbd782b2ee', 'ch06:f083': '42f2c0ccb4e5', 'ch06:f084': '197969d88ca6',
+  'ch06:f085': '0f2effc97768', 'ch06:f086': 'fb56463d8ec3', 'ch06:f087': '9ae546b6edf8', 'ch06:f088': '38285d7c1ea8',
+  'ch06:f089': '1b4d74710873', 'ch06:f090': 'b967178863e2', 'ch06:f091': '5fed3855ff3a', 'ch06:f092': '6779a5165b93',
+  'ch06:f093': '8f98e867b06b', 'ch06:f094': '6fca0656bdca', 'ch06:f095': 'd25373c11916', 'ch06:f096': 'e13655527791',
+  'ch06:f097': 'dea3154a77a5', 'ch06:f098': '5dcf448b0d7f', 'ch06:f099': 'a26e177036bb', 'ch06:f100': '9cb61e677651',
+  'ch06:f101': '09db93aadc8a', 'ch06:f102': 'd69415e10e8f', 'ch06:f103': '7739da10a55b', 'ch06:f104': '376b103d7214',
+  'ch06:f105': 'f3d19b9b8ca5', 'ch06:f106': '0b24ed643561', 'ch07:f048': 'ce76d79c6261', 'ch07:f049': '483326ebdc63',
+  'ch07:f050': 'fb6e6f1481d4', 'ch07:f051': 'a6ca05272ea1', 'ch07:f052': 'e0756de6e59d', 'ch07:f053': 'ecd65099b272',
+  'ch07:f054': '1d5e905a8b74', 'ch07:f055': 'af12520776fb', 'ch07:f056': 'cd66d760d56e', 'ch07:f057': '049b3897b56f',
+  'ch07:f058': '22bdfb238a28', 'ch07:f059': 'f396dcbdfbce', 'ch07:f060': 'ef46a29d79a3', 'ch07:f061': '0b16d6f819ff',
+  'ch07:f062': 'e05b745ba516', 'ch07:f063': 'd93c38df9cf8', 'ch07:f064': '626fa2cd80a1', 'ch07:f065': 'd110539249b9',
+  'ch07:f066': 'e5117f558db1', 'ch07:f067': '02a400d9b5c5', 'ch07:f068': 'b19258e049f8', 'ch07:f069': 'a954fcfa48b1',
+  'ch07:f070': '9f96b937db6e', 'ch07:f071': '1addda95d239', 'ch07:f072': '1b13fc5192a7', 'ch07:f073': 'f56f9b501a26',
+  'ch07:f074': '8b65097dd58c', 'ch07:f075': 'ff6a10fe4b96', 'ch07:f076': '567b47727976', 'ch08:f026': '375de1b3d4e0',
+  'ch08:f027': 'dfc6e6ea1c81', 'ch08:f028': '6db124780375', 'ch08:f029': '57434c0883f0'
+};
+const CH9_BRIDGE_SWEEP = {
+  'bank': '4e4c6228d9174305', 'mouth': '6ad40c1904817e8f',
+  'under': 'e65fe59310b65425', 'back': '41d5a3a6c9e8bdab',
+  'paws': '6c56acfe4cf91ddd', 'wall': '0fd672854acd945a',
+  'print': '29122c63f97d0af6'
+};
+
+test('bridge, chapter 9: every bridge frame of chapters 2 to 8 draws exactly as the shipped chapter 8 drew it (fingerprints)', { skip: !art.character && 'no cats.js' }, () => {
+  const now = frameHash9('bridge', ['ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07', 'ch08']);
+  assert.deepEqual(Object.keys(now).sort(), Object.keys(CH9_BRIDGE_FRAMES).sort(), 'the same frames visit the bridge');
+  for (const [k, want] of Object.entries(CH9_BRIDGE_FRAMES)) assert.equal(now[k], want, k + ': drawn as it was');
+});
+
+test('bridge, chapter 9: every camera, with every option chapters 2 to 8 gave the bridge, in every light they drew it, empty and with someone at every older spot, is byte for byte the snapshot\'s', { skip: !art.character && 'no cats.js' }, () => {
+  assert.deepEqual(bridgeSweep9(), CH9_BRIDGE_SWEEP, 'recorded from the chapter 8 snapshot');
+});
+
+test('bridge, chapter 9: the spec names `shallows` and the bank\'s new spots; the set declares them, off by default, and off draws exactly what it drew', () => {
+  const md = fs.readFileSync(SPEC9, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**Option `shallows: true`** (on `bank`; default false)', '**New anchors on `bank`** (additional): `run`', '`NO_SHADOW.sprinkle = { glide: 1, fly: 1, splash: 1 }`'])
+    assert.ok(md.includes(want), 'the spec says: ' + want);
+  const v = art.vocab.sets.bridge, info = art.sceneInfo('bridge');
+  assert.deepEqual(v.opts.shallows, [false, true]);
+  assert.equal(info.defaults.shallows, false);
+  for (const k of NEW9) assert.ok(info.anchors.main[k], 'bank: ' + k);
+  for (const comp of Object.keys(info.anchors)) if (comp !== 'main') for (const k of NEW9) assert.ok(!info.anchors[comp][k], comp + ': no ' + k);
+  // off is nothing, on every camera; on is the bank's alone
+  for (const cam of CAMS) for (const base of [{}, { drag: false }, { prints: true, stones: true }]) {
+    assert.ok(same5(render(cam, Object.assign({ shallows: false }, base)).svg, render(cam, base).svg), cam + ' ' + JSON.stringify(base) + ': off is nothing');
+    if (cam !== 'bank') assert.ok(same5(render(cam, Object.assign({ shallows: true }, base)).svg, render(cam, base).svg), cam + ': the shallows are the bank\'s');
+  }
+  assert.ok(!same5(render('bank', { shallows: true }).svg, render('bank').svg), 'on the bank it draws');
+});
+
+test('bridge, chapter 9: `shallows: true`: the water at the bank\'s edge bright and clear over a sandy bottom you can see, sparkles and rings, a strip of soft pale sand along it; never dark; the river beyond as it is', () => {
+  const B = art.bridgeBankInfo(), lum9 = (h) => { const v = parseInt(h.slice(1), 16); return 0.3 * (v >> 16) + 0.59 * ((v >> 8) & 255) + 0.11 * (v & 255); };
+  for (const fx of [['day'], ['sunset']]) {
+    const r = render('bank', { shallows: true, drag: false }, [], fx), svg = r.svg;
+    checkRender(r, [], 'bank shallows ' + fx);
+    const sh = groupNamed(svg, 'shallows'), sand = groupNamed(svg, 'sand');
+    assert.ok(sh && sand, 'the shallows and the sand');
+    const stopsOf9 = (g) => [...new Set((g.match(/url\(#[^)]+\)/g) || []).map((u) => u.slice(5, -1)))].flatMap((id) => {
+      const m = new RegExp('<linearGradient id="' + id + '"[^>]*>(.*?)</linearGradient>').exec(svg);
+      return m ? [...m[1].matchAll(/stop-color="(#[0-9a-fA-F]{6})"(?: stop-opacity="([\d.]+)")?/g)].map((q) => ({ c: q[1], op: q[2] == null ? 1 : +q[2] })) : [];
+    });
+    const fills = (g) => [...g.matchAll(/ (?:fill|stroke)="(#[0-9a-fA-F]{6})"(?:[^>]* opacity="([\d.]+)")?/g)].map((q) => ({ c: q[1], op: q[2] == null ? 1 : +q[2] }));
+    const water = stopsOf9(sh).concat(fills(sh)).filter((p) => p.op >= 0.5);
+    assert.ok(water.length > 4 && water.every((p) => lum9(p.c) >= 170), 'bright and clear: ' + water.filter((p) => lum9(p.c) < 170).map((p) => p.c).join(' '));
+    assert.ok(/pcs-glint|pcs-twk/.test(sh), 'sparkles');
+    assert.ok(/a[\d.]+ [\d.]+ 0 1 0/.test(sh), 'small rings');
+    const sandC = stopsOf9(sand).filter((p) => p.op >= 0.5);
+    assert.ok(sandC.length >= 3 && sandC.every((p) => lum9(p.c) >= 195), 'soft pale sand: ' + sandC.map((p) => p.c).join(' '));
+    // the river beyond: the brown, swirly water drawn as before, under it
+    assert.ok(svg.indexOf('data-art="shallows"') > svg.indexOf('pcs-drift" style="animation-duration:30s'), 'over the river');
+  }
+  // where it lies: at the bridge's foot (in the edge of its shadow), along the water's edge, the reeds standing again past it
+  assert.ok(B.sand.x0 < 600 && B.sand.x0 > 480, 'from the bridge\'s foot: ' + B.sand.x0);
+  for (let x = B.sand.x0 + 40; x < B.sand.x1 - 40; x += 40) {
+    const s = B.sandAt(x), w = B.shoalAt(x);
+    assert.ok(s[1] - s[0] > 8 && w[1] - w[0] > 15 && Math.abs(s[0] - w[1]) < 0.5, 'sand below the edge, the shallows above it, at ' + x);
+  }
+  // the reeds part along the sand and stand past it (screening it from the river path); off, every reed as before
+  const reedsAt = (svg) => (svg.match(/data-art="sand"/) ? 1 : 0);
+  assert.equal(reedsAt(render('bank').svg), 0, 'no sand without the option');
+});
+
+test('bridge, chapter 9: the new spots on the bank: run and run-2 on the sand, skim at the water\'s edge in the air, air above run, paddle in the shallows; the friends watching side by side at the left', () => {
+  const A = art.sceneInfo('bridge').anchors.main, B = art.bridgeBankInfo();
+  const onSand = (a) => { const s = B.sandAt(a.x); return a.y >= s[0] - 1 && a.y <= s[1] + 1; };
+  assert.ok(onSand(A.run) && onSand(A['run-2']), 'run and run-2 on the sand');
+  assert.ok(A.run.x > 800 && A.run.x < 1200, 'run mid-right');
+  assert.ok(A['run-2'].x < A.run.x - 180 && A['run-2'].face === 'right', 'run-2 on its left, facing her');
+  assert.ok(A.skim.x > A.run.x && A.skim.x < A.paddle.x, 'skim between run and paddle');
+  assert.ok(A.skim.elev === true && A.skim.air === true, 'skim: { elev: true, air: true }');
+  assert.ok(A.skim.y < B.edgeAt(A.skim.x) && B.edgeAt(A.skim.x) - A.skim.y < 20, 'skim at the water\'s edge, her paws just clear of the sand');
+  assert.ok(A.air.elev === true && A.air.air === true, 'air: { elev: true, air: true }');
+  assert.ok(A.air.x === A.run.x && A.air.h === A.run.h, 'air above run, at its depth');
+  assert.ok(A.run.y - A.air.y > A.run.h * 0.25 && A.run.y - A.air.y < A.run.h * 0.5, 'a little more than her leg\'s length off the sand: ' + (A.run.y - A.air.y));
+  assert.ok(A.paddle.air === true && !A.paddle.elev, 'paddle: { air: true }');
+  const w = B.shoalAt(A.paddle.x);
+  assert.ok(A.paddle.y > w[0] && A.paddle.y < w[1], 'paddle in the bright shallows at the sand\'s edge');
+  for (const k of ['run', 'run-2', 'skim', 'air', 'paddle']) assert.ok(A[k].x > B.sand.x0 && A[k].x < B.sand.x1, k + ' by the sand');
+  const W = ['watch-1', 'watch-2', 'watch-3', 'watch-4'].map((k) => A[k]);
+  W.forEach((a, i) => {
+    assert.ok(a.face === 'right' && !a.elev && !a.air && a.x < A['run-2'].x - 100, 'watch-' + (i + 1) + ': on the bank at the left, facing right');
+    if (i) assert.ok(a.x > W[i - 1].x + 100 && Math.abs(a.y - W[i - 1].y) < 20, 'side by side');
+  });
+  // the depth: each the height a spot of its own would have there (h about 0.8 (y - 580), as the bank's)
+  for (const k of ['run', 'run-2', 'paddle', 'watch-1', 'watch-4']) assert.ok(Math.abs(A[k].h - 0.8 * (A[k].y - 580)) < 20, k + ': ' + A[k].h);
+});
+
+test('bridge, chapter 9: the friends at watch-1 … watch-4 and a cat at run-2 all in shot, faces apart; Sprinkle at run, skim, air and paddle in shot', { skip: !art.character && 'no cats.js' }, () => {
+  const cast = [{ who: 'tallyheart', at: 'watch-1' }, { who: 'riffle', at: 'watch-2', pose: 'stand' }, { who: 'player', at: 'watch-3' }, { who: 'glintstar', at: 'watch-4' }, { who: 'clancat', variant: 2, at: 'run-2' }];
+  const r = render('bank', { shallows: true, drag: false }, cast);
+  checkRender(r, cast, 'the friends');
+  r.heads.forEach((h, i) => { assert.ok(h && h.x > 2 && h.x < 98, cast[i].at + ' in shot'); r.heads.slice(0, i).forEach((q, j) => assert.ok(Math.hypot((h.x - q.x) * 16, (h.y - q.y) * 10) > (h.r + q.r) * 16 * 0.9, cast[i].at + ' and ' + cast[j].at + ': faces apart')); });
+  for (const [at, pose] of [['run', 'hop'], ['run', 'flap'], ['skim', 'glide'], ['air', 'fly'], ['paddle', 'splash']]) {
+    const c = [{ who: 'sprinkle', at, pose, mood: 'happy', facing: 'left' }, { who: 'player', at: 'run-2' }];
+    const rr = render('bank', { shallows: true, drag: false }, c);
+    checkRender(rr, c, 'Sprinkle ' + pose + ' at ' + at);
+    assert.ok(rr.heads[0] && rr.heads[0].y > 2 && rr.heads[1], 'Sprinkle (' + pose + ') at ' + at + ' and our cat in shot');
+  }
+});
+
+// the set's shadows on the sand, and scenes.js's under a cast member (an ellipse of the palette's shade, opacity 0.28)
+const sandShadowOf = (svg, name) => { const m = new RegExp('<g data-art="' + name + '-shadow"><ellipse cx="([-\\d.]+)" cy="([-\\d.]+)" rx="([-\\d.]+)" ry="([-\\d.]+)" fill="(#[0-9a-fA-F]{6})" opacity="([\\d.]+)"').exec(svg); return m ? { cx: +m[1], cy: +m[2], rx: +m[3], ry: +m[4], op: +m[6] } : null; };
+test('bridge, chapter 9: the set\'s soft shadow on the sand under whoever is at `air`, a fainter one under `skim`, each only when someone is there; nothing dark in the water at `paddle`', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('bridge').anchors.main, B = art.bridgeBankInfo();
+  for (const shallows of [true, false]) {
+    const o = { shallows, drag: false };
+    assert.ok(!/-shadow"/.test(render('bank', o, [{ who: 'sprinkle', at: 'run', pose: 'hop' }, { who: 'player', at: 'run-2' }]).svg), 'nobody in the air: no shadow of the set\'s');
+    for (const pose of ['fly', 'glide', 'sit']) {
+      const air = render('bank', o, [{ who: 'sprinkle', at: 'air', pose, facing: 'left' }]).svg, sa = sandShadowOf(air, 'air');
+      assert.ok(sa && !sandShadowOf(air, 'skim'), 'air (' + pose + '): one, on the sand');
+      assert.equal(sa.cy, B.shadowY.air, 'on the sand below her, where run stands');
+      const bb = boxesAt({ who: 'sprinkle', pose, facing: 'left' }, A.air).body;
+      assert.ok(Math.abs(sa.cx - (bb[0] + bb[2]) / 2) < 1 && sa.rx > (bb[2] - bb[0]) * 0.25, 'under her body as drawn');
+      assert.ok(svg9Before(air, 'data-art="air-shadow"', '<g transform="translate(' + A.air.x + ' ' + A.air.y + ')'), 'under her');
+      const skim = render('bank', o, [{ who: 'sprinkle', at: 'skim', pose: pose === 'fly' ? 'glide' : pose, facing: 'left' }]).svg, ss = sandShadowOf(skim, 'skim');
+      assert.ok(ss && !sandShadowOf(skim, 'air'), 'skim: one');
+      assert.ok(ss.op < sa.op, 'fainter than under air');
+      assert.ok(ss.cy > A.skim.y && ss.cy - A.skim.y < 20, 'on the sand just under her');
+    }
+    // a cat in the air gets the set's shadow too (scenes.js lays none at an `air` spot)
+    assert.ok(sandShadowOf(render('bank', o, [{ who: 'player', at: 'air', pose: 'stretch' }]).svg, 'air'), 'anyone at air');
+  }
+  // paddle: the bright water over her legs, nothing dark in it, and only when someone is there
+  assert.ok(!/data-art="paddle"/.test(render('bank', { shallows: true }).svg), 'nobody: no water laid over anyone');
+  const lum9 = (h) => { const v = parseInt(h.slice(1), 16); return 0.3 * (v >> 16) + 0.59 * ((v >> 8) & 255) + 0.11 * (v & 255); };
+  for (const [who, pose] of [['sprinkle', 'splash'], ['sprinkle', 'sit'], ['player', 'sit'], ['riffle', 'stand']]) {
+    const svg = render('bank', { shallows: true, drag: false }, [{ who, at: 'paddle', pose, facing: 'left' }]).svg, p = groupNamed(svg, 'paddle');
+    assert.ok(p, who + ' ' + pose + ': the water over her');
+    const cols = [...p.matchAll(/ (?:fill|stroke)="(#[0-9a-fA-F]{6})"/g)].map((m) => m[1]);
+    assert.ok(cols.every((c) => lum9(c) >= 170), who + ' ' + pose + ': nothing dark in it: ' + cols.filter((c) => lum9(c) < 170).join(' '));
+    assert.ok(svg9Before(svg, '<g transform="translate(' + A.paddle.x + ' ' + A.paddle.y + ')', 'data-art="paddle"'), 'drawn over her');
+    const bb = boxesAt({ who, pose, facing: 'left' }, A.paddle).body, top = +(/M[-\d.]+ [-\d.]+Q[-\d.]+ [-\d.]+ [-\d.]+ ([-\d.]+)/.exec(p) || [])[1];
+    assert.ok(top < A.paddle.y - (bb[3] - bb[1]) * 0.15 && top > bb[1], who + ' ' + pose + ': over her legs (her chest, splashing), never her head: ' + top);
+  }
+});
+function svg9Before(svg, a, b) { const i = svg.indexOf(a), j = svg.indexOf(b); return i >= 0 && j >= 0 && i < j; }
+
+// Sprinkle's own body shadow (scenes.js) at the spots in the air or the water: the nest owner's NO_SHADOW.sprinkle
+// ({ glide, fly, splash }) stops it; the set lays the sand's own. (It waits on scenes.js: until then it fails, and says so.)
+test('bridge, chapter 9: no shadow of scenes.js\'s under Sprinkle gliding at skim, flying at air or splashing at paddle (NO_SHADOW.sprinkle, the nest owner\'s); she keeps hers hopping at run', { skip: !(art.vocab.otherPoses.sprinkle || []).includes('fly') && 'Sprinkle\'s flying poses are not drawn yet' }, () => {
+  const shade = '#2A3A4C';   // the day palette's shade, the colour scenes.js lays a shadow in
+  // (scenes.js lays a cast member's shadow just before its drawing: an ellipse in the shade)
+  const castShadows = (svg, a) => {
+    const i = svg.indexOf('<g transform="translate(' + a.x + ' ' + a.y + ')');
+    return new RegExp('<ellipse [^>]*fill="' + shade + '" opacity="[\\d.]+"/>$', 'i').test(svg.slice(Math.max(0, i - 300), i)) ? 1 : 0;
+  };
+  const A = art.sceneInfo('bridge').anchors.main;
+  for (const [at, pose] of [['skim', 'glide'], ['air', 'fly'], ['paddle', 'splash']]) {
+    const svg = render('bank', { shallows: true, drag: false }, [{ who: 'sprinkle', at, pose, facing: 'left' }]).svg;
+    assert.equal(castShadows(svg, A[at]), 0, 'Sprinkle ' + pose + ' at ' + at + ': no body shadow from scenes.js (NO_SHADOW.sprinkle.' + pose + ')');
+  }
+  const hop = render('bank', { shallows: true, drag: false }, [{ who: 'sprinkle', at: 'run', pose: 'hop', facing: 'left' }]).svg;
+  assert.equal(castShadows(hop, A.run), 1, 'hopping at run she keeps hers, on the sand under her');
+});
+

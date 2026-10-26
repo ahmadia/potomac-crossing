@@ -8,7 +8,8 @@
  * Every set is drawn in a 1600 x 1000 world, and each camera is a 16:10 viewBox onto it
  * (docs/build.md, "Art vocabulary").  A few cameras look at a set from somewhere the wide
  * shot cannot (the balcony nineteen floors up, the inside of the den; chapter 6's wall's end and
- * the dream): those cameras have their own composition in the same 1600 x 1000 space, with their
+ * the dream; chapter 9's Thymeleaf's den on the camp, `herbs`, and the case laid out in the den,
+ * `case`): those cameras have their own composition in the same 1600 x 1000 space, with their
  * own anchor spots.
  *
  * Characters come from PC.art.character(who, opts) in app/art/cats.js.  If it is missing,
@@ -2126,7 +2127,8 @@
 
   // ------------------------------------------------------------------ DEN
 
-  function drawDen(S) { return S.comp === 'outside' ? drawDenOutside(S) : drawDenInside(S); }
+  // (chapter 9: `case`, the case laid out on the floor in front of her nest, a composition of its own: drawDenCase)
+  function drawDen(S) { return S.comp === 'outside' ? drawDenOutside(S) : S.comp === 'case' ? drawDenCase(S) : drawDenInside(S); }
 
   function roseCols(S) {
     return S.tod === 'storm' ? ['#8E5A6E', '#6A3E50', '#B98498'] : S.tod === 'night' ? ['#B46F8C', '#82506A', '#E0A4BC'] : ['#E07A98', '#B05070', '#F7B7C6'];
@@ -2297,10 +2299,12 @@
   // (chapter 8: the stash, the glass, the fox's brag and Hail's two shapes go under the moss too, on every path:
   // the proof she keeps for the Gathering, and a dragonet's. Eight to ten secrets: the corners stand in layers of
   // six, denBark. And room along the edge for chapters 9 and 10: BARK_MAX is 27, three courses of nine, a third
-  // course standing only past what a live save holds: more than BARK_THIRD.hidden along the edge with `hidden:
-  // true`, more than BARK_THIRD.open with it off, as chapter 4's bedtime frames have it)
+  // course past eighteen along the edge with `hidden: true` (a reread cat's 29-card file after chapter 8, and the
+  // fullest after chapter 9, 30: nineteen), past twenty-four with it off, as chapter 4's bedtime frames have it)
+  // (chapter 9: Mizzle's card, `mizzle-wing`, goes under the moss too: a dragonet's card, as Hail's. Up to eleven
+  // corners, the second layer chapter 8 built; no live save holds it, so every live file draws as it did)
   var BARK_SECRET = { 'sprinkle-scales': 1, 'cant-fly': 1, 'coil-diggers': 1, 'my-count': 1, 'prints-sprinkle': 1, tunnel: 1,
-    stash: 1, glass: 1, 'fox-brag': 1, 'hail-shapes': 1 }, BARK_MAX = 27;
+    stash: 1, glass: 1, 'fox-brag': 1, 'hail-shapes': 1, 'mizzle-wing': 1 }, BARK_MAX = 27;
   // the most pieces one row holds (chapter 4's fullest); how much higher the course behind it stands (denBark)
   var BARK_ROW = 9, BARK_LIFT = 15;
   // chapter 8: corners a layer (chapter 7's six), the most drawn (three layers); where a third course begins
@@ -2351,8 +2355,8 @@
     var T = (R.hid ? 86 - 8 * Math.min(1, Math.max(0, R.hid - 2)) : 112) * k, cGap = (R.hid > 3 ? 8 : R.hid > 2 ? (110 - (T / k + 9)) / (R.hid - 1) : 15) * k, nRow = R.row.length, step = nRow > 1 ? Math.min(15 * k, (T - cw) / (nRow - 1)) : 0, len = nRow ? cw + (nRow - 1) * step : 0, t0 = (T - len) / 2;
     function at(t) { return x + d * (118 * k - t); }
     var x0 = 1e9, x1 = -1e9, top = 1e9, i, total = nRow;
-    // Chapter 8: a third course, only past what a live save holds (BARK_THIRD: more than eighteen along the
-    // edge with `hidden: true`, more than twenty-four with it off): the row stands three deep, the oldest third
+    // Chapter 8: a third course past eighteen along the edge with `hidden: true` (BARK_THIRD; a reread cat's
+    // 29-card file after chapter 8, and the fullest after chapter 9, 30: nineteen), past twenty-four with it off: the row stands three deep, the oldest third
     // highest (two lifts up), the middle third one lift up, the newest third in front where the one row stood;
     // each course at most nine (BARK_MAX, 27), each half a step along from the one in front, staggered as roof
     // tiles are, so no course is ever closer set than chapter 6's fullest (a step of 5).
@@ -2458,6 +2462,136 @@
     s += path(sparkleD(cx - 1 * k, cy - 3.5 * k, 5.5 * k), '#FFFFFF', { 'class': 'pcs-twk' });
     var bx = [Math.min(x - 12 * k, cx - 9 * k, tipX - 6 * k), Math.min(tipY - 6 * k, cy - 10 * k), Math.max(x + 14 * k, cx + 9 * k, tipX + 6 * k), y + 14 * k];
     return { svg: g(s, { 'data-prop': 'nest-glass' }), box: bx };
+  }
+
+  // ------------------------------------------------------------------ chapter 9: the case laid out (den, `case`)
+
+  /* The case laid out (docs/chapters/09-featherlight.spec.md, section 4, "The den: the case laid out"): close and a
+   * little above, on the den floor in front of her nest at night, the moonlight coming in from the doorway at the
+   * right (out of frame). Her nest at the back with its moss rolled back, Riffle's stone in it (`stone`, any value).
+   * On the floor her bark, face up, in rows, the pieces of a row touching as her file lays them, found by picture in
+   * `bark` (her file, { picture, mark } each, as E.resolveScene fills 'auto'; left unfilled, CASE_SAMPLE):
+   *   the six rows she reads (CASE_ROWS), the moon, FLEW (sleet-den at its end when she holds it), the piles, the
+   *   scale, the prints and the tunnel, in two columns, three and three; and a seventh, her count and Mizzle's card
+   *   (each only if she holds it), laid out only with `read: 7`, under the sixth.
+   * Every other piece she holds lies face down in a stack by the nest's edge, unread (<g data-prop="case-stack"
+   * data-count="n">): before `read: 7` her count and Mizzle's card with them, at it not. Her glass in its leaf lies
+   * beside the scale's row with `glass: true` (<g data-prop="case-glass">). Each row is one group,
+   * <g data-row="1..7" data-cards="…" data-lit="true|false">, and in keep.
+   *   read: n   the first n of the six rows lit (the bark warm, as a lit card is on the page; the rest in the den's
+   *             dark), and while n < 6 the next row glows for the Tap: one <rect class="pc-next"> straight before
+   *             that row's group (the page's hop wraps the glow with its next sibling); 6: all six lit, nothing
+   *             glowing; 7: the seventh row laid out and lit too. Nothing else here carries pc-next or pc-tap. */
+  var CASE_ROWS = [['waffles-no-moon', 'fox-moon', 'heron-no-moon'], ['cant-fly', 'fox-flew', 'fox-brag', 'sleet-den'], ['tidy', 'reed-pile', 'stash'],
+    ['scale', 'glass'], ['prints-sprinkle'], ['coil-diggers', 'tunnel'], ['my-count', 'mizzle-wing']];
+  // (left unfilled, as in the gallery and tools/frames.mjs: the 21 a chapter-9 cat with her count and no dragonet holds)
+  var CASE_SAMPLE = [['four-a-night', 'eye'], ['tidy', 'eye'], ['scale', 'eye'], ['fox-flew', 'ear'], ['fox-moon', 'ear'], ['sprinkle-scales', 'eye'], ['cant-fly', 'eye'],
+    ['otter-fox', 'ear'], ['fur', 'eye'], ['heron-no-moon', 'ear'], ['heron-shapes', 'ear'], ['prints-marsh', 'eye'], ['reed-pile', 'ear'], ['coil-diggers', 'ear'],
+    ['waffles-no-moon', 'ear'], ['my-count', 'eye'], ['prints-sprinkle', 'eye'], ['tunnel', 'eye'], ['stash', 'eye'], ['glass', 'eye'], ['fox-brag', 'ear']];
+  var CASE = {
+    spots: [[205, 968, 330], [1352, 962, 330], [1450, 606, 340]],
+    top: 446, gap: 16, f: 0.84, w: [104, 108, 112, 116],
+    cols: [{ x: 636, rows: [0, 1, 2] }, { x: 1040, rows: [3, 4, 5, 6] }],
+    nest: { x: 560, y: 288, k: 2.3 }, stack: { x: 978, y: 404, w: 92 }, glass: { x: 1218, y: 548 }
+  };
+  function caseCards(S) {
+    var b = S.opts.bark;
+    if (Array.isArray(b)) return b.map(function (c) { return c && typeof c === 'object' ? { picture: String(c.picture), mark: c.mark } : c ? { picture: String(c) } : null; }).filter(Boolean);
+    return b ? CASE_SAMPLE.map(function (c) { return { picture: c[0], mark: c[1] }; }) : [];
+  }
+  // One row of pieces lying face up on the floor, touching, centred at cx with its top at y, each `w` wide and seen a
+  // little from above (squashed to f): -> { svg, box: [x0, y0, x1, y1] }
+  function caseRow(S, cards, cx, y, w, f) {
+    var step = w * 0.97, tw = cards.length ? w + (cards.length - 1) * step : w, x0 = cx - tw / 2, h = w * 1.2 * f, s = '';
+    if (cards.length) s += ell(cx + 4, y + h + 2, tw / 2 + 6, 9, S.pal.shade, { opacity: 0.32 });
+    cards.forEach(function (c, i) {
+      var b = barkPiece(c), k = w / b.w;
+      s += '<g transform="translate(' + n(x0 + i * step) + ' ' + n(y) + ') matrix(' + n4(k) + ' 0 0 ' + n4(k * f) + ' 0 0)" data-bark="card" data-picture="' + esc(c.picture) + '">' + b.svg + '</g>';
+    });
+    return { svg: s, box: [x0, y, x0 + tw, y + h] };
+  }
+  // The pieces she is not reading, face down one on another by the nest's edge: each the bark's brown outside, a
+  // little askew, the newest on top. (x, y) the foot of the stack, w a piece's width.
+  function caseStack(S, count, x, y, w) {
+    if (!count) return '';
+    var r = rng(seedOf('stack' + count)), k = w / 200, f = 0.42, s = ell(x + 6, y + 2, w * 0.66, 13, S.pal.shade, { opacity: 0.32 });
+    for (var i = 0; i < count; i++) {
+      var dx = (r() - 0.5) * 16, rot = (r() - 0.5) * 16, yy = y - i * 5;
+      s += '<g transform="translate(' + n(x + dx) + ' ' + n(yy) + ') rotate(' + n(rot) + ') matrix(' + n4(k) + ' 0 0 ' + n4(k * f) + ' 0 0) translate(-100 -240)" data-bark="back">' +
+        path(BARK_FACE, BARK.under, { transform: 'translate(2.6 9)' }) + path(BARK_FACE, i % 2 ? BARK.lip : mix(BARK.lip, BARK.lipLight, 0.35), { stroke: BARK.lipEdge, 'stroke-width': 7 }) +
+        (i === count - 1 ? stroke('M40 70h40M100 110h52M46 150h36M118 190h30', BARK.lipLight, 6) : '') + '</g>';
+    }
+    return g(s, { 'data-prop': 'case-stack', 'data-count': count, filter: castTint(S) || null });
+  }
+  // Her piece of glass on its leaf, lying open on the floor (glass: true), a glint on it.
+  function caseGlass(S, x, y) {
+    var p = S.pal, leaf = mix(p.leafMid || p.leaf, '#9FD27A', 0.3), edge = mix(leaf, '#000000', 0.3);
+    return g(ell(x + 4, y + 10, 60, 9, p.shade, { opacity: 0.3 }) + path(leafD(x - 56, y + 2, 118, -0.08, 30), leaf, { stroke: edge, 'stroke-width': 2 }) +
+      stroke('M' + n(x - 52) + ' ' + n(y + 2) + 'Q' + n(x) + ' ' + n(y - 4) + ' ' + n(x + 56) + ' ' + n(y - 7), mix(leaf, '#FFFFFF', 0.35), 1.6, { opacity: 0.8 }) +
+      path('M' + n(x - 22) + ' ' + n(y + 4) + 'L' + n(x - 6) + ' ' + n(y - 16) + 'L' + n(x + 20) + ' ' + n(y - 10) + 'L' + n(x + 14) + ' ' + n(y + 6) + 'Z', '#DDF3EE',
+        { opacity: 0.85, stroke: '#9FD8CF', 'stroke-width': 2, 'stroke-linejoin': 'round' }) +
+      stroke('M' + n(x - 12) + ' ' + n(y - 2) + 'l10 -10', '#FFFFFF', 2, { opacity: 0.8 }) + path(sparkleD(x - 4, y - 12, 9), '#FFFFFF', { 'class': 'pcs-twk' }), { 'data-prop': 'case-glass' });
+  }
+  function drawDenCase(S) {
+    var p = S.pal, o = S.opts, back = '', r = rng(951), i, storm = o.weather === 'storm', cloudy = o.weather === 'cloudy', day = !!p.day, rc = roseCols(S);
+    // (the doorway is out of frame: rain falls nowhere in this picture)
+    S.weatherClip = S.clip('casedoor', rect(1600, 0, 0, 0, '#fff'));
+    // the back of the den, across the top (we look down at the floor): a wall of leaves in the dark
+    var dark = storm ? ['#0B1316', '#14211B'] : day ? [mix(p.leaf, '#0E1A14', 0.55), mix(p.leafMid, '#0E1A14', 0.5)] : ['#0F1C24', '#1A2E27'];
+    back += rect(0, 0, 1600, 1000, S.lin('casewall', [[0, dark[0]], [1, dark[1]]]));
+    var wl = '', wl2 = '';
+    for (i = 0; i < 160; i++) { var ld = leafD(r() * 1600, r() * 330, 24 + r() * 18, r() * 6.28, 9); if (r() < 0.55) wl += ld; else wl2 += ld; }
+    back += path(wl, mix(p.leaf, '#000000', 0.15), { opacity: 0.9 }) + path(wl2, p.leafMid, { opacity: 0.4 });
+    for (i = 0; i < 6; i++) back += rose(120 + i * 260 + r() * 80, 40 + r() * 120, 14 + r() * 8, rc[0], rc[1], rc[2]);
+    // the floor: soft moss, from the wall's foot to the front
+    back += path('M0 322Q420 296 800 304Q1200 312 1600 292V1000H0Z', S.lin('casefloor', [[0, mix(p.moss, '#000000', 0.32)], [1, mix(p.moss, '#000000', 0.5)]]));
+    back += path(blob(260, 900, 260, 34, 12, rng(952), 0.25, 0.3) + blob(860, 980, 320, 30, 12, rng(953), 0.25, 0.3) + blob(1300, 760, 240, 30, 12, rng(954), 0.25, 0.3), p.moss, { opacity: 0.4 });
+    // moonlight from the doorway, out of frame at the right, pooling across the floor (by day, the sun)
+    var lite = day ? '#FFF1C4' : storm || cloudy ? '#7F92B4' : '#C9D8FF';
+    back += ell(1640, 640, 780, 380, S.radB('casepool', [[0, lite, day ? 0.42 : storm ? 0.12 : cloudy ? 0.14 : 0.26], [1, lite, 0]]));
+    back += g(poly([[1600, 250], [1600, 520], [980, 1000], [640, 1000]], S.linU([[0, lite, day ? 0.24 : 0.14], [1, lite, 0]], 1600, 380, 800, 1000)), { style: 'mix-blend-mode:screen' });
+    // her nest at the back, the moss rolled back off its floor and Riffle's stone on it
+    var N = CASE.nest, nk = N.k, nn = nest(S, N.x, N.y, nk, true), rx = 140 * nk, ry = 40 * nk, moss = mix(p.moss, '#FFFFFF', 0.06);
+    var floorN = ell(N.x, N.y + 3 * nk, rx * 0.72, ry * 0.56, mix(p.wood, p.moss, 0.45));
+    var straw = '';
+    for (i = 0; i < 18; i++) { var sx = N.x + (r() - 0.5) * rx * 1.2, sy = N.y + (r() - 0.3) * ry * 0.7; straw += 'M' + n(sx) + ' ' + n(sy) + 'l' + n((r() - 0.5) * 50) + ' ' + n((r() - 0.5) * 8); }
+    // the moss, rolled up against the back of the nest: a fat roll with its two curled ends
+    var ex = rx * 0.6, ey = N.y + ry * 0.02, roll = 'M' + n(N.x - ex) + ' ' + n(ey) + 'Q' + n(N.x) + ' ' + n(N.y - ry * 0.5) + ' ' + n(N.x + ex) + ' ' + n(ey), rollLt = mix(moss, '#FFFFFF', 0.12);
+    var mossRoll = stroke(roll, mix(p.moss, '#000000', 0.35), 58, { transform: 'translate(0 7)' }) + stroke(roll, rollLt, 52) + stroke(roll, mix(rollLt, '#FFFFFF', 0.2), 14, { opacity: 0.6, transform: 'translate(0 -14)' }) +
+      path(dot(N.x - ex, ey, 27) + dot(N.x + ex, ey, 27), mix(rollLt, '#FFFFFF', 0.06), { stroke: mix(p.moss, '#000000', 0.3), 'stroke-width': 2.5 }) +
+      stroke('M' + n(N.x - ex - 12) + ' ' + n(ey + 2) + 'a12 12 0 1 0 16 -10a6 6 0 1 0 -8 6M' + n(N.x + ex - 4) + ' ' + n(ey + 2) + 'a12 12 0 1 1 16 -10a6 6 0 1 1 -8 6', mix(p.moss, '#000000', 0.32), 3);
+    back += g(nn.back + floorN + stroke(straw, mix(p.woodLight, p.moss, 0.3), 3, { opacity: 0.6 }) + mossRoll + nn.front, { 'data-prop': 'case-nest' });
+    if (o.stone) back += luckyStone(S, N.x + 30, N.y + 10 * nk, 12 * nk);
+    // her bark: the rows she reads, face up; the rest face down by the nest
+    var cards = caseCards(S), read = clamp(Math.round(+o.read || 0), 0, 7), byPic = {}, laid = {}, rows = '';
+    cards.forEach(function (c) { if (!byPic[c.picture]) byPic[c.picture] = c; });
+    var tint = castTint(S), lit = S.filter('caselit', '<feColorMatrix type="matrix" values="1.04 0 0 0 0.05  0 1 0 0 0.03  0 0 0.9 0 0  0 0 0 1 0"/>');
+    CASE.cols.forEach(function (col) {
+      var y = CASE.top;
+      col.rows.forEach(function (k, j) {
+        var w = CASE.w[j], h = w * 1.2 * CASE.f;
+        if (k === 6 && read < 7) return;
+        var row = CASE_ROWS[k].filter(function (pic) { return byPic[pic]; }).map(function (pic) { laid[pic] = true; return byPic[pic]; });
+        var on = k < 6 ? k < read : read >= 7, R = caseRow(S, row, col.x, y, w, CASE.f), b = R.box;
+        if (on) rows += ell((b[0] + b[2]) / 2, (b[1] + b[3]) / 2, (b[2] - b[0]) / 2 + 34, (b[3] - b[1]) / 2 + 24, S.radB('caselitglow', [[0, '#FFE6A0', 0.42], [1, '#FFE6A0', 0]]));
+        if (k === read && read < 6) rows += rect(b[0] - 12, b[1] - 12, b[2] - b[0] + 24, b[3] - b[1] + 26, '#fff3c2', { 'class': 'pc-next', rx: 22, opacity: '.5', stroke: '#f2b23a', 'stroke-width': 3.5, 'stroke-dasharray': '12 9' });
+        rows += '<g data-row="' + (k + 1) + '" data-cards="' + esc(row.map(function (c) { return c.picture; }).join(' ')) + '" data-lit="' + on + '"' + ((on ? lit : tint) ? ' filter="' + (on ? lit : tint) + '"' : '') + '>' + R.svg + '</g>';
+        (S.keep = S.keep || []).push({ x: b[0] - 6, y: b[1] - 6, w: b[2] - b[0] + 12, h: b[3] - b[1] + 14 });
+        y += h + CASE.gap;
+      });
+    });
+    // (a picture laid out once: every other piece of hers, a second of the same picture too, is in the stack)
+    var rest = cards.filter(function (c) { return !(laid[c.picture] && byPic[c.picture] === c); }).length;
+    back += caseStack(S, rest, CASE.stack.x, CASE.stack.y, CASE.stack.w);
+    if (o.glass) back += caseGlass(S, CASE.glass.x, CASE.glass.y);
+    back += g(rows, { 'data-prop': 'case-rows', 'data-read': read });
+    // fireflies on a clear night, high by the wall
+    if (!storm && !day && !cloudy) {
+      var ff = '';
+      for (i = 0; i < 4; i++) ff += g(circ(180 + r() * 1100, 120 + r() * 160, 9, '#FFF2A0', { opacity: 0.25 }) + circ(180 + r() * 1100, 120 + r() * 160, 3.5, '#FFF7C0'), { 'class': 'pcs-float', style: 'animation-delay:-' + (i * 1.3).toFixed(1) + 's' });
+      back += ff;
+    }
+    return { back: back, over: '', front: '' };
   }
 
   function drawDenInside(S) {
@@ -3038,7 +3172,9 @@
       spots: { 'end-1': [660, 928, 262], 'end-2': [430, 900, 240], 'end-3': [225, 876, 222], 'reed-1': [960, 928, 262], 'reed-2': [1235, 900, 240], 'reed-3': [1450, 876, 222] },
       behind: false,
       rustle: [[1030, 560, 1], [1250, 515, 1.1], [1450, 585, 0.95]],
-      front: [976, 1010, 24, 2.2]
+      front: [976, 1010, 24, 2.2],
+      // chapter 9: the root, from x0 to x1 along the foot of the stones at y (w its thickness), the pawprint on the line's stone
+      root: { x0: 716, x1: 916, y: 916, w: 17, print: [813, 883, 1] }
     },
     meet: {
       k: 1.5, sun: [300, 100], sunR: 380, horizon: 552, riverTo: 636, seed: 1631,
@@ -3050,7 +3186,8 @@
       spots: { 'end-1': [600, 975, 330], 'end-2': [330, 940, 295], 'end-3': [80, 900, 260], 'reed-1': [1000, 975, 330], 'reed-2': [1300, 940, 295], 'reed-3': [1548, 900, 260] },
       behind: true,
       rustle: [[1170, 300, 1.45], [1460, 230, 1.5]],
-      front: [982, 1012, 20, 3.2]
+      front: [982, 1012, 20, 3.2],
+      root: { x0: 640, x1: 930, y: 952, w: 25, print: [804, 944, 1.45] }
     }
   };
   function titleEndAnchors(comp) {
@@ -3087,6 +3224,36 @@
     s += path(edges, 'none', { stroke: mortar, 'stroke-width': n(2.6 * k), opacity: 0.55 });
     s += stroke(tops, p.rim, 2.2 * k, { opacity: 0.6 }) + path(moss, p.moss, { opacity: 0.9 });
     return s;
+  }
+  // Chapter 9 (`root: true`, on `end` and `meet`): what Sloshbank left at the wall's end. A long, pale reed root lying
+  // along the dry stones at the line where the wall stops (on the dry ground, never in the reeds or the river), its
+  // nodes and root hairs, lit along its top by the light; and one wet pawprint, dark on the line's stone, a glint of
+  // water in it. With `tap: 'root'`, the Tap's target: an unpainted <rect class="pc-tap" data-tap="root"> on the root's
+  // own box, first in keep (as the pile's and the marsh's). The root and the print are in keep.
+  function titleRoot(S, L) {
+    var p = S.pal, R = L.root, k = L.k, y = R.y, w = R.w, x0 = R.x0, x1 = R.x1, len = x1 - x0, s = '';
+    var body = taper([x0, y + w * 0.1], [x0 + len * 0.3, y - w * 0.7], [x0 + len * 0.66, y + w * 0.6], [x1, y - w * 0.2], w, w * 0.34, 18);
+    var pale = mix('#F4ECD8', p.sand, 0.15), line = mix('#7E6A48', p.shade, 0.25);
+    s += ell((x0 + x1) / 2, y + w * 0.8, len * 0.53, w * 0.5, p.shade, { opacity: 0.4 }) + path(body, pale, { stroke: line, 'stroke-width': n(2.6 * k) });
+    // its nodes (a ring every so often) and the hairs off it, and the light along its top
+    var nodes = '', hairs = '', top = '';
+    for (var t = 0.16; t < 0.95; t += 0.2) { var q = bez3([x0, y], [x0 + len * 0.3, y - w * 0.8], [x0 + len * 0.66, y + w * 0.6], [x1, y - w * 0.2], t), ww = lerp(w, w * 0.34, t) * 0.5; nodes += 'M' + n(q[0]) + ' ' + n(q[1] - ww) + 'v' + n(ww * 2); }
+    for (t = 0.08; t < 0.98; t += 0.09) { var h = bez3([x0, y], [x0 + len * 0.3, y - w * 0.8], [x0 + len * 0.66, y + w * 0.6], [x1, y - w * 0.2], t), hw = lerp(w, w * 0.34, t) * 0.5, sd = Math.round(t * 100) % 3 ? 1 : -1; hairs += 'M' + n(h[0]) + ' ' + n(h[1] + sd * hw) + 'l' + n((sd > 0 ? -3 : 4) * k) + ' ' + n(sd * 7 * k); }
+    top = 'M' + n(x0 + 8 * k) + ' ' + n(y - w * 0.25) + 'C' + n(x0 + len * 0.3) + ' ' + n(y - w * 1.05) + ' ' + n(x0 + len * 0.62) + ' ' + n(y + w * 0.1) + ' ' + n(x1 - 12 * k) + ' ' + n(y - w * 0.42);
+    s += stroke(nodes, line, 1.6 * k) + stroke(hairs, mix(pale, line, 0.5), 1.1 * k) + stroke(top, p.rim, 2.2 * k, { opacity: p.day ? 0.5 : 0.75 });
+    // the wet pawprint on the line's stone: a pad and four toes, dark, a glint in the pad
+    var px = R.print[0], py = R.print[1], pk = R.print[2] * 1, wet = mix(p.stoneDark, '#14100C', 0.55);
+    var print = ell(px, py + 2 * pk, 7.4 * pk, 5 * pk, wet) + path(dot(px - 8.6 * pk, py - 4.6 * pk, 2.6 * pk) + dot(px - 3.2 * pk, py - 7.6 * pk, 2.7 * pk) + dot(px + 3.2 * pk, py - 7.6 * pk, 2.7 * pk) + dot(px + 8.6 * pk, py - 4.6 * pk, 2.6 * pk), wet) +
+      ell(px - 2 * pk, py + 0.6 * pk, 2.6 * pk, 1.2 * pk, '#FFFFFF', { opacity: 0.55 });
+    s += g(print, { 'data-prop': 'wet-print', opacity: 0.9 });
+    var bx = [x0 - 6 * k, y - w * 1.1 - 6 * k, x1 + 6 * k, y + w * 1.2 + 6 * k];
+    var out = g(s, { 'data-prop': 'reed-root' });
+    (S.keep = S.keep || []).push({ x: Math.min(bx[0], px - 14 * pk), y: Math.min(bx[1], py - 14 * pk), w: Math.max(bx[2], px + 14 * pk) - Math.min(bx[0], px - 14 * pk), h: bx[3] - Math.min(bx[1], py - 14 * pk) });
+    if (S.opts.tap === 'root') {
+      S.keep.unshift({ x: bx[0] - 4, y: bx[1] - 4, w: bx[2] - bx[0] + 8, h: bx[3] - bx[1] + 8 });
+      out += rect(bx[0], bx[1], bx[2] - bx[0], bx[3] - bx[1], 'none', { 'class': 'pc-tap', 'data-tap': 'root', 'pointer-events': 'none' });
+    }
+    return out;
   }
   function drawTitleEnd(S, L) {
     var p = S.pal, o = S.opts, back = '', front = '', k = L.k, r = rng(L.seed), i, R = L.reeds;
@@ -3167,6 +3334,8 @@
       });
       back += g(stroke(lines, p.ink, 7 * k, { opacity: 0.3 }) + stroke(lines, '#FFFDF6', 3.6 * k), { 'data-prop': 'rustle', 'class': 'pcs-pulse' });
     }
+    // chapter 9: the reed root on the dry stones at the line, and one wet pawprint (`root`), and its Tap's box
+    if (o.root) back += titleRoot(S, L);
     // in front of everyone: a fringe of grass along the panel's foot, below every face
     var F = L.front;
     front += g(tufts(S, -20, 1620, F[0], F[1], F[2], L.seed + 6, p.grassNear, p.grassLight, F[3]), { filter: S.shadow('s') });
@@ -3187,6 +3356,8 @@
   function drawCamp(S) {
     if (S.comp === 'fountain') return drawCampFountain(S);
     if (S.comp === 'entrance') return drawCampEntrance(S);
+    // chapter 9: Thymeleaf's den, a nook of the bramble dens, a composition of its own (drawCampHerbs)
+    if (S.comp === 'herbs') return drawCampHerbs(S);
     return drawCampWide(S);
   }
 
@@ -3276,6 +3447,195 @@
     front += g(fernClump(S, -80, 1060, 380, { seed: 172, count: 6, spread: 1.3, lean: 0.6 }) + fernClump(S, 1680, 1080, 360, { seed: 173, count: 6, spread: 1.3, lean: -0.6 }) +
       fernClump(S, 1680, -80, 300, { seed: 174, count: 5, spread: 1.2, lean: -2.3 }) + bramble(S, -40, 520, 120, -120, { seed: 175, w: 14, len: 220, canes: 5 }), { filter: S.shadow('m') });
     return { back: back, over: '', front: front };
+  }
+
+  // ------------------------------------------------------------------ chapter 9: Thymeleaf's den (camp, `herbs`)
+
+  /* Thymeleaf's den (docs/chapters/09-featherlight.spec.md, section 4): a nook of the bramble dens at the camp's
+   * edge, seen from just inside its mouth, a composition of its own. A curtain of drying leaves across the top
+   * (bunches of leaves and stems hung upside down from a bramble cane), more bunches along the walls, a ledge of stones
+   * along the back with leaves laid out to dry, a flat mixing stone on the floor between Thymeleaf and his visitors,
+   * and in the top right corner a small web, where the spider lives; morning light through the leaves, green and warm
+   * (any of the camp's lights draws it: its own colours from the palette, the light only where there is sun).
+   *   remedy: 'four'  on the mixing stone the four things in a row: a long pale root, a roll of soft silver moss, a
+   *                   bunch of mint and a curled leaf holding dew drops (<g data-prop="remedy" data-remedy="four">)
+   *           'mixed' one curled leaf of pale green remedy, the stone smeared green
+   *           'none'  (or left out) the bare stone
+   * The web, and the stone when something lies on it, are in keep. The spider at `web` is the cast's (TINY: about the
+   * size of a cat's forepaw there, no shadow). */
+  var HERBS = {
+    spots: [[400, 905, 330], [1010, 915, 320], [1322, 898, 330]],
+    web: { x: 1436, y: 286, r: 98, h: 250, foot: 18 },
+    stone: { x: 712, y: 942, rx: 205, ry: 40, k: 1.22 },
+    cane: [[-30, 70], [800, 136], [1630, 62]],
+    ledge: { x0: 36, x1: 820, y: 712 }
+  };
+  function herbBunch(S, x, y, len, cols, r, lean) {
+    // a bunch of leaves and stems hung upside down: the twine round the stalks, then the leaves fanning down
+    var leaves = ['', '', ''], stems = '', n0 = 5 + Math.floor(r() * 3);
+    for (var i = 0; i < n0; i++) {
+      var a = Math.PI / 2 + (lean || 0) + (i / (n0 - 1) - 0.5) * 0.9 + (r() - 0.5) * 0.15, L = len * (0.7 + r() * 0.35);
+      var sx = x + Math.cos(a) * 10, sy = y + 10 + Math.sin(a) * 6;
+      stems += 'M' + n(x) + ' ' + n(y + 6) + 'L' + n(sx + Math.cos(a) * L * 0.85) + ' ' + n(sy + Math.sin(a) * L * 0.85);
+      leaves[i % 3] += leafD(sx, sy, L, a, L * (0.2 + r() * 0.06));
+      if (r() < 0.6) leaves[(i + 1) % 3] += leafD(sx + Math.cos(a) * L * 0.45, sy + Math.sin(a) * L * 0.45, L * 0.45, a + (r() < 0.5 ? -0.7 : 0.7), L * 0.11);
+    }
+    return stroke(stems, cols[3], 2.4, { opacity: 0.8 }) + path(leaves[0], cols[0]) + path(leaves[1], cols[1]) + path(leaves[2], cols[2]) +
+      // the twine, wound round the stalks, and its loop over the cane
+      stroke('M' + n(x - 7) + ' ' + n(y + 4) + 'h14M' + n(x - 6) + ' ' + n(y + 9) + 'h12', cols[4], 3.4) + stroke('M' + n(x) + ' ' + n(y + 2) + 'v-10', cols[4], 2.2);
+  }
+  function drawCampHerbs(S) {
+    var p = S.pal, back = '', front = '', r = rng(901), i, sun = !!p.sun, day = !!p.day, o = S.opts, H = HERBS;
+    var deep = mix(p.leaf, '#0B140E', day ? 0.38 : 0.55), deep2 = mix(p.leafMid, '#0B140E', day ? 0.3 : 0.5);
+    // the bramble nook all round: deep green, brighter at the back where the morning comes in through the leaves
+    back += rect(0, 0, 1600, 1000, S.lin('herbwall', [[0, deep], [0.75, deep2], [1, deep2]]));
+    if (sun) back += ell(800, 430, 700, 330, S.radB('herbglow', [[0, p.sun, 0.36], [0.55, p.glow || p.sun, 0.14], [1, p.glow || p.sun, 0]]));
+    var wl = ['', '', ''];
+    for (i = 0; i < 380; i++) {
+      var lx = r() * 1600, ly = r() * 780, q = r();
+      wl[q < 0.45 ? 0 : q < 0.8 ? 1 : 2] += leafD(lx, ly, 20 + r() * 18, r() * 6.28, 8);
+    }
+    back += path(wl[0], mix(p.leaf, '#000000', 0.12), { opacity: 0.9 }) + path(wl[1], p.leafMid, { opacity: 0.55 }) + path(wl[2], p.leafLight, { opacity: sun ? 0.42 : 0.18 });
+    // light through the leaves: two soft shafts from the upper left
+    if (sun) back += g(poly([[340, 0], [520, 0], [900, 1000], [560, 1000]], S.linU([[0, p.sun, 0.22], [1, p.sun, 0.02]], 0, 0, 0, 1000)) +
+      poly([[760, 0], [860, 0], [1180, 1000], [980, 1000]], S.linU([[0, p.sun, 0.16], [1, p.sun, 0]], 0, 0, 0, 1000)), { style: 'mix-blend-mode:screen' });
+    // the canes that arch over the nook, thorny, rising out of the floor at both sides
+    var stemCol = mix(p.woodDark, p.leaf, 0.3), canes = '', thorns = '';
+    [[[-20, 980], [60, 520], [260, 120], [700, 40]], [[1620, 990], [1540, 560], [1380, 140], [920, 30]], [[150, 1010], [120, 760], [200, 420], [420, 210]]].forEach(function (c, ci) {
+      var td = taper(c[0], c[1], c[2], c[3], ci === 2 ? 30 : 46, 14, 18);
+      canes += path(td, p.rim, { opacity: sun ? 0.35 : 0.15, transform: 'translate(-5 0)' }) + path(td, stemCol);
+      for (var t = 0.12; t < 0.95; t += 0.09) {
+        var qq = bez3(c[0], c[1], c[2], c[3], t), sd = Math.round(t * 100) % 2 ? 1 : -1, wd = lerp(ci === 2 ? 15 : 23, 7, t);
+        thorns += 'M' + n(qq[0] + sd * wd) + ' ' + n(qq[1] - 7) + 'L' + n(qq[0] + sd * wd * 1.9) + ' ' + n(qq[1] - 2) + 'L' + n(qq[0] + sd * wd) + ' ' + n(qq[1] + 6) + 'Z';
+      }
+    });
+    back += g(canes + path(thorns, stemCol), { filter: S.shadow('m') });
+    // the floor: earth and moss, a little sun on it
+    back += path('M0 760Q420 724 800 734Q1200 744 1600 720V1000H0Z', S.lin('herbfloor', [[0, mix(p.moss, p.sandDark, 0.35)], [1, mix(mix(p.moss, p.sandDark, 0.45), '#000000', 0.22)]]));
+    back += path(blob(300, 960, 260, 30, 12, rng(912), 0.25, 0.3) + blob(1180, 980, 300, 26, 12, rng(913), 0.25, 0.3), p.moss, { opacity: 0.5 });
+    if (sun) back += sunSpots(S, [[520, 830, 90, 16], [930, 790, 70, 12], [1240, 820, 80, 14], [220, 880, 70, 12], [760, 990, 110, 16]]);
+    // fallen leaves on the floor
+    var fl = '';
+    for (i = 0; i < 14; i++) fl += leafD(60 + r() * 1480, 790 + r() * 200, 16 + r() * 8, r() * 6.28, 6);
+    back += path(fl, mix(p.leafMid, '#A88E52', 0.5), { opacity: 0.85 });
+    // the ledge of stones along the back, behind Thymeleaf, with leaves laid out on it to dry
+    var L = H.ledge, ledge = '', lr = rng(911), x = L.x0;
+    // two courses of rough stones, a flat slab on top
+    for (var course = 0; course < 2; course++) {
+      x = L.x0 - course * 30;
+      while (x < L.x1) {
+        var w = 64 + lr() * 56, sh = 34 + lr() * 10;
+        ledge += path(blob(x + w / 2, L.y + 52 - course * 34, w / 2 + 3, sh * 0.6, 9, lr, 0.12, 0.25), mix(p.stone, p.stoneDark, 0.3 + lr() * 0.35));
+        x += w - 6;
+      }
+    }
+    var slab = 'M' + n(L.x0 - 10) + ' ' + n(L.y - 2) + 'Q' + n((L.x0 + L.x1) / 2) + ' ' + n(L.y - 16) + ' ' + n(L.x1 + 8) + ' ' + n(L.y - 4) + 'L' + n(L.x1 + 4) + ' ' + n(L.y + 16) +
+      'Q' + n((L.x0 + L.x1) / 2) + ' ' + n(L.y + 6) + ' ' + n(L.x0 - 6) + ' ' + n(L.y + 18) + 'Z';
+    ledge += path(slab, mix(p.stone, p.stoneDark, 0.15)) + stroke('M' + n(L.x0 - 6) + ' ' + n(L.y) + 'Q' + n((L.x0 + L.x1) / 2) + ' ' + n(L.y - 13) + ' ' + n(L.x1 + 4) + ' ' + n(L.y - 2), p.rim, 3, { opacity: sun ? 0.55 : 0.2 });
+    var dry = ['', '', ''];
+    for (i = 0; i < 30; i++) {
+      var dx = L.x0 + 20 + lr() * (L.x1 - L.x0 - 40), dl = 24 + lr() * 20;
+      dry[i % 3] += leafD(dx, L.y - 10 - lr() * 4, dl, (lr() < 0.5 ? 0 : Math.PI) + (lr() - 0.5) * 0.6, dl * 0.34);
+    }
+    ledge += path(dry[0], mix(p.leafMid, '#B9A75C', 0.45)) + path(dry[1], mix(p.leafLight, '#C8B46A', 0.4)) + path(dry[2], mix(p.leaf, '#8E7A44', 0.45));
+    back += g(ledge, { filter: S.shadow('s'), 'data-prop': 'herb-ledge' });
+    // the curtain of drying leaves across the top: bunches hung upside down from a cane
+    var C = H.cane, cols = [mix(p.leafMid, '#9A9850', 0.4), mix(p.leafLight, '#C2B060', 0.45), mix(p.leaf, '#7E8C44', 0.4), mix(p.woodDark, p.leaf, 0.3), mix('#C9A86A', p.shade, 0.15)];
+    var colsB = [mix(p.leaf, '#9C8A4E', 0.5), mix(p.leafMid, '#B5A25E', 0.5), mix(p.leafLight, '#8FA650', 0.35), cols[3], cols[4]];
+    var curtain = stroke('M' + n(C[0][0]) + ' ' + n(C[0][1]) + 'Q' + n(C[1][0]) + ' ' + n(C[1][1]) + ' ' + n(C[2][0]) + ' ' + n(C[2][1]), p.rim, 14, { opacity: sun ? 0.4 : 0.15, transform: 'translate(0 -5)' }) +
+      stroke('M' + n(C[0][0]) + ' ' + n(C[0][1]) + 'Q' + n(C[1][0]) + ' ' + n(C[1][1]) + ' ' + n(C[2][0]) + ' ' + n(C[2][1]), stemCol, 14);
+    var br = rng(921);
+    for (i = 0; i < 12; i++) {
+      var t2 = 0.04 + i * 0.074, cp = bez2(C[0], C[1], C[2], t2);
+      if (cp[0] > H.web.x - H.web.r - 30) break;   // the corner is the spider's
+      curtain += herbBunch(S, cp[0], cp[1] + 4, 96 + br() * 70, i % 2 ? colsB : cols, br, (br() - 0.5) * 0.2);
+    }
+    // more bunches along the walls, on pegs
+    [[70, 300, 120], [168, 372, 96], [54, 470, 104], [1556, 470, 110], [1490, 560, 92]].forEach(function (b, k) {
+      curtain += stroke('M' + n(b[0] - 14) + ' ' + n(b[1] - 4) + 'l28 -6', stemCol, 7) + herbBunch(S, b[0], b[1], b[2], k % 2 ? cols : colsB, br, (br() - 0.5) * 0.25);
+    });
+    back += g(curtain, { filter: S.shadow('m'), 'data-prop': 'herb-curtain' });
+    // the web in the corner: threads from the cane and the wall, and a spiral round them; dew beads in the sun
+    var W = H.web, spokes = '', spiral = '', beads = '', NS = 9, ends = [];
+    for (i = 0; i < NS; i++) {
+      var a2 = -Math.PI * 0.95 + i * (Math.PI * 1.9 / (NS - 1)) + Math.sin(i * 1.7) * 0.06;
+      ends.push([W.x + Math.cos(a2) * W.r * (0.92 + (i % 3) * 0.05), W.y + Math.sin(a2) * W.r * (0.88 + (i % 2) * 0.08)]);
+      spokes += 'M' + n(W.x) + ' ' + n(W.y) + 'L' + n(ends[i][0]) + ' ' + n(ends[i][1]);
+    }
+    for (var ring = 0.28; ring < 0.95; ring += 0.16) {
+      for (i = 0; i < NS; i++) {
+        var e = ends[i], px = lerp(W.x, e[0], ring), py = lerp(W.y, e[1], ring);
+        spiral += (i ? 'L' : 'M') + n(px) + ' ' + n(py);
+        if (sun && (i + Math.round(ring * 10)) % 3 === 0) beads += dot(px, py, 2.4);
+      }
+    }
+    // the anchor threads: up to the cane, and out to the wall
+    spokes += 'M' + n(ends[0][0]) + ' ' + n(ends[0][1]) + 'L' + n(W.x - W.r * 1.2) + ' ' + n(W.y + W.r * 0.2) + 'M' + n(ends[NS - 1][0]) + ' ' + n(ends[NS - 1][1]) + 'L' + n(1600) + ' ' + n(W.y - 20) +
+      'M' + n(ends[Math.floor(NS / 2)][0]) + ' ' + n(ends[Math.floor(NS / 2)][1]) + 'L' + n(W.x + 10) + ' ' + n(bez2(C[0], C[1], C[2], 0.89)[1]);
+    var silk = sun ? '#FBF8EE' : mix('#FBF8EE', p.sky[2] || '#22345F', 0.35);
+    back += g(stroke(spokes, silk, 1.7, { opacity: 0.8 }) + stroke(spiral, silk, 1.3, { opacity: 0.7 }) + (beads ? path(beads, '#FFFFFF', { opacity: 0.9 }) : ''), { 'data-prop': 'web' });
+    (S.keep = S.keep || []).push({ x: W.x - W.r - 10, y: W.y - W.r - 10, w: W.r * 2 + 20, h: W.r * 2 + 20 });
+    // the flat mixing stone, a little pounding pebble beside it, and what lies on it
+    var ST = H.stone, stone = ell(ST.x, ST.y + 14, ST.rx * 1.04, ST.ry * 0.9, p.shade, { opacity: 0.3 }) +
+      path(blob(ST.x, ST.y + 8, ST.rx, ST.ry * 1.05, 12, rng(931), 0.08, 0.2), mix(p.stoneDark, p.shade, 0.15)) +
+      path(blob(ST.x, ST.y - 2, ST.rx * 0.97, ST.ry * 0.86, 12, rng(932), 0.08, 0.2), S.lin('herbstone', [[0, p.stoneLight], [1, p.stone]])) +
+      ell(ST.x + 14, ST.y - 2, ST.rx * 0.52, ST.ry * 0.36, mix(p.stone, p.stoneDark, 0.3), { opacity: 0.5 }) +
+      stroke('M' + n(ST.x - ST.rx * 0.8) + ' ' + n(ST.y - ST.ry * 0.5) + 'Q' + n(ST.x - ST.rx * 0.2) + ' ' + n(ST.y - ST.ry * 0.95) + ' ' + n(ST.x + ST.rx * 0.5) + ' ' + n(ST.y - ST.ry * 0.7), p.rim, 3, { opacity: sun ? 0.6 : 0.25 });
+    stone += ell(ST.x + ST.rx + 34, ST.y + 12, 26, 18, mix(p.stone, p.stoneDark, 0.4)) + ell(ST.x + ST.rx + 28, ST.y + 6, 13, 7, p.stoneLight, { opacity: 0.6 });
+    var rem = o.remedy === 'four' || o.remedy === 'mixed' ? o.remedy : '';
+    if (rem) {
+      // (drawn about the stone's middle at the stone's own scale, k, so the four things read on a page)
+      var ref = { x: 0, y: 0, rx: ST.rx / ST.k, ry: ST.ry / ST.k };
+      stone += g(rem === 'four' ? herbFour(S, ref) : herbMixed(S, ref), { 'data-prop': 'remedy', 'data-remedy': rem, transform: 'translate(' + n(ST.x) + ' ' + n(ST.y) + ') scale(' + n4(ST.k) + ')' });
+      S.keep.push({ x: ST.x - ST.rx - 10, y: ST.y - ST.ry - 80, w: ST.rx * 2 + 20, h: ST.ry * 2 + 90 });
+    }
+    back += g(stone, { 'data-prop': 'mixing-stone' });
+    // the nook's mouth, round us: leaves at the bottom corners, clear of the cast
+    var avoid = [];
+    ['herbs-1', 'herbs-2', 'herbs-3'].forEach(function (k) { avoid = avoid.concat(spotBoxes(S, k)); });
+    front += fernClump(S, -60, 1012, 260, { seed: 941, count: 6, spread: 1.4, lean: 0.5, avoid: avoid }) + fernClump(S, 1670, 1012, 260, { seed: 942, count: 6, spread: 1.4, lean: -0.5, avoid: avoid });
+    return { back: back, over: '', front: g(front, { filter: S.shadow('m') }) };
+  }
+  // The four things in a row on the stone: a long pale root, a roll of soft silver moss, a bunch of mint, and a curled
+  // leaf holding dew drops (Thymeleaf's four, as she gathered them)
+  function herbFour(S, ST) {
+    var p = S.pal, y = ST.y - ST.ry * 0.25, s = '';
+    // the root: long and pale, a node or two, hairs
+    var rx0 = ST.x - ST.rx * 0.86, rx1 = ST.x - ST.rx * 0.36;
+    var root = taper([rx0, y + 2], [rx0 + 40, y - 8], [rx1 - 40, y + 6], [rx1, y - 2], 13, 5, 14);
+    s += g(ell((rx0 + rx1) / 2, y + 8, (rx1 - rx0) / 2, 5, p.shade, { opacity: 0.25 }) + path(root, '#E9DFC3', { stroke: mix('#B9A47C', p.shade, 0.15), 'stroke-width': 1.6 }) +
+      stroke('M' + n(rx0 + 30) + ' ' + n(y - 4) + 'v9M' + n(rx0 + 64) + ' ' + n(y - 3) + 'v8', '#C4B08A', 1.6) +
+      stroke('M' + n(rx0 + 16) + ' ' + n(y + 6) + 'l-5 8M' + n(rx0 + 48) + ' ' + n(y + 5) + 'l2 9M' + n(rx0 + 76) + ' ' + n(y + 4) + 'l6 7M' + n(rx1 - 6) + ' ' + n(y + 1) + 'l8 4', '#CDBB95', 1.2), { 'data-thing': 'root' });
+    // the roll of soft silver moss
+    var mx = ST.x - ST.rx * 0.12, silver = '#C4CCBC';
+    s += g(ell(mx, y + 8, 34, 6, p.shade, { opacity: 0.25 }) + rect(mx - 30, y - 18, 56, 26, silver, { rx: 13 }) + ell(mx + 26, y - 5, 10, 13, mix(silver, '#FFFFFF', 0.3), { stroke: '#9AA697', 'stroke-width': 1.6 }) +
+      stroke('M' + n(mx + 26) + ' ' + n(y - 9) + 'q5 3 0 7q-4 -2 -1 -4', '#9AA697', 1.4) + path(dot(mx - 18, y - 12, 3) + dot(mx - 4, y - 14, 3.4) + dot(mx + 10, y - 13, 3) + dot(mx - 10, y + 2, 2.6), mix(silver, '#FFFFFF', 0.45)), { 'data-thing': 'moss' });
+    // the bunch of mint: round toothed leaves on short stalks, tied
+    var nx = ST.x + ST.rx * 0.26, mint = '';
+    [[-0.5, 24], [-0.15, 28], [0.2, 26], [0.55, 22], [-0.3, 18], [0.35, 17]].forEach(function (l, k) { mint += leafD(nx - 16, y + 2, l[1] + 6, -Math.PI / 2 + 1.25 + l[0], l[1] * 0.5 + (k > 3 ? 1 : 3)); });
+    s += g(ell(nx, y + 8, 30, 5, p.shade, { opacity: 0.25 }) + stroke('M' + n(nx - 26) + ' ' + n(y + 4) + 'l18 -4', '#4C7A3E', 3) + path(mint, '#5DB458', { stroke: '#3E8A3E', 'stroke-width': 1.2 }) +
+      stroke('M' + n(nx - 4) + ' ' + n(y - 8) + 'l12 -6M' + n(nx + 2) + ' ' + n(y - 2) + 'l14 -1', '#9AD78C', 1.4, { opacity: 0.8 }), { 'data-thing': 'mint' });
+    // the curled leaf holding dew
+    var dx = ST.x + ST.rx * 0.66;
+    s += g(herbCup(S, dx, y, '#6FAE58') + path(dot(dx - 8, y - 9, 4.4) + dot(dx + 4, y - 11, 5) + dot(dx + 13, y - 8, 3.6), '#DDF0FA', { opacity: 0.95 }) +
+      path(dot(dx - 9.5, y - 10.5, 1.4) + dot(dx + 2.4, y - 12.8, 1.6) + dot(dx + 12, y - 9.2, 1.1), '#FFFFFF'), { 'data-thing': 'dew' });
+    return s;
+  }
+  // a leaf curled up into a little cup (lying on the stone), its far edge lifted
+  function herbCup(S, x, y, col) {
+    var p = S.pal;
+    return ell(x, y + 8, 30, 5, p.shade, { opacity: 0.25 }) +
+      path('M' + n(x - 28) + ' ' + n(y - 4) + 'Q' + n(x - 22) + ' ' + n(y + 10) + ' ' + n(x) + ' ' + n(y + 8) + 'Q' + n(x + 24) + ' ' + n(y + 8) + ' ' + n(x + 30) + ' ' + n(y - 8) +
+        'Q' + n(x + 6) + ' ' + n(y - 2) + ' ' + n(x - 28) + ' ' + n(y - 4) + 'Z', col, { stroke: mix(col, '#000000', 0.3), 'stroke-width': 1.6 }) +
+      path('M' + n(x - 28) + ' ' + n(y - 4) + 'Q' + n(x + 2) + ' ' + n(y - 20) + ' ' + n(x + 30) + ' ' + n(y - 8) + 'Q' + n(x + 6) + ' ' + n(y - 2) + ' ' + n(x - 28) + ' ' + n(y - 4) + 'Z', mix(col, '#FFFFFF', 0.2), { stroke: mix(col, '#000000', 0.3), 'stroke-width': 1.4 }) +
+      stroke('M' + n(x - 22) + ' ' + n(y) + 'Q' + n(x) + ' ' + n(y + 4) + ' ' + n(x + 24) + ' ' + n(y - 4), mix(col, '#FFFFFF', 0.4), 1.2, { opacity: 0.7 });
+  }
+  // the remedy mixed: one curled leaf of pale green remedy, the stone smeared green round it
+  function herbMixed(S, ST) {
+    var y = ST.y - ST.ry * 0.25, x = ST.x + 10, green = '#BFE3A2';
+    return g(stroke('M' + n(x - 120) + ' ' + n(y + 6) + 'q30 -10 62 -2M' + n(x - 96) + ' ' + n(y + 16) + 'q22 -6 44 0M' + n(x + 56) + ' ' + n(y + 12) + 'q26 -8 52 2', '#93C27A', 7, { opacity: 0.55 }), { 'data-thing': 'smears' }) +
+      g(herbCup(S, x, y, '#5E9E4C') + path('M' + n(x - 20) + ' ' + n(y - 6) + 'Q' + n(x) + ' ' + n(y - 17) + ' ' + n(x + 22) + ' ' + n(y - 9) + 'Q' + n(x + 2) + ' ' + n(y - 1) + ' ' + n(x - 20) + ' ' + n(y - 6) + 'Z', green) +
+      path(dot(x - 6, y - 11, 3) + dot(x + 8, y - 12, 2.2), '#E4F6D6'), { 'data-thing': 'remedy' });
   }
 
   function splash(S, sx, sy, k) {
@@ -3383,7 +3743,9 @@
         reveal: { box: [0, 0, 1600] }, crowd: { box: [240, 280, 1120] }, fountain: { box: [0, 0, 1600], comp: 'fountain' }, entrance: { box: [0, 0, 1600], comp: 'entrance' },
         // head and shoulders of a cat sitting on the fountain top (size 1), sunlit towers behind
         'fountain-close': { box: [380, 138, 690], comp: 'fountain' },
-        ferns: { box: [1080, 640, 520] }, purr: { box: [80, 100, 1440] }
+        ferns: { box: [1080, 640, 520] }, purr: { box: [80, 100, 1440] },
+        // chapter 9: Thymeleaf's den, a nook of the bramble dens at the camp's edge (drawCampHerbs)
+        herbs: { box: [0, 0, 1600], comp: 'herbs' }
       },
       anchors: {
         main: {
@@ -3391,12 +3753,18 @@
           'crowd-left': A(390, 784, 225), 'crowd-right': A(1215, 790, 225, 'left'), ferns: A(1400, 915, 280, 'left'), center: A(830, 912, 285)
         },
         fountain: { 'fountain-top': A(800, 598, 440, 'left', { elev: true }) },
-        entrance: { entrance: A(800, 820, 500) }
+        entrance: { entrance: A(800, 820, 500) },
+        // chapter 9, Thymeleaf's den: herbs-1 Thymeleaf among his leaves at the left, facing right; herbs-2 our cat, right,
+        // facing left; herbs-3 Tallyheart beside her, further right; web the spider's corner, high (no ground under her)
+        herbs: { 'herbs-1': A(HERBS.spots[0][0], HERBS.spots[0][1], HERBS.spots[0][2], 'right'), 'herbs-2': A(HERBS.spots[1][0], HERBS.spots[1][1], HERBS.spots[1][2], 'left'),
+          'herbs-3': A(HERBS.spots[2][0], HERBS.spots[2][1], HERBS.spots[2][2], 'left'), web: A(HERBS.web.x, HERBS.web.y + HERBS.web.foot, HERBS.web.h, 'left', { elev: true, air: true }) }
       },
       // crowd: the whole Clan crowded round the fountain (the Warrior Counts, chapter 3): rows of cats
       // behind the cast, never in front of one or near a face; heads along the bottom from below the
       // fountain; more watching shadows from above
-      opts: { puddles: [true, false], rainFountain: [true, false], crowd: [true, false] }, defaults: {}
+      // chapter 9: remedy, on Thymeleaf's mixing stone (`herbs`): 'four' the four things in a row, 'mixed' the remedy
+      // in a curled leaf; 'none' (left out) the bare stone
+      opts: { puddles: [true, false], rainFountain: [true, false], crowd: [true, false], remedy: ['none', 'four', 'mixed'] }, defaults: {}
     },
     hollow: {
       label: 'the Training Hollow', tod: 'golden', todMap: { sunset: 'golden' }, draw: drawHollow,
@@ -3436,14 +3804,21 @@
       label: "the apprentices' den", tod: 'night', draw: drawDen,
       cams: {
         outside: { box: [0, 0, 1600], comp: 'outside' }, inside: { box: [0, 0, 1600], comp: 'inside' },
-        nest: { box: [860, 690, 400], comp: 'inside' }, doorway: { box: [900, 500, 700], comp: 'inside' }
+        nest: { box: [860, 690, 400], comp: 'inside' }, doorway: { box: [900, 500, 700], comp: 'inside' },
+        // chapter 9: the case laid out on the floor in front of her nest, close and a little above (drawDenCase)
+        case: { box: [0, 0, 1600], comp: 'case' }
       },
       anchors: {
         outside: { 'entrance-left': A(540, 870, 270), 'entrance-right': A(1060, 870, 270, 'left'), doorway: A(800, 830, 250, 'left') },
         inside: {
           'entrance-left': A(1310, 898, 190), 'entrance-right': A(1476, 898, 190, 'left'), doorway: A(1392, 896, 250, 'left'),
           nest: A(1060, 892, 250), 'sleeper-1': A(330, 814, 245), 'sleeper-2': A(640, 856, 250, 'left')
-        }
+        },
+        // chapter 9, the case: case-1 our cat at the rows' near left, facing right; case-2 Tallyheart across the rows at the
+        // right, facing left; case-3 a standing cat at the far side by the doorway's light (out of frame), facing left:
+        // Glintstar, a little bigger, as the leader (her `walk` there steps in from the light, and facing right goes)
+        case: { 'case-1': A(CASE.spots[0][0], CASE.spots[0][1], CASE.spots[0][2], 'right'), 'case-2': A(CASE.spots[1][0], CASE.spots[1][1], CASE.spots[1][2], 'left'),
+          'case-3': A(CASE.spots[2][0], CASE.spots[2][1], CASE.spots[2][2], 'left') }
       },
       // stone: Riffle's lucky stone in her nest (true: between her paws; 'nose' or 'chin', where she
       // put it; 'auto' is the UI's to fill from her choice, and left unfilled is true)
@@ -3458,8 +3833,11 @@
       // chapter 8: moon: 8, the eighth evening's half moon, at night or dusk (denMoonAged), and glass: her piece
       // of glass in its leaf under the moss of her nest, beside the corners (nestGlass); more under the moss and a
       // third course along the edge are the bark's own (denBark), no new option
-      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
-        bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true], glass: [false, true] }, defaults: { weather: 'clear' }
+      // chapter 9: moon: 13, the thirteenth evening's moon, nearly round (denMoonAged, at night or dusk, outside and in the
+      // doorway); and on `case` only, read: a number (0 when left out), the first `read` of the six rows lit and the next
+      // one glowing for the Tap (pc-next), 7 the seventh row laid out too (drawDenCase)
+      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8, 13], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
+        bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true], glass: [false, true], read: 'number' }, defaults: { weather: 'clear' }
     },
     sky: {
       label: 'the Sky River', tod: 'night', draw: drawSky,
@@ -3495,7 +3873,10 @@
         meet: titleEndAnchors('meet')
       },
       // rustle: rustle lines in the reeds, nobody seen (chapter 6)
-      opts: { rustle: [false, true] }, defaults: {}
+      // chapter 9, the wall's end (`end`, `meet`): root, a long pale reed root on the dry stones at the line and one wet
+      // pawprint, dark on the line's stone (titleRoot); tap: 'root', its box for the take-the-root Tap (an unpainted
+      // pc-tap rect); 'none' (left out) no box
+      opts: { rustle: [false, true], root: [false, true], tap: ['none', 'root'] }, defaults: {}
     }
   };
   var SET_ORDER = ['room', 'tower', 'garden', 'camp', 'hollow', 'den', 'sky', 'river', 'title'];
@@ -3575,7 +3956,8 @@
   // so neither changes size from one panel to the next. A `size` on the cast member can make either
   // smaller, never bigger than that.
   // (chapter 8: Hail, a Mistscale dragonet about Squall's size, sitting no taller than our cat: Squall's rule)
-  var SIZE_CAP = { reynard: 'tallyheart', squall: 'player', hail: 'player' };
+  // (chapter 9: Mizzle, the last dragonet, little: sitting no taller than our cat, so she fits the hollow)
+  var SIZE_CAP = { reynard: 'tallyheart', squall: 'player', hail: 'player', mizzle: 'player' };
   function sitTall(S, who) {
     var memo = S.sitTall || (S.sitTall = {});
     if (memo[who] == null) {
@@ -3653,6 +4035,7 @@
     var who = m.who || 'clancat', co = charOpts(S, who, m);
     var s = sizeCap(S, who, m, a, R, a.h / R * (m.size > 0 ? +m.size : 1)), face = m.facing || a.face || 'right', ay = a.y;
     if (SIZE_BAND[who]) s = sizeBand(S, who, s);
+    if (TINY[who]) { var tc = getChar(who, co); s = a.h * TINY[who] / Math.max(1, tc.w, tc.h) * (m.size > 0 ? +m.size : 1); }
     if (who === 'moth' && !a.elev) ay = a.y - a.h * 0.55;
     if (who === 'tallone' && S.box) {
       var th = getChar(who, co).h;
@@ -3692,7 +4075,9 @@
   }
   // (`murmurchime`: the tortie named, chapter 3, if cats.js gives her a cast id of her own;
   // chapter 6's ReedClan cats, `sloshbank` and `reedclan`, are cats too: a face from the box, as everyone's)
-  var CAT_IDS = { player: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, murmurchime: 1, snorter: 1, clancat: 1, sloshbank: 1, reedclan: 1 };
+  // (chapter 9's `thymeleaf`, CrystalClan's medicine cat, and `groveclan`, GroveClan's cats by variant as reedclan's)
+  var CAT_IDS = { player: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, murmurchime: 1, snorter: 1, clancat: 1, sloshbank: 1, reedclan: 1,
+    thymeleaf: 1, groveclan: 1 };
   // Bigger than a cat (Sprinkle, heron-sized): drawn in the cats' units like everyone (cats.js gives
   // her a box bigger than a cat's, so a cat's anchor fits her), her face's r from her head box as the
   // otters' and dogs' are, and her shadow under her body rather than her whole box.
@@ -3708,8 +4093,16 @@
   // Chapter 8: Hail (Sprinkle's model: her shadow under her body, not her wings and tail) and the two weasels (under
   // the long body, not the tail); none for any of them peeking out of a hole or a log (`peek`: the set draws the
   // hole's lip, or the log's rim, over the rest of her), where a shadow on the ground in front would float.
-  var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1, coil: 1, sleet: 1, hail: 1, snip: 1, snatch: 1 },
-    NO_SHADOW = { coil: { stone: 1 }, sleet: { hidden: 1, tail: 1 }, hail: { peek: 1 }, snip: { peek: 1 }, snatch: { peek: 1 } };
+  // Chapter 9: Mizzle (Hail's rule: her shadow under her body, not her wings and tail); none for Squall `hidden` behind the
+  // red light's pole (only his tail tip shows: a shadow would give him away, as Sleet's would), and none for Sprinkle in
+  // the air or the water (`glide` low over the sand, `fly` at the bank's `air`, `splash` in the shallows): this branch
+  // reads no anchor's `air`, so the bank draws the sand's shadows itself, and nothing dark lies in the water under her.
+  var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1, coil: 1, sleet: 1, hail: 1, snip: 1, snatch: 1, mizzle: 1 },
+    NO_SHADOW = { coil: { stone: 1 }, sleet: { hidden: 1, tail: 1 }, hail: { peek: 1 }, snip: { peek: 1 }, snatch: { peek: 1 }, squall: { hidden: 1 },
+      sprinkle: { glide: 1, fly: 1, splash: 1 } };
+  // Chapter 9: the spider, tiny in any scene: her drawing's longer side this share of the anchor's height (a sitting
+  // cat's there), about the size of a cat's forepaw, whatever her box says; a `size` multiplies, and she casts no shadow.
+  var TINY = { spider: 0.15 };
   // Chapter 5's three have a shadow of that kind too, but only on ground that can take one: none at
   // an anchor a set marks `air: true` (a spot in the water, where the set draws its own rings), and
   // never under Puddle in the river, which is every pose the chapter gives him (a foot through the
@@ -3788,7 +4181,7 @@
         // bigger than a cat, and her box is mostly neck, wings and tail: the shadow lies under her
         // body as drawn (none when only her eyes show in the dark)
         if (co.pose !== 'eyes' && !(NO_SHADOW[who] && NO_SHADOW[who][co.pose])) piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
-      } else if (who !== 'moth' && !a.air && co.pose !== 'fall') piece += ell(a.x, restY - 1, c.w * 0.4, Math.max(2.5, a.h * 0.045), S.pal.shade, { opacity: 0.28 });
+      } else if (who !== 'moth' && !TINY[who] && !a.air && co.pose !== 'fall') piece += ell(a.x, restY - 1, c.w * 0.4, Math.max(2.5, a.h * 0.045), S.pal.shade, { opacity: 0.28 });
       // `holds: 'stone'` is drawn by cats.js with the cat (in her paws, or in the mouth on her feet),
       // which reports where it is (`held`, in its box): the sparkle effect twinkles on it
       piece += c.svg;

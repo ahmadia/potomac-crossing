@@ -37,6 +37,10 @@ frames the agents follow (without it they follow chapter 5): for chapter 7, `"mo
 "storyFile": "app/story/ch06.js", "test": "tests/story-ch06.test.js", "spec": "chapter 6's spec
 (docs/chapters/06-the-snake-in-the-stones.spec.md)" }`.
 
+**Effort.** Every agent runs at `args.effort`, `xhigh` unless you pass another (2026-10-25: before
+that, agents ran at whatever effort the session had, which nothing guaranteed). Each reviewer reports
+what it `checked`, so the review's and the final's completeness critic can name what nobody covered.
+
 The work directory is outside the repo on purpose: drafts, renders and results are not the record,
 and a chapter's phases span several sessions. Agents write only there and to the files a phase names.
 
@@ -48,9 +52,9 @@ and a chapter's phases span several sessions. Agents write only there and to the
 | | *stubs, by hand* | | | Each new set file registers an empty set with `PC.art.defineSet` (`docs/build.md`, "Art vocabulary, chapter 2"); `app/story/chNN.js` defines the chapter with a single `board: 'STUB.'` frame (a stub chapter is skipped); script tags in `index.html` in the game's order; `ASSETS` and a `CACHE` past the live value in `sw.js`; `node --test` (only the storyboard and gallery tests that list the new set may fail) |
 | 4 | `build` | `owners`: spec's `owners` | each owner's files | every report's `open` list; anything one owner needs from another |
 | 5 | `frames` | `buildFile`: `<work>/build.json` | `app/story/chNN.js`, its test, the storyboard | the frame count (the brief's cap); the suite |
-| 6 | `review` | `frames`: frames' `frames` | nothing in the repo | the confirmed findings by reviewer |
-| 7 | `integrate` | `findingsFile`: `<work>/review.json` | anything | `fixed` against the confirmed list; the suite. A run that read findings and changed no files stops itself |
-| 8 | `final` | `play: true` only if the visual review was not clean | nothing in the repo | if anything is confirmed: `integrate` again with `findingsFile: <work>/final.json`, `round: 2` |
+| 6 | `review` | `frames`: frames' `frames` | nothing in the repo | the confirmed findings by reviewer, and `gaps`: what the completeness critic found unchecked (each gap got a reviewer and a skeptic of its own) |
+| 7 | `integrate` | `findingsFile`: `<work>/review.json` | anything | `fixed` against the confirmed list; the independent checker's `unlanded` and `check.broken` (each goes back to a second round); the suite. A run that read findings and changed no files stops itself |
+| 8 | `final` | `play: false` to skip the fresh-eyes playtest (it runs by default since 2026-10-25) | nothing in the repo | if anything is confirmed: `integrate` again with `findingsFile: <work>/final.json`, `round: 2` |
 | | *ship, by hand* | | | `docs/production.md`, "Shipping checklist": the suite, the storyboards, five or six key panels in Safari, README and `docs/continuity.md`, commit, push, the live check |
 
 **Pacing.** About 25M subagent tokens fit in one five-hour window. The text (phases 1 to 3) is one

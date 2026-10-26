@@ -155,7 +155,7 @@ when something is missing. Each Count has a picture every cat carries:
 | 5s | claws on one forepaw |
 | 10s | claws on both forepaws |
 | 6s | whiskers on one cheek |
-| 7s | sunrises in a quarter-moon |
+| 7s | a clutch of seven dragonets (decision 51; was "sunrises in a quarter-moon") |
 | 8s | a spider's legs |
 | 9s | a cat's nine lives (the elders swear by it) |
 

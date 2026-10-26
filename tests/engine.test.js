@@ -1129,9 +1129,9 @@ function finishedCat(stories, over) {
   return cat;
 }
 
-test('version 0.8.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 8 add none)', () => {
-  assert.equal(E.VERSION, '0.8.0 (chapter 8, 2026-10-21)');
-  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 8 store nothing new (chapter 7’s ch7Flew and chapter 8’s foundHail are flags)');
+test('version 0.9.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 9 add none)', () => {
+  assert.equal(E.VERSION, '0.9.0 (chapter 9, 2026-10-26)');
+  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 9 store nothing new (chapter 7’s ch7Flew, chapter 8’s foundHail and chapter 9’s foundMizzle and ch9Roof are flags)');
   assert.equal(E.STORAGE_KEY, 'potomac-crossing.v1');
   assert.deepEqual(E.newSave(), { version: 2, cats: [], current: null, settings: { readAloud: false, bigText: false } });
   const c = E.blankCat({ now: 5, id: 'x' });
@@ -6426,9 +6426,11 @@ test('chapter 8’s words in the grown-ups corner and its speakers: foundHail, f
   const tom = E.blankCat({}); tom.look.sex = 'tom';
   assert.equal(E.fill(W.foundHail.true, tom), W.foundHail.true, 'nothing in it changes for a tom');
   assert.ok(!PC.ui.quietFlags.foundHail, 'listed among what she did');
-  assert.deepEqual(Object.keys(W).slice(-2), ['ch7Flew', 'foundHail'], 'chapter 8 adds one flag');
+  // (chapter 9 adds foundMizzle and ch9Roof after foundHail: its own test below)
+  assert.deepEqual(Object.keys(W).slice(Object.keys(W).indexOf('ch7Flew'), Object.keys(W).indexOf('foundMizzle')), ['ch7Flew', 'foundHail'], 'chapter 8 adds one flag');
   assert.ok(!('ch8Route' in W), 'the route is not recorded (spec section 1)');
-  assert.deepEqual(Object.keys(Sp.NAMES), ['tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth', 'riffle', 'otter', 'dog',
+  // (chapter 9 names three more after snatch: its own test below)
+  assert.deepEqual(Object.keys(Sp.NAMES).slice(0, Object.keys(Sp.NAMES).indexOf('thymeleaf')), ['tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth', 'riffle', 'otter', 'dog',
     'sprinkle', 'murmurchime', 'reynard', 'squall', 'patience', 'puddle', 'wisp', 'coil', 'sloshbank', 'sleet', 'reedclan', 'hail', 'snip', 'snatch']);
   assert.deepEqual([Sp.NAMES.hail, Sp.NAMES.snip, Sp.NAMES.snatch], ['Hail', 'Snip', 'Snatch']);
   // the labels: the chapter's `names` until a balloon carries its own (spec section 5)
@@ -6468,4 +6470,72 @@ test('chapter 8’s Case File page: a row of four (the brag’s, for a cat who f
   // and the engine hands the page the lines in order: the brag's row of four, three joins
   const list = list8(), F = E.caseFile(holder8(list, HELD8, { ch7Flew: true, foundSleet: true }), list);
   assert.deepEqual(classes(F.links[0].lines.length), ['j0', 'jm', 'j1']);
+});
+
+/* Chapter 9 (docs/chapters/09-featherlight.spec.md, sections 1 and 6, "Code beside the engine"): no engine
+ * change, so only the version moves (its own test above); the page gains two flags' words in the grown-ups
+ * corner and three speakers with their voices. */
+test('chapter 9’s words in the grown-ups corner and its speakers: foundMizzle and ch9Roof, for a she-cat and a tom, last in the corner; Thymeleaf, Mizzle and GroveClan’s cats (by variant) named after chapter 8’s, with their voices; every earlier voice as it was; no new face hidden', () => {
+  require('../app/ui.js');
+  const W = PC.ui.flagWords, Sp = PC.ui.speakers;
+  assert.deepEqual(W.foundMizzle, { 'true': 'found Mizzle in the old oak in GroveClan’s woods (later chapters remember)' });
+  assert.deepEqual(W.ch9Roof, { 'true': 'met Squall in chapter 9: the roof, offered again ({their} book says so on chapter 9’s page)' });
+  const tom = E.blankCat({}); tom.look.sex = 'tom';
+  assert.equal(E.fill(W.foundMizzle.true, tom), W.foundMizzle.true, 'nothing in it changes for a tom');
+  assert.equal(E.fill(W.ch9Roof.true, tom), 'met Squall in chapter 9: the roof, offered again (his book says so on chapter 9’s page)');
+  assert.equal(E.fill(W.ch9Roof.true, E.blankCat({})), 'met Squall in chapter 9: the roof, offered again (her book says so on chapter 9’s page)');
+  assert.ok(!PC.ui.quietFlags.foundMizzle && !PC.ui.quietFlags.ch9Roof, 'both listed among what she did');
+  assert.deepEqual(Object.keys(W).slice(-2), ['foundMizzle', 'ch9Roof'], 'chapter 9 adds two flags, and they are the corner’s last');
+  assert.deepEqual(Object.keys(W).slice(Object.keys(W).indexOf('foundHail') + 1), ['foundMizzle', 'ch9Roof'], 'right after chapter 8’s');
+  // no choice flag (spec section 1: "No choice in this chapter sets anything")
+  assert.ok(!Object.keys(W).some(k => /^ch9/.test(k) && k !== 'ch9Roof'), 'no other chapter-9 flag');
+  // the speakers: three new names after chapter 8's, GroveClan's by variant (labels only: the brief, call 11)
+  assert.deepEqual(Object.keys(Sp.NAMES).slice(Object.keys(Sp.NAMES).indexOf('snatch') + 1), ['thymeleaf', 'mizzle', 'groveclan']);
+  assert.deepEqual([Sp.NAMES.thymeleaf, Sp.NAMES.mizzle, Sp.NAMES.groveclan], ['Thymeleaf', 'Mizzle', 'A GroveClan cat']);
+  const lab = (b, story) => Sp.label(b, { story, fill: t => t });
+  const names = { mizzle: 'The sleepy dragonet' };
+  assert.deepEqual([lab({ who: 'thymeleaf' }, { names }), lab({ who: 'mizzle' }, { names }), lab({ who: 'mizzle', name: 'Mizzle' }, { names }), lab({ who: 'mizzle' }, {})],
+    ['Thymeleaf', 'The sleepy dragonet', 'Mizzle', 'Mizzle'], 'Mizzle by the chapter’s name until her balloons carry her own');
+  assert.deepEqual([1, 2, undefined].map(variant => lab({ who: 'groveclan', variant }, { names })), ['A GroveClan elder', 'A GroveClan apprentice', 'A GroveClan elder'], 'by variant; no variant reads as 1');
+  assert.equal(lab({ who: 'squall', name: 'A voice' }, { names }), 'A voice', 'Squall’s shout from behind the pole');
+  // Read to me: Thymeleaf low, warm and slow; Mizzle sweet and sleepy, slow; the elder old and slow
+  assert.deepEqual([Sp.pitch('thymeleaf'), Sp.rate('thymeleaf')], [0.82, 0.85]);
+  assert.deepEqual([Sp.pitch('mizzle'), Sp.rate('mizzle')], [1.35, 0.82]);
+  assert.deepEqual([Sp.pitch('groveclan', 1), Sp.pitch('groveclan'), Sp.rate('groveclan')], [0.78, 0.78, 0.86], 'the elder by variant (no variant reads as 1)');
+  assert.equal(Sp.pitch('groveclan', 2), 1, 'the apprentice keeps the default pitch: she never speaks');
+  assert.ok(Sp.rate('thymeleaf') < 0.95 && Sp.rate('mizzle') < 0.95 && Sp.rate('groveclan') < 0.95, 'all three slower than the default');
+  assert.ok(Sp.pitch('thymeleaf') < Sp.pitch('tallyheart') && Sp.pitch('mizzle') > Sp.pitch('player'), 'an old tom below Tallyheart; a little dragonet above the cats');
+  // nobody else's voice changes
+  const before = { tallyheart: [0.92, 0.95], glintstar: [0.85, 0.95], player: [1.2, 0.95], riffle: [1.5, 0.95], sprinkle: [1.38, 0.86], reynard: [0.8, 0.82], squall: [1.7, 1.02],
+    patience: [0.7, 0.8], puddle: [1.32, 1.05], wisp: [1.25, 0.95], coil: [0.72, 0.7], sloshbank: [0.62, 0.88], sleet: [1.45, 1.04], reedclan: [1.0, 0.95], clancat: [1.0, 0.95], murmurchime: [1.3, 0.95],
+    hail: [1.5, 1.08], snip: [1.65, 1.12], snatch: [1.35, 1.0], grizzled: [0.6, 0.95], waffles: [1.45, 0.95], snorer: [1.1, 0.95] };
+  Object.entries(before).forEach(([w, v]) => assert.deepEqual([Sp.pitch(w), Sp.rate(w)], v, w));
+  assert.deepEqual([1, 2, 3, 4].map(v => Sp.pitch('reedclan', v)), [1, 1.12, 1, 1], 'ReedClan’s by variant, as they were');
+  assert.deepEqual([1, 2, 3].map(v => Sp.pitch('dog', v)), [0.55, 0.95, 1.75]);
+  assert.equal(Sp.pitch('otter', 1), 0.68);
+  // no new faceHidden pose: Squall's `hidden` is a pose name NO_FACE_POSES has had since chapter 6 (Sleet's)
+  assert.equal(Sp.faceHidden({ who: 'squall', name: 'A voice' }, { who: 'squall', pose: 'hidden' }), true, 'his shout keeps its face to itself');
+  assert.equal(Sp.faceHidden({ who: 'squall', name: 'Squall' }, { who: 'squall', pose: 'roar' }), false);
+  const POSES9 = { thymeleaf: ['sit', 'stand', 'walk', 'crouch', 'pawup', 'lookup'], mizzle: ['curl', 'yawn', 'sit', 'wake', 'pawup'], groveclan: ['sit', 'stand', 'walk', 'pawup'],
+    sprinkle: ['hop', 'flap', 'glide', 'fly', 'splash'], spider: ['spin', 'wave'] };
+  Object.entries(POSES9).forEach(([who, poses]) => poses.forEach(pose => assert.equal(Sp.faceHidden({ who, name: 'Somebody' }, { who, pose }), false, who + ' ' + pose)));
+  const ui = require('node:fs').readFileSync(require('node:path').join(__dirname, '../app/ui.js'), 'utf8');
+  assert.match(ui, /var NO_FACE_POSES = \{ eyes: 1, hide: 1, stone: 1, hidden: 1, tail: 1 \};/, 'the list as chapter 6 left it');
+});
+
+/* The kept path's words in the grown-ups corner are no longer true after chapter 9 (its kept path tells
+ * Tallyheart about Sprinkle, and Tallyheart tells Thymeleaf and Glintstar), and they are KEPT on purpose:
+ * they describe the chapter 3 choice ("kept Sprinkle's secret"), and changing them would move the corner of
+ * every kept cat in the goldens (chapters 1 to 8 byte-identical for every live save). Chapter 9's spec,
+ * section 7, item 16. Do not "fix" this string: if it must change, that is a decision for the README, made
+ * with the goldens re-recorded in the same change. */
+test('FLAG_WORDS.ch3Told stays exactly as chapter 3 wrote it, on purpose (chapter 9’s spec, section 7, item 16): the words describe the chapter 3 choice, and the goldens pin them', () => {
+  require('../app/ui.js');
+  const W = PC.ui.flagWords;
+  assert.deepEqual(W.ch3Told, {
+    'true': 'told Tallyheart about Sprinkle, and Tallyheart helped hide her (later chapters remember)',
+    'false': 'kept Sprinkle’s secret: only Riffle knows too (later chapters remember)'
+  });
+  const tom = E.blankCat({}); tom.look.sex = 'tom';
+  assert.equal(E.fill(W.ch3Told.false, tom), W.ch3Told.false, 'the same for a tom');
 });

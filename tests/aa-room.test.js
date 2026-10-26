@@ -54,7 +54,8 @@ test('the block is there once, in its place: after the landscape spread, before 
 
 test('every rule is Bigger text’s alone, and none touches the picture or makes anything sticky (Aa off: nothing changes)', () => {
   const all = rulesAt(html.indexOf(ROOM)).concat(rulesAt(html.indexOf(SHORT)), rulesAt(html.indexOf(UPRIGHT)), skipRules());
-  assert.equal(all.length, 19, all.length + ' rules');
+  // 19, plus chapter 9's ask list (f118's six pairs; 2026-10-26)
+  assert.equal(all.length, 20, all.length + ' rules');
   all.forEach((r) => {
     r.sel.forEach((s) => {
       assert.match(s, /^html\.big \.frame(\[data-kind="[a-z]+"\])?( |$)/, s + ': starts html.big .frame');

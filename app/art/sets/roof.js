@@ -43,6 +43,13 @@
  * (seven little forepaws scratched in the grit, four above three, five claw marks each: the
  * riddle's picture; they are in `keep`).
  *
+ * Chapter 9 (docs/chapters/09-featherlight.spec.md, section 4, "The roof at first light"): chapter 4's roof frames run
+ * again at `morning`, as the roof's morning has always drawn them. `dew: true` (default false): the rain puddle silver with
+ * dew, pale and bright, a warm blush of the low sun and a glint in it, and tiny beads of dew on the grit round it, a few
+ * twinkling (<g data-part="dew">), in every camera that shows the puddle (wide, pole, two, over). Anchor `puddle`, on
+ * `wide` and `two` only (the spec's call; the dew's frames are on `two`): a cat crouched at the puddle's left rim facing
+ * it, her leaf at her paws on its edge, clear of the pole and the wall. roofInfo() gives each composition's `puddle`.
+ *
  * Registered with PC.art.defineSet (app/art/scenes.js); painters come from PC.art.kit.
  */
 (function (root) {
@@ -424,6 +431,31 @@
     return g(s, { 'data-part': 'puddle' });
   }
 
+  // Chapter 9: the dew (`dew: true`). At first light the rain puddle is silver with dew, its surface pale and
+  // bright, a faint warm blush of the low sun in it and a glint; tiny beads of dew lie on the grit round it,
+  // each with its own spark of light, a few twinkling (the shared pcs-twk: still under reduced motion). Over
+  // the puddle as drawn; only on the floor. <g data-part="dew">.
+  function dewPuddle(S, C, L) {
+    var q = L.puddle, cx = q[0], cy = q[1], rx = q[2], ry = q[3], z = L.zoom || 1, foot = L.wall.foot, r = rng(9500 + Math.round(cx));
+    var d = blob(cx, cy, rx, ry, 12, rng(Math.round(cx * 3 + cy)), 0.16, 0.22), s = '';
+    s += path(d, S.linU([[0, '#F4F7FB'], [0.5, '#E3EAF2'], [1, '#FFFFFF']], 0, cy - ry, 0, cy + ry), { opacity: 0.94 });
+    s += path(d, S.linU([[0, '#FFE6CF', 0], [0.5, '#FFE6CF', 0.45], [1, '#FFE6CF', 0]], cx - rx, 0, cx + rx, 0));
+    s += ell(cx - rx * 0.18, cy - ry * 0.12, rx * 0.5, ry * 0.32, '#FFFFFF', { opacity: 0.85 });
+    s += stroke('M' + n(cx - rx * 0.62) + ' ' + n(cy + ry * 0.3) + 'h' + n(rx * 0.38) + 'M' + n(cx + rx * 0.16) + ' ' + n(cy + ry * 0.5) + 'h' + n(rx * 0.32), '#FFFFFF', Math.max(1.4, ry * 0.14), { opacity: 0.95, 'class': 'pcs-glint' });
+    s += path(K.sparkleD(cx + rx * 0.34, cy - ry * 0.2, Math.max(6, ry * 0.75)), '#FFFFFF', { 'class': 'pcs-twk' });
+    // the beads on the grit round it
+    var beads = '', hi = '', tw = '', count = Math.round(70 + 30 * Math.min(1, z / 2));
+    for (var i = 0; i < count; i++) {
+      var t = r() * Math.PI * 2, f = 1.12 + Math.pow(r(), 0.7) * 1.25, bx = cx + Math.cos(t) * rx * f, by = cy + Math.sin(t) * ry * f * 2.1;
+      if (by < foot + 6 || bx < -10 || bx > 1610 || by > 1004) continue;
+      var br = (1.4 + r() * 1.8) * Math.max(0.7, z * 0.75) * (0.7 + (by - foot) / 600);
+      beads += dot(bx, by, br); hi += dot(bx - br * 0.3, by - br * 0.35, br * 0.42);
+      if (i % 9 === 0) tw += path(K.sparkleD(bx, by - br * 0.4, br * 2.6), '#FFFFFF', { 'class': 'pcs-twk', style: 'animation-delay:-' + (r() * 3.6).toFixed(1) + 's' });
+    }
+    s += path(beads, '#DCE6F0', { opacity: 0.95 }) + path(hi, '#FFFFFF') + tw;
+    return g(s, { 'data-part': 'dew' });
+  }
+
   // ------------------------------------------------------------------ the pole and its red light
 
   // the little red light, with its glow (as on the riverbank's far view of it); it blinks
@@ -769,6 +801,8 @@
     back += walls(S, C, L);
     if (L.hut) { L.hut.vp = L.vp; back += g(hut(S, C, L.hut), { filter: S.shadow('m'), 'data-part': 'hut' }); }
     if (L.puddle) back += puddle(S, C, L.puddle);
+    // chapter 9: the puddle silver with dew, beads on the grit round it (`dew: true`; off, nothing)
+    if (L.puddle && o.dew === true) back += dewPuddle(S, C, L);
     if (o.grit === 'paws' && L.paws) back += gritPaws(S, C, L.paws);
     var pw = poleWidth(AM.pole) / 2;
     back += mast(S, C, { x: L.pole.x, foot: L.pole.foot, top: L.pole.top, w: pw, w1: pw * L.pole.taper, r: L.pole.r });
@@ -788,10 +822,15 @@
   // Every composition places every anchor, so nobody a frame names is ever out of sight. `pole` is
   // the pole's own foot (the same x), `beside` is next to it, `door` by the hut's door; none is at
   // the wall (tests/set-roof.test.js measures it).
+  // Chapter 9: `puddle` (`wide` and `two` only, the spec's call): a cat crouched at the rain puddle's left rim,
+  // facing it, her leaf at her paws on its edge; clear of the pole's spot and of the wall; its height the depth
+  // there (the floor's perspective) on `wide`; on `two`, where the dew's frames are, at the puddle's near-left rim
+  // and about his size (the review, 2026-10-26: at 250 high she read as a small figure far back behind him, and for
+  // a cat who never met him the panel was an empty roof), so she is the panel's co-subject beside him.
   var SPOTS = {
-    main: { pole: A(800, 806, 150), beside: A(1004, 824, 156, 'left'), door: A(484, 772, 138) },
+    main: { pole: A(800, 806, 150), beside: A(1004, 824, 156, 'left'), door: A(484, 772, 138), puddle: A(1025, 754, 132, 'right') },
     pole: { pole: A(800, 930, 600), beside: A(1340, 962, 560, 'left'), door: A(210, 962, 550) },
-    two: { pole: A(640, 904, 420), beside: A(1060, 904, 400, 'left'), door: A(215, 930, 392) },
+    two: { pole: A(640, 904, 420), beside: A(1060, 904, 400, 'left'), door: A(215, 930, 392), puddle: A(1100, 726, 370, 'right') },
     // (here alone our cat is on the pole's other side, out of the way of his pointing claw)
     over: { pole: A(470, 986, 290), beside: A(170, 990, 290), door: A(1440, 994, 264, 'left') },
     sky: { pole: A(640, 990, 390), beside: A(1090, 994, 380, 'left'), door: A(220, 994, 370) },
@@ -809,8 +848,8 @@
       paw: { box: [0, 0, 1600], comp: 'paw' }
     },
     anchors: SPOTS,
-    opts: { plane: [false, true], moth: [false, true], grit: ['none', 'paws'] },
-    defaults: { grit: 'none' }
+    opts: { plane: [false, true], moth: [false, true], grit: ['none', 'paws'], dew: [false, true] },
+    defaults: { grit: 'none', dew: false }
   });
 
   // for the tests: where each composition puts the wall, the pole, the light and the airplane
@@ -820,7 +859,9 @@
       var L = COMPS[k];
       out[k] = { wall: { top: L.wall.top, foot: L.wall.foot, cap: L.wall.cap }, pole: { x: L.pole.x, foot: L.pole.foot, top: L.pole.top, r: L.pole.r, w: poleWidth(SPOTS[k].pole) },
         plane: L.plane ? { x: L.plane[0], y: L.plane[1], s: L.plane[2], always: !!L.planeOn } : null, hut: !!L.hut, view: !!L.view, paws: L.paws ? L.paws.slice() : null,
-        forepaw: L.forepaw ? JSON.parse(JSON.stringify(L.forepaw)) : null };
+        forepaw: L.forepaw ? JSON.parse(JSON.stringify(L.forepaw)) : null,
+        // chapter 9: the rain puddle, [cx, cy, rx, ry] (the dew's)
+        puddle: L.puddle ? L.puddle.slice() : null };
     });
     return out;
   };

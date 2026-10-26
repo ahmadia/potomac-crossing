@@ -19,7 +19,7 @@ drafting); chapter 8's is the latest (2026-10-20).
   `MOVED-TO-MINI` note and is not edited. The mini pushes with a **deploy key** that reaches
   this repo only: SSH alias `github-potomac-crossing`, key `~/.ssh/potomac_crossing_deploy`,
   repo deploy key 165338954 (revoke under Settings > Deploy keys).
-- **Phase: chapters 1 to 8 are live.** They deploy whenever `main` is pushed. The stack and file layout
+- **Phase: chapters 1 to 9 are live.** They deploy whenever `main` is pushed. The stack and file layout
   are in `docs/build.md`; follow it. Static site, no build step, no dependencies.
   **Bump `CACHE` in `sw.js` whenever a cached file changes**, or installed iPads keep the old
   version.

@@ -2751,7 +2751,13 @@ test('the teaser for chapter 9, curious and never scary, with no number; chapter
   story.teaser.lines.forEach(l => assert.ok(words(l) <= 25, l));
   assert.doesNotMatch(story.teaser.lines.join(' '), /\d|twenty|sixty|weasel|thief|robbed|stolen|scary|monster|hurt/i, 'no number, no answer');
   const cat = E.blankCat({}); cat.name = 'Moon';
-  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'Chapter 9: Featherlight', lines: story.teaser.lines, built: false, next: null }, 'chapter 9 is coming soon');
+  // chapter 9 is in the game now, built (2026-10-25; its stub from 2026-10-24): the hub offers it; read with chapters 1
+  // to 8 only, it is still "coming soon". Its teaser's words stand: chapter 9 keeps both promises (tests/story-ch09.test.js)
+  assert.ok(PC.story.ch09, 'chapter 9 is in the game');
+  assert.ok(Object.values(PC.story.ch09.frames).every(f => !/^STUB\b/.test(f.board || '')), 'built, not the stub');
+  assert.equal(E.chapterHeading(PC.story.ch09), story.teaser.title, 'the teaser’s title is chapter 9’s');
+  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'Chapter 9: Featherlight', lines: story.teaser.lines, built: true, next: 'ch09' }, 'chapter 9 is in: the hub offers it');
+  assert.deepEqual(E.teaser(story, cat, STORIES), { title: 'Chapter 9: Featherlight', lines: story.teaser.lines, built: false, next: null }, 'without it, coming soon');
   // the hook it carries on: whatever the Clans decide, Sprinkle has to fly, and her wing still won't lift
   assert.match(T(F(/^Whatever the Clans decide/)), /How do you mend a dragon’s wing\?/);
   // chapter 7's teaser stands, its title this chapter's, and both its promises are kept: a trail in the dark,
@@ -2762,7 +2768,7 @@ test('the teaser for chapter 9, curious and never scary, with no number; chapter
   assert.match(T(HOLES), /All along the bank are holes, like the one under your pile\./);
   assert.match(T(DUSK), /The camp turns silver\./, 'the night trail');
   const done = reading({ specialty: 'sneaking' }, {}).cat, p = E.progress(done, PC.story);
-  assert.deepEqual([p.latest.id, p.next, p.soon && p.soon.title, E.status(done, PC.story)], ['ch08', null, 'Chapter 9: Featherlight', 'Chapter 8 finished']);
+  assert.deepEqual([p.latest.id, p.next && p.next.id, p.soon, E.status(done, PC.story)], ['ch08', 'ch09', null, 'Chapter 8 finished']);
   const c7 = E.blankCat({}); c7.finished = { ch01: 1, ch02: 2, ch03: 3, ch04: 4, ch05: 5, ch06: 6, ch07: 7 };
   assert.deepEqual([E.progress(c7, PC.story).next.id, E.chapterHeading(E.progress(c7, PC.story).next)], ['ch08', 'Chapter 8: The Night Trail']);
 });

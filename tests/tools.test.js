@@ -381,12 +381,62 @@ test('storyboard.mjs --check-words: words for every name chapter 8’s spec adds
     // names nobody gave: a camera, anchors, taps, a glass that is no flag, a tight place that is no flag, a cast member, poses, extras
     const bad = run({
       sets: { tracks: { cams: ['tunnel'], anchors: ['hole-3', 'sleeper'], opts: { tap: ['rails'], tight: ['very'] } }, field: { anchors: ['kennel'], opts: { tap: ['log'] } }, pile: { opts: { tap: ['hedge'] } }, den: { opts: { glass: ['heap'] } } },
-      cast: ['swipe'], otherPoses: { hail: ['spin'], snip: ['dig'] }, extras: { tap: ['mouse'], holds: ['shard'], tailUp: ['half'] }
+      // (`spin` was a name nobody gave until chapter 9 gave it to the spider: Hail's never-given pose is `twirl` now)
+      cast: ['swipe'], otherPoses: { hail: ['twirl'], snip: ['dig'] }, extras: { tap: ['mouse'], holds: ['shard'], tailUp: ['half'] }
     });
     assert.equal(bad.status, 1);
     assert.deepEqual(bad.stderr.trim().split('\n').slice(1).map(l => l.trim()).sort(),
       ['cast extra holds: "shard"', 'cast extra tailUp: "half"', 'cast extra tap: "mouse"', 'cast swipe', 'den option glass: "heap"', 'field anchor kennel', 'field option tap: "log"', 'pile option tap: "hedge"',
-        'pose dig', 'pose spin', 'tracks anchor hole-3', 'tracks anchor sleeper', 'tracks camera tunnel', 'tracks option tap: "rails"', 'tracks option tight: "very"'].sort());
+        'pose dig', 'pose twirl', 'tracks anchor hole-3', 'tracks anchor sleeper', 'tracks camera tunnel', 'tracks option tap: "rails"', 'tracks option tight: "very"'].sort());
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+/* Chapter 9: the same, for every new name in chapter 9's spec (docs/chapters/09-featherlight.spec.md, section 4),
+ * declared as the spec has them: the new set `grove` (its five cameras and their anchors, no options); the camp's
+ * `herbs` (its anchors and `remedy`), the den's `case` (its anchors, `read` a number, the moon at 13), the title's
+ * `root` and `tap: 'root'`, the roof's `dew` and `puddle`, the bridge's `shallows` and the bank's new spots;
+ * Thymeleaf, Mizzle, GroveClan's two by variant and the spider, with every pose of theirs; Sprinkle's flight,
+ * Squall's `hidden`; Riffle's mint, the wing tapped, and the cats' marks this chapter carries. Thymeleaf and
+ * GroveClan's cats are cats: their poses are the cats' own names. */
+test('storyboard.mjs --check-words: words for every name chapter 9’s spec adds to the art (GroveClan’s woods, Thymeleaf’s den, the case laid out and its rows, the moon at 13, the root, the dew, the shallows and the bank’s spots, Thymeleaf, Mizzle, GroveClan by variant, the spider, Sprinkle in flight, Squall behind the pole, the mint and the wing), declared as the spec has them; a name the spec never gave fails', () => {
+  const fs = require('node:fs'), os = require('node:os');
+  const TOOL = path.join(ROOT, 'tools/storyboard.mjs');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-words-'));
+  try {
+    const ch09 = {
+      sets: {
+        grove: { cams: ['bridge', 'wide', 'meet', 'oak', 'hollow'],
+          anchors: ['near-1', 'near-2', 'span-1', 'span-2', 'far', 'edge-1', 'edge-2', 'edge-3', 'elder', 'fern', 'meet-1', 'meet-2', 'meet-3', 'root-1', 'root-2', 'root-3', 'trunk', 'moss', 'nook', 'lip'], opts: {} },
+        camp: { cams: ['herbs'], anchors: ['herbs-1', 'herbs-2', 'herbs-3', 'web'], opts: { remedy: ['none', 'four', 'mixed'] } },
+        den: { cams: ['case'], anchors: ['case-1', 'case-2', 'case-3'], opts: { read: 'number', moon: [false, true, 5, 8, 13] } },
+        title: { opts: { root: [false, true], tap: ['none', 'root'] } },
+        roof: { anchors: ['puddle'], opts: { dew: [false, true] } },
+        bridge: { anchors: ['run', 'run-2', 'skim', 'air', 'paddle', 'watch-1', 'watch-2', 'watch-3', 'watch-4'], opts: { shallows: [false, true] } }
+      },
+      cast: ['thymeleaf', 'mizzle', 'groveclan', 'spider'],
+      otherPoses: { mizzle: ['curl', 'yawn', 'sit', 'wake', 'pawup'], spider: ['spin', 'wave'], sprinkle: ['hop', 'flap', 'glide', 'fly', 'splash'], squall: ['hidden'] },
+      extras: { holds: ['mint', 'leaf', 'glass'], holdAt: ['paws', 'mouth'], tap: ['wing', 'leaf', 'nose', 'paw', 'ears', 'tail'], tailUp: [true], asleep: [true, 'half'] },
+      variants: { groveclan: [1, 2] }
+    };
+    const run = (x) => { const f = path.join(tmp, 'more.json'); fs.writeFileSync(f, JSON.stringify(x)); return spawnSync(process.execPath, [TOOL, '--check-words', f], { encoding: 'utf8' }); };
+    const ok = run(ch09);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.match(ok.stdout, /^Every set, camera, anchor, option, pose, mood, effect, cast member and cast extra has words\.$/m);
+    // every value of the case's `read` the spec uses (0 to 7) has words, not only the check's sample number
+    const rows = run({ sets: { den: { cams: ['case'], opts: { read: [0, 1, 2, 3, 4, 5, 6, 7] } } } });
+    assert.equal(rows.status, 0, rows.stderr);
+    // names nobody gave: a camera, anchors, option values, a cast member, poses, extras, a third GroveClan cat
+    const bad = run({
+      sets: { grove: { cams: ['canopy'], anchors: ['branch'] }, camp: { opts: { remedy: ['boiled'] } }, den: { opts: { read: [8] } }, title: { opts: { tap: ['reeds'] } },
+        roof: { opts: { dew: ['frost'] } }, bridge: { anchors: ['run-3'], opts: { shallows: ['deep'] } } },
+      cast: ['thistle'], otherPoses: { mizzle: ['nap'], spider: ['crawl'] }, extras: { holds: ['acorn'], tap: ['web'] }, variants: { groveclan: [3] }
+    });
+    assert.equal(bad.status, 1);
+    assert.deepEqual(bad.stderr.trim().split('\n').slice(1).map(l => l.trim()).sort(),
+      ['bridge anchor run-3', 'bridge option shallows: "deep"', 'camp option remedy: "boiled"', 'cast extra holds: "acorn"', 'cast extra tap: "web"', 'cast groveclan variant 3', 'cast thistle',
+        'den option read: 8', 'grove anchor branch', 'grove camera canopy', 'pose crawl', 'pose nap', 'roof option dew: "frost"', 'title option tap: "reeds"'].sort());
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

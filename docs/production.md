@@ -39,6 +39,15 @@ art), planned as two build windows and done in one run: the text about 6.3M (wit
 **about 16.1M**, with no session-limit stop. 169 frames (about 85 to 103 a reading), about 21
 minutes, 22 to 24 with Hail, 13 confirmed review findings and 3 in the final review, 1295 tests.
 
+**Chapter 9** (2026-10-26), the first with every agent at `xhigh`, a completeness critic and an
+independent checker after each fix round: about 35M in all, more than twice chapter 8, and three
+session-limit stops. The text about 4M, the build and frames about 6M; the review, its fix round and
+the final review about 20M, much of it rerun after resumes (a resumed pipeline reruns finished agents
+when parallel calls come back in a new order) and slowed by Safari automation hanging under load (the
+checks moved to an offscreen WebKit view). 140 frames (95 to 120 a reading), 15 to 17 typed answers,
+30 confirmed review findings, 1437 tests. Two live fixes rode along: a player's bug (a far cat drawn
+over a near one, twelve frames) and bigger text that fits a 10.2-inch iPad.
+
 Chapter 1 was 98 frames and a 387-line text. The engine has grown from 841 to 2,933 lines, the page
 code from 1,635 to 3,109, the character art from 1,195 to 5,792, and `docs/build.md` to 1,254 lines.
 The suite takes about 100 seconds.
@@ -182,8 +191,8 @@ time instead of waiting to be asked.
 ### 9. Aron's to decide before they block
 
 - The Warrior Counts' format: 55 pairs or 100 questions; one sitting or rounds; how retries work.
-- Dew's new name (before chapter 9); Snip's (before chapter 8); the 7s picture's words
-  ("sunrises in a quarter-moon" echoes the books).
+- ~~Dew's new name (before chapter 9); Snip's (before chapter 8); the 7s picture's words~~ Settled: Dew is
+  Mizzle (chapter 9), Snip kept (chapter 8), the 7s a clutch of seven (decision 51).
 - ~~Whether chapters may run to 22 minutes or should come back to 15–20.~~ Answered for chapter 6:
   up to 22 minutes (decision 47, 2026-10-18).
 
@@ -193,7 +202,10 @@ to ask.
 ## Shipping checklist
 
 1. `node --test` green; storyboards current (`node tools/storyboard.mjs` changes nothing).
-2. `CACHE` in `sw.js` past the live value; every script in `index.html` in `ASSETS`.
+2. `CACHE` in `sw.js` past the live value; every script in `index.html` in `ASSETS`. The live value is the last entry of
+   `tests/fixtures/sw-shipped.json` (not a worktree's own `HEAD`: two trees built side by side both read the same one);
+   `tests/sw.test.js` fails until `CACHE` is past it. At ship, append `{ commit, shipped, what, cache, assets }` to the ledger
+   (the test's diagnostic prints the `assets` digest), in the ship's own commit.
 3. The orchestrator looks at five or six key panels in Safari (`tools/shots.mjs`).
 4. README: status line, docs list, calls made under decision 46. `docs/continuity.md` updated.
 5. `git add -A` (new files are untracked until then), commit, push with the deploy key.

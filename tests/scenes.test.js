@@ -1283,6 +1283,8 @@ const CAMP_MAIN = ['reveal', 'crowd', 'purr', 'ferns'];
 
 test('camp crowd: the whole Clan crowded round the fountain in the wide shots, every cat turned to it; heads from below the fountain, more shadows from above; nothing without the option', () => {
   assert.deepEqual(art.vocab.sets.camp.opts.crowd, [true, false]);
+  // (chapter 9: every camp camera, Thymeleaf's den among them: it draws at every camp light, and no crowd in his nook)
+  assert.ok(art.vocab.sets.camp.cams.includes('herbs'), 'Thymeleaf\'s den is in this loop');
   for (const cam of art.vocab.sets.camp.cams) for (const fx of [['sunset'], ['morning'], ['dusk', 'purr']]) {
     const scene = { set: 'camp', cam, opts: { crowd: true }, cast: [], fx };
     checkRender(art.render(scene, { look: LOOK }), scene, 'crowd ' + cam + ' ' + fx);
@@ -1440,7 +1442,15 @@ const CH6_NEW = {
   title: { cams: ['end', 'meet'], anchors: ['wall-3', 'end-1', 'end-2', 'end-3', 'reed-1', 'reed-2', 'reed-3'], opts: ['rustle'] },
   sky: { cams: ['walk', 'below'], anchors: ['star-1', 'star-2'], opts: [] }
 };
-const ch1Cams = (set) => art.vocab.sets[set].cams.filter((c) => !((CH6_NEW[set] || {}).cams || []).includes(c));
+// What chapter 9 adds to chapter 1's sets, by name: Thymeleaf's den on the camp and the case laid out in the den,
+// each a composition of its own (chapter 1's fixed anchors are not theirs), and the title's root and its Tap
+const CH9_NEW = {
+  camp: { cams: ['herbs'], anchors: ['herbs-1', 'herbs-2', 'herbs-3', 'web'], opts: ['remedy'] },
+  den: { cams: ['case'], anchors: ['case-1', 'case-2', 'case-3'], opts: ['read'] },
+  title: { cams: [], anchors: [], opts: ['root', 'tap'] }
+};
+// (chapter 9: and its new cameras, as chapter 6's are)
+const ch1Cams = (set) => art.vocab.sets[set].cams.filter((c) => !((CH6_NEW[set] || {}).cams || []).concat((CH9_NEW[set] || {}).cams || []).includes(c));
 function ch13Fingerprint(art, crypto) {
   const fake = function () { throw new Error('placeholder'); };
   fake.placeholder = true;
@@ -2376,10 +2386,10 @@ test('vocab, chapter 5: the den\'s moon takes its age in evenings (5: a little f
   assert.deepEqual(v.den.opts.bark, [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 'bark: a number, or auto (her own cards, however many)');
   assert.deepEqual(v.den.opts.hidden, [false, true], 'no change to hidden');
   // chapter 5 needs no new place to stand and no new camera in chapter 1's sets (the storyboard has words for all of these);
-  // chapter 6's are its own, named in CH6_NEW, after them
+  // chapter 6's are its own, named in CH6_NEW, after them (chapter 9: and chapter 9's, named in CH9_NEW, after those)
   for (const set of CH1_SETS) {
-    assert.deepEqual(v[set].cams, CH1_CAMS[set].concat((CH6_NEW[set] || {}).cams || []), set + ': cameras');
-    assert.deepEqual(v[set].anchors, CH1_ANCHORS[set].concat((CH6_NEW[set] || {}).anchors || []), set + ': anchors');
+    assert.deepEqual(v[set].cams, CH1_CAMS[set].concat((CH6_NEW[set] || {}).cams || [], (CH9_NEW[set] || {}).cams || []), set + ': cameras');
+    assert.deepEqual(v[set].anchors, CH1_ANCHORS[set].concat((CH6_NEW[set] || {}).anchors || [], (CH9_NEW[set] || {}).anchors || []), set + ': anchors');
   }
   assert.deepEqual(Object.keys(v.tower.opts), ['chime', 'light', 'roar', 'ding'], 'the tower as chapter 4 left it');
   assert.deepEqual(Object.keys(v.den.opts).slice(0, 6), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden']);   // (chapter 8's `glass` after them)
@@ -3178,7 +3188,8 @@ test('vocab, chapter 6: the title\'s wall-3 and the wall\'s end (end, meet; end-
   const v = art.vocab.sets;
   assert.deepEqual(v.title.cams, ['wide', 'end', 'meet']);
   assert.deepEqual(v.title.anchors, ['wall', 'wall-2', 'wall-3', 'end-1', 'end-2', 'end-3', 'reed-1', 'reed-2', 'reed-3']);
-  assert.deepEqual(v.title.opts, { rustle: [false, true] }, 'rustle, off unless a frame asks');
+  // (chapter 9: and the root at the wall's end and its Tap, after it: chapter 9's vocabulary)
+  assert.deepEqual(v.title.opts, { rustle: [false, true], root: [false, true], tap: ['none', 'root'] }, 'rustle, off unless a frame asks');
   assert.ok(!v.title.cams.includes('reeds'), 'no reeds close-up (spec v0.2, call 21)');
   assert.deepEqual(v.sky.cams, ['up', 'cats', 'walk', 'below']);
   assert.deepEqual(v.sky.anchors, ['ground-left', 'ground-right', 'star-1', 'star-2']);
@@ -3645,7 +3656,11 @@ test('chapter 7: chapters 1 to 6 draw byte for byte as they shipped: every frame
   // what is new is only chapter 7's: its cameras on the gallery; and from chapter 8 on, a panel for every camera of the
   // railway bank (the `tracks` set, sets/tracks.js), whichever of them it has: one while its file is a stub, all eight built
   const tracks = (art.vocab.sets.tracks ? art.vocab.sets.tracks.cams : []).map((c) => 'gallery/tracks/' + c);
-  assert.deepEqual(Object.keys(now).filter((k) => !want.includes(k)).sort(), ['gallery/bridge/print', 'gallery/pile/hole', 'gallery/pile/rear'].concat(tracks).sort());
+  // (chapter 9: and a panel for every camera of GroveClan's woods (the `grove` set, sets/grove.js), whichever of them it
+  // has: one while its file is a stub, all five built; and Thymeleaf's den and the case laid out, the camp's and the
+  // den's new cameras, each a composition of its own)
+  const grove = (art.vocab.sets.grove ? art.vocab.sets.grove.cams : []).map((c) => 'gallery/grove/' + c);
+  assert.deepEqual(Object.keys(now).filter((k) => !want.includes(k)).sort(), ['gallery/bridge/print', 'gallery/pile/hole', 'gallery/pile/rear'].concat(tracks, grove, ['gallery/camp/herbs', 'gallery/den/case']).sort());
 });
 
 test('vocab, chapter 7: the hollow\'s `compare`, declared as the bridge\'s ([false, [24, 60]], off by default); seven marks as markSpots has always drawn them; the den takes nothing new by name; the kit\'s one painter', () => {
@@ -3656,7 +3671,8 @@ test('vocab, chapter 7: the hollow\'s `compare`, declared as the bridge\'s ([fal
   assert.ok(v.hollow.opts.marks.includes(7), 'marks: 7');
   assert.deepEqual(Object.keys(v.den.opts).slice(0, 6), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden'], 'the den: three more cards under the moss, by their pictures; no new option');
   // (chapter 8 adds one, `glass`, after them, and the moon's eighth evening: tested with chapter 8's vocabulary)
-  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass'], 'and chapter 8\'s `glass`, last');
+  // (chapter 9: and `read`, the case's rows, after it: tested with chapter 9's)
+  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read'], 'and chapter 8\'s `glass`, and chapter 9\'s `read`, last');
   assert.deepEqual(v.hollow.cams, ['wide', 'lesson', 'sand', 'tree']);
   assert.equal(typeof art.kit.compareLines, 'function', 'kit.compareLines, the one drawing for the hollow and the bridge');
   assert.equal(typeof art.kit.compareNums, 'function');
@@ -3954,14 +3970,16 @@ const cornerShapes = (svg) => [...svg.matchAll(/<g transform="translate\(([-\d.]
 
 test('vocab, chapter 8: the den\'s moon takes the eighth evening (8) and the den takes `glass`, both off unless a frame asks; nothing else is new on the den or the hollow; the weasels\' sizes published; the secrets\' table', () => {
   const v = art.vocab.sets;
-  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass']);
-  assert.deepEqual(v.den.opts.moon, [false, true, 5, 8], 'no moon, chapter 4\'s sliver, the fifth evening\'s crescent, the eighth evening\'s half moon');
+  // (chapter 9: and `read`, the case's rows, after `glass`; the moon's thirteenth evening after the eighth: chapter 9's vocabulary)
+  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read']);
+  assert.deepEqual(v.den.opts.moon.slice(0, 4), [false, true, 5, 8], 'no moon, chapter 4\'s sliver, the fifth evening\'s crescent, the eighth evening\'s half moon');
   assert.deepEqual(v.den.opts.glass, [false, true]);
   assert.deepEqual(v.den.opts.hidden, [false, true], 'more under the moss is the bark\'s own: no new value');
   assert.deepEqual(v.den.opts.bark, [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   assert.deepEqual(art.sceneInfo('den').defaults, { weather: 'clear' }, 'no glass and no moon unless a frame asks');
-  assert.deepEqual(v.den.cams, ['outside', 'inside', 'nest', 'doorway']);
-  assert.deepEqual(v.den.anchors, ['entrance-left', 'entrance-right', 'doorway', 'nest', 'sleeper-1', 'sleeper-2']);
+  // (chapter 9: and the case laid out, its camera and its three spots, after them)
+  assert.deepEqual(v.den.cams, ['outside', 'inside', 'nest', 'doorway', 'case']);
+  assert.deepEqual(v.den.anchors, ['entrance-left', 'entrance-right', 'doorway', 'nest', 'sleeper-1', 'sleeper-2', 'case-1', 'case-2', 'case-3']);
   assert.deepEqual(Object.keys(v.hollow.opts), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap', 'compare'], 'the hollow: eight marks as markSpots has laid them since chapter 1');
   assert.ok(v.hollow.opts.marks.includes(8), 'marks: 8');
   assert.deepEqual({ snip: art.sizeBands.snip, snatch: art.sizeBands.snatch }, {
@@ -3969,7 +3987,8 @@ test('vocab, chapter 8: the den\'s moon takes the eighth evening (8) and the den
     snatch: { ref: 'player', pose: 'up', by: 'tall', min: 0.5, max: 0.65 }
   }, '"half your size", sitting up tall');
   assert.equal(art.sizeBands.hail, undefined, 'Hail is held as Squall is (a cap), not by a band');
-  assert.deepEqual(Object.keys(art.barkSecret).filter((p) => !/^later-secret-/.test(p)), SECRET8, 'chapter 7\'s six and chapter 8\'s four go under the moss');
+  // (chapter 9: and Mizzle's card after them, a dragonet's, as Hail's)
+  assert.deepEqual(Object.keys(art.barkSecret).filter((p) => !/^later-secret-/.test(p)), SECRET8.concat(['mizzle-wing']), 'chapter 7\'s six and chapter 8\'s four go under the moss, and chapter 9\'s one');
   // the spec names them so
   const md = fs.readFileSync(path.join(ROOT, 'docs/chapters/08-the-night-trail.spec.md'), 'utf8').replace(/\s+/g, ' ');
   assert.ok(md.includes('**`moon: 8`** (the den\'s `moon` list gains 8: `[false, true, 5, 8]`)'));
@@ -4269,4 +4288,567 @@ test('the real Hail, Snip and Snatch (cats.js, once it draws them): in every pos
       }
     }
   }
+});
+
+
+// ================================================================ chapter 9 (docs/chapters/09-featherlight.spec.md, sections 3, 4 and 10)
+
+// The proof that chapters 1 to 8 look exactly as they shipped (spec section 7, item 2: the nest owner's fingerprint).
+// The numbers were taken once from the tree as chapter 8 shipped it (the snapshot of commit b6a8d4f taken before
+// chapter 9's build, loaded in a process of its own), and are kept here: this test never reads that tree.
+// <ch9-fingerprint>
+// Every frame of chapters 7 and 8, by chapter and set, and every camp and title frame of chapters 1 to 8, as a fixed
+// cat sees them (each 'auto' filled: a mark a Count, the first glowing, her stone by her nose, and her file: her own
+// chapter's, a full chapter-8 file of 28 and, in chapter 8, the fewest a chapter-8 cat holds, 20). Then her nest for
+// every file a live save can hold after chapter 8: 1 to 28 cards, 0 to 10 of them under the moss (and never more than
+// eighteen others), in two orders (as she found them, and the secrets spread through the file), lying in it facing right, facing left, and nobody home, with `hidden: true` and
+// her glass on `nest` (chapter 8's bedtime); with seven to ten under the moss, the same files with the glass left out
+// (chapters 5 to 7's bedtime frames, reread); and with `hidden` off on `nest` and `doorway` (chapter 4's f114 and
+// f115), 25 to 28 cards among them; then a reread cat's files, nineteen along the edge (19 to 29 cards, the third course
+// standing; added 2026-10-26). Last, the hollow at eight marks in every camera and its lights. Hashed with the per-render ids
+// stripped, with the heads and keep: one hash per chapter and set, per count of cards and camera, and per camera.
+function ch9Fingerprint(PC, crypto) {
+  const art = PC.art, out = {}, LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
+  const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+  const F28 = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes',
+    'prints-marsh', 'prints-tracks', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel', 'stash', 'glass', 'fox-brag', 'hail-shapes'];
+  const F20 = F28.filter((p) => !['my-count', 'hail-shapes', 'dug-earth', 'squall-shapes', 'prints-pile', 'prints-tracks', 'wisp-fox', 'sleet-den'].includes(p));
+  const EAR = ['fox-flew', 'fox-moon', 'squall-shapes', 'otter-fox', 'heron-no-moon', 'heron-shapes', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'fox-brag', 'hail-shapes'];
+  const SECRET = ['sprinkle-scales', 'cant-fly', 'coil-diggers', 'my-count', 'prints-sprinkle', 'tunnel', 'stash', 'glass', 'fox-brag', 'hail-shapes'], OPEN = F28.filter((p) => !SECRET.includes(p));
+  const card = (p) => ({ picture: p, mark: EAR.includes(p) ? 'ear' : 'eye' });
+  function file(n, s, order) {
+    const sec = SECRET.slice(0, s), open = OPEN.slice(0, n - s);
+    let list;
+    if (order === 0) list = F28.filter((p) => sec.includes(p) || open.includes(p));
+    else if (order === 1) list = open.concat(sec);
+    else if (order === 2) list = sec.concat(open);
+    else { list = open.slice(); sec.forEach((p, i) => list.splice(Math.round((i + 1) * open.length / (s + 1)) + i, 0, p)); }
+    return list.map(card);
+  }
+  function add(key, tag, scene) {
+    const r = art.render(scene, { look: LOOK }), h = out[key] || (out[key] = crypto.createHash('sha1'));
+    h.update(tag + ':' + strip(r.svg) + JSON.stringify(r.heads) + JSON.stringify(r.keep));
+  }
+  // the frames
+  const FILE = { 7: F28.slice(0, 24), 8: F28 };
+  for (const ch of ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07', 'ch08']) {
+    const n = +ch.slice(2);
+    for (const [id, f] of Object.entries(PC.story[ch].frames)) {
+      const sc = f.scene;
+      if (!sc || (n < 7 && sc.set !== 'camp' && sc.set !== 'title')) continue;
+      const o = Object.assign({}, sc.opts || {}), m = typeof o.marks === 'number' ? o.marks : n;
+      if (o.marks === 'auto') o.marks = n;
+      if (o.glow === 'auto') o.glow = Array.from({ length: m }, (v, i) => i === 0);
+      if (o.stone === 'auto') o.stone = 'nose';
+      const files = o.bark === 'auto' ? [FILE[n] || F28.slice(0, 17), F28].concat(n === 8 ? [F20] : []) : [null];
+      files.forEach((fl, i) => add('frames/' + ch + '/' + sc.set, id + ' ' + i, Object.assign({}, sc, { opts: Object.assign({}, o, fl ? { bark: fl.map(card) } : {}) })));
+    }
+  }
+  // her nest, every file a live save can hold (chapter 8's own fingerprint keeps 1 to 24 cards with 0 to 6 under the
+  // moss and no glass in all four orders; here the glass, and seven to ten under the moss, and 25 to 28 cards)
+  const her = (facing) => (facing ? [{ who: 'player', at: 'nest', pose: 'lie', mood: 'sleepy', facing }] : []);
+  for (let n = 1; n <= 28; n++) for (let s = Math.max(0, n - 18); s <= Math.min(10, n); s++) for (const order of [0, 3]) {
+    if (order && (s === 0 || s === n)) continue;
+    for (const facing of order ? ['right', 'left'] : ['right', 'left', null]) add('hidden/' + n, s + ' ' + order + ' ' + facing, { set: 'den', cam: 'nest', opts: { weather: 'clear', moon: false, stone: true, bark: file(n, s, order), hidden: true, glass: true }, cast: her(facing), fx: ['night'] });
+    if (s > 6) for (const facing of ['right', 'left']) add('bare/' + n, s + ' ' + order + ' ' + facing, { set: 'den', cam: 'nest', opts: { weather: 'clear', stone: 'nose', bark: file(n, s, order), hidden: true }, cast: her(facing), fx: ['night'] });
+  }
+  for (const cam of ['nest', 'doorway']) for (let n = 1; n <= 28; n++) for (const s of [...new Set([Math.max(0, n - 18), Math.min(10, n)])]) for (const facing of ['right', 'left']) {
+    add('open/' + cam + '/' + n, s + ' ' + facing, { set: 'den', cam, opts: { weather: 'clear', moon: false, stone: 'nose', bark: file(n, s, 0) }, cast: her(facing), fx: cam === 'doorway' ? ['night', 'stars', 'skyriver', 'zzz'] : ['night'] });
+  }
+  // and a reread cat's file after chapter 8 (chapter 9's review, 2026-10-26): a cat who read chapter 1 again with the
+  // other specialty holds both specialties' cards (`dug-earth`, `prints-pile`, `prints-tracks`), and with Puddle's
+  // `puddle-paws` up to 29 cards, nineteen along the edge, so the third course stands with `hidden: true`. Every such
+  // file: 19 to 29 cards, nineteen along the edge and 0 to 10 under the moss, in both orders, both facings and nobody
+  // home, her glass on; with seven to ten under the moss, the glass left out; and all 29 with `hidden` off on `nest`
+  // and `doorway` (the newest 27 drawn)
+  const F29R = F28.slice(0, 10).concat(['puddle-paws'], F28.slice(10)), OPEN19 = F29R.filter((p) => !SECRET.includes(p));
+  const card19 = (p) => ({ picture: p, mark: EAR.includes(p) || p === 'puddle-paws' ? 'ear' : 'eye' });
+  function file19(n, s, order) {
+    const sec = SECRET.slice(0, s), open = OPEN19.slice(0, n - s);
+    let list;
+    if (order === 0) list = F29R.filter((p) => sec.includes(p) || open.includes(p));
+    else { list = open.slice(); sec.forEach((p, i) => list.splice(Math.round((i + 1) * open.length / (s + 1)) + i, 0, p)); }
+    return list.map(card19);
+  }
+  for (let n = 19; n <= 29; n++) for (const order of [0, 3]) {
+    const s = n - 19;
+    if (order && s === 0) continue;
+    for (const facing of order ? ['right', 'left'] : ['right', 'left', null]) add('edge19/' + n, s + ' ' + order + ' ' + facing, { set: 'den', cam: 'nest', opts: { weather: 'clear', moon: false, stone: true, bark: file19(n, s, order), hidden: true, glass: true }, cast: her(facing), fx: ['night'] });
+    if (s > 6) for (const facing of ['right', 'left']) add('edge19-bare/' + n, s + ' ' + order + ' ' + facing, { set: 'den', cam: 'nest', opts: { weather: 'clear', stone: 'nose', bark: file19(n, s, order), hidden: true }, cast: her(facing), fx: ['night'] });
+  }
+  for (const cam of ['nest', 'doorway']) for (const facing of ['right', 'left']) {
+    add('open/' + cam + '/29', '10 ' + facing, { set: 'den', cam, opts: { weather: 'clear', moon: false, stone: 'nose', bark: file19(29, 10, 0) }, cast: her(facing), fx: cam === 'doorway' ? ['night', 'stars', 'skyriver', 'zzz'] : ['night'] });
+  }
+  // the hollow at eight marks
+  const SIT = [{ who: 'tallyheart', at: 'tree-far', pose: 'sit', mood: 'proud' }, { who: 'player', at: 'sunpatch-2', pose: 'sit', mood: 'happy' }];
+  for (const cam of ['wide', 'lesson', 'sand', 'tree']) for (const glow of [false, true, [false, false, false, false, false, false, false, true]]) for (const fx of [[], ['morning'], ['sunset']]) {
+    add('hollow8/' + cam, JSON.stringify(glow) + ' ' + fx.join(','), { set: 'hollow', cam, opts: { marks: 8, glow }, cast: cam === 'tree' ? [] : SIT, fx });
+  }
+  for (const k of Object.keys(out)) out[k] = out[k].digest('hex').slice(0, 12);
+  return out;
+}
+// </ch9-fingerprint>
+// Recorded again 2026-10-26 from the same snapshot with the live depth hotfix (83313a1) in it: its ch06.js, ch07.js and
+// ch08.js list the cat at `crowd-2` first in twelve pile frames, which moves 'frames/ch07/pile' (1497b99226d1 to
+// 3c4c879f9c2a) and 'frames/ch08/pile' (1fc2e6c6c453 to ca59efb39ce0) and nothing else; and with the reread cat's
+// files (`edge19/`, `edge19-bare/`, 'open/nest/29', 'open/doorway/29'), each the same drawn by b6a8d4f's art and today's.
+const CH9_FINGERPRINT = {
+  'frames/ch01/camp': '52024762b3ab', 'frames/ch02/camp': '37f1cfa0b9af', 'frames/ch02/title': '97b041bf8c30', 'frames/ch03/camp': 'cb2faa4b7631',
+  'frames/ch03/title': 'db1742914844', 'frames/ch04/camp': 'e35863d59e65', 'frames/ch04/title': '1b557a164797', 'frames/ch06/title': 'a401878368c8',
+  'frames/ch07/den': '58d4fe34542e', 'frames/ch07/garden': '09079618c1d0', 'frames/ch07/tower': 'e6fd123668b3', 'frames/ch07/pile': '3c4c879f9c2a',
+  'frames/ch07/hollow': '2766386b7003', 'frames/ch07/bridge': 'a947e968e2d8', 'frames/ch08/den': '1cdf369eb976', 'frames/ch08/pile': 'ca59efb39ce0',
+  'frames/ch08/hollow': '7d3435162f0a', 'frames/ch08/bridge': 'ba48580d243f', 'frames/ch08/tracks': '8d4b02bc38e5', 'frames/ch08/field': '56928dd644be',
+  'hidden/1': 'cb1ced5a69d5', 'hidden/2': '115c44b63008', 'hidden/3': '2333d7565fa6', 'hidden/4': 'a467e546c333',
+  'hidden/5': '913476ceb1d5', 'hidden/6': '4b61509243bc', 'hidden/7': '7e2ecb53220b', 'bare/7': '9a37d87fb588',
+  'hidden/8': '277b8b2a1062', 'bare/8': '2c93cf6fccb4', 'hidden/9': '9052627adf38', 'bare/9': '3d8876765151',
+  'hidden/10': '3f587275fe33', 'bare/10': '28f2d4f4848b', 'hidden/11': '538cb9d5296a', 'bare/11': '51bba59d03c1',
+  'hidden/12': '1faf48e1efcc', 'bare/12': '2240de972b25', 'hidden/13': 'a2d8f179037b', 'bare/13': 'f3a4efbd7257',
+  'hidden/14': '09fbac1e8848', 'bare/14': '3123948716d9', 'hidden/15': '23f5ecd0bf5e', 'bare/15': '8266d6858721',
+  'hidden/16': '294b095a0389', 'bare/16': 'fe7d84d414e3', 'hidden/17': '254dca326da2', 'bare/17': '6c401462f775',
+  'hidden/18': '3da6a70acff6', 'bare/18': '7f8b096f7e1d', 'hidden/19': 'c27d944fcaf1', 'bare/19': 'a3b0d56c992a',
+  'hidden/20': '3ec3157afa3a', 'bare/20': '009d74804854', 'hidden/21': '9ff437d664f2', 'bare/21': '67797e834429',
+  'hidden/22': '4e22029a3740', 'bare/22': '8faf9d8e386c', 'hidden/23': 'd560c7fb8a0a', 'bare/23': '7f6f187b638e',
+  'hidden/24': '8b15d12c832a', 'bare/24': 'f4f1f8dc1926', 'hidden/25': '8a76c798dc85', 'bare/25': '62a59654cb17',
+  'hidden/26': 'fbbdbbdb16fd', 'bare/26': 'b4426c66e395', 'hidden/27': '6015b2488dd7', 'bare/27': 'a2bd49253ddc',
+  'hidden/28': 'e8835e5ceb69', 'bare/28': 'cbd4c29ca641', 'open/nest/1': '85d490993f00', 'open/nest/2': 'd1ddd3e9b1d2',
+  'open/nest/3': 'ac9b8a84b6fa', 'open/nest/4': '5b6ac3c726f8', 'open/nest/5': 'a8d2f348d311', 'open/nest/6': 'e11092c864ea',
+  'open/nest/7': 'b388dc84d94c', 'open/nest/8': '91c7fada7435', 'open/nest/9': 'c57f4a4cea9d', 'open/nest/10': '43d652cf3d75',
+  'open/nest/11': '72786d5dbe84', 'open/nest/12': '0282e7dd68b9', 'open/nest/13': 'ea9926fceeb0', 'open/nest/14': '40c4db75a96d',
+  'open/nest/15': 'c1becd75fbe4', 'open/nest/16': 'fe97803e040b', 'open/nest/17': '8c18ec4cafbf', 'open/nest/18': 'b5afa5d56150',
+  'open/nest/19': 'bd6b0af06db2', 'open/nest/20': '9ff8632285ab', 'open/nest/21': 'e1685d1a9677', 'open/nest/22': 'f6a80346048f',
+  'open/nest/23': '98d6727b604a', 'open/nest/24': '50e3b4b32def', 'open/nest/25': '2bbeb7ba3861', 'open/nest/26': '05e5ec71e3c1',
+  'open/nest/27': 'f827b013f269', 'open/nest/28': '06733bd669f3', 'open/doorway/1': '36e12d850565', 'open/doorway/2': '6c75b9998aa2',
+  'open/doorway/3': 'efefac995f26', 'open/doorway/4': '1cf8390216c1', 'open/doorway/5': 'cc65d59d36bf', 'open/doorway/6': 'fd88141ed4bd',
+  'open/doorway/7': '09df70a5d833', 'open/doorway/8': 'ae76ea060c59', 'open/doorway/9': '077c9f6a5cf4', 'open/doorway/10': '902b09d62b8e',
+  'open/doorway/11': 'f7cbb7b28d0f', 'open/doorway/12': 'ea4b7c78ed37', 'open/doorway/13': 'ea18ac85a511', 'open/doorway/14': '004b467d137b',
+  'open/doorway/15': 'e0bd35470fb1', 'open/doorway/16': '671b5afd031e', 'open/doorway/17': 'ef5128f0a358', 'open/doorway/18': '40950e5f35f5',
+  'open/doorway/19': '69d1edd2c945', 'open/doorway/20': '0a7914bd8025', 'open/doorway/21': '0a2d76e6c28c', 'open/doorway/22': 'd04dfeeb4aaa',
+  'open/doorway/23': '345751f4dd6f', 'open/doorway/24': '3bd97429a498', 'open/doorway/25': '36000991681a', 'open/doorway/26': '3191255ab926',
+  'open/doorway/27': '016964a57166', 'open/doorway/28': 'fd63aa52f079', 'edge19/19': '583727c4ef30', 'edge19/20': '010629c5e805',
+  'edge19/21': 'adeaa7c84abf', 'edge19/22': 'a2eb2225e6df', 'edge19/23': '1e94b39e67d9', 'edge19/24': '2a0e766dfe8c',
+  'edge19/25': 'aa599f007143', 'edge19/26': 'd505b0c44b65', 'edge19-bare/26': '218471f111b3', 'edge19/27': '0062124a90eb',
+  'edge19-bare/27': 'c8078d145058', 'edge19/28': '8ab59195c70f', 'edge19-bare/28': '96ef682f4455', 'edge19/29': '8120173ac343',
+  'edge19-bare/29': '2a338d8700c3', 'open/nest/29': 'c3173c093b90', 'open/doorway/29': '08bedbfcbe73', 'hollow8/wide': 'c805a6e25443',
+  'hollow8/lesson': 'fd23db042e2d', 'hollow8/sand': 'b234f0441c29', 'hollow8/tree': 'efad29e322f7'
+};
+
+test('chapter 9: chapters 1 to 8 draw byte for byte as chapter 8 shipped them: every frame of chapters 7 and 8, every camp and title frame, her nest for every file a live save can hold (1 to 29 cards, 0 to 10 under the moss, up to nineteen along the edge, her glass, both facings and nobody home; `hidden` off on nest and doorway), and the hollow at eight marks', { skip: !art.character && 'no cats.js' }, () => {
+  for (let i = 1; i <= 8; i++) require(path.join(ROOT, 'app/story/ch0' + i + '.js'));
+  const now = ch9Fingerprint(PC, require('crypto'));
+  assert.deepEqual(Object.keys(now), Object.keys(CH9_FINGERPRINT), 'the same files, cameras and chapters, in the same order');
+  for (const k of Object.keys(CH9_FINGERPRINT)) assert.equal(now[k], CH9_FINGERPRINT[k], k + ' draws something else than it did when chapter 8 shipped');
+  const keys = Object.keys(CH9_FINGERPRINT);
+  assert.equal(keys.filter((k) => /^hidden\//.test(k)).length, 28, 'one to twenty-eight cards, the moss over the secret ones, and her glass');
+  for (const cam of ['nest', 'doorway']) assert.equal(keys.filter((k) => k.startsWith('open/' + cam + '/')).length, 29, 'with nothing hidden, 1 to 29 cards on ' + cam);
+  for (const n of [7, 10, 18, 25, 28]) assert.ok(CH9_FINGERPRINT['bare/' + n], n + ' cards with seven or more under the moss, and no glass');
+  // a reread cat's files: nineteen along the edge, 19 to 29 cards (the third course with `hidden`), and all 29 with it off
+  assert.deepEqual(keys.filter((k) => /^edge19\//.test(k)), Array.from({ length: 11 }, (v, i) => 'edge19/' + (19 + i)), 'nineteen along the edge, 0 to 10 under the moss');
+  assert.deepEqual(keys.filter((k) => /^edge19-bare\//.test(k)), [26, 27, 28, 29].map((n) => 'edge19-bare/' + n), 'and seven to ten under the moss without the glass');
+  for (const cam of ['nest', 'doorway']) assert.ok(CH9_FINGERPRINT['open/' + cam + '/29'], '29 cards with nothing hidden on ' + cam);
+  for (const ch of ['ch07', 'ch08']) for (const set of ['den', 'hollow', 'pile', 'bridge']) assert.ok(CH9_FINGERPRINT['frames/' + ch + '/' + set], ch + ' ' + set);
+  for (const k of ['frames/ch08/tracks', 'frames/ch08/field', 'frames/ch01/camp', 'frames/ch06/title', 'hollow8/tree', 'hollow8/wide']) assert.ok(CH9_FINGERPRINT[k], k);
+});
+
+// ---------------------------------------------------------------- chapter 9: the new names (spec sections 3 and 4)
+
+// her file after chapter 9 (spec section 3): the fullest cat's 29 on a straight reading (chapter 8's 28 and Mizzle's
+// card) and a cat with her count and no dragonet, no roof and no noticing card: 21 (chapter 8's fewest, 20, and
+// my-count); and the fullest of all, 30 (the review, 2026-10-26): a cat who read chapter 1 again with the other
+// specialty holds both specialties' cards, and with Puddle's `puddle-paws` too (in the order she found them)
+const F29 = F28.concat(['mizzle-wing']);
+const F30 = F28.slice(0, 10).concat(['puddle-paws'], F28.slice(10), ['mizzle-wing']);
+const F21 = F28.filter((p) => !['hail-shapes', 'dug-earth', 'squall-shapes', 'prints-pile', 'prints-tracks', 'wisp-fox', 'sleet-den'].includes(p));
+const EAR9 = ['fox-flew', 'fox-moon', 'squall-shapes', 'puddle-paws', 'otter-fox', 'heron-no-moon', 'heron-shapes', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'fox-brag', 'hail-shapes', 'mizzle-wing'];
+const file9 = (list) => list.map((p) => ({ picture: p, mark: EAR9.includes(p) ? 'ear' : 'eye' }));
+// the case's rows, as she reads them (spec section 3): the moon; FLEW (and sleet-den at its end); the piles; the scale;
+// the prints; the tunnel; and the seventh, her count and Mizzle's card
+const ROWS9 = [['waffles-no-moon', 'fox-moon', 'heron-no-moon'], ['cant-fly', 'fox-flew', 'fox-brag', 'sleet-den'], ['tidy', 'reed-pile', 'stash'], ['scale', 'glass'],
+  ['prints-sprinkle'], ['coil-diggers', 'tunnel'], ['my-count', 'mizzle-wing']];
+const CASE_CAST = [{ who: 'player', at: 'case-1', pose: 'sit', mood: 'wonder' }, { who: 'tallyheart', at: 'case-2', pose: 'sit', mood: 'solemn' }];
+const caseScene = (opts, cast, fx) => ({ set: 'den', cam: 'case', opts: Object.assign({ weather: 'clear', stone: true, glass: true }, opts), cast: cast || CASE_CAST, fx: fx || ['night'] });
+// the rows on the case, in the order they are drawn: { row, cards, lit, at (index in the markup) }
+const caseRows = (svg) => [...svg.matchAll(/<g data-row="(\d)" data-cards="([^"]*)" data-lit="(true|false)"/g)].map((m) => ({ row: +m[1], cards: m[2] ? m[2].split(' ') : [], lit: m[3] === 'true', at: m.index }));
+// each piece lying face up on the case: its box in the world (cards.js's 200 x 240, at its scale, squashed)
+const casePieces = (svg) => [...svg.matchAll(/<g transform="translate\(([-\d.]+) ([-\d.]+)\) matrix\(([\d.]+) 0 0 ([\d.]+) 0 0\)" data-bark="card" data-picture="([^"]+)">/g)]
+  .map((m) => ({ pic: m[5], box: [+m[1], +m[2], +m[1] + 200 * m[3], +m[2] + 240 * m[4]] }));
+const keptWorld = (r, b) => (r.keep || []).some((k) => { const vb = viewBox(r.svg); const x0 = vb[0] + k.x / 100 * vb[2], y0 = vb[1] + k.y / 100 * vb[3], x1 = x0 + k.w / 100 * vb[2], y1 = y0 + k.h / 100 * vb[3]; return x0 <= b[0] + 1 && y0 <= b[1] + 1 && x1 >= b[2] - 1 && y1 >= b[3] - 1; });
+const HERBS_CAST = [{ who: 'thymeleaf', at: 'herbs-1', pose: 'sit', mood: 'kind' }, { who: 'player', at: 'herbs-2', pose: 'sit', mood: 'wonder' }, { who: 'tallyheart', at: 'herbs-3', pose: 'sit', mood: 'happy' },
+  { who: 'spider', at: 'web', pose: 'spin' }];
+
+test('vocab, chapter 9: Thymeleaf\'s den on the camp (`herbs`, its four spots, `remedy`), the case laid out in the den (`case`, its three spots, `read` a number), the thirteenth evening\'s moon, the title\'s `root` and its Tap, Mizzle\'s card under the moss: as the spec names them, every one off unless a frame asks', () => {
+  const v = art.vocab.sets, ci = art.sceneInfo('camp'), di = art.sceneInfo('den'), ti = art.sceneInfo('title');
+  // Thymeleaf's den: a camera of the camp, a composition of its own, after chapter 1's seven
+  assert.equal(v.camp.cams[v.camp.cams.length - 1], 'herbs');
+  assert.equal(ci.cams.herbs.comp, 'herbs', 'a composition of its own');
+  assert.deepEqual(Object.keys(ci.anchors.herbs), ['herbs-1', 'herbs-2', 'herbs-3', 'web']);
+  const H = ci.anchors.herbs;
+  assert.deepEqual([H['herbs-1'].face, H['herbs-2'].face, H['herbs-3'].face], ['right', 'left', 'left'], 'Thymeleaf facing his visitors, they facing him');
+  assert.ok(H['herbs-1'].x < 600 && H['herbs-1'].x < H['herbs-2'].x && H['herbs-2'].x < H['herbs-3'].x, 'Thymeleaf at the left, our cat at the right, Tallyheart beside her, further right');
+  assert.ok(H.web.elev && H.web.air && H.web.y < 400 && H.web.x > 1300, 'the web: the top right corner, high, no ground under the spider');
+  assert.deepEqual(v.camp.opts.remedy, ['none', 'four', 'mixed']);
+  assert.deepEqual(ci.defaults, {}, 'the bare stone unless a frame asks');
+  // the case laid out: a camera of the den, a composition of its own, after chapter 1's four
+  assert.equal(di.cams.case.comp, 'case');
+  assert.deepEqual(Object.keys(di.anchors.case), ['case-1', 'case-2', 'case-3']);
+  const C = di.anchors.case;
+  assert.deepEqual([C['case-1'].face, C['case-2'].face, C['case-3'].face], ['right', 'left', 'left']);
+  assert.ok(C['case-1'].x < 400 && C['case-2'].x > 1200, 'our cat at the rows\' near left, Tallyheart across them at the right');
+  assert.ok(C['case-3'].y < C['case-1'].y - 200 && C['case-3'].y < C['case-2'].y - 200 && C['case-3'].x > 1300, 'Glintstar\'s spot: the far side, by the doorway\'s light at the right');
+  assert.ok(C['case-3'].h > C['case-2'].h, 'a little bigger, as the leader, though further off');
+  assert.equal(v.den.opts.read, 'number', 'read: a number');
+  assert.deepEqual(v.den.opts.moon, [false, true, 5, 8, 13], 'and the thirteenth evening\'s moon');
+  assert.deepEqual(di.defaults, { weather: 'clear' }, 'no row read unless a frame asks (0)');
+  // the wall's end: the root and its Tap
+  assert.deepEqual(v.title.opts.root, [false, true]);
+  assert.deepEqual(v.title.opts.tap, ['none', 'root']);
+  assert.deepEqual(ti.defaults, {}, 'no root and no Tap unless a frame asks');
+  assert.equal(art.barkSecret['mizzle-wing'], 1, 'Mizzle\'s card goes under the moss');
+  // the spec names them so
+  const md = fs.readFileSync(path.join(ROOT, 'docs/chapters/09-featherlight.spec.md'), 'utf8').replace(/\s+/g, ' ');
+  for (const s of ['**Option `remedy: \'none\' | \'four\' | \'mixed\'`** (default `\'none\'`)', '**Camera `case`** (`comp: \'case\'`)', '**Option `read`** (a number, default 0; on `case` only)',
+    '**`moon: 13`** (the den\'s `moon` list gains 13: `[false, true, 5, 8, 13]`)', '**`BARK_SECRET` gains `mizzle-wing`.**', '**Option `root: true`** (`end` and `meet`; default false)',
+    '**`tap: \'none\' | \'root\'`** (default `\'none\'`)', 'Anchors: `herbs-1` (Thymeleaf, among his leaves at the left, facing right), `herbs-2` (our cat, right, facing left), `herbs-3` (Tallyheart, beside our cat, further right), `web`',
+    'NO_SHADOW.squall = { hidden: 1 }', 'NO_SHADOW.sprinkle = { glide: 1, fly: 1, splash: 1 }', '`SIZE_CAP` in `scenes.js`: `mizzle: \'player\'`']) assert.ok(md.includes(s), 'the spec: ' + s);
+});
+
+test('Thymeleaf\'s den (camp, `herbs`): his nook at every camp light, a curtain of drying leaves across the top, a ledge of stones, the mixing stone between him and his visitors, the web high in the corner (in keep); everyone in the panel; nothing to tap', () => {
+  for (const fx of [[], ['sunset'], ['morning'], ['dusk', 'purr'], ['night'], ['day']]) for (const remedy of [undefined, 'none', 'four', 'mixed']) {
+    const scene = { set: 'camp', cam: 'herbs', opts: remedy === undefined ? {} : { remedy }, cast: HERBS_CAST, fx }, r = art.render(scene, { look: LOOK });
+    const label = 'herbs ' + fx.join('+') + ' ' + remedy;
+    checkRender(r, scene, label);
+    for (const k of ['herb-curtain', 'herb-ledge', 'mixing-stone', 'web']) assert.ok(prop(r.svg, k), label + ': ' + k);
+    assert.ok(r.heads.every((h) => h), label + ': everyone in the panel: ' + JSON.stringify(r.heads));
+    if (art.character) for (let i = 0; i < 3; i++) assert.ok(r.heads[i].r > 0, label + ': ' + HERBS_CAST[i].who + '\'s face to letter');
+    assert.ok(!/pc-next|pc-tap/.test(r.svg), label + ': the set draws nothing to tap');
+    // the web in its corner, in keep; Thymeleaf left of the stone's middle, his visitors right of it
+    const W = art.sceneInfo('camp').anchors.herbs.web;
+    assert.ok(keptWorld(r, [W.x - 40, W.y - 60, W.x + 40, W.y - 10]), label + ': the web is kept clear of the lettering');
+  }
+  // the bare stone ('none') is exactly what nothing asked for; and the remedy is the den's only, on no other camp camera
+  const herbs = (opts, fx) => strip(art.render({ set: 'camp', cam: 'herbs', opts, cast: HERBS_CAST, fx: fx || ['morning'] }, { look: LOOK }).svg);
+  assert.equal(herbs({ remedy: 'none' }), herbs({}));
+  for (const cam of ['reveal', 'crowd', 'fountain', 'entrance', 'fountain-close', 'ferns', 'purr']) {
+    assert.equal(strip(art.render({ set: 'camp', cam, opts: { remedy: 'four' }, cast: [], fx: ['morning'] }).svg), strip(art.render({ set: 'camp', cam, cast: [], fx: ['morning'] }).svg), cam + ': no remedy there');
+  }
+  // the light only where there is sun: by night no shafts of light, the same nook
+  assert.ok(/mix-blend-mode:screen/.test(herbs({}, ['morning'])) && !/mix-blend-mode:screen/.test(herbs({}, ['night'])));
+});
+
+test('the remedy on Thymeleaf\'s stone: `four`, the four things in a row (the root, the silver moss, the mint, the dew in a curled leaf); `mixed`, one curled leaf of pale green remedy and the stone smeared green; each on the stone, between him and his visitors, in keep', () => {
+  const at = (remedy, cast) => art.render({ set: 'camp', cam: 'herbs', opts: { remedy }, cast: cast || HERBS_CAST, fx: ['morning'] }, { look: LOOK });
+  const H = art.sceneInfo('camp').anchors.herbs;
+  for (const remedy of ['four', 'mixed']) {
+    const r = at(remedy), grp = prop(r.svg, 'remedy');
+    assert.ok(grp && grp.includes('data-remedy="' + remedy + '"'), remedy);
+    const things = [...grp.matchAll(/data-thing="([a-z]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(things, remedy === 'four' ? ['root', 'moss', 'mint', 'dew'] : ['smears', 'remedy'], remedy + ': in a row, left to right');
+    // on the stone: the group is set at the stone's middle, between Thymeleaf and our cat, on the floor
+    const m = /data-prop="remedy" data-remedy="[a-z]+" transform="translate\(([-\d.]+) ([-\d.]+)\) scale\(([\d.]+)\)"/.exec(grp);
+    assert.ok(m, remedy + ': set on the stone');
+    const sx = +m[1], sy = +m[2];
+    assert.ok(sx > H['herbs-1'].x + 150 && sx < H['herbs-2'].x - 150 && sy > 880, remedy + ': between him and her, on the floor: ' + sx + ', ' + sy);
+    assert.ok(keptWorld(r, [sx - 120, sy - 40, sx + 120, sy + 10]), remedy + ': the lettering keeps off it');
+    // the four things are coloured as they are: the root pale, the moss silver, the mint green, the dew bright
+    if (remedy === 'four') {
+      assert.ok(grp.includes('#E9DFC3') && grp.includes('#C4CCBC') && grp.includes('#5DB458') && grp.includes('#DDF0FA'), 'the root, the silver moss, the mint and the dew');
+    } else assert.ok(grp.includes('#BFE3A2') && grp.includes('#93C27A'), 'the pale green remedy, and the green smears');
+  }
+  // Thymeleaf crouching over his stone, as the remedy is mixed: everyone still in the panel
+  const crouch = at('mixed', [{ who: 'thymeleaf', at: 'herbs-1', pose: 'crouch', mood: 'kind' }, { who: 'player', at: 'herbs-2', pose: 'sit' }, { who: 'tallyheart', at: 'herbs-3', pose: 'sit' }, { who: 'spider', at: 'web', pose: 'wave' }]);
+  assert.ok(crouch.heads.every((h) => h));
+});
+
+test('the case laid out (den, `case`): six rows face up as she reads them, every cat\'s fourteen, found by picture, sleet-den at FLEW\'s end; `read` lights the first rows and the next one glows for the Tap, its pc-next rect straight before its group; 6 and 7 glow nothing, 7 lays out her count and Mizzle\'s card; the rest of her bark face down by the nest (15 and 13 for the fullest file, 30; 14 and 12 for 29); the rows in keep', () => {
+  for (const [name, file, stack6, stack7] of [['21', F21, 7, 6], ['29', F29, 14, 12], ['30', F30, 15, 13]]) for (let read = 0; read <= 7; read++) {
+    const scene = caseScene({ bark: file9(file), read }), r = art.render(scene, { look: LOOK }), label = name + ' cards, read ' + read;
+    checkRender(r, scene, label);
+    const rows = caseRows(r.svg), want = ROWS9.map((row) => row.filter((p) => file.includes(p))).filter((row, k) => k < 6 || (read >= 7 && row.length));
+    assert.deepEqual(rows.map((x) => x.cards), want, label + ': the rows, found by picture, in her order');
+    assert.deepEqual(rows.map((x) => x.row), want.map((x, k) => k + 1), label + ': numbered as she reads them');
+    assert.deepEqual(rows.map((x) => x.lit), rows.map((x) => (x.row <= 6 ? x.row <= read : read >= 7)), label + ': the first ' + read + ' lit');
+    // the glow: one pc-next, straight before the next row's group (the page's hop wraps the two); none at 6 and 7
+    const glows = (r.svg.match(/class="pc-next"/g) || []).length;
+    assert.equal(glows, read < 6 ? 1 : 0, label + ': ' + (read < 6 ? 'the next row glows' : 'nothing glows'));
+    if (read < 6) {
+      const m = /<rect [^>]*class="pc-next"[^>]*\/>(<g[^>]*>)/.exec(r.svg);
+      assert.ok(m && m[1].startsWith('<g data-row="' + (read + 1) + '"'), label + ': the glow is straight before row ' + (read + 1) + '\'s group: ' + (m && m[1]));
+    }
+    assert.ok(!/pc-tap/.test(r.svg), label + ': nothing else to tap');
+    // face up: at most fifteen before read 7, seventeen at it; the rest face down in the stack by the nest
+    const up = casePieces(r.svg);
+    assert.equal(up.length, want.flat().length, label + ': every piece of the rows, face up, and no other');
+    assert.ok(up.length <= (read >= 7 ? 17 : 15), label + ': ' + up.length + ' face up');
+    const stack = /data-prop="case-stack" data-count="(\d+)"/.exec(r.svg);
+    assert.equal(stack ? +stack[1] : 0, file.length - up.length, label + ': the stack holds the rest');
+    if (read === 6) assert.equal(+stack[1], stack6, label + ': the stack before her count is read');
+    if (read === 7) assert.equal(+stack[1], stack7, label + ': and after');
+    // each row: its pieces touching, side by side, and in keep
+    for (const x of rows) {
+      const ps = up.filter((p) => x.cards.includes(p.pic));
+      for (let i = 1; i < ps.length; i++) {
+        assert.ok(Math.abs(ps[i].box[1] - ps[i - 1].box[1]) < 0.5 && ps[i].box[0] <= ps[i - 1].box[2] + 0.5 && ps[i].box[0] > ps[i - 1].box[0], label + ': row ' + x.row + ' touching, in order');
+      }
+      const b = [Math.min(...ps.map((p) => p.box[0])), Math.min(...ps.map((p) => p.box[1])), Math.max(...ps.map((p) => p.box[2])), Math.max(...ps.map((p) => p.box[3]))];
+      assert.ok(keptWorld(r, b), label + ': row ' + x.row + ' in keep');
+    }
+    // no two rows on top of each other
+    const rb = rows.map((x) => { const ps = up.filter((p) => x.cards.includes(p.pic)); return [Math.min(...ps.map((p) => p.box[0])), Math.min(...ps.map((p) => p.box[1])), Math.max(...ps.map((p) => p.box[2])), Math.max(...ps.map((p) => p.box[3]))]; });
+    for (let i = 0; i < rb.length; i++) for (let j = i + 1; j < rb.length; j++) assert.equal(overlap(rb[i], rb[j]), 0, label + ': rows ' + (i + 1) + ' and ' + (j + 1) + ' apart');
+  }
+  // sleet-den at FLEW's end for a cat who found Sleet; her glass in its leaf beside the rows; nothing without it
+  const full = art.render(caseScene({ bark: file9(F29), read: 3 }), { look: LOOK }).svg;
+  assert.deepEqual(caseRows(full)[1].cards, ['cant-fly', 'fox-flew', 'fox-brag', 'sleet-den'], 'FLEW\'s row of four, sleet-den last');
+  assert.ok(prop(full, 'case-glass'), 'her glass beside the rows');
+  assert.ok(!prop(art.render(caseScene({ bark: file9(F29), read: 3, glass: false }), { look: LOOK }).svg, 'case-glass'), 'the leaf in her paws: no glass on the floor');
+  // the pieces are her own cards (cards.js), with their marks
+  if (art.cardGroup) assert.ok(/data-picture="mizzle-wing">[\s\S]*?pcc-pic/.test(art.render(caseScene({ bark: file9(F29), read: 7 }), { look: LOOK }).svg), 'Mizzle\'s card, drawn by cards.js, at read 7');
+  // without a filled file (the gallery, tools/frames.mjs): the twenty-one every-row cat\'s, and it never throws
+  for (const bark of ['auto', true, 12, false, [], [null, 'tidy', { picture: 'scale' }]]) checkRender(art.render(caseScene({ bark, read: 2 }), { look: LOOK }), caseScene({ bark, read: 2 }), 'bark ' + JSON.stringify(bark));
+  assert.equal(caseRows(art.render(caseScene({ bark: 'auto', read: 0 }), { look: LOOK }).svg).length, 6);
+  // read past the ends: below 0 is 0, past 7 is 7; not a number is 0
+  const rd = (read) => strip(art.render(caseScene({ bark: file9(F21), read }), { look: LOOK }).svg);
+  assert.equal(rd(-3), rd(0)); assert.equal(rd(12), rd(7)); assert.equal(rd('x'), rd(0)); assert.equal(rd(undefined), rd(0));
+});
+
+test('the case: her nest at the back with its moss rolled back and Riffle\'s stone in it (every value of `stone`); the moonlight from the doorway out of frame; her, Tallyheart and Glintstar (stepping in, standing, going) all in the panel, their faces clear of the rows', () => {
+  for (const stone of [true, 'nose', 'chin', 'auto']) {
+    const r = art.render(caseScene({ bark: file9(F21), read: 0, stone }), { look: LOOK });
+    const nest = prop(r.svg, 'case-nest');
+    assert.ok(nest, 'her nest');
+    const st = [...r.svg.matchAll(/<g transform="translate\(([-\d.]+) ([-\d.]+)\) rotate\(-8\)"><ellipse cx="0" cy="0" rx="[\d.]+" ry="[\d.]+" fill="#24252C"/g)];
+    assert.equal(st.length, 1, stone + ': Riffle\'s stone');
+    const x = +st[0][1], y = +st[0][2];
+    assert.ok(x > 300 && x < 820 && y > 200 && y < 400, stone + ': in the nest at the back: ' + x + ', ' + y);
+  }
+  assert.ok(!/rotate\(-8\)"><ellipse cx="0" cy="0" rx="[\d.]+" ry="[\d.]+" fill="#24252C"/.test(art.render(caseScene({ bark: file9(F21), stone: false }), { look: LOOK }).svg), 'no stone unless asked');
+  // nothing of the doorway's sky in the picture (it is out of frame): no moon, whatever the frame asks
+  assert.ok(!/waxing-moon|thin-moon/.test(art.render(caseScene({ bark: file9(F21), moon: 13 }), { look: LOOK }).svg));
+  if (!art.character) return;
+  const A = art.sceneInfo('den').anchors.case;
+  for (const glint of [{ pose: 'walk', facing: 'left' }, { pose: 'stand', facing: 'left' }, { pose: 'walk', facing: 'right' }]) for (const file of [F21, F29]) {
+    const cast = [{ who: 'player', at: 'case-1', pose: 'crouch', mood: 'wonder', holds: 'leaf', holdAt: 'paws' }, { who: 'tallyheart', at: 'case-2', pose: 'sit', mood: 'solemn' },
+      Object.assign({ who: 'glintstar', at: 'case-3', mood: 'kind' }, glint)];
+    const scene = caseScene({ bark: file9(file), read: 7, glass: false }, cast), r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'case ' + glint.pose + ' ' + glint.facing);
+    assert.ok(r.heads.every((h) => h && h.r > 0), 'everyone in the panel, a face to letter: ' + JSON.stringify(r.heads));
+    const up = casePieces(r.svg);
+    cast.forEach((m) => {
+      const me = landed(r.svg, m, A[m.at]);
+      assert.ok(me, m.who + ' drawn at ' + m.at);
+      for (const p of up) assert.equal(overlap(me.head, p.box), 0, m.who + '\'s face clear of ' + p.pic);
+    });
+  }
+});
+
+test('the den\'s moon on the thirteenth evening (`moon: 13`): nearly round, at night as at dusk, outside over the towers and in the doorway\'s patch of sky (inside and doorway); bigger and rounder than the eighth evening\'s; in keep', () => {
+  const t = (age) => Math.max(-1, Math.min(0.9, 0.8 - 0.18 * (age - 4)));
+  assert.ok(Math.abs(t(13) + 0.82) < 1e-9, 'the art\'s clock: moonT(13) = -0.82');
+  for (const [cam, fx] of [['outside', ['night', 'stars']], ['outside', ['dusk']], ['inside', ['night']], ['doorway', ['night', 'stars', 'skyriver', 'zzz']], ['doorway', ['dusk']]]) {
+    const at = (moon) => art.render({ set: 'den', cam, opts: { weather: 'clear', moon }, cast: [], fx }, { look: LOOK });
+    const r = at(13), m = prop(r.svg, 'waxing-moon');
+    assert.ok(m && m.includes('data-age="13"'), cam + ' ' + fx + ': the thirteenth evening\'s moon');
+    // the terminator bulges the other way, 0.82 of the radius across: the moon nearly full
+    const arcs = [...m.matchAll(/A([\d.]+) ([\d.]+) 0 0 (0|1)/g)].map((x) => [+x[1], +x[2], +x[3]]);
+    assert.ok(arcs.length === 2 && arcs[1][2] === 1 && Math.abs(arcs[1][0] / arcs[1][1] - 0.82) < 0.02, cam + ': nearly round: ' + JSON.stringify(arcs));
+    const eight = [...prop(at(8).svg, 'waxing-moon').matchAll(/A([\d.]+) ([\d.]+) 0 0 (0|1)/g)].map((x) => [+x[1], +x[2], +x[3]]);
+    assert.ok(arcs[0][1] >= eight[0][1], cam + ': no smaller than the eighth evening\'s');
+    assert.ok(r.keep.length >= 1, cam + ': in keep');
+    // under cloud, none
+    assert.ok(!prop(art.render({ set: 'den', cam, opts: { weather: 'cloudy', moon: 13 }, cast: [], fx }).svg, 'waxing-moon'), cam + ': no moon under cloud');
+  }
+  // the nest close-up looks the other way: the doorway's moon is out of its sight
+  const nest = art.render({ set: 'den', cam: 'nest', opts: { weather: 'clear', moon: 13 }, cast: [], fx: ['night'] }), at = /data-prop="waxing-moon"[^>]*><circle cx="([\d.]+)" cy="([\d.]+)"/.exec(nest.svg);
+  assert.ok(!at || !inVb(+at[1], +at[2], viewBox(nest.svg), -40), 'not in the nest close-up');
+});
+
+test('the reed root at the wall\'s end (`root`, on `end` and `meet`): a long pale root on the dry ground at the line where the stones stop, in front of the reeds (never in them, nor in the river), and one wet pawprint, dark on the line\'s stone, by day and at sunset; `tap: \'root\'` its Tap\'s box, an unpainted pc-tap rect on the root, inside the camera, first in keep; nothing on the river\'s own picture', () => {
+  const L = art.titleEndInfo(), STONE = { end: [810, 886, 30, 16], meet: [800, 950, 42, 22] };
+  const lum = (hex) => { const v = parseInt(hex.slice(1), 16); return 0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255); };
+  for (const cam of ['end', 'meet']) for (const fx of [[], ['day'], ['sunset']]) for (const tap of [undefined, 'none', 'root']) for (const rustle of [false, true]) {
+    const cast = [{ who: 'player', at: 'end-1', pose: 'sit', mood: 'happy', holds: 'leaf' }, { who: 'tallyheart', at: 'end-2', pose: 'sit', mood: 'kind' }];
+    const opts = Object.assign({ root: true, rustle }, tap ? { tap } : {}), scene = { set: 'title', cam, opts, cast, fx }, r = art.render(scene, { look: LOOK });
+    const label = cam + ' ' + fx.join('+') + ' tap ' + tap + (rustle ? ' rustle' : '');
+    checkRender(r, scene, label);
+    const root = prop(r.svg, 'reed-root');
+    assert.ok(root, label + ': the root');
+    const pts = [...root.matchAll(/<path d="([^"]+)" fill="#[0-9A-Fa-f]{6}" stroke=/g)].flatMap((m) => (m[1].match(/-?[\d.]+ -?[\d.]+/g) || []).map((q) => q.split(' ').map(Number)));
+    const b = [Math.min(...pts.map((q) => q[0])), Math.min(...pts.map((q) => q[1])), Math.max(...pts.map((q) => q[0])), Math.max(...pts.map((q) => q[1]))];
+    assert.ok(b[2] - b[0] > 180, label + ': a long root: ' + b.map(Math.round));
+    assert.ok(b[0] < L[cam].line && b[2] > L[cam].line, label + ': lying across the line where the stones stop');
+    assert.ok(b[1] > L[cam].reeds.base && b[1] > L[cam].ground, label + ': on the dry ground in front of the reed bed, never in it: top ' + Math.round(b[1]));
+    assert.ok(b[3] < L[cam].front[0] + 4, label + ': above the grass fringe at the panel\'s foot');
+    // the pawprint on the line's stone, dark
+    const print = prop(r.svg, 'wet-print'), pc = /<ellipse cx="([-\d.]+)" cy="([-\d.]+)" rx="[\d.]+" ry="[\d.]+" fill="(#[0-9A-Fa-f]{6})"/.exec(print);
+    const S = STONE[cam];
+    assert.ok(pc && Math.pow((pc[1] - S[0]) / S[2], 2) + Math.pow((pc[2] - S[1]) / S[3], 2) < 1, label + ': on the line\'s stone');
+    assert.ok(lum(pc[3]) < 90, label + ': dark (' + pc[3] + '), still dark in the late gold');
+    // the Tap's box: only with tap: 'root', on the root, inside the camera, first in keep
+    const taps = [...r.svg.matchAll(/<rect x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)" fill="none" class="pc-tap" data-tap="root" pointer-events="none"\/>/g)];
+    assert.equal(taps.length, tap === 'root' ? 1 : 0, label + ': the Tap\'s box');
+    assert.equal((r.svg.match(/pc-tap/g) || []).length, tap === 'root' ? 1 : 0, label + ': no other');
+    if (tap === 'root') {
+      const t = taps[0].slice(1).map(Number), box = [t[0], t[1], t[0] + t[2], t[1] + t[3]], vb = viewBox(r.svg);
+      assert.ok(box[0] <= b[0] && box[1] <= b[1] && box[2] >= b[2] && box[3] >= b[3], label + ': round the root');
+      assert.ok(box[0] >= vb[0] && box[1] >= vb[1] && box[2] <= vb[0] + vb[2] && box[3] <= vb[1] + vb[3], label + ': inside the camera');
+      const k = r.keep[0];
+      assert.ok(k.x * 16 <= box[0] && k.y * 10 <= box[1] && (k.x + k.w) * 16 >= box[2] - 0.5 && (k.y + k.h) * 10 >= box[3] - 0.5, label + ': first in keep');
+    }
+    // her own: the cast where they were, and everyone in the panel
+    assert.deepEqual(r.heads, art.render({ set: 'title', cam, opts: { rustle }, cast, fx }, { look: LOOK }).heads, label + ': nobody moved');
+  }
+  // off by default; and the river at dusk (the title screen) takes none of it
+  for (const cam of ['end', 'meet']) assert.equal(strip(art.render({ set: 'title', cam, opts: { root: false, tap: 'none' }, cast: [], fx: ['sunset'] }).svg), strip(art.render({ set: 'title', cam, cast: [], fx: ['sunset'] }).svg), cam);
+  assert.equal(strip(art.render({ set: 'title', cam: 'wide', opts: { root: true, tap: 'root' }, cast: [], fx: ['sunset'] }).svg), strip(art.render({ set: 'title', cam: 'wide', cast: [], fx: ['sunset'] }).svg), 'the river\'s own picture');
+  // the way home, at sunset (the first time `end` is drawn by anything but day): the sun low over the river, its gold on the water
+  const sun = art.render({ set: 'title', cam: 'end', opts: { root: true, tap: 'root' }, cast: [], fx: ['sunset'] }).svg;
+  assert.ok(/data-prop="reeds"/.test(sun) && /pcs-glint/.test(sun), 'the reeds and the river\'s glint at sunset');
+});
+
+test('hollow, chapter 9: `marks: 9` draws as markSpots has laid nine since chapter 1 (four, four and one), every mark on the trunk in the tree close-up and the wide shot; the ninth glowing alone', () => {
+  for (const cam of ['tree', 'wide']) {
+    const glow = [false, false, false, false, false, false, false, false, true];
+    const r = art.render({ set: 'hollow', cam, opts: { marks: 9, glow }, cast: [], fx: ['morning'] });
+    checkRender(r, { cast: [] }, cam);
+    const sc = shapes(r.svg, 'fill="#3A281E"');
+    assert.equal(sc.length, 27, cam + ': nine marks, three scratches each');
+    const vb = viewBox(r.svg);
+    for (const p of sc.flat()) assert.ok(inVb(p[0], p[1], vb, 2), cam + ': in the panel: ' + p);
+    const rows = [...new Set(sc.filter((x, i) => i % 3 === 0).map((q) => Math.round(centre(q)[1] / 40)))];
+    assert.equal(rows.length, 3, cam + ': three rows');
+    assert.equal(r.keep.length, 1, cam + ': in keep');
+  }
+});
+
+test('chapter 9\'s cast in the scenes: the spider tiny at `web` (her drawing\'s longer side 0.15 of the spot\'s height, about a cat\'s forepaw there), no shadow; Thymeleaf and GroveClan\'s cats are cats (a cat\'s face from the box, a cat\'s shadow; GroveClan\'s by variant); Mizzle no taller sitting than our cat (Squall\'s rule), her shadow under her body in every pose', { skip: !art.character && 'no cats.js' }, () => {
+  const real = art.character, near = (x, y, what) => assert.ok(Math.abs(x - y) < 0.0002, what + ': ' + x + ' vs ' + y);
+  const SPIDER = { svg: '<rect width="60" height="44" fill="#8A6A4A"/>', w: 60, h: 44, head: { x: 40, y: 14 }, headBox: { x0: 30, y0: 6, x1: 52, y1: 26 }, bounds: { x0: 0, y0: 0, x1: 60, y1: 44 } };
+  const MIZ = { svg: '<rect width="240" height="300" fill="#BFE0C8"/>', w: 240, h: 300, head: { x: 150, y: 80 }, headBox: { x0: 110, y0: 30, x1: 200, y1: 130 }, bounds: { x0: 40, y0: 30, x1: 220, y1: 300 } };
+  // Thymeleaf and GroveClan's cats as a Clan cat with a bigger head box: a cat's face is sized from the box, so theirs
+  // is the Clan cat's; sized from the head box (everyone who is not a cat), it would be bigger
+  const bigHead = (c) => Object.assign({}, c, { headBox: { x0: c.headBox.x0 - 24, y0: c.headBox.y0 - 24, x1: c.headBox.x1 + 24, y1: c.headBox.y1 + 24 } });
+  const fake = function (who, o) {
+    if (who === 'spider') return Object.assign({}, SPIDER);
+    if (who === 'mizzle') return Object.assign({}, MIZ);
+    if (who === 'thymeleaf' || who === 'groveclan') return bigHead(real('clancat', Object.assign({}, o, { variant: 1 })));
+    return real(who, o);
+  };
+  withCharacter(fake, () => {
+    // the spider, at her web and at a cat's spot
+    for (const [set, cam, spot] of [['camp', 'herbs', 'web'], ['camp', 'herbs', 'herbs-2'], ['title', 'wide', 'wall']]) {
+      const info = art.sceneInfo(set), a = info.anchors[info.cams[cam].comp][spot];
+      const one = (m) => art.render({ set, cam, cast: [Object.assign({ who: 'spider', at: spot, pose: 'spin', mood: 'happy' }, m || {})], fx: ['morning'] }, { look: LOOK });
+      const r = one(), s = placedScale(r.svg, a, SPIDER.w, SPIDER.h);
+      near(s, round4(0.15 * a.h / Math.max(SPIDER.w, SPIDER.h)), set + '/' + cam + ' ' + spot + ': tiny, her longer side 0.15 of the spot');
+      assert.ok(s * SPIDER.w < a.h * 0.16, spot + ': about a cat\'s forepaw there');
+      near(placedScale(one({ size: 2 }).svg, a, SPIDER.w, SPIDER.h), round4(2 * 0.15 * a.h / Math.max(SPIDER.w, SPIDER.h)), spot + ': a size multiplies');
+      assert.equal(footShade(r.svg, a.y).filter((e) => Math.abs(e[0] - a.x) < 40).length, 0, spot + ': no shadow under her');
+    }
+    // Thymeleaf and GroveClan's cats: a cat's face and a cat's shadow
+    const a = art.sceneInfo('title').anchors.meet['reed-1'];
+    const at = (who, extra) => art.render({ set: 'title', cam: 'meet', fx: ['day'], cast: [Object.assign({ who, at: 'reed-1', pose: 'sit', mood: 'kind' }, extra || {})] }, { look: LOOK });
+    const clan = at('clancat', { variant: 1 }).heads[0];
+    for (const [who, extra] of [['thymeleaf'], ['groveclan', { variant: 1 }], ['groveclan', { variant: 2 }]]) {
+      const r = at(who, extra), h = r.heads[0], c = fake(who, { pose: 'sit', mood: 'kind', facing: 'left' }), s = placedScale(r.svg, a, c.w, c.h);
+      assert.ok(Math.abs(h.r / clan.r - 1) < 0.02, who + ': a cat\'s face, sized from the box: ' + h.r + ' vs ' + clan.r);
+      assert.ok(footShade(r.svg, a.y).some((e) => Math.abs(e[0] - a.x) < 1 && Math.abs(e[2] - c.w * s * 0.4) < 0.3), who + ': a cat\'s shadow under him');
+    }
+    // Mizzle: capped to our cat's sitting height, every pose scaled as she sits, her shadow under her body
+    const w = art.sceneInfo('title').anchors.main.wall, base = w.h / 200, mine = sitTall('player', LOOK), tall = MIZ.h - MIZ.headBox.y0;
+    const miz = (pose, extra) => art.render({ set: 'title', cam: 'wide', cast: [Object.assign({ who: 'mizzle', pose, mood: 'sleepy', at: 'wall', facing: 'left' }, extra || {}), { who: 'player', pose: 'sit', at: 'wall-2' }], fx: ['day'] }, { look: LOOK });
+    const s = placedScale(miz('sit').svg, w, MIZ.w, MIZ.h);
+    near(s, Math.round(base * mine / tall * 10000) / 10000, 'Mizzle capped to our cat\'s sitting height');
+    for (const pose of ['curl', 'yawn', 'wake', 'pawup']) {
+      const r = miz(pose);
+      near(placedScale(r.svg, w, MIZ.w, MIZ.h), s, 'Mizzle ' + pose + ': the same scale');
+      assert.ok(footShade(r.svg, w.y).some((e) => Math.abs(e[2] - (MIZ.bounds.x1 - MIZ.bounds.x0) * s * 0.42) < 0.3), 'Mizzle ' + pose + ': her shadow under her body (no pose of hers without one)');
+    }
+    near(placedScale(miz('sit', { size: 1.5 }).svg, w, MIZ.w, MIZ.h), s, 'a size above 1 is held to the cap');
+    assert.ok(miz('sit').heads[0].r > 0, 'her face is lettered');
+  });
+  // GroveClan's two are told apart by variant: the painter is handed it
+  const calls = [];
+  withCharacter(function (who, o) { calls.push([who, o.variant]); return real(who, o); }, () => art.render({ set: 'title', cam: 'meet', cast: [{ who: 'groveclan', variant: 2, at: 'reed-1', pose: 'sit', mood: 'shy' }], fx: ['day'] }, { look: LOOK }));
+  assert.ok(calls.some(([who, v]) => who === 'groveclan' && v === 2), 'the apprentice, by variant');
+});
+
+test('shadows, chapter 9: none under Squall `hidden` behind the pole (his tail tip only), nor under Sprinkle gliding, flying or splashing (the bank draws the sand\'s shadows itself, and nothing dark lies in the water); her shadow still under her sitting and in her `hop`, and his sitting', { skip: !art.character && 'no cats.js' }, () => {
+  const a = art.sceneInfo('title').anchors.main.wall;
+  const one = (who, pose) => art.render({ set: 'title', cam: 'wide', cast: [{ who, pose, mood: 'happy', at: 'wall', facing: 'left' }], fx: ['day'] }, { look: LOOK });
+  const shade = (svg) => footShade(svg, a.y).filter((e) => Math.abs(e[0] - a.x) < 120);
+  assert.equal(shade(one('squall', 'hidden').svg).length, 0, 'Squall hidden: nothing gives him away');
+  assert.equal(shade(one('squall', 'sit').svg).length, 1, 'Squall sitting: his shadow');
+  for (const pose of ['glide', 'fly', 'splash']) assert.equal(shade(one('sprinkle', pose).svg).length, 0, 'Sprinkle ' + pose + ': no body shadow');
+  for (const pose of ['sit', 'hop', 'flap', 'wings']) assert.equal(shade(one('sprinkle', pose).svg).length, 1, 'Sprinkle ' + pose + ': her shadow');
+  // an `air` spot does not stop it for her (this branch reads no air): only the pose does
+  const bank = art.sceneInfo('bridge');
+  if (bank && bank.anchors.bank && bank.anchors.bank.air) {
+    const b = bank.anchors.bank.air, r = art.render({ set: 'bridge', cam: 'bank', cast: [{ who: 'sprinkle', pose: 'fly', mood: 'happy', at: 'air' }], fx: ['day'] }, { look: LOOK });
+    assert.equal(footShade(r.svg, b.y).filter((e) => Math.abs(e[0] - b.x) < 120).length, 0, 'Sprinkle flying at the bank\'s air: none from the scenes');
+  }
+});
+
+test('the real Mizzle and the spider (cats.js, once it draws them): Mizzle in every pose of hers, at every cat anchor of chapter 1\'s sets, never taller sitting than our cat there, a face to letter and her shadow; the spider at `web` her longer side 0.15 of the spot, in the panel, no shadow, in both her poses', { skip: !(art.vocab.otherPoses && art.vocab.otherPoses.mizzle && art.vocab.otherPoses.spider) && 'cats.js does not draw Mizzle and the spider yet' }, () => {
+  const real = art.character, mine = sitTall('player', LOOK), m = real('mizzle', { pose: 'sit', mood: 'neutral' }), tall = m.h - (m.headBox ? m.headBox.y0 : 0);
+  const SPOTS = [['title', 'wide', 'wall'], ['den', 'inside', 'nest'], ['garden', 'wide', 'lawn'], ['hollow', 'wide', 'sand-left'], ['camp', 'reveal', 'center'], ['camp', 'herbs', 'herbs-2'], ['den', 'case', 'case-1']];
+  for (const [set, cam, spot] of SPOTS) {
+    const info = art.sceneInfo(set), a = (info.anchors[info.cams[cam].comp] || {})[spot];
+    assert.ok(a, set + '/' + cam + ': ' + spot);
+    for (const pose of art.vocab.otherPoses.mizzle) {
+      const scene = { set, cam, cast: [{ who: 'mizzle', pose, mood: 'sleepy', at: spot }], fx: [] }, r = art.render(scene, { look: LOOK });
+      checkRender(r, scene, set + '/' + cam + ' mizzle ' + pose + ' at ' + spot);
+      const c = real('mizzle', { pose, mood: 'sleepy', facing: a.face || 'right' }), s = placedScale(r.svg, a, c.w, c.h);
+      if (s === null) continue;
+      assert.ok(s * tall <= a.h / 200 * mine + 0.05, set + '/' + cam + ' ' + spot + ': Mizzle ' + pose + ' no taller sitting than our cat');
+      if (r.heads[0]) assert.ok(r.heads[0].r > 0, 'Mizzle ' + pose + ': a face to letter');
+      assert.ok(footShade(r.svg, a.y).some((e) => Math.abs(e[0] - a.x) < 120), set + ' ' + spot + ': Mizzle ' + pose + ': her shadow');
+    }
+  }
+  const W = art.sceneInfo('camp').anchors.herbs.web;
+  for (const pose of art.vocab.otherPoses.spider) {
+    const r = art.render({ set: 'camp', cam: 'herbs', cast: [{ who: 'spider', pose, mood: 'happy', at: 'web' }], fx: ['morning'] }, { look: LOOK });
+    const c = real('spider', { pose, mood: 'happy', facing: W.face }), s = placedScale(r.svg, W, c.w, c.h);
+    assert.ok(Math.abs(s - round4(0.15 * W.h / Math.max(c.w, c.h))) < 0.0002, 'the spider ' + pose + ': tiny, ' + s);
+    assert.ok(r.heads[0], 'the spider ' + pose + ' in the panel');
+    assert.equal(footShade(r.svg, W.y).filter((e) => Math.abs(e[0] - W.x) < 40).length, 0, 'the spider ' + pose + ': no shadow');
+  }
+});
+
+test('den hidden, chapter 9: Mizzle\'s card goes under the moss (BARK_SECRET), a dragonet\'s as Hail\'s: the fullest file on a straight reading, 29, lays eighteen along the edge and eleven corners (the second layer chapter 8 built); the fullest of all, 30, nineteen in three courses (6, 6, 7) and eleven corners, and with nothing hidden its newest 27; every file without her card as it was', { skip: !art.character && 'no cats.js' }, () => {
+  for (const facing of ['right', 'left']) for (const cam of ['nest', 'inside']) {
+    const scene = nestScene({ weather: 'clear', moon: false, stone: 'auto', bark: cardsOf(F29), hidden: true, glass: true }, { pose: 'curl', mood: 'kind', asleep: 'half', facing }, cam), r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'den/' + cam + ' 29 cards');
+    assert.equal(pieces(r.svg).length, 18, 'eighteen along the edge');
+    assert.equal(corners(r.svg).length, 11, 'eleven corners, one for each secret');
+    const asked = [], spy = (o) => { asked.push(o.blank ? '(blank)' : o.picture); return { svg: '<rect class="spy-card" width="200" height="240" fill="#EDE1C5"/>', w: 200, h: 240 }; };
+    withCards(spy, () => art.render(scene, { look: LOOK }));
+    assert.ok(!asked.includes('mizzle-wing'), 'Mizzle\'s card is under the moss');
+    assert.deepEqual(asked, F28.filter((p) => !SECRET8.includes(p)), 'the row: chapter 8\'s eighteen');
+  }
+  // the fullest file of all, 30 (a reread cat's, the review of 2026-10-26): nineteen along the edge, past
+  // BARK_THIRD.hidden (18), so three courses, 6, 6 and 7, the oldest highest, each one lift up; eleven corners
+  const OPEN30 = F30.filter((p) => !SECRET8.includes(p) && p !== 'mizzle-wing'), k = 1.06;
+  assert.equal(OPEN30.length, 19);
+  for (const facing of ['right', 'left']) for (const cam of ['nest', 'inside', 'doorway']) {
+    const scene = nestScene({ weather: 'clear', moon: false, stone: 'auto', bark: cardsOf(F30), hidden: true, glass: true }, { pose: 'curl', mood: 'kind', asleep: 'half', facing }, cam), r = art.render(scene, { look: LOOK });
+    checkRender(r, scene, 'den/' + cam + ' 30 cards');
+    const P = pieces(r.svg), what = 'den/' + cam + ' 30 cards, facing ' + facing;
+    assert.equal(P.length, 19, what + ': nineteen along the edge');
+    assert.equal(corners(r.svg).length, 11, what + ': eleven corners, one for each secret');
+    const top = P.slice(0, 6), mid = P.slice(6, 12), front = P.slice(12), avg = (c) => c.reduce((a, q) => a + q.y, 0) / c.length;
+    assert.ok(avg(front) - avg(mid) > 12 * k && avg(front) - avg(mid) < 18 * k && avg(mid) - avg(top) > 12 * k && avg(mid) - avg(top) < 18 * k, what + ': three courses, 6, 6 and 7, each one lift up from the one in front');
+    const asked = [], spy = (o) => { asked.push(o.blank ? '(blank)' : o.picture); return { svg: '<rect class="spy-card" width="200" height="240" fill="#EDE1C5"/>', w: 200, h: 240 }; };
+    withCards(spy, () => art.render(scene, { look: LOOK }));
+    assert.deepEqual(asked, OPEN30, what + ': the row, oldest first, Mizzle\'s and every secret under the moss');
+  }
+  // with nothing hidden (chapter 4's bedtime frames, reread), its newest 27 along the edge
+  for (const cam of ['nest', 'doorway']) {
+    const scene = nestScene({ weather: 'clear', moon: false, stone: 'nose', bark: cardsOf(F30) }, { pose: 'lie', mood: 'sleepy', facing: 'right' }, cam);
+    const asked = [], spy = (o) => { asked.push(o.blank ? '(blank)' : o.picture); return { svg: '<rect class="spy-card" width="200" height="240" fill="#EDE1C5"/>', w: 200, h: 240 }; };
+    assert.equal(pieces(art.render(scene, { look: LOOK }).svg).length, 27, cam + ': 27 along the edge (BARK_MAX)');
+    withCards(spy, () => art.render(scene, { look: LOOK }));
+    assert.deepEqual(asked, F30.slice(-27), cam + ': her newest 27');
+  }
+  // a file without it draws as the same file did before chapter 9 (the fingerprint above keeps every live file)
+  const without = art.render(nestScene({ bark: cardsOf(F28), hidden: true, glass: true }), { look: LOOK }).svg;
+  assert.equal(corners(without).length, 10);
 });

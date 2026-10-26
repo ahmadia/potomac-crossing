@@ -1,5 +1,5 @@
 /* The storyboards are generated from the story data, so they must never lag behind it: every
- * chapter in app/story/ has its docs/storyboard/chNN.md, exactly as tools/storyboard.mjs writes it
+ * chapter in app/story/ has its docs/storyboard/chNN.md (and the Warrior Counts, warrior.js, its warrior.md), exactly as tools/storyboard.mjs writes it
  * now (else run: node tools/storyboard.mjs). Also: the tool prints a chapter-2 frame's skip-count,
  * gift and `when` conditions, chapter 3's new keys, chapter 4's (the Case File, the pages she
  * taps, the 10s) and chapter 5's (the questions she taps out, the skip-count's new forms, the 9s,
@@ -14,7 +14,7 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
 const TOOL = path.join(ROOT, 'tools/storyboard.mjs');
-const chapters = fs.readdirSync(path.join(ROOT, 'app/story')).filter(f => /^ch\d+\.js$/.test(f)).sort();
+const chapters = fs.readdirSync(path.join(ROOT, 'app/story')).filter(f => /^(ch\d+|warrior)\.js$/.test(f)).sort();
 
 function generate(storyFile, tmp) {
   const out = path.join(tmp, path.basename(storyFile, '.js') + '.md');
@@ -706,7 +706,7 @@ test('with no arguments the tool writes a storyboard for every chapter (run in a
     for (const f of chapters) {
       const id = path.basename(f, '.js');
       const md = fs.readFileSync(path.join(tmp, 'docs/storyboard', id + '.md'), 'utf8');
-      assert.match(md, new RegExp('^# Storyboard: Chapter \\d+, '), id);
+      assert.match(md, new RegExp(id === 'warrior' ? '^# Storyboard: The Warrior Counts\\n' : '^# Storyboard: Chapter \\d+, '), id);
       assert.match(run.stdout, new RegExp('Wrote docs/storyboard/' + id + '\\.md'));
     }
   } finally {

@@ -312,6 +312,9 @@
     var list = E.chapters(stories);
     for (var i = 0; i < list.length; i++) {
       if (list[i].id !== story.id) continue;
+      // the Ceremony (docs/warrior-counts.md, section 7): a chapter with `opensWhen: 'warrior'` opens
+      // once she has passed her Warrior Counts, not when the chapter before it is finished
+      if (story.opensWhen === 'warrior') return warriorPassed(cat) || E.isFinished(cat, story.id);
       return i === 0 || E.isFinished(cat, list[i - 1].id) || E.isFinished(cat, story.id);
     }
     return false;
@@ -542,6 +545,12 @@
       if (frame == null && !lesson) return;
       out.places[id] = { frame: frame, history: frame != null && Array.isArray(p.history) ? p.history : [], lesson: lesson };
     });
+    // the Warrior Counts (docs/warrior-counts.md, section 6): optional, absent until her first sitting
+    // starts; a sitting whose last answer is in but was never recorded is settled now
+    if (isObj(c.warrior)) {
+      out.warrior = normWarrior(c.warrior);
+      if (out.warrior.sitting && C.done(out.warrior.sitting.state)) E.warriorFinish(out, out.warrior.sitting.state);
+    }
     return out;
   }
   /* Bring any stored value up to the current save shape: version 1 (chapter 1's) or 2. Lossless
@@ -2145,6 +2154,15 @@
    * {thing} {things}) are filled here, the cat's ({name}…) are left for the page. */
   var NUMW = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   E.numWord = function (n) { return NUMW[n] || String(n); };
+  /* Number words to a hundred ("fifty-two"), for the Warrior Counts' results; E.numWord stops at twelve. */
+  var ONES = NUMW.concat(['thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']);
+  var TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  E.countWords = function (n) {
+    if (!(typeof n === 'number' && isFinite(n) && n === Math.floor(n) && n >= 0 && n <= 100)) return String(n);
+    if (n === 100) return 'one hundred';
+    if (n < 20) return ONES[n];
+    return TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : '');
+  };
   function pictureOf(D, q) { return Object.assign({}, (D && D.picture) || {}, (q && q.picture) || {}); }
   function fillQ(text, D, q) {
     var x = { a: q.a, b: q.b, answer: q.answer != null ? q.answer : q.a * q.b, groups: q.groups, per: q.per,
@@ -2356,6 +2374,12 @@
    * Hollow: the round counts (E.hollowFinish, exactly once). Returns { mode, summary, hollow }. */
   E.recordLesson = function (cat, st) {
     if (!st || !C.done(st)) return null;
+    // the Warrior Counts (docs/warrior-counts.md, section 7): a sitting is an attempt, never a lesson;
+    // it never touches `lessons` or `lesson`
+    if (st.mode === 'warrior') {
+      var w = E.warriorFinish(cat, st);
+      return w ? { mode: 'warrior', summary: C.summary(st), hollow: null, warrior: w } : null;
+    }
     if (st.mode === 'hollow') {
       var h = E.hollowFinish(cat, st);
       return { mode: 'hollow', summary: h.summary, hollow: h };
@@ -2548,7 +2572,11 @@
         : counts.length ? 'Which Count today? A full round earns a treasure for your nest.' : 'Finish a Count in your story first. Then come back and practise it.';
     var glow = one && one.glow ? 'Look at your claw mark. It glows now. You know your ' + E.hollowWord(one.def) + '.'
       : glowing.length ? 'Look at your claw marks. Your ' + andList(glowing.map(function (d) { return E.hollowWord(d.def); })) + ' ' + (glowing.length === 1 ? 'mark glows' : 'marks glow') + ' now.' : null;
-    return { counts: counts, one: one, greet: greet, glow: glow };
+    var out = { counts: counts, one: one, greet: greet, glow: glow };
+    // the Warrior Counts (docs/warrior-counts.md, section 5): only with `warrior` data, so every
+    // other cat's Hollow reads exactly as it did
+    if (cat && isObj(cat.warrior)) warriorHollow(out, cat, stories, opts || {});
+    return out;
   };
   E.hollowRoundLine = function (def) { return 'A round of ' + E.hollowWord(def) + '. Ready? Here we go.'; };
   /* When a mark starts to glow: `many` Counts on the tree, and it names which. */
@@ -2644,6 +2672,11 @@
     table = table || 1;
     var mine = {};
     for (var n = 1; n <= 10; n++) mine[pairKey(n, table)] = true;
+    return hardRule(cat, mine, stories);
+  };
+  /* E.hardFacts' rule over any set of pairs (`mine`, by pair key): shared with the Warrior Counts'
+   * E.warriorHard, which reads it over the 54 pairs other than 10 × 10. */
+  function hardRule(cat, mine, stories) {
     var last = {}, memo = {};
     (cat && cat.counts || []).forEach(function (e, i, log) {
       // a right check says nothing about the fact (she read the long prompt; the answer was on
@@ -2661,7 +2694,7 @@
     }).sort(function (x, y) {
       return (x.e.correct ? 1 : 0) - (y.e.correct ? 1 : 0) || (y.e.ms || 0) - (x.e.ms || 0) || y.i - x.i;
     }).map(function (x) { return [x.e.a, x.e.b]; });
-  };
+  }
   E.HARD_PER_ROUND = 3;
   function tableRecord(cat, table) {
     if (!isObj(cat.hollow)) cat.hollow = blankHollow();
@@ -2705,6 +2738,574 @@
     cat.lesson = null;
     return { awarded: t, summary: sum, glowNow: rec.glow && !wasGlow, rounds: h.rounds, table: table };
   };
+
+  /* ------------------------------------------------------------ the Warrior Counts
+   * docs/warrior-counts.md (v0.4; decisions 48 and 49): once chapter 10 is finished, every pair up to
+   * 10 × 10 once (55), in one sitting, from the hub; 50 right passes, a miss counts against her and
+   * gets the sand's help, and she may try again whenever she likes. The story around it is
+   * app/story/warrior.js, `PC.warrior` (not in PC.story, so no chapter, progress, Count or storyboard of
+   * chapters 1 to 9 ever sees it): `after`, the chapter that opens it; `counts`, the sitting's lines
+   * (`praise`, `fast`, `remembered`, `rememberedSlow`, `missLast`: four, in turn) and 10 × 10's own
+   * under `counts.last` (`prompt`, `right`, `missLast`).
+   * The save gains one optional field on a cat, `warrior`, absent until her first sitting starts:
+   * { sitting: { at, state } | null, attempts: [{ n, at, done, finished, answered, right, passed,
+   * missed, ms, seen, aside? }] (the last E.WARRIOR_KEEP), passedAt }. The sitting is a lesson state
+   * with `mode: 'warrior'`, run by the Counts runner untouched: its queue of 55, `requeues` at
+   * E.MAX_REQUEUE for every fact (a miss never comes back), `shown: true`, `crowd` and `beats`. It has
+   * its own slot, never `lesson`, `places`, `hollowWaiting` or `lessons`. Each answer goes into
+   * `counts` as every lesson's does (set 'warrior', its `table` the pair's anchor Count). */
+  E.WARRIOR_PASS = 50;                       // nine in every ten of 55 is 49.5
+  E.WARRIOR_BEATS = [14, 28, 42];            // the pauses after these answers; 28 is the halfway page
+  E.WARRIOR_PAUSE_MS = 7200000;              // a sitting left partway picks up within two hours
+  E.WARRIOR_TRICKY = 12;                     // her hardest facts spread through a sitting
+  E.WARRIOR_NEW = [[7, 7], [7, 8], [8, 8]];  // the module's last new facts, always among the tricky ones
+  E.WARRIOR_KEEP = 100;                      // attempts kept
+  E.WARRIOR_STARTS = [100, 200];             // the order's fill: rule 4 relaxed after the first, the last resort after the second
+  var W_GENTLE = [1, 2, 10], W_EASY = [1, 2, 5, 10], W_EASY_AT = [2, 3, 15, 29, 43];
+  function warriorStory() { return isObj(PC.warrior) ? PC.warrior : {}; }
+  function warriorLines() { var c = warriorStory().counts; return isObj(c) ? c : {}; }
+  function warriorAfter() { var a = warriorStory().after; return typeof a === 'string' && a ? a : 'ch10'; }
+  function warriorData(cat, create) {
+    if (!cat) return null;
+    if (!isObj(cat.warrior)) {
+      if (!create) return null;
+      cat.warrior = { sitting: null, attempts: [], passedAt: 0 };
+    }
+    var W = cat.warrior;
+    if (!Array.isArray(W.attempts)) W.attempts = [];
+    if (!okNum(W.passedAt)) W.passedAt = 0;
+    if (!isObj(W.sitting)) W.sitting = null;
+    return W;
+  }
+  function warriorAttempts(cat) { return cat && isObj(cat.warrior) && Array.isArray(cat.warrior.attempts) ? cat.warrior.attempts : []; }
+  function warriorPassed(cat) { return !!(cat && isObj(cat.warrior) && num(cat.warrior.passedAt, 0) > 0); }
+  function latestFinished(A) { for (var i = A.length - 1; i >= 0; i--) if (A[i] && A[i].finished) return i; return -1; }
+  // the number the next sitting carries: one more than the last attempt's
+  function nextSitting(cat) {
+    var A = warriorAttempts(cat), last = A[A.length - 1];
+    return last && okNum(last.n) ? last.n + 1 : A.length + 1;
+  }
+
+  /* The 55: every {a, b} with 1 ≤ a ≤ b ≤ 10, ten squares among them. */
+  E.warriorPairs = function () {
+    var out = [];
+    for (var a = 1; a <= 10; a++) for (var b = a; b <= 10; b++) out.push([a, b]);
+    return out;
+  };
+  /* The order the Counts are taught in (E.countSets: 1, 2, 5, 10, 9, 3, 6, 4, 8, 7 once chapter 10 is
+   * built), as a rank: a table with no set yet comes after every taught one, the smaller first. */
+  function taughtRank(stories) {
+    var r = {};
+    E.countSets(stories).forEach(function (c, i) { if (!own(r, c.table)) r[c.table] = i; });
+    return function (t) { return own(r, t) ? r[t] : 1000 + t; };
+  }
+  /* A pair's anchor Count: of its two numbers, the one taught first (3 × 8 is eight patrols of three,
+   * 9 × 7 seven cats' nine lives, 7 × 8 seven spiders). Its help is pictured in that Count's way. */
+  E.warriorAnchor = function (a, b, stories, rank) {
+    rank = rank || taughtRank(stories);
+    return rank(a) <= rank(b) ? a : b;
+  };
+  /* Her hard facts for the Warrior Counts: E.hardFacts' rule over the 54 pairs other than 10 × 10 (a
+   * slow right 10 × 10, three digits to type, is never one of the tricky ones): [[a, b]] as last
+   * asked, the misses first, then the slowest. */
+  E.warriorHard = function (cat, stories) {
+    var mine = {};
+    E.warriorPairs().forEach(function (p) { if (!(p[0] === 10 && p[1] === 10)) mine[pairKey(p[0], p[1])] = true; });
+    return hardRule(cat, mine, stories);
+  };
+
+  /* The order (section 2): 10 × 10 last; a gentle first (a 1, 2 or 10 with a number up to 5); an easy
+   * pair (a 1, 2, 5 or 10) at 2, 3 and first after each pause (15, 29, 43); the tricky ones at even
+   * spacing over 4 to 54, never two in a row, never right after a pause; no two in a row sharing a
+   * number, no number in more than two of any five in a row, never three in a row of the 21 pairs of
+   * 3, 4, 6, 7, 8 and 9. The fill is greedy and starts over on the same stream when stuck; after
+   * E.WARRIOR_STARTS[0] starts it keeps only the first of those three, after [1] it takes the last
+   * resort, which cannot fail. Keys are "axb" with a ≤ b. */
+  var W_KEYS = E.warriorPairs().map(function (p) { return pairKey(p[0], p[1]); });
+  var W_PAIR = {}, W_AT = {};
+  E.warriorPairs().forEach(function (p, i) { W_PAIR[pairKey(p[0], p[1])] = p; W_AT[pairKey(p[0], p[1])] = i; });
+  function wHas(p, set) { return set.indexOf(p[0]) >= 0 || set.indexOf(p[1]) >= 0; }
+  // each pair (by its place in E.warriorPairs) and its numbers (a square's once), as a list and as
+  // bits, and its kind, worked out once: the fill runs on these, thousands of times in the tests
+  var W_N = W_KEYS.length, W_NUMS = [], W_BITS = [], W_TIER = [], W_GENT = [], W_EASE = [];
+  E.warriorPairs().forEach(function (p, i) {
+    W_NUMS[i] = p[0] === p[1] ? [p[0]] : [p[0], p[1]];
+    W_BITS[i] = (1 << p[0]) | (1 << p[1]);
+    W_EASE[i] = wHas(p, W_EASY);
+    W_TIER[i] = !W_EASE[i];
+    W_GENT[i] = (W_GENTLE.indexOf(p[0]) >= 0 && p[1] <= 5) || (W_GENTLE.indexOf(p[1]) >= 0 && p[0] <= 5);
+  });
+  var W_LAST = W_AT[pairKey(10, 10)];
+  function wShare(j, k) { return j >= 0 && k >= 0 && (W_BITS[j] & W_BITS[k]) !== 0; }
+  function wShuffle(rnd, a) {
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  // whether the pair at i keeps the rules with what is placed around it (`relax`: only the first);
+  // `out` holds pair numbers, -1 where nothing is placed yet
+  var W_COUNT = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  function wOkAt(out, i, relax) {
+    var k = out[i], N = out.length, s, j, m;
+    if ((i > 0 && wShare(k, out[i - 1])) || (i + 1 < N && wShare(k, out[i + 1]))) return false;
+    if (relax) return true;
+    for (s = Math.max(0, i - 4); s <= Math.min(i, N - 5); s++) {
+      for (m = 1; m <= 10; m++) W_COUNT[m] = 0;
+      for (j = s; j < s + 5; j++) {
+        if (out[j] < 0) continue;
+        var ns = W_NUMS[out[j]];
+        for (m = 0; m < ns.length; m++) if (++W_COUNT[ns[m]] > 2) return false;
+      }
+    }
+    var tier = function (x) { return x >= 0 && W_TIER[x]; };
+    for (s = Math.max(0, i - 2); s <= Math.min(i, N - 3); s++) if (tier(out[s]) && tier(out[s + 1]) && tier(out[s + 2])) return false;
+    return true;
+  }
+  // the tricky ones' places (1-based): even spacing over 4 to 54 with a little jitter, each moved to
+  // the nearest place that is not 15, 29 or 43 (right after a pause) and touches no other
+  function wSlots(rnd, k, N) {
+    var lo = 4, hi = N - 1, span = hi - lo + 1, taken = {}, out = [];
+    var bad = function (p) { return p < lo || p > hi || W_EASY_AT.indexOf(p) >= 0 || taken[p] || taken[p - 1] || taken[p + 1]; };
+    for (var i = 0; i < k; i++) {
+      var want = Math.round(lo - 0.5 + (i + 0.5 + (rnd() - 0.5) * 0.5) * span / k), at = null;
+      for (var d = 0; d <= span && at == null; d++) {
+        if (!bad(want + d)) at = want + d;
+        else if (!bad(want - d)) at = want - d;
+      }
+      // (fifteen always fit: fourteen placed take at most 42 of the 51 places, and the pauses three)
+      if (at != null) taken[at] = true;
+      out.push(at);
+    }
+    return out;
+  }
+  // `tricky`: pair keys. Returns the 55 keys in order.
+  function warriorOrder(rnd, tricky, giveUp, info) {
+    var N = W_N, starts = 0, T = tricky.map(function (k) { return W_AT[k]; });
+    for (;;) {
+      starts++;
+      var out = [], used = [], i;
+      for (i = 0; i < N; i++) { out.push(-1); used.push(false); }
+      out[N - 1] = W_LAST; used[W_LAST] = true;
+      var order = wShuffle(rnd, T.slice()), slots = wSlots(rnd, order.length, N);
+      // (a tricky pair with a 10 never sits at 54, beside 10 × 10, where no fill could save the start)
+      var end = slots.indexOf(N - 1);
+      if (end >= 0 && wShare(order[end], W_LAST)) {
+        for (var s = 0; s < order.length; s++) if (s !== end && !wShare(order[s], W_LAST)) { var x = order[s]; order[s] = order[end]; order[end] = x; break; }
+      }
+      order.forEach(function (k, n) { if (slots[n] != null) { out[slots[n] - 1] = k; used[k] = true; } });
+      var free = function (want) {
+        var f = [];
+        for (var k = 0; k < N; k++) if (!used[k] && (!want || want[k])) f.push(k);
+        return f;
+      };
+      var done = function (how) {
+        if (info) { info.starts = starts; info.relaxed = how === 'relaxed'; info.lastResort = how === 'last'; info.slots = slots; }
+        return out.map(function (k) { return W_KEYS[k]; });
+      };
+      if (giveUp || starts > E.WARRIOR_STARTS[1]) {
+        // the last resort: rules 1 to 3 by construction (at most twelve of the fourteen gentle pairs
+        // can be tricky, so two are always free), rule 4 not looked at
+        var put = function (at, k) { out[at] = k; used[k] = true; };
+        if (out[0] < 0) put(0, wShuffle(rnd, free(W_GENT))[0]);
+        W_EASY_AT.forEach(function (p) { if (out[p - 1] < 0) put(p - 1, wShuffle(rnd, free(W_EASE))[0]); });
+        var rest = wShuffle(rnd, free(null));
+        for (i = 0; i < N; i++) if (out[i] < 0) put(i, rest.shift());
+        return done('last');
+      }
+      var relax = starts > E.WARRIOR_STARTS[0], ok = true;
+      for (i = 0; i < N && ok; i++) {
+        if (out[i] >= 0) { if (!wOkAt(out, i, relax)) ok = false; continue; }
+        var pos = i + 1, want = pos === 1 ? W_GENT : W_EASY_AT.indexOf(pos) >= 0 ? W_EASE : null;
+        // the free pairs in a random order, drawn one at a time until one fits (a shuffle that stops early)
+        var pool = free(want), got = -1;
+        for (var j = 0; j < pool.length && got < 0; j++) {
+          var r = j + Math.floor(rnd() * (pool.length - j)), y = pool[r];
+          pool[r] = pool[j]; pool[j] = y;
+          out[i] = y;
+          if (wOkAt(out, i, relax) && (out[i + 1] < 0 || wOkAt(out, i + 1, relax))) got = y;
+        }
+        if (got < 0) { out[i] = -1; ok = false; }
+        else used[got] = true;
+      }
+      if (ok) return done(relax ? 'relaxed' : 'kept');
+    }
+  }
+  // the sitting's stream: from `now` and the sitting's number, so the same `now` gives the same order
+  function warriorSeed(now, n) {
+    var t = Math.floor(Math.abs(num(now, 0))), lo = t % 4294967296, hi = Math.floor(t / 4294967296) % 4294967296;
+    return (lo ^ Math.imul(hi | 0, 0x85EBCA6B) ^ Math.imul((n | 0) + 1, 0x9E3779B1)) >>> 0;
+  }
+  // 10 × 10's own lines: the caption and Glintstar's balloon, her shout, its miss line
+  function warriorFinale() {
+    var f = isObj(warriorLines().last) ? warriorLines().last : {};
+    return {
+      prompt: f.prompt != null ? clone(f.prompt) : [{ text: 'At last:', kind: 'caption' }, { who: 'glintstar', text: 'Ten times ten.' }],
+      right: f.right != null ? clone(f.right) : [{ who: 'player', text: 'A HUNDRED!', kind: 'shout' }],
+      missLast: f.missLast != null ? clone(f.missLast) : 'There. A hundred. And that’s every Count!'
+    };
+  }
+  /* The sitting's queue: 55 { a, b, table, prompt, hard? } in section 2's order. `table` is the pair's
+   * anchor; `prompt` Glintstar's balloon ("Seven times eight."); her own hard facts (the first
+   * E.WARRIOR_TRICKY of E.warriorHard) carry `hard: true`, so a right one earns the `remembered` line;
+   * 10 × 10, last, carries its caption in its prompt, its `right` and its `missLast`, and never `hard`.
+   * Each pair that is not a square is shown one way round or the other, afresh every sitting.
+   * `opts.giveUp` forces the last resort (for the test); `opts.info`, an object, is told how the order
+   * was made ({ starts, relaxed, lastResort, slots, tricky }). */
+  E.warriorFacts = function (cat, stories, now, opts) {
+    opts = opts || {};
+    var rnd = mulberry32(warriorSeed(now, nextSitting(cat)));
+    var orient = {};
+    W_KEYS.forEach(function (k) { var p = W_PAIR[k]; orient[k] = p[0] === p[1] || rnd() < 0.5 ? [p[0], p[1]] : [p[1], p[0]]; });
+    var hard = {}, tricky = [], inT = {};
+    E.warriorHard(cat, stories).slice(0, E.WARRIOR_TRICKY).forEach(function (f) { hard[pairKey(f[0], f[1])] = true; });
+    Object.keys(hard).concat(E.WARRIOR_NEW.map(function (f) { return pairKey(f[0], f[1]); })).forEach(function (k) {
+      if (!inT[k] && W_PAIR[k] && k !== pairKey(10, 10)) { inT[k] = true; tricky.push(k); }
+    });
+    var info = isObj(opts.info) ? opts.info : null;
+    var keys = warriorOrder(rnd, tricky, !!opts.giveUp, info);
+    if (info) info.tricky = tricky.slice();
+    var rank = taughtRank(stories), fin = warriorFinale();
+    return keys.map(function (k) {
+      var p = orient[k], q = { a: p[0], b: p[1], table: E.warriorAnchor(p[0], p[1], stories, rank) };
+      if (k === pairKey(10, 10)) { q.prompt = fin.prompt; q.right = fin.right; q.missLast = fin.missLast; return q; }
+      q.prompt = [{ who: 'glintstar', text: cap1(E.countWords(p[0])) + ' times ' + E.countWords(p[1]) + '.' }];
+      if (hard[k]) q.hard = true;
+      return q;
+    });
+  };
+  /* The sitting's set: Tallyheart's sand and PC.warrior's lines. No `table`, so every answer logs its
+   * anchor as its `table`; no `fastAfterMiss` ("You didn't even look at the sand" could land forty
+   * questions after the sand); `missLast` the four, which E.warriorAsk hands out in turn. */
+  var W_SET_LINES = ['praise', 'fast', 'remembered', 'rememberedSlow', 'missLast'];
+  E.warriorDef = function (stories) {
+    var c = warriorLines(), def = { id: 'warrior', teacher: 'tallyheart', ground: 'sand', ask: '{a} × {b}' };
+    W_SET_LINES.forEach(function (k) { if (c[k] != null) def[k] = clone(c[k]); });
+    return def;
+  };
+  /* The set a question is asked as, in place of E.questionDef: the sitting's, with only the picture
+   * and the help openings of its anchor's E.hollowDef (so its help is scratched in that Count's way,
+   * with that Count's first lines); nothing else of the anchor's, so none of its remembered,
+   * fastAfterMiss, miss, again, prompt or helpCounter comes in. Its `missLast` is one line: the
+   * sitting's list in turn, by the misses in the sitting so far (never one twice running). */
+  var W_ASK_KEYS = ['table', 'thing', 'things', 'unit', 'units', 'picture',
+    'helpIntro', 'helpIntroFar', 'helpIntroNotFive', 'helpIntroNotTen', 'helpIntroTens', 'helpIntroOneTuck', 'helpIntroNotNine'];
+  E.warriorAsk = function (def, st, q, stories) {
+    def = def || E.warriorDef(stories);
+    var t = q && okNum(q.table) ? q.table : q ? E.warriorAnchor(q.a, q.b, stories) : 1;
+    var A = E.hollowDef(stories, t), D = {};
+    Object.keys(def).forEach(function (k) { D[k] = def[k]; });
+    W_ASK_KEYS.forEach(function (k) { if (A[k] != null) D[k] = clone(A[k]); else delete D[k]; });
+    var lines = asList(def.missLast), misses = st && Array.isArray(st.log) ? st.log.filter(function (e) { return e && !e.correct; }).length : 0;
+    if (lines.length) D.missLast = pick(lines, misses); else delete D.missLast;
+    return D;
+  };
+  // a sitting left partway: why it no longer picks up ('practice': a Counts answer from anything else
+  // came after its last answer, before its two hours were up; 'late': two hours went by), or null
+  function warriorStale(cat, S, now) {
+    var at = num(S.at, 0), first = null;
+    ((cat && cat.counts) || []).forEach(function (e) {
+      if (e && e.set !== 'warrior' && num(e.at, 0) > at && (first == null || e.at < first)) first = e.at;
+    });
+    if (first != null && first < at + E.WARRIOR_PAUSE_MS) return 'practice';
+    if (num(now, 0) - at >= E.WARRIOR_PAUSE_MS) return 'late';
+    return null;
+  }
+  // an attempt from a sitting's state: finished (all 55 in) or set aside (`aside`)
+  function warriorAttempt(cat, st, aside) {
+    var sum = C.summary(st), log = st.log || [], end = log[log.length - 1];
+    var times = log.filter(function (e) { return e && e.correct && okNum(e.ms); }).map(function (e) { return e.ms; });
+    var a = {
+      n: nextSitting(cat), at: num(st.startedAt, 0), done: end ? num(end.at, 0) : num(st.startedAt, 0),
+      finished: !!sum.finished, answered: log.length, right: sum.firstTry, passed: false,
+      // (only real pairs: a hand-edited log never puts junk in a chip, and a second migrate changes nothing)
+      missed: log.filter(function (e) { return e && !e.correct && wInt(e.a) && wInt(e.b); }).map(function (e) { return [e.a, e.b]; }),
+      ms: times.length ? Math.round(median(times)) : null,
+      seen: !!aside   // a finished attempt's result is shown until it is seen; a set-aside one has none
+    };
+    a.passed = a.finished && a.right >= E.WARRIOR_PASS;
+    if (aside) a.aside = aside;
+    return a;
+  }
+  function keepAttempt(W, a) {
+    W.attempts.push(a);
+    if (W.attempts.length > E.WARRIOR_KEEP) W.attempts.splice(0, W.attempts.length - E.WARRIOR_KEEP);
+  }
+  function sameSitting(S, st) { return !!(S && isObj(S.state) && (S.state === st || (okNum(st.startedAt) && S.state.startedAt === st.startedAt))); }
+  // a sitting whose last answer is in but was never recorded: one finished attempt, at any age
+  function settleSitting(cat) {
+    var W = warriorData(cat, false), S = W && W.sitting;
+    if (!S || !isObj(S.state) || !C.done(S.state)) return null;
+    var r = E.warriorFinish(cat, S.state);
+    if (W.sitting === S) W.sitting = null;
+    return r;
+  }
+  /* A sitting's end: its attempt (E.counts.summary: `firstTry` is her right count), timed by its last
+   * answer, so it needs no clock of its own; `passedAt` on a first pass, never moved after; the
+   * sitting cleared. Recorded once (a second call returns null). Returns { attempt, passed,
+   * firstPass, clean }. */
+  E.warriorFinish = function (cat, st) {
+    if (!cat || !st || st.mode !== 'warrior' || !C.done(st)) return null;
+    var W = warriorData(cat, true);
+    if (st.recorded) { if (sameSitting(W.sitting, st)) W.sitting = null; return null; }
+    var a = warriorAttempt(cat, st, null);
+    keepAttempt(W, a);
+    st.recorded = true;
+    var firstPass = a.passed && !(W.passedAt > 0);
+    if (firstPass) W.passedAt = Math.max(1, a.done);
+    if (sameSitting(W.sitting, st)) W.sitting = null;
+    return { attempt: clone(a), passed: a.passed, firstPass: firstPass, clean: a.finished && a.right === W_KEYS.length };
+  };
+  /* The sitting to run: a done one is settled first; one in progress within E.WARRIOR_PAUSE_MS, with
+   * no other Counts answer since its last, is picked up (its `at` moved to now: two hours from when she
+   * was last there); else a stale one becomes an unfinished attempt (`aside`; dropped when it has no
+   * answer) and a new one starts: the runner's own start with `mode: 'warrior'`, every fact's requeues
+   * at E.MAX_REQUEUE (a miss is logged once and never asked again), `shown: true` (the 9s' digits line
+   * from the first question, as in the Hollow), `crowd` (the whole Clan watches until she has a
+   * finished sitting), `beats` (the pauses shown) and `aside` (why the sitting before it was set aside
+   * or dropped, else null: its opening's reason). Saved as `warrior.sitting`; `warrior` is created on
+   * her first. Returns { def, state, opening }. */
+  E.warriorBegin = function (cat, stories, now) {
+    var W = warriorData(cat, true);
+    settleSitting(cat);
+    var S = W.sitting, st = null;
+    // (picked up: her coming back counts as being there, so the two hours run from now, not from her last
+    // answer, and a sitting picked up late in its two hours never goes stale before she answers again;
+    // nothing is skipped: a pick-up means no other Counts answer came in since S.at)
+    if (S && isObj(S.state) && !warriorStale(cat, S, now)) { st = S.state; S.at = Math.max(num(S.at, 0), num(now, 0)); }
+    else {
+      // (why it was set aside, on the new sitting, so its opening says this reason, once: a sitting with
+      // no answer is dropped, never recorded, and still has its reason)
+      var why = S && isObj(S.state) ? warriorStale(cat, S, now) || 'late' : null;
+      if (S && isObj(S.state) && Array.isArray(S.state.log) && S.state.log.length) keepAttempt(W, warriorAttempt(cat, S.state, why));
+      W.sitting = null;
+      var def = E.warriorDef(stories);
+      st = C.start(def, { facts: E.warriorFacts(cat, stories, now), set: 'warrior', mode: 'warrior', now: now });
+      st.queue.forEach(function (q) { st.requeues[factKey(q.a, q.b)] = E.MAX_REQUEUE; });
+      st.shown = true;
+      st.crowd = !W.attempts.some(function (a) { return a && a.finished; });
+      st.beats = [];
+      st.aside = why;
+      W.sitting = { at: num(now, 0), state: st };
+    }
+    if (now) cat.updated = now;
+    return { def: E.warriorDef(stories), state: st, opening: E.warriorOpen(cat, st) };
+  };
+  /* The opening: 'resume' for a sitting picked up with an answer in it; else the sitting's own, 'first'
+   * (no attempt yet: one set aside with no answer was never one), 'again' (attempts, none finished:
+   * the crowd again) or 'quiet'; and `aside`, on 'again' and 'quiet', why the sitting before this one was
+   * set aside or dropped: the reason E.warriorBegin put on this sitting (`st.aside`), so it is said once
+   * and is this set-aside's own (a sitting saved without the key: the last attempt's, as before). The
+   * first opening never says one: she had begun nothing. */
+  E.warriorOpen = function (cat, st) {
+    var A = warriorAttempts(cat), prev = A[A.length - 1] || null;
+    var kind = st && Array.isArray(st.log) && st.log.length ? 'resume'
+      : !A.length ? 'first' : A.some(function (a) { return a && a.finished; }) ? 'quiet' : 'again';
+    var why = st && own(st, 'aside') ? st.aside : prev ? prev.aside : null;
+    var aside = (kind === 'again' || kind === 'quiet') && (why === 'late' || why === 'practice') ? why : null;
+    return { kind: kind, aside: aside, crowd: !!(st && st.crowd) };
+  };
+  /* After an answer that is not the last: the sitting kept, with the time its last answer went in. */
+  E.warriorKeep = function (cat, st, now) {
+    var W = warriorData(cat, true);
+    W.sitting = { at: num(now, 0), state: st };
+    if (now) cat.updated = now;
+    return W.sitting;
+  };
+  /* The pause due before the next question: 14 (Tallyheart's line), 28 (the halfway page) or 42, each
+   * once a sitting (kept in `st.beats`, so a page picked up after it never shows it again; `opts.peek`
+   * only looks); else 0. Never after the last answer. */
+  E.warriorBeat = function (st, opts) {
+    if (!st || C.done(st)) return 0;
+    var at = st.pos;
+    if (E.WARRIOR_BEATS.indexOf(at) < 0) return 0;
+    if (!Array.isArray(st.beats)) st.beats = [];
+    if (st.beats.indexOf(at) >= 0) return 0;
+    if (!(opts && opts.peek)) st.beats.push(at);
+    return at;
+  };
+  /* The four paw prints, each 0 to 1: one a quarter (14, 14, 14 and 13 questions). The one she is on
+   * fills a little at every answer, a miss the same as a right one; how far, never how well. */
+  E.warriorPaws = function (st) {
+    var n = st && okNum(st.pos) ? st.pos : 0, total = st && Array.isArray(st.queue) && st.queue.length ? st.queue.length : W_KEYS.length;
+    var bounds = [0].concat(E.WARRIOR_BEATS, [total]), out = [];
+    for (var i = 0; i + 1 < bounds.length; i++) out.push(Math.max(0, Math.min(1, (n - bounds[i]) / (bounds[i + 1] - bounds[i]))));
+    return out;
+  };
+  function warriorPaw(st) {
+    var n = st && okNum(st.pos) ? st.pos : 0, k = 1;
+    E.WARRIOR_BEATS.forEach(function (b) { if (n >= b) k++; });
+    return k;
+  }
+  /* The tricky Counts of some misses: each missed pair counts for both its numbers (a square once);
+   * the one or two tables with the most, ties to the one taught later, never the 1s. */
+  function trickyTables(missed, stories) {
+    var rank = taughtRank(stories), n = {};
+    asList(missed).forEach(function (p) {
+      (p[0] === p[1] ? [p[0]] : [p[0], p[1]]).forEach(function (t) { if (t !== 1) n[t] = (n[t] || 0) + 1; });
+    });
+    return Object.keys(n).map(Number).sort(function (x, y) { return n[y] - n[x] || rank(y) - rank(x); }).slice(0, 2);
+  }
+  /* The result of her latest finished attempt, so the hub can show it again while it is unseen:
+   * { attempt, right, last, short, missed (up to six, the named Counts' first), tricky (the tables
+   * named), tokens (for E.fill, in number words: {right} {Right} {last} {Last} {short}; and {tricky}
+   * {Tricky}, "the 7s and the 8s"), seen, variant }.
+   * `variant`: { kind: 'pass' | 'notYet' | 'afterPass', clean (55 right), quiet (a sitting without the
+   * crowd), nth: which not-yet ('first', 'second', 'later'), number (her number is said: on a not-yet,
+   * 45 or more, or more than last time; after the pass, 50 to 54), tone ('better', 'close' on 47 to 49,
+   * 'plain' under 45, else null), keys (the story's keys that apply, as 'notYet.first'; 'pass.quiet' for
+   * a pass in a quiet sitting; 'afterPass.number') }. Null before a finished attempt. */
+  E.warriorResult = function (cat, stories) {
+    var A = warriorAttempts(cat), at = latestFinished(A);
+    if (at < 0) return null;
+    var att = A[at], before = A.slice(0, at), done = before.filter(function (a) { return a && a.finished; });
+    var prev = done[done.length - 1] || null, passedAt = cat && cat.warrior ? num(cat.warrior.passedAt, 0) : 0;
+    var after = passedAt > 0 && (!att.passed || before.some(function (a) { return a && a.passed; }) || passedAt < num(att.done, 0));
+    var kind = after ? 'afterPass' : att.passed ? 'pass' : 'notYet';
+    var right = num(att.right, 0), last = prev ? num(prev.right, 0) : null;
+    var v = { kind: kind, clean: kind !== 'notYet' && right === W_KEYS.length, quiet: after || done.length > 0, nth: null, number: false, tone: null, keys: [kind] };
+    if (v.clean) v.keys.push(kind + '.clean');
+    if (kind === 'pass' && v.quiet) v.keys.push('pass.quiet');   // a pass in a quiet sitting: the Clan comes running
+    // a sitting again after the pass says her number only when it is good news (decision 49): a passing
+    // score, 50 to 54 (55 is `clean`, its own words); under 50, no number
+    if (kind === 'afterPass' && !v.clean && right >= E.WARRIOR_PASS) { v.number = true; v.keys.push('afterPass.number'); }
+    if (kind === 'notYet') {
+      var k = done.filter(function (a) { return !a.passed; }).length + 1, better = last != null && right > last;
+      v.nth = k === 1 ? 'first' : k === 2 ? 'second' : 'later';
+      v.number = right >= 45 || better;
+      v.tone = better ? 'better' : right >= 47 ? 'close' : right < 45 ? 'plain' : null;
+      v.keys.push('notYet.' + v.nth);
+      if (v.number) v.keys.push('notYet.number');
+      if (v.tone) v.keys.push('notYet.' + v.tone);
+    }
+    var tricky = trickyTables(att.missed, stories);
+    var named = function (p) { return tricky.indexOf(p[0]) >= 0 || tricky.indexOf(p[1]) >= 0; };
+    // the named Counts' misses first; within each, a pair with a 1 last (1 × 8 is a slip more than a tricky one)
+    var one = function (p) { return p[0] === 1 || p[1] === 1; };
+    var by = function (L) { return L.filter(function (p) { return !one(p); }).concat(L.filter(one)); };
+    var M = asList(att.missed);
+    var missed = by(M.filter(named)).concat(by(M.filter(function (p) { return !named(p); }))).slice(0, 6);
+    var short = Math.max(0, E.WARRIOR_PASS - right), named2 = andList(tricky.map(function (t) { return 'the ' + t + 's'; }));
+    return {
+      attempt: clone(att), right: right, last: last, short: short, missed: clone(missed), tricky: tricky, seen: !!att.seen, variant: v,
+      tokens: { right: E.countWords(right), Right: cap1(E.countWords(right)), last: last != null ? E.countWords(last) : '', Last: last != null ? cap1(E.countWords(last)) : '',
+        short: E.countWords(short), tricky: named2, Tricky: cap1(named2) }
+    };
+  };
+  /* The result's last button: her latest finished attempt is seen. True when that changed anything. */
+  E.warriorSeen = function (cat) {
+    var A = warriorAttempts(cat), at = latestFinished(A);
+    if (at < 0 || A[at].seen === true) return false;
+    A[at].seen = true;
+    return true;
+  };
+  /* For the hub and the grown-ups corner (a done sitting settled first): `open` (chapter 10 finished),
+   * `passed`, `passedAt`, `sat` (any attempt or sitting), `sitting` to pick up ({ at, answered, paw:
+   * 1 to 4, paws }; one with an answer in it, none once stale, and then `stale` says why it will be set
+   * aside), `unseen` (the latest finished attempt's result not yet seen), `notYet` (her latest finished
+   * attempt, before any pass, did not pass), `attempts` and `last` (the latest finished). */
+  E.warriorState = function (cat, stories, now) {
+    if (cat && isObj(cat.warrior)) settleSitting(cat);
+    var W = warriorData(cat, false), A = W ? W.attempts : [], S = W ? W.sitting : null;
+    var why = S && isObj(S.state) ? warriorStale(cat, S, now) : null, at = latestFinished(A), last = at >= 0 ? A[at] : null;
+    var passed = warriorPassed(cat);
+    return {
+      open: E.isFinished(cat, warriorAfter()),
+      passed: passed, passedAt: W ? num(W.passedAt, 0) : 0,
+      sat: A.length > 0 || !!S,
+      // (a sitting to pick up has an answer in it: one opened and left before its first answer has nothing
+      // to keep going with; E.warriorBegin still picks it up within its two hours and plays its opening)
+      sitting: S && isObj(S.state) && !why && Array.isArray(S.state.log) && S.state.log.length ? { at: num(S.at, 0), answered: S.state.log.length, paw: warriorPaw(S.state), paws: E.warriorPaws(S.state) } : null,
+      stale: S && why ? why : null,
+      unseen: !!(last && last.seen === false),
+      notYet: !!(last && !passed && !last.passed),
+      attempts: clone(A), last: last ? clone(last) : null
+    };
+  };
+  /* E.hollowLines with `warrior` data: while a sitting with an answer in it is paused (`opts.now` to
+   * tell a stale one), the waiting line; while she has not passed and her latest finished attempt is a
+   * not-yet whose result she has seen (Glintstar says it first), the tricky greeting and `tricky: true`
+   * on the Counts whose missed pairs are still hard (E.warriorHard). A
+   * Count's paw goes once none of its missed pairs is hard; the greeting names only the Counts still
+   * marked ("the tricky one" when one pair is left in them), and goes with the last paw. After a round
+   * (`opts.reward`) the reward line keeps its place, unless `opts.tricky`: the first Hollow page after a
+   * round she went back to from a not-yet, where the greeting was waiting (section 5). The page says
+   * the waiting line in the greeting's place (a Count in the Hollow is a times table: "Warrior Counts"). */
+  E.WARRIOR_WAITING = 'Your Warrior Counts are waiting at the fountain. Finish them first, or practice now and start them fresh later.';
+  function warriorHollow(out, cat, stories, opts) {
+    var W = cat.warrior, S = isObj(W.sitting) ? W.sitting : null;
+    // (waiting: a sitting with an answer in it; setting one aside with none loses nothing)
+    if (S && isObj(S.state) && !C.done(S.state) && Array.isArray(S.state.log) && S.state.log.length && !warriorStale(cat, S, opts.now != null ? opts.now : S.at)) out.waiting = E.WARRIOR_WAITING;
+    if (warriorPassed(cat)) return;
+    var A = warriorAttempts(cat), at = latestFinished(A), last = at >= 0 ? A[at] : null;
+    // (a not-yet whose result is unseen: the Hollow never says it before Glintstar does)
+    if (!last || last.passed || last.seen === false) return;
+    var hard = pairSet(E.warriorHard(cat, stories)), missed = asList(last.missed);
+    var still = missed.filter(function (p) { return Array.isArray(p) && hard[pairKey(p[0], p[1])]; });
+    var here = {};
+    out.counts.forEach(function (c) { here[c.table] = true; });
+    var marked = trickyTables(missed, stories).filter(function (t) {
+      return here[t] && still.some(function (p) { return p[0] === t || p[1] === t; });
+    });
+    if (!marked.length) return;
+    out.counts.forEach(function (c) { if (marked.indexOf(c.table) >= 0) c.tricky = true; });
+    out.tricky = marked;
+    var left = still.filter(function (p) { return marked.some(function (t) { return p[0] === t || p[1] === t; }); }).length;
+    if (!opts.reward || opts.tricky) out.greet = cap1(andList(marked.map(function (t) { return 'the ' + t + 's'; }))) + ' first? I’ve got the tricky ' + (left === 1 ? 'one' : 'ones') + ' ready.';
+  }
+  /* The save's `warrior` (section 6), from E.migrate: attempts that are objects with a numeric `right`
+   * (0 to 55) and `at`, in their shape (a stored `passed` kept; bad pairs out of `missed`; `seen` true
+   * unless it is false; `aside` only 'late' or 'practice'), the last E.WARRIOR_KEEP; the sitting only
+   * when the runner can take it up (E.okLesson), its mode 'warrior', its `at` a number, its queue 55
+   * distinct pairs in 1 to 10 and its `beats` numbers; `passedAt` when positive, else the first passed
+   * attempt's `done`, else 0. Idempotent. (normCat settles a done sitting.) */
+  function wInt(v) { return typeof v === 'number' && v === Math.floor(v) && v >= 1 && v <= 10; }
+  function okWarriorPair(p) { return Array.isArray(p) && p.length === 2 && wInt(p[0]) && wInt(p[1]); }
+  function okSitting(S) {
+    if (!isObj(S) || !okNum(S.at) || !okLesson({ state: S.state })) return false;
+    var st = S.state, seen = {};
+    if (st.mode !== 'warrior' || !Array.isArray(st.beats) || !st.beats.every(okNum) || st.queue.length !== W_KEYS.length) return false;
+    return st.queue.every(function (q) {
+      if (!wInt(q.a) || !wInt(q.b)) return false;
+      var k = pairKey(q.a, q.b);
+      if (seen[k]) return false;
+      seen[k] = true;
+      return true;
+    });
+  }
+  function normAttempt(a, prevN) {
+    var missed = (Array.isArray(a.missed) ? a.missed : []).filter(okWarriorPair).map(function (p) { return [p[0], p[1]]; });
+    var finished = typeof a.finished === 'boolean' ? a.finished : num(a.answered, 0) >= W_KEYS.length;
+    var x = {
+      n: okNum(a.n) && a.n >= 1 ? a.n : prevN + 1,
+      at: a.at,
+      done: okNum(a.done) ? a.done : a.at,
+      finished: finished,
+      answered: okNum(a.answered) && a.answered >= 0 && a.answered <= W_KEYS.length ? a.answered : finished ? W_KEYS.length : Math.min(W_KEYS.length, a.right + missed.length),
+      right: a.right,
+      passed: typeof a.passed === 'boolean' ? a.passed : finished && a.right >= E.WARRIOR_PASS,
+      missed: missed,
+      ms: okNum(a.ms) && a.ms >= 0 ? a.ms : null,
+      seen: a.seen !== false
+    };
+    if (a.aside === 'late' || a.aside === 'practice') x.aside = a.aside;
+    return x;
+  }
+  function normWarrior(w) {
+    var out = { sitting: null, attempts: [], passedAt: 0 }, prevN = 0;
+    (Array.isArray(w.attempts) ? w.attempts : []).forEach(function (a) {
+      if (!isObj(a) || !okNum(a.right) || a.right < 0 || a.right > W_KEYS.length || !okNum(a.at)) return;
+      var x = normAttempt(a, prevN);
+      prevN = x.n;
+      out.attempts.push(x);
+    });
+    if (out.attempts.length > E.WARRIOR_KEEP) out.attempts = out.attempts.slice(-E.WARRIOR_KEEP);
+    if (okSitting(w.sitting)) out.sitting = { at: w.sitting.at, state: w.sitting.state };
+    if (okNum(w.passedAt) && w.passedAt > 0) out.passedAt = w.passedAt;
+    else {
+      var p = out.attempts.filter(function (a) { return a.passed; })[0];
+      out.passedAt = p ? Math.max(1, num(p.done, 0)) : 0;
+    }
+    return out;
+  }
 
   /* ------------------------------------------------------------ story checks */
   /* Problems with a story's frame graph, as strings (empty = fine). Used by tests and the UI's

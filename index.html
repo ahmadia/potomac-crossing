@@ -353,6 +353,32 @@ html.big .sw{font-size:max(15px, calc(var(--fs) * var(--scale) * .72))}
 .btn.go .glowdot{width:1.15em;height:1.15em;background:none;border:0;border-radius:0;box-shadow:none;filter:drop-shadow(0 0 4px #fff)}
 .glowdot svg{display:none}
 .btn.go .glowdot svg{display:block;width:100%;height:100%;fill:#fffbe6;stroke:var(--ink);stroke-width:2.2;stroke-linejoin:round}
+/* the Warrior Counts (docs/warrior-counts.md): the hub's big button for them (the paw print, an ember
+   edge so it reads as the test and not a chapter) and the quiet "again" under the Ceremony's; the four
+   paw prints above the question line, each filling from the heel as she goes (how far, never how well);
+   the tricky ones written out in Andika under Tallyheart's balloon; a small paw on the Hollow's Counts */
+.hub .btn.hub-warrior{background:linear-gradient(135deg, var(--gold) 0%, var(--gold) 62%, var(--ember) 100%)}
+.hub .btn.hub-warrior i svg,.hub .btn.hub-again i svg{width:38px;height:38px}
+.wpaws{display:flex;justify-content:center;gap:clamp(10px, 4cqi, 22px);margin:0 auto -2px}
+.wpaw{width:clamp(30px, 9cqi, 44px);height:clamp(30px, 9cqi, 44px);flex:none;overflow:visible}
+.wpaw-e{fill:rgba(255,250,240,.1);stroke:rgba(255,246,228,.6);stroke-width:2.6;stroke-linejoin:round}
+.wpaw-f{fill:var(--gold);stroke:var(--ink);stroke-width:2.6;stroke-linejoin:round}
+.wpaw.full{filter:drop-shadow(0 0 5px rgba(255,210,63,.55))}
+/* two chips a row at any text size (a grid: with Bigger text a wrapping row fell to one a row, and the
+   not-yet's last page ran past the screen in landscape) */
+.wchips{display:grid;grid-template-columns:repeat(2,max-content);justify-content:start;gap:6px 8px;margin:-2px 0 2px 64px;max-width:calc(100% - 64px)}
+html.big .wchip{font-size:.85em}
+.wchip{font-family:var(--digits);font-weight:700;font-size:1em;letter-spacing:.02em;line-height:1.1;white-space:nowrap;background:var(--ink);color:var(--gold);
+  border:2px solid var(--cream);border-radius:10px;padding:.18em .5em .22em;box-shadow:2px 2px 0 rgba(0,0,0,.35)}
+.trickypaw{display:inline-grid;place-items:center;width:1.3em;height:1.3em;flex:none;margin-right:.1em}
+.trickypaw svg{width:100%;height:100%;display:block}
+@media (orientation: landscape) and (max-height: 500px){
+  .frame[data-mode="warrior"] .wpaws{gap:12px}
+  .frame[data-mode="warrior"] .wpaw{width:28px;height:28px}
+}
+@media (max-width: 520px){
+  .wchips{margin-left:0;max-width:100%}
+}
 .nest-h{margin:8px 0 -4px;font-size:1.35em}
 .treasure small{display:block;font-weight:700;font-size:.92em;color:#7a5b2e;margin-top:3px}
 .treasure.gift{background:#fff1c9}
@@ -739,6 +765,7 @@ html.file-open,html.file-open body{overflow:hidden}
 <script src="app/story/ch06.js"></script>
 <script src="app/story/ch07.js"></script>
 <script src="app/story/ch08.js"></script>
+<script src="app/story/warrior.js"></script>
 <script src="app/engine.js"></script>
 <script src="app/ui.js"></script>
 <script>

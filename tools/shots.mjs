@@ -17,6 +17,13 @@
  *   node tools/shots.mjs OUTDIR ch04:f052@tap@tap         open a frame, then tap its tap picture (a skip-count, a row
  *                                                         of bark, the glint; chapter 5: a one-tap frame's nose or
  *                                                         tuft of fur, the page of questions), once for each @tap
+ *   node tools/shots.mjs OUTDIR warrior:open warrior:q warrior:sand warrior:halfway warrior:pass warrior:notyet#3
+ *                                                         the Warrior Counts (docs/warrior-counts.md): the first opening,
+ *                                                         a question, the sand on a miss (its count out at once), the
+ *                                                         halfway page, a pass, a not-yet's tricky ones; also
+ *                                                         warrior:afterpass; `#n` a page of the opening or the result
+ *                                                         (1 the first, -1 the last). Each sets up its own test cat's
+ *                                                         Counts through the engine (WARRIOR below)
  *   node tools/shots.mjs --lock                           is the screen locked (so: a session a shot)? no Safari
  *   node tools/shots.mjs --blank a.png b.png              is each PNG a blank screenshot (one flat colour)? no Safari
  *   node tools/shots.mjs --page                           the game's page as this tool serves it to Safari (the
@@ -98,6 +105,16 @@
  * `cards` lists the Case File cards she holds, in order (any chapter's ids), and the flags `caseFileOpen`
  * (her Case File's button is in the top bar), `foundSquall` and `ch4CaughtFly` go in `flags`, as do
  * chapter 5's (`ch5First`, `ch5Roof`, `foundPuddle`, `foundWisp`).
+ * The Warrior Counts: `warrior` is a recipe for her Counts, run through the engine as the page runs a
+ * sitting (WARRIOR): every built chapter and the one they open after (`PC.warrior.after`, chapter 10, a
+ * stand-in until it is built) finished, every Count learned, then `{ sittings: [rights of each finished
+ * sitting, oldest first, a day apart], seen: false (the last one's result not yet seen), answers: n (a
+ * sitting in progress, n answered, inside its two hours), stale: true (that sitting's last answer three
+ * hours ago, so the next opening sets it aside: "It's been a while"), round: { table, answers } (a
+ * Training Hollow round in progress, its answers given before that sitting began) }`; her misses fall in
+ * the 7s and the 8s first, never on 10 × 10. CAT='{"warrior":{"sittings":[46],"answers":20}}' node
+ * tools/shots.mjs OUTDIR hub hollow.
+ * A `warrior:` target sets up its own (WARRIOR_TARGETS) unless CAT has one.
  * It lives in this localhost origin's storage only (the server's port), never in a real player's
  * save. The service worker is not registered on localhost.
  */
@@ -301,6 +318,67 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const STILL = `if (!document.getElementById('shots-still')) document.head.insertAdjacentHTML('beforeend',
   '<style id="shots-still">*,*::before,*::after{animation:none!important;transition:none!important}</style>'); return true;`;
 
+/* The Warrior Counts' test cat (the header's `warrior`): runs in the page, through the engine, as the page
+ * runs a sitting (E.warriorBegin, E.warriorBeat before each question, E.warriorAsk, E.counts.answer,
+ * E.warriorKeep, E.recordLesson at the last answer). `arguments[0]` is the recipe. */
+const WARRIOR = `
+  var w = arguments[0] || {}, E = PC.engine, c = PC.debug.cat(), S = PC.story;
+  if (!c) return 'no cat';
+  if (!PC.warrior || typeof E.warriorBegin !== 'function') return 'no Warrior Counts in this build';
+  var t = Date.now(), day = 86400000;
+  // every chapter built, and the one the Counts open after (chapter 10: a stand-in until it is built), finished; every Count learned
+  E.chapters(S).map(function (s) { return s.id; }).concat([PC.warrior.after]).forEach(function (id, i) { if (!c.finished[id]) c.finished[id] = t - day * (60 - i); });
+  E.countSets(S).forEach(function (k) { if (!c.lessons[k.setId]) c.lessons[k.setId] = { set: k.setId, mode: 'chapter', answers: 10, correct: 10, fast: 5, facts: 10, firstTry: 10, helped: 0, noHelp: true, finished: true }; });
+  delete c.warrior;
+  var sit = function (right, n, start) {
+    var r = E.warriorBegin(c, S, start), st = r.state, k = 0, at = start, wrong = {};
+    // her misses in the 7s and the 8s first, then the 6s and the 9s, never on 10 × 10
+    st.queue.map(function (q, i) { return { i: i, p: q.a === 10 && q.b === 10 ? 9 : q.a === 7 || q.b === 7 || q.a === 8 || q.b === 8 ? 0 : q.a >= 6 || q.b >= 6 ? 1 : 2 }; })
+      .sort(function (x, y) { return x.p - y.p || x.i - y.i; }).slice(0, 55 - right).forEach(function (x) { if (x.p < 9) wrong[x.i] = true; });
+    while (!E.counts.done(st) && k < n) {
+      E.warriorBeat(st);   // each pause on the way, as the page shows it
+      var q = E.counts.question(st), D = E.warriorAsk(r.def, st, q, S), miss = !!wrong[st.pos];
+      at += 9000;
+      var res = E.counts.answer(st, D, miss ? q.a * q.b + 1 : q.a * q.b, miss ? 6000 : 2400, at);
+      E.logAnswer(c, res.entry);
+      if (res.done) E.recordLesson(c, st); else E.warriorKeep(c, st, at);
+      k++;
+    }
+  };
+  var sits = Array.isArray(w.sittings) ? w.sittings : [];
+  sits.forEach(function (right, i) {
+    sit(Math.max(0, Math.min(55, +right || 0)), 55, t - day * (sits.length + 1 - i));
+    if (i < sits.length - 1 || w.seen !== false) E.warriorSeen(c);
+  });
+  var t1 = t - 9000 * (w.answers || 0) - 60000;
+  // a Training Hollow round in progress, its answers before the sitting below began (so it sets nothing aside)
+  if (w.round && E.hollowStart) {
+    var h = E.hollowStart(c, S, t1 - 600000, +w.round.table || 2);
+    c.lesson = { mode: 'hollow', state: h.state };
+    for (var ra = 0; ra < (+w.round.answers || 0); ra++) {
+      var hq = E.counts.question(h.state);
+      if (!hq) break;
+      E.logAnswer(c, E.counts.answer(h.state, h.def, hq.a * hq.b, 2400, t1 - 600000 + 9000 * (ra + 1)).entry);
+    }
+  }
+  if (w.answers > 0) sit(55, Math.min(54, w.answers), t1);
+  // that sitting left three hours ago: set aside at the next opening ("It's been a while")
+  if (w.stale && c.warrior && c.warrior.sitting) c.warrior.sitting.at -= 3 * 3600000;
+  PC.debug.save();
+  return true;`;
+// each `warrior:` target's own recipe (CAT's `warrior` wins), and what it opens (PC.debug.warrior)
+const WARRIOR_TARGETS = {
+  open: [{}, 'open'], q: [{}, 'q'], sand: [{}, 'sand'], halfway: [{ answers: 28 }, 'halfway'],
+  pass: [{ sittings: [52], seen: false }, 'result'], notyet: [{ sittings: [46], seen: false }, 'result'], afterpass: [{ sittings: [52, 53], seen: false }, 'result']
+};
+function warriorTarget(fid, anchor) {
+  const w = WARRIOR_TARGETS[fid];
+  if (!w) return null;
+  // `#n`: a page, 1 the first, -1 the last (PC.debug.warrior counts from 0, and from the end below 0)
+  const n = anchor != null && anchor !== '' ? +anchor : 1;
+  return { recipe: CAT.warrior || w[0], what: w[1], page: n > 0 ? n - 1 : n };
+}
+
 /* Runs in the page: a fresh device with one test cat (save version 2) set up as CAT says. */
 const SETUP = `
   var o = arguments[0], fixture = arguments[1], E = PC.engine;
@@ -331,6 +409,8 @@ const SETUP = `
       if (q) E.logAnswer(c, E.counts.answer(go.state, E.questionDef(go.def, q, sto, PC.story), a, 3000, t).entry);
     });
   }
+  // the Warrior Counts: her Counts as the recipe says (WARRIOR)
+  if (o.warrior) { var wr = (function () { ` + WARRIOR + ` }).call(null, o.warrior); if (wr !== true) return 'warrior: ' + wr; }
   PC.debug.save();
   return (function () { ` + QUIET + ` }).call(null, arguments[2]);`;
 
@@ -431,7 +511,7 @@ async function sheet(S, run, four) {
   }
   const res = await run(`
     var out = [], frames = document.querySelectorAll('iframe'), targets = arguments[0], still = arguments[1], fixture = arguments[2];
-    var setup = arguments[3], cat = arguments[4], read = arguments[5];
+    var setup = arguments[3], cat = arguments[4], read = arguments[5], warriorJs = arguments[6], warriors = arguments[7];
     for (var i = 0; i < frames.length; i++) {
       var w = frames[i].contentWindow, PC = w.PC, t = targets[i].split('@'), target = t[0];
       try {
@@ -441,11 +521,18 @@ async function sheet(S, run, four) {
         if (made !== true) { out.push(targets[i] + ': setting up the test cat: ' + made); continue; }
         if (/^(hub|book|hollow|nest|who|title)$/.test(target)) PC.debug.go(target, { from: 'hub' });
         else if (/^file(#|$)/.test(target)) { var fr = PC.debug.file(target.split('#')[1] || null); if (fr !== true) { out.push(targets[i] + ': ' + fr); continue; } }
+        else if (warriors[i]) {
+          // the Warrior Counts: the pane's own test cat's Counts, then the screen
+          var wm = new w.Function(warriorJs).apply(null, [warriors[i].recipe]);
+          var wd = wm === true ? PC.debug.warrior(warriors[i].what, warriors[i].page) : wm;
+          if (wd !== true) { out.push(targets[i] + ': ' + wd); continue; }
+        }
         else { var cf = target.indexOf(':') >= 0 ? target.split(':') : ['ch01', target]; var r = PC.debug.goto(cf[1], cf[0]); if (r !== cf[1]) { out.push(targets[i] + ': ' + r); continue; } }
         out.push(true);
       } catch (e) { out.push(targets[i] + ': ' + e.message); }
     }
-    return out;`, [four, '(function(){' + STILL.replace(/return true;$/, '') + '})()', FIXTURE, SETUP, CAT, READ]);
+    return out;`, [four, '(function(){' + STILL.replace(/return true;$/, '') + '})()', FIXTURE, SETUP, CAT, READ, WARRIOR,
+    four.map(t => { const [c0, f0] = t.split('@')[0].split('#')[0].split(':'); return f0 && c0 === 'warrior' ? warriorTarget(f0, t.split('@')[0].split('#')[1]) : null; })]);
   res.forEach((r) => { if (r !== true) console.error(r); });
   if (four.some(t => t.includes('@'))) {
     await sleep(450);   // past each page's double-tap guard
@@ -494,7 +581,14 @@ async function shoot(S, run, t) {
   const [target, anchor] = target0.split('#');
   const screen = /^(hub|book|hollow|nest|who|title)$/.test(target);
   const [ch, fid] = target.includes(':') ? target.split(':') : ['ch01', target];
-  const ok = await run(target === 'file' ? 'if (!PC.debug.cat()) return "no cat"; return PC.debug.file(arguments[1]);' : screen
+  // the Warrior Counts: its own test cat's Counts first, then the screen (PC.debug.warrior)
+  const wt = ch === 'warrior' ? warriorTarget(fid, anchor) : null;
+  if (ch === 'warrior') {
+    if (!wt) { console.error(t + ': warrior: ' + Object.keys(WARRIOR_TARGETS).join(', ')); return; }
+    const made = await run(WARRIOR, [wt.recipe]);
+    if (made !== true) { console.error(t + ': ' + made); return; }
+  }
+  const ok = wt ? await run('return PC.debug.warrior(arguments[0], arguments[1]);', [wt.what, wt.page]) : await run(target === 'file' ? 'if (!PC.debug.cat()) return "no cat"; return PC.debug.file(arguments[1]);' : screen
     ? 'if (!PC.debug.cat()) PC.debug.go("who"); else PC.debug.go(arguments[0], { from: "hub" });' +
       'var a = arguments[1] && document.getElementById("book-" + arguments[1]); if (arguments[1] && !a) return "no page " + arguments[1]; if (a) a.scrollIntoView({ block: "start" }); return true;'
     : 'var r = PC.debug.goto(arguments[1], arguments[0]); return r === arguments[1] || r;', screen || target === 'file' ? [target, anchor || null] : [ch, fid]);

@@ -143,6 +143,21 @@ Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24.
 46. **"I'll let you steer"** (Aron, 2026-10-10): from chapter 5 on, Claude decides the open
     questions as they come up, records each choice below with its reason, and keeps building. Aron
     can reverse any of them; a reversed choice gets a new numbered decision.
+48. **The Warrior Counts** (Aron, 2026-10-24): every pair up to 10 × 10 once, so 3 × 7 and 7 × 3 are
+    one pair (55 questions, each pair shown in a random order), in **one sitting**; she passes with 90%
+    (50 of 55 right). A missed question still gets the sand's help but counts against the 90%. If she
+    doesn't pass, she can **try again whenever she likes**, and Tallyheart, warm about it, points her
+    to the Training Hollow for the tricky ones. Built and tested as its own piece before chapter 10's
+    build.
+49. **The Warrior Counts' three open questions** (Aron, 2026-10-24; `docs/warrior-counts.md`): she
+    hears her number only when it is good news (on a pass, and on a not-yet only at 45 or more right
+    or when better than last time); after passing she may quietly sit it again for a clean sweep, which
+    never changes her pass; the whole Clan watches her first sitting, and after that only Glintstar,
+    Tallyheart and {Murmur}chime, with the Clan running in for a pass.
+50. **The finale may run to about 30 minutes** (Aron, 2026-10-24): chapter 10's plain path up to about
+    2,700 words, so the case and the goodbyes get room; it stays one chapter (decision 8's ten).
+51. **The 7s are a clutch of seven** (Aron, 2026-10-24; amends 42): the seven dragonets of Sprinkle's
+    clutch, not "sunrises in a quarter-moon", which echoes the books' "quarter moon".
 47. **Chapter 6 may run to 22 minutes** (Aron, 2026-10-18), answering `docs/production.md`'s open
     question (22 minutes, or back to 15–20) for this chapter. It takes it as: the plain path at
     most about 2,000 words (chapter 5's was 1,965, about 22 minutes), and its one optional scene,
@@ -466,15 +481,40 @@ Each is Aron's to reverse.
      cat who never met Squall meets him at last (chapter 4's scene again, as chapter 5 promised).
   6. Sprinkle practises and lifts off for a few wingbeats; whether her wing holds is the Gathering's.
      Glintstar is told everything on the last evening, and says the apprentice will speak.
+  7. Words checked by the draft's names check and kept (2026-10-24): *Thymeleaf* (module-1's; the
+     whole name is clear on both wikis, its "-leaf" is a Warriors suffix, as Tallyheart's "-heart" is;
+     thyme is a Warriors medicine herb); *medicine cat* (the Warriors term for the healer, in world.md
+     and module-1 from the start, a shared Clan convention like apprentice and elder); *the Moon Ferry*
+     (module-1's; plain words); *sage* (the herb, lower case only); *featherlight* (the title's word,
+     never a name).
+
+- **The Warrior Counts' design** (2026-10-24; `docs/warrior-counts.md`, its section 9 has every call):
+  taken from the hub once chapter 10 is finished, in chapter 3's scene at the fountain; 10 × 10 always
+  last, as Murmurpaw's was; no clock, no score on screen, four paw prints filling as she goes; a miss
+  gets the sand once and is not asked again; a paused sitting can be picked up within two hours, and
+  practising in the Hollow or a chapter lesson in between sets it aside, so she starts fresh.
+
+- **Chapter 10's brief** (2026-10-24; `docs/chapters/10-the-gathering.brief.md`, each call with its
+  reason). In short:
+  1. Every one of Reynard's claims can be answered by a card every player holds on every path; nothing
+     needs `my-count` or an optional card. A wrong pick gets a gentle nudge and another try.
+  2. Water's brave moment is the Moon Ferry at night (moonlit silver-blue, never dark); talk's is her
+     answering Reynard out loud. Puddle can be found under the ferry raft, if he wasn't before.
+  3. The foxes are chased off by every Clan standing together: no fighting, nobody hurt. The prey
+     comes home from the stash.
+  4. The Mistscales are huge, gentle and misty, never frightening; Sprinkle flies to her Mama; the
+     dragonets she found say goodbye by name, the others are shapes in the mist.
+  5. Glintstar honours her; she is still {name}paw; Tallyheart says the name will come when she
+     passes the Warrior Counts, which the hub offers from then on.
+  6. Leaders and grown Mistscales stay unnamed (labels and "Mama").
 
 ## Open questions, waiting on Aron
 
 Nothing here blocks the chapter being built; each chapter's own questions are in its text, under
 "For Aron to confirm".
 
-- **The Warrior Counts, for chapter 10:** whether 3 × 7 and 7 × 3 are one pair or two (55 questions
-  or 100); one sitting or a few rounds; a missed question still gets the sand but counts against
-  the 90%; and she can try again from the Training Hollow whenever she likes.
+- ~~**The Warrior Counts, for chapter 10**~~: answered by decision 48 (2026-10-24): 55 pairs, one
+  sitting, try again anytime. The design is `docs/warrior-counts.md`.
 - **Names and words that may still echo the books**: the Training Hollow (ThunderClan's training
   hollow; the Claw Tree Hollow?); chapter 1's Clan-name ideas, which make Warriors apprentice names
   (Hollypaw, Fernpaw, Stormpaw, Minnowpaw, Sedgepaw, Frostpaw) and "Moon" (Wings of Fire's

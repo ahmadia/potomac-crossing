@@ -24,6 +24,7 @@ var ASSETS = [
   './app/story/ch06.js',
   './app/story/ch07.js',
   './app/story/ch08.js',
+  './app/story/warrior.js',
   './app/engine.js',
   './app/ui.js',
   './manifest.webmanifest',

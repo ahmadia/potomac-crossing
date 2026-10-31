@@ -10,12 +10,14 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-26):** chapters 1 to 9 are built as a static web app (`index.html`, `app/`; the
+**Status (2026-10-31):** chapters 1 to 9 are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04). Chapter 6, *The Snake in the Stones*,
 shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`; chapter 7, *The Counts
 Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24; chapter 9, *Featherlight*, 2026-10-26.
+The Warrior Counts (decisions 48 and 49) are built and merged on top of chapter 9 (2026-10-31); they
+open once chapter 10 is finished, so they ship with it.
 
 ## Docs
 
@@ -35,6 +37,9 @@ Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24; chapter 9, *
 - [`docs/storyboard/`](docs/storyboard/): the verbal storyboard of every frame, for an illustrator
   (generated from `app/story/`).
 - [`docs/build.md`](docs/build.md): how it is built, tested and deployed.
+- [`docs/warrior-counts.md`](docs/warrior-counts.md): the Warrior Counts (decisions 48 and 49), every
+  pair up to 10 × 10 in one sitting, offered on the hub once chapter 10 is finished; built and merged
+  onto chapter 9 (2026-10-31), so they ship with chapter 10.
 - [`docs/continuity.md`](docs/continuity.md): where the story stands after the last shipped
   chapter (what happened, the flags, the cards, the names), for whoever writes the next one.
 - [`docs/production.md`](docs/production.md): how a chapter gets made, what the first five cost,
@@ -547,7 +552,7 @@ Each is Aron's to reverse.
     the Aa fix's three leftovers (ch04 f115 for a noticing cat, an already-counted Counts page, the
     Case File's last row), whose second round was stopped half built in ~/potomac-crossing-hotfix.
   - *CACHE knows what is live*: `tests/fixtures/sw-shipped.json` lists every shipped `CACHE` with a
-    digest of what it cached (v16, chapter 8; v17, the depth hotfix), and `tests/sw.test.js` fails until
+    digest of what it cached (from v16, chapter 8, to v19, chapter 9), and `tests/sw.test.js` fails until
     `CACHE` is past the last; a ship appends its own entry (production.md, step 2). Chapter 9 and the
     hotfix had both bumped to v17, which would have stranded installed iPads on whichever shipped first.
 
@@ -556,6 +561,159 @@ Each is Aron's to reverse.
   last, as Murmurpaw's was; no clock, no score on screen, four paw prints filling as she goes; a miss
   gets the sand once and is not asked again; a paused sitting can be picked up within two hours, and
   practising in the Hollow or a chapter lesson in between sets it aside, so she starts fresh.
+
+- **The Warrior Counts as built** (2026-10-26: built on chapter 8's tree in the `warrior-counts` branch
+  and reviewed twice; merged onto chapter 9 2026-10-31. `docs/warrior-counts.md` v0.4, sections 9, 11
+  and 12, has each with its test; `~/potomac-crossing-work/warrior-counts/build.json` and
+  `review-final.json` the findings). They open once chapter 10 is finished, so no player sees them
+  before it ships. Each call, with its reason:
+  - *The builders, the engine:*
+    1. A table with no set yet anchors after every taught one, two such the smaller: a tree without
+       chapter 10 still pictures every pair (7 × 9 as the 9s).
+    2. A stale sitting is set aside as "practice" when another Counts answer came within its two hours,
+       else as "late": the next opening's reason is then the true one.
+    3. A set-aside attempt is stored `seen: true`: it has no result page to show.
+    4. 45 or 46 right, no better than last time, says her number and nothing after it (the slot's
+       `else`): good news, with no "So close" (47 to 49) or "Last time" to add.
+    5. `E.hollowLines` takes `opts.now` to tell a stale sitting, and without a clock a sitting with no
+       practice since counts as waiting: the page always passes one.
+  - *The builders, the story:*
+    6. `pass.clean` keeps "Every Count up to ten times ten" before the design's "Every one. Not one
+       missed. Like {Murmur}chime.": the first says what she passed, the second how.
+    7. A not-yet is three pages (Glintstar's "Not yet" sharing a panel with the old tom's or
+       {Murmur}chime's line, Tallyheart's walk, the tricky ones): short, the kind words beside the hard one.
+    8. The praise words sit at the fourth of every five places and the quick words at the first: the
+       runner keeps a turn for each list, and blanks alone put two words in a row.
+    9. 10 × 10's lines are `counts.last` (the design's "finale"): the engine already reads that key.
+  - *The builders, the page:*
+    10. After the pass, a sitting in progress puts "Keep going: the Warrior Counts" in the quiet slot: it
+        is one to pick up, as "Keep going" says before the pass.
+    11. The tricky chips go in the column under Tallyheart's balloon, that page's balloons stacked: they
+        read as hers, beside her words.
+    12. A hub tap that finds the state changed (a sitting gone stale) redraws the hub instead of going
+        in: she never walks into a sitting that is no longer there.
+    13. During a pause the keypad is hidden and a tap anywhere moves on: there is nothing to answer.
+    14. The paws fill from the heel to the toe tips, a sliver from a paw's first answer: how far, never
+        how well.
+    15. The hub's button is a paw on ember-edged gold: it reads as the test, not a chapter.
+    16. The bar says "The Warrior Counts" on all its pages, with Camp and no Case File: she knows where
+        she is, and the file is a chapter's.
+    17. The grown-ups corner says the Counts are not open until chapter 10 is finished, for every cat in a
+        build with them: the design asks for the line, and none of her screens change.
+  - *Review round 1:*
+    18. After the pass, her number is said only at 50 or more (50 to 54; 55 has the clean sweep's
+        words), never from 45: on a not-yet 45 means "close to a pass", which a sitting after the pass is
+        not; three of the four reviewers chose 50.
+    19. That number is a variant key of its own, `afterPass.number`, the slot's `else` the page with no
+        number: it mirrors the not-yet's, and a variant nobody wrote says no number.
+    20. `aside.late` is "It’s been a while, so we start fresh.", not "A new day": two hours can still
+        be the same evening.
+    21. The quiet opening's caption is "…and {Murmur}chime comes to watch." (not "has come"): the
+        longer aside put that page at 31 words, over the 30-word cap.
+    22. The Hollow's waiting line takes the greeting's place, never both, and says "Warrior Counts": two
+        "first"s pulled opposite ways, and in the Hollow a "Count" is a times table.
+    23. The remembered lines are four each, in turn, a blank between: a strong player heard one sentence
+        about twelve times.
+    24. The sitting's lines wait to be read (Read to me off: the longer of 1.3 or 1.5 s and 0.6 s plus
+        0.38 s a word; on: the speech and 0.4 s), in the sitting only: she reads to herself, and the
+        chapters keep their timing.
+    25. Every Read to me and guard fix (the pause's fallback, the help's opener before its count, the
+        clock, the button's words, the tap-time guard, Enter on a focused page) is warrior-only: the
+        chapters must play as they shipped.
+    26. The help's reminder stays above the count on its last page, in the sitting only, and "Got it!" is
+        brought into view on a small screen (since chapter 9 every lesson's help does that; the branch's own
+        copy of the scroll went at the merge's review, call 53): the phone render showed "Got it!" below
+        the edge.
+    27. The old tom says "Took me THREE tries.": "goes" reads British, and the capital is his habit.
+    28. The 42nd answer's pause says "Three paws done. Just one more paw.": it mirrors "One paw done.",
+        and "one to go" could mean one question.
+    29. While a result is unseen, the hub hides the Ceremony's button too: it would give the pass away, as
+        the quiet button did.
+    30. The chips are a two-column grid, .85em with Bigger text (both reviewers' fixes): either alone left
+        Back or Camp just below the edge on a phone.
+    31. One chip has words of its own (`one` on the chips' balloon), used after the pass only: a not-yet
+        always has six misses or more.
+    32. The first opening's caption drops the sand ("Tallyheart sits down right beside you."): no new
+        art, and the sand comes with a miss.
+    33. The tricky greeting after a round picked up from a not-yet is a one-shot flag on the page
+        (`wTrickyDue`) and `E.hollowLines`' `opts.tricky`: as the finding proposed; otherwise a round's
+        reward line keeps its place.
+    34. The Hollow says "the tricky one" when one missed pair is left in the marked Counts: "ones" over
+        one pair would not be true.
+    35. In the chips a pair with a 1 goes last in its group, and still counts toward its other number's
+        Count (as designed): 1 × 8 is more a slip than a tricky one.
+    36. The engine tests read the real chapters once they land, the anchor tests chapters 1 to 8 as well:
+        "neither taught: the smaller" stops holding once chapter 9 teaches the 8s.
+    37. The Safari tool's warrior recipe gains `stale` (the last answer three hours ago) and `round` (a
+        Hollow round in progress before the sitting): to picture that round's screens.
+    38. The changed screens were checked in WebKit (an offscreen WKWebView, Safari's engine, silent):
+        Safari's automation hung at session creation on the mini.
+  - *Review round 2:*
+    39. The Hollow's keypad re-check runs only for a cat with Counts data, not on every round: it
+        overflows only under the waiting line, which only she sees, so the Hollow is otherwise as shipped.
+    40. A pause lasts the longer of 2.5 or 3.5 s and its reading time, with Read to me off, and that is
+        its cap with it on (round 1 had kept 2.5 and 3.5 s): the cap matters only when a voice never
+        reports its end, and a longer one only waits for the words.
+    41. A pick-up moves the sitting's `at` to the pick-up time, with no new field: `E.migrate` already
+        keeps `{ at, state }`, so the save's shape stays (the corner's "the last at" is her last visit).
+    42. A sitting with no answer is still picked up within its two hours by the hub's "When you're
+        ready" or "Try again whenever you like", and plays its opening again; the corner lists it in
+        progress with 0 answered: true for grown-ups, and she never misses the rule.
+    43. The set-aside's reason rides on the new sitting (`st.aside`; the last attempt's for a state saved
+        without it), and the first opening never gives one: she had begun nothing.
+    44. After the pass, a sitting again's unseen result takes the quiet slot ("The Warrior Counts:
+        Glintstar is waiting") and the Ceremony keeps the big one; the hub's and the book's "Your
+        ceremony is coming soon." follow one rule, and a state with no `passedAt` counts as a first
+        pass: the conservative choice.
+    45. The old tom's line is a plain balloon, his one capital word kept: as his capital-word lines in
+        chapters 3 to 6.
+    46. The design moved to v0.3 and v0.4 with the rounds (its sections 11 and 12), and the code and the
+        tests cite v0.4: they carry v0.4's behaviour.
+  - *The merge onto chapter 9* (2026-10-31):
+    47. `CACHE` is `potomac-crossing-v21`: v20 is the polish release built meanwhile in its own tree,
+        and `tests/fixtures/sw-shipped.json` holds every shipped `CACHE` to the files it cached.
+    48. `E.VERSION` is `0.9.1 (the Warrior Counts, 2026-10-31)`: a point after chapter 9's 0.9.0, as
+        the Counts are no chapter; the save stays version 2 (chapter 10's spec v0.3 had 0.10.0 here and
+        0.11.0 for chapter 10; amended in its v0.4, so chapter 10 is 0.10.0).
+    49. Decisions 48 to 51 came in from both sides; they are listed once, in number order.
+    50. The branch's tests read chapter 9's 8s: the anchors with chapters 1 to 9 (7 × 8 is seven
+        spiders), and the Hollow's paws and greeting with nine Counts (the 8s marked; the 7s' paw comes
+        with chapter 10's button).
+    51. `tools/shots.mjs --page` exits only once the page is written: with the Counts' CSS the page passed
+        a pipe's 64 KiB on macOS, and the suite's silence test read it cut off at 65,536 bytes. Its two
+        lines are the polish release's (v20) word for word, as v20 makes the same fix, so the two fold with
+        no conflict there.
+    52. In the Hollow the tricky paw sits in its button's left padding (`position: absolute`; with Bigger
+        text a 1em paw and 1.3em of padding, as the polish release's tighter Aa padding needs), so a marked
+        Count's name keeps its line: at 1080 x 720, 1180 x 820, 1024 x 768, 820 x 1180, 768 x 1024 and
+        390 x 844, Aa off and on, the 8s and My nest stand exactly as in chapter 9's Hollow, the paw inside
+        its button and clear of the name, and a glowing Count's sparkle sits beside it, its button as tall
+        as without the paw. With the polish release's Hollow rules the same holds but for one case, left
+        for chapter 10's round: a Count that both glows and has a paw wraps one line more with Aa on at
+        1180 x 820 and 768 x 1024 (the paw's 1.3em of padding against the polish release's .6em). Measured
+        in WebKit, 2026-10-31. Inline, a paw on the 8s had wrapped "Spiders’ legs · the 8s" to two lines
+        (94px, not 64, at 1080 x 720), and My nest sat 30px further below the screen.
+  - *The merge's review* (2026-10-31):
+    53. On the help's last page in a sitting the paws step aside and "Got it!" (and A HUNDRED!'s Next)
+        sits at the top of the keypad's place, 14px under the question line: centred over the hidden
+        keypad, it took the page about 110px further than it needed when brought into view, and the
+        anchor's reminder went under the bar on Charlie's 1080 x 720 iPad (9 × 9 and 10 × 10, Aa on and
+        off) and at 1180 x 820 with Aa on. Now 98% or more of its balloon is on the screen at every size
+        measured (1080 x 720, 1180 x 820, 1024 x 768, 820 x 1180 and 390 x 844, Aa off and on; before, as
+        little as none), with "Got it!" on the screen; the paws are back for the next question and a pause.
+        The chapters' "Got it!" stays centred.
+    54. The pass in a quiet sitting (`pass.quiet`) lists the runner at `crowd-left` first: listed after
+        the nearer runner at the entrance, it was drawn over his ear and brow (Charlie's bug); only that
+        page's picture changes. `tests/warrior-story.test.js` holds every scene of the Counts to the depth
+        rule, reading each cat's place and size as drawn (the Counts' spots have no `h`).
+    55. A sitting's `at` is her latest answer's time when that is less than two hours ahead of the clock
+        (the merge's check: further ahead, lifting it let practice never set a sitting aside); with a device clock set back after she
+        played, her chapter answers came "after" every new sitting, which was then stale as practice
+        from its first answer, so she could not take the Counts until the clock caught up. Practice
+        stamped after that time still sets a sitting aside, and "late" runs two hours from it.
+    56. A cat's `warrior` is read as her own key only, and a saved lesson whose state is a sitting's is
+        dropped like any bad lesson: two hand-edited saves (a `__proto__` key, a chapter lesson marked
+        `mode: 'warrior'`) made Counts data chapter 9's engine never saw; no page writes either.
 
 - **Chapter 10's brief** (2026-10-24; `docs/chapters/10-the-gathering.brief.md`, each call with its
   reason). In short:
@@ -580,7 +738,10 @@ Each is Aron's to reverse.
   f005. A depth sort in the engine was turned down too: some overlaps are meant (ch05 f154, nose to ear), and
   in ch04 f046 and the border-fox close-ups drawing by depth would hide a face. tests/set-pile.test.js
   holds the pile's `wide` camera to it. The small cases elsewhere (ch04 f043; ear tips, a tail and
-  shadow edges in ch01, ch04 f028, ch06 f069 and ch07 f067) wait for a later batch.
+  shadow edges in ch01, ch04 f028, ch06 f069 and ch07 f067, and the Warrior Counts' walk to the Hollow,
+  our cat's tail tip behind Tallyheart's chin) wait for a later batch. Chapter 9 lists its far guard
+  first on f112, and the Warrior Counts' pass in a quiet sitting (`pass.quiet`) the runner at
+  `crowd-left` (2026-10-31, the merge's review: README call 54).
 - **Bigger text fits the screen it is on** (2026-10-26, after Charlie's 10.2-inch iPad): with Aa on and
   the iPad held sideways at 1080 x 720, Back and Next wrapped to two rows on 167 pages, and Back (Next
   too on ch04 f085a, ch05 f031a, ch07 f050, ch08 f049, f087) ran below the screen on 16, and on ch05

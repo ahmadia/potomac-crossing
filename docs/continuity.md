@@ -1256,8 +1256,8 @@ against the chapter as built.
   again whenever she likes, Tallyheart pointing her to the Training Hollow. **Offered from the hub only,
   once chapter 10 is finished** (`E.isFinished(cat, PC.warrior.after)`), never before (decision 34; the
   7s are chapter 10's), on the big button where the next chapter's stands; taken at the fountain in
-  chapter 3's scene, she in Murmurpaw's place, Glintstar asking, Tallyheart beside her by a patch of
-  sand. Chapter 10's last pages tell her it is hers to take (for example Tallyheart: "The Warrior Counts
+  chapter 3's scene, she in Murmurpaw's place, Glintstar asking, Tallyheart right beside her (the sand is
+  drawn only for a miss). Chapter 10's last pages tell her it is hers to take (for example Tallyheart: "The Warrior Counts
   are yours, whenever you're ready. At the fountain, like {Murmur}chime."), and its teaser is the
   Ceremony's ("Pass your Warrior Counts, and the Clan will gather for your name."). She hears her number
   only when it is good news; after a pass she may sit it again for a clean sweep, which never changes her

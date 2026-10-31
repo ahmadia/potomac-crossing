@@ -1129,9 +1129,10 @@ function finishedCat(stories, over) {
   return cat;
 }
 
-test('version 0.9.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 9 add none)', () => {
-  assert.equal(E.VERSION, '0.9.0 (chapter 9, 2026-10-26)');
-  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 9 store nothing new (chapter 7’s ch7Flew, chapter 8’s foundHail and chapter 9’s foundMizzle and ch9Roof are flags)');
+test('version 0.9.1 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 9 add none; the Warrior Counts add one optional field on a cat, `warrior`, absent until her first sitting)', () => {
+  assert.equal(E.VERSION, '0.9.1 (the Warrior Counts, 2026-10-31)');
+  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 9 store nothing new (chapter 7’s ch7Flew, chapter 8’s foundHail and chapter 9’s foundMizzle and ch9Roof are flags); the Warrior Counts’ `warrior` is optional and not in E.blankCat (docs/warrior-counts.md, section 6)');
+  assert.ok(!('warrior' in E.blankCat({ now: 1 })), 'a cat who has not sat the Counts is stored exactly as before');
   assert.equal(E.STORAGE_KEY, 'potomac-crossing.v1');
   assert.deepEqual(E.newSave(), { version: 2, cats: [], current: null, settings: { readAloud: false, bigText: false } });
   const c = E.blankCat({ now: 5, id: 'x' });

@@ -529,6 +529,333 @@
   }
   UI.taps = { hit: tapHit, pick: tapPick, glow: tapGlow, namesAnswers: namesAnswers };
 
+  /* ---------------------------------------------------------------- the Warrior Counts (pure: tested in Node)
+   * docs/warrior-counts.md, section 7's UI table: what the hub's big button says, the four paws, the
+   * pauses' length, the opening with Tallyheart's "we start fresh", the result's pages and buttons, the
+   * tricky chips and the grown-ups corner's line. Each takes what the engine hands the page
+   * (E.warriorState, E.warriorResult, PC.warrior) and nothing from the screen, so Node checks the words.
+   * None of it runs for a cat with no `warrior` data before the Counts are open: chapters 1 to 8's
+   * screens letter exactly as before. */
+  var W_PAW_WORDS = ['first', 'second', 'third', 'fourth'];
+  var W_QUARTERS = [14, 14, 14, 13];   // the four paws: 14, 14, 14 and 13 questions
+  function wNum(v, d) { return typeof v === 'number' && isFinite(v) ? v : d; }
+  /* The paw she is on (0 to 3) after `answered` answers, and the four paws' fill, 0 to 1: the one she
+   * is on fills a little at every answer, a miss the same as a right one; full ones stay full. */
+  function wPawOn(answered) {
+    var n = Math.max(0, wNum(answered, 0)), k = 0, start = 0;
+    while (k < 3 && n >= start + W_QUARTERS[k]) { start += W_QUARTERS[k]; k++; }
+    return k;
+  }
+  function wPawFills(answered) {
+    var n = Math.max(0, wNum(answered, 0)), start = 0;
+    return W_QUARTERS.map(function (size) { var f = clamp((n - start) / size, 0, 1); start += size; return Math.round(f * 1000) / 1000; });
+  }
+  /* The engine's paws (E.warriorPaws: four fills, 0 to 1), or, without them, counted from the answers. */
+  function wPaws(v, answered) {
+    if (Array.isArray(v) && v.length === 4 && v.every(function (x) { return typeof x === 'number' && isFinite(x); })) return v.map(function (x) { return clamp(x, 0, 1); });
+    return wPawFills(answered);
+  }
+  /* What E.warriorState says: the sitting to pick up (none once stale: { at, answered, paw, paws }), how
+   * far in it is, the latest finished attempt, whether its result is unseen. */
+  function wSittingOf(ws) {
+    var s = ws && ws.sitting;
+    return s && typeof s === 'object' ? s : null;
+  }
+  function wAnswered(ws) {
+    var s = wSittingOf(ws);
+    if (!s) return 0;
+    var st = s.state || s;
+    if (typeof s.answered === 'number') return s.answered;
+    if (st && Array.isArray(st.log)) return st.log.length;
+    return wNum(st && st.pos, 0);
+  }
+  function wPawOfState(ws) {
+    // (E.warriorState's sitting names its paw 1 to 4; without one, it is counted from the answers)
+    var s = wSittingOf(ws), p = s && s.paw;
+    if (typeof p === 'number' && isFinite(p)) return clamp(Math.round(p) - 1, 0, 3);
+    return wPawOn(wAnswered(ws));
+  }
+  function wFinished(list) { return (list || []).filter(function (a) { return a && a.finished; }); }
+  function wLastFinished(ws) {
+    if (ws && ws.last && ws.last.finished) return ws.last;
+    var f = wFinished(ws && ws.attempts);
+    return f.length ? f[f.length - 1] : null;
+  }
+  function wUnseen(ws) {
+    if (!ws) return false;
+    if (typeof ws.unseen === 'boolean') return ws.unseen;
+    var l = wLastFinished(ws);
+    return !!(l && l.seen === false);
+  }
+  function wPassed(ws) { return !!(ws && (ws.passed || (typeof ws.passedAt === 'number' && ws.passedAt > 0))); }
+  /* An unseen result that ended after her pass (a sitting again): her pass is known and kept for good,
+   * so nothing waits for Glintstar to say it. Her first pass's own attempt set passedAt, so it is never
+   * this; nor is anything the state cannot tell (no passedAt, no last). */
+  function wAfterPassUnseen(ws) {
+    var last = wLastFinished(ws);
+    return wUnseen(ws) && wPassed(ws) && !!last && typeof ws.passedAt === 'number' && ws.passedAt > 0 && ws.passedAt < wNum(last.done, 0);
+  }
+  /* Her pass can be shown (the hub's "again" and "coming soon", the book's "coming soon"): she has passed,
+   * and Glintstar has said so, or the result waiting is a sitting again's. */
+  function wPassShown(ws) { return wPassed(ws) && (!wUnseen(ws) || wAfterPassUnseen(ws)); }
+  function wOpen(ws) { return !!(ws && (ws.open || wPassed(ws))); }
+  /* The hub's warrior slot. `ws` is E.warriorState (null: no Counts in this build, or none for her),
+   * `p` E.progress. Returns null while the Counts are closed (the hub is as it always was); else
+   * { big, quiet, soon, hideSoon }: `big` the big button ({ id, act, label, small, says }: act 'result'
+   * reopens an unseen result, 'begin' sits or picks up), `quiet` the quiet "again" button after the
+   * pass, `soon` the line in the coming-soon slot ("Your ceremony is coming soon."), `hideSoon`: while
+   * the Counts are open, no chapter teaser's "coming soon" shows, and `hideNext`: while her first pass
+   * waits to be seen, the Ceremony's chapter button is not there either (nothing on the hub says she
+   * passed before Glintstar does). A result of a sitting again after the pass gives nothing away (her
+   * pass is known and kept for good): it waits in the quiet slot, "The Warrior Counts: Glintstar is
+   * waiting" (act 'result'), and the Ceremony keeps the big one. `p.ceremonyBuilt`: the Ceremony
+   * chapter exists (finished or not). */
+  function wHub(ws, p) {
+    if (!wOpen(ws)) return null;
+    p = p || {};
+    var passed = wPassed(ws), sitting = wSittingOf(ws), last = wLastFinished(ws);
+    // (an unseen result that ended after her pass, a sitting again's, waits quietly; her first pass's, and
+    // anything the state cannot tell, in the big slot)
+    var unseen = wUnseen(ws), waitsQuietly = wAfterPassUnseen(ws);
+    var out = { big: null, quiet: null, soon: null, hideSoon: true, hideNext: unseen && !waitsQuietly };
+    var big = function (act, label, small, says) { return { id: 'warriorBtn', act: act, label: label, small: small, says: says }; };
+    if (unseen && !waitsQuietly) out.big = big('result', 'The Warrior Counts', 'Glintstar is waiting', 'The Warrior Counts. Glintstar is waiting.');
+    else if (!passed && sitting) {
+      var paw = W_PAW_WORDS[wPawOfState(ws)];
+      out.big = big('begin', 'Keep going', 'The Warrior Counts · ' + paw + ' paw', 'Keep going: the Warrior Counts, ' + paw + ' paw.');
+    } else if (!passed && last && !last.passed) out.big = big('begin', 'The Warrior Counts', 'Try again whenever you like', 'The Warrior Counts. Try again whenever you like.');
+    else if (!passed) out.big = big('begin', 'The Warrior Counts', 'When you’re ready', 'The Warrior Counts. When you’re ready.');
+    // (passed, once Glintstar has said so: while her first pass is unseen nothing here gives it away)
+    if (wPassShown(ws)) {
+      // the Ceremony's chapter button is the hub's own (E.progress's next, as for any chapter); under it,
+      // quietly, the Counts again, or the result of a sitting again waiting to be seen
+      out.quiet = waitsQuietly ? { id: 'warriorAgain', act: 'result', label: 'The Warrior Counts: Glintstar is waiting' }
+        : { id: 'warriorAgain', act: 'begin', label: sitting ? 'Keep going: the Warrior Counts' : 'The Warrior Counts again' };
+      if (!p.next && !p.ceremonyBuilt) out.soon = 'Your ceremony is coming soon.';
+    }
+    return out;
+  }
+  /* The tricky ones as she sees them, written out in Andika: "7 × 8 = 56", up to six. */
+  function wChips(missed, n) {
+    return (missed || []).filter(function (m) { return Array.isArray(m) && m.length === 2; }).slice(0, n == null ? 6 : n).map(function (m) { return m[0] + ' × ' + m[1] + ' = ' + (m[0] * m[1]); });
+  }
+  /* A missed answer that is the start of the right one ("2" for 20, "5" for 56): a slip on the keypad
+   * (OK sits beside 0), marked for grown-ups so the play test shows whether the keypad needs a guard. */
+  function wSlip(a, b, given) {
+    if (given == null || given === '' || isNaN(+given)) return false;
+    var right = String(a * b), g = String(+given);
+    return g !== right && g.length < right.length && right.indexOf(g) === 0;
+  }
+  /* How long a pause stays: 2.5 s, or 3.5 s when its line is over six words, or as long as its words
+   * take to read (wReadMs: 0.6 s and 0.38 s a word) when that is longer, so a pause picked up with
+   * "Where were we? Ah, yes." in front (14 words) stays 5.9 s. (Read to me on: until the speech ends,
+   * and half a second more, and at most this long after that; the page's own.) */
+  function wBeatMs(lines) {
+    var words = 0, said = [];
+    asList0(lines).forEach(function (l) {
+      var t = String(typeof l === 'string' ? l : (l && l.text) || '');
+      words += t.split(/\s+/).filter(Boolean).length;
+      said.push(t);
+    });
+    return Math.max(words > 6 ? 3500 : 2500, wReadMs(said.join(' '), false));
+  }
+  function asList0(x) { return x == null ? [] : Array.isArray(x) ? x : [x]; }
+  /* How long Read to me takes to say these (each { text, who }): about 150 words a minute at the
+   * voice's rate 1, each speaker at its own rate (rateOf). A pause, a right answer's line and the help's
+   * first line wait this long (and a little more) when the voice never says it has finished. */
+  function wSpeechMs(items) {
+    var ms = 0;
+    asList0(items).forEach(function (it) {
+      var t = String(typeof it === 'string' ? it : (it && (it.text || it.html)) || '').replace(/<[^>]+>/g, ' ').replace(/×/g, ' times ');
+      ms += t.split(/\s+/).filter(Boolean).length / 2.5 / rateOf(it && it.who) * 1000;
+    });
+    return Math.round(ms);
+  }
+  /* How long a right answer's line stays when she reads it herself (Read to me off): the runner's 1.3 s
+   * (a quick answer) or 1.5 s, or longer for a long line, 0.6 s and 0.38 s a word ("Last time, 7 × 8
+   * made you stop and think. Not today!" is 4.8 s). A tap on the panel still moves on. */
+  function wReadMs(line, fast) {
+    var n = String(line || '').split(/\s+/).filter(function (w) { return /[\p{L}\p{N}]/u.test(w); }).length;
+    return Math.max(fast ? 1300 : 1500, Math.round(600 + 380 * n));
+  }
+  /* The opening's frames for this sitting: E.warriorOpen's kind ('first', 'again', 'quiet'), with
+   * Tallyheart's "we start fresh" (`aside`: PC.warrior.aside's line) said once, at the start of her
+   * balloon, before "Every Count, same as before." (else at the start of her first balloon, else as one
+   * of its own on the last panel). Returns copies: the story's frames are never changed. */
+  function wOpening(Wd, kind, aside) {
+    var list = asList0(Wd && Wd.open && Wd.open[kind]).map(function (f) { return Object.assign({}, f, { say: asList0(f && f.say).map(function (b) { return typeof b === 'string' ? { text: b } : Object.assign({}, b); }) }); });
+    var line = aside && Wd && Wd.aside ? Wd.aside[aside] : null;
+    if (typeof line === 'string' && line && list.length) {
+      var hit = null;
+      var find = function (test) {
+        for (var i = 0; i < list.length && !hit; i++) for (var k = 0; k < list[i].say.length && !hit; k++) if (list[i].say[k] && test(list[i].say[k])) hit = list[i].say[k];
+      };
+      find(function (b) { return b.who === 'tallyheart' && /^Every Count/.test(b.text || ''); });
+      if (!hit) find(function (b) { return b.who === 'tallyheart'; });
+      if (hit) hit.text = line + ' ' + hit.text;
+      else list[list.length - 1].say.push({ who: 'tallyheart', text: line });
+    }
+    return list;
+  }
+  /* The kind of opening (E.warriorOpen, E.warriorBegin's `opening`: { kind, aside }; a bare word too). */
+  function wOpenKind(op) {
+    if (typeof op === 'string') return { kind: op, aside: null };
+    op = op || {};
+    return { kind: op.kind || 'first', aside: op.aside === 'late' || op.aside === 'practice' ? op.aside : null };
+  }
+  /* E.warriorResult's variant as a set of words: 'pass', 'clean', 'quiet', 'afterPass', which not-yet
+   * ('first', 'second', 'later'), Tallyheart's number ('better', 'close', 'plain') and 'number' (her
+   * number is said: after the pass, 50 to 54); a word, a list of them, or an object whose keys are true
+   * or whose values are words. */
+  var W_VARIANT_WORDS = ['pass', 'clean', 'quiet', 'afterPass', 'notYet', 'first', 'second', 'later', 'better', 'close', 'plain', 'number'];
+  function wVariant(v) {
+    var out = {};
+    var add = function (w) { if (typeof w === 'string' && W_VARIANT_WORDS.indexOf(w) >= 0) out[w] = true; };
+    if (typeof v === 'string') v.split(/[^A-Za-z]+/).forEach(add);
+    else if (Array.isArray(v)) v.forEach(function (w) { if (typeof w === 'string') w.split(/[^A-Za-z]+/).forEach(add); });
+    else if (v && typeof v === 'object') Object.keys(v).forEach(function (k) { if (v[k] === true) add(k); else if (typeof v[k] === 'string') v[k].split(/[^A-Za-z]+/).forEach(add); });
+    return out;
+  }
+  /* The tables her misses fall in, as Tallyheart names them: "the 7s and the 8s". */
+  function wTricky(t) {
+    if (typeof t === 'string') return t;
+    var list = asList0(t).map(function (x) { return typeof x === 'number' ? 'the ' + x + 's' : x && typeof x.table === 'number' ? 'the ' + x.table + 's' : typeof x === 'string' ? x : ''; }).filter(Boolean);
+    return list.length > 1 ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] : list[0] || 'the tricky ones';
+  }
+  /* The result's own tokens, in number words (E.countWords): {right} {Right} {last} {Last} {short}
+   * {tricky}, filled before the cat's own. */
+  function wTokens(R, words) {
+    R = R || {};
+    var w = typeof words === 'function' ? words : function (n) { return String(n); };
+    var right = wNum(R.right, 0), last = wNum(R.last, null);
+    var cap = function (x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; };
+    var t = { right: w(right), Right: cap(w(right)), short: w(Math.max(0, 50 - right)), tricky: wTricky(R.tricky) };
+    t.Tricky = cap(t.tricky);
+    if (last != null) { t.last = w(last); t.Last = cap(w(last)); }
+    return t;
+  }
+  /* The result's pages and buttons (docs/warrior-counts.md section 5), from E.warriorResult
+   * ({ right, last, missed, tricky, variant }) and PC.warrior's `pass`, `notYet` or `afterPass`: each
+   * `{ frames, <variant>: frame }`, a slot in `frames` (`{ by, else }`) playing the frame under the
+   * first of its keys the variant names, else its `else`, else nothing. `o.quiet`: the pass came in a
+   * quiet sitting (when the engine's variant does not say), `o.ceremony`: the Ceremony chapter is
+   * built, `o.hollowRound`: a Training Hollow round is in progress. Returns { kind, variant, pages:
+   * [{ frame, chips?, chipsAt? }], buttons: [{ id, label, big, act, disabled? }], note? }. */
+  function wResult(Wd, R, o) {
+    o = o || {};
+    R = R || {};
+    var v = wVariant(R.variant);
+    // (a pass in a quiet sitting: the engine's variant says so, or, when it does not say, the page's `o.quiet`)
+    var said = !!(R.variant && typeof R.variant === 'object' && !Array.isArray(R.variant) && Object.prototype.hasOwnProperty.call(R.variant, 'quiet'));
+    if (!v.quiet && !said && o.quiet && v.pass && !v.afterPass) v.quiet = true;
+    var kind = v.afterPass ? 'afterPass' : v.pass || v.clean ? 'pass' : 'notYet';
+    var src = (Wd && Wd[kind]) || {};
+    var frames = [];
+    asList0(src.frames).forEach(function (e) {
+      if (!e) return;
+      if (e.by) {
+        var key = asList0(e.by).filter(function (k) { return v[k] && src[k]; })[0];
+        if (key) frames.push(src[key]); else if (e.else) frames.push(e.else);
+      } else frames.push(e);
+    });
+    var chips = wChips(R.missed);
+    var pages = frames.map(function (f) {
+      var pg = { frame: f };
+      var bs = asList0(f.say), at = -1;
+      for (var i = 0; i < bs.length; i++) if (bs[i] && bs[i].chips) { at = i; break; }
+      if (at >= 0) {
+        pg.chipsAt = at; pg.chips = chips;
+        // one chip under the balloon: its own words for one ("This was the tricky one."), on a copy
+        if (chips.length === 1 && typeof bs[at].one === 'string' && bs[at].one) {
+          pg.frame = Object.assign({}, f, { say: bs.map(function (b, k) { return k === at ? Object.assign({}, b, { text: b.one }) : b; }) });
+        }
+      }
+      return pg;
+    });
+    var buttons, note = null;
+    if (kind === 'pass') {
+      if (o.ceremony) buttons = [{ id: 'resultCamp', label: 'Camp', big: false, act: 'camp' }, { id: 'resultCeremony', label: 'To your ceremony', big: true, act: 'ceremony' }];
+      else { note = 'Your ceremony is coming soon.'; buttons = [{ id: 'resultSoon', label: note, big: false, disabled: true }, { id: 'resultCamp', label: 'Camp', big: true, act: 'camp' }]; }
+    } else if (kind === 'notYet') {
+      buttons = [{ id: 'resultCamp', label: 'Camp', big: false, act: 'camp' }, { id: 'resultHollow', label: o.hollowRound ? 'Back to the Training Hollow' : 'The Training Hollow', big: true, act: 'hollow' }];
+    } else {
+      buttons = [{ id: 'resultHollow', label: 'The Training Hollow', big: false, act: 'hollow' }, { id: 'resultCamp', label: 'Camp', big: true, act: 'camp' }];
+    }
+    // (the engine's number words when it gives them, E.warriorResult's `tokens`; {tricky} from its tables)
+    var tokens = wTokens(R, o.countWords);
+    if (R.tokens && typeof R.tokens === 'object') Object.keys(R.tokens).forEach(function (k) { if (typeof R.tokens[k] === 'string' && (R.tokens[k] || !tokens[k])) tokens[k] = R.tokens[k]; });
+    return { kind: kind, variant: v, pages: pages, buttons: buttons, note: note, tokens: tokens };
+  }
+  /* The pause due before the next question of a sitting (runLesson's, between two answers): null, or
+   * { at, lines } with Tallyheart's lines (PC.warrior.beats: after the 14th and the 42nd answers), or
+   * { at, halfway: true } after the 28th, where the halfway page takes the screen. E.warriorBeat keeps
+   * each in the sitting's `beats`, so a sitting picked up never shows one twice. Lines are { who, text }
+   * with the tokens left for the page. */
+  function wPause(E, Wd, st) {
+    if (!E || typeof E.warriorBeat !== 'function' || !st) return null;
+    var at = E.warriorBeat(st);
+    if (!at) return null;
+    if (!Array.isArray(st.beats)) st.beats = [];
+    if (st.beats.indexOf(at) < 0) st.beats.push(at);
+    var b = Wd && Wd.beats ? Wd.beats[at] : null;
+    if (b == null) return { at: at, halfway: true };
+    return { at: at, lines: asList0(b).map(function (l) { return typeof l === 'string' ? { who: 'tallyheart', text: l } : { who: l.who || 'tallyheart', text: l.text, kind: l.kind }; }).filter(function (l) { return l.text; }) };
+  }
+  /* The question panel (and the halfway page's own scene, `own`): the story's scene, written with the
+   * crowd, drawn with the sitting's `st.crowd`: the whole Clan round the fountain until she has a
+   * finished sitting, then the camp quiet (decision 49). A copy: the story's scene is never changed. */
+  function wScene(Wd, st, own) {
+    var sc = own || (Wd && Wd.scene), crowd = !!(st && st.crowd);
+    if (!sc) return null;
+    var out = Object.assign({}, sc, { opts: Object.assign({}, sc.opts || {}) });
+    if (crowd) out.opts.crowd = true; else delete out.opts.crowd;
+    return out;
+  }
+  /* The grown-ups corner's Warrior Counts line (no pronoun: the corner's lines are for a tom too):
+   * not open yet; open, not sat; then each attempt, oldest first: its date, right of 55, passed or not,
+   * the missed pairs with what was typed (one that is the start of the right answer marked "a slip?":
+   * "2" for 20, "5" for 56), the typical time; a sitting set aside marked, and why; and a sitting in
+   * progress. `o.open`: the Counts are open; `o.after`: the chapter they open after ("Chapter 10");
+   * `o.date(ms)` and `o.secs(ms)` format a time. Returns { line, attempts: [lines], sitting }. */
+  function wCorner(c, o) {
+    o = o || {};
+    var date = o.date || function (ms) { return new Date(ms).toISOString().slice(0, 10); };
+    var secs = o.secs || function (ms) { return (ms / 1000).toFixed(1) + ' s'; };
+    var W = c && c.warrior && typeof c.warrior === 'object' ? c.warrior : null;
+    var attempts = W && Array.isArray(W.attempts) ? W.attempts : [];
+    var S = W && W.sitting && W.sitting.state ? W.sitting : null;
+    if (!o.open && !W) return { line: 'not open yet: they open once ' + (o.after || 'chapter 10') + ' is finished', attempts: [], sitting: null };
+    var fin = attempts.filter(function (a) { return a && a.finished; });
+    var passedAt = W && typeof W.passedAt === 'number' && W.passedAt > 0 ? W.passedAt : 0;
+    var line = !attempts.length && !S ? 'open; not sat yet' :
+      (passedAt ? 'passed on ' + date(passedAt) : 'not passed yet') + '; ' + fin.length + ' finished sitting' + (fin.length === 1 ? '' : 's') +
+      (attempts.length > fin.length ? ', ' + (attempts.length - fin.length) + ' set aside' : '');
+    var log = (c && Array.isArray(c.counts) ? c.counts : []).filter(function (e) { return e && e.set === 'warrior'; });
+    var lines = attempts.map(function (a, k) {
+      var head = '#' + (a.n != null ? a.n : k + 1) + (typeof a.at === 'number' && a.at > 1e11 ? ', ' + date(a.at) : '') + ': ';
+      if (!a.finished) {
+        var why = a.aside === 'late' ? 'two hours went by' : a.aside === 'practice' ? 'other Counts were practiced in between' : 'left unfinished';
+        return head + 'set aside after ' + wNum(a.answered, 0) + ' of 55 answered (' + wNum(a.right, 0) + ' right): ' + why + '; never counted as a not-yet';
+      }
+      var t0 = wNum(a.at, -Infinity), t1 = wNum(a.done, Infinity);
+      var mine = log.filter(function (e) { return !e.correct && typeof e.at === 'number' && e.at >= t0 && e.at <= t1; });
+      var miss = asList0(a.missed).filter(function (m) { return Array.isArray(m) && m.length === 2; }).map(function (m) {
+        var e = mine.filter(function (x) { return x.a === m[0] && x.b === m[1]; })[0];
+        var typed = e && e.answer != null ? e.answer : null;
+        return m[0] + ' × ' + m[1] + (typed != null ? ' (typed ' + typed + (wSlip(m[0], m[1], typed) ? ': a slip?' : '') + ')' : '');
+      });
+      return head + wNum(a.right, 0) + ' of 55 right, ' + (a.passed ? 'passed' : 'not yet') + (typeof a.ms === 'number' ? '; typical time ' + secs(a.ms) : '') +
+        (miss.length ? '; missed ' + miss.join(', ') : '; nothing missed');
+    });
+    var sitting = S && S.state ? 'a sitting in progress: ' + (Array.isArray(S.state.log) ? S.state.log.length : wNum(S.state.pos, 0)) + ' of 55 answered' +
+      (typeof S.at === 'number' && S.at > 1e11 ? ', the last at ' + date(S.at) : '') : null;
+    return { line: line, attempts: lines, sitting: sitting };
+  }
+  UI.warrior = { corner: wCorner, PAW_WORDS: W_PAW_WORDS, QUARTERS: W_QUARTERS, pawOn: wPawOn, pawFills: wPawFills, paws: wPaws, hub: wHub, chips: wChips, slip: wSlip,
+    beatMs: wBeatMs, opening: wOpening, openKind: wOpenKind, unseen: wUnseen, passed: wPassed, open: wOpen, sittingOf: wSittingOf, lastFinished: wLastFinished,
+    afterPassUnseen: wAfterPassUnseen, passShown: wPassShown,
+    variant: wVariant, tricky: wTricky, tokens: wTokens, result: wResult, pause: wPause, scene: wScene, speechMs: wSpeechMs, readMs: wReadMs };
+
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
   var doc = root.document;
   if (!doc || typeof doc.createElement !== 'function') return;
@@ -545,6 +872,9 @@
   // chapter 4: a lesson's keypad screen is up (the Case File's button is left off it, as Back is);
   // the Case File open over the page; and, on the `file` frame, what the top bar's button does
   var inLesson = false;
+  // the Warrior Counts: a pause on screen, when Read to me is switched on during it (it says its line
+  // and waits for the end of it; false once its page is gone)
+  var pauseRead = null;
   var fileState = null;
   var fileTeach = null;
   var frameTap = null;
@@ -565,6 +895,11 @@
   function asList(x) { return x == null ? [] : (Array.isArray(x) ? x : [x]); }
   function debounce(fn, ms) { var t; return function () { clearTimeout(t); t = setTimeout(fn, ms); }; }
   function now() { return Date.now(); }
+  // when the screen was drawn on the input's own clock (an event's timeStamp is performance.now()'s), so
+  // a guard can tell a tap made before it from one merely handed over late (the Warrior Counts' pages)
+  var renderedPerf = 0;
+  function perfNow() { try { return root.performance && performance.now ? performance.now() : 0; } catch (e) { return 0; } }
+  function tappedEarly(e, ms) { var t = e && typeof e.timeStamp === 'number' ? e.timeStamp : 0; return t > 0 && renderedPerf > 0 && t - renderedPerf < ms; }
   function persist() { if (cat) cat.updated = now(); if (store) store.save(save); }
   var NUMW = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   function numWord(n) { return NUMW[n] || String(n); }
@@ -759,6 +1094,17 @@
       keyHandler(e);
     });
     if ('speechSynthesis' in root) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = function () { voice = null; }; } catch (e) {} }
+    // the Warrior Counts: a hub left open (an iPad asleep overnight) reads E.warriorState again when it
+    // is seen, so it never offers "Keep going" for a sitting gone stale (only with the Counts open)
+    doc.addEventListener('visibilitychange', function () {
+      // the sitting's own screen, left open past its two hours (a question, the halfway page, an opening
+      // page): to the hub, whose next tap sets it aside and starts afresh (never a stale "Keep going")
+      if (doc.visibilityState === 'visible' && view.name === 'warrior' && view.opts.step !== 'result' && cat && wv && wv.state && warriorStale()) { wv = null; return go('hub'); }
+      if (doc.visibilityState !== 'visible' || view.name !== 'hub' || !cat || hubWarriorSig == null || fileState) return;
+      var was = hubWarriorSig;
+      hubWarrior(E.progress(cat, stories()));
+      if (hubWarriorSig !== was) go('hub', { keepScroll: true });
+    });
     PC.debug = {
       /* Open a frame of any chapter (the cat's own when no chapter is named), with a test cat if
        * there is none. tools/shots.mjs uses it. */
@@ -793,7 +1139,13 @@
        * bark, the glint). */
       file: function (cardId) { if (!cat) return 'no cat'; openFile({ card: cardId || null, quiet: true }); return fileState ? true : 'not open'; },
       closeFile: function () { closeFile(true); return true; },
-      tap: function () { if (typeof frameTap !== 'function') return 'nothing to tap here'; frameTap(); return true; }
+      tap: function () { if (typeof frameTap !== 'function') return 'nothing to tap here'; frameTap(); return true; },
+      /* The Warrior Counts, for tools/shots.mjs (its test cat has finished chapter 10, and a `warrior` set
+       * up through the engine): 'open', the screen as the hub opens it (`i`: a later page of the
+       * opening); 'q', a question (the opening passed over); 'sand', a question answered wrong, its help
+       * counted out at once; 'halfway', a sitting picked up at its halfway page; 'result', her result's
+       * page `i` (the last: -1). */
+      warrior: function (what, i) { return warriorDebug(what, i); }
     };
     go('title');
   }
@@ -811,7 +1163,9 @@
     // "Put it in my book" over f085's "See your book"). For a moment after a screen is drawn, taps on
     // it are swallowed before any handler sees them. The top bar and the grown-ups sheet are outside.
     $('screen').addEventListener('click', function (e) {
-      if (now() - renderedAt < UI_GUARD_MS) { e.stopPropagation(); e.preventDefault(); }
+      // (the Warrior Counts' pages also by when the tap was made: a busy page can hand over the second
+      // tap of a double tap late, after the guard's moment, and it would turn the next page too)
+      if (now() - renderedAt < UI_GUARD_MS || (view.name === 'warrior' && tappedEarly(e, UI_GUARD_MS))) { e.stopPropagation(); e.preventDefault(); }
     }, true);
     $('backBtn').addEventListener('click', onBack);
     $('catsBtn').addEventListener('click', function () { go('who'); });
@@ -836,6 +1190,8 @@
     });
     $('readBtn').addEventListener('click', function () {
       save.settings.readAloud = !save.settings.readAloud; applySettings(); persist();
+      // (a pause of the Warrior Counts on screen: it says its line and waits for it, from here)
+      if (save.settings.readAloud && pauseRead && pauseRead()) return;
       if (save.settings.readAloud) speakItems(currentSpeech); else stopSpeech();
     });
     bindLeaf();
@@ -851,11 +1207,11 @@
     view = { name: name, opts: opts };
     var scr = $('screen');
     scr.classList.remove('enter', 'enter-back');
-    var fn = { title: renderTitle, who: renderWho, frame: renderFrame, book: renderBook, hub: renderHub, hollow: renderHollow, nest: renderNest }[name];
+    var fn = { title: renderTitle, who: renderWho, frame: renderFrame, book: renderBook, hub: renderHub, hollow: renderHollow, nest: renderNest, warrior: renderWarrior }[name];
     if (!fn) fn = renderTitle;
     fn(opts);
     if (!reduceMotion) { void scr.offsetWidth; scr.classList.add(opts.back ? 'enter-back' : 'enter'); }
-    renderedAt = now();
+    renderedAt = now(); renderedPerf = perfNow();
     updateBar();
     if (!opts.keepScroll && !opts.scrollTo) root.scrollTo(0, 0);
     if (save.settings.readAloud) speakItems(currentSpeech);
@@ -870,6 +1226,9 @@
     // Camp, partway through a chapter (once there is a camp: a chapter finished). Her place stays:
     // the hub's big button picks it up, a lesson in progress too
     $('campBtn').hidden = !(n === 'frame' && cat && E.hasFinished(cat));
+    // the Warrior Counts: Camp is there on every page of them (she has finished every chapter), the
+    // sitting kept; her Case File's button stays off, as in the Hollow
+    if (n === 'warrior') $('campBtn').hidden = !cat;
     // her Case File, on every frame of every chapter once she has it (from the `file` frame on);
     // left off a lesson's keypad screen, as Back is. On the `file` frame itself it glows
     var fb = $('fileBtn');
@@ -883,7 +1242,8 @@
     var t = '';
     if (n === 'title') t = '';
     else if (n === 'who') t = 'Potomac Crossing';
-    else if (cat) t = esc(E.displayName(cat)) + (n === 'frame' && story ? '<small>Chapter ' + (story.number || 1) + ' · ' + esc(story.title) + '</small>' : '');
+    else if (cat) t = esc(E.displayName(cat)) + (n === 'frame' && story ? '<small>Chapter ' + (story.number || 1) + ' · ' + esc(story.title) + '</small>' : '') +
+      (n === 'warrior' ? '<small>The Warrior Counts</small>' : '');
     title.innerHTML = t;
   }
   function onBack() {
@@ -897,12 +1257,15 @@
     if (n === 'book') return view.opts.from === 'end' ? go('frame', { back: true }) : go('hub', { back: true });
     if (n === 'hollow' || n === 'nest') return go(view.opts.from === 'book' ? 'book' : 'hub', { back: true });
     if (n === 'hub') return go('who', { back: true });
+    // the Warrior Counts: to camp, the sitting kept (E.warriorKeep has it after every answer)
+    if (n === 'warrior') return go('hub', { back: true });
     go('title', { back: true });
   }
   /* The big Back button at the left of every frame's bottom row, beside Next, the same size. On the
      first frame there is nothing to go back to: it keeps its place, invisible, so Next never moves. */
-  function backBottom() {
-    var can = E.canBack(cat);
+  function backBottom(can) {
+    // (the Warrior Counts' frames say themselves whether there is a page to go back to: `can`)
+    if (can == null) can = E.canBack(cat);
     return '<button class="btn big back' + (can ? '' : ' nohist') + '" id="backBottom" type="button"' +
       (can ? '' : ' tabindex="-1" aria-hidden="true"') + '>' +
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Back</button>';
@@ -1295,8 +1658,10 @@
       spots.forEach(function (s) { s.el.remove(); if (s.pill) s.pill.remove(); });
       placed = placed.slice(0, placedBefore);
       layout.balloons = 'stack';
-      stack.innerHTML = bs.map(function (b) { return stackBalloon(b); }).join('');
-      bs.forEach(function (b) { reading.push({ text: b.text, who: b.who, variant: b.variant }); });
+      // (the Warrior Counts: the tricky ones written out under one of the balloons, `afterBalloon`)
+      var ab = ctx.afterBalloon || null;
+      stack.innerHTML = bs.map(function (b, i) { return stackBalloon(b) + (ab && ab.i === i ? ab.html : ''); }).join('');
+      bs.forEach(function (b, i) { reading.push({ text: b.text, who: b.who, variant: b.variant }); if (ab && ab.i === i) reading.push.apply(reading, ab.reading || []); });
     }
 
     // 3. sound effect: big, tilted, somewhere it doesn't cover a face
@@ -2368,6 +2733,12 @@
    * from the set's fillFrom) is asked as its lending set's: D is the set the question is asked as. */
   function runLesson(o) {
     var def = o.def, st = o.state, D = def;
+    // the Warrior Counts (`mode: 'warrior'`, docs/warrior-counts.md section 7): the panel is the fountain
+    // scene, not a counting picture (the sand on a miss, as in every lesson); each question asked as
+    // E.warriorAsk's set; the sitting kept after every answer (E.warriorKeep) and recorded at its last;
+    // the four paws above the question line; Tallyheart's pauses and the halfway page between questions;
+    // Read to me says Glintstar's balloon and not the question line again
+    var warrior = o.mode === 'warrior';
     var teacher = def.teacher || 'tallyheart';
     var things = def.things || 'tails', thing = def.thing || 'tail';
     function asSet(d) {
@@ -2382,16 +2753,20 @@
     renderedAt = now();   // a new screen: the double-tap guard in bindChrome applies
     var panel = $('panel');
     panel.classList.add('lesson-panel');
+    if (warrior) scr.querySelector('.frame').setAttribute('data-mode', 'warrior');
     var art = panel.querySelector('.art');
     var stack = $('stack'), box = $('interact');
     var typed = '', t0 = 0, locked = false, q = null, first = true;
+    // (the Warrior Counts: a pause on screen, Tallyheart's line between two questions: how it ends)
+    var beatEnd = null;
     // "Got it!" sits over the keypad: after a tap brings the next question, the keypad ignores
     // presses for a moment, so the second tap of a double tap never types into the new question
     var padLockedUntil = 0;
     relayoutFn = null;
-    panel.setAttribute('aria-label', 'Counting picture');
+    panel.setAttribute('aria-label', warrior ? 'The fountain: Glintstar on top, you at its foot, Tallyheart beside you' : 'Counting picture');
     box.innerHTML =
       '<div class="counts">' +
+      (warrior ? '<div class="wpaws" id="wpaws" aria-hidden="true"></div>' : '') +
       '<div class="q" id="qline" aria-live="polite"></div>' +
       '<div class="padwrap"><div class="keypad" id="keypad">' +
       [1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return '<button class="key" type="button" data-k="' + n + '">' + n + '</button>'; }).join('') +
@@ -2464,6 +2839,72 @@
       if (!namesAnswers(svg, o.answers)) svg = artCall('countsPicture', Object.assign({ kind: 'answers' }, o));
       art.innerHTML = namesAnswers(svg, o.answers) ? svg : answersFallback(o.answers);
     }
+    /* The Warrior Counts: the panel between questions is the fountain (PC.warrior.scene, the Clan round it
+     * or the camp quiet), drawn once a sitting; the four paws fill as she goes (E.warriorPaws). */
+    var sceneSvg = null;
+    function fountain() {
+      if (sceneSvg == null) sceneSvg = warriorSceneSvg(st);
+      art.innerHTML = sceneSvg;
+    }
+    function drawPaws() {
+      var el = $('wpaws');
+      // (shown again after the help's last page, which hides them)
+      if (el) el.hidden = false;
+      if (el) el.innerHTML = pawsSvg(wPaws(typeof E.warriorPaws === 'function' ? E.warriorPaws(st) : null, st.log.length));
+    }
+    /* A pause before the next question (E.warriorBeat: after the 14th and the 42nd answers, Tallyheart's
+     * line; after the 28th, the halfway page), each once a sitting (kept in the sitting's `beats`).
+     * Returns true when a pause took the screen: it asks the next question itself when it is over. */
+    function pause() {
+      if (E.counts.done(st)) return false;
+      var P = wPause(E, PC.warrior, st);
+      if (!P) return false;
+      keepSitting(st);
+      persist();
+      if (P.halfway) { if (o.onHalfway) o.onHalfway(P.at); return true; }
+      var lines = P.lines.map(function (l) { return { who: l.who, text: fill(l.text), kind: l.kind }; });
+      // a sitting picked up right at a pause: "Where were we? Ah, yes." first, here, and not again over
+      // the question after it
+      if (first && o.intro && o.intro.length) { lines = o.intro.slice().concat(lines); first = false; }
+      q = null;
+      pad.classList.add('away'); $('lessonNext').hidden = true;
+      // (the panel between questions is the fountain, even when the pause is the first thing drawn, or
+      // comes after a miss's sand)
+      drawPaws(); fountain();
+      say(lines);
+      var heard = lines.map(function (l) { return { text: l.text, who: l.who }; });
+      saying(heard);
+      // (a tap on the page moves on: listened for on this lesson's own page, which goes with it)
+      var done = false, scrEl = scr.querySelector('.frame'), timer = null;
+      beatEnd = function () {
+        // (once its page is gone, a pause never asks: a late end of its speech finds nothing to do)
+        if (done || !scrEl.isConnected) return;
+        done = true; beatEnd = null; pauseRead = null; clearTimers();
+        scrEl.removeEventListener('click', tapOn);
+        ask(true);
+      };
+      var end = function () { if (beatEnd) beatEnd(); };
+      var tapOn = function (e) { if (e.target && e.target.closest && e.target.closest('.bar')) return; end(); };
+      later(function () { scrEl.addEventListener('click', tapOn); }, 300);
+      // 2.5 s, or 3.5 s when the line is over six words, or as long as its words take to read when that
+      // is longer (wBeatMs); with Read to me on, until it has been said and half a second more, and never
+      // longer than that after that (a voice that never says it has finished, a speech that fails, Read to
+      // me switched off partway: the pause still ends)
+      var spoken = function () {
+        speakItems(heard, function () { later(end, 500); });
+        if (timer) clearTimeout(timer);
+        timer = later(end, wBeatMs(lines) + wSpeechMs(heard));
+      };
+      if (save.settings.readAloud && 'speechSynthesis' in root) spoken();
+      else timer = later(end, wBeatMs(lines));
+      // (Read to me switched on during the pause: the line said from its start, the pause waiting for it)
+      pauseRead = function () { if (done || !scrEl.isConnected || !('speechSynthesis' in root)) return false; spoken(); return true; };
+      return true;
+    }
+    /* The Warrior Counts: what this page says, for Read to me's button and PC.debug.speech (DRY=1). Set
+     * once the page is drawn: a question asked as the screen opens is spoken here, with its own wait,
+     * never a second time by go(). */
+    function saying(items) { later(function () { currentSpeech = items; }, 0); }
     function fillQ(t) { return E.fill(t, cat, { a: q.a, b: q.b, answer: q.answer, groups: q.groups, per: q.per, thing: thing, things: things }); }
     function balloonLines(x) {
       return asList(x).map(function (b) { return typeof b === 'string' ? { text: b } : b; }).filter(function (b) { return b && b.text; })
@@ -2512,16 +2953,19 @@
     }
     function ask(byTap) {
       if (byTap) padLockedUntil = now() + 400;
+      // (the Warrior Counts: a pause comes first, when one is due)
+      if (warrior && pause()) return;
       q = E.counts.question(st);
       if (!q) return finish();
-      asSet(E.questionDef(def, q, story, stories()));
+      asSet(warrior ? E.warriorAsk(def, st, q, stories()) : E.questionDef(def, q, story, stories()));
       typed = ''; locked = false;
       pad.classList.remove('locked', 'away'); $('lessonNext').hidden = true;
       $('gotIt').textContent = 'Got it!';
       // `lit`: what glows as it is asked (2 × 6: the first five cats' ears, ten, to hop on from)
       // (chapter 5's nines open on the hop: all ten claws lit on every cat; then playTuck)
       var tuck = q.light === 'tuck' ? E.lightSteps(D, q) : null;
-      if (tuck) paint(tuck.open); else picture(q.lit || 0);
+      if (warrior) { fountain(); drawPaws(); }
+      else if (tuck) paint(tuck.open); else picture(q.lit || 0);
       var lines = [];
       if (first && o.intro && o.intro.length) lines = o.intro.slice();
       lines = lines.concat(promptLines());
@@ -2532,12 +2976,28 @@
       // last row below the screen: bring the whole keypad into view, whatever the intro's length
       var kb = pad.getBoundingClientRect().bottom, vh = root.innerHeight || 0;
       if (vh && kb > vh) root.scrollBy(0, kb - vh + 8);
+      // (the Warrior Counts: a question drawn as its screen opens is drawn inside go(), whose scroll to
+      // the top comes after this; so look again once go() is done: a picked-up question's keypad, under
+      // "Where were we? Ah, yes.", is brought into view too; and a Training Hollow round picked up, drawn
+      // inside go('hollow'), under the Counts' waiting line: only for a cat with Warrior Counts data, so
+      // the Hollow of chapters 1 to 8 is as it was)
+      if (warrior || (o.mode === 'hollow' && cat && cat.warrior)) later(function () {
+        var kb2 = pad.getBoundingClientRect().bottom, vh2 = root.innerHeight || 0;
+        if (vh2 && kb2 > vh2) root.scrollBy(0, kb2 - vh2 + 8);
+      }, 0);
       t0 = performance.now();
       var asked = q;
       if (tuck) playTuck(asked, tuck);
       else if (q.light) lightUp(asked);
-      speakItems(lines.map(function (l) { return { text: l.text, who: l.who, variant: l.variant }; }).concat([{ text: E.counts.ask(def, q) }]),
-        function () { restartClock(asked); });
+      // (the Warrior Counts: Glintstar's balloon asks it in words; the question line is not read again)
+      var heard = lines.map(function (l) { return { text: l.text, who: l.who, variant: l.variant }; });
+      if (warrior) saying(heard);
+      // (the Warrior Counts: her clock starts again when the question has been said, or at the latest
+      // when it would have been, so a voice that never says it has finished is never timed as hers)
+      var restarted = false, rc = function () { if (!restarted) { restarted = true; restartClock(asked); } };
+      speakItems(warrior ? heard : heard.concat([{ text: E.counts.ask(def, q) }]),
+        warrior ? rc : function () { restartClock(asked); });
+      if (warrior && save.settings.readAloud && 'speechSynthesis' in root) later(rc, wSpeechMs(heard) + 300);
     }
     function press(k) {
       if (locked || now() < padLockedUntil) return;
@@ -2547,6 +3007,9 @@
     }
     function submit() {
       if (!typed || locked) return;
+      // (the Warrior Counts: a screen left open past the sitting's two hours never takes another answer
+      // into it; the hub's next tap sets it aside and starts afresh)
+      if (warrior && warriorStale()) { wv = null; return go('hub'); }
       locked = true; pad.classList.add('locked');
       var ms = performance.now() - t0;
       // a borrowed question earns its own lesson's praise and fast lines
@@ -2554,19 +3017,26 @@
       E.logAnswer(cat, res.entry);
       // the last answer finishes the lesson: record it now, not after the praise pause
       if (res.done) o.recorded = E.recordLesson(cat, st);
+      // (the Warrior Counts: the sitting is kept in its own slot, never `lesson`)
+      else if (warrior) E.warriorKeep(cat, st, now());
       else if (o.mode === 'chapter') cat.lesson = { mode: 'chapter', frame: cat.frame, chapter: story.id, state: st };
       else cat.lesson = { mode: o.mode, state: st };
       persist();
+      if (warrior) drawPaws();
       if (res.correct) {
         showQ(typed, 'right');
         // five pairs of ears sliding into two rows of five: the picture regroups, all lit
-        if (res.rightPicture) { var R = look(res.rightPicture); picture(R.groups * R.per, res.rightPicture); }
+        // (the Warrior Counts: the fountain stays)
+        if (warrior) fountain();
+        else if (res.rightPicture) { var R = look(res.rightPicture); picture(R.groups * R.per, res.rightPicture); }
         else if (res.shows) answersPicture(res.shows, null);   // chapter 5: her two answers in the sand, under the line about them
         else picture(q.groups * q.per);
         if (res.balloons && res.balloons.length) {
           // the question's own lines go on with the story: she reads them, then taps on
           var lines = balloonLines(res.balloons);
           say(lines);
+          // (the Warrior Counts: what Read to me says from here is her shout, not the question)
+          if (warrior) saying(lines.map(function (l) { return { text: l.text, who: l.who }; }));
           speakItems(lines.map(function (l) { return { text: l.text, who: l.who }; }));
           pad.classList.add('away');
           $('gotIt').textContent = 'Next';
@@ -2579,12 +3049,15 @@
         say(line ? [{ who: teacher, text: line }] : []);
         if (line) speakItems([{ text: line, who: teacher }]);
         var wait = !line ? 800 : save.settings.readAloud ? 2600 : (res.fast ? 1300 : 1500);
+        // (the Warrior Counts: a long line, her hard fact remembered, stays until it can be said or read
+        // to its end: "Not today!" is the point of it)
+        if (warrior && line) wait = save.settings.readAloud ? Math.max(2600, wSpeechMs([{ text: line, who: teacher }]) + 400) : wReadMs(line, res.fast);
         var skip = function () { panel.removeEventListener('click', skip); clearTimers(); ask(true); };
         panel.addEventListener('click', skip);
         later(function () { panel.removeEventListener('click', skip); ask(); }, wait);
       } else {
         showQ(typed, 'miss');
-        later(function () { help(res); }, 650);
+        later(function () { help(res); }, quickHelp ? 0 : 650);
       }
     }
     function help(res) {
@@ -2602,7 +3075,13 @@
       pad.classList.add('away');
       var intro = fill(plan.intro);
       say([{ who: opener, text: intro }]);
-      speakItems([{ text: intro, who: opener }]);
+      // (the Warrior Counts, Read to me on: the first line is the anchor's reminder, the five-or-zero,
+      // the zero, the nines' digits; the count waits until it has been said, so the first number never
+      // cuts it off. Elsewhere, as it always was)
+      var readFirst = warrior && save.settings.readAloud && 'speechSynthesis' in root, startCount = null;
+      if (readFirst) speakItems([{ text: intro, who: opener }], function () { later(function () { if (startCount) startCount(); }, 300); });
+      else speakItems([{ text: intro, who: opener }]);
+      if (warrior) saying([{ text: intro, who: opener }]);
       // the scratches match the picture: a picture in rows is scratched in rows (lit a column at a
       // time, top and bottom together; a whole row at a time when the help hops by the row: the
       // pile's rows of ten). On the 10s the swipes come in pairs, one for each forepaw (E.sandOpts)
@@ -2622,13 +3101,22 @@
         if (res.shows) answersPicture(res.shows, plan); else sand();
         nums = plan.nums.slice();
         var line = fill(res.line);
-        say([{ who: counter, html: '<span class="counter">' + nums.join(' · ') + '</span>' }].concat(line ? [{ who: teacher, text: line }] : []));
+        // (the Warrior Counts: the anchor's reminder stays above the count, so a reader of eight can finish
+        // it; "Got it!" is the only way on)
+        say((warrior && intro ? [{ who: opener, text: intro }] : []).concat([{ who: counter, html: '<span class="counter">' + nums.join(' · ') + '</span>' }], line ? [{ who: teacher, text: line }] : []));
         typed = String(hp.answer);
         showQ(typed, 'right');
-        speakItems([{ text: hp.a + ' times ' + hp.b + ' is ' + hp.answer + '. ' + line, who: teacher }]);
+        var told = [{ text: hp.a + ' times ' + hp.b + ' is ' + hp.answer + '. ' + line, who: teacher }];
+        if (warrior) saying(told);
+        speakItems(told);
         $('lessonNext').hidden = false;
+        // (the Warrior Counts: the paws step aside on the help's last page, and “Got it!” sits at the top of
+        // the keypad's place (index.html), so the reminder above the count stays on the screen when “Got it!”
+        // is brought in; drawPaws() shows them again for the next question, or a pause)
+        if (warrior && $('wpaws')) $('wpaws').hidden = true;
         // (chapter 9's review: the longest help line, 7 × 8's, can leave “Got it!” below the screen with Aa on in
-        // landscape: bring it into view, as the keypad is brought in for a long intro; nothing moves where it fits)
+        // landscape: bring it into view, as the keypad is brought in for a long intro; nothing moves where it fits;
+        // the Warrior Counts' too)
         var gb = $('gotIt').getBoundingClientRect().bottom, gvh = root.innerHeight || 0;
         if (gvh && gb > gvh) root.scrollBy(0, gb - gvh + 8);
         $('gotIt').focus({ preventScroll: true });
@@ -2652,11 +3140,18 @@
         clearTimers(); tick();
       };
       panel.addEventListener('click', tapCount);
-      later(function () {
+      // (tools/shots.mjs's picture of the sand: the count already out, PC.debug.warrior('sand'))
+      if (quickHelp) { quickHelp = false; return finishHelp(); }
+      var began = false;
+      startCount = function () {
+        if (began) return;
+        began = true; startCount = null;
         say([{ who: opener, text: intro }, { who: counter, text: '…' }]);
         ticking = true;
         tick();
-      }, 900);
+      };
+      // (with readFirst: once the first line has been said, or at the latest when it would have been)
+      later(function () { if (startCount) startCount(); }, readFirst ? wSpeechMs([{ text: intro, who: opener }]) + 600 : 900);
     }
     function finish() {
       keyHandler = null;
@@ -2664,6 +3159,8 @@
       var sum = E.counts.summary(st);
       // recorded at the last answer; this only catches a lesson that somehow was not
       if (!o.recorded && cat.lesson && cat.lesson.state === st) { o.recorded = E.recordLesson(cat, st); persist(); }
+      // (nor a sitting of the Warrior Counts, still in its own slot)
+      if (warrior && !o.recorded && cat.warrior && cat.warrior.sitting && cat.warrior.sitting.state === st) { o.recorded = E.recordLesson(cat, st); persist(); }
       o.onDone(sum, o.recorded);
       updateBar();   // the keypad screen is over: her Case File's button is back
     }
@@ -2676,7 +3173,9 @@
       if (isTyping(e)) return;
       if (/^[0-9]$/.test(e.key)) { e.preventDefault(); press(e.key); }
       else if (e.key === 'Backspace') { e.preventDefault(); press('del'); }
-      else if (e.key === 'Enter') { e.preventDefault(); if (!$('lessonNext').hidden) ask(true); else press('ok'); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (beatEnd) beatEnd(); else if (!$('lessonNext').hidden) ask(true); else press('ok'); }
+      // (a pause of the Warrior Counts: Space moves on too, as a tap does)
+      else if (e.key === ' ' && beatEnd) { e.preventDefault(); beatEnd(); }
     };
     updateBar();
     ask();
@@ -2731,13 +3230,28 @@
     }
     var again = p.finished.map(function (s) { return hubBtn('again', 'Read chapter ' + (s.number || 1) + ' again', ICON.again, s.id); }).join('');
     var soon = p.soon ? '<button class="btn quiet" type="button" disabled><i aria-hidden="true">' + ICON.moon + '</i>' + esc(p.soon.title) + ' is coming soon</button>' : '';
+    // the Warrior Counts (docs/warrior-counts.md, section 7): once chapter 10 is finished the big button
+    // is theirs until she passes (an unseen result first); then the Ceremony's chapter button, as for any
+    // chapter, with a quiet "The Warrior Counts again" under it (UI.warrior.hub). Null for every cat
+    // before then: the hub is as it always was
+    var WH = hubWarrior(p), wbig = '', wquiet = '';
+    if (WH) {
+      // (a result waiting to be seen: the Ceremony's chapter button waits too, so the hub never tells her
+      // she passed before Glintstar does)
+      if (WH.hideNext && big) { big = ''; bigSays = ''; }
+      if (WH.hideSoon) soon = '';
+      if (WH.soon) soon = '<button class="btn quiet" type="button" disabled><i aria-hidden="true">' + ICON.moon + '</i>' + esc(WH.soon) + '</button>';
+      if (WH.big) wbig = '<button class="btn go big hub-next hub-warrior" type="button" id="warriorBtn"><i aria-hidden="true">' + ICON.paw + '</i><span>' +
+        '<b>' + esc(WH.big.label) + '</b><small>' + esc(WH.big.small) + '</small></span></button>';
+      if (WH.quiet) wquiet = '<button class="btn quiet hub-again" type="button" id="warriorAgain"><i aria-hidden="true">' + ICON.paw + '</i>' + esc(WH.quiet.label) + '</button>';
+    }
     $('screen').innerHTML =
       '<section class="page center">' +
       '<div class="hero"><span class="face" aria-hidden="true">' + catPortrait(cat.look, 'proud') + '</span>' +
       '<div><h1 class="h1" style="text-align:left">' + esc(E.displayName(cat)) + '</h1><p class="note" style="text-align:left">Apprentice of CrystalClan' +
       (latest ? ' · Chapter ' + (latest.number || 1) + ' finished' : '') + '</p></div></div>' +
       // "… is coming soon" stands where the big button goes, so it never sinks below the screen
-      '<div class="hub">' + big + soon +
+      '<div class="hub">' + wbig + big + soon + wquiet +
       (latest ? hubBtn('book', 'Read my book', ICON.book) : '') +
       (learned.length ? hubBtn('hollow', 'The Training Hollow', ICON.tree) : '') +
       hubBtn('nest', 'My nest', ICON.nest) +
@@ -2755,7 +3269,16 @@
     if ($('nextChapter')) $('nextChapter').addEventListener('click', function () { readChapter(p.next, true); });
     if ($('hubFile')) $('hubFile').addEventListener('click', function () { openFile(); });
     currentSpeech = [{ text: E.displayName(cat) + ', apprentice of CrystalClan.' }].concat(p.next ? [{ text: bigSays }] : p.soon ? [{ text: p.soon.title + ' is coming soon.' }] : []);
-    keyHandler = function (e) { if (!isTyping(e) && e.key === 'Enter' && $('nextChapter') && doc.activeElement === doc.body) { e.preventDefault(); $('nextChapter').click(); } };
+    // (the Warrior Counts' slot, when it holds the big button or the coming-soon line: Read to me names it)
+    if (WH) currentSpeech = [{ text: E.displayName(cat) + ', apprentice of CrystalClan.' }].concat(WH.big ? [{ text: WH.big.says }] : [])
+      .concat(p.next && bigSays ? [{ text: bigSays }] : WH.soon ? [{ text: WH.soon }] : []);
+    if (WH) wireHubWarrior(WH);
+    // Enter: whichever holds the big slot (the Warrior Counts' button, else the next chapter's); with the
+    // Warrior Counts' slot, also once a tap has put the focus on the page itself (main#screen)
+    keyHandler = function (e) {
+      var bb = $('warriorBtn') || $('nextChapter'), here = doc.activeElement === doc.body || (!!WH && doc.activeElement === $('screen'));
+      if (!isTyping(e) && e.key === 'Enter' && bb && here) { e.preventDefault(); bb.click(); }
+    };
   }
   function hubBtn(w, label, icon, ch) { return '<button class="btn" type="button" data-go="' + w + '"' + (ch ? ' data-ch="' + esc(ch) + '"' : '') + '><i aria-hidden="true">' + icon + '</i>' + esc(label) + '</button>'; }
 
@@ -2766,6 +3289,12 @@
     if (!cat) return go('who');
     var b = E.buildFullBook(cat, stories());
     var t = b.teaser;
+    // the Warrior Counts passed, the Ceremony not built yet: "Your ceremony is coming soon." in place of
+    // chapter 10's teaser lines (a UI choice: E.teaser is unchanged)
+    // (once Glintstar has said it: never while her first pass's result is unseen; a sitting again's
+    // unseen result gives nothing away, as on the hub)
+    var wsBook = t && !t.built && warriorBuilt() ? warriorNow() : null;
+    if (wsBook && wPassShown(wsBook)) t = Object.assign({}, t, { lines: ['Your ceremony is coming soon.'] });
     $('screen').innerHTML =
       '<article class="book" aria-label="' + esc(b.title) + '">' +
       // a long Clan name ("Thunderwhiskerpaw’s") gets a smaller title, so the word never breaks
@@ -2851,7 +3380,12 @@
     if (waited) persist();
     if (HL) {
       var tbl = HL.state.table || 1;
-      if (!E.counts.done(HL.state)) return hollowLesson(E.hollowDef(stories(), tbl), HL.state, true);
+      if (!E.counts.done(HL.state)) {
+        // (the Warrior Counts: a sitting paused at the fountain is said over the round's next question, so
+        // she knows an answer here starts the Counts fresh later; only for a cat with `warrior` data)
+        var wl = cat.warrior ? E.hollowLines(cat, stories(), { now: now() }).waiting : null;
+        return hollowLesson(E.hollowDef(stories(), tbl), HL.state, true, wl);
+      }
       // a round whose last answer is in but which was never recorded: it counts, once
       var rec = E.settleLesson(cat);
       persist();
@@ -2859,7 +3393,10 @@
     }
     // the Counts she can practise and Tallyheart's lines about them (E.hollowLines: each Count's own
     // word there, "tens" for the 10s, so the 5s and the 10s never read the same)
-    var HW = E.hollowLines(cat, stories(), { reward: !!(opts && opts.reward) });
+    // (the Warrior Counts: with `now`, a paused sitting that has gone stale is not "waiting")
+    // (and the tricky greeting, after a round she went back to from a not-yet: wTrickyDue, once)
+    var HW = E.hollowLines(cat, stories(), cat.warrior ? { reward: !!(opts && opts.reward), now: now(), tricky: wTrickyDue } : { reward: !!(opts && opts.reward) });
+    wTrickyDue = false;
     var defs = HW.counts;
     var scr = $('screen');
     scr.innerHTML = frameShell('hollow', 'hollow');
@@ -2868,7 +3405,10 @@
     var f = {
       scene: hollowScene('wide', [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'sunpatch', facing: 'left' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'sand-left', facing: 'right' }], ['sunset']),
       caption: ['The Training Hollow. The old tree leans over the sand like it’s listening.'],
-      say: [{ who: 'tallyheart', text: HW.greet }]
+      // the Warrior Counts: a sitting paused at the fountain is said before she picks a Count, in the
+      // greeting's place (the tricky greeting would say "first" the other way; the paws on the
+      // buttons still mark the tricky Counts)
+      say: [{ who: 'tallyheart', text: HW.waiting || HW.greet }]
     };
     if (HW.glow) f.say.push({ who: 'tallyheart', text: HW.glow });
     var heads = drawArt(panel, shownFrame(f), cat.look);
@@ -2885,7 +3425,9 @@
       $('interact').innerHTML = '<div class="row end"><button class="btn" type="button" id="nestBtn">My nest</button><button class="btn go big" type="button" id="startBtn" data-t="' + one.table + '">Start a round</button></div>';
     } else {
       $('interact').innerHTML = '<div class="counts-pick" role="group" aria-label="Which Count?">' + defs.map(function (d) {
-        return '<button class="btn go big" type="button" data-t="' + d.table + '">' + (d.glow ? '<i class="glowdot" role="img" aria-label="glowing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l2.7 7.8 7.8 2.7-7.8 2.7L12 22.5l-2.7-7.8L1.5 12l7.8-2.7z"/></svg></i>' : '') + esc(d.name) + '</button>';
+        return '<button class="btn go big" type="button" data-t="' + d.table + '">' + (d.glow ? '<i class="glowdot" role="img" aria-label="glowing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l2.7 7.8 7.8 2.7-7.8 2.7L12 22.5l-2.7-7.8L1.5 12l7.8-2.7z"/></svg></i>' : '') +
+          // (the Warrior Counts: a small paw on a Count whose tricky ones are still to practise)
+          (d.tricky ? '<i class="trickypaw" role="img" aria-label="tricky ones">' + ICON.paw + '</i>' : '') + esc(d.name) + '</button>';
       }).join('') + '</div><div class="row end"><button class="btn" type="button" id="nestBtn">My nest</button></div>';
     }
     $('nestBtn').addEventListener('click', function () { go('nest', { from: 'hollow' }); });
@@ -2894,10 +3436,11 @@
     });
     currentSpeech = (ctx.reading || []).concat(one ? [] : defs.map(function (d) { return { text: d.name.replace(' · ', ', ') }; }));
   }
-  function hollowLesson(def, st, resume) {
+  function hollowLesson(def, st, resume, waiting) {
     runLesson({
       def: def, state: st, mode: 'hollow',
-      intro: resume ? [] : [{ who: 'tallyheart', text: E.hollowRoundLine(def) }],
+      // (a round picked up says nothing first, but the Warrior Counts' waiting line when a sitting is paused)
+      intro: resume ? (waiting ? [{ who: 'tallyheart', text: waiting }] : []) : [{ who: 'tallyheart', text: E.hollowRoundLine(def) }],
       onDone: function (sum, rec) {
         // the round was counted (E.hollowFinish, once) when its last answer went in
         hollowReward(def, rec && rec.hollow ? rec.hollow : { awarded: null, glowNow: false });
@@ -2929,6 +3472,260 @@
     $('againBtn').addEventListener('click', function () { go('hollow', { from: 'hub', reward: true }); });
     currentSpeech = [{ text: line, who: 'tallyheart' }].concat(t ? [{ text: t.name + ', for your nest.' }] : []).concat(res.glowNow ? [{ text: glowNote }] : []);
     speakItems(currentSpeech);
+  }
+
+  /* ================================================================ the Warrior Counts
+   * docs/warrior-counts.md (decisions 48 and 49). A screen of its own, like the Hollow's: the opening's
+   * frames (the big Back beside Next, within their own list), the sitting (runLesson's warrior mode:
+   * the fountain, the sand on a miss, the four paws, Tallyheart's pauses), the halfway page, and the
+   * result's pages. `wv` is the sitting on screen: a page turn (go('warrior', { step })) reads it; a
+   * visit from the hub starts again from E.warriorBegin, which picks a sitting up or starts one, or
+   * reopens a result she has not seen to the end. Nothing here runs before the Counts are open. */
+  var wv = null;
+  var hubWarriorSig = null;
+  // the not-yet's "Back to the Training Hollow" picked a round up: the tricky greeting is kept for the
+  // first Hollow page after it (its reward's "Another round" included), once
+  var wTrickyDue = false;
+  var quickHelp = false;   // PC.debug.warrior('sand') only: the help's count is out at once, for a picture
+  function warriorDebug(what, i) {
+    if (!cat) return 'no cat';
+    if (!warriorBuilt()) return 'no Warrior Counts in this build';
+    var ws = warriorNow();
+    if (!wOpen(ws)) return 'the Warrior Counts are not open for this cat (finished.' + PC.warrior.after + '?)';
+    if (what === 'result') {
+      if (!wLastFinished(ws)) return 'no finished sitting';
+      wv = { cat: cat.id };
+      var n = wResult(PC.warrior, E.warriorResult(cat, stories()), { quiet: warriorQuietPass(), ceremony: false }).pages.length;
+      go('warrior', { step: 'result', i: i == null ? 0 : i < 0 ? n + i : i });
+      return true;
+    }
+    if (wUnseen(ws)) return 'a result is waiting to be seen (PC.debug.warrior("result"))';
+    go('warrior');
+    if (!wv || !wv.state) return 'no sitting';
+    if (what === 'open') { if (i) go('warrior', { step: 'open', i: i }); return view.name === 'warrior' ? true : view.name; }
+    if (what === 'halfway') return view.opts.step === 'halfway' ? true : 'not at the halfway page (give the sitting 28 answers)';
+    if (what === 'q' || what === 'sand') {
+      if (!$('keypad')) go('warrior', { step: 'q' });
+      if (!$('keypad')) return 'no question';
+      if (what === 'sand') {
+        var qq = E.counts.question(wv.state);
+        if (!qq) return 'no question';
+        quickHelp = true;
+        renderedAt = now() - UI_GUARD_MS - 1; renderedPerf = perfNow() - UI_GUARD_MS - 1;   // (past the double-tap guard: these taps are the tool's)
+        // a wrong answer that is not a slip: one more than the right one
+        String(qq.a * qq.b + 1).split('').concat(['ok']).forEach(function (k) { var b = doc.querySelector('.key[data-k="' + k + '"]'); if (b) b.click(); });
+      }
+      return true;
+    }
+    return 'warrior: open, q, sand, halfway or result';
+  }
+  function warriorBuilt() {
+    return !!(PC.warrior && E && typeof E.warriorState === 'function' && typeof E.warriorBegin === 'function');
+  }
+  /* E.warriorState, read now (a sitting that is done is settled first: saved when she has `warrior` data). */
+  function warriorNow() {
+    if (!cat || !warriorBuilt()) return null;
+    var ws = null;
+    try { ws = E.warriorState(cat, stories(), now()); } catch (e) { if (root.console) console.warn('E.warriorState failed', e); return null; }
+    if (cat.warrior) persist();
+    return ws;
+  }
+  /* The sitting on screen has gone stale (two hours since its last answer, or practice since): read
+   * now, as the hub reads it. */
+  function warriorStale() {
+    var ws = warriorNow();
+    return !!(ws && ws.stale);
+  }
+  function hubWarrior(p) {
+    // (whether the Ceremony chapter is built, finished or not: once it is, never "coming soon")
+    var built = E.chapters(stories()).some(function (s) { return s.opensWhen === 'warrior'; });
+    var h = wHub(warriorNow(), Object.assign({}, p, { ceremonyBuilt: built }));
+    // (what the slot offers, to tell when it has changed: on a tap, and when the page is seen again)
+    hubWarriorSig = h ? JSON.stringify(h) : null;
+    return h;
+  }
+  function wireHubWarrior(WH) {
+    var drawn = hubWarriorSig;
+    // read again on a tap: what the button offered may have gone stale (a sitting past its two hours)
+    var tap = function (act) {
+      if (now() - renderedAt < UI_GUARD_MS) return;
+      hubWarrior(E.progress(cat, stories()));
+      if (hubWarriorSig !== drawn) return go('hub', { keepScroll: true });
+      go('warrior', act === 'result' ? { result: true } : {});
+    };
+    if ($('warriorBtn')) $('warriorBtn').addEventListener('click', function () { tap(WH.big.act); });
+    if ($('warriorAgain')) $('warriorAgain').addEventListener('click', function () { tap(WH.quiet && WH.quiet.act === 'result' ? 'result' : 'begin'); });
+  }
+  /* The question panel: the fountain, the whole Clan round it in a sitting with the crowd, else the camp
+   * quiet (PC.warrior.scene, written with the crowd, drawn with `crowd` as the sitting's; the halfway
+   * page's own scene the same way, `own`). */
+  function warriorScene(st, own) { return wScene(PC.warrior, st, own); }
+  function warriorSceneSvg(st) { return artRender(warriorScene(st), cat && cat.look).svg; }
+  /* A pause's `beats` are on the sitting kept in its slot (the same state, or kept again at its own time). */
+  function keepSitting(st) {
+    var S = cat.warrior && cat.warrior.sitting;
+    if (S && S.state === st) return;
+    if (typeof E.warriorKeep === 'function') E.warriorKeep(cat, st, S && typeof S.at === 'number' ? S.at : now());
+  }
+  var PAW_PATH = '<path d="M24 25c-6.6 0-12.4 6.6-12.4 11.9 0 3.9 3.2 5.4 6.2 5.4 2.5 0 4-1.3 6.2-1.3s3.7 1.3 6.2 1.3c3 0 6.2-1.5 6.2-5.4C36.4 31.6 30.6 25 24 25z"/>' +
+    '<ellipse cx="10.6" cy="20" rx="4.3" ry="5.5" transform="rotate(-20 10.6 20)"/><ellipse cx="18.6" cy="12" rx="4.5" ry="5.9" transform="rotate(-6 18.6 12)"/>' +
+    '<ellipse cx="29.4" cy="12" rx="4.5" ry="5.9" transform="rotate(6 29.4 12)"/><ellipse cx="37.4" cy="20" rx="4.3" ry="5.5" transform="rotate(20 37.4 20)"/>';
+  /* The four paw prints above the question line: each filled from the heel up as far as it has gone
+   * (over the print's own height, heel to toe tips, so the first answer of a paw already shows). */
+  function pawsSvg(fills) {
+    return fills.map(function (fl, i) {
+      // (a begun paw shows at once: its first answer fills the heel pad's bottom 4.5, every later one ~2 more)
+      var top = 5.8, heel = 42.6, y = fl >= 1 ? 0 : Math.min(heel - 4.5, heel - (heel - top) * fl), h = 48 - y;
+      return '<svg class="wpaw' + (fl >= 1 ? ' full' : fl > 0 ? ' on' : '') + '" viewBox="0 0 48 48"><defs><clipPath id="wpc' + i + '"><rect x="0" y="' + f1(y) + '" width="48" height="' + f1(h) + '"/></clipPath></defs>' +
+        '<g class="wpaw-e">' + PAW_PATH + '</g>' + (fl > 0 ? '<g class="wpaw-f" clip-path="url(#wpc' + i + ')">' + PAW_PATH + '</g>' : '') + '</svg>';
+    }).join('');
+  }
+  /* A frame of the Warrior Counts with its tokens filled (the result's {right}, {Right}, {last}, {Last},
+   * {short} in number words, then the cat's own), never changing the story's. */
+  function warriorFilled(f, extra) {
+    if (!f) return f;
+    var put = function (t) { return E.fill(t, cat, extra || {}); };
+    var g = Object.assign({}, f);
+    if (f.caption != null) g.caption = asList(f.caption).map(function (c) { return typeof c === 'string' ? put(c) : c && Object.assign({}, c, { text: put(c.text) }); });
+    if (f.say != null) g.say = asList(f.say).map(function (b) { return typeof b === 'string' ? put(b) : b && Object.assign({}, b, { text: put(b.text) }); });
+    return g;
+  }
+  /* One page of the Warrior Counts drawn from a frame: its panel, captions and balloons laid out as a
+   * chapter's are, and a row of buttons under it. `o.back`: the big Back beside them (a function; null
+   * keeps its place, invisible; false: no Back at all, the halfway page). `o.buttons`: [{ id, label, big,
+   * act }], the last the big one. `o.chips`: the tricky ones written out under one of the balloons. */
+  function warriorPlate(f, id, o) {
+    var scr = $('screen');
+    scr.innerHTML = frameShell('next', 'warrior-' + id);
+    var frameEl = scr.querySelector('.frame');
+    frameEl.setAttribute('data-mode', 'warrior');
+    var panel = $('panel');
+    var heads = drawArt(panel, shownFrame(f), cat.look);
+    var caps = captionsOf(f), balloons = balloonsOf(f);
+    var capsRead = E.captionsRead(f, cat).map(fill).filter(Boolean);
+    panel.setAttribute('aria-label', capsRead.length ? plain(capsRead.join(' ')) : 'A comic panel');
+    var ctx = { panel: panel, frame: f, heads: heads, caps: caps, capsRead: capsRead, balloons: balloons };
+    if (o.chips && o.chips.list.length) {
+      // the chips go under her balloon, in the column: the balloons stack there with them
+      ctx.forceStack = true;
+      ctx.afterBalloon = { i: Math.min(o.chips.at, Math.max(0, balloons.length - 1)),
+        html: '<div class="wchips" role="list" aria-label="The tricky ones">' + o.chips.list.map(function (c) { return '<span class="wchip" role="listitem">' + esc(c) + '</span>'; }).join('') + '</div>',
+        reading: o.chips.list.map(function (c) { return { text: c.replace(/ × /, ' times ').replace(/ = /, ' is '), who: 'tallyheart' }; }) };
+    }
+    relayoutFn = function () {
+      frameEl.classList.add('solo');
+      var L = layoutText(ctx);
+      if ((L.captions === 'column' && ctx.caps.length) || L.balloons === 'stack') { frameEl.classList.remove('solo'); layoutText(ctx); }
+    };
+    relayoutFn();
+    playFx(panel, f);
+    var box = $('interact'), bs = o.buttons || [];
+    var back = o.back === false ? '' : backBottom(!!o.back);
+    box.innerHTML = '<div class="' + (bs.length > 1 ? 'row end' : 'next-row') + '">' + back + bs.map(function (b, i) {
+      var last = i === bs.length - 1;
+      return '<button class="btn ' + (b.big || (last && b.big !== false) ? 'go big' : 'quiet') + '" id="' + esc(b.id) + '" type="button"' + (b.disabled ? ' disabled' : '') + '>' + esc(b.label) +
+        (b.next ? ' <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') + '</button>';
+    }).join('') + '</div>';
+    // (by when the tap was made, too: the second tap of a double tap handed over late never turns this page)
+    var guard = function (fn) { return function (e) { if (now() - renderedAt < 280 || tappedEarly(e, 280)) return; fn(); }; };
+    bs.forEach(function (b) { if (!b.disabled && $(b.id)) $(b.id).addEventListener('click', guard(b.act)); });
+    if (o.back && $('backBottom')) $('backBottom').addEventListener('click', guard(o.back));
+    var nextB = bs.length === 1 && bs[0].next ? bs[0] : null;
+    if (nextB) { panel.classList.add('tappable'); panel.addEventListener('click', guard(nextB.act)); }
+    keyHandler = function (e) {
+      if (isTyping(e)) return;
+      var main = bs.length ? bs[bs.length - 1] : null;
+      if ((e.key === 'ArrowRight' && nextB) || ((e.key === ' ' || e.key === 'Enter') && main && !main.disabled)) { e.preventDefault(); (nextB || main).act(); }
+      else if (e.key === 'ArrowLeft' && o.back) { e.preventDefault(); o.back(); }
+    };
+    currentSpeech = (ctx.reading || []).concat(o.say ? asList(o.say).map(function (t) { return { text: t }; }) : []);
+  }
+  function renderWarrior(opts) {
+    if (!cat) return go('who');
+    if (!warriorBuilt()) return go('hub');
+    opts = opts || {};
+    var step = opts.step;
+    if (!step || !wv || wv.cat !== cat.id) {
+      var ws = warriorNow();
+      if (!wOpen(ws)) return go('hub');
+      if (opts.result || wUnseen(ws)) { wv = { cat: cat.id }; return warriorResultPage(0); }
+      var r = E.warriorBegin(cat, stories(), now());
+      persist();
+      var op = wOpenKind(r.opening != null ? r.opening : typeof E.warriorOpen === 'function' ? E.warriorOpen(cat, r.state) : 'first');
+      wv = { cat: cat.id, def: r.def, state: r.state, op: op, frames: op.kind === 'resume' ? [] : wOpening(PC.warrior, op.kind, op.aside) };
+      if (!wv.frames.length) return runWarrior(op.kind === 'resume');
+      return warriorOpenPage(0);
+    }
+    // (a page turned on a sitting gone stale while its screen was open: to the hub, which starts afresh)
+    if ((step === 'open' || step === 'q' || step === 'halfway') && wv.state && warriorStale()) { wv = null; return go('hub'); }
+    if (step === 'open') return warriorOpenPage(opts.i || 0);
+    if (step === 'q' && wv.state) return runWarrior(false);
+    if (step === 'halfway' && wv.state) return warriorHalfway();
+    if (step === 'result') return warriorResultPage(opts.i || 0);
+    go('hub');
+  }
+  /* The opening: Glintstar's rule and Tallyheart's sand the first time, one panel after that. */
+  function warriorOpenPage(i) {
+    var list = wv.frames, f = list[i];
+    if (!f) return runWarrior(false);
+    warriorPlate(f, 'open-' + i, {
+      back: i > 0 ? function () { go('warrior', { step: 'open', i: i - 1, back: true }); } : null,
+      buttons: [{ id: 'nextBtn', label: 'Next', next: true, act: function () { go('warrior', i + 1 < list.length ? { step: 'open', i: i + 1 } : { step: 'q' }); } }]
+    });
+  }
+  /* The sitting itself (runLesson, mode 'warrior'). A sitting picked up with an answer in it opens on
+   * Tallyheart's "Where were we? Ah, yes." over her question (PC.warrior.open.resume). */
+  function runWarrior(resume) {
+    var rs = resume && PC.warrior.open ? PC.warrior.open.resume : null;
+    var intro = asList(rs).map(function (l) { return typeof l === 'string' ? { who: 'tallyheart', text: fill(l) } : { who: l.who || 'tallyheart', text: fill(l.text), kind: l.kind }; }).filter(function (l) { return l.text; });
+    runLesson({
+      def: wv.def, state: wv.state, mode: 'warrior', intro: intro, frameId: 'warrior',
+      onHalfway: function () { go('warrior', { step: 'halfway' }); },
+      onDone: function (sum, rec) { wv.rec = rec; wv.result = null; go('warrior', { step: 'result', i: 0 }); }
+    });
+  }
+  /* After the 28th answer: Murmurchime's tail straight up, Glintstar's "Halfway", the big stretch. One
+   * button; no Back (it comes after an answer). */
+  function warriorHalfway() {
+    var f = asList(PC.warrior.halfway)[0];
+    if (!f) return runWarrior(false);
+    // (written with the crowd, drawn like the question panel: the crowd as the sitting's)
+    if (f.scene) f = Object.assign({}, f, { scene: warriorScene(wv.state, f.scene) });
+    warriorPlate(f, 'halfway', { back: false, buttons: [{ id: 'keepGoing', label: 'Keep going', big: true, act: function () { go('warrior', { step: 'q' }); } }] });
+  }
+  /* The result: the variant's pages (UI.warrior.result), Back beside Next, the last with its buttons;
+   * each of those marks the result seen (E.warriorSeen) before it goes on. */
+  function warriorResultPage(i) {
+    var R = wv.result || (wv.result = typeof E.warriorResult === 'function' ? E.warriorResult(cat, stories()) : null);
+    if (!R) return go('hub');
+    var ceremony = E.chapters(stories()).filter(function (s) { return s.opensWhen === 'warrior'; })[0] || null;
+    var round = !!E.hollowRound(cat);
+    var RP = wResult(PC.warrior, R, {
+      quiet: warriorQuietPass(), ceremony: !!ceremony, hollowRound: round, countWords: E.countWords
+    });
+    if (!RP.pages.length) return go('hub');
+    i = clamp(i, 0, RP.pages.length - 1);
+    var pg = RP.pages[i], last = i === RP.pages.length - 1;
+    var seen = function (fn) { return function () { if (typeof E.warriorSeen === 'function') E.warriorSeen(cat); persist(); wv = null; fn(); }; };
+    var acts = {
+      ceremony: function () { readChapter(ceremony, false); },
+      camp: function () { go('hub'); },
+      // (a round in progress picks up first: the tricky greeting waits for the Hollow's page after it)
+      hollow: function () { wTrickyDue = round; go('hollow', { from: 'hub' }); }
+    };
+    warriorPlate(warriorFilled(pg.frame, RP.tokens), 'result-' + i, {
+      back: i > 0 ? function () { go('warrior', { step: 'result', i: i - 1, back: true }); } : null,
+      chips: pg.chips ? { at: pg.chipsAt || 0, list: pg.chips } : null,
+      say: last && RP.note ? [RP.note] : null,
+      buttons: last ? RP.buttons.map(function (b) { return { id: b.id, label: b.label, big: b.big, disabled: b.disabled, act: b.disabled ? null : seen(acts[b.act] || acts.camp) }; })
+        : [{ id: 'nextBtn', label: 'Next', next: true, act: function () { go('warrior', { step: 'result', i: i + 1 }); } }]
+    });
+  }
+  /* A pass in a sitting after a finished one is a quiet sitting's: the Clan comes running. */
+  function warriorQuietPass() {
+    var list = (cat.warrior && cat.warrior.attempts) || [];
+    var fin = list.filter(function (a) { return a && a.finished; });
+    return fin.length > 1;
   }
 
   /* ================================================================ my nest */
@@ -3034,7 +3831,17 @@
       return 'on frame ' + (reading ? E.frameId(c, s) : pl.frame) + ', page ' + (pl.history.length + 1) +
         (pl.lesson ? ', partway through a lesson' : '') + (reading ? '' : ' (kept while another chapter is read)');
     }
-    return E.isOpen(c, s, stories()) ? 'not started' : 'opens when the chapter before it is finished';
+    // (the Ceremony: it opens once the Warrior Counts are passed, not when the chapter before it is finished)
+    return E.isOpen(c, s, stories()) ? 'not started' : s.opensWhen === 'warrior' ? 'opens once the Warrior Counts are passed' : 'opens when the chapter before it is finished';
+  }
+  /* The corner's Warrior Counts for one cat (UI.warrior.corner), or null in a build without them. */
+  function warriorCornerOf(c) {
+    if (!PC.warrior || typeof E.warriorState !== 'function') return null;
+    var ws = null;
+    try { ws = E.warriorState(c, stories(), now()); } catch (e) { ws = null; }
+    var after = E.chapter(PC.warrior.after, stories());
+    return wCorner(c, { open: wOpen(ws), after: after ? 'chapter ' + (after.number || '') : 'chapter 10',
+      date: function (ms) { return new Date(ms).toLocaleDateString(); }, secs: fmtMs });
   }
   function openGrownups() {
     stopSpeech();
@@ -3071,6 +3878,7 @@
           (k.shown ? '' : '; given, not in her file yet') + ')</span></li>';
       }).join('');
       var learned = E.learnedCounts(c, stories());
+      var WC = warriorCornerOf(c);
       var hollowTxt = c.hollow.rounds + ' round' + (c.hollow.rounds === 1 ? '' : 's') + (learned.length ? ': ' + learned.map(function (k) {
         var r = E.hollowTable(c, k.table);
         return 'the ' + k.table + 's ' + r.rounds + ' (' + r.cleanRounds + ' without help' + (r.glow ? ', claw mark glowing' : '') + ')';
@@ -3082,10 +3890,13 @@
         chs.map(function (s) { return '<dt>Chapter ' + (s.number || 1) + '</dt><dd>' + esc(chapterProgress(c, s)) + '</dd>'; }).join('') +
         '<dt>Dreams</dt><dd>' + esc(dreams || '–') + '</dd>' +
         '<dt>Training Hollow</dt><dd>' + esc(hollowTxt) + '</dd>' +
+        // the Warrior Counts (docs/warrior-counts.md, section 7): only in a build that has them
+        (WC ? '<dt>Warrior Counts</dt><dd>' + esc(WC.line) + '</dd>' : '') +
         '<dt>Nest</dt><dd>' + esc(nestTxt || '–') + '</dd></dl>' +
         (flags ? '<h4>What the choices say</h4><ul>' + flags + '</ul>' : '') +
         (choices ? '<h4>Choices, in order</h4><ul>' + choices + '</ul>' : '') +
         (cardsTxt ? '<h4>The Case File' + (E.hasFile(c) ? '' : ' (its button appears when she is shown how to open it)') + '</h4><ul>' + cardsTxt + '</ul>' : '') +
+        (WC && (WC.attempts.length || WC.sitting) ? '<h4>The Warrior Counts, sitting by sitting</h4><ul>' + WC.attempts.concat(WC.sitting ? [WC.sitting] : []).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' : '') +
         '<h4>The Counts</h4>' +
         (c.counts.length ? E.factTables(c, stories()).map(function (t) {
           return '<h5>' + esc(t.name) + '</h5><div class="scroll"><table><thead><tr><th>Fact</th><th>Attempts</th><th>Right first time</th><th>Helped</th><th>Typical time</th></tr></thead><tbody>' +
@@ -3131,6 +3942,8 @@
     nest: '<svg viewBox="0 0 48 48"><ellipse cx="24" cy="32" rx="19" ry="10" fill="#8a6a3a" stroke="#1b1622" stroke-width="3"/><path d="M8 30c6 4 26 4 32 0" stroke="#5fae5a" stroke-width="4" fill="none"/><circle cx="18" cy="26" r="4" fill="#9fd3ff" stroke="#1b1622" stroke-width="2"/><path d="M28 18c4 2 6 6 4 10" stroke="#4f86d8" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
     again: '<svg viewBox="0 0 48 48"><path d="M38 24a14 14 0 1 1-5-10.7" fill="none" stroke="#1b1622" stroke-width="4" stroke-linecap="round"/><path d="M34 6v9h-9" fill="none" stroke="#1b1622" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     moon: '<svg viewBox="0 0 48 48"><path d="M30 6a18 18 0 1 0 12 30A15 15 0 0 1 30 6z" fill="#ffe8a3" stroke="#1b1622" stroke-width="3" stroke-linejoin="round"/></svg>',
+    // the Warrior Counts: a paw print, as on the four above the question line
+    paw: '<svg viewBox="0 0 48 48"><g fill="#ffe8a3" stroke="#1b1622" stroke-width="3" stroke-linejoin="round">' + PAW_PATH + '</g></svg>',
     // her Case File: a curl of pale bark with a scratch on it (the art's PC.art.fileIcon, when it has one, is used instead)
     file: '<svg viewBox="0 0 48 48"><path d="M9 8 Q24 3 39 9 Q43 24 40 40 Q24 45 8 40 Q5 24 9 8 Z" fill="#e9dcc0" stroke="#1b1622" stroke-width="3" stroke-linejoin="round"/><path d="M39 9 Q33 12 34 18 Q40 17 40 12" fill="#cdbb95" stroke="#1b1622" stroke-width="2.4" stroke-linejoin="round"/><path d="M14 20 q5 -5 10 0 t10 0 M14 29 q5 -5 10 0 t8 0" fill="none" stroke="#5a4326" stroke-width="2.6" stroke-linecap="round"/></svg>'
   };

@@ -1,5 +1,16 @@
 # Chapter 10 spec: The Gathering
 
+*v0.4 · 2026-10-31 (v0.3 brought to the tree it is built on, the Warrior Counts merged onto chapter 9 that day: step 0 done, as a
+merge of their commit, with `E.VERSION` '0.9.1 (the Warrior Counts, 2026-10-31)', a point after chapter 9's as the Counts are no
+chapter (README call 48), so chapter 10 is 0.10.0, and `CACHE` v21, v20 being the polish release's; the depth hotfix had shipped before
+chapter 9; the snapshot is main's commit after the merge and the polish release; chapter 10's `CACHE` one past the live one in the
+ledger; the owners' briefs on the merged engine and page: the Warrior Counts' hub test already stands, the Training Hollow re-laid for
+ten Counts (measured in WebKit: “Clutches of seven · the 7s” wraps, and My nest runs under a 1080 x 720 screen), the pick screen beside
+the Case File's Aa rules and `tests/aa-room.test.js`, the looks in WebKit while Safari's automation hangs, the test lines as the merged
+tree has them; the six verify fixes: `fileKey`'s pick line cancels only Escape and ←, a dimmed tap's `said` (`pickPage`'s `dimmed`)
+and the live region read again, call 33's reason, step 0's citation and its warrior tests run on their own, `tests/sw.test.js`'s
+`markSvg` count; no line of the story changed)*
+
 *v0.3 · 2026-10-26 (v0.2 with the verify critics' findings applied: the hotfix and the Warrior Counts are uncommitted worktrees, so
 step 0 says where each comes from, lists their files, brings the hotfix onto chapter 9 (ch09 f112's cast, the ch08 golden, chapter 9's
 fingerprints) and checks what a no-op merge would miss; `CACHE` counted from the tree; no depth rule: casts back to front, the leaders'
@@ -25,22 +36,33 @@ written here: `~/potomac-crossing-work/ch10/spec-writer/sets.js` (the sets on a 
 `sim1.js` (the warm-up, for every chapter-9 record that picks its first question, to six misses), `sim2.js` (the 7s, to four
 misses, with the giveaway check), `sim3.js` (the Moon Ferry Counts, to four misses, how each pattern ends), `sim4.js` (the sixty and
 Puddle's riddle) and `sim5.js` (her Case File at the Gathering for the thinnest and the fullest files, and each claim's right cards).
+On the tree it is built on (the Warrior Counts merged, the polish release folded in) all six runs, `sim6.js` among them, print the
+same, byte for byte, as on chapter 9 as it shipped (`~/potomac-crossing-work/warrior-merge/spec-editor-v04/sims-base/` and
+`sims-merged/`, 2026-10-31): the merge leaves the Counts runner as it was.
 Where the story's italic notes and this spec differ, the spec is the build's (section 7, item 2). Names in `code` are fixed: the art,
 the engine, the storyboard words and the story builder use exactly these.*
 
-*The tree it is built on* (the orchestrator's): main after (1) chapter 9 ships, (2) the hotfix of chapters 6 to 8's cast order
-(Charlie's bug, ch08 f030: a far cat painted over a near one) is brought onto it, and (3) the Warrior Counts (`docs/warrior-counts.md`
-v0.2, decisions 48 and 49) are brought onto that: `E.warrior*`, `app/story/warrior.js` (`PC.warrior`, `after: 'ch10'`), the hub's offer
-once chapter 10 is finished, and a Ceremony chapter that opens with `opensWhen: 'warrior'`. Where this spec touches those, it says
-exactly what chapter 10 sets or calls (section 6, "Where chapter 10 meets the Warrior Counts"). **The hotfix adds no depth rule and
-changes no engine** (`~/potomac-crossing-work/hotfix-ch08/plan.json`, which rejects both a set-level `z: 'behind'` and a kit-wide sort):
-it moves the far cat at `crowd-2` to the head of the cast in 12 pile frames (ch06 f004, f107, f109; ch07 f018, f021, f077, f079 to f082;
-ch08 f009, f030) and adds a guard for the pile's `wide` camera (`tests/set-pile.test.js`'s depth-hotfix test, its list `DEPTH_FIXED`).
-**Neither has a commit** (as found 2026-10-25): branches `hotfix-ch08-f030` and `warrior-counts` both still point at chapter 8's
-`b6a8d4f` (`E.VERSION` '0.8.0', `CACHE` v16), and both pieces of work are uncommitted files in their worktrees,
-`/Users/aron/potomac-crossing-hotfix` (16 modified) and `/Users/aron/potomac-crossing-wc` (8 modified, 6 new; both lists in section
-10, step 0). A `git merge warrior-counts` therefore says "Already up to date" and brings nothing. Bringing both onto chapter 9 is the
-orchestrator's step 0 (section 10), before the snapshot.
+*The tree it is built on* (the orchestrator's): **main after the Warrior Counts' merge and the polish release.** Chapter 9 shipped
+on 2026-10-26 (`ba481b7`, `E.VERSION` '0.9.0 (chapter 9, 2026-10-26)', `CACHE` v19), after the depth hotfix (Charlie's bug, ch08 f030:
+a far cat painted over a near one; v17, `83313a1`) and the Aa fix (v18, `2b52b6c`), so chapter 9's own build already lists ch09 f112's
+crowd back to front (`tests/set-pile.test.js`, `DEPTH_FIXED9`). **The Warrior Counts** (`docs/warrior-counts.md` v0.4, decisions 48
+and 49; branch `warrior-counts`, `b2c9e22`) were merged onto it on 2026-10-31 and reviewed there (the README's "The Warrior Counts as
+built", calls 47 to 56): `E.warrior*`, `app/story/warrior.js` (`PC.warrior`, `after: 'ch10'`), the hub's offer once chapter 10 is
+finished, the Hollow's tricky paws and waiting line, a Ceremony chapter that opens with `opensWhen: 'warrior'`; `E.VERSION` '0.9.1 (the
+Warrior Counts, 2026-10-31)' (a point release: they are no chapter) and `CACHE` v21. **The polish release** (v20, built in
+`/Users/aron/potomac-crossing-hotfix`; the README's "2026-10-31: the polish release") lands on main before the snapshot: it moves
+Thymeleaf's spots under the bridge (`app/story/ch09.js`, f089 to f100) and Sprinkle's lift on the bank (`app/art/sets/bridge.js`,
+`BANK9.air`, f115), and adds `index.html` rules: the Case File's (no word broken inside; with Aa where the screen has little room, its
+words 1.14 times plain), ch04 f115's two cards and a counted Counts page's buttons with Aa, and the Training Hollow's (56px buttons 8px
+apart on an iPad held sideways up to 860px tall, 54px with Aa), all pinned as text in `tests/aa-room.test.js`. **The snapshot**
+(section 10, step 1) is taken by the orchestrator from main's commit after both. Where this spec touches the Warrior Counts, it says
+exactly what chapter 10 sets or calls (section 6, "Where chapter 10 meets the Warrior Counts"). **There is no depth rule in the art**
+(`~/potomac-crossing-work/hotfix-ch08/plan.json` rejects both a set-level `z: 'behind'` and a kit-wide sort): the hotfix moved the far
+cat at `crowd-2` to the head of the cast in 12 pile frames (ch06 f004, f107, f109; ch07 f018, f021, f077, f079 to f082; ch08 f009, f030)
+and guards the pile's `wide` camera (`tests/set-pile.test.js`'s depth-hotfix test, `DEPTH_FIXED`), and the merge's review holds the
+Warrior Counts' scenes to the same rule (`tests/warrior-story.test.js`, README call 54). (v0.3's account of this tree, from 2026-10-25,
+when neither the hotfix nor the Warrior Counts had a commit, and its plan for bringing both over by hand, are in
+`~/potomac-crossing-work/warrior-merge/spec-editor-v04/spec-before.md`.)
 
 ---
 
@@ -692,7 +714,9 @@ per 1 to 10) is untouched: per-7 marks change only on `ground: 'log'` (below), w
   generic per-7 picture as drawn today.
 - **The sand at per 7: four and three** (new): `PC.art.sand({ groups, per: 7, counted })` scratches each group as a four and a three with
   a gap (as per 8 is four and four), lit in order. **Only where plain** (no `style`, no `layout`), on any ground (sand, and `ground:
-  'log'` for the Moon Ferry's 7 × 7).
+  'log'` for the Moon Ferry's 7 × 7). It is also the Warrior Counts' help for 7 × 7, the one pair they anchor on the 7s (`E.warriorAsk`:
+  every help on the sand, in the anchor Count's groups): on the merged tree that help scratches the plain per-7 sand as it is today,
+  where no player can reach it before chapter 10 ships, so the change reaches nothing shipped.
 - **Marks at per 7: four and three, on a log** (new): `kind: 'marks'` at per 7 **with `ground: 'log'`** (the only use: the Moon Ferry's
   7 × 7) lays each group's seven marks as four and three with a gap, scratched on a log's top (the raft's wet logs, as chapter 5's log
   help), seven rows of seven for 7 × 7, lit in order; its label “Seven rows of seven marks” (N rows of seven marks: no “nights”, which a
@@ -1177,9 +1201,12 @@ are open (section 6).
   bug cannot come back on the panels where most cats meet (`island` `wide`, `roots`, `case`, `fox`, `mist`; `ferry` `deck`).
 - **Finishing chapter 10 opens the Warrior Counts**, checked through the Warrior Counts' own code on each scripted reading (not a bare
   `E.isFinished`): one frame before the end (the dream input), `E.warriorState(cat, stories, now).open === false` and
-  `PC.ui.warrior.hub(state, E.progress(cat, stories))` is null; on the end frame, `open` is true, the hub's `big` is 'The Warrior Counts' /
-  'When you’re ready', `hideSoon` is true, the book's teaser under chapter 10's page is 'The Warrior Ceremony' with 'Pass your Warrior
-  Counts, and the Clan will gather for your name.', and the corner's line reads 'open; not sat yet'.
+  `PC.ui.warrior.hub(state, E.progress(cat, stories))` is null; on the end frame, `open` is true, the hub's `big.label` is 'The Warrior
+  Counts' and its `big.small` 'When you’re ready' (`PC.ui.warrior` is ui.js's: the test loads `app/ui.js` after `tests/_load.js`, as
+  `tests/warrior-ui.test.js` does), `hideSoon` is true, the book's teaser under chapter 10's page is 'The Warrior Ceremony' with 'Pass your Warrior
+  Counts, and the Clan will gather for your name.', and the corner's line reads 'open; not sat yet' (`PC.ui.warrior.corner(cat, { open:
+  state.open }).line`). The Hollow of a cat who has just finished chapter 10 offers ten Counts, the 7s last (“Clutches of seven · the
+  7s”).
 
 ## 6. Engine needs
 
@@ -1325,19 +1352,25 @@ id is an error). Every chapter 1 to 9 story stays clean.
   - **after a wrong pick**, `said`, cutting off what was being read: the nudge (in Tallyheart's voice, whispered) alone after the first
     and the second; after the third, the nudge and then the glowing cards' lines in her file's order, so a listening reader hears where
     to tap;
-  - **a tap on a dimmed card** after the glow: no nudge; the glowing cards' lines again (`said` without its nudge);
+  - **a tap on a dimmed card** after the glow: no nudge; the glowing cards' lines again (`said` with `dimmed`, below: the glowing
+    cards' lines alone), while the newest nudge stays on screen under the claim;
   - **a right pick**: nothing (the next page reads itself).
 - **VoiceOver and keys**: the screen is a dialog labelled “Pick a card”; the strip a heading; the nudge a polite live region, which says
-  what Read to me's `said` says (after the third, the nudge and the glowing cards' lines; a dimmed tap repeats it); each card's label
-  its line and its mark's meaning, then “Pick this card.”; after the third wrong pick, dimmed cards carry `aria-disabled="true"` (still
-  focusable, their labels unchanged) and the glowing ones keep “Pick this card.”; Tab through the cards, Enter or Space picks, Escape or
-  ← closes.
-- **Pure, for Node**: `PC.ui.pickPage(view, wrongs, nudge, opened)` → `{ strip: { who, text, word }, nudge: { who, text, kind: 'whisper' }
-  | null, cards: [{ id, glow, dim }], speech: [...], said: [...] }`, which the page draws and the tests read. `opened` counts the openings
-  of the pick screen on this frame (1 is the first), kept by the page beside `wrongs`. `speech` is what Read to me says as the screen
-  opens: `opened` 1, the claim (`who` 'reynard') and every card's line in her file's order; `opened` above 1, the claim and then `said`.
-  `said` is what the newest wrong pick says: nothing with no wrong pick; the nudge (`who` 'tallyheart', a whisper) after one or two; the
-  nudge and the glowing cards' lines after three or more.
+  what Read to me's `said` says, every time: after the first and second wrong picks the nudge; after the third, the nudge and the
+  glowing cards' lines; after a dimmed tap, the glowing cards' lines alone. A polite region reads only a change, so the page empties it
+  and writes `said` into it 100 ms later, and a second dimmed tap in a row is read again. (The whisper on screen is drawn from
+  `pickPage`'s `nudge`, never from the live region's text.) Each card's label is its line and its mark's meaning, then “Pick this card.”;
+  after the third wrong pick, dimmed cards carry `aria-disabled="true"` (still focusable, their labels unchanged) and the glowing ones
+  keep “Pick this card.”; Tab through the cards, Enter or Space picks, Escape or ← closes.
+- **Pure, for Node**: `PC.ui.pickPage(view, wrongs, nudge, opened, dimmed)` → `{ strip: { who, text, word }, nudge: { who, text, kind:
+  'whisper' } | null, cards: [{ id, glow, dim }], speech: [...], said: [...] }`, which the page draws and the tests read. `opened` counts
+  the openings of the pick screen on this frame (1 is the first), kept by the page beside `wrongs`. `dimmed` is true when the tap being
+  answered was on a dimmed card after the glow (the page's `null` from `E.pick`); it changes `said` only. `speech` is what Read to me says
+  as the screen opens: `opened` 1, the claim (`who` 'reynard') and every card's line in her file's order; `opened` above 1, the claim and
+  then `said`. `said` is what the newest pick says: nothing with no wrong pick; the nudge (`who` 'tallyheart', a whisper) after one or
+  two; the nudge and the glowing cards' lines after three or more; and with `dimmed` (only after three: before the glow no card is
+  dimmed, and `dimmed` is ignored) the glowing cards' lines alone. `nudge` is the newest nudge whatever `dimmed` says, so the whisper
+  under the claim never goes on a dimmed tap.
 - **Hooks in shared code**, each a branch only pick mode reaches (with no `pick` on the frame and none in `fileState`, every one is
   today's code path, byte for byte):
   - `renderInteractionKind`'s `if (kind === 'pick') return renderPickFrame(…)`; `renderFrame`'s `soloOk` list gains `'pick'`;
@@ -1345,9 +1378,12 @@ id is an error). Every chapter 1 to 9 story stays clean.
     "The files both touch"); the Case File button's handler opens the pick screen on a pick frame;
   - `openFile(o)`: an `o.pick` (the frame's view) is kept as `fileState.pick` and drawn by the pick section's own `drawPick` in place of
     `drawFile`; the plain Case File is drawn as it is;
-  - `fileKey`, a first line: `if (fileState.pick) { e.preventDefault(); if (!fileState.pending && (e.key === 'Escape' || e.key ===
-    'ArrowLeft')) closeFile(); return; }` (Tab, Enter and Space are left to the buttons; today `fileKey` handles ← only while a card is
-    shown large);
+  - `fileKey`, a first line: `if (fileState.pick) { if (e.key === 'Escape' || e.key === 'ArrowLeft') { e.preventDefault(); if
+    (!fileState.pending) closeFile(); } return; }`. Only Escape and ← are cancelled: the page's keydown handler sends every key to
+    `fileKey` while the screen is open (`if (fileState) { fileKey(e); return; }`, ui.js:1090 on the merged tree), so a
+    `preventDefault` on every key would stop Tab moving focus and Enter or Space pressing a card; Tab, Enter and Space are left to the
+    buttons (a keyed click while `pending` is ignored by the pick handler, as a tap is). Today `fileKey` handles ← only while a card is
+    shown large;
   - bindChrome's backdrop click: `if (e.target === fo && !(fileState && fileState.pending)) closeFile();`, so a tap on the dark edge in
     the 900 ms after a right pick never closes the screen while the cat is already on the answer frame;
   - `fileCard(c, o)`: an optional second argument that only `drawPick` passes, read as `o && o.pick === true` (the plain file's
@@ -1361,10 +1397,25 @@ id is an error). Every chapter 1 to 9 story stays clean.
     the pick screen and restyle every plain Case File opened after it (later in chapter 10, and chapters 4 to 9 reread from the hub).
     Every `innerHTML` replaces the wrapper, so no plain file can carry it. **Every pick-mode CSS rule is scoped under `.cf-in.picking`**,
     so no rule on `.cfile`, `.cf-head`, `.cf-card` or `.cf-close` can change chapters 4 to 9's plain Case File (which no golden sees:
-    they record engine output and art, never ui.js's HTML or index.html's CSS).
+    they record engine output and art, never ui.js's HTML or index.html's CSS);
+  - **the Case File's own rules reach the pick screen as they are**, since it is a `.cf-in` and `drawPick` writes the classes
+    `drawFile` writes (`cf-groups` with `one`, `linked` and `many`; `cf-group`; `cf-link` and `row`; `cf-pair` and `n3`): its layout as
+    chapter 9 left it, and the polish release's rules (no word broken inside, the middle column at least 14em where a row of three or
+    more is linked; with Aa where the screen has little room, the file's words 1.14 times plain on closer lines in snugger boxes). The
+    pick adds only its own rules: one block
+    after the Case File's, every rule under `.cf-in.picking`, the strip's `position: sticky` among them (never in an Aa block:
+    `tests/aa-room.test.js` holds that no Aa rule makes anything sticky). If a pick rule needs a media query, it is worded unlike every
+    query `tests/aa-room.test.js` looks up by its exact text (that test counts the `@media (min-width: 960px){` blocks, three with the
+    polish release, and finds the Aa and the Hollow's blocks by their wording), for instance `@media screen and (min-width: 960px)`;
+  - **`tests/sw.test.js`'s pins on ui.js stand unedited** (it has no owner): besides `go('frame', { fromSkip: true })` at three, it
+    counts `markSvg((big|g).mark)` at exactly two (`drawFile`'s group heading and its large card's meaning, `tests/sw.test.js:158`) and
+    forbids `MARK[(big|g).mark]`. So `drawPick` never copies `drawFile`'s heading code word for word: its group headings call `markSvg`
+    on a name of their own (for instance `markSvg(pg.mark)`), never `MARK[…]`, and the count stays two.
   Source pins in `tests/engine.test.js` (as `tests/sw.test.js` pins the other screens): `picking` is written in ui.js only inside
   `drawPick`'s `.cf-in`, and every index.html rule that names it is under `.cf-in.picking`; the double-tap guard's line (as the ask's
-  “a double tap asks one question, not two”); `fileCard` with one argument unchanged.
+  “a double tap asks one question, not two”); `fileCard` with one argument unchanged; `fileKey`'s pick line, whose `preventDefault` is
+  reached only by Escape and ← (Tab, Enter and Space pass); `drawPick`'s headings through `markSvg`, with no `MARK[` in the pick's
+  section; the live region emptied before `said` is written into it.
 - **`PC.debug.pick(ids)`** (after the Warrior Counts' `PC.debug.warrior` entry): opens the pick screen on the current pick frame and
   taps those card ids in turn through the pick handler (past the tap guard), for `tools/shots.mjs` (which reads `#` only on book, file
   and warrior targets).
@@ -1400,9 +1451,10 @@ frame each):
   pick errors named (a claim with no word or two in capitals, an unknown right card, an own card in `right`, one nudge, a sticky or shared
   flag, a `when` naming a card not in `right`, `who` not in the cast, an empty `by`); `by` and `who` keys of `PC.ui.speakers.NAMES` (the
   fixture); no chapter 1 to 9 frame has `pick`. **The tests that pin today's kinds change with them**: `tests/engine.test.js`'s
-  `assert.deepEqual(E.KINDS, [… 'file', 'ask', 'end'], 'chapter 5 adds ask')` (line 4159 in chapter 9's tree) gains `'pick'` after
-  `'file'` (“chapter 10 adds `pick`”), and the two regexes on the kinds message (lines 4158 and 5365) read
-  `…/scratch/file/pick/ask/end`, as the message now does.
+  `assert.deepEqual(E.KINDS, [… 'file', 'ask', 'end'], 'chapter 5 adds ask')` (line 4160 on the merged tree; 4159 in chapter 9's)
+  gains `'pick'` after `'file'` (“chapter 10 adds `pick`”), and the two regexes on the kinds message (lines 4159 and 5366; 4158 and
+  5365 in chapter 9's) read `…/scratch/file/pick/ask/end`, as the message now does. Its version pin (line 1133, the merge's '0.9.1 (the
+  Warrior Counts, 2026-10-31)') moves to chapter 10's.
 - `E.pickJudge`: each right card she holds is right; a card she does not show is `null`; the own nudge, the first, the second, the third
   (the second again, never the first: the nudge is clamped, and the glow of her right cards in her file's order, groups then links);
   **after the third wrong pick, a dimmed card is `null` and a glowing card is right: no fourth nudge**; `wrongs` undefined read as 0;
@@ -1414,9 +1466,11 @@ frame each):
 - `PC.ui.pickPage`: the strip, the nudge, glow and dim after three; `speech` on a first opening (`opened` 1: the claim, then every
   card's line in her file's order, cards' lines only, no heading or link line) and on a reopen (the claim and `said`; the claim alone
   with no wrong pick); `said` after a first, a second and a third wrong pick (the nudge; the nudge; the nudge and the glowing cards'
-  lines); the corner's pick-flag words for a she-cat and a tom, a right card's and any other card's (every card id has an entry).
+  lines) and after a dimmed tap (`dimmed` true after three: the glowing cards' lines alone, `nudge` still the newest; `dimmed` ignored
+  before the glow); the corner's pick-flag words for a she-cat and a tom, a right card's and any other card's (every card id has an
+  entry).
 - The goldens: chapters 1 to 9 byte-identical (section 7, item 3).
-- In Safari, for the ship's look (`tools/shots.mjs`, a section of its own): `ch10:fNNN#pick` (the pick screen open on the first claim:
+- For the ship's look, targets in `tools/shots.mjs` (a section of its own): `ch10:fNNN#pick` (the pick screen open on the first claim:
   `PC.debug.pick([])`) and `#pick3` (after three wrong picks, the glow: `PC.debug.pick(['tidy', 'otter-fox', 'reed-pile'])`, none in
   claim 1's `right` and none its `own`, so `cant-fly` and `fox-brag` then glow), the screen locked, a fresh short session each, silent.
   The look's cat is the thinnest file, not `PC.debug.goto`'s default (which holds no cards): `cards` section 3's twenty, `flags: {
@@ -1425,9 +1479,19 @@ frame each):
   the layout most likely to break: `cards` the thirty of `critic-pick-r1/fullest2.js` (section 3's twenty and `dug-earth`,
   `prints-pile`, `prints-tracks`, `sleet-den`, `my-count`, `squall-shapes`, `puddle-paws`, `wisp-fox`, `mizzle-wing`, `hail-shapes`), with
   the flags their definitions' `when`s need beside the thin cat's (the six found flags among them), checked in Node first
-  (`E.cards(cat, PC.story).length` is 30). **Beside them, the plain Case File**: `file` on a chapter 9 frame with the thin cat, the
-  "before" taken by the orchestrator on the snapshot tree before the build starts (section 10, step 1) and the "after" by the engine
-  owner on the built tree, at the same frame and size, compared (the plain Case File unchanged by the pick's CSS).
+  (`E.cards(cat, PC.story).length` is 30). **Beside them, the plain Case File**: `file` on a chapter 9 frame with the thin cat and with
+  the fullest file, the "before" taken by the orchestrator on the snapshot tree before the build starts (section 10, step 1) and the
+  "after" by the engine owner on the built tree, at the same frames and sizes, Aa off and on, compared box for box (`#file`'s cards,
+  headings and link lines; the plain Case File unchanged by the pick's CSS), with one picture each.
+  **Safari's automation hangs on the mini** (at session creation: the Warrior Counts' README call 38; the merge and the polish release
+  were checked without it), so these looks and measures are taken in WebKit, Safari's engine, with the offscreen WKWebView tool the
+  earlier checkers built, driven by the tree's own `tools/shots.mjs` page scripts (`SILENT` first, `STILL`, `SETUP` with Read to me
+  off, the test cat): `~/potomac-crossing-work/warrior-merge/fixer/wk2/` is its latest copy (`csnap`, `drive.mjs`, `measure.js`,
+  probes; the polled font step), and the engine owner adds a step that calls `PC.debug.pick(ids)` as the targets do. Every render must
+  report silent, Read to me off, nothing said; at most 20 looks at pictures; `shots.mjs` itself when Safari answers. Measured, not only
+  seen: on the thin and the fullest file at 1080 x 720, 1180 x 820, 1024 x 768, 820 x 1180 and 390 x 844, Aa off and on, the strip stays
+  at the top while the file scrolls and takes no more than about a quarter of the screen, every card can be scrolled to, no card's word
+  breaks inside, and nothing runs off the screen sideways.
 
 ### Data beside the engine (the engine owner's)
 
@@ -1435,9 +1499,9 @@ frame each):
   'Sprinkle' }` (a gift, as Riffle's stone: data, no new behaviour; the story's words); the frame that lays it on the moss carries
   `gift: 'mist-stone'`, so My nest shows it under “From friends” and the page's note says “Sprinkle’s mist stone is in your nest.”. ui.js's
   `treasureSvg('mist-stone')`: a grey egg-shaped pebble with a band of blue and green across it. No live save has it.
-- **`E.VERSION`** one minor version past the merged tree's `E.VERSION` as found after step 0 (section 10: the Warrior Counts' merge moves
-  chapter 9's 0.9.0 to 0.10.0, since their branch never moved it), so chapter 10's is `'0.11.0 (chapter 10, <ship date>)'`, with its pin
-  in `tests/engine.test.js`; the save stays version 2.
+- **`E.VERSION`** one minor version past the merged tree's (the Warrior Counts' merge, 2026-10-31, moved chapter 9's 0.9.0 to 0.9.1),
+  so chapter 10's is `'0.10.0 (chapter 10, <ship date>)'`, with its pin in `tests/engine.test.js`; the save stays version 2. (v0.3 had
+  the merge at 0.10.0 and chapter 10 at 0.11.0; the merge chose 0.9.1, README call 48.)
 - **`PC.ui.speakers`**: `NAMES.mistscale = 'A Mistscale'`, `VARIANT_NAMES.mistscale = { 1: 'Mama', 2: 'The eldest Mistscale' }`;
   `VARIANT_NAMES.reedclan[5] = 'ReedClan’s leader'`; `VARIANT_NAMES.groveclan[3] = 'GroveClan’s leader'`. Granny is labelled by the
   chapter's `names` (`otter: 'Granny'`). Read to me (pitch, rate): Mama low, soft and slow (`PITCH.mistscale` 0.7, `RATE.mistscale` 0.8;
@@ -1447,7 +1511,43 @@ frame each):
   that pin the speakers' lists and the corner's flags take the new entries.
 - **`PC.ui.flagWords`**: `ch10Puddle`, `ch10Best` (section 1) and the pick flags (above).
 
-### Where chapter 10 meets the Warrior Counts (the merged tree's API, `docs/warrior-counts.md` v0.2)
+### The Training Hollow with ten Counts (the engine owner's: `index.html`)
+
+Chapter 10's lesson adds the 7s to the Hollow: `E.countSets` gives table 7 to `ch10-sevens`, so a cat who has finished it sees ten
+Counts, the 7s last, “Clutches of seven · the 7s” (the story's own name: “Clutches of seven. That’s your tenth Count.”), with My nest
+under them, and after a not-yet the Warrior Counts' paw sits on the 7s as well as the 8s (`E.hollowLines`; README call 50, “the 7s'
+paw comes with chapter 10's button”). `renderHollow` lists ten as it lists nine: nothing in ui.js changes. **The room does.** Measured
+in WebKit on the merged tree with the polish release's `index.html` folded in and a stand-in chapter 10 holding section 2's sets
+(`~/potomac-crossing-work/warrior-merge/spec-editor-v04/`, its notes and `ana-h.py`; every render silent, Read to me off), with no
+glowing Count, My nest's bottom against the screen's:
+- **1080 x 720** (Charlie's iPad): the 7s' name wraps to two lines (84px, not 56), the list ends 10px under the screen and My nest
+  78px under; nine Counts leave it 14px above the edge. With Aa: the name wraps (75px), My nest 34px under (nine: 40px above).
+- **1080 x 700** (Safari's tab bar on a 10.2-inch iPad): My nest 80px under (nine: 10 above); with Aa 53px under (nine: 27 above).
+- **1024 x 768**: the name wraps, My nest 58px under (nine: 34 above); with Aa 7px under (nine: 54 above).
+- **1180 x 820**: on the screen, 42px to spare (with Aa 57; with a paw and Aa the 7s' name wraps, 44 to spare). **Upright**
+  (820 x 1180, 768 x 1024: three columns) all on the screen, 43px to spare at the least. **A phone** (390 x 844) scrolls the list, as
+  with nine.
+
+**The engine owner re-lays the Hollow's Counts list for ten**, in `index.html`: at 1080 x 720, 1080 x 700 and 1024 x 768, Aa off and on,
+every Count and My nest on the screen with no glowing Count, as the polish release (its fix 6) made nine; 1180 x 820 and upright keep
+theirs; the phone scrolls as before. How is the owner's call (the polish release chose shorter buttons and gaps; a second column where
+the list is beside the picture is another), within: buttons never under 48px, nor 54px with Aa (`tests/aa-room.test.js`'s floor); no
+name cut; rules only under `.frame[data-kind="hollow"]`, so nothing but the Hollow's Counts list moves; the same rules serve a cat with
+nine Counts (one who has not yet had chapter 10's lesson). **The paws**: README call 52 left one case for this round, and the owner takes
+it: with the polish release's rules, a Count that both glows and has a paw wraps one line more with Aa at 1180 x 820 and 768 x 1024
+(the paw's 1.3em of padding against the polish release's .6em); after the re-lay, a paw costs no line, glowing or not, on the 7s too.
+The four paw rules `tests/warrior-ui.test.js` pins stay byte-identical (no owner holds that test); anything more goes in rules after
+them. A glowing Count's Hollow with Aa already runs under the screen with nine (Tallyheart's glow line takes the room; chapter 9 as live
+puts My nest 534px under at 1080 x 720, `warrior-merge/fixer/`) and scrolls: measured and recorded, not required to fit.
+**Its test**: the polish release's `tests/aa-room.test.js` test “the Training Hollow with nine Counts” pins those rules and
+`E.countSets`' tables as exactly `[1, 2, 5, 10, 9, 3, 6, 4, 8]`, so it fails once chapter 10's 7s are in `PC.story`; the engine owner
+changes it with the rules, with a chapter-10 comment, so it passes on the stub (nine Counts) and with chapter 10's sets (ten, the 7s
+last). Measured again on the built rules, in WebKit, at 1080 x 720, 1080 x 700, 1024 x 768, 1180 x 820, 820 x 1180, 768 x 1024 and
+390 x 844, Aa off and on, for a cat with no Counts data, one with paws on the 7s and the 8s (the `WARRIOR` recipe's `sittings: [46]`)
+and one with a glowing Count and a paw, on a scratch copy with a stand-in chapter 10 holding section 2's three sets
+(`~/potomac-crossing-work/warrior-merge/critic/mk-ch10-keep8.js` writes one): the story builder's chapter 10 comes later.
+
+### Where chapter 10 meets the Warrior Counts (the merged tree's API, `docs/warrior-counts.md` v0.4)
 
 - **What chapter 10 sets**: `PC.story.ch10` with `id: 'ch10'` (`PC.warrior.after`), `number: 10`, and its last frame `end: true`. Reaching
   it finishes chapter 10 (`cat.finished.ch10`, `arrive`'s), and that alone opens the Warrior Counts: `E.warriorState(cat, stories,
@@ -1457,13 +1557,17 @@ frame each):
   are open (`hideSoon`) and shows “Your ceremony is coming soon.” in place of chapter 10's teaser lines in her book once she has passed;
   when the Ceremony chapter (`opensWhen: 'warrior'`, number 11) is built, `E.teaser(ch10)` is `built: true, next: 'ch11'`.
 - **The 7s**: `ch10-sevens` (table 7) is the 7s' own Count, so `E.warriorAnchor` and `E.warriorAsk` find the 7s there (7 × 7 is helped as
-  clutches, with this set's help openings, `E.hollowDef(stories, 7)`), and the Hollow's tricky greeting can name “the 7s”. The Warrior
-  Counts' tests stub a chapter 10 with the same set id: once chapter 10 is built, their stub stands beside it (it is a test fixture),
-  and with the real `ch10-sevens`, `ch10-ferry` and `ch10-sixty` beside it `E.warriorAsk(7 × 7)` takes the clutches and their help
-  openings with nothing leaking (run on a scratch copy of the merged tree: `critic-warrior-handoff/`). **One Warrior Counts test does
-  not stand**: `tests/warrior-ui.test.js`'s first hub test marks every chapter of `E.chapters(PC.story)` finished and expects no Warrior
-  Counts, so once `PC.story.ch10` exists (the stub included) it finishes chapter 10 too and fails. The orchestrator changes it with the
-  stub (section 10, step 3): every chapter finished but `PC.warrior.after`, the null assertion kept.
+  clutches, with this set's help openings, `E.hollowDef(stories, 7)`), and the Hollow's tricky greeting can name “the 7s” (“The 7s and
+  the 8s first? …”, which `tests/warrior-ui.test.js` already expects once `PC.story.ch10` is there). The Warrior Counts' tests carry a
+  stand-in chapter 10 with the same set id, **used only while `PC.story.ch10` is absent** (`tests/warrior-engine.test.js`: `STORIES =
+  BUILT.concat(… PC.story.ch10 ? [] : [CH10])`): with the real `ch10-sevens`, `ch10-ferry` and `ch10-sixty` in its place,
+  `E.warriorAsk(7 × 7)` takes the clutches and their help openings with nothing leaking, and the warrior, engine and story tests pass
+  (on the merged tree with a mock chapter 10 holding section 2's sets: the three warrior files 85 of 85,
+  `~/potomac-crossing-work/warrior-merge/spec-editor-v04/t10-warrior.txt`; with the engine tests 272 of 272 before the merge's
+  review, `warrior-merge/critic/`; `critic-warrior-handoff/` before both). **Their first hub test already stands**: since the
+  branch's integrate round it marks every chapter but `PC.warrior.after` finished, so `PC.story.ch10` changes nothing there (v0.3 had
+  the orchestrator change it with the stub). **On the stub**, which has no Counts, the real chapter 10 is there with no 7s and the stand-in is not used, so the warrior
+  tests that need the 7s fail until the story builder's chapter lands (section 10, step 4, names them).
 - **The words**: Tallyheart's “When you pass your Warrior Counts. They’re yours, whenever you’re ready. At the fountain, like
   {Murmur}chime.” and {Murmur}chime's “When you sit your Warrior Counts, I’ll be right at the front.” are the story's own lines
   (warrior-counts.md section 1 gives a looser example: “The Warrior Counts are yours, whenever you're ready. At the fountain, like
@@ -1473,18 +1577,26 @@ frame each):
 - **The files both touch**, and how they meet: in `app/engine.js` the pick's code is a section of its own after the `ask` section (before
   "flow"), with one-line hooks in `E.KINDS`, `E.kindOf`, `E.exits`, `E.next` (its one pick branch) and `E.checkStory` (its kinds list,
   and a pick block after the `ask` block), the gift's entry in `E.GIFTS` and `E.VERSION`: none is in a function the Warrior Counts
-  changed (`E.isOpen`, `normCat`, `E.recordLesson`, `E.hollowLines`, `E.hardFacts`, their new section). In `app/ui.js` the pick's code is
-  a section of its own after the Case File's `drawFile`; its hooks are the ones listed above ("Hooks in shared code"). Only two of them
-  are in spots the Warrior Counts also changed: `updateBar` (one expression: the glow's) and the `PC.debug` object, where `pick:` goes
-  after their `warrior:` entry, with a comma (one entry); the Case File's `openFile`, `fileKey`, `fileCard` and bindChrome's backdrop
-  handler the Warrior Counts never touched. **`tests/warrior-ui.test.js` pins ui.js's and `tools/shots.mjs`'s source text by regex**,
-  and no owner holds it: the engine owner leaves every pinned line byte-identical, among them updateBar's `var hasFile = n === 'frame'
-  && !!cat && E.hasFile(cat) && !inLesson;` (beside the glow line the pick changes), `warrior: function (what, i) { return
-  warriorDebug(what, i); }` (beside which `pick:` goes), shots.mjs's `run('return PC.debug.warrior(arguments[0], arguments[1]);', …)` and
+  changed (`E.isOpen`, `normCat` with the merge review's `isSittingState`, `E.recordLesson`, `E.hollowLines`, `E.hardFacts`, whose rule
+  they share as `hardRule`, the new `E.countWords`, and their own section after `E.hardFacts`'s). In `app/ui.js` the pick's code is a
+  section of its own after the Case File's `drawFile`; its hooks are the ones listed above ("Hooks in shared code"). On the merged tree
+  `renderInteractionKind`, `renderFrame`, `openFile`, `closeFile`, `fileKey`, `fileCard` and `drawFile` are chapter 9's byte for byte
+  (checked 2026-10-31); the Warrior Counts changed `updateBar`, `bindChrome`, the key and visibility handlers, `PC.debug`, `go`,
+  `runLesson`, `renderHub`, `renderBook`, `renderHollow` and `openGrownups`. Only two of the pick's hooks are in functions they changed,
+  and neither on a line they changed: `updateBar` (one expression, the file button's glow; their line there sets Camp on their pages)
+  and `PC.debug`, where `pick:` goes after their `warrior:` entry, the last, with a comma added to it (one entry; the pin on that line
+  is not anchored at its end). bindChrome's backdrop line and the `#file` capture guard beside it are chapter 9's, and the keydown
+  handler's `if (fileState) { fileKey(e); return; }` too. **`tests/warrior-ui.test.js` pins ui.js's, `index.html`'s and
+  `tools/shots.mjs`'s source text by regex**, and no owner holds it: the engine owner leaves every pinned line byte-identical (the one
+  exception, the comma after `warrior: function (what, i) { return warriorDebug(what, i); }`, which its unanchored pin still matches),
+  among them updateBar's `var hasFile = n === 'frame' && !!cat && E.hasFile(cat) && !inLesson;` (beside the glow line the pick
+  changes), the four paw rules in `index.html` (section 6, the Hollow), shots.mjs's `run('return PC.debug.warrior(arguments[0], arguments[1]);', …)` and
   its `WARRIOR` recipe (the `const WARRIOR =` template the test evaluates), and the lesson and hub lines, and runs
   `tests/warrior-ui.test.js` before handing back.
-  `index.html`: the pick screen's CSS in a block of its own after the Case File's; the script tags are the stub's (section 10).
-  `tools/storyboard.mjs` and `tools/shots.mjs`: sections of their own; the Warrior Counts' `warrior.md` and `warrior:*` targets stand.
+  `index.html`: the pick screen's CSS in a block of its own after the Case File's, and the Hollow's ten-Count rules beside the polish
+  release's (above); the Warrior Counts' paw, chip and hub rules stand; the script tags are the stub's (section 10).
+  `tools/storyboard.mjs` and `tools/shots.mjs`: sections of their own; the Warrior Counts' `warrior.md` and `warrior:*` targets stand,
+  and so does `shots.mjs --page`'s wait for its write (the polish release's two lines: the page is past a pipe's 64 KiB).
   `sw.js`: the stub's entries and `CACHE` (section 10).
 
 ## 7. Known issues the text critics left
@@ -1536,12 +1648,13 @@ this spec (sections 2 and 5). What is still open, and how the build handles it:
      riverbank's path by moonlight, and the voice in the stones is a caption (section 9, call 15).
 3. **Chapters 1 to 9 byte-identical for every live save** (the orchestrator's "golden"). The proof is the golden owner's (section 10):
    `tests/fixtures/make-ch09-golden.js` records `tests/fixtures/ch09-golden.json` from the snapshot of the tree this chapter is built on
-   (chapter 9 shipped, the hotfix and the Warrior Counts brought onto it by section 10's step 0), in a process of its own, as
-   `make-ch08-golden.js` recorded chapter 8's. **Its version constant is the snapshot's own `E.VERSION`** after step 0, `'0.10.0 (the
-   Warrior Counts, <date>)'` as step 0 writes it (read it from `GOLDEN_ROOT/app/engine.js`), not chapter 9's '0.9.0 (chapter 9,
-   2026-10-24)': its model records only when `E.VERSION` is its constant (`make-ch08-golden.js` exits with “This tree is not chapter
-   8’s (…)” on any other), and `golden-ch08.test.js` pins `GOLDEN8.engine` to it, so a maker with chapter 9's string would refuse the
-   snapshot. The test's message calls it the engine of the merged tree chapter 10 is built on, not chapter 9's. It records chapters 1 to
+   (main after the Warrior Counts' merge and the polish release: chapter 9 as it shipped, the depth hotfix already in it, with the
+   polish release's spots for Thymeleaf under the bridge, f089 to f100, and Sprinkle's lift, f115; section 10, steps 0 and 1), in a
+   process of its own, as `make-ch08-golden.js` recorded chapter 8's. **Its version constant is the snapshot's own `E.VERSION`**, read
+   from `GOLDEN_ROOT/app/engine.js`: `'0.9.1 (the Warrior Counts, 2026-10-31)'` as the merge wrote it (the polish release leaves it),
+   not chapter 9's '0.9.0 (chapter 9, 2026-10-26)': its model records only when `E.VERSION` is its constant (`make-ch08-golden.js`
+   exits with “This tree is not chapter 8’s (…)” on any other), and `golden-ch08.test.js` pins `GOLDEN8.engine` to it, so a maker with
+   chapter 9's string would refuse the snapshot. The test's message calls it the engine of the merged tree chapter 10 is built on, not chapter 9's. It records chapters 1 to
    9, every frame and what it shows (the scene with her options filled and a hash of its drawing, ids stripped;
    captions and what Read to me says; balloons with labels and voices; options; the card under the panel; her whole Case File; the pages
    she taps), every skip tap by tap, every question, picture, line and help hop by hop, the Training Hollow (the 8s' rounds among them),
@@ -1551,7 +1664,7 @@ this spec (sections 2 and 5). What is still open, and how the build handles it:
    the engine, exactly; (b) every loaded story handed to the engine, exactly, but for the deltas a later chapter is allowed, by name:
    chapter 9's teaser in her book `built: true, next: 'ch10'` (its words as they were) and the hub's next chapter. The stub keeps both
    deltas in both states (the test tells the stub by its boards, `'STUB.'`, and says which state it ran in). `ch08-golden.json` (as
-   step 0 re-records it for the hotfix) and the older goldens and their tests stay as they are and must still pass. **The
+   chapter 9 shipped it, the hotfix already in it) and the older goldens and their tests stay as they are and must still pass. **The
    fingerprints**, each art owner's for its own files, recorded once from the snapshot in a separate process and committed as
    constants: the riverbank's frames of chapters 2 to 9 (the places owner);
    the den's frames and nest for every file a live save can hold after chapter 9 (1 to 30 cards, 0 to 11 under the moss, `hidden`,
@@ -1609,7 +1722,10 @@ this spec (sections 2 and 5). What is still open, and how the build handles it:
     the spec critics' (v0.1 to v0.2) in `critic-spec-counts/`, `critic-pick-r1/` and `critic-warrior-handoff/`, the editor's in
     `spec-editor/` and `spec-editor-r2/`; the verify critics' (v0.2 to v0.3) in `critic-edit-round/`, `critic-cardpick-r1/` and
     `critic-build-merged/` (the scratch merge of chapter 9, the hotfix and the Warrior Counts, its `merge.sh` and test runs), the
-    editor's in `spec-verify-edit/` (with v0.2 as `spec-v0.2.md`).
+    editor's in `spec-verify-edit/` (with v0.2 as `spec-v0.2.md`); the merge's (v0.3 to v0.4) in `~/potomac-crossing-work/warrior-merge/`
+    (`merger/`, `fixer/`, `polish-fold/`, `critic/`, `counts-nine/`), and this editor's in `warrior-merge/spec-editor-v04/` (v0.3 as
+    found, `spec-before.md`; the Hollow with ten Counts measured in WebKit; the suite on the merged tree with the polish release and
+    section 10's stubs).
 17. **The sixty's empty prompt is a first use** (section 2): a sixty resumed mid-question (the page closed on it) has no intro to say
     (`lessonIntro` returns nothing), so the first question shows `10 × 6 = ?` over six nights of marks with no words; its retry has its
     own words. Rare, and she has just read the frame. Kept (the alternative, our cat's line as the fact's own prompt, moves a line off the
@@ -1622,8 +1738,8 @@ this spec (sections 2 and 5). What is still open, and how the build handles it:
     the faint far-over-near overlaps in ch01 f029a, f030 to f033 and f055, ch04 f028, ch06 f069 and ch07 f067 (1.5 to 5% of a head, mostly
     shadow edges; ch01 f055's purr arcs walk the cast in order). Chapter 10 takes none of them: chapters 1 to 9 stay byte-identical for
     the golden (item 3), and fixing f043 would pull the ch04, ch06, ch07, ch08 and ch09 goldens and the ch04 storyboard into this build.
-    They wait for a later release (section 9, call 35). ch09 f112, the one chapter 9 frame with the pile's fault, is fixed before the
-    snapshot (section 10, step 0), so it is in the golden as fixed.
+    They wait for a later release (section 9, call 35). ch09 f112, the one chapter 9 frame with the pile's fault, was fixed in chapter
+    9's own build (`tests/set-pile.test.js`, `DEPTH_FIXED9`), so it is in the golden as fixed.
 
 ## 8. What chapter 11 inherits
 
@@ -1750,10 +1866,15 @@ passed her Warrior Counts, which open once chapter 10 is finished. Module 1 ends
     and a crowd seat in a named cat's coat puts that cat in the picture twice.
 32. **The roll call's HERE! is a plain panel of its own, with Mama `lift`.** Reason: an `sfxRead` is refused on a skip frame and a skip's
     scene is never drawn; the story breaks the screen there.
-33. **The hotfix, then the Warrior Counts, are brought onto chapter 9 before the snapshot, each moving `CACHE` one past the tree's
-    (v18, then v19, if chapter 9 ships at v17), the Warrior Counts moving `E.VERSION` to 0.10.0** (section 10, step 0). Reason: both
-    sit uncommitted on chapter 8 and moved neither past chapter 8's (the hotfix's own v16 → v17 merges silently onto chapter 9's v17);
-    the snapshot is every golden's and fingerprint's source.
+33. **The Warrior Counts are merged onto chapter 9, and the polish release lands, before the snapshot; chapter 10 then ships at
+    `E.VERSION` 0.10.0 and at `CACHE` one past the live one** (section 10, steps 0 and 3). Done 2026-10-31: the depth hotfix had
+    shipped on its own (v17) before chapter 9 (v19), and the merge took `E.VERSION` '0.9.1 (the Warrior Counts, 2026-10-31)' and `CACHE`
+    v21, v20 being the polish release's. Reason: the snapshot is every golden's and fingerprint's source, so it must hold everything
+    chapter 10 is built beside; and a `CACHE` counted from the ledger (`tests/fixtures/sw-shipped.json`, whose last entry is the live
+    one) never repeats a shipped value, whichever of v20 and v21 has shipped by then, which `tests/sw.test.js` enforces. (v0.3 had the
+    hotfix and the Warrior Counts brought over by hand from uncommitted worktrees, each moving `CACHE` one past the tree's, and its
+    reason said neither had moved past chapter 8's, which was wrong for `CACHE`: the hotfix had moved it from v16 to v17, the same edit
+    chapter 9 made, so it merged silently; neither had moved past chapter 9's.)
 34. **No depth rule: every crowded cast is listed back to front, and the leaders' roots sit behind their Clans' spots.** Reason: the
     hotfix's call (per-frame order, no set or kit rule: a kit-wide sort flips frames where the list order is the better one); chapter
     10's crowded panels get the hotfix's own check (section 5), and with the roots behind, the leader-first rule for balloons and back
@@ -1761,67 +1882,45 @@ passed her Warrior Counts, which open once chapter 10 is finished. Module 1 ends
 35. **The depth faults the hotfix deferred stay deferred** (ch04 f043 and the faint overlaps of chapters 1, 4, 6 and 7: section 7, item
     19). Reason: chapters 1 to 9 stay byte-identical for the golden; f043 would pull five goldens and a storyboard into this build for
     3.5% of a head on a noticing cat's panel.
+36. **The Training Hollow is re-laid for ten Counts in this build, by the engine owner** (section 6). Reason: the 7s' Count is
+    chapter 10's, and measured in WebKit with ten Counts My nest runs under Charlie's 1080 x 720 screen again (78px, Aa off; the 7s'
+    name, the story's “Clutches of seven”, wraps there), as the 8s and My nest did before the polish release fitted nine; README call
+    52 left the paw's last case (a glowing Count with a paw, with Aa) to this round; and the engine owner already holds `index.html`.
+    The list's rules stay the Hollow's alone, and `tests/aa-room.test.js`'s nine-Count pin becomes nine-or-ten with it.
+37. **The pick screen's looks and measures are taken in WebKit, not Safari** (section 6). Reason: Safari's automation hangs at session
+    creation on the mini, and the merge and the polish release were checked the same way; the offscreen WKWebView tool runs the tree's
+    own `tools/shots.mjs` page scripts, silent, and measures boxes, so the plain Case File's before and after are compared box for box.
 
 ## 10. For the orchestrator
 
-- **Before the build, in this order** (on main after chapter 9 ships):
-  0. **The hotfix, then the Warrior Counts, brought onto chapter 9** (the orchestrator's). **Neither is a commit** (header): branches
-     `hotfix-ch08-f030` and `warrior-counts` both point at chapter 8's `b6a8d4f`, and the work is uncommitted in their worktrees, so a
-     `git merge` of either branch as found does nothing ("Already up to date"), and every check below but (d) would then pass on a tree
-     without them. Take each from its worktree in one of two ways: either its owner commits it on its branch first (Aron's or the
-     orchestrator's call: agents treat both worktrees as read-only) and step 0 merges that commit; or step 0 brings its files over one
-     by one, each a three-way merge against `b6a8d4f` (`git merge-file`, as `~/potomac-crossing-work/ch10/critic-build-merged/merge.sh`
-     did on a scratch copy). The files:
-     - **the hotfix**, `/Users/aron/potomac-crossing-hotfix`, 16 modified: `app/story/ch06.js`, `ch07.js`, `ch08.js`;
-       `docs/storyboard/ch06.md`, `ch07.md`, `ch08.md`; `tests/fixtures/ch06-golden.json`, `ch07-golden.json`, `make-ch06-golden.js`,
-       `make-ch07-golden.js`; `tests/scenes.test.js`, `tests/set-pile.test.js`, `tests/story-ch07.test.js`, `tests/story-ch08.test.js`;
-       `sw.js`; `README.md` (`plan.json` records its fixer as stopped, but the worktree holds the whole fix: on the critics' scratch merge
-       every hotfix test passes but the ones (a) names);
-     - **the Warrior Counts**, `/Users/aron/potomac-crossing-wc`, 8 modified: `README.md`, `app/engine.js`, `app/ui.js`,
-       `dev/gallery.html`, `index.html`, `sw.js`, `tools/shots.mjs`, `tools/storyboard.mjs`; and 6 new: `app/story/warrior.js`,
-       `docs/storyboard/warrior.md`, `docs/warrior-counts.md` (already in main's tree, untracked, byte-identical to the worktree's),
-       `tests/warrior-engine.test.js`, `tests/warrior-story.test.js`, `tests/warrior-ui.test.js`.
-
-     (a) **The hotfix first.** Its files merge onto chapter 9 cleanly but `README.md`, which conflicts with chapter 9's (keep every
-     side's decisions and calls), and `sw.js`, which merges "cleanly" to v17, because both sides made the same v16 → v17 edit: **move
-     `CACHE` one past chapter 9's by hand** (v18 if chapter 9 ships at v17, as the hotfix plan says). Merged as it is, the tree then
-     fails four tests, none of them chapter 10's or the Warrior Counts' (`critic-build-merged/merged-ch9-hotfix-warrior.test.txt`: 1,496
-     tests, 4 failures), and step 0 fixes all of them before going on:
-     1. **ch09 f112's cast.** `tests/set-pile.test.js`'s depth-hotfix test fails on “ch09 f112: clancat at `crowd-2` is drawn over
-        clancat's head at `beside`”: chapter 9's montage (`app/story/ch09.js` f112) lists `beside` before `crowd-2`, the same picture
-        as Charlie's ch08 f030. Reorder its cast with the `crowd-2` cat first, as the hotfix did its twelve (f112 has no balloon, so no
-        speaker moves); regenerate `docs/storyboard/ch09.md` (one Cast line changes); optionally add `'ch09:f112'` to `DEPTH_FIXED`, so
-        the guard names it.
-     2. **The ch08 golden.** Both tests in `tests/golden-ch08.test.js` fail (first diff ch06 f004): chapter 9's
-        `tests/fixtures/ch08-golden.json` was recorded on the pre-hotfix snapshot `~/potomac-crossing-work/ch09/shipped`. Re-record it
-        with `GOLDEN_ROOT` on a copy of that snapshot with the hotfix's twelve reorders applied (`node tests/fixtures/make-ch08-golden.js`;
-        the copy stays at `E.VERSION` '0.8.0', since the maker exits on any other), as the hotfix plan re-recorded the ch06 and ch07
-        goldens: the diff is the readings' `shown` digests and `recorded` only.
-     3. **Chapter 9's fingerprints.** `tests/scenes.test.js`'s `CH9_FINGERPRINT` test fails on “frames/ch07/pile draws something else
-        than it did when chapter 8 shipped”: re-take `frames/ch07/pile`, `frames/ch08/pile` and any other entry the reorders move, on
-        that same copy, saying so in the test.
-     4. The `CACHE` bump above.
-
-     (b) **Then the Warrior Counts.** Their files merge onto that tree cleanly in `app/engine.js`, `app/ui.js`, `tools/shots.mjs` and
-     `tools/storyboard.mjs`, and conflict in `index.html`, `sw.js` and `dev/gallery.html` at the line after `ch08.js` (resolve each as
-     `ch09.js`, then `warrior.js`) and in `README.md` (keep every side's decisions and calls). The merge moves `E.VERSION` to `'0.10.0 (the
-     Warrior Counts, <date>)'` with its pin in `tests/engine.test.js` (their branch never moved it from chapter 8's '0.8.0 (chapter 8,
-     2026-10-21)'), and `CACHE` one past the hotfix's (v19 if the hotfix took v18): `warrior.js`, `engine.js` and `ui.js` are cached
-     files. They bring no `docs/build.md` section (the words owner's adds a pointer: below), and their tests had never run beside the real
-     chapter 9.
-     (c) `node --test` runs green on the merged tree.
-     (d) **Checks a no-op merge cannot pass**: `app/story/warrior.js` is in the tree and loads (`PC.warrior.after === 'ch10'`), and
-     `index.html` loads it after `ch09.js`; the three `tests/warrior-*.test.js` are in the tree and `node --test` reports their 67 tests
-     passing; `tests/set-pile.test.js`'s depth-hotfix test and `DEPTH_FIXED` are there, and the twelve hotfix frames and ch09 f112 list
-     the `crowd-2` cat first; `E.VERSION` is 0.10.0 and `CACHE` two past chapter 9's. Only then is the snapshot taken: it is every
-     golden's and fingerprint's source, so a bad merge would be frozen into them.
-  1. **The snapshot** is taken (`/Users/aron/potomac-crossing-work/ch10/shipped/`, from that merged tree: `app/`, `index.html`,
-     `tests/_load.js`). It is the `GOLDEN_ROOT` and every fingerprint's source. Do not change it. **Then, before step 2, the plain Case
-     File's "before" look** (section 6), on the tree as the snapshot froze it: `CAT='{…}'` holding section 6's thinnest-file cat
-     (`cards` section 3's twenty, `flags: { caseFileOpen: true, caseFile: true, ch7Flew: true }`, chapters 1 to 9 finished) with its
-     `at` on a chapter 9 frame, then `node tools/shots.mjs ~/potomac-crossing-work/ch10/file-before file` (her Case File open over that
-     page), silent, the screen locked, a fresh short session; the `CAT` and the size go in the folder's notes, for the engine owner's
-     "after".
+- **Before the build, in this order** (on main):
+  0. **Done: the Warrior Counts merged onto chapter 9** (2026-10-31: the orchestrator's `git merge --no-commit --no-ff warrior-counts`,
+     the conflicts in `README.md`, `index.html`, `sw.js` and `dev/gallery.html` resolved, then the merge's review fixed;
+     `~/potomac-crossing-work/warrior-merge/merger/notes.md` and `fixer/notes.md`, README calls 47 to 56). v0.3's plan for this step is
+     moot: the depth hotfix had shipped on its own before chapter 9 (v17, with ch09 f112 back to front in chapter 9's own build), and the
+     Warrior Counts came as a commit (`b2c9e22`), so nothing was brought over by hand (`warrior-merge/spec-editor-v04/spec-before.md`,
+     section 10, has that plan). What remains before step 1, the orchestrator's:
+     (a) the merge committed on main: the whole working tree (the merge's critic: stage everything, then check the commit's tree
+     against the working tree file by file);
+     (b) the polish release (v20) on main, before the merge or folded onto it as it ships (`warrior-merge/polish-fold/notes.md`):
+     `index.html`, `docs/build.md` and `README.md` fold cleanly, `sw.js` conflicts on its `CACHE` line (keep the higher, unshipped
+     value) and `tools/shots.mjs` keeps one copy of the `--page` lines, the polish release's; fold with that note's `diff3.py`, not
+     `/usr/bin/diff3`, which truncates `index.html` and grows `README.md`. README calls 47, 51 and 52 then read as that note says;
+     (c) `node --test` green on main's commit;
+     (d) **checks on it**: `app/story/warrior.js` loads (`PC.warrior.after === 'ch10'`) and `index.html` and `dev/gallery.html` load it
+     after `ch09.js`; the three `tests/warrior-*.test.js` pass when run on their own (`node --test tests/warrior-engine.test.js
+     tests/warrior-story.test.js tests/warrior-ui.test.js`: over the whole suite `node --test` prints one total); `E.VERSION` is '0.9.1
+     (the Warrior Counts, 2026-10-31)'; `CACHE` is past every entry of `tests/fixtures/sw-shipped.json`, or a shipped one caching what
+     it shipped (`tests/sw.test.js`); the polish release is in (`tests/aa-room.test.js` has its Hollow and Case File tests, and
+     `app/story/ch09.js` its `MENDER_WING`). Only then is the snapshot taken: it is every golden's and fingerprint's source.
+  1. **The snapshot** is taken (`/Users/aron/potomac-crossing-work/ch10/shipped/`, from main's commit after step 0: `app/`,
+     `index.html`, `tests/_load.js`). It is the `GOLDEN_ROOT` and every fingerprint's source. Do not change it. **Then, before step 2,
+     the plain Case File's "before"** (section 6), on the tree as the snapshot froze it: section 6's thinnest-file cat (`cards` section
+     3's twenty, `flags: { caseFileOpen: true, caseFile: true, ch7Flew: true }`, chapters 1 to 9 finished) and the fullest-file cat,
+     each with its `at` on a chapter 9 frame, her Case File open over that page (`PC.debug.file()`, as `tools/shots.mjs`'s `file`
+     target opens it), measured in WebKit with the offscreen tool (section 6: `#file`'s cards, headings and link lines box by box, at
+     1080 x 720, 1180 x 820, 820 x 1180 and 390 x 844, Aa off and on, silent, Read to me off) with one picture each; the cats, the
+     sizes and the boxes go in `~/potomac-crossing-work/ch10/file-before/`, for the engine owner's "after".
   2. **Stub `app/art/sets/ferry.js` and `app/art/sets/island.js`**: each a set registered with `PC.art.defineSet('ferry', …)` /
      `('island', …)` (**its final `label`** from section 4, `'the otters’ Moon Ferry: a line of log rafts on the moonlit river'` /
      `'Gathering Island: the clearing under the great tree'`, `tod: 'night'`, one camera, `deck` / `wide`, **at least one anchor** on it,
@@ -1835,33 +1934,39 @@ passed her Warrior Counts, which open once chapter 10 is finished. Module 1 ends
      `E.startChapter` arrives on the start frame, and a start frame that is the end would set `cat.finished.ch10` at once, which alone
      opens the Warrior Counts and is never unset), empty `counts` and `cards`, and the teaser (`{ title: 'The Warrior Ceremony', lines:
      ['Pass your Warrior Counts, and the Clan will gather for your name.'] }`); its script tag in `index.html` **after `ch09.js` and
-     before `app/story/warrior.js`** (the Warrior Counts' tag stays after the chapters); in `sw.js`'s `ASSETS`, with `CACHE` past step
-     0's value (v20 or later if step 0 left v19); `docs/storyboard/ch10.md` generated from the stub (`node tools/storyboard.mjs
-     app/story/ch10.js`). **`main` is never
-     pushed while the stub stands** (a child's save would meet it). With the stub, the orchestrator also updates **chapter 9's teaser
-     test** (below) and **`tests/warrior-ui.test.js`'s first hub test** ('the hub: no Warrior Counts before chapter 10 is finished'): it
-     marks every chapter of `E.chapters(PC.story)` finished, which now includes `ch10`; it becomes `E.chapters(S).filter(s => s.id !==
-     W.after).forEach(…)`, the null assertion kept (checked on a scratch copy: with the stub, or with the real chapter 10's three sets,
-     it is the one Warrior Counts test of 67 that fails, `critic-warrior-handoff/`).
-  4. `node --test`: only these may fail until their owners land (on the critics' scratch tree with labelled stubs and neither of step
-     3's test changes, these failed and nothing else beside the four that step 0 fixes, 13 in all: `critic-build-merged/
-     merged-plus-stubs.test.txt`, line numbers as found there; `set-tracks`' pins fail only once the places owner adds samples): the
-     gallery test (`tests/scenes.test.js:2219`: `dev/gallery.html` must load every script `index.html` does, in its order, so it lacks the
-     two set files and `ch10.js`: **the places owner** adds the tags and the samples); **`tests/set-tracks.test.js`'s gallery pins**
-     (lines 788 to 796: it hashes every `SAMPLES` entry but `tracks` and `grove`,
-     and allows only `['grove']` after `SAMPLES.tracks`, so `SAMPLES.ferry` and `SAMPLES.island` fail both: **the places owner** adds
-     `delete others.ferry; delete others.island;` beside `delete others.grove` and `['grove', 'ferry', 'island']`, each with a
-     chapter-10 comment, in chapter 9's style); the storyboard's words, `tests/storyboard.test.js:814` (“its words cover the art’s whole
-     vocabulary”) and `tests/tools.test.js`'s four `--check-words` tests (286, 323, 357 and 403, chapters 6 to 9's specs: “No words in
-     tools/storyboard.mjs for: set ferry”; the stub sets have no words: **the words owner's**); **`tests/story-ch09.test.js`'s
-     teaser test** (with `ch10` in `PC.story`, `E.teaser(ch09)` is `built: true, next: 'ch10'` and the hub's next chapter `ch10`: **the
-     orchestrator updates it with the stub**, as chapter 9's spec had chapter 8's updated); `tests/warrior-ui.test.js`'s first hub test
-     (`:75`, changed with the stub, step 3); and `tests/scenes.test.js`'s pins that list the gallery's new keys and each set's cameras,
-     anchors and options (`:3649`'s list of gallery keys among them; `gallery/ferry/<cam>`, `gallery/island/<cam>` for every camera in the
-     vocabulary, and `gallery/den/stone`; the den's `cams`, `Object.keys(den.opts)` and `den.opts.moon`; the tower's options): **the nest
-     owner's**, each changed with a chapter-10 comment so it passes on the stub and on the built sets. The Warrior Counts' tests keep their own
-     stand-in chapter 10 (a fixture) and pass with the stub and with the built chapter, but for the hub test step 3 changes (the
-     orchestrator's, with the stub: no owner holds `tests/warrior-*.test.js`).
+     before `app/story/warrior.js`** (the Warrior Counts' tag stays after the chapters); in `sw.js`'s `ASSETS`, with **`CACHE` one past
+     the live one**, the last entry of `tests/fixtures/sw-shipped.json` (chapter 10 ships at that value: v21 if the merge's v21 has not
+     shipped by then, v22 if it has; never a shipped value); `docs/storyboard/ch10.md` generated from the stub (`node
+     tools/storyboard.mjs app/story/ch10.js`). **`main` is never pushed while the stub stands** (a child's save would meet it), so the
+     ledger cannot move under it; at the ship the value is checked against the ledger again and the ship appends its own entry. With the
+     stub, the orchestrator also updates **chapter 9's teaser test** (below). `tests/warrior-ui.test.js`'s first hub test needs no
+     change: it already marks every chapter but `PC.warrior.after` finished (section 6).
+  4. `node --test`: only these may fail until their owners land. **Run on the merged tree with the polish release folded in and
+     steps 2 and 3's stubs** (`~/potomac-crossing-work/warrior-merge/spec-editor-v04/t10stub/`, `stub-suite.txt`: 1,533 tests, 13
+     failures, nothing else; lines as found there): the gallery test (`tests/scenes.test.js:2219`: `dev/gallery.html` must load every
+     script `index.html` does, in its order, so it lacks the two set files and `ch10.js`: **the places owner** adds the tags and the
+     samples); `tests/scenes.test.js:3647`, chapter 7's fingerprint test, whose list of the gallery's new keys (:3663) now meets
+     `gallery/ferry/deck` and `gallery/island/wide` (the gallery draws a panel for every camera a set declares): **the nest owner's**,
+     with the other pins that list the gallery's new keys and each set's cameras, anchors and options (`gallery/ferry/<cam>`,
+     `gallery/island/<cam>` for every camera in the vocabulary, and `gallery/den/stone`; the den's `cams`, `Object.keys(den.opts)` and
+     `den.opts.moon`; the tower's options), each changed with a chapter-10 comment so it passes on the stub and on the built sets; the
+     storyboard's words, `tests/storyboard.test.js:814` (“its words cover the art’s whole vocabulary”) and `tests/tools.test.js`'s four
+     `--check-words` tests (286, 323, 357 and 403, chapters 6 to 9's specs: “No words in tools/storyboard.mjs for: set ferry”; the stub
+     sets have no words: **the words owner's**); **`tests/story-ch09.test.js`'s teaser test** (:2725 with the polish release, :2601
+     without: with `ch10` in `PC.story`, `E.teaser(ch09)` is `built: true, next: 'ch10'` and the hub's next chapter `ch10`: **the
+     orchestrator updates it with the stub**, as chapter 9's spec had chapter 8's updated); and **five Warrior Counts tests that need
+     the 7s**, which no owner fixes: they pass once the story builder's chapter 10 brings `ch10-sevens` (on the merged tree with a mock
+     chapter 10 holding section 2's sets all 85 warrior tests pass: `warrior-merge/spec-editor-v04/t10-warrior.txt`), because their
+     stand-in chapter 10 is used only while `PC.story.ch10` is absent, and the stub is there with no Counts: `tests/warrior-engine.test.js`'s anchor test (:213, “the order
+     chapter 9 and the stand-in chapter 10 complete”), its help for all 55 pairs (:446, 7 × 7's first line), the Hollow after a not-yet
+     missing 7 × 8 and 6 × 7 (:1035) and the tricky greeting after a round (:1121), and `tests/warrior-ui.test.js`'s `tools/shots.mjs`
+     warrior targets test (:725, which expects “The 7s and the 8s first?” once `PC.story.ch10` exists). `tests/set-tracks.test.js`'s
+     gallery pins (lines 788 to 796) fail only once the places owner adds samples: it hashes every `SAMPLES` entry but `tracks` and
+     `grove`, and allows only `['grove']` after `SAMPLES.tracks`, so **the places owner** adds `delete others.ferry; delete
+     others.island;` beside `delete others.grove` and `['grove', 'ferry', 'island']`, each with a chapter-10 comment, in chapter 9's
+     style. With the built chapter, the polish release's `tests/aa-room.test.js` Hollow test (nine Counts pinned) fails until **the
+     engine owner's** ten-Count change (section 6). No owner holds `tests/warrior-*.test.js`, and none needs to: the stub leaves their
+     first hub test standing (step 3).
 - **Owners**: six, disjoint (the build's `owners`): **places** (the two new sets, the riverbank's options, their tests, the gallery page:
   append only, new `SAMPLES` and new `EXTRA` entries after the last, each new EXTRA's label beginning “chapter 10: ” (scenes.test.js's
   and set-tracks.test.js's rules), since the nest owner's fingerprints hash every old camera's sample and extra; it also samples the
@@ -1869,7 +1974,8 @@ passed her Warrior Counts, which open once chapter 10 is finished. Module 1 ends
   `tests/set-tracks.test.js`'s two gallery pins, step 4; and the island's `wide` depth, its roots behind every Clan spot, section 4);
   **cast** (cats.js, its test, its gallery: the new cast, poses, extras and Counts art); **nest** (scenes.js and its
   test: the den, the tower, the hollow's check, the kit's crowd helper, the new cast's scene rules); **engine** (the card pick and the data
-  beside it: engine.js, ui.js, index.html, tools/shots.mjs, tests/engine.test.js); **words** (tools/storyboard.mjs and every storyboard,
+  beside it, and the Training Hollow re-laid for ten Counts: engine.js, ui.js, index.html, tools/shots.mjs, tests/engine.test.js, and
+  `tests/aa-room.test.js`'s Hollow test, which the polish release brings); **words** (tools/storyboard.mjs and every storyboard,
   regenerated with the bare `node tools/storyboard.mjs`, `docs/storyboard/warrior.md` among them, byte for byte but ch05.md's book rows
   and the stub's ch10.md; docs/build.md, chapter 5's page, their tests); **golden** (the chapters 1 to 9 golden, its maker, fixture and
   test, its version constant the snapshot's). No owner holds `tests/sw.test.js` or `tests/warrior-*.test.js` (the orchestrator's): the
@@ -1891,10 +1997,9 @@ passed her Warrior Counts, which open once chapter 10 is finished. Module 1 ends
   the cast table (Mama, the eldest, ReedClan's and GroveClan's leaders, Granny speaking); the Counts table (the 8s warm-up, the 7s lesson
   with 7 × 7, the Moon Ferry's eight, the sixty typed at last; ten marks); the places table (section 8, "Drawn now"); who knows what (every
   Clan, everything).
-- **`docs/build.md`** gets a short "Chapter 10" section from the words owner: the card pick (pointing to section 6), the art's new names
-  and the words as built; and, since the Warrior Counts brought none and `app/story/warrior.js` is a new kind of story file (`PC.warrior`,
-  not in `PC.story`), a short pointer to `docs/warrior-counts.md`: `PC.warrior` and its `after`, its storyboard
-  (`docs/storyboard/warrior.md`), and its test cat in `tools/shots.mjs` (the `WARRIOR` recipe and the `warrior:*` targets).
+- **`docs/build.md`** gets a short "Chapter 10" section from the words owner, after the merge's "The Warrior Counts (v0.1)" (which has
+  `PC.warrior`, its `after`, its storyboard and its test cat, so chapter 10's section only points to it): the card pick (pointing to
+  section 6), the Training Hollow with ten Counts (the engine owner's rules, in a line), the art's new names and the words as built.
 - **Can't be built literally, built nearly**: the speech tags' narration (section 7, item 10); “Granny winks.” (`kind`: no art draws a
   wink); “Tallyheart presses her head against yours.” (nose to nose: no art draws two cats touching); “Sprinkle wraps her tail round you”
   (Sprinkle `curl` beside her, the storyboard's own words); “every Clan takes one step toward the fox” (every cat standing, `crowd:
@@ -1909,7 +2014,9 @@ passed her Warrior Counts, which open once chapter 10 is finished. Module 1 ends
   about 133 (112 + 7 + 9 + 5). Under the brief's 170. With Read to me on, each pick screen's first opening reads her whole file (two
   minutes or more:
   section 6), so a listening reading runs longer than the story's minutes, which are for a cat who reads.
-- **The ship's Safari look** should include: the Hollow empty, ten marks on the tree; a lesson question with seven clutches and one with
+- **The ship's look** (in WebKit with the offscreen tool while Safari's automation hangs, section 6; at most 20 pictures, silent)
+  should include: the Hollow empty, ten marks on the tree; the Training Hollow's ten Counts at 1080 x 720, Aa off and on, with the
+  paws on the 7s and the 8s (section 6); a lesson question with seven clutches and one with
   six lit (6 × 7), the help's four-and-three sand; the five clutches skip; the Moon Ferry boarding at dusk and the deck by the full moon
   (the river silver, never dark), the luggage heap with its puff, the low raft with Puddle's foot, the gap with his eyes; a ferry question
   of each picture (9 × 4's nine cats, 6 × 8's spiders, 7 × 7's marks on a log, a missed one's help on the log); Gathering Island's shore,

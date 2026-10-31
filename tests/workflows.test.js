@@ -209,3 +209,12 @@ test('chapter.js spec: args.extra reaches the writer and args.specLenses adds cr
   assert.deepEqual(calls.filter(c => /^spec-critic:/.test(c.opts.label)).map(c => c.opts.label), ['spec-critic:math', 'spec-critic:continuity', 'spec-critic:pick']);
   assert.ok(!calls.some(c => /about 16 typed answers/.test(c.prompt)));
 });
+
+test('chapter.js: every prompt asks for a short report, and every build-side prompt for one full suite, a Safari limit and no leftover process', async () => {
+  for (const [phase, extra] of Object.entries(PHASES)) {
+    const { calls } = await run(Object.assign({ phase }, BASE, extra));
+    for (const c of calls) assert.match(c.prompt, /Keep your returned report short/, `${c.opts.label}: a short report`);
+    if (['build', 'frames', 'review', 'integrate', 'final'].includes(phase))
+      for (const c of calls) assert.match(c.prompt, /the whole suite once at the end[\s\S]*Safari at most 5 minutes[\s\S]*leave no process running/, `${c.opts.label}: spend tokens well`);
+  }
+});

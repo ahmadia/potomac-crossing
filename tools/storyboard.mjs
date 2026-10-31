@@ -3,6 +3,10 @@
  *
  *   node tools/storyboard.mjs                                               every chapter in app/story/ -> docs/storyboard/
  *   node tools/storyboard.mjs app/story/ch02.js [docs/storyboard/ch02.md]   one chapter
+ *   node tools/storyboard.mjs app/story/warrior.js [docs/storyboard/warrior.md]   the Warrior Counts
+ *                                             (`PC.warrior`: its openings, the question panel, the sitting's
+ *                                             lines and pauses, the halfway page and every result's pages;
+ *                                             written with every chapter when the file is there)
  *   node tools/storyboard.mjs --check-words   every set, camera, anchor, option value, pose, mood,
  *                                             effect and cast extra in the art's vocabulary has words here
  *                                             (exit 1 and a list when one hasn't; tests run it)
@@ -809,10 +813,60 @@ function optWords(set, k, v, all, cam) {
   return k + ': ' + JSON.stringify(v);
 }
 /* ------------------------------------------------------------------ one chapter */
+/* ------------------------------------------------------------------ the Warrior Counts
+ * PC.warrior as one story the board can walk: every frame under an id of its own (`first-1`, `halfway`,
+ * `pass-clean`, `notyet-3`…), each list's frames joined by `next`, the last of each naming what comes
+ * after it (`after`); and the result's pages, each a list of its versions ({ key, id, same }). */
+const VARIANT_WORDS = {
+  'pass.clean': 'every one right (55 of 55)', 'pass.quiet': 'a pass in a quiet sitting (she had a finished sitting before it): the Clan comes running',
+  'notYet.first': 'her first not-yet (a sitting with the whole Clan watching)', 'notYet.second': 'her second not-yet', 'notYet.later': 'her third not-yet, and every one after',
+  'notYet.better': 'more right than her last finished sitting', 'notYet.close': '47 to 49 right, no more than last time', 'notYet.plain': 'fewer than 45 right, no more than last time: no number',
+  'afterPass.clean': 'every one right, after the pass', 'afterPass.number': 'fifty to fifty-four right, after the pass: a passing score, so her number'
+};
+function warriorStory(W) {
+  const frames = {}, lists = {}, after = {}, pages = {};
+  const seen = new Map();
+  const put = (id, f, next) => { frames[id] = Object.assign({}, f, { next: next }); seen.set(f, id); return id; };
+  const list = (name, fl, last, lastWords) => {
+    lists[name] = [];
+    asList(fl).forEach((f, i, a) => lists[name].push(put(name + '-' + (i + 1), f, i + 1 < a.length ? name + '-' + (i + 2) : '§' + name)));
+    after[name] = lastWords;
+  };
+  const o = W.open || {};
+  list('first', o.first, null, '**Then:** the first question.');
+  list('again', o.again, null, '**Then:** the first question.');
+  list('quiet', o.quiet, null, '**Then:** the first question.');
+  lists.halfway = [put('halfway', asList(W.halfway)[0] || {}, '§halfway')];
+  after.halfway = '**Then:** one button, “Keep going”, and the 29th question. No Back: the page comes after an answer.';
+  const BUTTONS = {
+    pass: '**Then:** her buttons, “Camp” and “To your ceremony” (the big one: the Ceremony chapter from its first page); while the Ceremony is not built, “Your ceremony is coming soon.” in its place, and “Camp”.',
+    notYet: '**Then:** her buttons, “Camp” and “The Training Hollow” (the big one; “Back to the Training Hollow” while a round there is in progress). Trying again is on the hub, any time.',
+    afterPass: '**Then:** her buttons, “The Training Hollow” and “Camp” (the big one).'
+  };
+  ['pass', 'notYet', 'afterPass'].forEach(kind => {
+    const src = W[kind] || {}, name = kind.toLowerCase(), entries = asList(src.frames);
+    pages[kind] = entries.map((e, i) => {
+      const last = i === entries.length - 1, nx = last ? '§' + name : '(the next page)';
+      if (!e || !e.by) return [{ id: put(name + '-' + (i + 1), e || {}, nx) }];
+      const out = asList(e.by).filter(k => src[k]).map(k => (seen.has(src[k]) ? { key: k, same: seen.get(src[k]), id: seen.get(src[k]) } : { key: k, id: put(name + '-' + k, src[k], nx) }));
+      if (e.else) out.push(seen.has(e.else) ? { same: seen.get(e.else), id: seen.get(e.else) } : { id: put(name + '-' + (i + 1), e.else, nx) });
+      else out.push({ id: null });
+      return out;
+    });
+    after[name] = BUTTONS[kind];
+    after['(the next page)'] = '**Then:** Next, to the next page.';
+  });
+  Object.keys(frames).forEach(id => { if (frames[id].next === '(the next page)') frames[id].next = '§(the next page)'; });
+  return { id: 'warrior', title: 'The Warrior Counts', frames, start: lists.first[0] || Object.keys(frames)[0], lists, after, pages };
+}
+
 function board(storyPath, outPath) {
   const PC = require(storyPath);
+  // the Warrior Counts (app/story/warrior.js): not a chapter but `PC.warrior`, its frames in lists,
+  // boarded as one story of its own (warriorStory) and written under its own headings (below)
+  const W = basename(storyPath, '.js') === 'warrior' ? ((PC && PC.warrior) || (globalThis.PC && globalThis.PC.warrior) || null) : null;
   const stories = (PC && PC.story) || (globalThis.PC && globalThis.PC.story) || {};
-  const story = stories[basename(storyPath, '.js')] || Object.values(stories)[0];
+  const story = W ? warriorStory(W) : stories[basename(storyPath, '.js')] || Object.values(stories)[0];
   if (!story || !story.frames) {
     console.error('No story found in ' + storyPath);
     process.exit(1);
@@ -1349,7 +1403,10 @@ function board(storyPath, outPath) {
     if (say.length) {
       out.push(''); out.push('**Balloons**'); out.push('');
       say.forEach(b => out.push('- **' + speaker(b) + '**' + kindWord(b.kind) + ': “' + q(b.text) + '”' + onlyIf(b.when) +
-        (b.digits ? ' *(lettered small beside it, in Andika: ' + q(b.digits) + ')*' : '')));
+        (b.digits ? ' *(lettered small beside it, in Andika: ' + q(b.digits) + ')*' : '') +
+        // (the Warrior Counts: her missed pairs written out under this balloon)
+        (b.chips ? ' *(under it, her missed pairs written out in Andika, each with its answer (“7 × 8 = 56”), up to six, the tricky Counts’ first, a pair with a 1 last)*' : '') +
+        (b.one ? ' *(over a single chip: “' + q(b.one) + '”)*' : '')));
     }
     // (chapter 5, `sfxAt`: a frame that says where its sound is lettered, in hundredths of the panel;
     // `sfxRead`: the sound in words, said by Read to me after the caption that runs on into it)
@@ -1482,6 +1539,132 @@ function board(storyPath, outPath) {
   })();
   const readLo = readThrough ? readThrough[0] : mainLine + shortest, readHi = readThrough ? readThrough[1] : mainLine + longest;
   const unreachable = ids.filter(id => !reachable.has(id));
+
+  if (W) {
+    writeWarrior();
+    return;
+  }
+  /* The Warrior Counts' storyboard (docs/warrior-counts.md): where it opens, the question panel, the
+   * openings, the sitting's lines and pauses, the halfway page and the result's pages, each frame as a
+   * chapter's is boarded (frameMd), its last line saying what comes after it. */
+  function writeWarrior() {
+    const md = [], L = story.lists, C = W.counts || {};
+    const then = (id, n, level) => frameMd(id, level || 4, n).replace(/\*\*Then:\*\* Next → §([^.]*)\./, (m, k) => story.after[k] || m);
+    md.push('# Storyboard: The Warrior Counts');
+    md.push('');
+    md.push('*Generated by `tools/storyboard.mjs` from `' + relative(ROOT, storyPath) + '`. Do not edit by hand: change the story file and run `node tools/storyboard.mjs` again.*');
+    md.push('');
+    md.push('## How to read this');
+    md.push('');
+    md.push('The Warrior Counts are not a chapter: no choices, one sitting of 55 questions, every pair up to ten times ten once, and the frames around it (`PC.warrior`, docs/warrior-counts.md). Each frame is boarded as a chapter’s is (**Shot**, **Scene**, **Captions**, **Balloons**, **Then**). The opening’s frames and the result’s are played in order with Next and the big Back beside it; a result page that depends on how the sitting went is listed with each of its versions.');
+    md.push('');
+    md.push('`{name}` is the first part of her Clan name, `{petname}` what her Tall One calls her, and `{Murmur}`/`{murmur}` the tortoiseshell’s name word (Murmur, or Mutter for a reader whose own Clan name is Murmur). The result’s own words come first, in number words: `{right}`/`{Right}` her right answers, `{last}`/`{Last}` her last finished sitting’s, `{short}` fifty less `{right}`, and `{tricky}` the one or two Counts her misses fall in (“the 7s and the 8s”); a capital starts a sentence.');
+    md.push('');
+    md.push('## At a glance');
+    md.push('');
+    md.push('| | |');
+    md.push('|---|---|');
+    md.push('| Opens | once `' + (W.after || 'ch10') + '` is finished, from the hub’s big button (never the Training Hollow); after the pass, a quiet “The Warrior Counts again” |');
+    md.push('| A sitting | 55 questions, 10 × 10 always last; 50 right passes; a miss gets the sand’s help once and is not asked again; four paw prints, no score, no clock |');
+    const inResult = kind => new Set([].concat(...story.pages[kind].map(pg => pg.map(v => v.id).filter(Boolean)))).size;
+    md.push('| Frames | ' + ids.length + ' (the openings ' + (L.first.length + L.again.length + L.quiet.length) + ', halfway ' + L.halfway.length +
+      ', the pass ' + inResult('pass') + ', the not-yet ' + inResult('notYet') + ', after the pass ' + inResult('afterPass') + ') |');
+    md.push('| Captions and balloons | ' + captions + ' captions, ' + balloons + ' balloons, about ' + words + ' words in all |');
+    md.push('| Scenes | ' + Object.keys(setCount).map(k => k + ' ' + setCount[k]).join(' · ') + ' |');
+    md.push('');
+    md.push('## The hub');
+    md.push('');
+    md.push('Once `' + (W.after || 'ch10') + '` is finished the big button is the Warrior Counts’ until she passes, and no chapter’s “coming soon” shows:');
+    md.push('');
+    md.push('- a result she has not seen to its last button: **The Warrior Counts** / *Glintstar is waiting* (it opens the result again);');
+    md.push('- never sat: **The Warrior Counts** / *When you’re ready*;');
+    md.push('- a sitting to pick up (an answer in it, within two hours of when she was last there, nothing practiced since): **Keep going** / *The Warrior Counts · third paw*;');
+    md.push('- after a not-yet: **The Warrior Counts** / *Try again whenever you like*;');
+    md.push('- passed: the Ceremony’s chapter button, as any chapter’s, and under it, quietly, **The Warrior Counts again**; while the Ceremony is not built, “Your ceremony is coming soon.” in its place, here and in her book. A sitting again whose result she has not seen waits in the quiet slot, **The Warrior Counts: Glintstar is waiting**, and the Ceremony keeps the big one.');
+    md.push('');
+    md.push('## The question panel');
+    md.push('');
+    md.push('**Scene.** ' + sceneWords(W.scene));
+    md.push('');
+    md.push('The same panel for all 55. It is drawn with the crowd until she has a finished sitting; after that the camp is quiet: the same panel without the crowd (the halfway page too).');
+    md.push('');
+    md.push('Under the panel Glintstar asks each question in her balloon, in words (“Seven times eight.”), then the question line in Andika (“7 × 8 = ?”) and the keypad. Above the question line, four paw prints, one a quarter (14, 14, 14 and 13 questions): the one she is on fills a little at every answer, a miss the same as a right one. Read to me says Glintstar’s balloon, not the question line. On a miss the panel turns to Tallyheart’s sand, the count scratched out in the pair’s anchor Count’s way.');
+    md.push('');
+    const fin = C.finale || C.last || {};
+    if (fin.prompt) md.push('**The last question, 10 × 10:**', '', ...balloonLines(fin.prompt, { scene: W.scene }).map(l => l.replace(/^ {2}/, '')), '');
+    if (fin.right) md.push('**Right:**', '', ...balloonLines(fin.right, { scene: W.scene }).map(l => l.replace(/^ {2}/, '')), '');
+    if (fin.missLast) md.push('**Missed:** the sand, then Tallyheart: “' + q(fin.missLast) + '”', '');
+    md.push('## The opening');
+    md.push('');
+    md.push('### The first sitting');
+    md.push('');
+    L.first.forEach((id, i) => md.push(then(id, i + 1)));
+    md.push('### Again, the Clan watching (sittings set aside, none finished)');
+    md.push('');
+    L.again.forEach((id, i) => md.push(then(id, i + 1)));
+    md.push('### Again, the camp quiet (after a finished sitting)');
+    md.push('');
+    L.quiet.forEach((id, i) => md.push(then(id, i + 1)));
+    const aside = W.aside || {};
+    md.push('### When the sitting before was set aside');
+    md.push('');
+    md.push('Tallyheart says why, once, at the start of her balloon on that one panel, before “Every Count, same as before.” (also when the sitting before was opened and left with no answer, which is dropped, not recorded; never on the first opening):');
+    md.push('');
+    if (aside.late) md.push('- two hours went by (`late`): “' + q(aside.late) + '”');
+    if (aside.practice) md.push('- she practiced other Counts in between (`practice`): “' + q(aside.practice) + '”');
+    md.push('');
+    md.push('### A sitting picked up');
+    md.push('');
+    md.push('Within two hours of when she was last there, with nothing practiced since, it picks up at the same question, under:');
+    md.push('');
+    md.push(...balloonLines(W.open && W.open.resume, { scene: W.scene }).map(l => l.replace(/^ {2}/, '')));
+    md.push('');
+    md.push('(A sitting picked up before its first answer plays its own opening again.)');
+    md.push('');
+    md.push('## The sitting');
+    md.push('');
+    const said = x => asList(x).filter(l => typeof l === 'string' ? l : l && l.text);
+    const ln = x => said(x).map(l => '“' + q(typeof l === 'string' ? l : l.text) + '”').join(', ');
+    const praise = asList(C.praise), fast = asList(C.fast);
+    md.push('Tallyheart’s lines (Glintstar asks every question):');
+    md.push('');
+    md.push('- After a right answer, now and then (' + said(praise).length + ' of the ' + praise.length + ' praise entries say something; a blank says nothing and the next question comes): ' + ln(praise) + '. Quick ones: ' + ln(fast) + '.');
+    if (C.remembered) md.push('- Right on one of her hard facts, every other one, in turn (' + said(C.remembered).length + ' lines, a blank between): quick, ' + ln(C.remembered) + '; slow, ' + ln(C.rememberedSlow) + '. A long line stays until it is read (about 0.4 s a word) or said to its end.');
+    if (C.missLast) md.push('- After a miss, in turn, never one twice running: ' + ln(C.missLast) + '.');
+    md.push('- No line after a miss for the right answers that follow (no `fastAfterMiss`), and none that counts what is left.');
+    md.push('');
+    md.push('### The pauses');
+    md.push('');
+    const nth = n => n + (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');
+    Object.keys(W.beats || {}).sort((a, b) => a - b).forEach(k => md.push('- After the ' + nth(+k) + ' answer, Tallyheart: ' + ln(W.beats[k])));
+    md.push('');
+    md.push('Each stays 2.5 s, or 3.5 s when its line is over six words, or as long as its words take to read (0.6 s and 0.38 s a word) when that is longer (with Read to me on, until it has been said, and half a second more; at most that long again after that); a tap moves on. No Back: a pause comes after an answer. A sitting picked up right at a pause says “Where were we? Ah, yes.” in it, first, and the pause waits for all of it.');
+    md.push('');
+    md.push('### The halfway page, after the 28th answer');
+    md.push('');
+    L.halfway.forEach((id, i) => md.push(then(id, i + 1)));
+    md.push('## The result');
+    md.push('');
+    md.push('Every page has the big Back beside Next; the last has two buttons, and either marks the result seen (until then the hub reopens it).');
+    md.push('');
+    [['pass', 'The pass: 50 or more right'], ['notYet', 'The not-yet: 49 or fewer'], ['afterPass', 'After the pass: a sitting again, for a clean sweep']].forEach(([kind, head]) => {
+      md.push('### ' + head);
+      md.push('');
+      story.pages[kind].forEach((pg, i) => {
+        if (pg.length === 1 && !pg[0].key) { md.push(then(pg[0].id, i + 1)); return; }
+        md.push('#### Page ' + (i + 1) + ', by how the sitting went');
+        md.push('');
+        pg.forEach(v => {
+          md.push('*' + (v.key ? cap(VARIANT_WORDS[kind + '.' + v.key] || v.key) + ' (`' + kind + '.' + v.key + '`)' : 'Otherwise') + (v.same ? ': the same frame as `' + v.same + '`.*' : v.id ? ':*' : ': no page.*'));
+          md.push('');
+          if (v.id && !v.same) md.push(then(v.id, 0, 5));
+        });
+      });
+    });
+    mkdirSync(dirname(outPath), { recursive: true });
+    writeFileSync(outPath, md.join('\n').replace(/\n{3,}/g, '\n\n'));
+    console.log('Wrote ' + relative(ROOT, outPath) + ': ' + ids.length + ' frames.');
+  }
 
   const md = [];
   md.push('# Storyboard: Chapter ' + (story.number || '') + ', ' + story.title);
@@ -1646,4 +1829,6 @@ else if (argv.length) {
   readdirSync(dir).filter(f => /^ch\d+\.js$/.test(f)).sort().forEach(f => {
     board(join(dir, f), join(ROOT, 'docs/storyboard', basename(f, '.js') + '.md'));
   });
+  // the Warrior Counts, when the story file is there
+  if (readdirSync(dir).includes('warrior.js')) board(join(dir, 'warrior.js'), join(ROOT, 'docs/storyboard/warrior.md'));
 }

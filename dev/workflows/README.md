@@ -37,6 +37,17 @@ frames the agents follow (without it they follow chapter 5): for chapter 7, `"mo
 "storyFile": "app/story/ch06.js", "test": "tests/story-ch06.test.js", "spec": "chapter 6's spec
 (docs/chapters/06-the-snake-in-the-stones.spec.md)" }`.
 
+**Spending tokens well** (2026-10-31, after chapter 9 cost about 35M, more than twice chapter 8,
+mostly in waste). Never resume a workflow whose agents run in parallel: a resume replays only the
+unchanged prefix of agent calls in call order, and parallel calls finish in a new order each run, so
+finished agents run again. Start a fresh small workflow from the saved results instead. Run at most
+two workflows at once, and only one that leans on Safari: four at once took the load to 60–150 and a
+full suite to 30 minutes. Agents run the test files they touch while working and the whole suite once
+at the end. They wait for Safari at most 5 minutes, then use the offscreen WebKit tool, leave no
+process running, and return a short report with the detail in their notes (the ORIENT and BUILD
+contexts say so). Check runs with `~/potomac-crossing-work/tools/watchdog.sh`, which shows each agent's
+idle time, orphaned automation and concurrent suites; `--kill` stops orphans over 30 minutes old.
+
 **Effort.** Every agent runs at `args.effort`, `xhigh` unless you pass another (2026-10-25: before
 that, agents ran at whatever effort the session had, which nothing guaranteed). Each reviewer reports
 what it `checked`, so the review's and the final's completeness critic can name what nobody covered.

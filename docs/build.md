@@ -29,9 +29,10 @@ app/art/cats.js          PC.art.cat + character presets + counts pictures + sand
 app/art/scenes.js        PC.art.render (sets, cameras, cast placement, effects) + vocab + art.kit, art.defineSet
 app/art/sets/*.js        one set per file (chapter 2 on): pile, bridge, field, crossing, riverbank
 app/story/chNN.js        one chapter each: frames, Counts sets, book recap, teaser
+app/story/warrior.js     the Warrior Counts (PC.warrior, not a chapter): its frames and lines
 sw.js, manifest.webmanifest, icons/icon-{180,192,512}.png, .nojekyll
 tests/*.test.js          node --test (engine logic; story ↔ art vocabulary; graph checks)
-tools/storyboard.mjs     writes docs/storyboard/chNN.md from app/story/chNN.js (no arguments: every chapter)
+tools/storyboard.mjs     writes docs/storyboard/chNN.md from app/story/chNN.js, and warrior.md from app/story/warrior.js (no arguments: all of them)
 tools/frames.mjs         renders a chapter's frames (the art only) to PNG through Quick Look, macOS
 tools/shots.mjs          screenshots of the real game screens in Safari (safaridriver), macOS
 tests/_load.js           loads the app/ scripts into Node in index.html's order
@@ -1605,3 +1606,103 @@ case) is tapped on the glowing row, each tap lighting it. A recap line that read
 as any other. `--check-words` passes with the spec's names and declarations added (`tests/tools.test.js`, with
 names the spec never gave failing). Chapters 1 to 8's storyboards regenerate byte for byte but for `ch04.md`'s
 book rows (the recap edit), and `ch09.md` was regenerated from the stub.
+
+## The Warrior Counts (v0.1)
+
+The Warrior Counts (decisions 48 and 49) are [`warrior-counts.md`](warrior-counts.md) (Design v0.4), built in
+`app/story/warrior.js`, `app/engine.js` and `app/ui.js` on the `warrior-counts` branch from chapter 8's tree,
+reviewed twice, and merged onto chapter 9 on 2026-10-31. **That design is the build's contract**: section 6 the
+save, section 7 every piece with what it does and the guard that keeps the chapters as they are, section 8 the
+tests; the calls are in the README, under decision 46. They are not a chapter: `PC.warrior`, never `PC.story.*`,
+so `E.chapters`, `E.progress`, `E.countSets`, the chapters' storyboards and the goldens never see them. They open
+once chapter 10 is finished (`PC.warrior.after`), so in a tree without chapter 10 no player sees them; they ship
+with it. This section records the names as built; the design has the rest.
+
+**The story file** (`app/story/warrior.js`, `PC.warrior`; its header has the shape in full)
+
+- `after: 'ch10'`; `scene`, the question panel (chapter 3's fountain, written with the crowd and drawn with the
+  sitting's `st.crowd`); `open: { first, again, quiet, resume }` (four panels, one, one, and the runner's intro
+  "Where were we? Ah, yes."); `aside: { late, practice }`, put at the start of Tallyheart's balloon; `halfway`, one
+  frame; `beats: { 14, 42 }`, Tallyheart's lines at those pauses (28 is `halfway`).
+- `pass`, `notYet`, `afterPass`: each `{ frames, <variant key>: frame }`, an entry of `frames` a frame or a slot
+  `{ by: [keys], else? }` played by `E.warriorResult`'s variant (`pass.clean`, `pass.quiet`; `notYet.first`,
+  `second`, `later`; `notYet.better`, `close`, `plain`; `afterPass.clean`, `afterPass.number`), never by `when`.
+  A balloon with `chips: true` has her missed pairs under it, `one` its words over a single chip.
+- `counts`: `praise`, `fast` (one right answer in five gets a word, the lines among blanks), `remembered`,
+  `rememberedSlow` (four each, a blank between), `missLast` (four, in turn), and `last`, 10 × 10's `prompt`,
+  `right` ("A HUNDRED!") and `missLast`. No `fastAfterMiss`, no help openings: each anchor Count's own.
+- Tokens: the result's `{right}`, `{Right}`, `{last}`, `{Last}`, `{short}`, `{tricky}` and `{Tricky}`, number words
+  through `E.countWords`, filled before the cat's own (`{name}`, `{petname}`, `{Murmur}`). No new art, no new
+  speaker: Glintstar, Tallyheart, {Murmur}chime, the old tom and the crowd are chapter 3's.
+- Its script tag comes after the chapters (after `ch09.js`) and before `engine.js`, in `index.html` and
+  `dev/gallery.html`; its path is in `sw.js`'s `ASSETS` after `ch09.js`.
+
+**Engine** (a section "the Warrior Counts" after the Training Hollow's)
+
+- Numbers: `E.WARRIOR_PASS` 50, `E.WARRIOR_BEATS` [14, 28, 42], `E.WARRIOR_PAUSE_MS` 7,200,000 (two hours),
+  `E.WARRIOR_TRICKY` 12, `E.WARRIOR_NEW` [[7, 7], [7, 8], [8, 8]], `E.WARRIOR_KEEP` 100, `E.WARRIOR_STARTS`
+  [100, 200], and `E.WARRIOR_WAITING`, the Hollow's waiting line.
+- New: `E.warriorPairs`, `E.warriorAnchor` (the pair's Count taught first by `E.countSets`' order; a table with
+  no set yet after every taught one, two such the smaller: with chapter 9 the 8s are taught and 7 × 8 is seven
+  spiders, while the 7s wait for chapter 10), `E.warriorHard`, `E.warriorFacts`, `E.warriorDef`, `E.warriorAsk`,
+  `E.warriorBegin` (a new sitting's `at` never earlier than her latest answer when that is less than two hours
+  ahead, so a device clock set back a little cannot make it stale as practice at once), `E.warriorOpen`, `E.warriorKeep` (never moving the same sitting's `at`
+  back), `E.warriorFinish`, `E.warriorResult`, `E.warriorSeen`,
+  `E.warriorBeat`, `E.warriorPaws`, `E.warriorState`, `E.countWords` (number words to 100).
+- Changed, each only with `warrior` data, `mode: 'warrior'` or a story with `opensWhen: 'warrior'`:
+  `E.recordLesson` (a sitting goes to `E.warriorFinish`, never to `lessons` or `lesson`), `E.isOpen` (the
+  Ceremony opens once she has passed), `E.hollowLines` (`waiting`, the tricky greeting, `tricky` and `tricky:
+  true` on a marked Count; it reads `opts.now` and `opts.tricky`), `normCat` (`normWarrior` for her own `warrior`
+  key only; a saved lesson whose state is a sitting's dropped from `lesson`, `hollowWaiting` and a place), and
+  `E.hardFacts`, whose rule moved into a private helper (`hardRule`) it shares with `E.warriorHard`, its output
+  unchanged.
+- The save stays version 2. One optional field on a cat, `warrior: { sitting: { at, state } | null, attempts,
+  passedAt }`, absent until her first sitting (not in `E.blankCat`); the sitting is a lesson state with `mode:
+  'warrior'` run by the Counts runner untouched. Each answer goes into `counts` with `set: 'warrior'` and `table`
+  its anchor Count.
+- `E.VERSION = '0.9.1 (the Warrior Counts, 2026-10-31)'`.
+
+**The page** (`app/ui.js`, `index.html`)
+
+- Pure, for Node: `PC.ui.warrior` (`hub`, `opening`, `openKind`, `result`, `variant`, `tokens`, `tricky`,
+  `chips`, `pause`, `beatMs`, `readMs`, `speechMs`, `scene`, `paws`, `pawOn`, `pawFills`, `PAW_WORDS`, `QUARTERS`,
+  `corner`, `slip`, `sittingOf`, `lastFinished`, `unseen`, `passed`, `open`, `afterPassUnseen`, `passShown`).
+- The view `warrior` (`renderWarrior`; steps `open`, `q`, `halfway`, `result`), its frames with the big Back
+  within their own list; `runLesson`'s mode `warrior` (the fountain under the questions, `#wpaws`, the pauses,
+  `E.warriorAsk`, `E.warriorKeep` after every answer but the last, `E.recordLesson` at the last;
+  `.frame[data-mode="warrior"]`; on the help's last page `#wpaws` is hidden, `drawPaws()` shows it again, and
+  "Got it!" sits at the top of the keypad's place, so bringing it in keeps the anchor's reminder on the screen);
+  the halfway page's `#keepGoing`; the result's `#resultCamp`, `#resultHollow`
+  ("The Training Hollow", or "Back to the Training Hollow" over a round to pick up) and `#resultCeremony` ("To
+  your ceremony"). Every timing and guard change (the reading waits, the pauses, the clock, the tap-time guard)
+  is warrior-only.
+- The hub: `#warriorBtn` (`hub-warrior`, the paw, `ICON.paw`) in the next chapter's big slot, and `#warriorAgain`
+  (`hub-again`) quiet under the Ceremony's; read again on a tap and on `visibilitychange`. The book's and the
+  hub's "Your ceremony is coming soon." once her pass is seen and the Ceremony is unbuilt. The bar: "The Warrior
+  Counts" under the title, Camp shown, the Case File's button off; ‹ goes to the hub, the sitting kept.
+- The Hollow: the waiting line in the greeting's place (a round picked up says it over its next question, and its
+  keypad is brought into view, only for a cat with `warrior` data); a small paw (`.trickypaw`) on a marked
+  Count's button, placed in the button's left padding (`position: absolute`; with Bigger text 1em, the button's
+  left padding 1.3em), so a marked Count's name keeps its line; the tricky greeting kept, once, for the page after the not-yet's "Back to the Training Hollow"
+  (`wTrickyDue`).
+- The grown-ups corner: a Warrior Counts line and each attempt (a missed answer that starts the right one is "a
+  slip?"); the Ceremony "opens once the Warrior Counts are passed".
+- `PC.debug.warrior(what, i)`, for the Safari tool: `open`, `q`, `sand`, `halfway` or `result`.
+- CSS: `.hub .btn.hub-warrior` (gold with an ember edge), `.wpaws`, `.wpaw` (`.wpaw-e`, `.wpaw-f`, `.full`), `.wchips`
+  and `.wchip` (Andika, two a row at any text size, `.85em` with Bigger text), `.trickypaw` (and `.counts-pick
+  .btn .trickypaw`), and `.frame[data-mode="warrior"] .gotit` (top-aligned).
+
+**Tools**
+
+- `tools/storyboard.mjs` also writes `docs/storyboard/warrior.md` from `PC.warrior` (`warriorStory`: every frame
+  under an id of its own, under headings of its own); the chapters' storyboards regenerate byte for byte.
+- `tools/shots.mjs`: targets `warrior:open`, `warrior:q`, `warrior:sand`, `warrior:halfway`, `warrior:pass`,
+  `warrior:notyet` and `warrior:afterpass` (`#n` a page), each with its own test cat unless CAT has a `warrior`
+  recipe (`sittings`, `seen`, `answers`, `stale`, `round`), run through the engine as the page runs a sitting.
+  Its `--page` exits only once the page is written (with this CSS the page is past a macOS pipe's 64 KiB; the
+  polish release v20 makes the same fix in the same words).
+
+**Tests**: `tests/warrior-engine.test.js`, `tests/warrior-story.test.js` and `tests/warrior-ui.test.js` (the page's
+wiring pinned as text), on the real chapters 1 to 9 and stand-ins for chapter 10 (the 7s) and the Ceremony;
+`tests/storyboard.test.js` compares `warrior.md`; the version pin is in `tests/engine.test.js`. The depth rule
+holds on every scene of the Counts (`tests/warrior-story.test.js`, "staging, depth"), as on chapter 9's.

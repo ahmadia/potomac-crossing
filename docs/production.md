@@ -190,7 +190,8 @@ time instead of waiting to be asked.
 
 ### 9. Aron's to decide before they block
 
-- The Warrior Counts' format: 55 pairs or 100 questions; one sitting or rounds; how retries work.
+- ~~The Warrior Counts' format~~ Settled: 55 pairs, one sitting, try again any time (decisions 48 and 49); built and
+  merged onto chapter 9 (2026-10-31).
 - ~~Dew's new name (before chapter 9); Snip's (before chapter 8); the 7s picture's words~~ Settled: Dew is
   Mizzle (chapter 9), Snip kept (chapter 8), the 7s a clutch of seven (decision 51).
 - ~~Whether chapters may run to 22 minutes or should come back to 15–20.~~ Answered for chapter 6:

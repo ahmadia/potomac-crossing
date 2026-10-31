@@ -350,8 +350,9 @@ test('the runner’s timing in a sitting, Read to me on or off: a pause ends whe
   assert.match(UI_SRC, /say\(\(warrior && intro \? \[\{ who: opener, text: intro \}\] : \[\]\)\.concat\(\[\{ who: counter, html:/, 'the anchor’s reminder stays above the count on the help’s last page');
   assert.match(UI_SRC, /if \(warrior && save\.settings\.readAloud && 'speechSynthesis' in root\) later\(rc, wSpeechMs\(heard\) \+ 300\);/, 'the clock: at the latest when the question would have been said');
   // what Read to me's button says on the sand's last page and on 10 × 10's Next page: what is there
-  assert.match(UI_SRC, /if \(warrior\) saying\(told\);/);
-  assert.match(UI_SRC, /if \(warrior\) saying\(lines\.map\(function \(l\) \{ return \{ text: l\.text, who: l\.who \}; \}\)\);/);
+  // (every lesson's page, since the final review's L9: a chapter's and the Hollow's too)
+  assert.match(UI_SRC, /\n        saying\(told\);/);
+  assert.match(UI_SRC, /\n          saying\(lines\.map\(function \(l\) \{ return \{ text: l\.text, who: l\.who, variant: l\.variant \}; \}\)\);/);
 });
 
 test('the sitting’s screen left open past its two hours (a question, the halfway page, an opening page): it never takes another answer into the sitting; seen again, or a page turned, it goes to the hub, whose next tap sets it aside and starts afresh', () => {
@@ -371,9 +372,20 @@ test('the page’s guards in a sitting: the keypad brought into view after go()�
   // (and a Training Hollow round picked up, drawn inside go('hollow'), under the Counts' waiting line: a
   // phone, or an iPad with Bigger text, had the keypad's bottom row below the screen's edge; only for a cat
   // with Warrior Counts data, so the Hollow of chapters 1 to 8 is as it was, and only when it is below)
-  assert.match(UI_SRC, /if \(warrior \|\| \(o\.mode === 'hollow' && cat && cat\.warrior\)\) later\(function \(\) \{\n        var kb2 = pad\.getBoundingClientRect\(\)\.bottom, vh2 = root\.innerHeight \|\| 0;\n        if \(vh2 && kb2 > vh2\) root\.scrollBy\(0, kb2 - vh2 \+ 8\);\n      \}, 0\);/);
+  // (and a chapter's lesson picked up, drawn inside go('frame'), under the waiting line or not (final review K5; L8: so
+  // are chapters 1 to 9's, on purpose: a resumed lesson at 768 x 1024 had the keypad's last row 7px below the screen))
+  assert.match(UI_SRC, /if \(warrior \|\| o\.mode === 'chapter' \|\| \(o\.mode === 'hollow' && cat && cat\.warrior\)\) later\(function \(\) \{\n        var kb2 = pad\.getBoundingClientRect\(\)\.bottom, vh2 = root\.innerHeight \|\| 0;\n        if \(vh2 && kb2 > vh2\) root\.scrollBy\(0, kb2 - vh2 \+ 8\);\n      \}, 0\);/);
   assert.match(UI_SRC, /def: def, state: st, mode: 'hollow',\n      \/\/ \(a round picked up says nothing first, but the Warrior Counts' waiting line when a sitting is paused\)/, 'the Hollow’s rounds run as mode “hollow”');
-  assert.match(UI_SRC, /def: def, state: st, intro: intro, mode: 'chapter',/, 'a chapter’s lesson is mode “chapter”: never re-checked, as at HEAD');
+  assert.match(UI_SRC, /def: def, state: st, intro: intro, mode: 'chapter', waitLine: wWait,/, 'a chapter’s lesson is mode “chapter”, with the waiting line passed in');
+  // what a lesson's page says for Read to me's button (PC.debug.speech): the lines over the question and the question, set
+  // after go() (final review L9, L11): a chapter's lesson once said the frame's old lines, or nothing when picked up
+  assert.match(UI_SRC, /saying\(warrior \? heard : heard\.concat\(\[\{ text: E\.counts\.ask\(def, q\) \}\]\)\);/);
+  assert.match(UI_SRC, /say\(line \? \[\{ who: teacher, text: line \}\] : \[\]\);\n        saying\(line \? \[\{ text: line, who: teacher \}\] : \[\]\);/);
+  assert.doesNotMatch(UI_SRC, /if \(warrior\) saying\(/, 'every lesson page sets what it says');
+  // the waiting line read first (final review L10): with Read to me off, the first question's clock starts again once the
+  // line would have been read, so a right answer there is never slow for the line's sake
+  assert.match(UI_SRC, /if \(waitFirst && o\.waitLine && !save\.settings\.readAloud\) later\(function \(\) \{ restartClock\(asked\); \}, wReadMs\(o\.waitLine, false\)\);/);
+  assert.match(UI_SRC, /var lines = \[\], waitFirst = first;/);
   assert.match(UI_SRC, /if \(now\(\) - renderedAt < UI_GUARD_MS \|\| \(view\.name === 'warrior' && tappedEarly\(e, UI_GUARD_MS\)\)\) \{ e\.stopPropagation\(\); e\.preventDefault\(\); \}/, 'the screen’s guard, by the tap’s own time on the Counts’ pages');
   assert.match(UI_SRC, /var guard = function \(fn\) \{ return function \(e\) \{ if \(now\(\) - renderedAt < 280 \|\| tappedEarly\(e, 280\)\) return; fn\(\); \}; \};/);
   assert.match(UI_SRC, /renderedAt = now\(\); renderedPerf = perfNow\(\);/);
@@ -590,6 +602,38 @@ test('the Hollow with a round in progress and a sitting paused: the round picks 
   assert.equal(E.hollowLines(plain, S, { now: t }).waiting, undefined);
 });
 
+/* Chapter 10's review (the reread after a paused sitting): a chapter read again is practice (section 4), so one answer in
+ * any of its lessons ("Count them again", or a lesson she skipped the first time) sets a paused sitting aside. The Hollow
+ * warns her first; a chapter's counted page did not, and she could lose 40 answers without a word. Claude's call under
+ * decision 46 (README, 'Chapter 10 as built'): the page warns as the Hollow does, with the Hollow's own condition and words. */
+test('a chapter’s lesson while a sitting waits: Tallyheart’s waiting line over its first question (the Hollow’s condition and words, the last line before the question), said with it, before any answer; a stale sitting, or a cat with no Counts data, counts as she always did', () => {
+  const c = catAfter10();
+  const t = Date.UTC(2026, 10, 9, 15);
+  const part = sitting(c, t, null, 40);
+  assert.equal(part.asked.length, 40);
+  // waiting: the Hollow's line, which the chapter's lesson opens on too
+  const H = E.hollowLines(c, S, { now: part.t + 60000 });
+  assert.equal(H.waiting, E.WARRIOR_WAITING);
+  // she counts in chapter 10 read again: one answer, and the sitting is set aside (practice), so the line goes
+  const L = E.chapterLesson(c, S.ch10, 'ch10-eights', part.t + 120000, E.chapters(S));
+  const q = E.counts.question(L.state);
+  E.logAnswer(c, E.counts.answer(L.state, L.def, q.a * q.b, 2500, part.t + 130000).entry);
+  assert.equal(E.warriorState(c, S, part.t + 140000).stale, 'practice');
+  assert.equal(E.hollowLines(c, S, { now: part.t + 140000 }).waiting, undefined, 'after it, the lesson as it always was');
+  // a cat with no `warrior` data: nothing
+  assert.equal(E.hollowLines(E.blankCat({ now: 1 }), S, { now: t }).waiting, undefined);
+  // the page: startChapterLesson (both “Count them again” and a first “Let’s count!” start the lesson through it) adds her
+  // line after the frame's own intro, as the Hollow's picked-up round opens on it; runLesson letters and says the intro
+  // over the first question only (`first`), so once
+  const fn = UI_SRC.slice(UI_SRC.indexOf('  function startChapterLesson('), UI_SRC.indexOf('\n  }\n', UI_SRC.indexOf('  function startChapterLesson(')));
+  assert.match(fn, /var wWait = cat\.warrior \? E\.hollowLines\(cat, stories\(\), \{ now: now\(\) \}\)\.waiting : null;\n    if \(wWait\) intro = \(intro \|\| \[\]\)\.concat\(\[\{ who: 'tallyheart', text: wWait \}\]\);\n/);
+  assert.ok(fn.indexOf('var wWait') < fn.indexOf('runLesson({'), 'before the lesson runs');
+  assert.match(UI_SRC, /\$\('againBtn'\)\.addEventListener\('click', function \(\) \{ startChapterLesson\(f, id, false\); \}\);/);
+  assert.match(UI_SRC, /nextBtn\('Let’s count!', function \(\) \{ startChapterLesson\(f, id, false\); \}\);/);
+  assert.match(UI_SRC, /if \(first && o\.intro && o\.intro\.length\) lines = o\.intro\.slice\(\);/, 'the intro over the first question only');
+  assert.doesNotMatch(UI_SRC, /class="wwait"/, 'nothing added to the counted page itself (with Aa it ran Back and Next under a 1080 x 720 screen)');
+});
+
 test('the not-yet’s “Back to the Training Hollow” picks the round up first; the tricky greeting waits for the Hollow page after it (its reward’s “Another round” too), once', () => {
   assert.match(UI_SRC, /var round = !!E\.hollowRound\(cat\);\n    var RP = wResult\(PC\.warrior, R, \{\n      quiet: warriorQuietPass\(\), ceremony: !!ceremony, hollowRound: round, countWords: E\.countWords/);
   assert.match(UI_SRC, /hollow: function \(\) \{ wTrickyDue = round; go\('hollow', \{ from: 'hub' \}\); \}/);
@@ -655,6 +699,16 @@ test('the grown-ups corner’s Warrior Counts: not open yet; open, not sat; then
   assert.equal((W1.attempts[0].match(/\(typed \d+\)/g) || []).length, 1, 'a miss that is not a slip, unmarked');
   assert.match(W1.attempts[1], /^#2, \d{4}-\d\d-\d\d: set aside after 9 of 55 answered \(9 right\): other Counts were practiced in between; never counted as a not-yet$/);
   assert.match(W1.sitting, /^a sitting in progress: 0 of 55 answered/);
+  // a sitting gone stale: the corner says it starts fresh next time, and why, in the attempt line's words (never "in progress")
+  const c2 = catAfter10(), p2 = sitting(c2, Date.UTC(2026, 10, 10, 15), null, 40);
+  const L2 = E.chapterLesson(c2, S.ch10, 'ch10-eights', p2.t + 60000, E.chapters(S)), q2 = E.counts.question(L2.state);
+  E.logAnswer(c2, E.counts.answer(L2.state, L2.def, q2.a * q2.b, 2500, p2.t + 70000).entry);
+  const st2 = E.warriorState(c2, S, p2.t + 80000).stale;
+  assert.equal(st2, 'practice');
+  assert.equal(U.corner(c2, Object.assign({ open: true, stale: st2 }, opts)).sitting, 'a sitting left at 40 of 55 answered: it starts fresh next time (other Counts were practiced in between)');
+  assert.equal(U.corner(c2, Object.assign({ open: true, stale: 'late' }, opts)).sitting, 'a sitting left at 40 of 55 answered: it starts fresh next time (two hours went by)');
+  assert.match(U.corner(c2, Object.assign({ open: true, stale: null }, opts)).sitting, /^a sitting in progress: 40 of 55 answered/);
+  assert.match(UI_SRC, /stale: ws \? ws\.stale : null,/, 'the page passes E.warriorState’s stale to the corner');
   [W1.line].concat(W1.attempts, [W1.sitting]).forEach(l => assert.doesNotMatch(l, /\b(she|her|he|him|his)\b/i, l));
   // a slip is the start of the right answer: "2" for 20, "5" for 56; never the whole of it, never another number
   assert.deepEqual([U.slip(4, 5, 2), U.slip(7, 8, 5), U.slip(7, 8, 56), U.slip(7, 8, 6), U.slip(10, 10, 10), U.slip(3, 4, null)], [true, true, false, false, true, false]);

@@ -174,24 +174,100 @@ test('her Case File: no word broken inside (the middle column at least 14em wher
   little.forEach((r) => assert.doesNotMatch(r.body, /sticky|position|min-height/));
 });
 
-test('the Training Hollow with nine Counts: on an iPad held sideways up to 860px tall its Counts are a little lower and closer (the 8s and My nest were under a 1080 x 720 screen), with Aa never under its 54px; nothing but the Hollow’s Counts changes', () => {
+/* Chapter 10 (docs/chapters/10-the-gathering.spec.md, section 6, "The Training Hollow with ten Counts"): its lesson adds
+ * the 7s, the tenth Count, last ("Clutches of seven · the 7s"), and with the polish release's rules the 7s' name wrapped and
+ * My nest ran under a 1080 x 720 screen (78px; with Aa 34), 1080 x 700 and 1024 x 768. The polish release's blocks stand as
+ * they were; chapter 10's three blocks come after them (worded "screen and", so no query here is looked up twice): beside the
+ * picture, up to 860px tall, a wider column, every Count with the paw's room on both sides (a paw costs no line, glowing or
+ * not), the buttons 50px (54px with Aa) and closer, My nest as tall; upright, the paw's room with Aa. Measured in WebKit at
+ * 1080 x 720, 1080 x 700, 1024 x 768, 1180 x 820, 820 x 1180, 768 x 1024 and 390 x 844, Aa off and on, nine and ten Counts
+ * (build-engine). The test passes on the stub (nine Counts) and with chapter 10's sets (ten, the 7s last). */
+test('the Training Hollow with nine or ten Counts: on an iPad held sideways up to 860px tall its Counts are lower and closer, and every name keeps its line (the 7s and My nest were under a 1080 x 720 screen), with Aa never under its 54px, nor 48px without; a paw costs no line; nothing but the Hollow’s Counts changes', () => {
   const sw = blocksOf('@media (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 860px)');
   const short = blocksOf('@media (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 719px)');
   const big = blocksOf('@media (orientation: portrait), (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 860px)');
   assert.equal(sw.length, 1); assert.equal(big.length, 1);
+  // the polish release's rules, as they were
   assert.deepEqual(sw[0].map((r) => [r.sel.join(','), r.body]), [
     ['.frame[data-kind="hollow"] .counts-pick', 'gap:8px'],
     ['.frame[data-kind="hollow"] .counts-pick .btn.big', 'min-height:56px;padding-top:.2em;padding-bottom:.2em']]);
-  // under 720px tall (Safari with its tab bar on a 10.2-inch iPad, 1080 x 700) a little closer still
   const sh = short.find((b) => b.some((r) => r.sel.some((s) => s.includes('hollow'))));
   assert.deepEqual(sh.map((r) => [r.sel.join(','), r.body]), [['.frame[data-kind="hollow"] .counts-pick', 'gap:6px']]);
   assert.deepEqual(big[0].map((r) => [r.sel.join(','), r.body]), [
     ['html.big .frame[data-kind="hollow"] .counts-pick', 'gap:6px'],
     ['html.big .frame[data-kind="hollow"] .counts-pick .btn.big', 'min-height:54px;padding:.12em .6em;line-height:1.1']]);
+  // chapter 10's, after them
+  const SW10 = '@media screen and (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 860px)';
+  const SH10 = '@media screen and (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 719px)';
+  const UP10 = '@media screen and (orientation: portrait), screen and (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 860px)';
+  const [sw10] = blocksOf(SW10), [sh10] = blocksOf(SH10), [up10] = blocksOf(UP10);
+  const polish = html.indexOf('@media (orientation: portrait), (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 860px){');
+  [SW10, SH10, UP10].forEach((q) => { assert.equal(blocksOf(q).length, 1, q); assert.ok(html.indexOf(q + '{') > polish, q + ': after the polish release’s'); });
+  assert.deepEqual(sw10.map((r) => [r.sel.join(','), r.body]), [
+    ['.frame[data-kind="hollow"]', 'grid-template-columns:minmax(410px, .7fr) minmax(0, 1fr)'],
+    ['.frame[data-kind="hollow"] .interact', 'gap:8px'],
+    ['.frame[data-kind="hollow"] .counts-pick', 'grid-template-columns:minmax(0, 1fr);gap:6px'],
+    ['.frame[data-kind="hollow"] .counts-pick .btn.big', 'min-height:50px;padding:.1em 1.45em'],
+    ['.frame[data-kind="hollow"] #nestBtn', 'min-height:50px;padding-top:.1em;padding-bottom:.1em'],
+    ['html.big .frame[data-kind="hollow"] .interact', 'gap:6px'],
+    ['html.big .frame[data-kind="hollow"] .counts-pick', 'gap:4px'],
+    ['html.big .frame[data-kind="hollow"] #nestBtn', 'min-height:54px']]);
+  assert.deepEqual(sh10.map((r) => [r.sel.join(','), r.body]), [
+    ['.frame[data-kind="hollow"] .interact', 'gap:6px'],
+    ['html.big .frame[data-kind="hollow"] .interact', 'gap:4px'],
+    ['html.big .frame[data-kind="hollow"] .counts-pick', 'gap:3px']]);
+  assert.deepEqual(up10.map((r) => [r.sel.join(','), r.body]), [['html.big .frame[data-kind="hollow"] .counts-pick .btn.big', 'min-height:54px;padding:.08em 1.3em']]);
+  // every one of them the Hollow's alone; no button under 48px, nor 54px with Aa; nothing sticky
+  sw10.concat(sh10, up10).forEach((r) => r.sel.forEach((s) => {
+    assert.match(s, /^(html\.big )?\.frame\[data-kind="hollow"\]( |$)/, s);
+    const mh = /min-height:(\d+)px/.exec(r.body);
+    if (mh) assert.ok(+mh[1] >= (s.startsWith('html.big') ? 54 : 48), s + ': ' + mh[1] + 'px');
+    assert.doesNotMatch(r.body, /sticky|position/);
+  }));
+  // a paw costs no line: every Count has the paw's room. Without Aa the paw (.3em in, 1.1em wide) inside the 1.45em
+  // padding; with Aa every Count's padding is the paw's own (the Warrior Counts' rule, which stays as it was)
+  const paw = /\.counts-pick \.btn \.trickypaw\{position:absolute;left:\.3em;top:50%;width:1\.1em;/.test(html), pawAa = html.includes('html.big .frame[data-kind="hollow"] .counts-pick .btn.big:has(.trickypaw){padding-left:1.3em}');
+  assert.ok(paw && pawAa, 'the Warrior Counts’ paw rules');
+  assert.ok(0.3 + 1.1 < 1.45);
   // the Hollow is the only page with a list of Counts, and its frame is `hollow`
   assert.match(ui, /scr\.innerHTML = frameShell\('hollow', 'hollow'\);/);
   assert.equal((ui.match(/class="counts-pick"/g) || []).length, 1);
-  // the list it holds: nine Counts once chapter 9 is finished (each Count's own set, in the order taught)
+  assert.equal((ui.match(/id="nestBtn"/g) || []).length, 3, 'My nest: the Hollow’s list, its one Count, its reward page');
+  // the list it holds: nine Counts once chapter 9 is finished; ten once chapter 10's 7s are in, the 7s last (each Count's own
+  // set, in the order taught). On the orchestrator's stub (no Counts) nine; with the story builder's chapter, ten
   const E = PC.engine, sets = E.countSets(E.chapters(Object.keys(PC.story).sort().map((k) => PC.story[k])));
-  assert.deepEqual(sets.map((c) => c.table), [1, 2, 5, 10, 9, 3, 6, 4, 8]);
+  const ten = !!(PC.story.ch10 && PC.story.ch10.counts && PC.story.ch10.counts['ch10-sevens']);
+  assert.deepEqual(sets.map((c) => c.table), ten ? [1, 2, 5, 10, 9, 3, 6, 4, 8, 7] : [1, 2, 5, 10, 9, 3, 6, 4, 8]);
+  if (ten) assert.equal(sets[9].setId, 'ch10-sevens');
+});
+
+/* Chapter 10's review (the Hollow for live players): the wider column chapter 10 gave ten names made the picture too
+ * narrow for Tallyheart's line about glowing marks on a 1024-wide iPad held sideways, Aa off, so a chapter 5 to 9 cat's
+ * Counts and My nest went under the screen (up to 215px at 1024 x 700, every mark glowing; live kept them on it); and
+ * upright with Aa the paw's padding wrapped names no paw can reach (the paw comes only with ten Counts). Two blocks at
+ * the sheet's end give a list of nine or fewer its room back: 370px beside the picture (Aa off, 1060px wide or less),
+ * the polish release's .6em padding upright with Aa. A ten-Count list is untouched by both (measured in WebKit,
+ * hollow-live/fixfinal: every ten-Count run box for box as before; no chapter 1 to 9 case worse than live). */
+test('the Hollow with nine Counts or fewer gets live’s room back beside the picture (1024-wide sideways, Aa off) and its padding upright with Aa; ten Counts as chapter 10 lays them', () => {
+  const NINE_SW = '@media screen and (orientation: landscape) and (min-width: 700px) and (max-width: 1060px) and (min-height: 501px) and (max-height: 860px)';
+  const NINE_UP = '@media screen and (orientation: portrait)';
+  const sw = html.indexOf(NINE_SW + '{'), up = html.indexOf(NINE_UP + '{\n  html.big .frame[data-kind="hollow"]');
+  assert.equal(html.split(NINE_SW + '{').length, 2, 'once');
+  assert.ok(sw > html.indexOf('@media screen and (orientation: portrait), screen and (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 860px){'), 'after chapter 10’s Hollow blocks');
+  assert.ok(up > sw && up < html.indexOf('</style>'), 'the upright block after it, at the sheet’s end');
+  assert.deepEqual(rulesAt(sw).map((r) => [r.sel.join(','), r.body]), [
+    ['html:not(.big) .frame[data-kind="hollow"]:not(:has(.counts-pick > .btn:nth-child(10)))', 'grid-template-columns:370px minmax(0, 1fr)']]);
+  assert.deepEqual(rulesAt(up).map((r) => [r.sel.join(','), r.body]), [
+    ['html.big .frame[data-kind="hollow"] .counts-pick:not(:has(> .btn:nth-child(10))) .btn.big', 'padding:.12em .6em']]);
+  // (the final review's L0: 1134px wide or more held sideways, Aa off, nine or fewer get live's own column back, so a chapter 1
+  // to 9 player's picture and lettering at 1180 x 820 and 1194 x 834 are live's box for box; measured in WebKit, final-regress)
+  const WIDE_SW = '@media screen and (orientation: landscape) and (min-width: 1134px) and (min-height: 501px) and (max-height: 860px)';
+  const wd = html.indexOf(WIDE_SW + '{');
+  assert.equal(html.split(WIDE_SW + '{').length, 2, 'once');
+  assert.ok(wd > sw && wd < up, 'after the 1060 block');
+  assert.deepEqual(rulesAt(wd).map((r) => [r.sel.join(','), r.body]), [
+    ['html:not(.big) .frame[data-kind="hollow"]:not(:has(.counts-pick > .btn:nth-child(10)))', 'grid-template-columns:minmax(300px, 0.5fr) minmax(0, 1fr)']]);
+  assert.match(html, /\.frame\{display:grid;grid-template-columns:minmax\(300px, 0\.5fr\) minmax\(0, 1fr\);/, 'live’s column: every frame’s own');
+  // nothing sticky, nothing outside the Hollow, no height under the Hollow's floors
+  rulesAt(sw).concat(rulesAt(up), rulesAt(wd)).forEach((r) => { assert.match(r.sel[0], /\.frame\[data-kind="hollow"\]/); assert.doesNotMatch(r.body, /sticky|position|min-height/); });
 });

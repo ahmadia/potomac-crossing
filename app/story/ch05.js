@@ -2403,16 +2403,19 @@
       // `ch5Roof`, never `foundSquall` (chapter 4’s page has the other half of the rule). A tom's page
       // never has two different he's in one sentence (the otter and him, Puddle and him): the cat is
       // named there, or Puddle is.
+      // (chapter 10: a cat who meets Puddle only under the Moon Ferry, `ch10Puddle`, found him there, not here: the two
+      // lines that read `foundPuddle` leave her out, the forepaw line's “found today” in this page only, the frames
+      // keeping ANY; docs/chapters/10-the-gathering.spec.md, section 5. No live save holds `ch10Puddle`.)
       recap: [
         { text: 'On {name}paw’s fourth morning, the old tom was guarding the pile with his eyes shut and a snail on his ear, and four more pieces were gone: sixteen in four nights.' },
         { text: 'Tallyheart taught {name}paw {their} fifth Count, nine lives: a ten with one claw tucked in.' },
         { when: { ch5Roof: true }, text: 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who told {them} about two skinny shapes that go to the tracks every night.' },
         { text: '{name}paw sat through the Roar, the apprentices’ courage test, on the otters’ raft, and did not move one of nine claws. Tallyheart counted.' },
-        { when: { foundPuddle: true }, text: 'Under the raft {they} found Puddle, who has four big feet and says he is a log. Puddle saw clever little paws picking up mice on the storm night.' },
+        { when: { foundPuddle: true, ch10Puddle: false }, text: 'Under the raft {they} found Puddle, who has four big feet and says he is a log. Puddle saw clever little paws picking up mice on the storm night.' },
         { text: 'The old ferry otter said the fox had told him the dragon story, twice, and showed {name}paw a tuft of thin brown fur.' },
         { text: 'Patience the heron said there was no moon on the storm night, and that two small shapes crossed her mud. There were tiny prints in it. It cost eighteen fish.' },
         { when: { foundWisp: true }, text: '{name}paw sat still until a pale reed blinked. It was Wisp, who stands on one leg like a heron, and drew a fox dropping something glittering in the reeds.' },
-        { when: ANY, text: 'Under the Old Bridge, Sprinkle lit a forepaw for everyone found so far. Mama’s count is coming back.' },
+        { when: { not: { ch5Roof: false, foundWisp: false, not: { foundPuddle: true, ch10Puddle: false } } }, text: 'Under the Old Bridge, Sprinkle lit a forepaw for everyone found so far. Mama’s count is coming back.' },
         { text: 'That night, Tallyheart said every warrior has sat through the Roar. She counted through hers, very loudly.' }
       ],
       // the third and fourth of the seven dragonets’ pages: each only for a cat who has found it

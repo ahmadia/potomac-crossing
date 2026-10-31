@@ -9,6 +9,9 @@ const LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
 const CAMS = ['path', 'water', 'roof', 'slide'];
 const ANCHORS = ['path-left', 'path-right', 'water', 'bank-top', 'slope'];
 const OPTS = { plane: ['none', 'low'], roar: [true, false], light: [true, false] };
+// chapter 10 (docs/chapters/10-the-gathering.spec.md, section 4, "The riverbank by night: the walk home"): two more, both off
+// by default: `moon` (a number) and `flyer` (roof)
+const OPTS10 = { moon: 'number', flyer: [false, true] };
 const TODS = ['morning', 'day', 'sunset', 'dusk', 'night'];
 // which anchors each camera is meant to show (docs/build.md, "Art vocabulary, chapter 2")
 const SEES = {
@@ -76,8 +79,11 @@ test('vocab: riverbank lists exactly the contract names', () => {
   assert.ok(v, 'the set is registered');
   assert.deepEqual(v.cams, CAMS);
   assert.deepEqual(v.anchors.slice().sort(), ANCHORS.slice().sort());
-  assert.deepEqual(Object.keys(v.opts).sort(), Object.keys(OPTS).sort());
+  // (chapter 10: and its two options, after chapter 2's, declared as the spec declares them)
+  assert.deepEqual(Object.keys(v.opts), Object.keys(OPTS).concat(Object.keys(OPTS10)));
   for (const [k, vals] of Object.entries(OPTS)) assert.deepEqual(v.opts[k].slice().sort(), vals.slice().sort(), 'values of ' + k);
+  assert.deepEqual(v.opts.moon, 'number', 'moon: a number');
+  assert.deepEqual(v.opts.flyer, [false, true], 'flyer: off by default');
 });
 
 test('defaults: by day, no plane, no roar, the light blinking', () => {
@@ -239,4 +245,133 @@ test('every animation class the set uses is defined in PC.art.css', () => {
   for (const c of used) if (c.startsWith('pcs-') && !c.startsWith('pcs-set-') && !c.startsWith('pcs-cam-') && c !== 'pcs-panel' && c !== 'pcs-fx') {
     assert.ok(art.css.includes('.' + c + '{'), 'css defines .' + c);
   }
+});
+
+// ================================================================ chapter 10: the walk home by moonlight
+// docs/chapters/10-the-gathering.spec.md, section 4, "The riverbank by night: the walk home": options `moon` and `flyer`,
+// both off by default, so chapters 2 to 9's riverbank frames draw byte for byte. The fingerprints were recorded once from
+// the snapshot the build froze (main after the Warrior Counts' merge and the polish release, commit 5bde0c5, engine
+// '0.9.1 (the Warrior Counts, 2026-10-31)'), in a node process of its own, with the recorder's code below; no test reads
+// that tree.
+
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const { ROOT } = require('./_load.js');
+const SPEC10 = path.join(ROOT, 'docs/chapters/10-the-gathering.spec.md');
+// <fp10> (the recorder's code, as it ran on the snapshot)
+const LOOK10 = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
+const strip10 = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+const hash10 = (r) => crypto.createHash('sha1').update(strip10(r.svg) + JSON.stringify(r.keep) + JSON.stringify(r.heads)).digest('hex').slice(0, 12);
+const fpCat10 = () => { const c = PC.engine.blankCat({ id: 'fingerprint', now: 0, look: LOOK10 }); c.name = 'Pebble'; c.petname = 'Pebble'; return c; };
+function frameHash10(set, ids) {
+  const E = PC.engine, cat = fpCat10(), stories = ['ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07', 'ch08', 'ch09'].map((id) => PC.story[id]), out = {};
+  for (const id of ids) for (const [fid, f] of Object.entries(PC.story[id].frames)) {
+    if (!f.scene || f.scene.set !== set) continue;
+    out[id + ':' + fid] = hash10(art.render(E.resolveScene(f.scene, cat, stories), { look: LOOK10 }));
+  }
+  return out;
+}
+// one hash per camera: every option value chapters 2 to 9 had (and the defaults), in every light, empty and with someone at every spot
+const RB_OPTS10 = [{}, { plane: 'low' }, { roar: true }, { light: false }, { light: true }, { plane: 'low', roar: true, light: false }, { plane: 'none', roar: false }];
+const RB_FX10 = [['day'], ['morning'], ['sunset'], ['dusk'], ['night', 'stars'], ['night'], []];
+function riverbankSweep10() {
+  const info = art.sceneInfo('riverbank'), out = {}, WHO = ['player', 'tallyheart', 'riffle', 'clancat', 'otter'];
+  for (const cam of Object.keys(info.cams)) {
+    const spots = Object.keys(info.anchors[info.cams[cam].comp] || {});
+    const cast = spots.map((at, i) => ({ who: WHO[i % WHO.length], variant: 1 + (i % 3), pose: 'sit', at }));
+    const h = crypto.createHash('sha1');
+    for (const fx of RB_FX10) for (const opts of RB_OPTS10) for (const c of [[], cast]) {
+      const r = art.render({ set: 'riverbank', cam, fx, opts, cast: c }, { look: LOOK10 });
+      h.update(strip10(r.svg) + JSON.stringify(r.keep) + JSON.stringify(r.heads));
+    }
+    out[cam] = h.digest('hex').slice(0, 16);
+  }
+  return out;
+}
+// </fp10>
+const CH10_RIVERBANK_FRAMES = {
+  'ch02:f080': '4c445d95fc5c', 'ch02:f085b': '68fe539548ca', 'ch02:f086b': 'ec2c59d8d278',
+  'ch02:f087b': '8c791437d026', 'ch02:f088b': '774303b1bb2b', 'ch02:f089b': '881f83e9fef7',
+  'ch02:f090b': '644fafc239eb', 'ch02:f091b': '8634f9f6b036', 'ch02:f092b': 'd4f9df89064d',
+  'ch02:f093b': 'ab599eee7b8f', 'ch02:f094b': 'dc7df6386493', 'ch02:f095b': '14d1a8e94c87',
+  'ch02:f096b': '05b32b3275ed', 'ch02:f097b': 'ef6c70eb52d4', 'ch02:f102': '25cdfefc0a2b',
+  'ch03:f108': 'b09b1963a892', 'ch04:f077b': 'dbe76db7cd7e'
+};
+const CH10_RIVERBANK_SWEEP = {
+  'path': '85fb21cd6c215a6b', 'water': 'fa0e0d11e4aec921',
+  'roof': 'ab1c397b0c173aa3', 'slide': '7c80a07b9ac85cfd'
+};
+
+test('riverbank, chapter 10: every riverbank frame of chapters 2 to 9 draws exactly as the snapshot drew it (fingerprints)', { skip: !art.character && 'no cats.js' }, () => {
+  const now = frameHash10('riverbank', ['ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07', 'ch08', 'ch09']);
+  assert.deepEqual(Object.keys(now).sort(), Object.keys(CH10_RIVERBANK_FRAMES).sort(), 'the same frames visit the riverbank');
+  for (const [k, want] of Object.entries(CH10_RIVERBANK_FRAMES)) assert.equal(now[k], want, k + ': drawn as it was');
+});
+
+test('riverbank, chapter 10: every camera, with every option value chapters 2 to 9 had, in every light, empty and with someone at every spot, is byte for byte the snapshot\'s (neither new option set)', { skip: !art.character && 'no cats.js' }, () => {
+  assert.deepEqual(riverbankSweep10(), CH10_RIVERBANK_SWEEP, 'recorded from the snapshot');
+  // and the new options, off, draw exactly as left out
+  for (const cam of CAMS) for (const fx of [['night', 'stars'], ['day'], ['dusk']]) {
+    const plain = art.render({ set: 'riverbank', cam, fx }, { look: LOOK10 }).svg.replace(/pcs?[0-9a-z]+-/g, '');
+    for (const o of [{ flyer: false }, { moon: 0 }, { moon: false }]) assert.equal(art.render({ set: 'riverbank', cam, fx, opts: o }, { look: LOOK10 }).svg.replace(/pcs?[0-9a-z]+-/g, ''), plain, cam + ' ' + fx + ' ' + JSON.stringify(o));
+  }
+});
+
+test('riverbank, chapter 10: the spec names `moon` and `flyer`; the set declares them, off by default', () => {
+  const md = fs.readFileSync(SPEC10, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**Option `moon`** (a number: 14; `path` and `roof`)', '**Option `flyer: true`** (`roof`)', 'Chapters 2 to 9\'s riverbank frames draw as they do.'])
+    assert.ok(md.includes(want), 'the spec says: ' + want);
+  assert.deepEqual(art.sceneInfo('riverbank').defaults, { plane: 'none', roar: false, light: true }, 'no new default');
+});
+
+const rgb10 = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const lum10 = (h) => { const q = rgb10(h); return 0.3 * q[0] + 0.59 * q[1] + 0.11 * q[2]; };
+// the river's own gradient (rbwater): its stops' colours
+function waterStops(svg) {
+  const m = /<linearGradient id="[^"]*-l-rbwater"[^>]*>(.*?)<\/linearGradient>/.exec(svg);
+  return m ? (m[1].match(/stop-color="(#[0-9A-Fa-f]{6})"/g) || []).map((s) => s.slice(12, -1)) : [];
+}
+
+test('riverbank `moon` at night: the full moon over the towers (path and roof), kept clear of the lettering; under it the river silver-blue, moonlight on its ripples, never the black water of chapter 3\'s night; the path pale', () => {
+  const black = waterStops(art.render({ set: 'riverbank', cam: 'path', fx: ['night', 'stars'] }).svg);
+  assert.ok(black.length && black.some((c) => lum10(c) < 70), 'chapter 3\'s night: dark water (as shipped): ' + black.join(' '));
+  for (const fx of [['night'], ['night', 'stars']]) {
+    const r = art.render({ set: 'riverbank', cam: 'path', fx, opts: { moon: 14 } }), silver = waterStops(r.svg);
+    assert.ok(silver.length >= 3 && silver.every((c) => lum10(c) >= 120), 'silver water: ' + silver.join(' '));
+    for (const c of silver) { const q = rgb10(c); assert.ok(q[2] > q[0] && q[2] > q[1], 'silver-blue: ' + c); }
+    assert.ok(/data-art="moon" data-age="14"/.test(r.svg), 'the full moon');
+    assert.ok(/data-art="moon-path"/.test(r.svg), 'its path of light on the water');
+    const m = /<g data-art="moon"[^>]*>.*?<circle cx="([-\d.]+)" cy="([-\d.]+)"/.exec(r.svg), x = +m[1] / 16, y = +m[2] / 10;
+    assert.ok(+m[2] < 300, 'over the towers, high');
+    assert.ok(r.keep.some((k) => k.x <= x && k.x + k.w >= x && k.y <= y && k.y + k.h >= y), 'kept clear of the lettering');
+    // the path pale in the moonlight
+    const path = /<linearGradient id="[^"]*-l-rbpath"[^>]*>(.*?)<\/linearGradient>/.exec(r.svg)[1].match(/#[0-9A-Fa-f]{6}/g);
+    assert.ok(path.every((c) => lum10(c) >= 120), 'the path pale: ' + path.join(' '));
+  }
+  const roof = art.render({ set: 'riverbank', cam: 'roof', fx: ['night'], opts: { moon: 14 } });
+  assert.ok(/data-art="moon" data-age="14"/.test(roof.svg), 'roof: the moon');
+  // by day, no moon is drawn (it is a night's and a dusk's)
+  assert.ok(!/data-art="moon"/.test(art.render({ set: 'riverbank', cam: 'path', fx: ['day'], opts: { moon: 14 } }).svg), 'none by day');
+  // the cast keeps the night's light: the same tint as without the moon
+  const tint = (svg) => (/<filter id="[^"]*-f-tint"[^>]*>(.*?)<\/filter>/.exec(svg) || [])[1];
+  const c = [{ who: 'player', at: 'path-left' }];
+  assert.equal(tint(art.render({ set: 'riverbank', cam: 'path', fx: ['night'], opts: { moon: 14 }, cast: c }, { look: LOOK }).svg), tint(art.render({ set: 'riverbank', cam: 'path', fx: ['night'], cast: c }, { look: LOOK }).svg), 'the night\'s tint on the cast');
+});
+
+test('riverbank `flyer` (roof): a small winged shape flying off upriver across the sky by the red light, slate-dark with a pale rim, wings out, a tiny ring of hiccup mist behind it; with `roar`, the roar\'s lines first; nowhere else', () => {
+  const quiet = art.render({ set: 'riverbank', cam: 'roof', fx: ['night'], opts: { moon: 14 } }).svg;
+  assert.ok(!/data-art="flyer"/.test(quiet), 'none by default');
+  const svg = art.render({ set: 'riverbank', cam: 'roof', fx: ['night'], opts: { moon: 14, roar: true, flyer: true } }).svg, F = /<g data-art="flyer" data-box="([^"]+)">/.exec(svg);
+  assert.ok(F, 'the flyer');
+  const b = F[1].split(' ').map(Number), light = [900, 92];
+  assert.ok(b[2] - b[0] < 220 && b[3] - b[1] < 120, 'small: ' + b);
+  assert.ok(b[0] > light[0] - 60 && Math.abs((b[1] + b[3]) / 2 - light[1]) < 160, 'by the red light, flying off (to the right, upriver)');
+  assert.ok(b[3] < 400, 'across the sky');
+  assert.ok(svg.indexOf('data-art="flyer"') > svg.lastIndexOf('pcs-pulse'), 'the roar first, then the flyer');
+  const f = svg.slice(svg.indexOf('data-art="flyer"'), svg.indexOf('</g>', svg.indexOf('data-art="flyer"')));
+  assert.ok(/fill="#55617A"|fill="#3C465C"/.test(f), 'slate-dark');
+  assert.ok(/stroke="#DCE5F6"/.test(f), 'a pale rim on the moonlit sky');
+  assert.ok(/<ellipse[^>]*fill="none" stroke="#EEF3FF"/.test(f), 'a ring of hiccup mist');
+  for (const cam of ['path', 'water', 'slide']) assert.equal(art.render({ set: 'riverbank', cam, fx: ['night'], opts: { flyer: true } }).svg.replace(/pcs?[0-9a-z]+-/g, ''), art.render({ set: 'riverbank', cam, fx: ['night'] }).svg.replace(/pcs?[0-9a-z]+-/g, ''), cam + ': the roof\'s only');
 });

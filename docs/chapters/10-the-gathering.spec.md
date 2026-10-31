@@ -136,7 +136,7 @@ var WAY56 = 'Twenty and twenty make forty. Eight and eight make sixteen. Forty a
 
 Lines use the story's typographic quotes and apostrophes. A balloon carries the spoken words only (chapter 9's rule): a quote the story
 splits round "says X" is one balloon, its comma before the tag a full stop when the quote resumes with a new sentence (“Eighteen guards.
-I was one. Awake, mostly.”). Engine lines that reach her and that no set words: **a retry** opens with “Here’s that one again.” (a
+Not ONE of them with a pinecone.”). Engine lines that reach her and that no set words: **a retry** opens with “Here’s that one again.” (a
 borrowed filler's retry, in a set that borrows in its own voice, opens with its `fillIntro` again); **a right retry** of a fact with no
 `rightAgain` gets “There it is. You remembered that one.” then “Yes! That one came back, and you knew it.”; **a generic question** where
 a question has no words of its own (set by set, below).
@@ -294,7 +294,7 @@ water-worry cat), the confession's ask, the roll call's seven forepaws (5 to 35)
     { a: 3, b: 10, table: 10, prompt: 'Both forepaws! Three cats.', retryPrompt: true,
       right: [{ who: 'riffle', text: 'Thirty! That’s a LOT of claws.' }], rightAgain: true },
     { a: 6, b: 3, table: 3, prompt: 'Patrols! Six patrols.', retryPrompt: true,
-      right: [{ who: 'grizzled', text: 'Eighteen guards. I was one. Awake, mostly.' }], rightAgain: true },
+      right: [{ who: 'grizzled', text: 'Eighteen guards. Not ONE of them with a pinecone.' }], rightAgain: true },
     { a: 4, b: 6, table: 6, picture: { kind: 'cheeks' }, prompt: 'Whiskers! Four cheeks.', retryPrompt: true,
       right: [{ who: 'glintstar', text: 'Twenty-four. I remember that count.' }], rightAgain: true },
     { a: 9, b: 4, table: 4, prompt: 'Paws! Nine cats.', retryPrompt: true,
@@ -346,13 +346,14 @@ water-worry cat), the confession's ask, the roll call's seven forepaws (5 to 35)
   You remembered that one.” or “Yes! That one came back, and you knew it.”: a filler's, as the story's note allows, “a right last answer is
   always cheered but a filler’s”); 39 on a last miss of a fact missed three times. Never a wall; no clock.
 
-### `ch10-sixty`, the sixty (one question, at the case; Counts frame default intro)
+### `ch10-sixty`, the sixty (one question, at the case; Counts frame `intro: false`)
 
 ```js
 'ch10-sixty': {
   table: 10, thing: 'fish', things: 'fish', unit: 'night', units: 'nights', teacher: 'tallyheart', ask: '{a} × {b}',
   picture: { kind: 'marks' },
-  facts: [{ a: 10, b: 6, prompt: [], retryPrompt: [{ who: 'player', text: 'And a dragon who eats ten fish a meal, for six nights?' }],
+  facts: [{ a: 10, b: 6, prompt: [{ who: 'player', text: 'And a dragon who eats ten fish a meal, for six nights?' }],
+    retryPrompt: [{ who: 'player', text: 'And a dragon who eats ten fish a meal, for six nights?' }],
     right: [{ who: 'player', text: 'SIXTY!' }, { who: 'glintstar', text: 'A good count.' }], rightAgain: true }],
   help: 'picture', helpIntro: HOP, helpIntroFar: HOP_FAR,
   fillFrom: 'ch04-tens', fillOrder: 'easiest', fillVoice: 'borrower', fillPicture: 'borrower', fillIntro: 'An easy one.',
@@ -361,12 +362,12 @@ water-worry cat), the confession's ask, the roll call's seven forepaws (5 to 35)
 ```
 
 - **Said, then typed**: the Counts frame's two balloons (Glintstar's, by `ch10PickBig`, and our cat's “Four a night, for six nights:
-  twenty-four. And a dragon who eats ten fish a meal, for six nights?”) are said again over the question (the default intro: one or two
-  balloons), and the fact's own prompt is empty (`prompt: []`: no more words), so the keypad page shows her question and `10 × 6 = ?`. Read
-  under her own question, it is never timed (`E.readFirst`: a fact with its own `prompt`). Its retry: “Here’s that one again.” (Tallyheart)
-  and her question again (`retryPrompt`: the story's "the sixty again with its own words"). The empty prompt is a first use: a sixty
-  resumed mid-question (the page closed on it) has no intro to say, so it asks `10 × 6 = ?` over the six nights with no words (section
-  7, item 17: known, kept).
+  twenty-four. And a dragon who eats ten fish a meal, for six nights?”) are not said again over the question (`counts: { intro: false }`,
+  as chapter 5's bill: said again, they made the page tall enough to scroll on a 1080 x 720 iPad with Aa, and Glintstar's first line went
+  under the top bar: the final review's K2). The fact's own prompt is her last sentence, “And a dragon who eats ten fish a meal, for six
+  nights?”, so the keypad page shows her question and `10 × 6 = ?`. Read under her own question, it is never timed (`E.readFirst`: a fact
+  with its own `prompt`). Its retry: “Here’s that one again.” (Tallyheart) and her question again (`retryPrompt`: the story's "the sixty
+  again with its own words"). A sixty resumed mid-question (the page closed on it) is asked with the same words (section 7, item 17).
 - **Picture**: chapter 7's six nights of ten marks (`kind: 'marks'`, on the 10s), unlit. A miss (`help: 'picture'`, run) lights them a
   night at a time, 10 · 20 … 60, in Tallyheart's count (the story's whisper, “Ten, twenty…”, is the count itself: the help's opening has no
   numbers, since the set lends a one-night filler: chapter 9's filler rule), “Close. Let’s hop it together.” or “Let’s hop it together.”,
@@ -476,8 +477,8 @@ water-worry cat), the confession's ask, the roll call's seven forepaws (5 to 35)
 Two new places (the brief: Gathering Island and the Moon Ferry, two build windows) and the new cast the brief names. **New** marks what
 the art must add; every option is off by default and every camera and anchor additional, so chapters 1 to 9 draw byte-identically for
 every live save (section 7, item 3: the proof). **Never dark**: the Moon Ferry's river and the island are moonlit, bright silver and
-silver-blue (the README rule of 2026-10-12, the brief). Times of day: `morning` in the den and the Hollow; `dusk` at the Moon Ferry's
-boarding; `night` everywhere after (the full moon, `moon: 14`, wherever the sky shows). **Depth**: there is no depth rule in the art
+silver-blue (the README rule of 2026-10-12, the brief). Times of day: `morning` in the den and the Hollow; `dusk` as the Clan comes
+down to the Moon Ferry; `night` from the moonrise and the boarding on, everywhere after (the full moon, `moon: 14`, wherever the sky shows). **Depth**: there is no depth rule in the art
 (the hotfix reorders casts and adds none: `drawCast` paints each z layer in cast order), so the story builder lists every crowded cast
 back to front, far cats first, as chapter 4's border frames do and as the hotfix did for chapters 6 to 8: where two cats in the same
 z layer meet (the farther cat's body over the nearer cat's head), the farther is listed first, and the story test checks it (section 5).
@@ -498,8 +499,8 @@ this rule and the leader-first rule for balloons (section 5, "Speakers") never d
 #### The new set, `ferry` (`app/art/sets/ferry.js`)
 
 `PC.art.defineSet('ferry', { label: 'the otters’ Moon Ferry: a line of log rafts on the moonlit river', tod: 'night', … })`, drawn with
-`PC.art.kit` in the 1600 × 1000 world: **the otters' long line of rafts**, logs lashed with reeds, the front raft (the ferry itself)
-biggest and nearest, more rafts tied behind it in a line; the river **silver-blue under the full moon, bright and clear, never black**:
+`PC.art.kit` in the 1600 × 1000 world: **the otters' long line of rafts**, logs lashed with reeds, the front raft (the ferry itself,
+chapter 5's otters' ferry raft: **four logs** on every camera, as Puddle's riddle counts them) biggest and nearest, more rafts tied behind it in a line; the river **silver-blue under the full moon, bright and clear, never black**:
 moonlight on every ripple, the far banks dark green but lit, the glass towers far off downriver. Drawn at `dusk` (the boarding at the
 Crossing: rose and lilac light, the moon just up, round, over the water) and at `night` (everything after). The raft is never damaged and
 never tips; nothing in the water is dark under a cat (chapter 5's rule). **No otter is drawn by the set**: every otter is cast.
@@ -510,7 +511,7 @@ never tips; nothing in the water is dark under a cat (chapter 5's rule). **No ot
 | `deck` | aboard the front raft, from its back end looking forward, upriver: the logs running away from us, the Clan seated along both sides, the front end and the poler against the moonlit river, the full moon ahead and high | `seat-1` … `seat-6` (seated along the logs, three a side, the near ones bigger), `front` (our cat, mid-raft at the left, facing right), `beside` (beside `front`: Tallyheart), `pole` (standing at the front end with her pole: Granny), `back` (at the near right corner, beside the luggage: Riffle) | `moon`, `clan`, `luggage` |
 | `back` | close on the very back of the front raft: **the heap of reeds** (the luggage) taking the right half, its reeds loose and green-gold in the moonlight, a cat's height and more; the river behind | `heap` (beside the heap: Riffle), `back-1`, `back-2`, `back-3` (Tallyheart, Glintstar, Granny at the left, facing right) | `moon`, `luggage`, `puff` |
 | `low` | at cat height on the front raft's logs, close, the raft **riding low**: the water lapping right at the logs' tops, silver rings, and between two logs a gap of silver water | `gap` (in the water between two logs: Puddle's foot, or nothing; `{ air: true }`: no ground shadow, the set draws its rings), `lie` (lying flat on the logs at the gap's edge, chin over it: our cat peeking), `sit-1`, `sit-2`, `sit-3` (on the logs beside the gap: our cat, Riffle, Tallyheart; three, since all three sit on Puddle's last screen and the low raft's panels) | `moon`, `low` |
-| `under` | looking straight down into the gap between two logs: the silver water filling the panel, the logs' wet tops at the edges, the moon's reflection; **never dark**: a cat's face reflected at the top edge | `water` (in the water, centre: Puddle `eyes`, `head`, `log`, `pawup`, `foot`; `{ air: true }`), `lip` (at the top edge, looking down: our cat's head and forepaws, the rest cut by the edge, as `grove`'s `lip`; `{ elev: true }`, as grove's, so it never skews the camera's depth scale) | `moon` |
+| `under` | looking straight down into the gap between two logs: the silver water filling the panel, the logs' wet tops at the edges, the moon's reflection; **never dark**: a cat's face reflected at the top edge | `water` (in the water, centre: Puddle `eyes`, `head`, `log`, `pawup`, `foot`; `{ air: true }`), `lip` (at the top edge, looking down: our cat's head and forepaws over the water at the left log's edge, the rest of her under the log drawn again over her (a cover, cut behind her head), as `grove`'s `lip`; `{ elev: true }`, as grove's, so it never skews the camera's depth scale) | `moon` |
 | `river` | wide: the Moon Ferry gliding upriver under the full moon, the front raft with its poler and its small seated cats, the line of rafts behind; later the same raft bumping home at the Crossing's stones | `raft-1`, `raft-2` (small cats on the front raft), `pole` (Granny, small) | `moon`, `clan`, `luggage`, `home` |
 
 Options (every one off by default): **`moon`** (a number: 14, the full moon, round, wherever the sky or its reflection shows); **`clan:
@@ -555,7 +556,7 @@ moon always glowing through it, everything silver, never grey-dark); **`tail: tr
 through the mist: the mist Tap's response); **`grown: true`** (`mist`, `sky`: the other grown Mistscales as great soft grey shapes in the
 mist, gentle, no faces, no teeth or claws); **`small: 'none' | 'one' | 'some' | 'coming'`** (`case`, `mist`: small dragonet shapes in
 the mist, grey and soft, faceless: `one` one shape, `some` three or four, `coming` small shapes stepping out of the mist toward her, still
-misty: “the dragonets you found come to stand beside you”); **`rising: true`** (`sky`: the Mistscales rising into the mist and away
+misty: “Small shapes step out of the mist: the dragonets you found.”, the final review's L5: the picture's faceless shapes are never drawn beside her, so the caption no longer says so; each found one is drawn on its own goodbye); **`rising: true`** (`sky`: the Mistscales rising into the mist and away
 upriver, great soft shapes going up, a small one with them); **`zip: true`** (`sky`: one small winged shape zipping off the other way,
 toward the towers far downriver, a little ring of hiccup mist behind it); **`drawing: 'none' | 'cat'`** (`case`: a little cat scratched in
 the earth in front of `beside`, four legs, two ears and a tail: Wisp's); **`bubbles: true`** (`wide`: little bubbles rising over the otters
@@ -808,7 +809,7 @@ model: its helpers (`c`, `S`, `merge`, `fid`), frame ids in reading order (lette
   | the GroveClan elder's “And the polite one.” | `nose` (our cat, `crouch`, `kind`, `tap: 'nose'`: her head dipped) | `**Tap** to dip your head, very politely.` | `Dip your head.` |
   | “She nods to you.” | `reeds` (`island`/`wide`, `luggage: 'heap'`, `tap: 'reeds'`) | `**Tap** to pull the reeds off the luggage.` | `Pull the reeds off.` |
   | “THAT’S the dragon?” | `paw` (our cat, `walk`, `tap: 'paw'`, toward Sprinkle) | `**Tap** to sit beside her.` | `Sit beside Sprinkle.` |
-  | the third answer (the glass) | `leaf` (our cat, `crouch`, `holds: 'leaf'`, `holdAt: 'paws'`, `tap: 'leaf'`) | `**Tap** to show every Clan your glass.` | `Show every Clan your glass.` |
+  | the third answer (the glass) | `leaf` (our cat, `sit`, `holds: 'leaf'`, `holdAt: 'paws'`, `tap: 'leaf'`) | `**Tap** to show every Clan your glass.` | `Show every Clan your glass.` |
   | “Every cat on the island stands up…” | `paw` (our cat, `stand`, `tap: 'paw'`; `island`/`wide`, `crowd: 'standing'`) | `**Tap** to take a step with every Clan.` | `Take a step with every Clan.` |
   | “That’s MY mist.” | `mist` (`island`/`mist`, `mist: 'rolling'`, `tap: 'mist'`) | `**Tap** the mist.` | `Look at the mist.` |
   | “Sprinkle runs. She flaps.…” | `tail` (our cat, `sit`, `tailUp: true`, `tap: 'tail'`) | `**Tap** to cheer!` | `Cheer!` |
@@ -860,11 +861,12 @@ model: its helpers (`c`, `S`, `merge`, `fid`), frame ids in reading order (lette
 
 ### The Moon Ferry
 
-- `ferry`/`shore`, `dusk`, `{ moon: 14, clan: true }`: the Clan padding down the stones (our cat at `bank-1`, Tallyheart at `bank-2`),
+- `ferry`/`shore`, `dusk`, `{ moon: 14, clan: true }`: the Clan padding down the stones (our cat at `bank-1`, Tallyheart at `bank-3`, up the stones),
   Riffle at `log-1` (`hop`, `shout`), Granny at `pole` (`stand`, `holds: 'pole'`): the caption and Riffle's “The MOON FERRY! Granny’s
   steering. Everybody ON!”; then **a panel of its own** for “Your glass is with you, safe in its leaf. For proof.” (our cat `walk`,
   `holds: 'leaf'`, `holdAt: 'mouth'`).
-- The moonrise and the boarding, **a pair by `worry`**, on `shore` with the moon up (`dusk`, `{ moon: 14, clan: true }`; our cat at
+- The moonrise and the boarding, **a pair by `worry`**, on `shore` with the moon up (`night`, the final review's L1: “The river shines
+  silver-blue.”, and at dusk it was pink; `{ moon: 14, clan: true }`; our cat at
   `edge`): `{ worry: 'water' }` carries the caption, Tallyheart's “One paw at a time. I’ll count.” and the four-paw skip (section 2), with
   `else` to its twin; the twin carries the caption and the one-tap step aboard. The water twin's skip turns to **a water-only panel** on
   `deck` (`night`, our cat at `front`, Tallyheart at `beside`): “One. Two. Three. FOUR. You’re ON. Tallyheart is right beside you.”
@@ -950,15 +952,18 @@ model: its helpers (`c`, `S`, `merge`, `fid`), frame ids in reading order (lette
      “Reynard coughs.” and “A very… moony sort of dark.”
   3. Pick `ch10PickScale` on `case`: “That’s two.”, Reynard's “Well, it left a dragon SCALE by your pile! Shiny! Glittering!” (`comb`) and
      the old tom's “I SAW it!” (at `front-4`). Its answer on `case`: our cat's line by card (four `when`s), with the glass Tap. Then
-     `case` (our cat `holds: 'glass'`, held up): “Your piece of glass shines in the moonlight. Smooth. Clear. Flat.” and the old tom's
-     “Glass? I said DRAGON about GLASS?”.
-  4. “That’s three.” (Tallyheart, whisper) **on a panel of its own** (her balloon comes before the caption); then pick `ch10PickBig` on
+     `island`/`paws`, as the mist stone's close-up (our cat `crouch` at `close`, `holds: 'glass'`, `holdAt: 'paws'`, fx `night`,
+     `sparkle`): “Your piece of glass shines in the moonlight. Smooth. Clear. Flat.” alone (the final review's K1: on `case` the glass
+     was a speck at her forepaw).
+  4. On `case` (the old tom at `front-4`, `situp`, `wonder`, listed first; Tallyheart `crouch`): the old tom's “Glass? I said DRAGON
+     about GLASS?” and “That’s three.” (Tallyheart, whisper), in that order, the story's screen break kept (the screen's last line
+     moves one panel on, ahead of the next screen's first); then pick `ch10PickBig` on
      `case`: “Reynard’s tail twitches.” and “Then who else could take so much prey? Only something BIG. A great big dragon!” (`flap`).
      Its answer, **a pair by `ch10PickBig: 'stash'`** on `case`: the stash twin (`when: { ch10PickBig: 'stash' }`, `else` to the other) with
      our cat's stash line, Sloshbank's “OURS?” and *Drip.*; the other with our cat's line by the thirteen other cards. Then `case`:
      “Sprinkle holds up a forepaw. It’s as big as a heron’s foot.” / “Snip and Snatch quickly hide their tiny paws behind their backs.”
      (Sprinkle `pawup`; the weasels `hidepaws`).
-  5. The sixty: Counts frame `{ set: 'ch10-sixty' }` on `wide` (the clearing as the case's other `wide` panels draw it; Glintstar on
+  5. The sixty: Counts frame `{ set: 'ch10-sixty', intro: false }` on `wide` (the clearing as the case's other `wide` panels draw it; Glintstar on
      her root, `root-2`; our cat at `centre`; Sprinkle at `beside`, as on every `case` panel round it; **Tallyheart at `crowd-1`**, the
      front of CrystalClan's seats, `kind`: she letters the retry's opening, the help, the count and the fillers, and every voice of a set
      is in its Counts frame's picture, chapters 7 to 9's `castOf(id, teacher)` test; Reynard, Snip and Snatch at `edge`, `edge-2`,
@@ -980,8 +985,9 @@ model: its helpers (`c`, `S`, `merge`, `fid`), frame ids in reading order (lette
 - `fox`: Reynard's “Weasels.” (`sit`, `solemn`) alone; then **a panel** on `wide`: “Snatch holds up his mouse.” with “This one’s mine,
   though.” (`up`) and Glintstar's “It is NOT.”. From the next frame on, Snatch has no `holds`.
 - `wide` (`{ crowd: true }`): Glintstar's “Reynard. You lied at my border, and you lied here. From tonight, stay past the last post. Not one
-  paw in our territory.”, ReedClan's leader's “Or ReedClan’s.”, GroveClan's leader's “Or GroveClan’s.”, Granny's “Or the RIVER. Once you’ve
-  swum home.” (four boxes; Granny at `bank`, by the water; the two leaders first among their Clans' cast). Then “Every cat on the
+  paw in our territory.” on a `wide` panel of its own; then `wide` again: ReedClan's leader's “Or ReedClan’s.”, GroveClan's leader's “Or
+  GroveClan’s.”, Granny's “Or the RIVER. Once you’ve swum home.” (three boxes; Granny at `bank`, by the water; the leaders first among
+  their Clans' cast). Then “Every cat on the
   island stands up, and every otter too.” with the step Tap (`{ crowd: 'standing' }`: every Clan standing; our cat `stand`).
 - `fox` (`{ crowd: 'standing' }`): “Reynard looks at all those cats.” and “Well. This is all very… DAMP.”; then `fox` with Reynard and the weasels at `water` …
   `water-3` (`swim`): “Back into the river he slinks, with Snip and Snatch paddling after him.”, “Far, far away, the Barking Field dogs
@@ -1021,8 +1027,8 @@ model: its helpers (`c`, `S`, `merge`, `fid`), frame ids in reading order (lette
   own, by the counted conditions** (section 1), each on `case` with `{ crowd: true, mist: 'thick' }`: six frames, *just one of the six*, in
   the story's order (Squall, Puddle, Wisp, Sleet, Hail, Mizzle), each `when` one flag `true` and five `false`, `next` to that dragonet's
   goodbye and `else` to the next of the six; their caption “Out of the mist, the dragonet you found comes to stand beside you.”, the dragonet
-  stepping out at `beside`. After them, the any-found frame (`else` the shapes' screen below), “Out of the mist, the dragonets you found
-  come to stand beside you.” (`small: 'coming'`), `next` to the goodbyes. A cat who found none goes straight to the shapes' screen.
+  stepping out at `beside`. After them, the any-found frame (`else` the shapes' screen below), “Small shapes step out of the mist: the
+  dragonets you found.” (`small: 'coming'`), `next` to the goodbyes. A cat who found none goes straight to the shapes' screen.
 - **The goodbyes**: one frame for each dragonet, in the story's order, each with its found flag as `when` (no `else`: a frame that does
   not show leads on to the next), on `case` (`{ crowd: true, mist: 'thick' }`), the dragonet at `beside` with `tap: 'nose'`, our cat at
   `speak`: its goodbye in its balloon (Squall `roar`, “GOODBYE, {name}paw! One more roar from my tower. THEN home!” and the sound *Hic!*;
@@ -1053,7 +1059,7 @@ model: its helpers (`c`, `S`, `merge`, `fid`), frame ids in reading order (lette
 - `case`: “Sprinkle says goodbye to everyone, by name.” with her “Riffle. Thank you for ALL the fish.”; then **a panel**: “Riffle sniffs.”
   with “Otters don’t cry. That’s river water.”.
 - `case`: Sprinkle's thanks, one balloon written twice by `ch3Told` (told: “Tallyheart. Thank you for keeping my secret. Thymeleaf. Thank
-  you for my wing.”; kept: “Tallyheart. Thank you for coming to meet me. Keep counting fish. ESPECIALLY fish. Thymeleaf. Thank you for my
+  you for my wing.”; kept: “Tallyheart. Thank you for coming to meet me. Keep counting. ESPECIALLY fish. Thymeleaf. Thank you for my
   wing.”), Thymeleaf's “Goodbye, wing. Behave.” and Sprinkle's “And tell Coil I’ll be QUIET now.” (the comma that only marked the tag goes:
   chapter 9's rule).
 - `case` (Sprinkle `curl` beside our cat: her tail round her): “Then Sprinkle wraps her tail round you, the way she did under the bridge.”
@@ -1068,9 +1074,9 @@ model: its helpers (`c`, `S`, `merge`, `fid`), frame ids in reading order (lette
   missing…”); “{name}paw, you belong to CrystalClan.” with the bow Tap.
 - `wide` (`{ crowd: true, bubbles: true }`, fx `purr`): the two captions (“The whole Clan purrs your name. Then ReedClan does. Then
   GroveClan.”, “The otters try too. It sounds like bubbles.”).
-- `case` (Tallyheart at `beside`, `crouch`, nose to nose): “Tallyheart presses her head against yours.” and her two balloons (whispers:
+- `case` (our cat `crouch` at `speak`, Tallyheart `crouch` at the raw spot `NOSE`, `{ x: 900, y: 950, h: 352 }`, nose to nose): “Tallyheart presses her head against yours.” and her two balloons (whispers:
   “Sharp eyes. I knew it, from the thirteenth sparrow.” / “Still {name}paw, for now. Your warrior name is coming. And this moon will be in
-  it.”); then, on a `case` panel of its own (the story's screen break; Tallyheart still at `beside`, `crouch`, nose to nose), our cat's
+  it.”); then, on a `case` panel of its own (the story's screen break; both still `crouch`, Tallyheart at `NOSE`), our cat's
   `{ who: 'player', text: 'When?', kind: 'whisper' }` and Tallyheart's whisper “When you pass your Warrior Counts. They’re yours, whenever
   you’re ready. At the fountain, like {Murmur}chime.” (`kind: 'whisper'`): the line that hands chapter 10 to the Warrior Counts, whose hub
   button (“When you’re ready”) echoes it; the story test pins both strings exactly, and {Murmur}chime's “When you sit your Warrior Counts,
@@ -1337,9 +1343,11 @@ id is an error). Every chapter 1 to 9 story stays clean.
   opening), and a tap on the card she just picked wrong, while its wiggle runs, is no new pick: the card wiggles again and the nudge
   stays. `PC.debug.pick` calls the pick handler directly, past the guard, so `#pick3`'s three taps count. **After the third**: the right
   cards she holds glow (the page's soft pulse) and the others dim (still readable); a tap on a dimmed card makes the glowing ones wiggle
-  and gives no nudge (Read to me and the live region say the glowing cards' lines again, below).
+  and gives no nudge (Read to me and the live region say the glowing cards' lines again, below). When no glowing card shows half its
+  picture, her file slides to the first (at once with reduced motion): after the third wrong pick once her card has wiggled, on a
+  dimmed tap, and reopened (the final review's K3 and K4).
 - **Back** (the screen's Back, Escape or ←) closes the pick screen; the frame stays, and its wrong count and its count of openings are
-  kept while she is on the frame (the page's, never saved; reopened after three, the glow is there). The frame's own Back steps to the
+  kept while she is on the frame (the page's, never saved; reopened after three, the glow is there, and in sight). The frame's own Back steps to the
   previous frame.
 - **Read to me** (the mute rules stand: nothing speaks unless Read to me is on; any tap stops the reading): on the pick frame, its
   captions and balloons, then the instruction (“Pick a card from your Case File.”), as a `file` frame reads its hint. On the pick screen,
@@ -1547,6 +1555,14 @@ last). Measured again on the built rules, in WebKit, at 1080 x 720, 1080 x 700, 
 and one with a glowing Count and a paw, on a scratch copy with a stand-in chapter 10 holding section 2's three sets
 (`~/potomac-crossing-work/warrior-merge/critic/mk-ch10-keep8.js` writes one): the story builder's chapter 10 comes later.
 
+**As built, and the review's round** (2026-10-31). Beside the picture (landscape, 501 to 860px tall) the re-lay widens the Hollow's
+column to `minmax(410px, .7fr)`, so the picture is about 12% narrower for every cat (1080 x 720: 684 to 603.5px wide); that, not only the
+Counts list, is what moves. The review measured its cost to a cat of chapters 5 to 9 (`ch10/hollow-live/`): on a 1024-wide iPad held
+sideways, Aa off, with two or more marks glowing, Tallyheart's line left the narrower picture and put Counts and My nest under the screen
+(live kept them on it); upright with Aa, the paw's 1.3em padding wrapped names no paw can reach (the paw comes only with ten Counts). Two
+rules at the sheet's end give a list of nine or fewer its room back: 370px beside the picture at 1060px wide or less with Aa off, and the
+polish release's .6em padding upright with Aa. A ten-Count list is untouched by both; `tests/aa-room.test.js` pins them.
+
 ### Where chapter 10 meets the Warrior Counts (the merged tree's API, `docs/warrior-counts.md` v0.4)
 
 - **What chapter 10 sets**: `PC.story.ch10` with `id: 'ch10'` (`PC.warrior.after`), `number: 10`, and its last frame `end: true`. Reaching
@@ -1726,10 +1742,10 @@ this spec (sections 2 and 5). What is still open, and how the build handles it:
     (`merger/`, `fixer/`, `polish-fold/`, `critic/`, `counts-nine/`), and this editor's in `warrior-merge/spec-editor-v04/` (v0.3 as
     found, `spec-before.md`; the Hollow with ten Counts measured in WebKit; the suite on the merged tree with the polish release and
     section 10's stubs).
-17. **The sixty's empty prompt is a first use** (section 2): a sixty resumed mid-question (the page closed on it) has no intro to say
-    (`lessonIntro` returns nothing), so the first question shows `10 × 6 = ?` over six nights of marks with no words; its retry has its
-    own words. Rare, and she has just read the frame. Kept (the alternative, our cat's line as the fact's own prompt, moves a line off the
-    story's screen).
+17. **The sixty's prompt** (section 2): it was empty, so a sixty resumed mid-question (the page closed on it), with no intro to say,
+    showed `10 × 6 = ?` with no words. Closed by the final review's K2: the frame's balloons are no longer said over the question
+    (`intro: false`), and the fact's own prompt is our cat's last sentence, the line the frame has just shown, so a fresh and a resumed
+    sixty both ask it in her words.
 18. **The Moon Ferry's eight are all groups first** (`8 × 1 = ?` … `9 × 4 = ?`, `6 × 8 = ?`: the story writes each fact's order), so the
     "every table, mixed" review never shows the other order (module 1's both-orders rule). The 7s lesson balances its own five and five,
     and flipping a ferry fact would change the sum she reads; kept as the story has it.
@@ -1740,6 +1756,14 @@ this spec (sections 2 and 5). What is still open, and how the build handles it:
     the golden (item 3), and fixing f043 would pull the ch04, ch06, ch07, ch08 and ch09 goldens and the ch04 storyboard into this build.
     They wait for a later release (section 9, call 35). ch09 f112, the one chapter 9 frame with the pile's fault, was fixed in chapter
     9's own build (`tests/set-pile.test.js`, `DEPTH_FIXED9`), so it is in the golden as fixed.
+20. **The eldest's bow can reach her book before she sees it** (the build review). Her book's chapter 10 page reads the six found flags,
+    not the bow: a cat who ends chapter 10 with five of the six and then finds the last in an earlier chapter's reread gets “The eldest
+    Mistscale bowed low to …paw, the cat who found all seven.” on the page before she has read chapter 10 again with all seven. Kept:
+    the line is true once she rereads chapter 10, and it is a happy one; a sticky bow flag would be an eighth flag the brief's budget
+    does not list (Puddle's page has its own flag because a page that says “found” in the wrong chapter is untrue for good).
+21. **Granny drags the luggage in the caption, not in the picture** (f035, built nearly): “Riffle and Granny drag the luggage up behind
+    you.” is lettered over Riffle hauling the heap and Granny on the raft with her pole (the `shore` camera's spots; the build review).
+    Kept: the caption says it, and moving her off the raft would leave the ferry with no poler in its arrival shot.
 
 ## 8. What chapter 11 inherits
 

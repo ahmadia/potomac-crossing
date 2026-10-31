@@ -233,7 +233,11 @@ the whole warrior screen, as in the Hollow, and stays on the hub.
   Hollow a Count is a times table.) A Hollow round left partway picks up first, as always, and then the
   same line is said over its next question, so no answer there sets the sitting aside unwarned; that
   round's keypad is brought into view after `go()`'s scroll to the top, as a picked-up question's is in
-  the sitting (only for a cat with `warrior` data: the Hollow of chapters 1 to 9 is as it was). The hub
+  the sitting (only for a cat with `warrior` data: the Hollow of chapters 1 to 9 is as it was). A
+  chapter read again warns the same way (chapter 10's review, README "Chapter 10 as built"): a chapter's
+  lesson begun while such a sitting waits ("Count them again", or a first "Let's count!") opens with the
+  same line over its first question, the last line before it, so no answer in a chapter sets the
+  sitting aside unwarned either. The hub
   reads `E.warriorState` again on a tap and on `visibilitychange`, so it never offers "Keep going" for a
   sitting that has gone stale; so does the sitting's own screen: a question, the halfway page or an
   opening page left open past the two hours goes to the hub when it is seen again or a page is turned,

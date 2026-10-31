@@ -2783,7 +2783,15 @@ test('the teaser for chapter 10, curious and never scary, with no number; chapte
   // the hook it carries on is the story's own: the teaser says what the last panels say
   assert.equal(story.teaser.lines.join(' '), T(F(/^Tomorrow: the otters’ Moon Ferry\./)));
   const cat = E.blankCat({}); cat.name = 'Moon';
-  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'Chapter 10: The Gathering', lines: story.teaser.lines, built: false, next: null }, 'chapter 10 is not built: coming soon');
+  // chapter 10 is in (2026-10-31: its stub, and then the story builder's chapter): the hub offers it, its words as they were
+  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'Chapter 10: The Gathering', lines: story.teaser.lines, built: true, next: 'ch10' }, 'chapter 10 is in: the hub offers it');
+  // and it is the built chapter, which keeps the teaser's promises: the otters' Moon Ferry, every Clan at the Gathering,
+  // Reynard with his little story, and our cat with her case, card by card
+  const ten = PC.story.ch10, said = id => [].concat(ten.frames[id].caption || [], ten.frames[id].say || []).map(x => (typeof x === 'string' ? x : x.text)).join(' ');
+  assert.ok(Object.values(ten.frames).every(f => !/^STUB\./.test(f.board || '')), 'not the stub');
+  assert.equal(E.chapterHeading(ten), story.teaser.title);
+  assert.ok(Object.keys(ten.frames).some(id => /The MOON FERRY!/.test(said(id))) && Object.keys(ten.frames).some(id => /^The Moon Ferry bumps onto Gathering Island\. Under one great tree, every Clan is here\./.test(said(id))));
+  assert.ok(Object.keys(ten.frames).filter(id => ten.frames[id].pick && ten.frames[id].pick.who === undefined).length === 5, 'Reynard’s claims, answered from her Case File');
   // chapter 8's teaser stands, its title this chapter's, and both its promises are kept: she flies (four wingbeats), and the
   // wing is mended by a remedy
   assert.deepEqual(ch08.teaser, { title: 'Chapter 9: Featherlight', lines: ['Sprinkle has to fly by the full moon.', 'How do you mend a dragon’s wing?'] });
@@ -2792,7 +2800,7 @@ test('the teaser for chapter 10, curious and never scary, with no number; chapte
   assert.match(T(F(/^…and she LIFTS\./)), /Her paws are off the ground!/);
   assert.match(T(F(/^A wing is a wing\./)), /I’ll make her a remedy: wing medicine\./);
   const done = reading({ specialty: 'sneaking' }, {}).cat, p = E.progress(done, PC.story);
-  assert.deepEqual([p.latest.id, p.next, p.soon && p.soon.title, E.status(done, PC.story)], ['ch09', null, 'Chapter 10: The Gathering', 'Chapter 9 finished']);
+  assert.deepEqual([p.latest.id, p.next && p.next.id, p.soon, E.status(done, PC.story)], ['ch09', 'ch10', null, 'Chapter 9 finished']);
   const c8 = E.blankCat({}); c8.finished = { ch01: 1, ch02: 2, ch03: 3, ch04: 4, ch05: 5, ch06: 6, ch07: 7, ch08: 8 };
   assert.deepEqual([E.progress(c8, PC.story).next.id, E.chapterHeading(E.progress(c8, PC.story).next)], ['ch09', 'Chapter 9: Featherlight']);
 });

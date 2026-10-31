@@ -72,6 +72,8 @@
 <script src="../app/art/sets/marsh.js"></script>
 <script src="../app/art/sets/tracks.js"></script>
 <script src="../app/art/sets/grove.js"></script>
+<script src="../app/art/sets/ferry.js"></script>
+<script src="../app/art/sets/island.js"></script>
 <script src="../app/art/cards.js"></script>
 <script src="../app/story/ch01.js"></script>
 <script src="../app/story/ch02.js"></script>
@@ -82,6 +84,7 @@
 <script src="../app/story/ch07.js"></script>
 <script src="../app/story/ch08.js"></script>
 <script src="../app/story/ch09.js"></script>
+<script src="../app/story/ch10.js"></script>
 <script src="../app/story/warrior.js"></script>
 <script>
 (function () {
@@ -238,6 +241,39 @@
         c('groveclan', 'elder', 'sit', 'kind', { variant: 1 }), c('groveclan', 'fern', 'sit', 'shy', { variant: 2 })], fx: ['day'] },
       oak: { cast: [c('player', 'trunk', 'stretch', 'happy'), c('tallyheart', 'root-1', 'sit', 'kind'), c('riffle', 'root-2', 'sit', 'proud', { holds: 'mint' }), c('groveclan', 'elder', 'sit', 'neutral', { variant: 1 })], fx: ['day'] },
       hollow: { cast: [c('mizzle', 'nook', 'curl', 'sleepy', { asleep: true }), c('player', 'lip', 'crouch', 'wonder')], fx: ['day', 'zzz'] }
+    },
+    // chapter 10: the otters' Moon Ferry (app/art/sets/ferry.js): the boarding at dusk, the deck, the luggage, the low raft, the gap, the river
+    ferry: {
+      shore: { opts: { moon: 14, clan: true }, cast: [c('clancat', 'bank-3', 'walk', 'happy', { variant: 4 }), c('tallyheart', 'bank-2', 'walk', 'kind'), c('player', 'bank-1', 'walk', 'wonder'),
+        c('murmurchime', 'edge', 'walk', 'happy'), c('riffle', 'log-1', 'hop', 'shout'), c('glintstar', 'log-2', 'sit', 'neutral'), c('otter', 'pole', 'stand', 'kind', { variant: 3, holds: 'pole' })], fx: ['dusk'] },
+      deck: { opts: { moon: 14, clan: true, luggage: true }, cast: [c('otter', 'pole', 'stand', 'kind', { variant: 3, holds: 'pole' }), c('grizzled', 'seat-3', 'sit', 'neutral'), c('glintstar', 'seat-4', 'sit', 'kind'),
+        c('snorer', 'seat-2', 'sit', 'happy'), c('thymeleaf', 'seat-5', 'sit', 'kind'), c('clancat', 'seat-6', 'sit', 'proud', { variant: 2 }), c('player', 'front', 'sit', 'wonder'),
+        c('tallyheart', 'beside', 'sit', 'kind'), c('murmurchime', 'seat-1', 'sit', 'happy'), c('riffle', 'back', 'sit', 'happy')], fx: ['night'] },
+      back: { opts: { moon: 14, luggage: true, puff: true }, cast: [c('tallyheart', 'back-1', 'lookup', 'kind'), c('glintstar', 'back-2', 'lookup', 'neutral'), c('otter', 'back-3', 'sit', 'kind', { variant: 3 }),
+        c('riffle', 'heap', 'hush', 'happy')], fx: ['night'] },
+      low: { opts: { moon: 14, low: true }, cast: [c('tallyheart', 'sit-3', 'sit', 'kind'), c('player', 'sit-1', 'pawup', 'happy', { tap: 'paw' }), c('riffle', 'sit-2', 'sit', 'happy'), c('puddle', 'gap', 'foot', 'happy')], fx: ['night'] },
+      under: { opts: { moon: 14 }, cast: [c('player', 'lip', 'crouch', 'wonder'), c('puddle', 'water', 'head', 'happy')], fx: ['night'] },
+      river: { opts: { moon: 14, clan: true, luggage: true }, cast: [c('player', 'raft-1', 'sit', 'wonder'), c('riffle', 'raft-2', 'sit', 'happy'), c('otter', 'pole', 'stand', 'kind', { variant: 3, holds: 'pole' })], fx: ['night'] }
+    },
+    // chapter 10: Gathering Island (app/art/sets/island.js), always under the full moon: the shore, the clearing, the roots, the case, the fox,
+    // the mist, the sky and her paws
+    island: {
+      shore: { opts: { ferry: true, luggage: 'heap' }, cast: [c('otter', 'raft', 'stand', 'kind', { variant: 3, holds: 'pole' }), c('riffle', 'drag', 'scramble', 'happy'), c('clancat', 'land-3', 'walk', 'neutral', { variant: 5 }),
+        c('tallyheart', 'land-2', 'walk', 'kind'), c('player', 'land-1', 'walk', 'wonder')], fx: ['night'] },
+      wide: { opts: { crowd: true, luggage: 'heap', tap: 'reeds' }, cast: [c('reedclan', 'root-1', 'sit', 'neutral', { variant: 5 }), c('glintstar', 'root-2', 'sit', 'solemn'), c('groveclan', 'root-3', 'sit', 'neutral', { variant: 3 }),
+        c('groveclan', 'elder', 'sit', 'proud', { variant: 1 }), c('murmurchime', 'crowd-3', 'sit', 'happy'), c('sloshbank', 'crowd-4', 'sit', 'stern'), c('tallyheart', 'crowd-1', 'sit', 'kind'),
+        c('reedclan', 'crowd-5', 'sit', 'neutral', { variant: 1 }), c('grizzled', 'crowd-2', 'sit', 'neutral'), c('reedclan', 'crowd-6', 'sit', 'wonder', { variant: 2 }), c('snatch', 'edge-3', 'stand', 'neutral', { holds: 'mouse', wet: true }),
+        c('reynard', 'edge', 'sit', 'proud', { wet: true }), c('snip', 'edge-2', 'stand', 'neutral', { wet: true }), c('player', 'centre', 'sit', 'proud'), c('thymeleaf', 'beside', 'sit', 'kind'), c('otter', 'bank', 'stand', 'kind', { variant: 3 })], fx: ['night'] },
+      roots: { opts: { crowd: true }, cast: [c('reedclan', 'root-1', 'sit', 'kind', { variant: 5 }), c('glintstar', 'root-2', 'sit', 'kind'), c('groveclan', 'root-3', 'sit', 'kind', { variant: 3 }),
+        c('tallyheart', 'near-1', 'sit', 'proud'), c('thymeleaf', 'near-2', 'sit', 'kind'), c('player', 'step', 'crouch', 'proud', { tap: 'nose' })], fx: ['night'] },
+      case: { opts: { crowd: true }, cast: [c('grizzled', 'front-1', 'sit', 'neutral'), c('thymeleaf', 'front-2', 'sit', 'kind'), c('sloshbank', 'front-3', 'sit', 'stern'), c('riffle', 'front-4', 'sit', 'happy'),
+        c('tallyheart', 'mentor', 'sit', 'kind'), c('player', 'speak', 'sit', 'proud'), c('sprinkle', 'beside', 'sit', 'shy'), c('snip', 'weasel-2', 'stand', 'neutral', { wet: true }),
+        c('snatch', 'weasel-1', 'stand', 'neutral', { holds: 'mouse', wet: true }), c('reynard', 'fox', 'think', 'proud', { wet: true })], fx: ['night'] },
+      fox: { opts: { crowd: true }, cast: [c('snatch', 'weasel-2', 'stand', 'neutral', { holds: 'mouse', wet: true }), c('snip', 'weasel-1', 'stand', 'neutral', { wet: true }), c('reynard', 'fox', 'trot', 'proud', { wet: true })], fx: ['night'] },
+      mist: { opts: { mist: 'thick', tail: true }, cast: [c('grizzled', 'front-1', 'lookup', 'wonder'), c('thymeleaf', 'front-2', 'lookup', 'wonder'), c('tallyheart', 'mentor', 'lookup', 'kind'),
+        c('player', 'speak', 'sit', 'wonder'), c('sprinkle', 'beside', 'sniff', 'happy'), c('mistscale', 'mama', 'lean', 'kind', { variant: 1 })], fx: ['night'] },
+      sky: { opts: { mist: 'thick', grown: true }, cast: [c('sprinkle', 'fly', 'fly', 'happy')], fx: ['night'] },
+      paws: { cast: [c('player', 'close', 'sit', 'wonder', { tap: 'paw' }), c('sprinkle', 'above', 'lookdown', 'kind', { holds: 'pebble' })], fx: ['night'] }
     }
   };
   var EXTRA = [
@@ -502,7 +538,57 @@
     // (the review, 2026-10-26: the fullest file is 30, a reread cat's, both specialties' cards and Puddle's: its case, the stack 15 and 13, and its nest, nineteen along the edge in three courses)
     ['den', 'case', { opts: { weather: 'clear', read: 3, glass: true, stone: 'auto', bark: CARDS30 }, cast: [c('player', 'case-1', 'crouch', 'wonder'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: read: 3, the fullest file, 30 cards (the stack 15)'],
     ['den', 'case', { opts: { weather: 'clear', read: 7, glass: true, stone: 'auto', bark: CARDS30 }, cast: [c('player', 'case-1', 'crouch', 'kind'), c('tallyheart', 'case-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 9: read: 7, 30 cards (the stack 13)'],
-    ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'auto', bark: CARDS30, hidden: true, glass: true }, cast: [c('player', 'nest', 'curl', 'kind', { asleep: 'half' })], fx: ['night'] }, 'chapter 9: bedtime with 30 cards: nineteen along the edge, three courses, eleven corners']
+    ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'auto', bark: CARDS30, hidden: true, glass: true }, cast: [c('player', 'nest', 'curl', 'kind', { asleep: 'half' })], fx: ['night'] }, 'chapter 9: bedtime with 30 cards: nineteen along the edge, three courses, eleven corners'],
+    // chapter 10 (2026-10-31): the Moon Ferry and Gathering Island beyond their samples; the riverbank by moonlight; the den's full moon, the
+    // mist stone and its close-up; the tower by night; the Hollow's ten marks
+    ['ferry', 'shore', { opts: { moon: 14, clan: true }, cast: [c('tallyheart', 'bank-2', 'sit', 'kind'), c('player', 'edge', 'walk', 'worried', { tap: 'paw' }), c('otter', 'pole', 'stand', 'kind', { variant: 3, holds: 'pole' })], fx: ['dusk'] },
+      'chapter 10: the moonrise and the step aboard: our cat at edge (tap: \u2018paw\u2019), the full moon just up'],
+    ['ferry', 'deck', { opts: { moon: 14 }, cast: [c('player', 'front', 'sit', 'proud'), c('tallyheart', 'beside', 'sit', 'kind')], fx: ['night'] }, 'chapter 10: \u201cYou\u2019re ON.\u201d: front and beside, the full moon ahead'],
+    ['ferry', 'back', { opts: { moon: 14, luggage: true }, cast: [c('riffle', 'heap', 'hush', 'happy')], fx: ['night'] }, 'chapter 10: the luggage, no puff'],
+    ['ferry', 'low', { opts: { moon: 14, low: true }, cast: [c('tallyheart', 'sit-3', 'sit', 'kind'), c('player', 'lie', 'flat', 'wonder'), c('riffle', 'sit-2', 'sit', 'happy'), c('puddle', 'gap', 'eyes', 'happy')], fx: ['night'] },
+      'chapter 10: two big eyes in the gap (Puddle \u2018eyes\u2019); our cat flat at lie, chin over it'],
+    ['ferry', 'low', { opts: { moon: 14 }, cast: [c('player', 'sit-1', 'peer', 'wonder'), c('tallyheart', 'sit-2', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 10: the brave look: the raft not riding low (low off), the logs\u2019 round sides above the water'],
+    ['ferry', 'under', { cast: [c('player', 'lip', 'crouch', 'wonder'), c('puddle', 'water', 'log', 'happy')], fx: ['night'] }, 'chapter 10: under, no moon option: the gap\u2019s silver water, Puddle a log'],
+    ['ferry', 'river', { opts: { moon: 14, home: true, clan: true }, cast: [c('riffle', 'raft-1', 'stand', 'happy', { tap: 'ears' }), c('player', 'raft-2', 'sit', 'happy'), c('otter', 'pole', 'stand', 'kind', { variant: 3, holds: 'pole' })], fx: ['night'] },
+      'chapter 10: home: true: the Moon Ferry bumps home at the Crossing\u2019s stones (the hug Tap on Riffle\u2019s ears)'],
+    ['island', 'wide', { opts: { crowd: 'standing' }, cast: [c('reedclan', 'root-1', 'stand', 'stern', { variant: 5 }), c('glintstar', 'root-2', 'stand', 'stern'), c('groveclan', 'root-3', 'stand', 'stern', { variant: 3 }),
+      c('snatch', 'edge-3', 'stand', 'worried', { wet: true }), c('reynard', 'edge', 'sit', 'worried', { wet: true }), c('snip', 'edge-2', 'stand', 'worried', { wet: true }), c('player', 'centre', 'stand', 'proud', { tap: 'paw' })], fx: ['night'] },
+      'chapter 10: crowd: \u2018standing\u2019: every cat on the island stands up, and every otter too (our cat\u2019s step Tap)'],
+    ['island', 'wide', { opts: { crowd: true, luggage: 'open', bubbles: true, mist: 'rolling' }, cast: [c('sprinkle', 'luggage', 'sit', 'shy'), c('player', 'centre', 'walk', 'happy', { tap: 'paw' })], fx: ['night'] },
+      'chapter 10: luggage: \u2018open\u2019 (Sprinkle at luggage), bubbles over the otters, the mist rolling in'],
+    ['island', 'wide', { opts: { crowd: true, mist: 'thick' }, cast: [c('glintstar', 'edge', 'sit', 'kind'), c('player', 'centre', 'sit', 'happy'), c('sprinkle', 'beside', 'sit', 'happy')], fx: ['night'] },
+      'chapter 10: mist: \u2018thick\u2019 round the great tree; Glintstar at edge, facing Sprinkle'],
+    ['island', 'shore', { opts: { print: true, ferry: true, tap: 'print' }, cast: [c('otter', 'raft', 'stand', 'kind', { variant: 3, holds: 'pole' }), c('tallyheart', 'land-2', 'sit', 'kind'), c('player', 'print', 'crouch', 'sniff')], fx: ['night'] },
+      'chapter 10: the badger\u2019s old print, dry at its edges; our cat at print sniffing (tap: \u2018print\u2019)'],
+    ['island', 'shore', { opts: { print: true }, cast: [], fx: ['night'] }, 'chapter 10: the hook: the print alone in the moonlight'],
+    ['island', 'shore', { opts: { luggage: 'open' }, cast: [c('riffle', 'drag', 'sit', 'happy')], fx: ['night'] }, 'chapter 10: the reeds open on the shore'],
+    ['island', 'roots', { opts: { crowd: 'standing', mist: 'thick' }, cast: [c('glintstar', 'root-2', 'sit', 'kind'), c('player', 'step', 'walk', 'proud', { tap: 'paw' })], fx: ['night'] }, 'chapter 10: the roots in the thick mist; our cat stepping up'],
+    ['island', 'case', { opts: { crowd: true, mist: 'thick', small: 'coming' }, cast: [c('player', 'speak', 'sit', 'wonder'), c('wisp', 'beside', 'draw', 'happy', { tap: 'nose' })], fx: ['night'] },
+      'chapter 10: small: \u2018coming\u2019: the dragonets she found step out of the mist; Wisp at beside'],
+    ['island', 'case', { opts: { crowd: true, mist: 'thick', drawing: 'cat' }, cast: [c('player', 'speak', 'sit', 'happy'), c('wisp', 'beside', 'draw', 'happy', { tap: 'nose' })], fx: ['night'] },
+      'chapter 10: drawing: \u2018cat\u2019: a little cat scratched in the earth (Wisp\u2019s goodbye)'],
+    ['island', 'case', { opts: { crowd: true, small: 'one' }, cast: [c('player', 'root', 'stand', 'proud'), c('tallyheart', 'mentor', 'sit', 'kind')], fx: ['night'] }, 'chapter 10: a climber up on the low root (root); small: \u2018one\u2019'],
+    ['island', 'case', { opts: { crowd: true, mist: 'rolling', small: 'some' }, cast: [c('player', 'speak', 'sit', 'kind'), c('squall', 'beside', 'roar', 'shout', { tap: 'nose' })], fx: ['night'] }, 'chapter 10: small: \u2018some\u2019; Squall\u2019s goodbye at beside'],
+    ['island', 'fox', { opts: { crowd: 'standing', mist: 'rolling' }, cast: [c('reynard', 'water', 'swim', 'worried', { wet: true }), c('snip', 'water-2', 'swim', 'worried', { wet: true }), c('snatch', 'water-3', 'swim', 'worried', { wet: true })], fx: ['night'] },
+      'chapter 10: back into the river: Reynard, Snip and Snatch at water, water-2, water-3 (swim)'],
+    ['island', 'mist', { opts: { mist: 'thick', grown: true, small: 'some', tap: 'mist' }, cast: [c('player', 'speak', 'sit', 'wonder'), c('sprinkle', 'nose', 'sit', 'happy'), c('mistscale', 'mama', 'lift', 'kind', { variant: 1 })], fx: ['night'] },
+      'chapter 10: ROLL CALL: Mama lift at mama, the grown Mistscales and small shapes in the mist; tap: \u2018mist\u2019'],
+    ['island', 'mist', { opts: { mist: 'thick', grown: true, small: 'one' }, cast: [c('groveclan', 'front-1', 'sit', 'wonder', { variant: 1 }), c('player', 'speak', 'crouch', 'proud', { tap: 'nose' }), c('mistscale', 'eldest', 'bow', 'kind', { variant: 2 })], fx: ['night'] },
+      'chapter 10: the eldest\u2019s bow at eldest; the elder at front-1; small: \u2018one\u2019'],
+    ['island', 'mist', { opts: { mist: 'rolling', small: 'coming' }, cast: [c('player', 'speak', 'sit', 'wonder'), c('sprinkle', 'beside', 'sit', 'happy')], fx: ['night'] }, 'chapter 10: the mist rolling; small: \u2018coming\u2019'],
+    ['island', 'sky', { opts: { rising: true, zip: true, grown: true }, cast: [c('sprinkle', 'far', 'fly', 'happy', { tailUp: true })], fx: ['night'] }, 'chapter 10: rising, and zip toward the towers; Sprinkle small at far'],
+    ['island', 'sky', { opts: { mist: 'rolling' }, cast: [c('sprinkle', 'nose', 'fly', 'happy')], fx: ['night'] }, 'chapter 10: Sprinkle at nose, high by Mama\u2019s face'],
+    ['island', 'paws', { cast: [c('player', 'close', 'sit', 'wonder', { holds: 'miststone', flash: true, tap: 'stone' }), c('sprinkle', 'above', 'lookdown', 'happy')], fx: ['night'] }, 'chapter 10: the mist stone in her paws, flashing (tap: \u2018stone\u2019)'],
+    ['riverbank', 'path', { opts: { moon: 14 }, cast: [c('player', 'path-left', 'walk', 'happy'), c('tallyheart', 'path-right', 'walk', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 10: moon: 14: the walk home, the river silver under the full moon'],
+    ['riverbank', 'roof', { opts: { moon: 14, roar: true, flyer: true }, cast: [], fx: ['night'] }, 'chapter 10: the last roar, and flyer: true: a small shape flies off upriver'],
+    ['den', 'outside', { opts: { weather: 'clear', moon: 14 }, cast: [c('grizzled', 'entrance-left', 'sit', 'proud'), c('murmurchime', 'entrance-right', 'sit', 'happy', { facing: 'left' })], fx: ['night'] }, 'chapter 10: moon: 14, round over the rosebush (\u201cIn camp:\u201d)'],
+    ['den', 'doorway', { opts: { weather: 'clear', moon: 14, stone: 'auto', hidden: true, glass: true, bark: CARDS30, miststone: 'flash' }, cast: [c('player', 'nest', 'curl', 'sleepy', { asleep: true })], fx: ['night'] },
+      'chapter 10: moon: 14 in the doorway; miststone: \u2018flash\u2019 on the moss'],
+    ['den', 'nest', { opts: { weather: 'clear', moon: false, stone: 'auto', hidden: true, glass: true, bark: CARDS30, miststone: true }, cast: [c('player', 'nest', 'curl', 'kind', { asleep: 'half' })], fx: ['night'] }, 'chapter 10: miststone: true, beside her glass and her secret bark'],
+    ['den', 'stone', { opts: { weather: 'clear', moon: 14, miststone: 'flash' }, cast: [c('player', 'tail', 'curl', 'sleepy', { asleep: true })], fx: ['night'] }, 'chapter 10: the stone camera: the mist stone close, flashing; her tail\u2019s tip'],
+    ['tower', 'up', { opts: { moon: 14, chime: true, light: true }, cast: [c('player', 'foot', 'sit', 'happy'), c('waffles', 'railing', 'peer', 'dreamy', { facing: 'left' })], fx: ['night'] }, 'chapter 10: the tower by night, moon: 14; Waffles at railing, our cat at foot'],
+    ['hollow', 'tree', { opts: { marks: 10, glow: [false, false, false, false, false, false, false, false, false, true] }, cast: [], fx: ['morning'] }, 'chapter 10: marks: 10, the tenth glowing'],
+    ['hollow', 'wide', { opts: { marks: 10, glow: [false, false, false, false, false, false, false, false, false, true] }, cast: [c('tallyheart', 'tree-far', 'sit', 'kind', { size: 1.2 }), c('player', 'sunpatch-2', 'sit', 'happy')], fx: ['morning'] }, 'chapter 10: marks: 10 from across the Hollow']
   ];
 
   // ---- panels, rendered when they scroll into view

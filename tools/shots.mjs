@@ -24,6 +24,13 @@
  *                                                         warrior:afterpass; `#n` a page of the opening or the result
  *                                                         (1 the first, -1 the last). Each sets up its own test cat's
  *                                                         Counts through the engine (WARRIOR below)
+ *   node tools/shots.mjs OUTDIR ch10:f057#pick ch10:f057#pick3 ch10:f057#pickfull
+ *                                                         chapter 10's card pick (a pick frame): the pick screen open on
+ *                                                         its claim, on the thinnest Case File; after three wrong picks
+ *                                                         (tidy, otter-fox, reed-pile: on the first claim, cant-fly and
+ *                                                         fox-brag then glow); open, on the fullest file (thirty cards
+ *                                                         under the sticky strip). Each sets up its own test cat's file
+ *                                                         through the engine (PICK_CATS; CAT's `cards` win)
  *   node tools/shots.mjs --lock                           is the screen locked (so: a session a shot)? no Safari
  *   node tools/shots.mjs --blank a.png b.png              is each PNG a blank screenshot (one flat colour)? no Safari
  *   node tools/shots.mjs --page                           the game's page as this tool serves it to Safari (the
@@ -380,6 +387,41 @@ function warriorTarget(fid, anchor) {
   return { recipe: CAT.warrior || w[0], what: w[1], page: n > 0 ? n - 1 : n };
 }
 
+/* Chapter 10's card pick (docs/chapters/10-the-gathering.spec.md, section 6): a pick frame's target with
+ * `#pick` (the pick screen open on its claim), `#pick3` (three wrong picks, none of the first claim's right
+ * cards nor its own: its right cards she holds then glow) or `#pickfull` (open, on the fullest file). The
+ * test cat's Case File is set up through the engine first (PICK, run in the page after SETUP): the thinnest
+ * file (the twenty cards every cat holds at the Gathering) or the fullest (thirty, with the found flags their
+ * cards' `when`s read), chapters 1 to 9 finished; CAT's own `cards` win. Then the frame, then PC.debug.pick. */
+const PICK_THIN = ['four-a-night', 'tidy', 'scale', 'fox-flew', 'fox-moon', 'sprinkle-scales', 'cant-fly', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes',
+  'prints-marsh', 'reed-pile', 'coil-diggers', 'waffles-no-moon', 'prints-sprinkle', 'tunnel', 'fox-brag', 'stash', 'glass'];
+const PICK_FULL = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'puddle-paws',
+  'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes', 'prints-marsh', 'prints-tracks', 'wisp-fox', 'reed-pile', 'sleet-den', 'coil-diggers', 'waffles-no-moon',
+  'my-count', 'prints-sprinkle', 'tunnel', 'hail-shapes', 'fox-brag', 'stash', 'glass', 'mizzle-wing'];
+const PICK_FLAGS = { caseFileOpen: true, caseFile: true, ch7Flew: true };
+const PICK_CATS = {
+  thin: { cards: PICK_THIN, flags: PICK_FLAGS },
+  full: { cards: PICK_FULL, flags: Object.assign({ foundSquall: true, foundPuddle: true, foundWisp: true, foundSleet: true, foundHail: true, foundMizzle: true }, PICK_FLAGS) }
+};
+const PICK_TARGETS = { pick: ['thin', []], pick3: ['thin', ['tidy', 'otter-fox', 'reed-pile']], pickfull: ['full', []] };
+function pickTarget(anchor) {
+  const p = PICK_TARGETS[anchor];
+  if (!p) return null;
+  const recipe = Object.assign({}, PICK_CATS[p[0]]);
+  if (Array.isArray(CAT.cards)) recipe.cards = CAT.cards;
+  return { recipe, ids: p[1] };
+}
+// runs in the page after SETUP: her Case File as the recipe says (in its order), its flags, chapters 1 to 9 finished
+const PICK = `
+  var o = arguments[0] || {}, E = PC.engine, c = PC.debug.cat(), t = Date.now();
+  if (!c) return 'no cat';
+  c.cards = [];
+  (o.cards || []).forEach(function (id, i) { E.giveCard(c, id, 'ch04', t - 60000 * (40 - i)); });
+  Object.keys(o.flags || {}).forEach(function (k) { c.flags[k] = o.flags[k]; });
+  E.chapters(PC.story).forEach(function (s, i) { if (+s.number < 10 && !c.finished[s.id]) c.finished[s.id] = t - 86400000 * (20 - i); });
+  PC.debug.save();
+  return E.cards(c, PC.story).length === (o.cards || []).length ? true : 'her file shows ' + E.cards(c, PC.story).length + ' of ' + (o.cards || []).length + ' cards';`;
+
 /* Runs in the page: a fresh device with one test cat (save version 2) set up as CAT says. */
 const SETUP = `
   var o = arguments[0], fixture = arguments[1], E = PC.engine;
@@ -512,7 +554,7 @@ async function sheet(S, run, four) {
   }
   const res = await run(`
     var out = [], frames = document.querySelectorAll('iframe'), targets = arguments[0], still = arguments[1], fixture = arguments[2];
-    var setup = arguments[3], cat = arguments[4], read = arguments[5], warriorJs = arguments[6], warriors = arguments[7];
+    var setup = arguments[3], cat = arguments[4], read = arguments[5], warriorJs = arguments[6], warriors = arguments[7], pickJs = arguments[8], picks = arguments[9];
     for (var i = 0; i < frames.length; i++) {
       var w = frames[i].contentWindow, PC = w.PC, t = targets[i].split('@'), target = t[0];
       try {
@@ -528,12 +570,18 @@ async function sheet(S, run, four) {
           var wd = wm === true ? PC.debug.warrior(warriors[i].what, warriors[i].page) : wm;
           if (wd !== true) { out.push(targets[i] + ': ' + wd); continue; }
         }
-        else { var cf = target.indexOf(':') >= 0 ? target.split(':') : ['ch01', target]; var r = PC.debug.goto(cf[1], cf[0]); if (r !== cf[1]) { out.push(targets[i] + ': ' + r); continue; } }
+        else {
+          // (chapter 10's card pick: the pane's own test cat's Case File first)
+          if (picks[i]) { var pm = new w.Function(pickJs).apply(null, [picks[i].recipe]); if (pm !== true) { out.push(targets[i] + ': ' + pm); continue; } }
+          var cf = target.split('#')[0].indexOf(':') >= 0 ? target.split('#')[0].split(':') : ['ch01', target.split('#')[0]]; var r = PC.debug.goto(cf[1], cf[0]); if (r !== cf[1]) { out.push(targets[i] + ': ' + r); continue; }
+          if (picks[i]) { var po = PC.debug.pick(picks[i].ids); if (po !== true) { out.push(targets[i] + ': ' + po); continue; } }
+        }
         out.push(true);
       } catch (e) { out.push(targets[i] + ': ' + e.message); }
     }
     return out;`, [four, '(function(){' + STILL.replace(/return true;$/, '') + '})()', FIXTURE, SETUP, CAT, READ, WARRIOR,
-    four.map(t => { const [c0, f0] = t.split('@')[0].split('#')[0].split(':'); return f0 && c0 === 'warrior' ? warriorTarget(f0, t.split('@')[0].split('#')[1]) : null; })]);
+    four.map(t => { const [c0, f0] = t.split('@')[0].split('#')[0].split(':'); return f0 && c0 === 'warrior' ? warriorTarget(f0, t.split('@')[0].split('#')[1]) : null; }), PICK,
+    four.map(t => { const [t0, a0] = t.split('@')[0].split('#'); return t0.includes(':') && !t0.startsWith('warrior:') ? pickTarget(a0) : null; })]);
   res.forEach((r) => { if (r !== true) console.error(r); });
   if (four.some(t => t.includes('@'))) {
     await sleep(450);   // past each page's double-tap guard
@@ -589,11 +637,21 @@ async function shoot(S, run, t) {
     const made = await run(WARRIOR, [wt.recipe]);
     if (made !== true) { console.error(t + ': ' + made); return; }
   }
+  // chapter 10's card pick: its own test cat's Case File first (PICK), then the frame, then the pick screen
+  const pt = !screen && ch !== 'warrior' && target !== 'file' ? pickTarget(anchor) : null;
+  if (pt) {
+    const made = await run(PICK, [pt.recipe]);
+    if (made !== true) { console.error(t + ': ' + made); return; }
+  }
   const ok = wt ? await run('return PC.debug.warrior(arguments[0], arguments[1]);', [wt.what, wt.page]) : await run(target === 'file' ? 'if (!PC.debug.cat()) return "no cat"; return PC.debug.file(arguments[1]);' : screen
     ? 'if (!PC.debug.cat()) PC.debug.go("who"); else PC.debug.go(arguments[0], { from: "hub" });' +
       'var a = arguments[1] && document.getElementById("book-" + arguments[1]); if (arguments[1] && !a) return "no page " + arguments[1]; if (a) a.scrollIntoView({ block: "start" }); return true;'
     : 'var r = PC.debug.goto(arguments[1], arguments[0]); return r === arguments[1] || r;', screen || target === 'file' ? [target, anchor || null] : [ch, fid]);
   if (ok !== true) { console.error(t + ': ' + ok); return; }
+  if (pt) {
+    const opened = await run('return PC.debug.pick(arguments[0]);', [pt.ids]);
+    if (opened !== true) { console.error(t + ': ' + opened); return; }
+  }
   // each @ taps a button by its id, in turn; @keys=3,4,ok presses the lesson's keypad (a wrong answer
   // shows the help: WAIT=ms waits for its count before the shot)
   for (const click of clicks) {

@@ -1712,3 +1712,73 @@ with it. This section records the names as built; the design has the rest.
 wiring pinned as text), on the real chapters 1 to 9 and stand-ins for chapter 10 (the 7s) and the Ceremony;
 `tests/storyboard.test.js` compares `warrior.md`; the version pin is in `tests/engine.test.js`. The depth rule
 holds on every scene of the Counts (`tests/warrior-story.test.js`, "staging, depth"), as on chapter 9's.
+
+## Chapter 10 (v0.1)
+
+Chapter 10, *The Gathering*, is [`chapters/10-the-gathering.md`](chapters/10-the-gathering.md) (Draft v0.5, final),
+built in `app/story/ch10.js`. **Its spec, [`chapters/10-the-gathering.spec.md`](chapters/10-the-gathering.spec.md)
+(v0.4), is the build's contract**: the flags, the Counts sets, the Case File, the art needs, the build notes, the engine
+need and the names. Finishing it opens the Warrior Counts (their section above: `PC.warrior`, its `after`, its storyboard
+and its test cat). This section records the names and the words as built; the spec has the rest.
+
+**The card pick**, the one engine need (`pick` on a frame, `E.KINDS` after `'file'`; the spec's section 6 has it whole: the
+key, the five picks, `E.pickJudge`, `E.pick`, `E.pickOpen`, `E.pickView`, `E.pickWords`, `PC.ui.pickPage` and the pick
+screen): Reynard's claim over her whole Case File; a right card sets the pick's `flag` to that card and turns the page; a
+wrong one gets Tallyheart's whispered nudge; after three the right cards she holds glow, so it can never fail. Each claim's
+screen opens at its top (`openFile`/`closeFile` set `#file`'s `scrollTop` to 0 for a pick only); the strip is `position:
+sticky; top: -12px`, below an installed iPad's status bar; when a nudge makes it taller, `pickTapCard` moves the tapped card
+down by what it would cover; a right card's pop grows toward the free side; with reduced motion the glowing cards brighten
+for a dimmed card's tap; and when no glowing card shows half its picture (after the third wrong pick, once her card has
+wiggled; on a dimmed tap; reopened after the glow), `pickShowGlow` slides her file till the first glowing card sits just
+under the strip (at once with reduced motion). Nothing is logged, nothing new is stored. **The Training Hollow** offers ten
+Counts once `ch10-sevens` is done (“Clutches of seven · the 7s”, last), its list re-laid for ten in `index.html` under
+`.frame[data-kind="hollow"]` only (the spec's section 6): held sideways (700px wide or more, 501 to 860px tall) the column is
+`minmax(410px, .7fr)` (the picture about 12% narrower for every cat), one column of 50px Counts (54 with Aa) padded for the
+paw (1.45em, 1.3em with Aa); three rules at the sheet's end give a list of nine or fewer
+(`:not(:has(.counts-pick > .btn:nth-child(10)))`) a 370px column at 1060px wide or less with Aa off, live's own
+`minmax(300px, 0.5fr)` at 1134px wide or more with Aa off, and, upright with Aa, the polish release's `.6em` padding;
+`tests/aa-room.test.js` pins them. **A lesson's page** (every chapter's, since chapter 10's final review) sets what Read to
+me's button says (`saying`: its lines and the question), and one drawn as its page opens (picked up) brings the keypad back
+on the screen after `go()`'s scroll to the top, as the Warrior Counts do; the Counts' waiting line over a chapter's first
+question (`waitLine`) restarts its clock once read, with Read to me off.
+
+**The art's new names** (the spec's section 4; every option off by default, every camera and anchor additional)
+
+- `ferry` (new, `sets/ferry.js`, the otters' Moon Ferry at dusk and by night, never dark): cameras `shore`, `deck`, `back`,
+  `low`, `under`, `river` and the spec's anchors; options `moon` (a number), `clan`, `luggage`, `puff`, `low`, `home`.
+- `island` (new, `sets/island.js`, Gathering Island, always under the full moon): cameras `shore`, `wide`, `roots`, `case`,
+  `fox`, `mist`, `sky`, `paws` and the spec's anchors (the leaders' `root-1` to `root-3` behind every Clan spot on `wide`);
+  options `crowd` (`true`, `'standing'`), `luggage` (`'heap'`, `'open'`), `ferry`, `print`, `mist` (`'rolling'`, `'thick'`),
+  `tail`, `grown`, `small` (`'one'`, `'some'`, `'coming'`), `rising`, `zip`, `drawing: 'cat'`, `bubbles`, `tap` (`'reeds'`,
+  `'mist'`, `'print'`); no `moon`.
+- `den`: `moon: 14`, option `miststone` (`true`, `'flash'`), camera `stone` with its one spot `tail`. `tower`: `night` and option
+  `moon`. `riverbank`: options `moon` (the river silver under it) and `flyer`. `hollow`: `marks: 10`. The kit's
+  `PC.art.kit.crowd(S, seats, k0)`.
+- Cast: `mistscale` (1 Mama, 2 the eldest; `lean`, `nuzzle`, `lift`, `bow`), `reedclan` 5 and `groveclan` 3 (the leaders),
+  `groveclan` 4 and 5 (the crowd's coats), Granny as chapter 5's `otter` 3 named by the chapter's `names`; Puddle's `eyes`,
+  Reynard's `bow` and `swim`, the weasels' `swim` and `hidepaws`, `wet: true`; `holds: 'miststone'` (with `flash: true`) and
+  `tap: 'stone'` on it; `tap: 'nose'` on every dragonet. Counts art: the clutches (`thing: 'dragonet'` at per 7), the sand at
+  per 7 four and three, the marks at per 7 on `ground: 'log'`, the roll call's forepaws (`who` entries with `shape: true`).
+
+**Words (`tools/storyboard.mjs`)**: words for every name above, each printed only where a chapter uses it: the Moon Ferry and
+Gathering Island as places of their own (`SETS`, `SET_COMP`, `SET_CAMS`, `SET_ANCH`, `CAM_ANCH`), their options set by set
+(`ferryIslandWords`), their times of day, the moon at 14 (“full and round, fourteen evenings old”; the riverbank's and the
+tower's in `MOON14`), the Mistscales by variant (`MISTSCALE_POSE`), the leaders and the crowd's coats by variant, Granny by
+the chapter's name, the new poses and extras, the island's own taps (`SET_TAPS`, `CAM_TAPS`) and a dragonet's snout. The
+Counts: the clutches (`CLUTCHES`), the sand at the 7s, a lesson of every Count mixed (`mixedSet`: each fact drawn as its own
+Count and helped on the log in its steps), an empty `prompt`, the skip-counts on the clutches and on the clutch's forepaws (the
+ones she never found soft grey shapes, in Mama's count), the two weasels' `ask` (two balloons a tap). **The card pick** prints
+the claim and its lit word, each right card by its line (one outside the twenty every cat holds, `EVERY_CAT_HOLDS`, “a card only
+some cats hold”), the nudges, the glow, the flag and the page a right pick turns to; a `when` on a pick's flag reads the card's
+whole line (“if she answered with “Sprinkle can’t fly.””; a `not` of one, “unless …”). **The tool's own graph** follows a pick
+(`exits`), so the order, the counts and the read-through run through it; the picks have a row of their own at a glance (“Other
+things she taps” is as it was); a frame only an `else` reaches (a twin, a chain of counted conditions) is boarded right after
+the frame whose `else` names it; and a flag the frames read only as true or false is walked as one reader for false and unset,
+which E.matches reads alike (the same numbers, far faster). `--check-words` passes with the spec's names (`tests/tools.test.js`;
+chapters 6's and 9's never-given coats move on to 6). Chapters 1 to 9's storyboards and `warrior.md` regenerate byte for byte
+but for `ch05.md`'s book rows.
+
+**Chapter 5's page** (`app/story/ch05.js`, `book.recap`, the one edit to shipped story code): the "found Puddle" line reads
+`{ foundPuddle: true, ch10Puddle: false }`, the forepaw line `{ not: { ch5Roof: false, foundWisp: false, not: { foundPuddle:
+true, ch10Puddle: false } } }` (the book only; the frames keep `ANY`), so a cat whose only Puddle is chapter 10's gets neither.
+No live save holds `ch10Puddle` (`tests/story-ch05.test.js`'s truth table).

@@ -811,6 +811,235 @@ test('its words for chapter 9’s art and keys: GroveClan’s woods (every camer
   }
 });
 
+/* Chapter 10 (docs/chapters/10-the-gathering.spec.md, sections 4 to 6): the words for its art and its keys, on a fixture
+ * chapter in the shape the spec gives them. The card picks' cards are the game's own (the fixture defines none, so the
+ * tool reads their lines from the chapters beside it, as chapter 10 does from chapters 4 to 9). */
+function fixture10() {
+  const c = (who, pose, at, extra) => Object.assign({ who, pose, mood: 'happy', at, facing: 'left' }, extra || {});
+  const T = text => ({ who: 'tallyheart', text });
+  const CLUTCH = { table: 7, thing: 'dragonet', things: 'dragonets', unit: 'clutch', units: 'clutches', teacher: 'tallyheart', ask: '{a} × {b}' };
+  const ROLL = [{ who: 'sprinkle' }, { who: 'squall', when: { foundSquall: true } }, { who: 'squall', shape: true, when: { foundSquall: false } },
+    { who: 'hail', when: { foundHail: true } }, { who: 'hail', shape: true, when: { foundHail: false } }];
+  return { id: 'fx15', number: 15, title: 'Words', start: 'a', names: { puddle: 'The big-footed dragon', otter: 'Granny' }, frames: {
+    a: { scene: { set: 'den', cam: 'inside', opts: { weather: 'clear', moon: 14, miststone: true }, cast: [c('tallyheart', 'peer', 'doorway')], fx: ['morning'] }, say: [{ who: 'tallyheart', kind: 'whisper', text: 'Big day.' }], next: 'b' },
+    b: { scene: { set: 'hollow', cam: 'sand', opts: { marks: 9, glow: 'auto' }, cast: [c('tallyheart', 'crouch', 'sand-left', { claws: true })], fx: ['morning'] }, say: [T('Hop by sevens.')],
+      skip: { table: 7, groups: 5, thing: 'dragonet', things: 'dragonets', teacher: 'tallyheart', label: 'Count the next clutch.', prompt: '**Tap** the clutches.', carry: false, next: 'c' } },
+    c: { scene: { set: 'hollow', cam: 'lesson', opts: { marks: 9, glow: 'auto' }, cast: [c('tallyheart', 'sit', 'sand-left'), c('player', 'sit', 'sand-right')], fx: ['morning'] }, counts: { set: 'fx15-sevens', next: 'd', intro: false } },
+    d: { scene: { set: 'hollow', cam: 'tree', opts: { marks: 10, glow: 'auto' }, fx: ['morning'] }, caption: ['A tenth claw mark.'], sfx: 'SKRITCH!', next: 'e' },
+    e: { scene: { set: 'ferry', cam: 'shore', opts: { moon: 14, clan: true }, cast: [c('player', 'walk', 'edge', { facing: 'right', tap: 'paw' }), c('otter', 'stand', 'pole', { variant: 3, holds: 'pole', mood: 'kind' }), c('riffle', 'hop', 'log-1', { mood: 'shout' })], fx: ['dusk'] },
+      say: [{ who: 'riffle', text: 'Everybody ON!' }, { who: 'otter', variant: 3, text: 'Hop on, little one.' }], scratch: { tap: 'paw', prompt: '**Tap** to step aboard.', label: 'Step aboard.', next: 'f' } },
+    f: { scene: { set: 'ferry', cam: 'back', opts: { moon: 14, luggage: true, puff: true }, cast: [c('riffle', 'hush', 'heap'), c('tallyheart', 'lookup', 'back-1', { facing: 'right' }), c('otter', 'sit', 'back-3', { variant: 3, mood: 'kind', facing: 'right' })], fx: ['night'] },
+      caption: ['The heap burps.'], next: 'g' },
+    g: { scene: { set: 'ferry', cam: 'low', opts: { moon: 14, low: true }, cast: [c('puddle', 'eyes', 'gap'), c('player', 'flat', 'lie', { facing: 'right' }), c('riffle', 'sit', 'sit-2'), c('tallyheart', 'sit', 'sit-3')], fx: ['night'] }, sfx: 'Blub.',
+      say: [{ who: 'puddle', name: 'Two big eyes', text: 'Hello.' }], next: 'h' },
+    h: { scene: { set: 'ferry', cam: 'under', opts: { moon: 14 }, cast: [c('puddle', 'head', 'water'), c('player', 'peer', 'lip', { facing: 'right' })], fx: ['night'] }, say: [{ who: 'puddle', text: 'On the storm night…' }], card: 'puddle-paws', next: 'i' },
+    i: { scene: { set: 'ferry', cam: 'deck', opts: { moon: 14, clan: true, luggage: true }, cast: [c('player', 'sit', 'front', { facing: 'right' }), c('tallyheart', 'sit', 'beside', { facing: 'right' }), c('otter', 'stand', 'pole', { variant: 3, holds: 'pole' }), c('murmurchime', 'sit', 'seat-1')], fx: ['night'] },
+      say: [T('So let’s count.')], counts: { set: 'fx15-ferry', next: 'j', intro: false } },
+    j: { scene: { set: 'island', cam: 'wide', opts: { crowd: true, luggage: 'heap', tap: 'reeds' }, cast: [c('reedclan', 'sit', 'root-1', { variant: 5, facing: 'right' }), c('groveclan', 'sit', 'root-3', { variant: 3 }), c('reedclan', 'sit', 'crowd-5', { variant: 1 }), c('sloshbank', 'sit', 'crowd-4'), c('player', 'sit', 'centre')], fx: ['night'] },
+      say: [{ who: 'reedclan', text: 'THAT’S the dragon?' }, { who: 'groveclan', text: 'Who is Princess Waffles?' }], scratch: { tap: 'reeds', prompt: '**Tap** to pull the reeds off the luggage.', label: 'Pull the reeds off.', next: 'k' } },
+    k: { scene: { set: 'island', cam: 'fox', opts: { crowd: true }, cast: [c('reynard', 'bow', 'fox', { wet: true }), c('snip', 'stand', 'weasel-1', { wet: true }), c('snatch', 'stand', 'weasel-2', { wet: true, holds: 'mouse' })], fx: ['night'] },
+      caption: ['Reynard bows low.'], say: [{ who: 'reynard', text: 'It FLEW out of your camp!' }],
+      pick: { claim: 'It FLEW out of your camp!', right: ['cant-fly', 'fox-brag', 'mizzle-wing'], own: { 'fox-flew': 'Hmm. That’s what HE says. Which card shows what YOU found out?' },
+        nudges: ['Hmm. Does that one say if Sprinkle could FLY?', 'Think of Sprinkle, under the bridge. Could she fly?'], flag: 'fx15Flew', next: 'l' } },
+    l: { scene: { set: 'island', cam: 'case', opts: { crowd: true, drawing: 'cat' }, cast: [c('player', 'sit', 'speak', { facing: 'right' }), c('sprinkle', 'sit', 'beside'), c('reynard', 'flap', 'fox')], fx: ['night'] },
+      say: [{ who: 'player', text: 'Sprinkle can’t fly!', when: { fx15Flew: 'cant-fly' } }, { who: 'player', text: 'Mizzle saw her wing.', when: { fx15Flew: ['mizzle-wing'] } }, { who: 'sprinkle', text: 'I couldn’t even FLAP.', when: { not: { fx15Flew: 'fox-brag' } } }],
+      next: 'm' },
+    m: { scene: { set: 'island', cam: 'case', opts: { crowd: true }, cast: [c('player', 'sit', 'speak', { facing: 'right' }), c('reynard', 'flap', 'fox')], fx: ['night'] }, say: [{ who: 'reynard', text: 'Only something BIG could take so much!' }],
+      pick: { claim: 'Only something BIG could take so much!', right: ['stash', 'tunnel', 'my-count'], nudges: ['Hmm. Does that one say how BIG the thief was?', 'Think of the prints.'], flag: 'fx15Big', next: 'n' } },
+    // the stash's twin, and the other: only its `else` reaches it (as chapter 10's twins and chains of counted conditions)
+    n: { when: { fx15Big: 'stash' }, else: 'n2', scene: { set: 'island', cam: 'case', cast: [c('player', 'sit', 'speak'), c('sloshbank', 'sit', 'front-1')], fx: ['night'] }, say: [{ who: 'sloshbank', text: 'OURS?' }], sfx: 'Drip.', next: 'n3' },
+    n2: { scene: { set: 'island', cam: 'case', cast: [c('player', 'sit', 'speak')], fx: ['night'] }, say: [{ who: 'player', text: 'Tiny prints.' }], next: 'n3' },
+    n3: { scene: { set: 'island', cam: 'wide', opts: { crowd: true }, cast: [c('glintstar', 'sit', 'root-2'), c('player', 'sit', 'centre'), c('tallyheart', 'sit', 'crowd-1')], fx: ['night'] },
+      say: [{ who: 'glintstar', text: 'I said bring it.', when: { not: { fx15Big: 'my-count' } } }, { who: 'player', text: 'Four a night, for six nights: twenty-four.' }], counts: { set: 'fx15-sixty', next: 'o' } },
+    o: { scene: { set: 'island', cam: 'fox', cast: [c('snatch', 'point', 'weasel-1', { glow: true, holds: 'mouse' }), c('snip', 'hidepaws', 'weasel-2'), c('reynard', 'sit', 'fox')], fx: ['night'] }, caption: ['And then it ALL tumbles out.'],
+      ask: { who: 'snatch', to: 'snip', prompt: '**Tap** the weasels.', label: 'Hear the next bit.', pairs: [['Two each, every night, he said!', 'Up the TUNNEL!'], ['Keep it TIDY!', 'Leave the shiny bit by the pile!']], next: 'p' } },
+    p: { scene: { set: 'island', cam: 'fox', opts: { crowd: 'standing' }, cast: [c('reynard', 'swim', 'water', { wet: true }), c('snip', 'swim', 'water-2', { wet: true }), c('snatch', 'swim', 'water-3', { wet: true })], fx: ['night'] }, sfx: 'BYE, GIANT SQUIRREL!', sfxRead: 'Bye, giant squirrel!', next: 'q' },
+    q: { scene: { set: 'island', cam: 'mist', opts: { mist: 'rolling', tap: 'mist' }, cast: [c('player', 'sit', 'speak', { facing: 'right' }), c('sprinkle', 'sniff', 'beside', { facing: 'right' }), c('tallyheart', 'sit', 'mentor', { facing: 'right' })], fx: ['night'] },
+      say: [{ who: 'sprinkle', text: 'That’s MY mist.' }], scratch: { tap: 'mist', prompt: '**Tap** the mist.', label: 'Look at the mist.', next: 'r' } },
+    r: { scene: { set: 'island', cam: 'mist', opts: { mist: 'thick', tail: true }, cast: [c('mistscale', 'lean', 'mama', { variant: 1, mood: 'kind' })], fx: ['night'] }, say: [{ who: 'mistscale', name: 'A soft voice', text: 'Sprinkle?' }], next: 's' },
+    s: { scene: { set: 'island', cam: 'mist', opts: { mist: 'thick', grown: true, small: 'some' }, cast: [c('mistscale', 'lift', 'mama', { variant: 1, mood: 'kind' }), c('sprinkle', 'sit', 'nose'), c('player', 'sit', 'speak', { facing: 'right' })], fx: ['night'] },
+      say: [{ who: 'mistscale', name: 'Mama', text: 'Forepaws UP.' }],
+      skip: { table: 5, groups: 3, teacher: 'mistscale', thing: 'claw', things: 'claws', label: 'Count the next forepaw.', prompt: '**Tap** each forepaw.', carry: false, who: ROLL, next: 't' } },
+    t: { scene: { set: 'island', cam: 'case', opts: { crowd: true, mist: 'thick', small: 'coming' }, cast: [c('player', 'sit', 'speak', { facing: 'right' }), c('squall', 'roar', 'beside', { tap: 'nose' })], fx: ['night'] }, say: [{ who: 'squall', text: 'GOODBYE!' }], sfx: 'Hic!',
+      scratch: { tap: 'nose', prompt: '**Tap** to say goodbye.', label: 'Say goodbye.', next: 'u' } },
+    u: { scene: { set: 'island', cam: 'mist', opts: { mist: 'thick', grown: true }, cast: [c('mistscale', 'bow', 'eldest', { variant: 2, mood: 'kind' }), c('groveclan', 'sit', 'front-1', { variant: 1, facing: 'right' }), c('player', 'crouch', 'speak', { facing: 'right', mood: 'proud', tap: 'nose' })], fx: ['night'] },
+      caption: ['The eldest bows low to you.'], scratch: { tap: 'nose', prompt: '**Tap** to bow back.', label: 'Bow back.', next: 'v' } },
+    v: { scene: { set: 'island', cam: 'paws', cast: [c('player', 'sit', 'close', { tap: 'paw' }), c('sprinkle', 'lookdown', 'above', { holds: 'pebble' })], fx: ['night'] }, say: [{ who: 'sprinkle', text: 'This is for you.' }],
+      scratch: { tap: 'paw', prompt: '**Tap** to hold out your paws.', label: 'Hold out your paws.', next: 'w' } },
+    w: { scene: { set: 'island', cam: 'paws', cast: [c('player', 'sit', 'close', { holds: 'miststone', flash: true, tap: 'stone' })], fx: ['night'] }, caption: ['And it FLASHES.'],
+      scratch: { tap: 'stone', prompt: '**Tap** to tilt it.', label: 'Tilt the stone.', next: 'x' } },
+    x: { scene: { set: 'island', cam: 'sky', opts: { rising: true, zip: true, grown: true }, cast: [c('sprinkle', 'fly', 'far')], fx: ['night'] }, caption: ['Then they are gone.'], next: 'y' },
+    y: { scene: { set: 'island', cam: 'shore', opts: { print: true, ferry: true, tap: 'print' }, cast: [c('player', 'crouch', 'print', { mood: 'sniff' }), c('otter', 'sit', 'raft', { variant: 3 })], fx: ['night'] },
+      say: [{ who: 'otter', text: 'Badger. An old track.' }], scratch: { tap: 'print', prompt: '**Tap** to sniff it, very carefully.', label: 'Sniff the print.', next: 'y2' } },
+    y2: { scene: { set: 'riverbank', cam: 'roof', opts: { moon: 14, roar: true, flyer: true }, fx: ['night'] }, caption: ['One last roar.'], next: 'y3' },
+    y3: { scene: { set: 'tower', cam: 'up', opts: { moon: 14, chime: true, light: true }, cast: [c('player', 'pawup', 'foot', { tap: 'paw' }), c('waffles', 'peer', 'railing', { mood: 'dreamy' })], fx: ['night'] }, say: [{ who: 'waffles', text: 'I have to lie DOWN.' }], next: 'y4' },
+    y4: { scene: { set: 'den', cam: 'nest', opts: { weather: 'clear', moon: false, stone: 'auto', bark: 'auto', hidden: true, glass: true }, cast: [c('player', 'crouch', 'nest', { holds: 'miststone', holdAt: 'paws', tap: 'stone' })], fx: ['night'] },
+      caption: ['Ten claw marks on the tree.'], gift: 'mist-stone', scratch: { tap: 'stone', prompt: '**Tap** to lay the mist stone on the moss.', label: 'Lay the stone on the moss.', next: 'z' } },
+    z: { scene: { set: 'den', cam: 'stone', opts: { miststone: 'flash', moon: 14 }, cast: [c('player', 'curl', 'tail', { asleep: true })], fx: ['night'] }, caption: ['On the moss, your mist stone flashes.'], end: true }
+  }, cards: {}, counts: {
+    'fx15-sevens': Object.assign({}, CLUTCH, { label: 'Clutches of seven', hollowThings: 'sevens', prompt: 'How many dragonets?', fillOrder: 'easiest',
+      facts: [{ a: 2, b: 7, prompt: 'Two clutches.', retryPrompt: true }, [7, 3], { a: 7, b: 7, lit: 42, prompt: 'Seven clutches. Six sevens is forty-two. One more seven…', retryPrompt: true, right: [T('Forty-nine! The new one.')], rightAgain: true }],
+      praise: ['Seven more, every time!'], helpIntro: 'Close. Let’s hop it together.', helpIntroFar: 'Let’s hop it together.', done: 'That’s the sevens.' }),
+    'fx15-ferry': { table: 2, thing: 'leg', things: 'legs', teacher: 'tallyheart', ask: '{a} × {b}', ground: 'log',
+      facts: [{ a: 8, b: 1, table: 1, prompt: 'Tails! Eight cats.', retryPrompt: true, right: [{ who: 'murmurchime', text: 'Eight!' }], rightAgain: true },
+        { a: 9, b: 4, table: 4, prompt: 'Paws! Nine cats.', retryPrompt: true, right: [{ kind: 'caption', text: 'Thump! Granny bangs her pole.' }, { who: 'otter', variant: 3, text: 'Thirty-six!' }], rightAgain: true },
+        { a: 6, b: 8, table: 8, prompt: 'Spiders’ legs! Six spiders.', retryPrompt: true },
+        { a: 4, b: 6, table: 6, picture: { kind: 'cheeks' }, prompt: 'Whiskers! Four cheeks.', retryPrompt: true },
+        { a: 7, b: 7, table: 7, picture: { kind: 'marks', ground: 'log' }, prompt: 'And the new one. Seven sevens!', retryPrompt: 'Seven sevens!' }],
+      praise: [], helpIntro: 'Close. Let’s hop it together.', helpIntroFar: 'Let’s hop it together.', done: null },
+    'fx15-sixty': { table: 10, thing: 'fish', things: 'fish', unit: 'night', units: 'nights', teacher: 'tallyheart', ask: '{a} × {b}', picture: { kind: 'marks' },
+      facts: [{ a: 10, b: 6, prompt: [], retryPrompt: [{ who: 'player', text: 'And a dragon who eats ten fish a meal, for six nights?' }], right: [{ who: 'player', text: 'SIXTY!' }], rightAgain: true }],
+      help: 'picture', helpIntro: 'Close. Let’s hop it together.', helpIntroFar: 'Let’s hop it together.', praise: [], done: null }
+  } };
+}
+const writeFixture = (dir, story) => {
+  const file = path.join(dir, story.id + '.js');
+  fs.writeFileSync(file, 'globalThis.PC = globalThis.PC || {}; PC.story = PC.story || {}; PC.story.' + story.id + ' = ' + JSON.stringify(story) + ';\nmodule.exports = PC;\n');
+  return file;
+};
+
+test('its words for chapter 10’s art and keys: the Moon Ferry and Gathering Island (every camera used, their spots, dusk and the moonlit night), the full moon over the den, the tower and the riverbank, the mist stone and its close-up, the ten marks; the grown Mistscales, the leaders by variant, Granny by the chapter’s name, Puddle’s eyes, Reynard’s bow, the swim, wet fur, the hidden paws, the stone held and tapped, the dragonets’ snouts; the clutches and the sand at the 7s, the mixed Moon Ferry Counts on a log, an empty prompt, the roll call’s forepaws with shapes; the two weasels’ ask; the card pick and a `when` that reads it', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-storyboard-'));
+  try {
+    const md = generate(writeFixture(tmp, fixture10()), tmp);
+    const panel = id => md.split('\n### ' + id + ' · panel ')[1].split('\n### ')[0];
+    // the clutches: five in the sand by sevens; the lesson's clutches, its step-off, its sand four and three
+    assert.match(panel('b'), /\*\*Then she counts by 7s on the clutches\*\* \(the skip-count\): five clutches of seven little dragonets, each a row of four over a row of three \(four sisters and three brothers\), [^\n]*\(in play they take the panel\); 5 taps, one on each clutch in turn \(the next one glows; a tap anywhere else makes it wiggle\), each lighting its seven dragonets, the row of four and then the row of three, and putting its running total under it and in Tallyheart’s balloon: 7, 14, 21, 28, 35\. Nothing can be got wrong, and nothing is logged\. The last tap turns the page to c, which does not show the number\. The instruction under the panel: “Tap the clutches\.”/);
+    assert.match(panel('c'), /\*\*Then the Counts lesson\*\* `fx15-sevens` \(dragonets, clutches of seven little dragonets, each a row of four over a row of three [^\n]*lit a dragonet at a time \(a clutch’s top four, then its bottom three\)\): 2 × 7 \(its own question, kept on its retry\), 7 × 3, 7 × 7 \(its first six clutches lit as it is asked \(42\); its own question, kept on its retry; its own lines after a right answer; its own lines after a right retry\)\./);
+    assert.match(panel('c'), /a miss gets the sand count \(seven marks for every clutch, scratched four and three with a gap between, hopped by sevens from the first\) and comes back two questions later/);
+    assert.match(panel('c'), /- In the Training Hollow: its button reads “Clutches of seven · the 7s”, and Tallyheart calls it “sevens”\./);
+    // the den by morning under the full moon, the mist stone on the moss; the tree's ten marks
+    assert.match(panel('a'), /Also: clear weather; the moon full and round, fourteen evenings old; the mist stone on the moss of her nest, beside her glass in its leaf and the corners of her secret bark: a smooth grey pebble, egg-shaped, the size of her paw\./);
+    assert.match(panel('d'), /Also: ten claw marks on the trunk, in rows of four, four and two: one for every Count;/);
+    // the Moon Ferry: its place words at dusk and by night, its cameras, its spots, its options, Granny by name
+    assert.match(panel('e'), /\*\*Scene\.\*\* Ferry: the otters’ Moon Ferry, a line of log rafts on the moonlit river, at dusk, rose and lilac light on the water, the moon just up \(logs lashed with reeds, [^\n]*never black[^\n]*every otter in it is cast, never drawn by the set\)\. Camera: the Crossing’s edge at dusk: [^\n]*the full moon rising \(`shore`\)\. Cast: you \(walking, happy, at the stones’ edge by the front raft, about to step aboard, facing right, the front paw, mid-step, is what she taps\); Granny, the old otter who poles the Moon Ferry \(standing up on her hind legs, kind, standing at the front raft’s far end with the long pole, facing left, holding the raft’s long pole\); Riffle, the otter pup \(hopping on the spot, shouting, just aboard, on the front raft’s near logs, facing left\)\. Also: the full moon, round and bright, wherever the sky or the water shows it; the rest of CrystalClan seated along the logs of the front raft and the rafts behind, small, in their coats\. Effects: dusk\./);
+    assert.match(panel('e'), /- \*\*Granny \(An otter\)\*\*: “Hop on, little one\.”/);
+    assert.match(panel('f'), /Ferry: [^\n]*at night, by the light of the full moon \([^\n]*Camera: close on the very back of the front raft: the heap of reeds \(the luggage\)[^\n]*\(`back`\)\. Cast: Riffle, the otter pup \(a paw over his mouth, happy, beside the heap of reeds, facing left\); Tallyheart \(looking up, happy, at the raft’s back end, left of the heap, first, facing right\); Granny, [^\n]*\(sitting, kind, at the raft’s back end, left of the heap, third, facing right\)\. Also: [^\n]*; the heap of reeds at the back of the front raft \(the luggage\), round and lumpy, nothing of Sprinkle showing; a little cloud of mist puffing out of the heap of reeds\./);
+    assert.match(panel('g'), /Camera: at cat height on the front raft’s logs, close: [^\n]*\(`low`\)\. Cast: Puddle, a Mistscale dragonet [^\n]*\(only his two big round eyes and the top of his head above the silver water, a ring of ripples round them, happy, in the silver water between two logs \(no ground shadow: the set draws its rings\), facing left\); you \(pressed flat, happy, lying flat on the logs at the gap’s edge, chin over it, facing right\); [^\n]*Also: [^\n]*the front raft riding low: the water lapping right at the logs’ tops, never over them\./);
+    assert.match(panel('g'), /- \*\*Two big eyes \(Puddle\)\*\*: “Hello\.”/);
+    assert.match(panel('h'), /Camera: looking straight down into the gap between two logs: [^\n]*never dark \(`under`\)\. Cast: [^\n]*in the silver water in the middle of the gap \(no ground shadow\)[^\n]*you \(peering, happy, at the gap’s top edge, looking down: head and forepaws, the rest cut off by the edge, facing right\)/);
+    assert.match(panel('i'), /Camera: aboard the front raft, from its back end looking forward, upriver: [^\n]*\(`deck`\)\. Cast: you \(sitting, happy, mid-raft at the left, facing right\); Tallyheart \(sitting, happy, mid-raft, beside her, facing right\); Granny, [^\n]*standing at the front end with her pole, against the moonlit river,[^\n]*Murmurchime, the tortoiseshell warrior \(sitting, happy, seated along the raft’s logs, in the first of six seats \(three down each side, the near ones bigger\), facing left\)\./);
+    // the Moon Ferry's Counts: every Count mixed, each fact its own picture, the help on a log in each Count's steps
+    assert.match(panel('i'), /\*\*Then the Counts lesson\*\* `fx15-ferry` \(every Count mixed, each fact in its own Count’s picture\): 8 × 1 \(from the 1s; drawn as eight cats’ tails; [^)]*\), 9 × 4 \(from the 4s; drawn as nine cats side-on, standing, four paws each, five to a row; [^)]*\), 6 × 8 \(from the 8s; drawn as six spiders from above, eight legs each, four on each side; [^)]*\), 4 × 6 \(from the 6s; drawn as four cheeks close up, six whiskers on each, three on top and three below; [^)]*\), 7 × 7 \(from the 7s; drawn as seven rows of seven marks scratched on a log’s top, each row four and three with a gap, lit in order; its own question, and another of its own on its retry\)\./);
+    assert.match(panel('i'), /a miss gets the fact’s own Count scratched on a log of the raft and hopped together in its own steps \(the 1s one by one; the 4s by fours, two and two; the 8s by eights, four and four; the 6s by sixes, three and three; the 7s by sevens, four and three\), and comes back two questions later\./);
+    assert.match(panel('i'), /- After 9 × 4, right the first time:\n {2}- \*Caption\*: Thump! Granny bangs her pole\.\n {2}- \*\*Granny \(An otter\)\*\*: “Thirty-six!”/);
+    assert.match(panel('i'), /- Asking 7 × 7 again after a miss:\n {2}- \*\*Tallyheart\*\*: “Here’s that one again\. Seven sevens!”/);
+    // Gathering Island: the clearing, the leaders by variant (labels only), the crowd, the reed heap tapped
+    assert.match(panel('j'), /\*\*Scene\.\*\* Island: Gathering Island, a round island in the river, at night under the full moon, high and bright silver, never dark \(one great tree in the middle, [^\n]*never in the branches[^\n]*\)\. Camera: wide: the clearing under the great tree, every Clan: [^\n]*\(`wide`\)\. Cast: ReedClan’s leader \(big, broad and grand: [^\n]*\) \(sitting, happy, on the great tree’s left root, facing right\); GroveClan’s leader \(tall and lean: [^\n]*\) \(sitting, happy, on the great tree’s right root, facing left\); the ReedClan she-cat [^\n]*at the front of the ring, ReedClan’s side, second, [^\n]*Also: every Clan in a wide ring round the clearing, small seated cats in their Clans’ coats [^\n]*; the reed heap \(the luggage\), round and lumpy; the heap of reeds over the luggage is what she taps\./);
+    assert.match(panel('j'), /- \*\*ReedClan’s leader\*\*: “THAT’S the dragon\?”\n- \*\*GroveClan’s leader\*\*: “Who is Princess Waffles\?”/);
+    assert.match(panel('j'), /\*\*Then she taps the heap of reeds over the luggage\*\* \(one tap, on this scene\)/);
+    // the fox: his bow, wet; the weasels wet, Snatch's mouse
+    assert.match(panel('k'), /Camera: close on the fox at the clearing’s edge, the river behind him; [^\n]*\(`fox`\)\. Cast: Reynard, the fox [^\n]*\(a low sweeping bow, one forepaw forward, his tail flourished up behind: charming, vain, happy, at the clearing’s edge, the river behind, facing left, wet through: a little darker, the fur flattened and spiky at its edges, two or three drips falling\); Snip, [^\n]*at the fox’s heels, first, facing left, wet through[^\n]*Snatch, [^\n]*at the fox’s heels, second, facing left, a mouse in the mouth \(eyes shut, its tail dangling\), wet through/);
+    // the card pick, as the spec words it (section 6, "The storyboard words"), and where a right pick turns the page
+    assert.ok(panel('k').includes('**Pick a card.** Her Case File opens over the panel, every card face up as her file lays them, under Reynard’s claim “It FLEW out of your camp!” (FLEW lit). Right: Sprinkle can’t fly. (`cant-fly`), Reynard calls ‘It FLEW off’ his little story. He wants the dry den. (`fox-brag`), Mizzle says Sprinkle’s wing was hurt before the rain stopped. (`mizzle-wing`, a card only some cats hold). The fox’s own card (`fox-flew`): “Hmm. That’s what HE says. Which card shows what YOU found out?” Any other card: “Hmm. Does that one say if Sprinkle could FLY?” A second wrong card: “Think of Sprinkle, under the bridge. Could she fly?” After a third, the right cards she holds glow. Her pick is remembered (`fx15Flew`). A right pick turns the page to l.'), panel('k'));
+    assert.match(panel('m'), /under Reynard’s claim “Only something BIG could take so much!” \(BIG lit\)\. Right: The weasels have a stash: our prey, and ReedClan’s\. \(`stash`\), [^\n]*\(`tunnel`\), [^\n]*\(`my-count`, a card only some cats hold\)\. Any other card: “Hmm\. Does that one say how BIG the thief was\?” A second wrong card: “Think of the prints\.”/);
+    // a `when` that reads a pick's flag: the card's whole line; a list of cards; a `not` of one, "unless"; a frame's
+    assert.match(panel('l'), /- \*\*You\*\*: “Sprinkle can’t fly!” \*\(only if she answered with “Sprinkle can’t fly\.”\)\*/);
+    assert.match(panel('l'), /- \*\*You\*\*: “Mizzle saw her wing\.” \*\(only if she answered with “Mizzle says Sprinkle’s wing was hurt before the rain stopped\.”\)\*/);
+    assert.match(panel('l'), /- \*\*Sprinkle\*\*: “I couldn’t even FLAP\.” \*\(unless she answered with “Reynard calls ‘It FLEW off’ his little story\. He wants the dry den\.”\)\*/);
+    assert.match(panel('l'), /Also: [^\n]*a little cat scratched in the earth in front of the dragonet beside her: four legs, two ears and a tail\./);
+    assert.match(panel('n'), /^14\n\n\*\*Shot\.\*\* \(no board written\)\n\n\*\*Shows only if\*\* she answered with “The weasels have a stash: our prey, and ReedClan’s\.”; otherwise the page turns straight on to n2\./);
+    assert.match(panel('n3'), /- \*\*Glintstar\*\*: “I said bring it\.” \*\(unless she answered with “My count: [^”]*”\)\*/);
+    // the sixty's empty prompt: the frame's own balloons ask it
+    assert.match(panel('n3'), /10 × 6 \(no words of its own: the frame’s balloons ask it, and its own question on its retry;[^\n]*\n[\s\S]*- Asking 10 × 6: no more words \(the frame’s own balloons, said again over the question, ask it\)\.\n- Asking 10 × 6 again after a miss:\n {2}- \*\*Tallyheart\*\*: “Here’s that one again\.”\n {2}- \*\*You\*\*: “And a dragon who eats ten fish a meal, for six nights\?”/);
+    // the two weasels' ask: two balloons a tap, his and hers
+    assert.match(panel('o'), /Snip, the weasel sister [^\n]*\(standing up, the tiny forepaws hidden behind the back, eyes wide and innocent, happy, at the fox’s heels, second, facing left\)/);
+    assert.match(panel('o'), /\*\*Then she taps the weasels, once for each pair of lines\*\* \(two taps, on this scene, counting nothing\): Snatch glows softly; a tap on him letters his next line in his balloon and Snip’s in hers, two balloons a tap, by turns, and the scene stays as it is; [^\n]*After the last one: Next → p\. The instruction under the panel: “Tap the weasels\.” For VoiceOver, a hidden button: “Hear the next bit\.”\n\n1\. \*\*Snatch\*\*: “Two each, every night, he said!” \*\*Snip\*\*: “Up the TUNNEL!”\n2\. \*\*Snatch\*\*: “Keep it TIDY!” \*\*Snip\*\*: “Leave the shiny bit by the pile!”/);
+    // off the island: the swim, the crowd on its feet, the dogs' goodbye said in words
+    assert.match(panel('p'), /Reynard, [^\n]*\(swimming away: only his head and the line of his back above the water, ears flat, his tail floating behind \(no splash at anyone\), happy, in the river, swimming away, first \(no ground shadow\), facing left, wet through[^\n]*Snip, [^\n]*\(swimming, the head up, paddling after the fox, [^\n]*Also: every Clan in the ring on its feet: every cat and every otter standing\./);
+    // the mist, Mama, her tail, the roll call with the clutch's shapes in her count
+    assert.match(panel('q'), /Camera: the clearing’s edge by the great tree, the mist rolling in off the river: [^\n]*\(`mist`\)\. Cast: you \(sitting, happy, at the left, facing the mist, facing right\); Sprinkle, [^\n]*\(sniffing, happy, on the grass beside her, facing the mist, facing right\); Tallyheart \(sitting, happy, behind her at the left, facing right\)\. Also: the mist coming up the river: [^\n]*; the soft silver bank of mist is what she taps\./);
+    assert.match(panel('q'), /\*\*Then she taps the soft silver bank of mist rolling in\*\*/);
+    assert.match(panel('r'), /Cast: Mama, Sprinkle’s mother, a grown Mistscale \(huge, gentle and misty, never frightening: [^\n]*no teeth, no claws shown\) \(her great face leaning out of the mist, kind, out of the mist at the right, the face about two cats tall, facing left\)\. Also: the mist thick round the great tree too, [^\n]*; the tip of a huge, soft grey tail curling through the mist\./);
+    assert.match(panel('r'), /- \*\*A soft voice \(Mama\)\*\*: “Sprinkle\?”/);
+    assert.match(panel('s'), /\(her great head lifted high, the mouth a little open in a call \(no teeth\), kind,[^\n]*Sprinkle, [^\n]*\(sitting, happy, on the grass under Mama’s lowered nose, facing left\)[^\n]*Also: [^\n]*; the other grown Mistscales, great soft grey shapes in the mist: gentle, no faces, no teeth or claws; three or four small dragonet shapes in the mist, grey, soft and faceless\./);
+    assert.match(panel('s'), /\*\*Then she counts the clutch’s forepaws\*\* \(the skip-count, by 5s\): three forepaws raised in one row, the clutch in a row \(in play they take the panel\), one for each of these that is hers, in order: Sprinkle, small behind a raised forepaw of her own; Squall, small behind a raised forepaw of his own \*\(only if foundSquall is true\)\*; a soft grey dragonet shape, faceless, in a wisp of mist, behind a misty grey forepaw whose five claws light pale silver \*\(only if foundSquall is false or not set\)\*; Hail, small behind a raised forepaw of her own \*\(only if foundHail is true\)\*; [^\n]*; 3 taps, one on each forepaw in turn [^\n]*putting the running total in Mama’s balloon: 5, 10, 15\. Nothing can be got wrong, and nothing is logged\. The last tap turns the page to t, which does not show the number\./);
+    // a dragonet's goodbye tapped on the snout; the eldest's bow, bowed back
+    assert.match(panel('t'), /Squall, the littlest dragonet [^\n]*\(head back, roaring, his mouth a round O, happy, at her right, between her and the fox, facing left, the snout is what she taps\)\. Also: [^\n]*small dragonet shapes stepping out of the mist toward her, still misty\./);
+    assert.match(panel('t'), /\*\*Then she taps Squall’s snout\*\*/);
+    assert.match(panel('u'), /Cast: the eldest Mistscale \(as big as Mama, [^\n]*never silver-white; no teeth, no claws shown\) \(the head bowed all the way down to the grass, eyes closed, the neck a long curve, kind, lower and further right, out of the mist, the face bowing to the grass, facing left\)/);
+    assert.match(panel('u'), /\*\*Then she taps her own nose\*\*/);
+    // her paws, the pebble over them, the mist stone flashing
+    assert.match(panel('v'), /Camera: close on our cat’s forepaws held out on the moonlit grass, [^\n]*\(`paws`\)\. Cast: you \(sitting, happy, close in front, the forepaws and chest filling the lower panel, facing left, her two forepaws, held out, are what she taps\); Sprinkle, [^\n]*\(leaning down from above, looking down, happy, leaning down from the top right, her claws over the paws below, facing left, holding her plain grey pebble, smooth as an egg\)\./);
+    assert.match(panel('v'), /\*\*Then she taps her own two forepaws, held out in the moonlight\*\*/);
+    assert.match(panel('w'), /the mist stone held out in her two forepaws: a smooth grey pebble, egg-shaped, the size of her paw, flashing blue and green in the moonlight \(a band of blue and green light across its face, the rest still grey\), the mist stone is what she taps\)/);
+    assert.match(panel('w'), /\*\*Then she taps the mist stone in her paws\*\*/);
+    // the sky, the shore and the badger's print, the walk home, Waffles by night
+    assert.match(panel('x'), /Island: the sky over Gathering Island, at night under the full moon, high and bright silver, never dark \(the full moon, the great tree’s crown, the top edge of the mist\)\. Camera: looking up past the great tree’s crown into the sky, for the flight and the leaving \(`sky`\)\. Cast: Sprinkle, [^\n]*far up the river, small, in the air, facing left\)\. Also: the Mistscales rising into the mist and away upriver, [^\n]*; one small winged shape zipping off the other way, toward the towers far downriver, a little ring of hiccup mist behind it; the other grown Mistscales/);
+    assert.match(panel('y'), /Island: Gathering Island’s shore, at night under the full moon, [^\n]*\(`shore`\)\. Cast: you \(crouching, sniffing, on the mud beside the badger’s print, facing left\); Granny, [^\n]*at the Moon Ferry’s front, at the water’s edge, facing left\)\. Also: the badger’s old track in the mud: one big print, a wide pad and five toes in a row, long digging claw marks, old and dry at its edges, in bright moonlight \(never fresh, and never the animal\); the Moon Ferry’s front raft at the water’s edge; the badger’s print is what she taps\./);
+    assert.match(panel('y'), /\*\*Then she taps the badger’s big old print in the mud\*\*/);
+    assert.match(panel('y2'), /Riverbank: the river path below a muddy bank, at night [^\n]*Also: the full moon over the towers, and under it the river silver, moonlight on its ripples \(never the black water of a dark night\); the path pale in the moonlight; jagged sound lines from the tower roof; a small winged shape flying off upriver across the sky by the red light, slate-dark, wings out, a tiny ring of hiccup mist behind it\./);
+    assert.match(panel('y3'), /Tower: outside, looking up a glass tower, at night, the glass dark blue against a starry sky, many windows lit warm gold, [^\n]*Also: the full moon high over the towers;/);
+    // bedtime: the stone laid on the moss (a gift), and the close-up on it, her tail's tip
+    assert.match(panel('y4'), /the mist stone in one forepaw over the moss: a smooth grey pebble, egg-shaped, the size of her paw, the mist stone is what she taps\)/);
+    assert.match(panel('y4'), /\*\*Gift:\*\* Sprinkle’s mist stone: grey, until the moonlight finds it \(from Sprinkle, `mist-stone`\)/);
+    assert.match(panel('z'), /Camera: extreme close on the moss at her nest’s edge in the moonlight from the doorway: the mist stone big in the middle, [^\n]*\(`stone`\)\. Cast: you \(curled up, happy, curled at the panel’s bottom edge: only her tail’s tip, facing left, eyes shut: asleep\)\. Also: [^\n]*flashing blue and green in the moonlight from the doorway [^\n]*; the moon full and round, fourteen evenings old\./);
+    // at a glance: the picks a row of their own, never among the things she taps
+    assert.match(md, /\| Card picks \| 2 \(k, m\) \|/);
+    const taps = md.split('\n').find(l => l.startsWith('| Other things she taps |'));
+    assert.match(taps, /the heap of reeds over the luggage \(j\), the weasels’ two pairs of lines \(o\), the soft silver bank of mist rolling in \(q\), Squall’s snout \(t\), [^|]*the badger’s big old print in the mud \(y\)/);
+    assert.doesNotMatch(taps, /\((k|m)\)/);
+    assert.doesNotMatch(md, /Not reachable from the start/);
+    // every new name has words: none prints as its bare id, no pose as its bare name
+    assert.doesNotMatch(md, /\[object Object\]|undefined|Set: |Camera: (shore|deck|back|low|under|river|wide|roots|case|fox|mist|sky|paws|stone|tree) \(|\bat (bank-\d|edge|log-\d|pole|seat-\d|front|beside|back|heap|back-\d|gap|lie|sit-\d|water|lip|raft-\d|land-\d|raft|drag|print|root-\d|crowd-\d|elder|centre|edge-\d|bank|luggage|step|near-\d|speak|mentor|root|fox|weasel-\d|front-\d|water-\d|mama|eldest|nose|fly|far|close|above|tail)\b|(?<![-\w])(clan|luggage|puff|low|home|crowd|ferry|print|mist|tail|grown|small|rising|zip|drawing|bubbles|tap|miststone|flyer|moon|marks): (true|false|"|\[|\d)/, 'every new name has words');
+    assert.doesNotMatch(md, /\((lean|nuzzle|lift|bow|hidepaws|swim|eyes), /, 'no pose prints as its bare name');
+    assert.doesNotMatch(md, /the old tom’s nose|Sprinkle’s little cloud of mist is what|the nearest of Sprinkle’s big prints|the head, turned into the gap|tiny Clan cats in the garden|crowded round the fountain|two nostrils and a string of bubbles|standing up on his hind legs, kind/, 'chapter 10’s names never read as an older chapter’s');
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+/* Chapter 10's card pick in the tool's own graph (the spec's section 6, "The tool's own graph"): `exits(f)` follows a pick
+ * to its `next`, so the reading order, the panel counts and the read-through run through it, and the stash twin's `when`
+ * on its flag is a reader of its own; the picks have their own row at a glance. On the stub (no pick yet) a fixture with
+ * picks stands in; once chapter 10 has one, its own storyboard is held to it too. */
+test('chapter 10’s card picks are followed by the storyboard’s own graph: everything after a pick is reachable, read in order and counted; docs/storyboard/ch10.md never lists a frame as “Not reachable from the start” once a pick frame exists', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-storyboard-'));
+  try {
+    const story = fixture10();
+    const md = generate(writeFixture(tmp, story), tmp);
+    assert.doesNotMatch(md, /Not reachable from the start/);
+    const order = (md.match(/^### [a-z0-9]+ · panel \d+$/gm) || []).map(l => l.split(' ')[1]);
+    assert.deepEqual(order.slice(9, 18), ['j', 'k', 'l', 'm', 'n', 'n2', 'n3', 'o', 'p'], 'the pages after each pick are read in order, on the main line, the twin only an else reaches right after the frame whose else it is');
+    assert.equal(order.length, 31, 'every frame boarded');
+    assert.match(md, /\| Frames \| 31 \(31 on the main line, 0 in branches\) \|/);
+    // n and n2 are twins by the pick's flag: a frame `when` on it is a reader of its own (with "stash", or any other card)
+    assert.match(md, /\| One read-through \| 30 panels, depending on her choices \|/);
+    assert.match(md, /\| Card picks \| 2 \(k, m\) \|/);
+    // without the pick in the graph every frame after it would be lost: the tool's own exits read `pick`
+    const src = fs.readFileSync(TOOL, 'utf8');
+    assert.match(src, /if \(f\.ask\) return \[f\.ask\.next\];\n(\s*\/\/[^\n]*\n)?\s*if \(f\.pick\) return \[f\.pick\.next\];\n\s*return f\.next \? \[f\.next\] : \[\];/);
+    // a read-through still counts a frame shown only by a flag read as true or false: both kinds of reader walk it
+    const two = { id: 'fx16', number: 16, title: 'Two', start: 'a', frames: {
+      a: { next: 'b' }, b: { when: { foundSquall: true }, else: 'c', next: 'c' }, c: { when: { foundSquall: false }, else: 'd', next: 'd' },
+      d: { when: { foundHail: true }, else: 'e', next: 'e' }, e: { end: true } }, counts: {} };
+    const md2 = generate(writeFixture(tmp, two), tmp);
+    assert.match(md2, /\| One read-through \| 3–4 panels, depending on her choices \|/);
+    // a chain of counted conditions, each frame's `else` the next (the roll call's): every one boarded, in the chain's order
+    const chain = { id: 'fx17', number: 17, title: 'Chain', start: 'a', frames: {
+      a: { next: 'b1' }, b1: { when: { foundSquall: true, foundHail: false }, else: 'b2', next: 'g1' }, b2: { when: { foundSquall: false, foundHail: true }, else: 'b3', next: 'g2' },
+      b3: { when: { not: { foundSquall: false, foundHail: false } }, else: 'h', next: 'g1' }, g1: { when: { foundSquall: true }, next: 'g2' }, g2: { when: { foundHail: true }, next: 'h' },
+      h: { when: { foundSquall: true, foundHail: true }, else: 'h2', next: 'z' }, h2: { next: 'z' }, z: { end: true } }, counts: {} };
+    const md3 = generate(writeFixture(tmp, chain), tmp);
+    assert.deepEqual((md3.match(/^### [a-z0-9]+ · panel \d+$/gm) || []).map(l => l.split(' ')[1]), ['a', 'b1', 'b2', 'b3', 'g1', 'g2', 'h', 'h2', 'z']);
+    assert.doesNotMatch(md3, /Not reachable from the start/);
+    assert.match(md3, /\| Frames \| 9 \(9 on the main line, 0 in branches\) \|/);
+    assert.match(md3, /\| One read-through \| 3–6 panels, depending on her choices \|/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+  // the real chapter, once it has a pick frame
+  const real = require(path.join(ROOT, 'app/story/ch10.js'));
+  const ch10 = ((real && real.story) || {}).ch10;
+  if (ch10 && Object.values(ch10.frames).some(f => f && f.pick)) {
+    const board = fs.readFileSync(path.join(ROOT, 'docs/storyboard/ch10.md'), 'utf8');
+    assert.doesNotMatch(board, /Not reachable from the start/);
+    const picks = Object.keys(ch10.frames).filter(id => ch10.frames[id].pick);
+    assert.ok(board.includes('| Card picks | ' + picks.length + ' (' + picks.join(', ') + ') |'), 'its own row at a glance');
+    picks.forEach(id => assert.ok(board.includes('Her pick is remembered (`' + ch10.frames[id].pick.flag + '`).'), id));
+  }
+});
+
 test('its words cover the art’s whole vocabulary: every set (with its time of day), camera, anchor, option value, pose, mood, effect, cast member and cast extra', () => {
   const run = spawnSync(process.execPath, [TOOL, '--check-words'], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);

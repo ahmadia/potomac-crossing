@@ -60,24 +60,40 @@
     // chapter 9: her first flights (her laugh is happy)
     hop: 'happy', flap: 'stern', glide: 'happy', fly: 'happy', splash: 'happy' };
   // chapter 4: Reynard's and Squall's poses, each with a mood the text gives it
-  var FOX_MOOD = { sit: 'neutral', comb: 'proud', chest: 'kind', think: 'dreamy', lean: 'solemn', flap: 'happy', slip: 'scared', dash: 'worried', trot: 'proud' };
+  var FOX_MOOD = { sit: 'neutral', comb: 'proud', chest: 'kind', think: 'dreamy', lean: 'solemn', flap: 'happy', slip: 'scared', dash: 'worried', trot: 'proud',
+    // chapter 10: his bow, and swimming away
+    bow: 'proud', swim: 'worried' };
   var SQ_MOOD = { hug: 'worried', sit: 'neutral', roar: 'shout', hiccup: 'wonder', halt: 'stern', tall: 'proud', point: 'neutral', snap: 'happy', pawup: 'proud', hidden: 'shout' };
   var HOLDS_POLE = { hug: 1, roar: 1, halt: 1, hidden: 1 };
   // chapter 5: Puddle's and Wisp's poses, each with a mood the text gives it (Patience has one mood, level)
-  var PD_MOOD = { foot: 'happy', head: 'happy', log: 'proud', sink: 'worried', pawup: 'happy', nostrils: 'neutral', sit: 'happy' };
+  var PD_MOOD = { foot: 'happy', head: 'happy', log: 'proud', sink: 'worried', pawup: 'happy', nostrils: 'neutral', sit: 'happy',
+    // chapter 10: two big eyes, looking up out of the silver water
+    eyes: 'wonder' };
   var WS_MOOD = { reed: 'neutral', blink: 'neutral', shh: 'shy', draw: 'neutral', nod: 'kind', flinch: 'neutral', gulp: 'happy', pawup: 'kind' };
   // chapter 6: Coil's and Sleet's poses, each with a mood the text gives it
   var COIL_MOOD = { stone: 'neutral', head: 'kind', long: 'neutral', longer: 'happy', still: 'kind', listen: 'dreamy', think: 'wonder', slide: 'sniff' };
   var SLEET_MOOD = { hidden: 'neutral', tail: 'sniff', flat: 'stern', point: 'stern', call: 'shout', puff: 'proud', droop: 'sad', sit: 'proud', pawup: 'happy' };
   // chapter 8: Hail's and the weasels' poses, each with a mood the story gives it
   var HAIL_MOOD = { sit: 'happy', stand: 'wonder', bounce: 'laugh', run: 'happy', peek: 'shout', pawup: 'wonder', tilt: 'neutral' };
-  var WEASEL_MOOD = { stand: 'neutral', up: 'happy', run: 'laugh', skid: 'scared', peek: 'wonder', point: 'shout', curl: 'sleepy' };
+  var WEASEL_MOOD = { stand: 'neutral', up: 'happy', run: 'laugh', skid: 'scared', peek: 'wonder', point: 'shout', curl: 'sleepy',
+    // chapter 10: paddling after Reynard; paws behind their backs, innocent
+    swim: 'worried', hidepaws: 'shy' };
+  // chapter 10: the grown Mistscales' poses, each with a mood the story gives it (kind is her resting face)
+  var MS_MOOD = { lean: 'kind', nuzzle: 'happy', lift: 'happy', bow: 'kind' };
   // chapter 9: Thymeleaf's poses (the story's), Mizzle's and the spider's, each with a mood the story gives it
   var THYME_MOOD = { sit: 'kind', stand: 'happy', walk: 'kind', crouch: 'sniff', pawup: 'proud', lookup: 'wonder' };
   var MIZZLE_MOOD = { curl: 'sleepy', yawn: 'sleepy', sit: 'neutral', wake: 'wonder', pawup: 'kind' };
   var SPIDER_MOOD = { spin: 'happy', wave: 'happy' };
   // the marks to tap are unpainted (the page glows them): the gallery outlines them so they can be seen
-  function showTaps(r) { return { svg: r.svg.replace(/(<g class="pc-tap pc-tap-[a-z]+">)([\s\S]*?)(<\/g>)/g, function (m, a, b, c) { return a + b.replace(/fill="none"/g, 'fill="none" stroke="#e8504a" stroke-width="2.4" stroke-dasharray="5 4"') + c; }), w: r.w, h: r.h }; }
+  // (chapter 10: a dragonet's nose is an unpainted rect of its own, class pc-tap pc-tap-nose)
+  function showTaps(r) {
+    var svg = r.svg.replace(/(<g class="pc-tap pc-tap-[a-z]+">)([\s\S]*?)(<\/g>)/g, function (m, a, b, c) { return a + b.replace(/fill="none"/g, 'fill="none" stroke="#e8504a" stroke-width="2.4" stroke-dasharray="5 4"') + c; });
+    svg = svg.replace(/(<rect class="pc-tap pc-tap-[a-z]+"[^>]*?)fill="none"/g, '$1fill="none" stroke="#e8504a" stroke-width="2.4" stroke-dasharray="5 4"');
+    return { svg: svg, w: r.w, h: r.h };
+  }
+  // the island's moonlit mist, for the grown Mistscales and the roll call's shapes
+  function mistBg(w, h) { return '<rect width="' + w + '" height="' + h + '" fill="#cdd8e4"/><ellipse cx="' + (w * 0.5) + '" cy="' + (h * 0.95) + '" rx="' + (w * 0.6) + '" ry="' + (h * 0.22) + '" fill="#e9eef4" opacity=".8"/>'; }
+  function nightWater(w, h) { return '<rect width="' + w + '" height="' + h + '" fill="#a9c3dc"/><rect y="' + (h - 3) + '" width="' + w + '" height="3" fill="#6f93b6"/>'; }
   // what she is seen against: the marsh's reeds, the open river (so a see-through Wisp and a Puddle up to his chin can be judged)
   function reedsBg(w, h) {
     var b = '<rect width="' + w + '" height="' + h + '" fill="#cfe0b6"/>';
@@ -990,6 +1006,126 @@
         ['… one spider (8 × 1), all eight', { groups: 1, per: 8, counted: 8 }],
         ['… ten spiders (10 × 8, counted 44)', { groups: 10, per: 8, counted: 44 }],
         ['chapter 2’s check, two rows of eight in the earth, as it was', { groups: 2, per: 8, counted: 6, layout: 'rows', ground: 'earth' }]].forEach(function (it) {
+        h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:720px">' + A.sand(it[1]) + '</div>';
+      });
+      return h;
+    }],
+    mistscale: ['The grown Mistscales (chapter 10): Mama and the eldest, a great head and neck leaning out of the mist; every pose, every mood', function (S) {
+      var h = '';
+      [[1, 'Mama: grey as a rain cloud, Sprinkle’s colour grown'], [2, 'the eldest: grey and weathered, a paler muzzle, lichen-pale spots, heavy-lidded old eyes']].forEach(function (b) {
+        h += '<h3>mistscale ' + b[0] + ', ' + b[1] + ': every pose (lean is what an unknown pose draws), both facings</h3><div class="row">';
+        V.otherPoses.mistscale.forEach(function (p) { h += cell(on(mistBg, A.character('mistscale', { variant: b[0], pose: p, mood: MS_MOOD[p] })), p + ' · ' + MS_MOOD[p], S * 1.8); });
+        h += cell(on(mistBg, A.character('mistscale', { variant: b[0], pose: 'lean', mood: 'kind', facing: 'left' })), 'lean ←', S * 1.8);
+        h += cell(on(mistBg, A.character('mistscale', { variant: b[0], pose: 'nuzzle', mood: 'happy', facing: 'left' })), 'nuzzle ←', S * 1.8);
+        h += '</div><h3>mistscale ' + b[0] + ': every mood (lean); stern, scared and laugh are drawn her way: solemn, worried, happy</h3><div class="row">';
+        V.moods.forEach(function (m) { h += cell(on(mistBg, A.character('mistscale', { variant: b[0], pose: 'lean', mood: m })), m, S * 1.1); });
+        h += '</div>';
+      });
+      // one scale: her face about two cats tall (the scene's rule: the anchor's height is her face's)
+      var cat = A.character('player', { pose: 'sit', mood: 'wonder', look: { fur: 'grey', marking: 'white-chest', eyes: 'green', sex: 'she' } });
+      var spr = A.character('sprinkle', { pose: 'sit', mood: 'happy' }), mama = A.character('mistscale', { variant: 1, pose: 'nuzzle', mood: 'happy', facing: 'left' });
+      var kc = 0.7, km = 2 * 160 * kc / (mama.headBox.y1 - mama.headBox.y0), ks = kc, H = 560;
+      var stage = '<svg viewBox="0 0 1100 ' + H + '" width="100%" style="max-width:1100px">' + mistBg(1100, H) +
+        '<g transform="translate(60,' + (H - 10 - cat.h * kc) + ') scale(' + kc + ')">' + cat.svg + '</g>' +
+        '<g transform="translate(' + (330 - spr.w * ks / 2) + ',' + (H - 10 - spr.h * ks) + ') scale(' + ks + ')">' + spr.svg + '</g>' +
+        '<g transform="translate(' + (1090 - mama.w * km) + ',' + (H - 10 - mama.h * km) + ') scale(' + km + ')">' + mama.svg + '</g></svg>';
+      return h + '<h3>one scale: our cat, Sprinkle, and Mama nuzzling (her face about two cats tall)</h3><div class="stage">' + stage + '</div>';
+    }],
+    clans10: ['ReedClan’s and GroveClan’s leaders, GroveClan’s crowd (chapter 10): every cat pose and mood, coats of their own', function (S) {
+      var h = '';
+      [['reedclan', 5, 'ReedClan’s leader: big and broad, deep russet brown with reed-dark stripes, a pale grey chest, a notch in one ear, amber eyes, sleek and muddy'],
+        ['groveclan', 3, 'GroveClan’s leader: tall and lean, a darker dappled coat, white chest and paws, long whiskers, green eyes'],
+        ['groveclan', 4, 'a GroveClan cat of the crowd: light grey-brown, dappled'], ['groveclan', 5, 'a GroveClan cat of the crowd: ginger-brown, dappled']].forEach(function (b) {
+        h += '<h3>' + b[0] + ' ' + b[1] + ', ' + b[2] + ': every cat pose</h3><div class="row">';
+        V.poses.forEach(function (p) { h += cell(A.character(b[0], { variant: b[1], pose: p, mood: POSE_MOOD[p] }), p, S); });
+        if (b[1] === 5 || b[1] === 3) {
+          h += '</div><h3>' + b[0] + ' ' + b[1] + ': every mood (situp, on a root)</h3><div class="row">';
+          V.moods.forEach(function (m) { h += cell(A.character(b[0], { variant: b[1], pose: 'situp', mood: m }), m, S); });
+        }
+        h += '</div>';
+      });
+      var stage = '', k = 0.85, x = 20;
+      function put(r) { stage += '<g transform="translate(' + x + ',' + (230 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; x += r.w * k * 0.8; }
+      [A.character('reedclan', { variant: 5, pose: 'sit', mood: 'proud' }), A.character('glintstar', { pose: 'sit', mood: 'kind' }), A.character('groveclan', { variant: 3, pose: 'sit', mood: 'kind' }),
+        A.character('reedclan', { variant: 1, pose: 'sit' }), A.character('reedclan', { variant: 2, pose: 'sit' }), A.character('sloshbank', { pose: 'sit', mood: 'stern' }),
+        A.character('groveclan', { variant: 1, pose: 'sit', mood: 'kind' }), A.character('groveclan', { variant: 2, pose: 'sit', mood: 'shy' }), A.character('groveclan', { variant: 4, pose: 'sit' }),
+        A.character('groveclan', { variant: 5, pose: 'sit' }), A.character('grizzled', { pose: 'sit', mood: 'stern' }), A.character('tallyheart', { pose: 'sit', mood: 'proud' }),
+        A.character('thymeleaf', { pose: 'sit', mood: 'kind' }), A.character('player', { pose: 'sit', mood: 'wonder', look: { fur: 'brown-tabby', marking: 'none', eyes: 'green', sex: 'she' } })].forEach(put);
+      return h + '<h3>one scale: the three leaders; ReedClan’s she-cat, young tom and Sloshbank; GroveClan’s elder, apprentice and crowd coats; the old tom, Tallyheart, Thymeleaf, a brown tabby player</h3><div class="stage"><svg viewBox="0 0 ' + Math.round(x + 60) + ' 240" width="100%">' + stage + '</svg></div>';
+    }],
+    extras10: ['Chapter 10: Puddle’s eyes, the dragonets’ noses to tap, Reynard’s bow and swim, the weasels’ swim and hidden paws, wet, the mist stone, Sprinkle’s pebble in the air', function (S) {
+      var look = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'she' };
+      var h = '<h3>Puddle: eyes (only his two big eyes and the top of his head above the water, ripples round them)</h3><div class="row">';
+      [['wonder', 'right'], ['happy', 'left'], ['worried', 'right'], ['shy', 'left']].forEach(function (it) { h += cell(on(nightWater, A.character('puddle', { pose: 'eyes', mood: it[0], facing: it[1] })), 'eyes · ' + it[0] + (it[1] === 'left' ? ' ←' : ''), S * 1.6); });
+      h += '</div><h3>tap: nose (the goodbye Tap: an unpainted rect over the snout, outlined here)</h3><div class="row">';
+      [['squall', 'roar', 'shout'], ['squall', 'sit', 'neutral'], ['puddle', 'sit', 'happy'], ['puddle', 'head', 'happy'], ['wisp', 'draw', 'kind'], ['sleet', 'point', 'proud'], ['hail', 'bounce', 'laugh'], ['mizzle', 'yawn', 'sleepy'], ['mizzle', 'sit', 'happy']].forEach(function (it) {
+        h += cell(it[0] === 'puddle' && it[1] === 'head' ? on(waterBg, showTaps(A.character(it[0], { pose: it[1], mood: it[2], tap: 'nose' }))) : showTaps(A.character(it[0], { pose: it[1], mood: it[2], tap: 'nose', facing: 'left' })), it[0] + ' ' + it[1] + ' · tap: nose', S * 1.4);
+      });
+      h += '</div><h3>Reynard: bow (one forepaw forward, his brush flourished), swim (head and back above the water, ears flat, brush floating), wet: true</h3><div class="row">';
+      [[{ pose: 'bow', mood: 'proud' }, 'bow · proud'], [{ pose: 'bow', mood: 'happy', facing: 'left' }, 'bow ←'], [{ pose: 'swim', mood: 'worried' }, 'swim · worried', nightWater], [{ pose: 'swim', mood: 'sad', facing: 'left', wet: true }, 'swim · wet ←', nightWater],
+        [{ pose: 'sit', mood: 'sad', wet: true }, 'sit · wet'], [{ pose: 'trot', mood: 'stern', wet: true, facing: 'left' }, 'trot · wet ←'], [{ pose: 'think', mood: 'dreamy', wet: true }, 'think · wet']].forEach(function (it) {
+        var r = A.character('reynard', it[0]);
+        h += cell(it[2] ? on(it[2], r) : r, it[1], S * 1.6);
+      });
+      h += '</div><h3>Snip and Snatch: swim, hidepaws (paws behind their backs, eyes wide; Snatch’s mouse in his mouth), up with the mouse held up, wet: true</h3><div class="row">';
+      [['snip', { pose: 'swim', mood: 'worried' }, 'snip swim', nightWater], ['snatch', { pose: 'swim', mood: 'scared', facing: 'left' }, 'snatch swim ←', nightWater], ['snip', { pose: 'hidepaws', mood: 'shy' }, 'snip hidepaws'],
+        ['snatch', { pose: 'hidepaws', mood: 'neutral', holds: 'mouse' }, 'snatch hidepaws · mouse'], ['snatch', { pose: 'up', mood: 'proud', holds: 'mouse' }, 'snatch up · mouse'], ['snatch', { pose: 'stand', mood: 'stern', holds: 'mouse' }, 'snatch stand · mouse'],
+        ['snip', { pose: 'up', mood: 'sad', wet: true }, 'snip up · wet'], ['snatch', { pose: 'run', mood: 'scared', wet: true, facing: 'left' }, 'snatch run · wet ←']].forEach(function (it) {
+        var r = A.character(it[0], it[1]);
+        h += cell(it[3] ? on(it[3], r) : r, it[2], S * 1.3);
+      });
+      h += '</div><h3>our cat: holds: miststone (at her paws, held up between her forepaws, in her mouth), flash: true, tap: stone</h3><div class="row">';
+      [[{ pose: 'sit', mood: 'wonder', holds: 'miststone' }, 'sit · miststone'], [{ pose: 'sit', mood: 'wonder', holds: 'miststone', flash: true, tap: 'stone' }, 'sit · flash · tap: stone'],
+        [{ pose: 'situp', mood: 'happy', holds: 'miststone', flash: true }, 'situp · flash'], [{ pose: 'crouch', mood: 'kind', holds: 'miststone', holdAt: 'paws', tap: 'stone' }, 'crouch · paws · tap: stone'],
+        [{ pose: 'walk', mood: 'proud', holds: 'miststone' }, 'walk · miststone (mouth)'], [{ pose: 'sit', mood: 'happy', holds: 'miststone', flash: true, facing: 'left' }, 'sit · flash ←']].forEach(function (it) {
+        h += cell(showTaps(A.character('player', Object.assign({ look: look }, it[0]))), it[1], S * 1.3);
+      });
+      h += '</div><h3>Sprinkle: holds: pebble in her claws in fly (fluttering down) and lookdown (at the bottom of her box); fly (her right wing nearly as high as her left); Granny’s pole</h3><div class="row">';
+      [[{ pose: 'fly', mood: 'happy', holds: 'pebble' }, 'fly · pebble'], [{ pose: 'fly', mood: 'happy', holds: 'pebble', facing: 'left' }, 'fly · pebble ←'], [{ pose: 'lookdown', mood: 'kind', holds: 'pebble' }, 'lookdown · pebble'],
+        [{ pose: 'lookdown', mood: 'kind', holds: 'pebble', facing: 'left' }, 'lookdown · pebble ←'], [{ pose: 'fly', mood: 'happy', facing: 'left' }, 'fly ←']].forEach(function (it) {
+        h += cell(A.character('sprinkle', it[0]), it[1], S * 1.7);
+      });
+      h += cell(A.character('otter', { variant: 3, pose: 'stand', mood: 'happy', holds: 'pole' }), 'otter 3 stand · pole', S * 1.3);
+      return h + '</div>';
+    }],
+    counts10: ['Counts pictures, chapter 10: the clutches, the sand at per 7, the marks on a log, the roll call’s forepaws, the Moon Ferry’s pictures', function (S) {
+      var look = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'she' };
+      var C7 = { table: 7, per: 7, thing: 'dragonet' };
+      var ROLL = [{ who: 'sprinkle' }, { who: 'squall' }, { who: 'puddle' }, { who: 'wisp' }, { who: 'sleet' }, { who: 'hail' }, { who: 'mizzle' }];
+      var SHAPES = [{ who: 'sprinkle' }].concat(['squall', 'puddle', 'wisp', 'sleet', 'hail', 'mizzle'].map(function (w) { return { who: w, shape: true }; }));
+      var MIXED = [{ who: 'sprinkle' }, { who: 'squall' }, { who: 'puddle', shape: true }, { who: 'wisp' }, { who: 'sleet', shape: true }, { who: 'hail' }, { who: 'mizzle', shape: true }];
+      var list = [
+        ['five clutches in the sand (the skip): 7, 14 counted, the third clutch glowing', Object.assign({ groups: 5, highlight: 14, totals: true, next: true }, C7)],
+        ['the lesson: ten clutches, seven dragonets each, unlit', Object.assign({ groups: 10, highlight: 0 }, C7)],
+        ['6 × 7 (lit: 35): five clutches lit, one to hop', Object.assign({ groups: 6, highlight: 35 }, C7)],
+        ['7 × 7 (lit: 42), the help lighting a dragonet at a time (highlight 46: the seventh clutch’s top four)', Object.assign({ groups: 7, highlight: 46, totals: true, next: true }, C7)],
+        ['one clutch (7 × 1): four sisters and three brothers', Object.assign({ groups: 1, highlight: 7, totals: true }, C7)],
+        ['the Moon Ferry’s 7 × 7 (kind: marks, ground: log): seven rows of seven marks, four and three, unlit', { table: 7, per: 7, groups: 7, kind: 'marks', ground: 'log', highlight: 0 }],
+        ['… the help, a row at a time (highlight 21, totals, the fourth row glowing)', { table: 7, per: 7, groups: 7, kind: 'marks', ground: 'log', highlight: 21, totals: true, next: true }],
+        ['the roll call, every dragonet found: Sprinkle, Squall, Puddle, Wisp, Sleet, Hail, Mizzle in one row (15 counted, the fourth glowing)', { table: 5, per: 5, groups: 7, thing: 'claw', who: ROLL, highlight: 15, totals: true, next: true, look: look }],
+        ['… none found: six soft shapes in the mist, their misty forepaws lit silver (35)', { table: 5, per: 5, groups: 7, thing: 'claw', who: SHAPES, highlight: 35, totals: true, look: look }],
+        ['… some found, some shapes (20 counted)', { table: 5, per: 5, groups: 7, thing: 'claw', who: MIXED, highlight: 20, totals: true, next: true, look: look }],
+        ['the ferry: tails (8 × 1)', { table: 1, per: 1, groups: 8, highlight: 0, look: look, thing: 'leg' }],
+        ['the ferry: ears (5 × 2)', { table: 2, per: 2, groups: 5, highlight: 0, look: look, thing: 'leg' }],
+        ['the ferry: both forepaws (3 × 10)', { table: 10, per: 10, groups: 3, highlight: 0, look: look, thing: 'leg' }],
+        ['the ferry: patrols (6 × 3)', { table: 3, per: 3, groups: 6, highlight: 0, look: look, thing: 'leg' }],
+        ['the ferry: whiskers, four cheeks (4 × 6)', { table: 6, per: 6, groups: 4, kind: 'cheeks', highlight: 0, look: look, thing: 'leg' }],
+        ['the ferry: paws, nine cats (9 × 4: rows of five and four)', { table: 4, per: 4, groups: 9, thing: 'leg', highlight: 0, look: look }],
+        ['the ferry: spiders’ legs (6 × 8)', { table: 8, per: 8, groups: 6, thing: 'leg', highlight: 0 }]
+      ];
+      var h = '';
+      list.forEach(function (it) { h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:' + (it[1].groups > 5 || it[1].kind === 'marks' ? 900 : 720) + 'px">' + A.countsPicture(it[1]) + '</div>'; });
+      [['the lesson’s help at per 7: four and three a clutch (7 × 7, counted 24)', { groups: 7, per: 7, counted: 24 }],
+        ['… one clutch (7 × 1), all seven', { groups: 1, per: 7, counted: 7 }],
+        ['… ten clutches (10 × 7, counted 38)', { groups: 10, per: 7, counted: 38 }],
+        ['the ferry’s help on a log, 7 × 7 by sevens (counted 21)', { groups: 7, per: 7, counted: 21, ground: 'log' }],
+        ['… 8 × 1 one by one', { groups: 8, per: 1, counted: 3, ground: 'log' }],
+        ['… 5 × 2 by twos', { groups: 5, per: 2, counted: 4, ground: 'log' }],
+        ['… 3 × 10 two swipes a cat, by tens', { groups: 3, per: 10, counted: 10, ground: 'log', style: 'swipe', pair: true }],
+        ['… 6 × 3 by threes', { groups: 6, per: 3, counted: 9, ground: 'log' }],
+        ['… 4 × 6 by sixes, three and three', { groups: 4, per: 6, counted: 12, ground: 'log' }],
+        ['… 9 × 4 by fours, two and two', { groups: 9, per: 4, counted: 8, ground: 'log' }],
+        ['… 6 × 8 by eights, four and four', { groups: 6, per: 8, counted: 16, ground: 'log' }]].forEach(function (it) {
         h += '<h3>' + it[0] + '</h3><div class="wide" style="max-width:720px">' + A.sand(it[1]) + '</div>';
       });
       return h;

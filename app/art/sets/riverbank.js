@@ -14,6 +14,16 @@
  * Options: `plane: 'low'` (an airplane low over the river, its shadow sliding across the water),
  * `roar: true` (jagged sound lines from the tallest tower's roof; the roarer is never seen),
  * `light` (the red light blinks; default true; false leaves it lit and still).
+ * Chapter 10 (docs/chapters/10-the-gathering.spec.md, section 4, "The riverbank by night: the walk home"), both off
+ * by default and off draws byte for byte as before:
+ *   moon: n      (path, roof) the moon n evenings old over the towers (kit.waxingMoon; 14 the full moon, round),
+ *                drawn at dusk and at night. At night it is a light of its own: the river silver-blue under it,
+ *                moonlight on its ripples (a path of glints under the moon), the path pale, the towers' glass and
+ *                their reflection lighter; never the black water of chapter 3's night (a night with no `moon`,
+ *                which draws as it did). In `keep`
+ *   flyer: true  (roof) a small winged shape flying off upriver across the sky by the red light, slate-dark with
+ *                a pale rim, wings out, a tiny ring of hiccup mist behind it (<g data-art="flyer" data-box>).
+ *                With `roar: true` the roar's lines are drawn first, from the roof, and the flyer after them
  *
  * `bank-top` is behind the lip of the bank (z: 'behind'): the bank is drawn in the `over` layer,
  * so a cat there shows only its head over the top. Registered with PC.art.defineSet
@@ -206,11 +216,65 @@
       path(heads, mix(p.woodDark, '#000', 0.1)) + stroke(heads, p.rim, 1.5, { opacity: 0.25 });
   }
 
+  // ------------------------------------------------------------------ chapter 10: the moonlit night
+
+  // `moon` set at night: the night's palette a step lighter and cooler, silver-blue (the walk home under the full
+  // moon). Only the colours the riverbank paints with change; the cast keeps the night's tint.
+  var MOONLIT = {
+    sky: ['#1B2D5E', '#253B72', '#334C84', '#46619A', '#5E7AB0'], glow: '#7A92C8', haze: '#62779F',
+    glassTop: '#4A6C93', glassBot: '#2C4A6C', glassEdge: '#9DB8DA', refl: '#9AB2DA', lit: '#FFD991', litP: 0.38, mullion: '#1A2A40',
+    grass: '#3F6460', grassFar: '#56746E', grassNear: '#2E4E4A', grassLight: '#7FA29A',
+    leaf: '#2E5450', leafMid: '#3E6660', leafLight: '#76A09A', rim: '#D6E2F8',
+    wood: '#6E6474', woodLight: '#8E8496', woodDark: '#4E4658',
+    stone: '#9AA0B8', stoneDark: '#737A94', stoneLight: '#C4CADC', moss: '#5E8270',
+    sand: '#B4B4C8', sandDark: '#9494AC', sandLight: '#D0D0DE',
+    water: '#9CB4DC', shade: '#1A2238', ink: '#141A2C', starOp: 0.85
+  };
+  function moonAge(S) { var m = S.opts.moon; return typeof m === 'number' && m > 0 ? m : 0; }
+  function moonlit(S) { return moonAge(S) > 0 && S.tod === 'night'; }
+  function moonPal(p) { var q = {}, k; for (k in p) q[k] = p[k]; for (k in MOONLIT) q[k] = MOONLIT[k]; return q; }
+  // the moon over the towers (dusk or night), kept clear of the lettering
+  function moonOver(S, x, y, r) {
+    var age = moonAge(S);
+    if (!age || !(S.tod === 'night' || S.tod === 'dusk' || S.tod === 'sunset')) return '';
+    (S.keep = S.keep || []).push({ x: x - r - 8, y: y - r - 8, w: 2 * r + 16, h: 2 * r + 16 });
+    var glow = moonlit(S) ? circ(x, y, r * 5.5, S.radU([[0, '#E8EEFF', 0.34], [0.4, '#C9D6F4', 0.12], [1, '#C9D6F4', 0]], x, y, r * 5.5)) : '';
+    return g(glow + K.waxingMoon(S, x, y, r, 20, age), { 'data-art': 'moon', 'data-age': n(age) });
+  }
+  // moonlight on the river: a path of glints under the moon, widening toward us
+  function moonPath(S, x, y0, y1, seed) {
+    var r = rng(seed), d = '', d2 = '';
+    for (var i = 0; i < 34; i++) {
+      var t = i / 33, y = lerp(y0, y1, t) + (r() - 0.5) * 8, w = lerp(14, 120, t) * (0.5 + r() * 0.7), cx = x + (r() - 0.5) * lerp(20, 150, t);
+      if (i % 3) d += 'M' + n(cx - w / 2) + ' ' + n(y) + 'h' + n(w); else d2 += 'M' + n(cx - w / 2) + ' ' + n(y) + 'h' + n(w);
+    }
+    return g(stroke(d, '#F4F7FF', 3, { opacity: 0.75 }) + stroke(d2, '#DCE6FF', 5, { opacity: 0.55, 'class': 'pcs-glint' }), { 'data-art': 'moon-path' });
+  }
+  // the small winged shape flying off upriver (to the right, a little up): slate, wings out, a pale rim so it reads
+  // on the moonlit sky, and a tiny ring of hiccup mist behind it (at its left)
+  function flyer(S, x, y, k) {
+    var body = '#55617A', dark = '#3C465C', rim = '#DCE5F6';
+    var wings = 'M' + n(x - 6 * k) + ' ' + n(y - 2 * k) + 'Q' + n(x - 18 * k) + ' ' + n(y - 40 * k) + ' ' + n(x - 44 * k) + ' ' + n(y - 46 * k) +
+      'Q' + n(x - 30 * k) + ' ' + n(y - 26 * k) + ' ' + n(x - 34 * k) + ' ' + n(y - 12 * k) + 'Q' + n(x - 20 * k) + ' ' + n(y - 12 * k) + ' ' + n(x - 8 * k) + ' ' + n(y + 2 * k) + 'Z' +
+      'M' + n(x + 4 * k) + ' ' + n(y - 4 * k) + 'Q' + n(x + 14 * k) + ' ' + n(y - 44 * k) + ' ' + n(x + 38 * k) + ' ' + n(y - 54 * k) +
+      'Q' + n(x + 28 * k) + ' ' + n(y - 32 * k) + ' ' + n(x + 32 * k) + ' ' + n(y - 18 * k) + 'Q' + n(x + 18 * k) + ' ' + n(y - 16 * k) + ' ' + n(x + 8 * k) + ' ' + n(y + 1 * k) + 'Z';
+    var bodyD = 'M' + n(x - 30 * k) + ' ' + n(y + 6 * k) + 'Q' + n(x - 12 * k) + ' ' + n(y - 4 * k) + ' ' + n(x + 10 * k) + ' ' + n(y - 4 * k) +
+      'Q' + n(x + 20 * k) + ' ' + n(y - 12 * k) + ' ' + n(x + 28 * k) + ' ' + n(y - 10 * k) + 'Q' + n(x + 34 * k) + ' ' + n(y - 6 * k) + ' ' + n(x + 30 * k) + ' ' + n(y - 1 * k) +
+      'Q' + n(x + 18 * k) + ' ' + n(y + 6 * k) + ' ' + n(x + 2 * k) + ' ' + n(y + 6 * k) + 'Q' + n(x - 16 * k) + ' ' + n(y + 8 * k) + ' ' + n(x - 30 * k) + ' ' + n(y + 6 * k) + 'Z';
+    var tail = 'M' + n(x - 28 * k) + ' ' + n(y + 6 * k) + 'Q' + n(x - 44 * k) + ' ' + n(y + 10 * k) + ' ' + n(x - 52 * k) + ' ' + n(y + 4 * k);
+    var ring = ell(x - 74 * k, y + 8 * k, 13 * k, 9 * k, 'none', { stroke: '#EEF3FF', 'stroke-width': n(3.4 * k), opacity: 0.85 }) +
+      ell(x - 74 * k, y + 8 * k, 13 * k, 9 * k, '#EEF3FF', { opacity: 0.22 }) + circ(x - 92 * k, y + 12 * k, 3 * k, '#EEF3FF', { opacity: 0.6 });
+    var s = ring + path(wings, dark) + stroke(wings, rim, 1.6 * k, { opacity: 0.8 }) + path(bodyD, body) + stroke(bodyD, rim, 1.4 * k, { opacity: 0.75 }) +
+      stroke(tail, body, 3.2 * k) + circ(x + 25 * k, y - 8 * k, 1.6 * k, '#F4F7FF');
+    return g(s, { 'data-art': 'flyer', 'data-box': [x - 100 * k, y - 56 * k, x + 40 * k, y + 22 * k].map(n).join(' ') });
+  }
+
   // ------------------------------------------------------------------ MAIN: the river path
 
   function drawPath(S) {
     var p = S.pal, o = S.opts, back = '', over = '', front = '', r = rng(5101), i;
-    var night = S.tod === 'night' || S.tod === 'storm';
+    // (chapter 10: under the moon the night's water shines: its ripples and glints as bright as by day)
+    var night = (S.tod === 'night' || S.tod === 'storm') && !moonlit(S);
     var mudLight = mix(p.wood, p.sand, 0.32), mudMid = mix(p.wood, p.woodDark, 0.15), mudDark = mix(p.woodDark, p.water, 0.22);
 
     // sky
@@ -219,6 +283,8 @@
     back += cloud(S, 520, 170, 300, 11) + cloud(S, 1420, 110, 240, 12) + cloud(S, 120, 330, 200, 13);
     // far airplanes, drifting down toward the airport
     back += K.plane(S, 860, 62, 0.9, 'left') + K.plane(S, 1500, 250, 0.6, 'left');
+    // (chapter 10: the moon over the towers)
+    if (moonAge(S)) back += moonOver(S, 1330, 118, 44);
 
     // the towers: far ones in the haze, then Crystal City close behind the bank
     var far = [
@@ -286,6 +352,8 @@
     for (i = 0; i < 26; i++) { var gy = W + 20 + r() * (1000 - W - 30), gx = r() * 1600; gl += 'M' + n(gx) + ' ' + n(gy) + 'h' + n(10 + (gy - W) * 0.12); }
     back += stroke(rip, mix(p.water, p.shade, 0.35), 2.2, { opacity: 0.35 }) + stroke(rip2, '#FFFFFF', 2.2, { opacity: night ? 0.18 : 0.45 }) +
       stroke(gl, p.rim, 3, { opacity: night ? 0.3 : 0.8, 'class': 'pcs-glint' });
+    // (chapter 10: the moon's path of light on the water)
+    if (moonlit(S)) back += moonPath(S, 1330, W + 18, 1000, 5181);
     // rings in the water where the slide comes out
     var sx0 = SLIDE[3][0] + 110, sy0 = EDGE + 22;
     back += stroke('M' + n(sx0 - 60) + ' ' + n(sy0) + 'A60 9 0 0 0 ' + n(sx0 + 60) + ' ' + n(sy0) + 'M' + n(sx0 - 100) + ' ' + n(sy0 + 4) + 'A100 15 0 0 0 ' + n(sx0 - 20) + ' ' + n(sy0 + 19) +
@@ -453,7 +521,8 @@
       y += bh; i++;
     }
     var night = S.tod === 'night' || S.tod === 'storm';
-    return g(out, { opacity: night ? 0.8 : 0.78 }) + rect(0, W, 1600, 1000 - W, S.lin('rbtint', [[0, p.water, 0.05], [1, p.water, 0.35]])) +
+    // (chapter 10: under the moon the towers in the water are fainter, the river silver between them)
+    return g(out, { opacity: moonlit(S) ? 0.5 : night ? 0.8 : 0.78 }) + rect(0, W, 1600, 1000 - W, S.lin('rbtint', [[0, p.water, 0.05], [1, p.water, 0.35]])) +
       stroke(lines, '#FFFFFF', 2, { opacity: night ? 0.12 : 0.32 }) + stroke(lines2, mix(p.water, p.shade, 0.4), 2, { opacity: 0.2 });
   }
 
@@ -464,7 +533,7 @@
 
   function drawRoof(S) {
     var p = S.pal, o = S.opts, back = '', r = rng(5201), i;
-    var night = S.tod === 'night' || S.tod === 'storm';
+    var night = (S.tod === 'night' || S.tod === 'storm') && !moonlit(S);
     var R = ROOF;
     var low = S.tod === 'sunset' || S.tod === 'dusk' || S.tod === 'golden';   // looking up, a low sun is only a glow behind the bushes
     // the same way the path camera faces (toward the bank and the towers), so the sun is at the
@@ -472,6 +541,8 @@
     back += K.sky(S, 0, 0, 1600, 1000, { sun: low ? [140, 900] : [270, 150], sunR: low ? 700 : 560, starDepth: 0.8 });
     back += cloud(S, 470, 340, 300, 21) + cloud(S, 1260, 420, 300, 22) + cloud(S, 150, 560, 220, 23);
     back += K.plane(S, 1180, 90, 1.1, 'left');
+    // (chapter 10: the moon high over the towers, at the left, away from the red light)
+    if (moonAge(S)) back += moonOver(S, 330, 250, 62);
     // neighbouring towers leaning in from the edges, lower than the tallest
     function lean(list, ang) { return g(K.towers(S, list), { transform: 'translate(0 1000) skewX(' + ang + ') translate(0 -1000)' }); }
     back += g(lean([{ x: -180, w: 330, top: 380, base: 1000, far: 0.18, cap: 'slant' }, { x: 120, w: 190, top: 560, base: 1000, far: 0.32 }], -14) +
@@ -525,6 +596,8 @@
     back += redLight(S, 900, R.top - 158, 14, o.light !== false);
     (S.keep = S.keep || []).push({ x: 620, y: R.top - 230, w: 360, h: 250 });
     if (o.roar) back += roarLines(S, 800, R.top - 30, 120, 52, 1.9, 5221, 0.72, [900, R.top - 158, 46]);
+    // (chapter 10: after the roar, a small shape flies off upriver by the red light)
+    if (o.flyer === true) back += flyer(S, 1150, 150, 1.25);
     if (o.plane === 'low') back += planeSpeed(S, 330, 470, 6) + K.plane(S, 330, 470, 6, 'left');
     // the top of the bank, seen from the path below: bushes along the bottom of the panel
     var backBush = mound(-80, 1680, 1060, 800, 13, rng(5232), 0.34, 0.35, 0.3), bush = mound(-120, 1720, 1080, 880, 17, rng(5231), 0.34, 0.3, 0.3);
@@ -538,7 +611,15 @@
     return { back: back, over: '', front: '' };
   }
 
-  function draw(S) { return S.comp === 'roof' ? drawRoof(S) : drawPath(S); }
+  function draw(S) {
+    // (chapter 10: `moon` at night, the moonlit palette for the set's own painting; the cast keeps the night's)
+    if (moonlit(S)) {
+      var pal = S.pal;
+      S.pal = moonPal(pal);
+      try { return S.comp === 'roof' ? drawRoof(S) : drawPath(S); } finally { S.pal = pal; }
+    }
+    return S.comp === 'roof' ? drawRoof(S) : drawPath(S);
+  }
 
   // ------------------------------------------------------------------ the set
 
@@ -563,7 +644,8 @@
       // the roof shot: two cats at the bottom corners, looking up with us
       roof: { 'path-left': K.anchor(250, 1000, 330), 'path-right': K.anchor(1350, 1000, 330, 'left') }
     },
-    opts: { plane: ['none', 'low'], roar: [false, true], light: [true, false] },
+    // chapter 10: moon (a number: the moon's age; 14 the full moon) and flyer (roof), both off by default
+    opts: { plane: ['none', 'low'], roar: [false, true], light: [true, false], moon: 'number', flyer: [false, true] },
     defaults: { plane: 'none', roar: false, light: true }
   });
 

@@ -29,6 +29,9 @@
  * (`link.with`) and so lie three in a row, and a dragonet's own pose in her book (docs/build.md,
  * "Chapter 5 (v0.4)"). Chapter 8 lets such a link give a partner a line of its own (`link.lines`), so
  * one card can join two rows' ends over two different lines (docs/build.md, "Chapter 8 (v0.1)").
+ * Chapter 10 adds the card pick (`pick`: Reynard's claim answered with a card from her Case File; its
+ * own section, after `ask`'s; docs/chapters/10-the-gathering.spec.md, section 6), which stores nothing
+ * new: the card she picks is its flag.
  *
  * Functions that change a cat change the object they are given (and return it or a result).
  * Nothing here reads the clock on its own: callers pass `now` (ms since epoch) where it matters,
@@ -40,7 +43,7 @@
   var PC = root.PC || (root.PC = {});
   var E = {};
 
-  E.VERSION = '0.9.1 (the Warrior Counts, 2026-10-31)';
+  E.VERSION = '0.10.0 (chapter 10, 2026-10-31)';
   E.STORAGE_KEY = 'potomac-crossing.v1';   // the key stays: renaming it would strand every save
   E.SAVE_VERSION = 2;
   E.MAX_CATS = 4;
@@ -632,7 +635,9 @@
   ];
   /* Gifts come from the story (a frame's `gift`), once each; My nest shows them first. */
   E.GIFTS = [
-    { id: 'riffle-stone', name: 'Riffle’s lucky stone: dark and smooth, with a white stripe all the way around', from: 'Riffle' }
+    { id: 'riffle-stone', name: 'Riffle’s lucky stone: dark and smooth, with a white stripe all the way around', from: 'Riffle' },
+    // chapter 10: Sprinkle's goodbye, laid on the moss (the story's words)
+    { id: 'mist-stone', name: 'Sprinkle’s mist stone: grey, until the moonlight finds it', from: 'Sprinkle' }
   ];
   E.gift = function (id) {
     for (var i = 0; i < E.GIFTS.length; i++) if (E.GIFTS[i].id === id) return E.GIFTS[i];
@@ -1087,8 +1092,94 @@
       label: typeof ask.label === 'string' && ask.label ? ask.label : 'Ask the next question.' };
   };
 
+  /* ------------------------------------------------------------ the card pick (chapter 10)
+   * `pick: { claim, who?, by?, right, own?, nudges, flag, prompt?, label?, next }`: Reynard's claim in
+   * the strip over her whole Case File, every card face up; she answers it with a card. `claim` has one
+   * word in capitals (the word the strip lights); `who` makes it (default 'reynard'); `by` nudges, in a
+   * whisper only she hears (default 'tallyheart'); `right` is every card whose own line answers it (held
+   * or not); `own` a wrong card's own nudge; `nudges` the first and the second wrong pick's (the second
+   * on every wrong pick after it); `flag` is set to the card she picks right, for the next screens'
+   * `when`s, and replaced as a choice's `sets` are. After E.PICK_GLOW wrong picks the right cards she
+   * holds glow and only they can be picked: it can never fail. Nothing is logged and nothing new is
+   * stored (the wrongs are the page's). The parameter is `pk`, never `pick`: the module's `pick(list,
+   * i)` above cycles, and a nudge must never come round to the first again. */
+  E.PICK_GLOW = 3;
+  E.PICK_PROMPT = '**Pick a card** from your Case File.';
+  E.PICK_LABEL = 'Open your Case File and pick a card.';
+  /* The claim's one word in capitals (two letters or more): 'FLEW' in "It FLEW out of your camp!".
+   * Null unless there is exactly one ("I" is one letter, so "How could I get the prey OUT?" has one). */
+  E.pickWord = function (claim) {
+    var words = String(claim == null ? '' : claim).match(/[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ’']*/g) || [];
+    var caps = words.filter(function (w) { var l = w.replace(/[’']/g, ''); return l.length >= 2 && l === l.toUpperCase() && l !== l.toLowerCase(); });
+    return caps.length === 1 ? caps[0] : null;
+  };
+  /* Her file's order: E.caseFile's groups first ("What I saw myself", then "What I was told"), each
+   * group's cards in order, then each linked row, its cards left to right (as drawFile reads them). */
+  function fileOrder(F) {
+    var out = [];
+    F.groups.forEach(function (g) { out = out.concat(g.cards); });
+    F.links.forEach(function (l) { out = out.concat(l.cards); });
+    return out;
+  }
+  E.fileOrder = function (cat, stories) { return fileOrder(E.caseFile(cat, stories)).map(function (c) { return c.id; }); };
+  // the right cards she holds, in her file's order
+  function pickHeld(pk, cat, stories) {
+    var right = asList(pk && pk.right);
+    return E.fileOrder(cat, stories).filter(function (id) { return right.indexOf(id) >= 0; });
+  }
+  /* The cards she may pick: every card her file shows; after the glow (`wrongs` >= E.PICK_GLOW) only
+   * the glowing ones (ids). */
+  E.pickOpen = function (pk, cat, wrongs, stories) {
+    wrongs = num(wrongs, 0);
+    if (wrongs >= E.PICK_GLOW) return pickHeld(pk, cat, stories);
+    return E.cards(cat, stories).map(function (c) { return c.id; });
+  };
+  /* A pick judged (pure): null for a card she may not pick (not in her file; off the glow after the
+   * third wrong pick): no line, nothing changes. Right: { right: true, card, flag }. Wrong: { right:
+   * false, card, wrongs: n, line, by, glow }: the card's own nudge, else the first nudge on the first
+   * wrong pick and the second on every one after (clamped); `glow` empty until the third, then the
+   * right cards she holds in her file's order. The guard (a data slip: she holds no right card at all):
+   * the third wrong pick is taken as right, { right: true, card, flag, guard: true }. */
+  E.pickJudge = function (pk, cat, cardId, wrongs, stories) {
+    if (!isObj(pk)) return null;
+    wrongs = num(wrongs, 0);
+    if (E.pickOpen(pk, cat, wrongs, stories).indexOf(cardId) < 0) return null;
+    if (asList(pk.right).indexOf(cardId) >= 0) return { right: true, card: cardId, flag: pk.flag };
+    var n = wrongs + 1, held = n >= E.PICK_GLOW ? pickHeld(pk, cat, stories) : [];
+    if (n >= E.PICK_GLOW && !held.length) return { right: true, card: cardId, flag: pk.flag, guard: true };
+    var nudges = asList(pk.nudges);
+    var line = (pk.own && pk.own[cardId]) || nudges[Math.min(n, 2) - 1];
+    return { right: false, card: cardId, wrongs: n, line: line, by: pk.by || 'tallyheart', glow: held };
+  };
+  /* A pick on the frame she is on. Null, changing nothing, when the frame has no `pick` or the card
+   * may not be picked. Right (or the guard): the flag is set to the card, then the page turns to
+   * `next` (where it lands for her). Wrong: nothing in the save changes. Returns the judge's answer. */
+  E.pick = function (cat, story, cardId, now, wrongs, stories) {
+    var f = E.currentFrame(cat, story), pk = f && f.pick;
+    if (!isObj(pk)) return null;
+    var r = E.pickJudge(pk, cat, cardId, wrongs, stories);
+    if (!r || !r.right) return r;
+    if (!isObj(cat.flags)) cat.flags = {};
+    cat.flags[pk.flag] = r.card;
+    E.go(cat, story, E.landing(cat, story, pk.next), now);
+    return r;
+  };
+  /* The pick screen's view (pure): { claim, word, who, by, right: the right cards she holds in her
+   * file's order, file: E.caseFile }. */
+  E.pickView = function (frame, cat, stories) {
+    var pk = (frame && frame.pick) || {}, file = E.caseFile(cat, stories);
+    var right = asList(pk.right);
+    return { claim: typeof pk.claim === 'string' ? pk.claim : '', word: E.pickWord(pk.claim), who: pk.who || 'reynard', by: pk.by || 'tallyheart',
+      right: fileOrder(file).map(function (c) { return c.id; }).filter(function (id) { return right.indexOf(id) >= 0; }), file: file };
+  };
+  /* The instruction under the panel and the hidden button's words. */
+  E.pickWords = function (frame) {
+    var pk = (frame && frame.pick) || {};
+    return { prompt: typeof pk.prompt === 'string' ? pk.prompt : E.PICK_PROMPT, label: typeof pk.label === 'string' && pk.label ? pk.label : E.PICK_LABEL };
+  };
+
   /* ------------------------------------------------------------ flow */
-  E.KINDS = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'ask', 'end'];
+  E.KINDS = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'pick', 'ask', 'end'];
   E.kindOf = function (frame) {
     if (!frame) return null;
     if (frame.end) return 'end';
@@ -1099,6 +1190,7 @@
     if (frame.skip) return 'skip';
     if (frame.scratch) return 'scratch';
     if (frame.file) return 'file';
+    if (frame.pick) return 'pick';
     if (frame.ask) return 'ask';
     if (frame.next) return 'next';
     return 'end';
@@ -1312,9 +1404,11 @@
     if (now) cat.updated = now;
     return true;
   };
-  E.next = function (cat, story, now) {
+  E.next = function (cat, story, now, stories) {
     var f = E.currentFrame(cat, story);
     var to = f && (f.next || (f.look && f.look.next) || (f.skip && f.skip.next) || (f.scratch && f.scratch.next) || (f.file && f.file.next) || (f.ask && f.ask.next));
+    // chapter 10: a card pick turns its page only by a pick (E.pick); with no card in her file (a data slip) Next follows it
+    if (f && f.pick) { if (E.cards(cat, stories).length) return false; to = f.pick.next; }
     // a row of bark turns its page on the last tap; however the page turns, no card is left behind
     if (f && f.scratch) for (var guard = 0; guard < 24 && E.scratchTap(cat, story, now); guard++);
     return E.go(cat, story, E.landing(cat, story, to), now);
@@ -1394,6 +1488,7 @@
     if (k === 'skip') return [frame.skip.next];
     if (k === 'scratch') return [frame.scratch.next];
     if (k === 'file') return [frame.file.next];
+    if (k === 'pick') return [frame.pick.next];
     if (k === 'ask') return [frame.ask.next];
     return [];
   };
@@ -3360,10 +3455,46 @@
       asList(w.lessonClean).forEach(function (s) { if (!E.countsSet(s, story)) errs.push(where + ': lessonClean names no counts set here: ' + s); });
       asList(w.firstTry).forEach(function (k) { if (!/^\d+\s*[x×]\s*\d+$/.test(String(k))) errs.push(where + ': firstTry wants "AxB": ' + k); });
     }
+    // chapter 10: the card pick. Its flag is set only by its pick: no frame `sets` it, no option, no other pick
+    var optSets = {}, pickFlags = {};
     Object.keys(story.frames).forEach(function (id) {
       var f = story.frames[id];
-      var kinds = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'ask', 'end'].filter(function (k) { return f[k]; });
-      if (kinds.length !== 1) errs.push(id + ': needs exactly one of next/choice/input/look/counts/skip/scratch/file/ask/end, has ' + (kinds.join(',') || 'none'));
+      if (f && f.choice) (f.choice.options || []).forEach(function (o) { if (o && isObj(o.sets)) Object.keys(o.sets).forEach(function (k) { optSets[k] = id; }); });
+      if (f && isObj(f.pick) && typeof f.pick.flag === 'string') (pickFlags[f.pick.flag] = pickFlags[f.pick.flag] || []).push(id);
+    });
+    function isLine(v) { return typeof v === 'string' && !!v.trim(); }
+    function checkPick(id, f) {
+      var pk = f.pick;
+      if (!isObj(pk)) { errs.push(id + ': pick is { claim, right, nudges, flag, next }'); return; }
+      if (!isLine(pk.claim) || !E.pickWord(pk.claim)) errs.push(id + ': pick claim is a line with exactly one word in capitals (the word the strip lights), like "It FLEW out of your camp!"');
+      var who = pk.who == null ? 'reynard' : pk.who;
+      if (!isLine(who)) errs.push(id + ': pick who is the one who makes the claim, like "reynard"');
+      else if (!(f.scene && (f.scene.cast || []).some(function (c) { return c && c.who === who; }))) errs.push(id + ': pick: ' + who + ' (who makes the claim) is not in the frame’s cast');
+      if (pk.by != null && !isLine(pk.by)) errs.push(id + ': pick by is the one who nudges, like "tallyheart"');
+      var right = Array.isArray(pk.right) ? pk.right : null;
+      if (!(right && right.length && right.every(function (c) { return isLine(c); }))) errs.push(id + ': pick right is a list of the cards that answer the claim');
+      else right.forEach(function (c) { if (!hasCard(c)) errs.push(id + ': pick right: unknown card ' + c); });
+      if (pk.own != null) {
+        if (!isObj(pk.own)) errs.push(id + ': pick own is { <a wrong card>: its own nudge }');
+        else Object.keys(pk.own).forEach(function (c) {
+          if (!hasCard(c)) errs.push(id + ': pick own: unknown card ' + c);
+          if (right && right.indexOf(c) >= 0) errs.push(id + ': pick own: ' + c + ' is a right card (own is a wrong card’s nudge)');
+          if (!isLine(pk.own[c])) errs.push(id + ': pick own: ' + c + ' needs its one line');
+        });
+      }
+      if (!(Array.isArray(pk.nudges) && pk.nudges.length === 2 && pk.nudges.every(isLine))) errs.push(id + ': pick nudges is two lines: the first wrong pick’s, then the second’s (and every one after)');
+      if (!isLine(pk.flag)) errs.push(id + ': pick flag is the flag her pick sets, like "ch10PickFlew"');
+      else {
+        if (own(sticky, pk.flag)) errs.push(id + ': pick flag ' + pk.flag + ' is set for good by frame ' + sticky[pk.flag]);
+        if (own(optSets, pk.flag)) errs.push(id + ': pick flag ' + pk.flag + ' is set by a choice too (frame ' + optSets[pk.flag] + ')');
+        if ((pickFlags[pk.flag] || []).length > 1) errs.push(id + ': pick flag ' + pk.flag + ' is another pick’s too (' + pickFlags[pk.flag].filter(function (x) { return x !== id; }).join(', ') + ')');
+      }
+      ['prompt', 'label'].forEach(function (k) { if (pk[k] != null && typeof pk[k] !== 'string') errs.push(id + ': pick ' + k + ' is a line'); });
+    }
+    Object.keys(story.frames).forEach(function (id) {
+      var f = story.frames[id];
+      var kinds = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'pick', 'ask', 'end'].filter(function (k) { return f[k]; });
+      if (kinds.length !== 1) errs.push(id + ': needs exactly one of next/choice/input/look/counts/skip/scratch/file/pick/ask/end, has ' + (kinds.join(',') || 'none'));
       E.exits(f).forEach(function (to) { if (!story.frames[to]) errs.push(id + ' -> missing ' + to); });
       if (f.counts && !hasSet(f.counts.set)) errs.push(id + ': unknown counts set ' + f.counts.set);
       if (f.counts && f.counts.intro != null && typeof f.counts.intro !== 'boolean') errs.push(id + ': counts intro is false (none of the frame’s lines is said again over the first question)');
@@ -3444,6 +3575,8 @@
           [ak.who, ak.to].forEach(function (w) { if (typeof w === 'string' && w && f.scene && !cast.some(function (c) { return c && c.who === w; })) errs.push(id + ': ask: ' + w + ' is not in the frame’s cast'); });
         }
       }
+      // chapter 10: the card pick (its flag is checked against every `when` in the story below)
+      if (f.pick) checkPick(id, f);
       if (f.file && f.file !== true && !(isObj(f.file) && (f.file.prompt == null || typeof f.file.prompt === 'string'))) errs.push(id + ': file is { next, prompt? }');
       // a frame shown only `when` it matches is passed over as if its next led straight on
       if (f.when != null) {
@@ -3469,6 +3602,29 @@
       if (f.skip && f.skip.carry != null && typeof f.skip.carry !== 'boolean') errs.push(id + ': skip carry is true or false');
       if (f.skip) ['prompt', 'label'].forEach(function (k) { if (f.skip[k] != null && typeof f.skip[k] !== 'string') errs.push(id + ': skip ' + k + ' is a line'); });
     });
+    // chapter 10: every `when` in the story that names a pick's flag (a caption's, a balloon's, a frame's, an
+    // option's, a recap line's, inside `not` too) names only cards in that pick's `right` (a typo'd id is an error)
+    var pickRight = {};
+    Object.keys(story.frames).forEach(function (id) { var pk = story.frames[id] && story.frames[id].pick; if (isObj(pk) && typeof pk.flag === 'string' && Array.isArray(pk.right)) pickRight[pk.flag] = pk.right; });
+    if (Object.keys(pickRight).length) {
+      var seen = [];
+      (function walk(o, where, depth) {
+        if (!o || typeof o !== 'object' || depth > 40 || seen.indexOf(o) >= 0) return;
+        seen.push(o);
+        if (Array.isArray(o)) { o.forEach(function (x, i) { walk(x, where + '.' + i, depth + 1); }); return; }
+        Object.keys(o).forEach(function (k) {
+          if (k === 'when' && isObj(o[k])) (function names(w, at) {
+            Object.keys(w).forEach(function (fk) {
+              if (fk === 'not' && isObj(w.not)) return names(w.not, at + ' (not)');
+              if (!own(pickRight, fk)) return;
+              var vals = Array.isArray(w[fk]) ? w[fk] : [w[fk]];
+              vals.forEach(function (v) { if (pickRight[fk].indexOf(v) < 0) errs.push(at + ': when ' + fk + ' names ' + JSON.stringify(v) + ', not a card in that pick’s right'); });
+            });
+          })(o[k], where);
+          walk(o[k], where + '.' + k, depth + 1);
+        });
+      })(story, story.id || 'story', 0);
+    }
     asList(story.book && story.book.dragonet).forEach(function (dn) {
       if (!(isObj(dn) && typeof dn.id === 'string' && dn.id && typeof dn.name === 'string' && dn.name)) errs.push('book.dragonet needs an id and a name');
       else {

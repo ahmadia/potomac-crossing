@@ -1129,8 +1129,9 @@ function finishedCat(stories, over) {
   return cat;
 }
 
-test('version 0.9.1 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 9 add none; the Warrior Counts add one optional field on a cat, `warrior`, absent until her first sitting)', () => {
-  assert.equal(E.VERSION, '0.9.1 (the Warrior Counts, 2026-10-31)');
+test('version 0.10.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 10 add none; the Warrior Counts add one optional field on a cat, `warrior`, absent until her first sitting)', () => {
+  // chapter 10 (one minor version past the Warrior Counts' merge, 0.9.1): its card pick stores nothing new, the card she picks is its flag
+  assert.equal(E.VERSION, '0.10.0 (chapter 10, 2026-10-31)');
   assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 9 store nothing new (chapter 7’s ch7Flew, chapter 8’s foundHail and chapter 9’s foundMizzle and ch9Roof are flags); the Warrior Counts’ `warrior` is optional and not in E.blankCat (docs/warrior-counts.md, section 6)');
   assert.ok(!('warrior' in E.blankCat({ now: 1 })), 'a cat who has not sat the Counts is stored exactly as before');
   assert.equal(E.STORAGE_KEY, 'potomac-crossing.v1');
@@ -2021,6 +2022,28 @@ test('the fixture chapters are sound and play through, both paths', () => {
 });
 
 /* ------------------------------------------------ every real chapter, through the engine */
+/* Chapter 10's card pick: the scripted player (tests/fixtures/v1.js's play) knows chapters 1 to 9's kinds of frame. With
+ * this engine a pick frame reads as a page turned by its pick: the first right card her file shows, picked (E.pick), or
+ * with no card at all (a cat that reads the chapter alone) the empty file's Next (E.next with the stories). */
+function withPicks(E, list) {
+  const P = Object.create(E);
+  P.kindOf = (f) => (f && f.pick ? 'next' : E.kindOf(f));
+  P.next = (cat, story, now) => {
+    const f = E.currentFrame(cat, story);
+    if (!(f && f.pick)) return E.next(cat, story, now);
+    const id = E.pickView(f, cat, list).right[0];
+    if (id) return !!E.pick(cat, story, id, now, 0, list);
+    // (2026-10-31, the story builder: a cat that reads chapter 10 alone holds only the card it gives her, Puddle's, which
+    // answers no claim but two: her file is not empty and holds no right card, so the engine's guard takes her third wrong
+    // pick as right)
+    const held = E.fileOrder(cat, list);
+    if (!held.length) return E.next(cat, story, now, list);
+    let r = null;
+    for (let w = 0; w < E.PICK_GLOW && !(r && r.right); w++) r = E.pick(cat, story, held[0], now, w, list);
+    return !!(r && r.right && r.guard);
+  };
+  return P;
+}
 test('every chapter in app/story plays to an end through the engine (all right, then all wrong)', () => {
   const { load } = require('./_load.js');
   const all = load().story;
@@ -2035,7 +2058,7 @@ test('every chapter in app/story plays to an end through the engine (all right, 
       list.filter(s => s.number < story.number).forEach(s => { cat.finished[s.id] = 1; });
       E.startChapter(cat, story, 1);
       // every frame's options, with the first visible one chosen
-      const seq = V1.play(E, story, cat, V1.script({ miss: [], allWrong: wrong }));
+      const seq = V1.play(withPicks(E, list), story, cat, V1.script({ miss: [], allWrong: wrong }));
       assert.ok(story.frames[seq[seq.length - 1]].end, story.id + ' reaches its end');
       assert.ok(E.isFinished(cat, story.id));
       Object.keys(story.counts || {}).forEach(id => {
@@ -4156,8 +4179,8 @@ test('the bark Taps (`scratch`): two pieces of bark, three for a noticing cat, h
     /g10: scratch at is \{ x, y \} in percent of the panel/]) assert.match(errs, want);
   // a frame is one kind of page: never a scratch and a Next beside it
   const two = clone(ch04); two.frames.g21.next = 'g22';
-  assert.match(E.checkStory(two, list).join('\n'), /g21: needs exactly one of next\/choice\/input\/look\/counts\/skip\/scratch\/file\/ask\/end, has next,scratch/);
-  assert.deepEqual(E.KINDS, ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'ask', 'end'], 'chapter 5 adds `ask`');
+  assert.match(E.checkStory(two, list).join('\n'), /g21: needs exactly one of next\/choice\/input\/look\/counts\/skip\/scratch\/file\/pick\/ask\/end, has next,scratch/);
+  assert.deepEqual(E.KINDS, ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'pick', 'ask', 'end'], 'chapter 5 adds `ask`; chapter 10 adds `pick`');
 });
 
 test('the glitter Tap: the plainest scratch frame, nothing scratched; the page turns on a tap on the glint and on nothing else (PC.ui.taps.hit)', () => {
@@ -5363,7 +5386,7 @@ test('Riffle’s seven questions (`ask`): a Tap that counts nothing; seven quest
   const bad = clone(ch05);
   bad.frames.m04.ask.pairs = [['Only a question']]; bad.frames.m04.ask.who = 'coil'; bad.frames.m03.ask = { who: 'riffle', to: 'patience', pairs: [['a', 'b']], next: 'm04' };
   const errs = E.checkStory(bad, list).join('\n');
-  for (const want of [/m04: ask pairs is a list of \[question, answer\]/, /m04: ask: coil is not in the frame’s cast/, /m03: needs exactly one of next\/choice\/input\/look\/counts\/skip\/scratch\/file\/ask\/end, has next,ask/]) assert.match(errs, want);
+  for (const want of [/m04: ask pairs is a list of \[question, answer\]/, /m04: ask: coil is not in the frame’s cast/, /m03: needs exactly one of next\/choice\/input\/look\/counts\/skip\/scratch\/file\/pick\/ask\/end, has next,ask/]) assert.match(errs, want);
   // chapters 1 to 4 have no such frame
   [st5.ch01, st5.ch02, st5.ch03, st5.ch04].forEach(s => assert.ok(!Object.values(s.frames).some(fr => fr.ask)));
 });
@@ -6486,12 +6509,12 @@ test('chapter 9’s words in the grown-ups corner and its speakers: foundMizzle 
   assert.equal(E.fill(W.ch9Roof.true, tom), 'met Squall in chapter 9: the roof, offered again (his book says so on chapter 9’s page)');
   assert.equal(E.fill(W.ch9Roof.true, E.blankCat({})), 'met Squall in chapter 9: the roof, offered again (her book says so on chapter 9’s page)');
   assert.ok(!PC.ui.quietFlags.foundMizzle && !PC.ui.quietFlags.ch9Roof, 'both listed among what she did');
-  assert.deepEqual(Object.keys(W).slice(-2), ['foundMizzle', 'ch9Roof'], 'chapter 9 adds two flags, and they are the corner’s last');
-  assert.deepEqual(Object.keys(W).slice(Object.keys(W).indexOf('foundHail') + 1), ['foundMizzle', 'ch9Roof'], 'right after chapter 8’s');
+  // (chapter 10's flags come after them: its spec, section 1; its own test below)
+  assert.deepEqual(Object.keys(W).slice(Object.keys(W).indexOf('foundHail') + 1, Object.keys(W).indexOf('ch10Puddle')), ['foundMizzle', 'ch9Roof'], 'chapter 9 adds two flags, right after chapter 8’s');
   // no choice flag (spec section 1: "No choice in this chapter sets anything")
   assert.ok(!Object.keys(W).some(k => /^ch9/.test(k) && k !== 'ch9Roof'), 'no other chapter-9 flag');
   // the speakers: three new names after chapter 8's, GroveClan's by variant (labels only: the brief, call 11)
-  assert.deepEqual(Object.keys(Sp.NAMES).slice(Object.keys(Sp.NAMES).indexOf('snatch') + 1), ['thymeleaf', 'mizzle', 'groveclan']);
+  assert.deepEqual(Object.keys(Sp.NAMES).slice(Object.keys(Sp.NAMES).indexOf('snatch') + 1, Object.keys(Sp.NAMES).indexOf('mistscale')), ['thymeleaf', 'mizzle', 'groveclan'], 'chapter 10’s Mistscales come after them');
   assert.deepEqual([Sp.NAMES.thymeleaf, Sp.NAMES.mizzle, Sp.NAMES.groveclan], ['Thymeleaf', 'Mizzle', 'A GroveClan cat']);
   const lab = (b, story) => Sp.label(b, { story, fill: t => t });
   const names = { mizzle: 'The sleepy dragonet' };
@@ -6539,4 +6562,477 @@ test('FLAG_WORDS.ch3Told stays exactly as chapter 3 wrote it, on purpose (chapte
   });
   const tom = E.blankCat({}); tom.look.sex = 'tom';
   assert.equal(E.fill(W.ch3Told.false, tom), W.ch3Told.false, 'the same for a tom');
+});
+
+/* ------------------------------------------------ chapter 10: the card pick
+ * docs/chapters/10-the-gathering.spec.md, section 6, "The card pick": a frame's `pick`, Reynard's claim
+ * answered with a card from her Case File. A fixture chapter of its own (two pick frames, an answer frame
+ * after each; its cards its own, so they are seen only through `stories`), the engine's judge and its one
+ * flag, the page's pure words (PC.ui.pickPage, the corner's), and the page's source where only text can be
+ * checked (the suite has no DOM). Nothing is logged and nothing new is stored: the save stays version 2. */
+function pickFixture() {
+  const cast = [{ who: 'reynard', at: 'left' }, { who: 'tallyheart', at: 'right' }, { who: 'player', at: 'front' }];
+  return {
+    id: 'cx10', number: 10, title: 'The Pick', start: 'p01',
+    cards: {
+      wing: { mark: 'eye', line: 'Her wing was hurt.' },
+      prints: { mark: 'eye', line: 'Tiny prints by the pile.' },
+      count: { mark: 'eye', line: 'Four a night, every night.' },
+      flew: { mark: 'ear', line: 'The fox says she FLEW.', link: { with: ['wing'], line: 'They can’t both be true.' } },
+      gossip: { mark: 'ear', line: 'An otter says it was a fox.' },
+      moon: { mark: 'ear', line: 'The heron says there was no moon.' },
+      brag: { mark: 'ear', line: 'The fox says FLEW off is his story.', link: { with: ['flew'], line: 'He made it up.' } }
+    },
+    frames: {
+      p01: { scene: { set: 'pile', cam: 'wide', cast }, say: [{ who: 'reynard', text: 'It FLEW out of your camp!' }], next: 'p02' },
+      p02: { scene: { set: 'pile', cam: 'wide', cast }, say: [{ who: 'reynard', text: 'It FLEW out of your camp!' }, { who: 'tallyheart', text: 'That’s one.' }],
+        pick: { claim: 'It FLEW out of your camp!', right: ['wing', 'brag', 'nowhere-card'].slice(0, 2),
+          own: { flew: 'Hmm. That’s what HE says. Which card shows what YOU found out?' },
+          nudges: ['Hmm. Does that one say if she could FLY?', 'Think of her, under the bridge. Could she fly?'], flag: 'cxPickFlew', next: 'p03' } },
+      // an answer frame no cat sees (its `when` never matches): the pick lands past it
+      p03: { when: { cxNever: true }, say: [{ who: 'player', text: 'Never.' }], next: 'p04' },
+      p04: { say: [{ who: 'player', text: 'Her wing!', when: { cxPickFlew: 'wing' } }, { who: 'player', text: 'He bragged!', when: { cxPickFlew: 'brag' } },
+        { who: 'reynard', text: 'Hmph.', when: { not: { cxPickFlew: ['wing', 'brag'] } } }], next: 'p05' },
+      p05: { scene: { set: 'pile', cam: 'wide', cast }, pick: { claim: 'By the light of the MOON.', by: 'tallyheart', who: 'reynard', right: ['moon'],
+        nudges: ['Hmm. Does that one say anything about the MOON?', 'Who said there was NO moon?'], flag: 'cxPickMoon', next: 'p06',
+        prompt: '**Pick a card** from your Case File.', label: 'Open your Case File and pick a card.' } },
+      p06: { caption: [{ when: { cxPickMoon: 'moon' }, text: 'No moon at all.' }], end: true }
+    }
+  };
+}
+// a cat at the first pick holding these cards (in this order), her file open; `list` is the fixture with chapters 1 to 9 beside it
+function pickCat(st, ids, at) {
+  const cat = E.blankCat({ now: 1, id: 'pk' }); cat.name = 'Moon';
+  E.startChapter(cat, st, 1);
+  ids.forEach((id, i) => E.giveCard(cat, id, st.id, 10 + i));
+  cat.flags.caseFileOpen = true;
+  if (at) E.go(cat, st, at, 2);
+  return cat;
+}
+const PICK_ALL = ['count', 'wing', 'gossip', 'flew', 'prints', 'moon', 'brag'];
+
+test('the card pick: `pick` is a kind of frame (after `file`), its one way on is `pick.next`, and E.next does nothing there unless her file shows no card at all', () => {
+  const st = pickFixture(), list = [st];
+  assert.deepEqual(E.KINDS, ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'pick', 'ask', 'end'], 'chapter 10 adds `pick`');
+  assert.equal(E.kindOf(st.frames.p02), 'pick');
+  assert.deepEqual(E.exits(st.frames.p02), ['p03']);
+  assert.deepEqual(E.exits(st.frames.p05), ['p06']);
+  // E.next on a pick frame: the pick is the only way on (the fixture's stories passed: its cards are seen)
+  const cat = pickCat(st, PICK_ALL, 'p02'), before = clone(cat);
+  assert.equal(E.next(cat, st, 5, list), false);
+  assert.deepEqual(cat, before, 'nothing changes');
+  // ... but for a cat whose file shows no card (the guard, unreachable on real paths): Next follows pick.next, where it lands
+  const none = pickCat(st, [], 'p02');
+  assert.equal(E.next(none, st, 5, list), true);
+  assert.equal(none.frame, 'p04', 'past the answer frame that does not show');
+  assert.equal(none.flags.cxPickFlew, undefined, 'and no flag: nothing was picked');
+  // without `stories`, E.cards takes the global PC.story, which has no fixture cards: her file reads as empty, so Next follows the pick
+  const bare = pickCat(st, PICK_ALL, 'p02');
+  assert.equal(E.next(bare, st, 5), true, 'the fixture’s cards are not in PC.story');
+  // no chapter 1 to 9 frame has a pick
+  const S = realStories();
+  Object.values(S).filter(s => s.number < 10).forEach(s => Object.entries(s.frames).forEach(([id, f]) => assert.ok(!f.pick, s.id + ' ' + id)));
+});
+
+test('the card pick, E.checkStory: the fixture and every chapter 1 to 9 story are clean; each of a pick’s errors is named', () => {
+  const st = pickFixture(), S = realStories();
+  assert.deepEqual(E.checkStory(st, [st]), []);
+  Object.values(S).forEach(s => assert.deepEqual(E.checkStory(s, S), [], s.id));
+  const errsOf = (edit) => { const b = clone(st); edit(b); return E.checkStory(b, [b]).join('\n'); };
+  const P = (b) => b.frames.p02.pick;
+  assert.match(errsOf(b => { P(b).claim = 'It flew out of your camp!'; }), /p02: pick claim is a line with exactly one word in capitals/, 'no word in capitals');
+  assert.match(errsOf(b => { P(b).claim = 'It FLEW out of your CAMP!'; }), /p02: pick claim is a line with exactly one word in capitals/, 'two');
+  assert.deepEqual(errsOf(b => { P(b).claim = 'I never even saw your pile! How could I get the prey OUT?'; }), '', '“I” is one letter: OUT is its one word');
+  assert.match(errsOf(b => { P(b).right = ['wing', 'wign']; }), /p02: pick right: unknown card wign/);
+  assert.match(errsOf(b => { P(b).right = []; }), /p02: pick right is a list of the cards that answer the claim/);
+  assert.match(errsOf(b => { P(b).own = { brag: 'Hmm.' }; }), /p02: pick own: brag is a right card/);
+  assert.match(errsOf(b => { P(b).own = { flwe: 'Hmm.' }; }), /p02: pick own: unknown card flwe/);
+  assert.match(errsOf(b => { P(b).nudges = ['Hmm. Does that one say if she could FLY?']; }), /p02: pick nudges is two lines/, 'one nudge');
+  assert.match(errsOf(b => { P(b).nudges = ['Hmm.', '']; }), /p02: pick nudges is two lines/);
+  assert.match(errsOf(b => { b.frames.p01.sets = { cxPickFlew: 'wing' }; }), /p02: pick flag cxPickFlew is set for good by frame p01/, 'a sticky flag');
+  assert.match(errsOf(b => { b.frames.p05.pick.flag = 'cxPickFlew'; }), /pick flag cxPickFlew is another pick’s too/, 'a shared flag');
+  assert.match(errsOf(b => { b.frames.p01 = { choice: { options: [{ label: 'Wing.', sets: { cxPickFlew: 'wing' }, next: 'p02' }] } }; }), /p02: pick flag cxPickFlew is set by a choice too/);
+  assert.match(errsOf(b => { delete P(b).flag; }), /p02: pick flag is the flag her pick sets/);
+  assert.match(errsOf(b => { b.frames.p04.say[1].when = { cxPickFlew: 'bragg' }; }), /when cxPickFlew names "bragg", not a card in that pick’s right/, 'a when naming a card not in right');
+  assert.match(errsOf(b => { b.frames.p04.say[2].when = { not: { cxPickFlew: ['wing', 'gossip'] } }; }), /when cxPickFlew names "gossip"/, 'inside `not` too');
+  assert.match(errsOf(b => { b.frames.p06.caption[0].when = { cxPickMoon: 'wing' }; }), /when cxPickMoon names "wing"/, 'a caption’s');
+  assert.match(errsOf(b => { b.frames.p04.when = { cxPickFlew: true }; }), /when cxPickFlew names true/, 'a frame’s');
+  assert.match(errsOf(b => { P(b).who = 'squall'; }), /p02: pick: squall \(who makes the claim\) is not in the frame’s cast/, 'who not in the cast');
+  assert.match(errsOf(b => { b.frames.p02.scene.cast = b.frames.p02.scene.cast.filter(c => c.who !== 'reynard'); }), /p02: pick: reynard \(who makes the claim\) is not in the frame’s cast/, 'the default who, Reynard, is on every pick panel');
+  assert.match(errsOf(b => { P(b).by = ''; }), /p02: pick by is the one who nudges/, 'an empty by');
+  assert.match(errsOf(b => { P(b).prompt = 5; }), /p02: pick prompt is a line/);
+  assert.match(errsOf(b => { P(b).next = 'p99'; }), /p02 -> missing p99/);
+  assert.match(errsOf(b => { b.frames.p02.next = 'p03'; }), /p02: needs exactly one of next\/choice\/input\/look\/counts\/skip\/scratch\/file\/pick\/ask\/end, has next,pick/);
+  // `by` and `who` are speakers the page knows (the engine has no list of them: NAMES is ui.js's)
+  require('../app/ui.js');
+  const NAMES = PC.ui.speakers.NAMES;
+  Object.values(st.frames).filter(f => f.pick).forEach(f => [f.pick.who || 'reynard', f.pick.by || 'tallyheart'].forEach(w => assert.ok(NAMES[w], w + ' is a speaker')));
+});
+
+test('the card pick, E.pickJudge: a right card she holds is right; a card her file does not show is null; the nudges, clamped; after the third wrong pick the right cards she holds glow, in her file’s order, and only they can be picked; the guard', () => {
+  const st = pickFixture(), list = [st], pk = st.frames.p02.pick;
+  const cat = pickCat(st, PICK_ALL, 'p02'), before = clone(cat);
+  // her file's order: the groups first (what she saw, then what she was told), then each linked row, left to right
+  const F = E.caseFile(cat, list);
+  assert.deepEqual(F.groups.map(g => g.cards.map(c => c.id)), [['count', 'prints'], ['gossip', 'moon']]);
+  assert.deepEqual(F.links.map(l => l.cards.map(c => c.id)), [['wing', 'flew', 'brag']]);
+  assert.deepEqual(E.fileOrder(cat, list), ['count', 'prints', 'gossip', 'moon', 'wing', 'flew', 'brag']);
+  // right
+  assert.deepEqual(E.pickJudge(pk, cat, 'wing', 0, list), { right: true, card: 'wing', flag: 'cxPickFlew' });
+  assert.deepEqual(E.pickJudge(pk, cat, 'brag', 2, list), { right: true, card: 'brag', flag: 'cxPickFlew' });
+  // a card her file does not show (not held; another chapter's; none at all)
+  assert.equal(E.pickJudge(pk, cat, 'tidy', 0, list), null);
+  assert.equal(E.pickJudge(pk, cat, 'nope', 0, list), null);
+  const fewer = pickCat(st, ['count', 'flew', 'gossip'], 'p02');
+  assert.equal(E.pickJudge(pk, fewer, 'wing', 0, list), null, 'a right card she does not hold');
+  // the card's own nudge; the first; the second; the third is the second again (clamped), never the first
+  assert.deepEqual(E.pickJudge(pk, cat, 'flew', 0, list), { right: false, card: 'flew', wrongs: 1, line: 'Hmm. That’s what HE says. Which card shows what YOU found out?', by: 'tallyheart', glow: [] });
+  assert.deepEqual(E.pickJudge(pk, cat, 'count', 0, list), { right: false, card: 'count', wrongs: 1, line: pk.nudges[0], by: 'tallyheart', glow: [] });
+  assert.deepEqual(E.pickJudge(pk, cat, 'gossip', 1, list), { right: false, card: 'gossip', wrongs: 2, line: pk.nudges[1], by: 'tallyheart', glow: [] });
+  assert.deepEqual(E.pickJudge(pk, cat, 'moon', 2, list), { right: false, card: 'moon', wrongs: 3, line: pk.nudges[1], by: 'tallyheart', glow: ['wing', 'brag'] },
+    'the third: the second nudge again, and the glow of her right cards in her file’s order');
+  // the order is her file's, never `right`'s: put brag first in `right` and the glow still reads wing, brag
+  assert.deepEqual(E.pickJudge(Object.assign({}, pk, { right: ['brag', 'wing'] }), cat, 'moon', 2, list).glow, ['wing', 'brag']);
+  // after the third: a dimmed card is null (no fourth nudge), a glowing card is right
+  assert.equal(E.pickJudge(pk, cat, 'count', 3, list), null);
+  assert.equal(E.pickJudge(pk, cat, 'flew', 7, list), null, 'its own nudge too: no pick off the glow');
+  assert.deepEqual(E.pickJudge(pk, cat, 'brag', 3, list), { right: true, card: 'brag', flag: 'cxPickFlew' });
+  // wrongs undefined (or anything but a number) is 0, never NaN
+  assert.deepEqual(E.pickJudge(pk, cat, 'count', undefined, list), E.pickJudge(pk, cat, 'count', 0, list));
+  assert.deepEqual(E.pickJudge(pk, cat, 'count', 'x', list).wrongs, 1);
+  // E.pickOpen: every card her file shows before the glow; the glowing ones after it
+  assert.deepEqual(E.pickOpen(pk, cat, 0, list), E.cards(cat, list).map(c => c.id));
+  assert.deepEqual(E.pickOpen(pk, cat, 2, list), PICK_ALL);
+  assert.deepEqual(E.pickOpen(pk, cat, E.PICK_GLOW, list), ['wing', 'brag']);
+  assert.deepEqual(E.pickOpen(pk, cat, undefined, list), PICK_ALL);
+  assert.equal(E.PICK_GLOW, 3);
+  // the guard (a data slip: she holds no right card at all): the third wrong pick is taken as right
+  const noRight = pickCat(st, ['count', 'gossip', 'moon'], 'p02');
+  assert.equal(E.pickJudge(pk, noRight, 'count', 1, list).right, false);
+  assert.deepEqual(E.pickJudge(pk, noRight, 'moon', 2, list), { right: true, card: 'moon', flag: 'cxPickFlew', guard: true });
+  assert.deepEqual(cat, before, 'judging is pure');
+});
+
+test('the card pick, E.pick: a right pick sets its flag and turns the page (where it lands); a wrong one changes nothing; off the glow it is null; null on a frame with no pick; Back lands on the pick; nothing is logged', () => {
+  const st = pickFixture(), list = [st];
+  const cat = pickCat(st, PICK_ALL, 'p02');
+  const counts = clone(cat.counts), choices = clone(cat.choices), lessons = clone(cat.lessons);
+  // a wrong pick: the cat deep-equal, whatever the count
+  let before = clone(cat);
+  assert.equal(E.pick(cat, st, 'count', 9, 0, list).right, false);
+  assert.equal(E.pick(cat, st, 'flew', 9, 1, list).line, st.frames.p02.pick.own.flew);
+  assert.deepEqual(cat, before, 'a wrong pick changes nothing in the save');
+  // after the glow: a dimmed card is null and changes nothing
+  assert.equal(E.pick(cat, st, 'gossip', 9, 3, list), null);
+  assert.deepEqual(cat, before);
+  // the fixture's cards are seen only through `stories`: without them her file is empty, and nothing can be picked
+  assert.equal(E.pick(cat, st, 'wing', 9, 0), null);
+  assert.deepEqual(cat, before);
+  // right: the flag, then the page turns to `next`, past the answer frame whose `when` does not match
+  assert.deepEqual(E.pick(cat, st, 'wing', 9, 3, list), { right: true, card: 'wing', flag: 'cxPickFlew' });
+  assert.equal(cat.flags.cxPickFlew, 'wing');
+  assert.deepEqual([cat.frame, cat.history.slice(-1)[0], cat.updated], ['p04', 'p02', 9]);
+  assert.deepEqual(E.balloons(st.frames.p04, cat).map(b => b.text), ['Her wing!'], 'the answer screen’s line, by card');
+  // nothing is logged and nothing new is stored
+  assert.deepEqual([cat.counts, cat.choices, cat.lessons], [counts, choices, lessons]);
+  assert.deepEqual(Object.keys(cat).sort(), Object.keys(before).sort());
+  // null on a frame with no pick
+  before = clone(cat);
+  assert.equal(E.pick(cat, st, 'brag', 10, 0, list), null);
+  assert.deepEqual(cat, before);
+  // Back from the answer lands on the pick (it starts fresh: the wrongs are the page's); a new right pick replaces the flag
+  assert.equal(E.back(cat, st), true);
+  assert.equal(cat.frame, 'p02');
+  assert.equal(E.pick(cat, st, 'brag', 11, 0, list).right, true);
+  assert.equal(cat.flags.cxPickFlew, 'brag', 'replaced, as a choice’s sets are');
+  assert.deepEqual(E.balloons(st.frames.p04, cat).map(b => b.text), ['He bragged!']);
+  // the second pick, and the end: the caption reads its flag
+  E.next(cat, st, 12, list);
+  assert.equal(cat.frame, 'p05');
+  assert.equal(E.pick(cat, st, 'moon', 13, 0, list).right, true);
+  assert.deepEqual([cat.frame, cat.flags.cxPickMoon, E.captions(st.frames.p06, cat).map(c => c.text || c)], ['p06', 'moon', ['No moon at all.']]);
+  // the save is still version 2, and migrates as it did (flags are kept as they are)
+  const save = E.newSave(); save.cats.push(clone(cat)); save.current = cat.id;
+  assert.equal(E.migrate(clone(save)).version, 2);
+  assert.deepEqual(E.migrate(clone(save)).cats[0].flags, cat.flags);
+  // the guard, through E.pick: the flag set to the card, the page turned as on a right pick
+  const noRight = pickCat(st, ['count', 'gossip', 'moon'], 'p02');
+  assert.deepEqual(E.pick(noRight, st, 'gossip', 20, 2, list), { right: true, card: 'gossip', flag: 'cxPickFlew', guard: true });
+  assert.deepEqual([noRight.frame, noRight.flags.cxPickFlew], ['p04', 'gossip']);
+  assert.deepEqual(E.balloons(st.frames.p04, noRight).map(b => b.text), ['Hmph.']);
+});
+
+test('the card pick: E.pickView (her file, its right cards in her file’s order, the claim’s word) and E.pickWords (the instruction and the hidden button, with their defaults)', () => {
+  const st = pickFixture(), list = [st], cat = pickCat(st, PICK_ALL, 'p02');
+  const v = E.pickView(st.frames.p02, cat, list);
+  assert.deepEqual(v.file, E.caseFile(cat, list));
+  assert.deepEqual([v.claim, v.word, v.who, v.by, v.right], ['It FLEW out of your camp!', 'FLEW', 'reynard', 'tallyheart', ['wing', 'brag']]);
+  assert.deepEqual(E.pickView(st.frames.p02, pickCat(st, ['brag', 'count'], 'p02'), list).right, ['brag'], 'only the right cards she holds');
+  assert.deepEqual([E.pickWord('By the light of the MOON.'), E.pickWord('I never even saw your pile! How could I get the prey OUT?'), E.pickWord('Only something BIG could take so much!'),
+    E.pickWord('A dragon SCALE by your pile!'), E.pickWord('no capitals here'), E.pickWord('TWO WORDS'), E.pickWord('I')], ['MOON', 'OUT', 'BIG', 'SCALE', null, null, null]);
+  assert.deepEqual(E.pickWords(st.frames.p02), { prompt: '**Pick a card** from your Case File.', label: 'Open your Case File and pick a card.' }, 'the defaults');
+  assert.deepEqual(E.pickWords(st.frames.p05), { prompt: '**Pick a card** from your Case File.', label: 'Open your Case File and pick a card.' });
+  const own = clone(st.frames.p05); own.pick.prompt = 'Which card?'; own.pick.label = 'Pick one.';
+  assert.deepEqual(E.pickWords(own), { prompt: 'Which card?', label: 'Pick one.' });
+});
+
+test('the card pick, PC.ui.pickPage: the strip, the newest nudge, the glow and the dim after three; what Read to me says as the screen opens (`speech`) and after a pick (`said`), a dimmed tap’s included', () => {
+  require('../app/ui.js');
+  const st = pickFixture(), list = [st], cat = pickCat(st, PICK_ALL, 'p02'), pk = st.frames.p02.pick;
+  const v = E.pickView(st.frames.p02, cat, list), P = PC.ui.pickPage;
+  const lines = E.fileOrder(cat, list).map(id => ({ text: st.cards[id].line }));
+  const claim = { text: 'It FLEW out of your camp!', who: 'reynard' };
+  const nudge = (t) => ({ text: t, who: 'tallyheart', kind: 'whisper' });
+  const lit = [{ text: 'Her wing was hurt.' }, { text: 'The fox says FLEW off is his story.' }];
+  // the first opening: the claim in his voice, then every card's line in her file's order (cards' lines only: no heading, no link line)
+  let p = P(v, 0, null, 1, false);
+  assert.deepEqual(p.strip, { who: 'reynard', text: 'It FLEW out of your camp!', word: 'FLEW' });
+  assert.equal(p.nudge, null);
+  assert.deepEqual(p.cards, E.fileOrder(cat, list).map(id => ({ id, glow: false, dim: false })));
+  assert.deepEqual(p.speech, [claim].concat(lines));
+  assert.ok(!p.speech.some(x => /What I|They can’t both be true|He made it up/.test(x.text)), 'no group heading, no link line');
+  assert.deepEqual(p.said, []);
+  // a reopen with no wrong pick: the claim alone
+  assert.deepEqual(P(v, 0, null, 2, false).speech, [claim]);
+  // after the first and the second wrong pick: the nudge, whispered (the newest only)
+  p = P(v, 1, pk.nudges[0], 1, false);
+  assert.deepEqual([p.nudge, p.said], [nudge(pk.nudges[0]), [nudge(pk.nudges[0])]]);
+  assert.deepEqual(p.speech, [claim].concat(lines), 'the first opening still reads her whole file');
+  p = P(v, 2, pk.nudges[1], 1, false);
+  assert.deepEqual([p.nudge, p.said, p.cards.some(c => c.glow || c.dim)], [nudge(pk.nudges[1]), [nudge(pk.nudges[1])], false]);
+  assert.deepEqual(P(v, 2, pk.nudges[1], 3, false).speech, [claim, nudge(pk.nudges[1])], 'a reopen: the claim, then said');
+  assert.deepEqual(P(v, 2, pk.nudges[1], 1, true).said, [nudge(pk.nudges[1])], 'dimmed is ignored before the glow (nothing is dimmed)');
+  // after the third: the right cards she holds glow, the rest are dimmed; said is the nudge and the glowing cards' lines
+  p = P(v, 3, pk.nudges[1], 1, false);
+  assert.deepEqual(p.cards.filter(c => c.glow).map(c => c.id), ['wing', 'brag']);
+  assert.deepEqual(p.cards.filter(c => c.dim).map(c => c.id), ['count', 'prints', 'gossip', 'moon', 'flew']);
+  assert.ok(p.cards.every(c => c.glow !== c.dim));
+  assert.deepEqual(p.said, [nudge(pk.nudges[1])].concat(lit));
+  // a dimmed tap: the glowing cards' lines alone, while the newest nudge stays on screen
+  p = P(v, 3, pk.nudges[1], 1, true);
+  assert.deepEqual([p.said, p.nudge], [lit, nudge(pk.nudges[1])]);
+  assert.deepEqual(P(v, 3, pk.nudges[1], 2, true).speech, [claim].concat(lit), 'reopened after a dimmed tap');
+  assert.deepEqual(P(v, 3, pk.nudges[1], 2, false).speech, [claim, nudge(pk.nudges[1])].concat(lit), 'reopened after three: the glow is there');
+});
+
+test('the card pick in the grown-ups corner (PC.ui.pickFlagWords): every pick flag has words for every card id any story defines, a right card’s with its line; filled for a she-cat and a tom; chapter 10’s other two flags', () => {
+  require('../app/ui.js');
+  const st = pickFixture(), S = realStories();
+  const W = PC.ui.pickFlagWords(Object.assign({}, S, { cx10: st }));
+  assert.deepEqual(Object.keys(W).filter(k => !/^ch10/.test(k)), ['cxPickFlew', 'cxPickMoon'], 'the fixture’s two (beside chapter 10’s five, once its story is in)');
+  const ids = [].concat(...Object.values(S).map(s => Object.keys(s.cards || {})), Object.keys(st.cards));
+  Object.values(W).forEach(w => assert.deepEqual(Object.keys(w).sort(), ids.slice().sort(), 'an entry for every card id'));
+  assert.equal(W.cxPickFlew.wing, 'answered Reynard’s “It FLEW out of your camp!” with: Her wing was hurt.');
+  assert.equal(W.cxPickFlew.gossip, 'answered Reynard’s “It FLEW out of your camp!”', 'any other card: the guard’s, unreachable');
+  assert.equal(W.cxPickFlew['cant-fly'], 'answered Reynard’s “It FLEW out of your camp!”', 'another chapter’s card too');
+  assert.equal(W.cxPickMoon.moon, 'answered Reynard’s “By the light of the MOON.” with: The heron says there was no moon.');
+  const tom = E.blankCat({}); tom.look.sex = 'tom';
+  Object.values(W).forEach(w => Object.values(w).forEach(t => { assert.equal(E.fill(t, tom), t); assert.equal(E.fill(t, E.blankCat({})), t); assert.doesNotMatch(t, /undefined|\{/); }));
+  // the page's corner is built at load from the loaded stories' picks (chapters 1 to 9 have none)
+  assert.deepEqual(PC.ui.pickFlagWords(Object.fromEntries(Object.entries(S).filter(([, s]) => s.number < 10))), {});
+  // chapter 10's two other flags (its spec, section 1), after chapter 9's
+  const FW = PC.ui.flagWords;
+  assert.deepEqual(FW.ch10Puddle, { 'true': 'found Puddle under the Moon Ferry (chapter 10; {their} book says so on chapter 10’s page)' });
+  assert.deepEqual(FW.ch10Best, { sprinkle: 'will remember Sprinkle most', friends: 'will remember {their} friends most', truth: 'will remember finding the truth most', counts: 'will remember the Counts most' });
+  assert.equal(E.fill(FW.ch10Puddle.true, tom), 'found Puddle under the Moon Ferry (chapter 10; his book says so on chapter 10’s page)');
+  assert.equal(E.fill(FW.ch10Best.friends, E.blankCat({})), 'will remember her friends most');
+  assert.deepEqual(Object.keys(FW).slice(Object.keys(FW).indexOf('ch9Roof') + 1, Object.keys(FW).indexOf('ch10Best') + 1), ['ch10Puddle', 'ch10Best']);
+  // the page builds them at load, from every story index.html loads before ui.js, into FLAG_WORDS (so openGrownups, unchanged,
+  // finds them): run as the page loads, in a process of its own (here ui.js may have been loaded before the stories)
+  const out = require('node:child_process').execFileSync(process.execPath, ['-e', 'const PC = require(' + JSON.stringify(require('node:path').join(__dirname, '_load.js')) + ').load();' +
+    'require(' + JSON.stringify(require('node:path').join(__dirname, '../app/ui.js')) + '); const W = PC.ui.flagWords, P = PC.ui.pickFlagWords(PC.story);' +
+    'process.stdout.write(JSON.stringify(Object.keys(P).map(k => [k, JSON.stringify(W[k]) === JSON.stringify(P[k])])));'], { encoding: 'utf8' });
+  const built = JSON.parse(out), picks = S.ch10 ? Object.values(S.ch10.frames).filter(f => f.pick).map(f => f.pick.flag) : [];
+  assert.deepEqual(built, picks.map(k => [k, true]), 'every loaded pick flag in the corner’s words');
+});
+
+test('chapter 10’s data beside the engine: the mist stone (a gift), the speakers (the Mistscales, the Clans’ leaders, Granny) and their voices; nobody else’s voice changes', () => {
+  require('../app/ui.js');
+  assert.deepEqual(E.gift('mist-stone'), { id: 'mist-stone', name: 'Sprinkle’s mist stone: grey, until the moonlight finds it', from: 'Sprinkle' });
+  assert.deepEqual(E.GIFTS.map(g => g.id), ['riffle-stone', 'mist-stone']);
+  const cat = E.blankCat({}); E.giveGift(cat, 'mist-stone');
+  assert.deepEqual(E.nestGroups(cat).gifts.map(x => x.treasure.id), ['mist-stone'], 'My nest shows it under “From friends”');
+  const ui = require('node:fs').readFileSync(require('node:path').join(__dirname, '../app/ui.js'), 'utf8');
+  assert.match(ui, /case 'mist-stone': return o \+ '<path d="[^"]+" fill="#9aa1ab"\/>/, 'treasureSvg draws it: a grey egg of a pebble');
+  assert.match(ui, /fill="#4f9fd6"[\s\S]{0,200}fill="#58b878"/, 'a band of blue and green across it');
+  const Sp = PC.ui.speakers, lab = (b, story) => Sp.label(b, { story, fill: t => t });
+  assert.equal(Sp.NAMES.mistscale, 'A Mistscale');
+  assert.deepEqual([1, 2, undefined].map(variant => lab({ who: 'mistscale', variant }, {})), ['Mama', 'The eldest Mistscale', 'Mama']);
+  assert.equal(lab({ who: 'reedclan', variant: 5 }, {}), 'ReedClan’s leader');
+  assert.equal(lab({ who: 'groveclan', variant: 3 }, {}), 'GroveClan’s leader');
+  assert.deepEqual([4, 5].map(variant => lab({ who: 'groveclan', variant }, {})), ['A GroveClan cat', 'A GroveClan cat'], 'the crowd falls back to the Clan’s name');
+  assert.equal(lab({ who: 'otter', variant: 3 }, { names: { otter: 'Granny' } }), 'Granny', 'Granny by the chapter’s names');
+  assert.deepEqual([Sp.pitch('mistscale'), Sp.rate('mistscale'), Sp.pitch('mistscale', 2)], [0.7, 0.8, 0.6], 'Mama low, soft and slow; the eldest lower');
+  assert.deepEqual([Sp.pitch('reedclan', 5), Sp.rate('reedclan'), Sp.pitch('groveclan', 3), Sp.rate('groveclan')], [0.8, 0.95, 0.88, 0.86], 'the leaders at their Clans’ rates');
+  assert.deepEqual([Sp.pitch('otter', 3), Sp.rate('otter')], [0.92, 0.95], 'Granny: her pitch, the otters’ rate');
+  assert.deepEqual([Sp.pitch('otter', 1), Sp.pitch('otter', 2), Sp.pitch('otter')], [0.68, 1.05, 0.68], 'chapter 2 and 5’s otters as they were');
+  assert.deepEqual([1, 2, 3, 4].map(v => Sp.pitch('reedclan', v)), [1, 1.12, 1, 1]);
+  assert.deepEqual([1, 2].map(v => Sp.pitch('groveclan', v)), [0.78, 1]);
+  assert.deepEqual(Object.keys(Sp.NAMES).slice(Object.keys(Sp.NAMES).indexOf('groveclan') + 1), ['mistscale'], 'one new name, the last');
+});
+
+/* The page's side of the pick, pinned as text where the suite has no DOM (as tests/sw.test.js pins the other screens). */
+test('the card pick on the page (app/ui.js, index.html): the mode class only on the pick screen’s own .cf-in and every rule of it under .cf-in.picking; the double tap; fileCard with one argument as it was; fileKey’s pick line; the headings through markSvg; the live region read again', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const ui = fs.readFileSync(path.join(__dirname, '../app/ui.js'), 'utf8'), html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const fn = (src, name) => { const at = src.indexOf('  function ' + name + '('); assert.ok(at > 0, name); const end = src.indexOf('\n  }\n', at); return src.slice(at, end + 4); };
+  // `picking` is written in ui.js once, in drawPick's .cf-in (never on #file, which lives for the whole session)
+  assert.equal((ui.match(/picking/g) || []).length, 1);
+  assert.match(fn(ui, 'drawPick'), /el\.innerHTML = '<div class="cf-in picking' \+/);
+  assert.doesNotMatch(ui, /\$\('file'\)\.classList|el\.classList\.(add|toggle)\('picking/);
+  // every index.html rule that names it is under .cf-in.picking; nothing sticky in an Aa rule
+  const css = html.replace(/\/\*[\s\S]*?\*\//g, '');
+  const sels = [];
+  css.replace(/([^{}]+)\{[^{}]*\}/g, (m, sel) => { if (/picking|pick-/.test(sel)) sels.push(sel.trim()); return m; });
+  assert.ok(sels.length >= 10, sels.length + ' pick rules');
+  sels.forEach(sel => sel.split(/,(?![^(]*\))/).forEach(s => assert.match(s.trim(), /^\.cf-in\.picking[.\s:]/, s)));
+  const at = html.indexOf('/* ---------- chapter 10: the card pick'), end = html.indexOf('/* ---------- grown-ups ---------- */');
+  assert.ok(at > html.indexOf('html.big .cf-h,html.big .cf-head{margin-bottom:6px}') && end > at, 'a block of its own, after the Case File’s');
+  const block = html.slice(at, end);
+  assert.ok(!/@media \(min-width: 960px\)\{|@media \(orientation:/.test(block), 'no media query worded as tests/aa-room.test.js looks one up');
+  assert.doesNotMatch(block, /html\.big/, 'no Aa rule: the Case File’s own Aa rules reach it as they are');
+  assert.match(block, /\.cf-in\.picking \.cf-head\{position:sticky;/);
+  // (and the page's style sheet still parses as one: every block closed, none closed twice)
+  const sheet = html.slice(html.indexOf('<style>'), html.indexOf('</style>')).replace(/\/\*[\s\S]*?\*\//g, '');
+  let depth = 0;
+  for (const ch of sheet) { if (ch === '{') depth++; else if (ch === '}') { depth--; assert.ok(depth >= 0, 'a brace closed twice'); } }
+  assert.equal(depth, 0);
+  // the double tap: the screen's tap guard is armed again after each pick (the #file capture guard swallows the second)
+  assert.match(fn(ui, 'pickTapCard'), /var r = E\.pick\(cat, story, id, now\(\), ps\.wrongs, stories\(\)\);\n    fileState\.at = now\(\);   \/\/ a double tap picks one card, not two/);
+  assert.match(ui, /fo\.addEventListener\('click', function \(e\) \{ if \(fileState && now\(\) - fileState\.at < UI_GUARD_MS\) \{ e\.stopPropagation\(\); e\.preventDefault\(\); \} \}, true\);/);
+  assert.match(ui, /fo\.addEventListener\('click', function \(e\) \{ if \(e\.target === fo && !\(fileState && fileState\.pending\)\) closeFile\(\); \}\);/, 'the dark edge never closes a pending pick');
+  // fileCard with one argument (or the plain file's .map index) is byte-identical to chapter 9's (its text, as shipped)
+  const FILECARD9 = '  function fileCard(c) {\n    var line = fill(c.line);\n' +
+    '    return \'<button class="cf-card \' + c.mark + \'" type="button" data-card="\' + esc(c.id) + \'" aria-label="\' + esc(plain(line) + \' \' + E.markMeans(c.mark)) + \'">\' +\n' +
+    '      \'<span class="cf-pic" aria-hidden="true">\' + cardSvg(c) + \'</span><span class="cf-line" aria-hidden="true">\' + rich(line) + \'</span></button>\';\n  }';
+  const sha = (t) => require('node:crypto').createHash('sha256').update(t).digest('hex');
+  assert.equal(sha(FILECARD9), '514eb55c9d3bc96aea3fdaf5d80e6d6277d82ab067f81eb2f38dd08082820ccc', 'chapter 9’s fileCard, word for word');
+  const stub = 'var E = { markMeans: function (m) { return m === "eye" ? "I saw this myself." : "Somebody told me."; } };' +
+    'function fill(s) { return s; } function plain(s) { return String(s).replace(/\\*+/g, ""); } function esc(s) { return String(s).replace(/[&<>"\']/g, function (c) { return "&#" + c.charCodeAt(0) + ";"; }); }' +
+    'function rich(s) { return esc(s); } function cardSvg(c) { return "<svg>" + c.id + "</svg>"; }';
+  const make = (text) => new Function(stub + text + '; return fileCard;')();
+  const now = make(fn(ui, 'fileCard')), then = make(FILECARD9), c = { id: 'cant-fly', mark: 'eye', line: 'Sprinkle can’t fly.' };
+  assert.equal(now(c), then(c));
+  assert.equal(now(c, 0), then(c, 0)); assert.equal(now(c, 3), then(c, 3));
+  assert.equal(now(c, { pick: true, dim: false }), '<button class="cf-card eye" type="button" data-card="cant-fly" id="pickcard-cant-fly" aria-label="Sprinkle can’t fly. I saw this myself. Pick this card.">' +
+    '<span class="cf-pic" aria-hidden="true"><svg>cant-fly</svg></span><span class="cf-line" aria-hidden="true">Sprinkle can’t fly.</span></button>');
+  assert.match(now(c, { pick: true, dim: true }), /id="pickcard-cant-fly" aria-disabled="true" aria-label="Sprinkle can’t fly\. I saw this myself\. Pick this card\."/, 'dimmed: still focusable, its label unchanged');
+  // fileKey: on the pick screen only Escape and ← are cancelled (and close it unless a right pick is pending); Tab, Enter and Space reach the buttons
+  assert.match(fn(ui, 'fileKey'), /^  function fileKey\(e\) \{\n    if \(fileState\.pick\) \{ if \(e\.key === 'Escape' \|\| e\.key === 'ArrowLeft'\) \{ e\.preventDefault\(\); if \(!fileState\.pending\) closeFile\(\); \} return; \}\n/);
+  const keys = (pending) => ['Tab', 'Enter', ' ', 'ArrowRight', 'Escape', 'ArrowLeft'].map(key => {
+    const st = { fileState: { pick: {}, pending }, closed: 0, prevented: 0 };
+    new Function('S', 'var fileState = S.fileState; function closeFile() { S.closed++; } function drawFile() {} ' + fn(ui, 'fileKey') + ' fileKey({ key: ' + JSON.stringify(key) + ', preventDefault: function () { S.prevented++; } });')(st);
+    return [key, st.prevented, st.closed];
+  });
+  assert.deepEqual(keys(false), [['Tab', 0, 0], ['Enter', 0, 0], [' ', 0, 0], ['ArrowRight', 0, 0], ['Escape', 1, 1], ['ArrowLeft', 1, 1]]);
+  assert.deepEqual(keys(true), [['Tab', 0, 0], ['Enter', 0, 0], [' ', 0, 0], ['ArrowRight', 0, 0], ['Escape', 1, 0], ['ArrowLeft', 1, 0]]);
+  assert.match(ui, /if \(fileState\) \{ fileKey\(e\); return; \}/, 'the page’s keydown hands every key to fileKey while the screen is open');
+  // drawPick's group headings through markSvg, on a name of its own; no MARK[ in the pick's section (tests/sw.test.js's count stays two)
+  const sec = ui.slice(ui.indexOf('/* ---------------------------------------------------------------- the card pick (chapter 10)'), ui.indexOf('/* ---------------------------------------------------------------- inputs */'));
+  assert.match(sec, /<i class="cf-mark" aria-hidden="true">' \+ markSvg\(pg\.mark\) \+ '<\/i>/);
+  assert.doesNotMatch(sec, /MARK\[/);
+  assert.equal((ui.match(/markSvg\((big|g)\.mark\)/g) || []).length, 2);
+  // the live region: emptied, then given `said` 100 ms later, so a polite region reads a repeat (a second dimmed tap)
+  assert.match(fn(ui, 'pickSay'), /if \(live\) live\.textContent = '';\n    later\(function \(\) \{ var l = \$\('pickSay'\); if \(l\) l\.textContent = [^\n]*\}, 100\);/);
+  assert.match(sec, /'<p class="sr" id="pickSay" role="status" aria-live="polite"><\/p>/);
+  // a right pick: E.pick at the tap, the screen pending till the page turns 900 ms later (at once with reduced motion), a plain go('frame')
+  assert.match(fn(ui, 'pickTapCard'), /st\.pending = true;[\s\S]*var turn = function \(\) \{ closeFile\(true\); go\('frame'\); \};\n      if \(reduceMotion\) turn\(\); else later\(turn, PICK_TURN_MS\);/);
+  assert.match(sec, /var PICK_TURN_MS = 900/);
+  assert.doesNotMatch(sec, /fromSkip/);
+  // the hooks in shared code: each a branch only a pick reaches
+  assert.match(ui, /if \(kind === 'pick'\) return renderPickFrame\(f, id, ctx, box, panel, nextBtn\);/);
+  assert.match(ui, /var soloOk = kind === 'next' \|\| kind === 'counts' \|\| kind === 'scratch' \|\| kind === 'file' \|\| kind === 'pick';/);
+  assert.match(ui, /fb\.classList\.toggle\('glow', hasFile && !!story && \['file', 'pick'\]\.indexOf\(E\.kindOf\(E\.currentFrame\(cat, story\)\)\) >= 0\);/);
+  assert.match(ui, /var hasFile = n === 'frame' && !!cat && E\.hasFile\(cat\) && !inLesson;/);
+  assert.match(fn(ui, 'openFile'), /if \(o\.pick\) \{ fileState\.pick = o\.pick; drawPick\(false\); \} else drawFile\(\);/);
+  // (closeFile: chapter 9's word for word but the pick screen's one line, its scroll to the top, a branch only a pick reaches)
+  const PICK_LINE = '    // (a pick screen leaves no scroll behind it, for the next claim or the plain Case File after it)\n    if (st.pick) el.scrollTop = 0;\n';
+  assert.ok(fn(ui, 'closeFile').includes(PICK_LINE));
+  assert.equal(sha(fn(ui, 'closeFile').replace(PICK_LINE, '')), 'ea0bf61c9b50dd13797b6561d9f08a3951600da80afb66c244873716cd27fc67', 'closeFile is chapter 9’s, word for word, but the pick’s line');
+  assert.equal(sha(fn(ui, 'drawFile')), '299d085d821ea6347a17821684fa91bc9fd678f1f7ec7360f0e910e7ebecd84b', 'drawFile is chapter 9’s, word for word');
+  assert.match(ui, /warrior: function \(what, i\) \{ return warriorDebug\(what, i\); \},\n[\s\S]{0,400}pick: function \(ids\) \{/, 'PC.debug.pick after the Warrior Counts’ entry');
+});
+
+/* Chapter 10's review, the pick screen in motion and in place (offscreen WebKit, pick-real and pick-motion): each claim's screen
+ * opens at its top (drawPick's scroll to the top was lost while #file was hidden, so claims 2 to 5 opened partway down her
+ * file, and the plain Case File after a pick opened where the pick screen was left); a wrong pick's taller strip never
+ * covers the card she tapped; a right card's pop grows toward the free side; the strip sticks below an installed iPad's
+ * status bar; with reduced motion the glowing cards brighten for a dimmed card's tap. Every hook is a branch only a pick
+ * reaches (o.pick, st.pick, pickTapCard), so the plain Case File of chapters 4 to 9 is as it was. */
+test('the pick screen: each claim opens at its top and leaves no scroll behind; a wrong pick’s taller strip never covers the tapped card; the right card’s pop grows toward the free side; the strip sticks below the status bar; reduced motion lights the glowing cards', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const ui = fs.readFileSync(path.join(__dirname, '../app/ui.js'), 'utf8'), html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const fn = (src, name) => { const at = src.indexOf('  function ' + name + '('); assert.ok(at > 0, name); const end = src.indexOf('\n  }\n', at); return src.slice(at, end + 4); };
+  const open = fn(ui, 'openFile'), close = fn(ui, 'closeFile'), tap = fn(ui, 'pickTapCard');
+  assert.match(open, /\$\('file'\)\.hidden = false;\n[\s\S]*?if \(o\.pick\) \$\('file'\)\.scrollTop = 0;/, 'a pick screen opens at its top, once the file is shown');
+  assert.match(close, /if \(st\.pick\) el\.scrollTop = 0;\n    el\.hidden = true; el\.innerHTML = '';/, 'and leaves no scroll behind it');
+  assert.equal((open.match(/scrollTop/g) || []).length, 1); assert.equal((close.match(/scrollTop/g) || []).length, 1);
+  // the strip's growth: measured before drawPick(true), the card moved down by what the taller strip would cover, at most its growth
+  assert.match(tap, /var hd0 = el\.querySelector\('\.cf-head'\), hb0 = hd0 \? hd0\.getBoundingClientRect\(\)\.bottom : 0;\n    drawPick\(true\);/);
+  assert.match(tap, /under = Math\.min\(hb1 - hb0, hb1 \+ 4 - nb\.getBoundingClientRect\(\)\.top\);\n      if \(under > 0\) el\.scrollTop -= under;/);
+  // (run it: a card 30px under a strip that grew by 50 moves down 34; one clear of it stays; a strip that grew less moves it that much)
+  const move = (hb0, hb1, top) => { const under = Math.min(hb1 - hb0, hb1 + 4 - top); return under > 0 ? under : 0; };
+  assert.deepEqual([move(100, 150, 120), move(100, 150, 200), move(100, 110, 60)], [34, 0, 10]);
+  // the pop: from the top edge just under the strip, the bottom edge at the screen's foot, the middle elsewhere
+  assert.match(tap, /btn\.style\.transformOrigin = hdr && br\.top - mg < hdr\.getBoundingClientRect\(\)\.bottom \? '50% 0' : br\.bottom \+ mg > \(root\.innerHeight \|\| Infinity\) \? '50% 100%' : '';\n        btn\.classList\.add\('pick-right'\);/);
+  assert.match(html, /@keyframes pickpop\{0%\{transform:scale\(1\)\}55%\{transform:scale\(1\.14\)\}/, '1.14 at its peak: 7% each side');
+  // the stuck strip: -12px against #file's padding of 12px and the status bar, so it sticks at the status bar's foot
+  assert.match(html, /\.cf-in\.picking \.cf-head\{position:sticky;top:-12px;z-index:3;/);
+  assert.match(html, /\.cfile\{[^}]*padding:calc\(12px \+ var\(--st\)\)|padding:calc\(12px \+ var\(--st\)\) calc\(12px \+ var\(--sr\)\) calc\(18px \+ var\(--sb\)\)/);
+  // reduced motion: the right card's scale is gone (the page turns at once, it was never drawn); the glowing cards brighten
+  const rm = html.slice(html.indexOf('@media screen and (prefers-reduced-motion: reduce){'), html.indexOf('/* ---------- grown-ups ---------- */'));
+  assert.doesNotMatch(rm, /pick-right/);
+  assert.match(rm, /\.cf-in\.picking\.glowing \.cf-card\.pick-wiggle:not\(\[aria-disabled="true"\]\) \.cf-pic\{filter:drop-shadow\(0 0 24px rgba\(255,236,150,1\)\)/);
+  assert.match(tap, /if \(reduceMotion\) turn\(\); else later\(turn, PICK_TURN_MS\);/);
+  // the glow in sight: when no glowing card shows half its picture under the strip, the first in her file's order slides to
+  // just under it (at once with reduced motion): on the third wrong pick once her card has wiggled, on a dimmed tap, reopened
+  const show = fn(ui, 'pickShowGlow');
+  assert.match(show, /if \(!hd \|\| !fileState \|\| !fileState\.pick \|\| fileState\.pending\) return;/, 'never on a pending pick or a closed screen');
+  assert.match(show, /Math\.min\(r\.bottom, foot\) - Math\.max\(r\.top, top\) >= r\.height \/ 2/);
+  assert.match(show, /var y = el\.scrollTop \+ lit\[0\]\.getBoundingClientRect\(\)\.top - top - 12;\n    try \{ el\.scrollTo\(\{ top: y, behavior: reduceMotion \? 'auto' : 'smooth' \}\); \} catch \(e\) \{ el\.scrollTop = y; \}/);
+  assert.match(tap, /ps\.dimmed = true;\n      pickShowGlow\(\);\n      pickWiggle\(/);
+  assert.match(tap, /if \(ps\.wrongs >= E\.PICK_GLOW\) later\(pickShowGlow, PICK_WIGGLE_MS\);\n    return false;\n  \}$/);
+  assert.match(fn(ui, 'openPick'), /if \(fc && ps\.wrongs >= E\.PICK_GLOW\) pickShowGlow\(\);/);
+});
+
+test('tools/shots.mjs’s card pick targets (#pick, #pick3, #pickfull): their test cats, set up through the engine, hold the thinnest file (twenty cards) and the fullest (thirty); #pick3’s three taps are none of the first claim’s right cards nor its own; the targets open the screen through the page’s own hook', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../tools/shots.mjs'), 'utf8');
+  const S = realStories();
+  // the block, word for word, with CAT as the tool's default (no `cards`) and as a caller's (its `cards` win)
+  const block = src.slice(src.indexOf('const PICK_THIN = '), src.indexOf('// runs in the page after SETUP: her Case File'));
+  const { pickTarget, PICK_TARGETS } = new Function('CAT', block + '; return { pickTarget, PICK_TARGETS };')({});
+  assert.deepEqual(Object.keys(PICK_TARGETS), ['pick', 'pick3', 'pickfull']);
+  assert.equal(pickTarget('nope'), null);
+  assert.deepEqual(new Function('CAT', block + '; return pickTarget;')({ cards: ['tidy'] })('pick').recipe.cards, ['tidy']);
+  const PICK = new Function('return `' + /const PICK = `([\s\S]*?)`;\n/.exec(src)[1] + '`;')();
+  const run = (recipe) => {
+    const c = E.blankCat({ now: 1 }); c.name = 'Moon';
+    const saved = [];
+    const page = { engine: E, story: S, debug: { cat: () => c, save: () => { saved.push(1); return true; } } };
+    const res = new Function('PC', 'recipe', 'return (function () { ' + PICK + ' }).call(null, recipe);')(page, recipe);
+    return { res, c, saved };
+  };
+  const thin = run(pickTarget('pick').recipe), full = run(pickTarget('pickfull').recipe);
+  assert.deepEqual([thin.res, E.cards(thin.c, S).length, thin.saved.length], [true, 20, 1]);
+  assert.deepEqual([full.res, E.cards(full.c, S).length], [true, 30]);
+  assert.deepEqual(pickTarget('pick3').recipe, pickTarget('pick').recipe, '#pick3 on the thinnest file too');
+  Object.values(S).filter(s => s.number < 10).forEach(s => [thin.c, full.c].forEach(c => assert.ok(E.isFinished(c, s.id), s.id)));
+  assert.ok(!E.isFinished(thin.c, 'ch10'), 'chapter 10 not finished: the Warrior Counts stay shut');
+  // her files as section 3 lays them: the thin one's groups and rows
+  const F = E.caseFile(thin.c, S);
+  assert.deepEqual(F.groups.map(g => g.cards.length), [5, 2]);
+  assert.deepEqual(F.links.map(l => l.cards.map(c => c.id).join('+')), ['cant-fly+fox-flew+fox-brag', 'waffles-no-moon+fox-moon+heron-no-moon', 'tidy+reed-pile+stash', 'coil-diggers+tunnel', 'scale+glass']);
+  // #pick3: three wrong picks on the first claim (the spec's, section 6; the built chapter's first pick when it is in)
+  const first = S.ch10 && Object.values(S.ch10.frames).find(f => f.pick);
+  const claim1 = first ? first.pick : { right: ['cant-fly', 'fox-brag', 'mizzle-wing'], own: { 'fox-flew': '' } };
+  pickTarget('pick3').ids.forEach(id => { assert.ok(claim1.right.indexOf(id) < 0 && !(claim1.own && claim1.own[id]), id); assert.ok(E.hasCard(thin.c, id), id + ' in her file'); });
+  assert.equal(new Set(pickTarget('pick3').ids).size, 3);
+  // the target: the recipe, then the frame, then the pick screen through PC.debug.pick (the page's own hook)
+  assert.match(src, /const opened = await run\('return PC\.debug\.pick\(arguments\[0\]\);', \[pt\.ids\]\);/);
+  assert.match(src, /const made = await run\(PICK, \[pt\.recipe\]\);/);
+  const ui = fs.readFileSync(path.join(__dirname, '../app/ui.js'), 'utf8');
+  assert.match(ui, /pick: function \(ids\) \{\n        if \(!cat \|\| !pickState\) return 'not on a pick frame';/);
+  // and the Warrior Counts' recipe and run line stand as they were
+  assert.match(src, /run\('return PC\.debug\.warrior\(arguments\[0\], arguments\[1\]\);', \[wt\.what, wt\.page\]\)/);
 });

@@ -791,9 +791,12 @@ test('the gallery: every tracks camera sampled with a cast and its options; the 
   // chapter 9 (2026-10-25) appends SAMPLES.grove after tracks: set aside like tracks, every older set's
   // samples still hash as chapter 8 shipped them
   delete others.grove;
+  // chapter 10 (2026-10-31) appends SAMPLES.ferry and SAMPLES.island after grove: set aside the same way
+  delete others.ferry; delete others.island;
   assert.equal(hash(others), 'bd5a5d0d6b62', 'no other set\'s samples touched');
   const keys = Object.keys(SAMPLES);
-  assert.equal(keys[keys.indexOf('tracks') + 1] === undefined || keys.slice(keys.indexOf('tracks') + 1).every((k) => ['grove'].includes(k)), true, 'SAMPLES.tracks last of chapter 8\'s, only later chapters\' sets after it');
+  // (chapter 10: and ferry and island, after grove)
+  assert.equal(keys[keys.indexOf('tracks') + 1] === undefined || keys.slice(keys.indexOf('tracks') + 1).every((k) => ['grove', 'ferry', 'island'].includes(k)), true, 'SAMPLES.tracks last of chapter 8\'s, only later chapters\' sets after it');
   assert.deepEqual(Object.keys(SAMPLES.tracks), CAMS, 'a sample for every camera');
   for (const cam of CAMS) {
     const smp = SAMPLES.tracks[cam];

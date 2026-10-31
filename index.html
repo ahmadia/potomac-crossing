@@ -613,6 +613,54 @@ html.file-open,html.file-open body{overflow:hidden}
   html.big .cf-h,html.big .cf-head{margin-bottom:6px}
 }
 
+/* ---------- chapter 10: the card pick, her Case File in pick mode ---------- */
+/* Every rule here is under .cf-in.picking (the class is on the .cf-in the pick screen writes, never on
+   #file), so the plain Case File of chapters 4 to 9 is as it was; the Case File's own rules above reach
+   the pick screen as they are. The head: Reynard's claim in his balloon, its one word in capitals lit
+   gold, and under it, once she has picked wrong, Tallyheart's whisper; it stays at the top while her
+   file scrolls under it, over the moss to the panel's edges, and Back beside it */
+.cf-in.picking .cf-head{position:sticky;top:-12px;z-index:3;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"claim back" "nudge nudge";
+  align-items:start;gap:8px 12px;margin:-12px calc(-1 * clamp(12px, 2.2vw, 26px)) 12px;padding:12px clamp(12px, 2.2vw, 26px) 10px;background:#5d8246;border-radius:10px 10px 0 0;box-shadow:0 7px 8px -5px rgba(10,8,20,.6)}
+/* (the claim beside Back, the nudge under both: on a phone the whisper keeps the strip's whole width) */
+.cf-in.picking .pick-strip{display:contents}
+.cf-in.picking .pick-claim{grid-area:claim;min-width:0}
+.cf-in.picking .pick-nudge{grid-area:nudge;min-width:0}
+.cf-in.picking .cf-close{grid-area:back}
+.cf-in.picking .pick-strip .sbrow{align-items:center}
+.cf-in.picking .pick-strip .sb{margin-top:0;line-height:1.22;padding:.42em .85em .46em}
+.cf-in.picking .pick-lit{font-weight:700;background:var(--gold);color:var(--ink);border-radius:6px;padding:0 .2em;box-shadow:0 0 9px 1px rgba(255,210,63,.85)}
+/* a card is a button: a wrong one wiggles (the bark's wiggle) and is lit a moment; after three wrong picks
+   the right cards she holds glow (a soft pulse) and the rest are dimmed, still readable; a right one pops
+   gold, and the others fade while the page turns */
+.cf-in.picking .cf-card{cursor:pointer}
+.cf-in.picking .cf-card.pick-wiggle{animation:hopwiggle .55s ease-in-out}
+.cf-in.picking .cf-card.pick-wiggle .cf-pic{filter:drop-shadow(0 0 12px rgba(255,236,150,.95)) drop-shadow(3px 4px 0 rgba(20,30,12,.5))}
+.cf-in.picking.glowing .cf-card:not([aria-disabled="true"]) .cf-pic{filter:drop-shadow(0 0 14px rgba(255,228,120,1)) drop-shadow(3px 4px 0 rgba(20,30,12,.5));animation:pickglow 1.5s ease-in-out infinite}
+.cf-in.picking.glowing .cf-card[aria-disabled="true"]{opacity:.55;filter:saturate(.45)}
+.cf-in.picking .cf-card.pick-right{position:relative;z-index:1;animation:pickpop .45s ease-out forwards}
+.cf-in.picking .cf-card.pick-right .cf-pic{filter:drop-shadow(0 0 16px rgba(255,228,120,1)) drop-shadow(3px 4px 0 rgba(20,30,12,.5))}
+.cf-in.picking.picked .cf-card:not(.pick-right){opacity:.35;transition:opacity .35s}
+@keyframes pickglow{0%,100%{filter:drop-shadow(0 0 5px rgba(255,214,70,.75)) drop-shadow(3px 4px 0 rgba(20,30,12,.5))}50%{filter:drop-shadow(0 0 18px rgba(255,228,120,1)) drop-shadow(3px 4px 0 rgba(20,30,12,.5))}}
+@keyframes pickpop{0%{transform:scale(1)}55%{transform:scale(1.14)}100%{transform:scale(1.08)}}
+/* a wide screen: the nudge beside the claim, one row with Back; a phone: the balloons without their faces
+   (their name tags say who), so the whisper keeps the strip's whole width; either way the strip keeps to
+   the top quarter of the screen */
+@media screen and (min-width: 960px){
+  .cf-in.picking .cf-head{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) auto;grid-template-areas:"claim nudge back"}
+}
+@media screen and (max-width: 520px){
+  .cf-in.picking .cf-head{gap:6px 8px;padding-bottom:8px}
+  .cf-in.picking .pick-strip .sface{display:none}
+  .cf-in.picking .pick-strip .sb{margin-left:0;padding:.36em .7em .4em;line-height:1.22}
+  .cf-in.picking .pick-strip .sb::before{display:none}
+  .cf-in.picking .cf-close{padding:.3em .7em}
+}
+/* reduced motion: no pop and no wiggle; a right pick turns the page at once, and the glow stands still. A tap on a dimmed
+   card after the glow brightens the glowing cards for the wiggle's moment (their light, in place of the wiggle) */
+@media screen and (prefers-reduced-motion: reduce){
+  .cf-in.picking.glowing .cf-card.pick-wiggle:not([aria-disabled="true"]) .cf-pic{filter:drop-shadow(0 0 24px rgba(255,236,150,1)) drop-shadow(3px 4px 0 rgba(20,30,12,.5))}
+}
+
 /* ---------- grown-ups ---------- */
 .leaf{position:relative;width:36px;height:36px;border-radius:50%;flex:none;opacity:.4;
   display:grid;place-items:center;color:var(--leaf);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -689,6 +737,30 @@ html.file-open,html.file-open body{overflow:hidden}
 @media (orientation: portrait), (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 860px){
   html.big .frame[data-kind="hollow"] .counts-pick{gap:6px}
   html.big .frame[data-kind="hollow"] .counts-pick .btn.big{min-height:54px;padding:.12em .6em;line-height:1.1}
+}
+/* Chapter 10: the Training Hollow with ten Counts (the 7s, “Clutches of seven · the 7s”). On an iPad held sideways up
+   to 860px tall, beside the picture: the column a little wider (the picture a little narrower), so every Count's name
+   keeps one line (one column of them, as before); every Count's padding with room for the Warrior Counts' paw (1.45em, 1.3em with Aa, the paw's own),
+   so a paw costs no line, glowing or not; the buttons 50px (54px with Aa) and closer, My nest as tall, so ten Counts
+   and My nest stay on a 1080 x 720 screen, 1080 x 700 and 1024 x 768 too, Aa off and on (nine sit the same way).
+   Upright, the same paw room with Aa (a paw costs no line there either); a phone scrolls the list as before */
+@media screen and (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 860px){
+  .frame[data-kind="hollow"]{grid-template-columns:minmax(410px, .7fr) minmax(0, 1fr)}
+  .frame[data-kind="hollow"] .interact{gap:8px}
+  .frame[data-kind="hollow"] .counts-pick{grid-template-columns:minmax(0, 1fr);gap:6px}
+  .frame[data-kind="hollow"] .counts-pick .btn.big{min-height:50px;padding:.1em 1.45em}
+  .frame[data-kind="hollow"] #nestBtn{min-height:50px;padding-top:.1em;padding-bottom:.1em}
+  html.big .frame[data-kind="hollow"] .interact{gap:6px}
+  html.big .frame[data-kind="hollow"] .counts-pick{gap:4px}
+  html.big .frame[data-kind="hollow"] #nestBtn{min-height:54px}
+}
+@media screen and (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 719px){
+  .frame[data-kind="hollow"] .interact{gap:6px}
+  html.big .frame[data-kind="hollow"] .interact{gap:4px}
+  html.big .frame[data-kind="hollow"] .counts-pick{gap:3px}
+}
+@media screen and (orientation: portrait), screen and (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 860px){
+  html.big .frame[data-kind="hollow"] .counts-pick .btn.big{min-height:54px;padding:.08em 1.3em}
 }
 /* Bigger text where the screen has little room: an iPad held sideways that is narrow (the text column
    under about 360px, where Back and Next at full Bigger text no longer fit side by side and wrap to two
@@ -815,6 +887,22 @@ html.big .frame[data-kind="skip"] .stack .sface{width:44px;height:44px}
   .book .bookpage.dragonets{break-inside:auto}
   .book .dragonet{break-inside:avoid}
 }
+/* Chapter 10's Hollow, for a cat with nine Counts or fewer (every cat of chapters 1 to 9: only the 7s make ten). On an
+   iPad 1060px wide or less held sideways, Aa off, the column chapter 10 widened for ten names is 370px again, so the
+   picture keeps room for Tallyheart's line about glowing marks and Counts and My nest stay on the screen as they did
+   live; a ten-Count list keeps the wider column, which keeps the 7s on one line. Upright with Aa, a list of nine or
+   fewer gets the polish release's padding back: only a ten-Count list can hold the Warrior Counts' paw */
+@media screen and (orientation: landscape) and (min-width: 700px) and (max-width: 1060px) and (min-height: 501px) and (max-height: 860px){
+  html:not(.big) .frame[data-kind="hollow"]:not(:has(.counts-pick > .btn:nth-child(10))){grid-template-columns:370px minmax(0, 1fr)}
+}
+/* ... and 1134px wide or more held sideways (1180 x 820, 1194 x 834), Aa off, live's own column: nine names fit there
+   on live's layout, so the picture and its lettering are live's, box for box */
+@media screen and (orientation: landscape) and (min-width: 1134px) and (min-height: 501px) and (max-height: 860px){
+  html:not(.big) .frame[data-kind="hollow"]:not(:has(.counts-pick > .btn:nth-child(10))){grid-template-columns:minmax(300px, 0.5fr) minmax(0, 1fr)}
+}
+@media screen and (orientation: portrait){
+  html.big .frame[data-kind="hollow"] .counts-pick:not(:has(> .btn:nth-child(10))) .btn.big{padding:.12em .6em}
+}
 </style>
 </head>
 <body>
@@ -861,6 +949,8 @@ html.big .frame[data-kind="skip"] .stack .sface{width:44px;height:44px}
 <script src="app/art/sets/marsh.js"></script>
 <script src="app/art/sets/tracks.js"></script>
 <script src="app/art/sets/grove.js"></script>
+<script src="app/art/sets/ferry.js"></script>
+<script src="app/art/sets/island.js"></script>
 <script src="app/art/cards.js"></script>
 <script src="app/story/ch01.js"></script>
 <script src="app/story/ch02.js"></script>
@@ -871,6 +961,7 @@ html.big .frame[data-kind="skip"] .stack .sface{width:44px;height:44px}
 <script src="app/story/ch07.js"></script>
 <script src="app/story/ch08.js"></script>
 <script src="app/story/ch09.js"></script>
+<script src="app/story/ch10.js"></script>
 <script src="app/story/warrior.js"></script>
 <script src="app/engine.js"></script>
 <script src="app/ui.js"></script>

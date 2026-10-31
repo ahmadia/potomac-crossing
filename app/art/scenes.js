@@ -1208,6 +1208,8 @@
   // The little red light on the roof's mast (as the riverbank set draws the same light from the
   // river path), blinking, with its glow: brought down into the picture by `light: true`.
   var TOWER_LIGHT = { x: 800, y: 11, r: 8 };
+  // Chapter 10: where the moon hangs over the towers (`moon`), in the open sky at the upper right
+  var TOWER_MOON = { x: 1452, y: 98, r: 50, tilt: 20 };
   function redLight(S, x, y, r, blink) {
     var night = S.tod === 'night' || S.tod === 'storm' || S.tod === 'dusk', R = r * (night ? 7 : 5);
     var halo = circ(x, y, R, S.radU([[0, '#FF6A5A', night ? 0.7 : 0.55], [0.35, '#FF5A4E', 0.22], [1, '#FF5A4E', 0]], x, y, R));
@@ -1247,6 +1249,13 @@
   function drawTowerUp(S) {
     var p = S.pal, back = '', over = '', front = '', T = TOWER, r = rng(61);
     back += sky(S, 0, 0, 1600, 1000, { sun: [180, 760], sunR: 560 });
+    // chapter 10: the moon (`moon`, its age in evenings: 14, the full moon, round), high over the towers at the right, clear
+    // of Waffles's balcony and kept clear of the lettering; at night, dusk or sunset, never by day
+    var TM = TOWER_MOON;
+    if (typeof S.opts.moon === 'number' && S.opts.moon > 0 && (S.tod === 'night' || S.tod === 'dusk' || S.tod === 'sunset')) {
+      back += g(waxingMoon(S, TM.x, TM.y, TM.r, TM.tilt, S.opts.moon), { 'data-prop': 'tower-moon' });
+      (S.keep = S.keep || []).push({ x: TM.x - TM.r - 8, y: TM.y - TM.r - 8, w: 2 * TM.r + 16, h: 2 * TM.r + 16 });
+    }
     back += plane(S, 1330, 150, 1.25, 'left') + plane(S, 300, 260, 0.8, 'left');
     // neighbouring towers, leaning in
     back += g(path('M-80 1000L60 120H330L360 1000Z', S.lin('nbL', [[0, mix(p.glassTop, p.haze, 0.35)], [1, mix(p.glassBot, p.haze, 0.25)]])) +
@@ -1754,14 +1763,25 @@
     return a[0] < b[2] + pad && a[2] > b[0] - pad && a[1] < b[3] + pad && a[3] > b[1] - pad;
   }
   // The crowd's seats that are free, drawn as Clan cats: the purr makes them all happy, eyes shut.
+  // (chapter 10: this is the kit's crowd helper, PC.art.kit.crowd(S, seats, k0), for the Moon Ferry and Gathering
+  // Island. A seat may say who sits there and in which coat, [x, y, facing, pose, size, who, variant]: `who` a Clan's cat
+  // ('clancat', 'reedclan', 'groveclan') or an 'otter', `variant` its coat, drawn in the seat's own pose (`stand` for the
+  // island's crowd on its feet), tinted for the hour, kept clear of the cast and marked as every crowd cat is. A seat
+  // that names both is left out when a member of the frame's cast has the same who and variant (a cast member's variant
+  // left out is the drawing's first): nobody is in the picture twice. That is not `taken`, which only swaps a Clan seat
+  // in her coat to a spare one and never drops a seat. A seat without them is the camp's: a CrystalClan cat in
+  // CROWD_COATS with `taken`, drawn exactly as before, so the camp's crowd and the Warrior Counts' draw byte for byte.)
   function crowdCats(S, seats, k0) {
     var R = refH(), zones = S.crowdZones || (S.crowdZones = castZones(S)), tint = castTint(S), out = '';
     var taken = (S.cast || []).filter(function (c) { return c && c.who === 'clancat'; }).map(function (c) { return c.variant; });
     seats.forEach(function (st, j) {
-      var i = k0 + j, s = depthAt(S, st[1]) / R * st[4];
-      var o = { pose: st[3], mood: S.fx.purr ? 'happy' : CROWD_MOODS[i % CROWD_MOODS.length], variant: CROWD_COATS[i % CROWD_COATS.length], look: S.look || {}, taken: taken };
-      var c = placeChar(S, 'clancat', o, st[0], st[1], s, st[2], tint ? { filter: tint } : null);
-      var b = castBoxes({ who: 'clancat', co: o, s: s, face: st[2], x: st[0], y: st[1] }, c.ch);
+      var i = k0 + j, s = depthAt(S, st[1]) / R * st[4], who = st[5] || 'clancat', mood = S.fx.purr ? 'happy' : CROWD_MOODS[i % CROWD_MOODS.length];
+      if (st[5] && st[6] != null && (S.cast || []).some(function (m) { return m && (m.who || 'clancat') === who && (+m.variant || 1) === +st[6]; })) return;
+      var o = who !== 'clancat' ? { pose: st[3], mood: mood } :
+        { pose: st[3], mood: mood, variant: st[6] != null ? st[6] : CROWD_COATS[i % CROWD_COATS.length], look: S.look || {}, taken: taken };
+      if (who !== 'clancat' && st[6] != null) o.variant = st[6];
+      var c = placeChar(S, who, o, st[0], st[1], s, st[2], tint ? { filter: tint } : null);
+      var b = castBoxes({ who: who, co: o, s: s, face: st[2], x: st[0], y: st[1] }, c.ch);
       // in a close camera (the 'ferns' close-up, a third of the camp wide) a face the panel's edge
       // would cut through is left out: a crowd cat there is wholly in the picture or wholly out of
       // it, never sliced at the eyes (the wide shots keep their full edges, cats small at the frame)
@@ -2128,7 +2148,7 @@
   // ------------------------------------------------------------------ DEN
 
   // (chapter 9: `case`, the case laid out on the floor in front of her nest, a composition of its own: drawDenCase)
-  function drawDen(S) { return S.comp === 'outside' ? drawDenOutside(S) : S.comp === 'case' ? drawDenCase(S) : drawDenInside(S); }
+  function drawDen(S) { return S.comp === 'outside' ? drawDenOutside(S) : S.comp === 'case' ? drawDenCase(S) : S.comp === 'stone' ? drawDenStone(S) : drawDenInside(S); }
 
   function roseCols(S) {
     return S.tod === 'storm' ? ['#8E5A6E', '#6A3E50', '#B98498'] : S.tod === 'night' ? ['#B46F8C', '#82506A', '#E0A4BC'] : ['#E07A98', '#B05070', '#F7B7C6'];
@@ -2272,6 +2292,8 @@
       else if (o === 'chin') { sx = hx + dir * hw * (up ? 0.24 : 0.06); sy = up ? crest : clamp(hb[3] + r * 0.2, hb[1] + hw * 0.6, crest); }
       else { sx = hx + dir * hw * 0.12; sy = crest; }
     }
+    // (chapter 10: where it lies, so the mist stone keeps off it: denMistStone)
+    S.luckyAt = [sx - r * 1.3, sy - r, sx + r * 1.3, sy + r];
     return luckyStone(S, sx, sy, r);
   }
 
@@ -2462,6 +2484,159 @@
     s += path(sparkleD(cx - 1 * k, cy - 3.5 * k, 5.5 * k), '#FFFFFF', { 'class': 'pcs-twk' });
     var bx = [Math.min(x - 12 * k, cx - 9 * k, tipX - 6 * k), Math.min(tipY - 6 * k, cy - 10 * k), Math.max(x + 14 * k, cx + 9 * k, tipX + 6 * k), y + 14 * k];
     return { svg: g(s, { 'data-prop': 'nest-glass' }), box: bx };
+  }
+
+  // ------------------------------------------------------------------ chapter 10: the mist stone (den, `miststone`)
+
+  // Sprinkle's gift (chapter 10): a smooth grey pebble, egg-shaped, grey as a rain cloud, the size of her paw on the moss
+  // of her nest, and big in the middle of the stone close. With `flash` it flashes in the moonlight from the doorway, as
+  // labradorite does: a band of blue and green light across its face, the rest still grey. eggD: its outline, centred
+  // on (0, 0), rx and ry its half-length and half-height, the fat end at the left.
+  function eggD(rx, ry) {
+    var k = 0.5523, xt = -0.12 * rx;
+    return 'M' + n(rx) + ' 0C' + n(rx) + ' ' + n(-k * ry * 0.8) + ' ' + n(xt + k * (rx - xt)) + ' ' + n(-ry) + ' ' + n(xt) + ' ' + n(-ry) +
+      'C' + n(xt - k * (rx + xt)) + ' ' + n(-ry) + ' ' + n(-rx) + ' ' + n(-k * ry) + ' ' + n(-rx) + ' 0' +
+      'C' + n(-rx) + ' ' + n(k * ry) + ' ' + n(xt - k * (rx + xt)) + ' ' + n(ry) + ' ' + n(xt) + ' ' + n(ry) +
+      'C' + n(xt + k * (rx - xt)) + ' ' + n(ry) + ' ' + n(rx) + ' ' + n(k * ry * 0.8) + ' ' + n(rx) + ' 0Z';
+  }
+  // (x, y) its middle, r its half-height (world units), its long axis tilted `tilt` degrees (o.tilt, default -10), a soft
+  // shade on the moss under it unless o.shadow is false. -> { svg, box: [x0, y0, x1, y1] }:
+  // <g data-prop="mist-stone" data-flash="true|false" data-box="x0 y0 x1 y1">, the band <g data-flash="band"> inside it.
+  var MIST_STONE = { grey: ['#DCE1E6', '#A6ADB6', '#757C87', '#5C626C'], edge: '#3F444C', flash: ['#3E9BF2', '#2FD3C4', '#62E07A'], glow: '#7FDFF0' };
+  function mistStone(S, x, y, r, flash, o) {
+    o = o || {};
+    var rx = r * 1.34, ry = r, tilt = o.tilt == null ? -10 : o.tilt, d = eggD(rx, ry), C = MIST_STONE, out = '', inner = '';
+    if (o.shadow !== false) out += ell(x + r * 0.1, y + ry * 0.84, rx * 0.96, ry * 0.3, S.pal.shade, { opacity: 0.45 });
+    // flashing, a faint blue-green light round it, so even the small one on the moss reads from the doorway
+    // (a small one, on the moss of her nest, a little more of it)
+    var gr0 = rx * (r < 40 ? 2.4 : 1.7), ga = r < 40 ? 0.62 : 0.42;
+    if (flash) out += circ(x, y, gr0, S.radU([[0, C.glow, ga], [0.55, C.glow, ga / 3], [1, C.glow, 0]], x, y, gr0));
+    // grey as a rain cloud: lit from the upper right (the moonlight from the doorway), darker underneath, a few soft
+    // cloudy patches in the grey
+    inner += path(d, S.radU([[0, C.grey[0]], [0.45, C.grey[1]], [0.85, C.grey[2]], [1, C.grey[3]]], rx * 0.35, -ry * 0.45, rx * 1.55),
+      { stroke: C.edge, 'stroke-width': n(Math.max(0.6, r * 0.05)) });
+    inner += ell(-rx * 0.34, ry * 0.18, rx * 0.34, ry * 0.32, C.grey[3], { opacity: 0.22 }) + ell(rx * 0.12, ry * 0.46, rx * 0.4, ry * 0.2, C.grey[3], { opacity: 0.2 }) +
+      ell(-rx * 0.05, -ry * 0.38, rx * 0.28, ry * 0.16, C.grey[0], { opacity: 0.3 });
+    if (flash) {
+      // labradorite's flash: one band across the face, blue, then green, then blue, brightest in the middle, clipped to the
+      // stone; a wider, fainter sheen round it; two glints on it
+      var clip = S.clip('miststone' + Math.round(r * 10), path(d, '#fff'));
+      var band = function (w0, w1) {
+        return 'M' + n(-rx * 1.1) + ' ' + n(ry * (0.3 - w0)) + 'Q0 ' + n(-ry * (0.12 + w0)) + ' ' + n(rx * 1.1) + ' ' + n(-ry * (0.36 + w0)) +
+          'L' + n(rx * 1.1) + ' ' + n(-ry * (0.36 - w1)) + 'Q0 ' + n(-ry * (0.12 - w1)) + ' ' + n(-rx * 1.1) + ' ' + n(ry * (0.3 + w1)) + 'Z';
+      };
+      var gr = function (a) { return S.linU([[0, C.flash[0], 0.2 * a], [0.22, C.flash[0], 0.9 * a], [0.5, C.flash[1], a], [0.76, C.flash[2], 0.92 * a], [1, C.flash[0], 0.5 * a]], -rx, ry * 0.4, rx, -ry * 0.6); };
+      inner += g(path(band(0.44, 0.48), gr(0.38)) + path(band(0.2, 0.23), gr(1)) + path(band(0.04, 0.05), '#E6FFF6', { opacity: 0.5 }), { 'clip-path': clip, 'data-flash': 'band' });
+      // (they twinkle in the moonlight; by day, as everything, they hold still)
+      var tw = !S.pal.day;
+      inner += g(path(sparkleD(-rx * 0.3, ry * 0.12, ry * 0.2), '#F2FFFB'), { 'class': tw ? 'pcs-twk' : null }) +
+        g(path(sparkleD(rx * 0.42, -ry * 0.24, ry * 0.15), '#F2FFFB'), { 'class': tw ? 'pcs-twk' : null, style: tw ? 'animation-delay:-1.4s' : null });
+    }
+    // the moon's shine on its upper right
+    inner += ell(rx * 0.3, -ry * 0.52, rx * 0.3, ry * 0.17, '#FFFFFF', { opacity: 0.32, transform: 'rotate(-14 ' + n(rx * 0.3) + ' ' + n(-ry * 0.52) + ')' }) +
+      ell(rx * 0.4, -ry * 0.58, rx * 0.09, ry * 0.065, '#FFFFFF', { opacity: 0.8 });
+    out += g(inner, { transform: 'translate(' + n(x) + ' ' + n(y) + ') rotate(' + n(tilt) + ')' });
+    var bw = rx * 1.04, bh = ry * 1.04 + rx * Math.abs(Math.sin(tilt * Math.PI / 180)) * 0.5, box = [x - bw, y - bh, x + bw, y + bh];
+    return { svg: g(out, { 'data-prop': 'mist-stone', 'data-flash': flash ? 'true' : 'false', 'data-box': box.map(n).join(' ') }), box: box };
+  }
+
+  // Chapter 10: the mist stone on the moss of her nest (`miststone`, in every camera inside the den), beside her glass in
+  // its leaf and the corners of her secret bark: just past where her glass is tucked (or would be), on the same side,
+  // on the rim's moss, the size of her paw. Never on her face nor on Riffle's stone: where it would touch either, it
+  // lies a little lower, on the rim's front, and failing that, a little nearer the corners.
+  function denMistStone(S, x, y, k) {
+    var o = S.opts.miststone;
+    if (!o) return '';
+    var R = barkRow(S), m = null, a = S.anchorMap && S.anchorMap.nest, d = -1, rx = 140 * k, ry = 40 * k, r = 10.5 * k;
+    (S.cast || []).forEach(function (c) { if (c && c.at === 'nest' && !m) m = c; });
+    var pl = m && a ? castPlan(S, m, a, refH()) : null, head = pl ? castBoxes(pl).head : null;
+    if (pl && pl.face === 'left') d = 1;
+    function rim(xx) { var u = clamp((xx - x) / (rx * 0.86), -1, 1); return y + Math.sqrt(1 - u * u) * ry * 0.98; }
+    function at(t) { return x + d * (118 * k - t); }
+    // her glass's place, as denBark lays it
+    var T = (R.hid ? 86 - 8 * Math.min(1, Math.max(0, R.hid - 2)) : 112) * k, cGap = (R.hid > 3 ? 8 : R.hid > 2 ? (110 - (T / k + 9)) / (R.hid - 1) : 15) * k;
+    var tg = T + 9 * k + (R.hid ? (Math.min(R.hid, CORNER_LAYER) - 1) * cGap + 13 * k : 0);
+    var tries = [[tg + 25 * k, -1 * k], [tg + 25 * k, 13 * k], [tg + 4 * k, 15 * k]], sx = 0, sy = 0;
+    for (var i = 0; i < tries.length; i++) {
+      sx = at(tries[i][0]); sy = rim(sx) + tries[i][1];
+      var b = [sx - r * 1.45, sy - r * 1.2, sx + r * 1.45, sy + r * 1.2];
+      if ((!head || !boxHit(b, head, 2 * k)) && (!S.luckyAt || !boxHit(b, S.luckyAt, 2 * k))) break;
+    }
+    var ms = mistStone(S, sx, sy, r, o === 'flash', { tilt: d * 12 });
+    (S.keep = S.keep || []).push({ x: ms.box[0], y: ms.box[1], w: ms.box[2] - ms.box[0], h: ms.box[3] - ms.box[1] });
+    return ms.svg;
+  }
+
+  // ------------------------------------------------------------------ chapter 10: the stone close (den, `stone`)
+
+  /* The stone close (docs/chapters/10-the-gathering.spec.md, section 4, "The den"): the chapter's last panel, an extreme
+   * close on the moss at her nest's edge in the moonlight from the doorway (out of the picture at the right). The mist
+   * stone lies big in the middle (`miststone`: true the grey stone, 'flash' its band of blue and green; left out, the moss
+   * alone), the corner of a curl of her secret bark pokes out of the moss at the left, the tip of her glass's leaf at the
+   * right, the den's dark beyond the nest's far rim. One anchor, `tail`: our cat asleep in her nest (`curl`, `asleep:
+   * true`) out of the picture at the right, so that all of her that shows is the tip of her tail, coming in at the bottom
+   * edge (drawn lying: below; a cast member facing left there is the picture's mirror: from the left). The stone is in
+   * keep: the lettering keeps
+   * off it. <g data-prop="mist-stone">, <g data-prop="stone-bark">, <g data-prop="nest-glass">. */
+  var STONE_CLOSE = { x: 800, y: 548, r: 168, tilt: -9, tail: [2356, 1096, 2800], bark: [262, 616], leaf: [1300, 642] };
+  function drawDenStone(S) {
+    var p = S.pal, o = S.opts, back = '', r = rng(1010), L = STONE_CLOSE, day = !!p.day, dim = S.tod === 'storm' || o.weather === 'cloudy', i;
+    var moss = mix(p.moss, '#FFFFFF', 0.06), hi = mix(moss, '#FFFFFF', 0.16), deep = mix(p.moss, '#000000', 0.42);
+    var light = day ? '#FFF1C4' : '#C9D8FF', lit = day ? 0.34 : dim ? 0.1 : 0.24;
+    // her tail: she sleeps in her nest out of the picture at the right, and all of her that shows is the tip of her tail,
+    // lying out on the moss at the bottom edge. cats.js's `curl` tucks its tip under her chin, where no picture can show
+    // it alone, so at this spot a cat is drawn lying (`lie`, the anchor's `pose`), her tail out behind her and its tip
+    // curled up: the picture holds that tip and nothing else of her. Facing left, the picture's mirror: from the left.
+    var m = null;
+    (S.cast || []).forEach(function (c) { if (c && c.at === 'tail' && !m) m = c; });
+    var mir = !!(m && m.facing === 'left');
+    if (mir) { S.spots = { tail: A(WORLD_W - L.tail[0], L.tail[1], L.tail[2], 'left', { elev: true, air: true, pose: 'lie' }) }; S.anchorMap = anchorsFor(S); }
+    // the den's dark beyond the nest, a few leaves of its wall, the moonlight coming in from the right
+    back += rect(0, 0, 1600, 1000, S.lin('stonedark', [[0, day ? mix(p.leaf, '#0E1A14', 0.55) : '#0D1820'], [1, day ? mix(p.leafMid, '#0E1A14', 0.5) : '#17291F']]));
+    var wl = '';
+    for (i = 0; i < 26; i++) wl += leafD(r() * 1600, 20 + r() * 300, 60 + r() * 40, r() * 6.28, 22);
+    back += path(wl, mix(p.leaf, '#000000', 0.2), { opacity: 0.55 });
+    back += g(poly([[1600, 0], [1600, 260], [700, 1000], [180, 1000]], S.linU([[0, light, lit * 0.9], [1, light, 0]], 1600, 0, 500, 1000)), { style: 'mix-blend-mode:screen' });
+    // the far side of her nest, its rim of moss in the dark
+    var far = '', farHi = '';
+    for (i = 0; i < 16; i++) { var fx0 = -60 + i * 112 + r() * 30, fy0 = 372 + Math.sin(i * 0.9) * 12 + r() * 14, fr = 54 + r() * 22; far += dot(fx0, fy0, fr); farHi += dot(fx0 + fr * 0.22, fy0 - fr * 0.36, fr * 0.42); }
+    back += path(far, deep) + rect(-80, 380, 1760, 140, deep) + path(farHi, mix(deep, '#FFFFFF', 0.1), { opacity: 0.5 });
+    back += rect(-10, 470, 1620, 120, S.lin('stonehollow', [[0, deep], [1, mix(deep, '#000000', 0.25)]]));
+    // the near rim, where the stone lies: big soft bumps of moss along its top, lit on their right, strands of moss
+    var bumps = '', lights = '', strands = '', base = 'M-80 1080V650';
+    for (i = 0; i <= 15; i++) {
+      var bx = -60 + i * 116 + (r() - 0.5) * 30, by = 640 + Math.sin(i * 1.3 + 0.6) * 22 + (r() - 0.5) * 18, br = 76 + r() * 34;
+      bumps += dot(bx, by, br); lights += dot(bx + br * 0.26, by - br * 0.34, br * 0.46);
+      base += 'L' + n(bx) + ' ' + n(by);
+      if (r() < 0.7) strands += 'M' + n(bx - br * 0.5) + ' ' + n(by + br * 0.2) + 'q' + n(br * 0.45) + ' ' + n(-br * 0.42) + ' ' + n(br * 1.0) + ' ' + n(-br * 0.12);
+    }
+    base += 'L1680 650V1080Z';
+    var tex = '';
+    for (i = 0; i < 90; i++) { var tx = r() * 1600, ty = 690 + r() * 320, tr0 = 16 + r() * 22; tex += dot(tx, ty, tr0); }
+    back += g(path(base, moss) + path(bumps, moss) + path(tex, mix(moss, '#000000', 0.12), { opacity: 0.5 }) + path(lights, hi, { opacity: 0.6 }) +
+      stroke(strands, mix(moss, '#000000', 0.25), 7, { opacity: 0.55 }), { 'data-prop': 'stone-moss' });
+    // the moonlight pooling across it, brightest at the right
+    back += ell(1060, 720, 900, 380, S.radB('stonepool', [[0, light, lit], [0.6, light, lit * 0.4], [1, light, 0]]));
+    // the corner of a curl of her secret bark, pushed down under the moss at the left, askew: its pale inside showing
+    var bark = path('M-15 3L-10 -19Q-8.5 -24.5 -3 -23.5L17 -16L14 3Z', BARK.under, { transform: 'translate(1 1.4)' }) +
+      path('M-15 3L-10 -19Q-8.5 -24.5 -3 -23.5L17 -16L14 3Z', BARK.face, { stroke: BARK.edge, 'stroke-width': 0.9, 'stroke-linejoin': 'round' }) +
+      stroke('M-5 -12h7M2 -6h6M-9 -4h5', BARK.grain, 0.9) + path('M-10 -19Q-8.5 -24.5 -3 -23.5L-2 -21Q-6 -22 -8 -18Z', BARK.lip, { opacity: 0.8 });
+    back += g(g(bark, { transform: tr(L.bark[0], L.bark[1], 7.4) + ' rotate(-16)', filter: castTint(S) || null }) +
+      path(dot(L.bark[0] - 92, L.bark[1] + 30, 54) + dot(L.bark[0] + 6, L.bark[1] + 44, 62) + dot(L.bark[0] + 104, L.bark[1] + 30, 50), moss) +
+      path(dot(L.bark[0] - 80, L.bark[1] + 12, 22) + dot(L.bark[0] + 22, L.bark[1] + 22, 26), hi, { opacity: 0.55 }), { 'data-prop': 'stone-bark' });
+    // the tip of her glass's leaf poking out of the moss at the right, its corner of glass glinting
+    // (by day its glint holds still: nothing twinkles by day)
+    var glassSvg = nestGlass(S, L.leaf[0], L.leaf[1], 5.2, -1).svg;
+    back += day ? glassSvg.replace(' class="pcs-twk"', '') : glassSvg;
+    // the mist stone, big in the middle, sunk a little into the moss: tufts over its foot
+    if (o.miststone) {
+      var ms = mistStone(S, L.x, L.y, L.r, o.miststone === 'flash', { tilt: L.tilt });
+      back += ms.svg;
+      back += path(dot(L.x - 190, L.y + 168, 46) + dot(L.x - 70, L.y + 186, 40) + dot(L.x + 60, L.y + 184, 44) + dot(L.x + 178, L.y + 160, 40), moss) +
+        path(dot(L.x - 178, L.y + 152, 20) + dot(L.x - 60, L.y + 172, 17) + dot(L.x + 72, L.y + 168, 19) + dot(L.x + 188, L.y + 146, 17), hi, { opacity: 0.55 });
+      (S.keep = S.keep || []).push({ x: ms.box[0], y: ms.box[1], w: ms.box[2] - ms.box[0], h: ms.box[3] - ms.box[1] });
+    }
+    return { back: back, over: '', front: '' };
   }
 
   // ------------------------------------------------------------------ chapter 9: the case laid out (den, `case`)
@@ -2692,7 +2867,9 @@
       var nn = nest(S, N[i][1], N[i][2], N[i][3], N[i][0] === 'nest');
       back += nn.back;
       // her own nest: her bark stands along its front rim (tufts of the moss hold it), her stone on the moss
-      S.covers[N[i][0]] = nn.front + (N[i][0] === 'nest' ? ((S.opts.bark || S.opts.hidden || S.opts.glass) ? denBark(S, N[i][1], N[i][2], N[i][3]) : '') + denStone(S, N[i][1], N[i][2], N[i][3]) : '');
+      // (chapter 10: and the mist stone on the moss beside her glass, `miststone`)
+      S.covers[N[i][0]] = nn.front + (N[i][0] === 'nest' ? ((S.opts.bark || S.opts.hidden || S.opts.glass) ? denBark(S, N[i][1], N[i][2], N[i][3]) : '') + denStone(S, N[i][1], N[i][2], N[i][3]) +
+        denMistStone(S, N[i][1], N[i][2], N[i][3]) : '');
     }
     if (storm) {
       // rain leaking through the roof: each drop falls from the leaves and fades (pcs-drip, as the
@@ -3714,7 +3891,10 @@
       // and the DING show the light too, unless light is false
       // chapter 5 asks nothing new: the offer is this camera with light and roar, our cat at `foot`
       // and nobody at the railing; "Not today" is chapter 4's own panel, Waffles at her railing
-      opts: { chime: [true, false], light: [false, true], roar: [false, true], ding: [false, true] }, defaults: {}
+      // chapter 10, by night (`night`, drawn by no frame before it: the glass dark blue, many windows lit gold, the stars,
+      // the red light with `light: true`): moon, a number, the moon that many evenings old high over the towers (14: the
+      // full moon, round); left out, no moon (drawTowerUp)
+      opts: { chime: [true, false], light: [false, true], roar: [false, true], ding: [false, true], moon: 'number' }, defaults: {}
     },
     garden: {
       label: 'the garden at dusk', tod: 'sunset', draw: drawGarden,
@@ -3806,7 +3986,10 @@
         outside: { box: [0, 0, 1600], comp: 'outside' }, inside: { box: [0, 0, 1600], comp: 'inside' },
         nest: { box: [860, 690, 400], comp: 'inside' }, doorway: { box: [900, 500, 700], comp: 'inside' },
         // chapter 9: the case laid out on the floor in front of her nest, close and a little above (drawDenCase)
-        case: { box: [0, 0, 1600], comp: 'case' }
+        case: { box: [0, 0, 1600], comp: 'case' },
+        // chapter 10: the stone close, the chapter's last panel: an extreme close on the moss at her nest's edge in the
+        // moonlight from the doorway, the mist stone big in the middle (drawDenStone)
+        stone: { box: [0, 0, 1600], comp: 'stone' }
       },
       anchors: {
         outside: { 'entrance-left': A(540, 870, 270), 'entrance-right': A(1060, 870, 270, 'left'), doorway: A(800, 830, 250, 'left') },
@@ -3818,7 +4001,10 @@
         // right, facing left; case-3 a standing cat at the far side by the doorway's light (out of frame), facing left:
         // Glintstar, a little bigger, as the leader (her `walk` there steps in from the light, and facing right goes)
         case: { 'case-1': A(CASE.spots[0][0], CASE.spots[0][1], CASE.spots[0][2], 'right'), 'case-2': A(CASE.spots[1][0], CASE.spots[1][1], CASE.spots[1][2], 'left'),
-          'case-3': A(CASE.spots[2][0], CASE.spots[2][1], CASE.spots[2][2], 'left') }
+          'case-3': A(CASE.spots[2][0], CASE.spots[2][1], CASE.spots[2][2], 'left') },
+        // chapter 10, the stone close: tail, our cat asleep in her nest, out of the picture at the right, so that only her
+        // curled tail comes into it, at its bottom edge (drawDenStone; facing left, the picture's mirror: from the left)
+        stone: { tail: A(STONE_CLOSE.tail[0], STONE_CLOSE.tail[1], STONE_CLOSE.tail[2], 'right', { elev: true, air: true, pose: 'lie' }) }
       },
       // stone: Riffle's lucky stone in her nest (true: between her paws; 'nose' or 'chin', where she
       // put it; 'auto' is the UI's to fill from her choice, and left unfilled is true)
@@ -3836,8 +4022,13 @@
       // chapter 9: moon: 13, the thirteenth evening's moon, nearly round (denMoonAged, at night or dusk, outside and in the
       // doorway); and on `case` only, read: a number (0 when left out), the first `read` of the six rows lit and the next
       // one glowing for the Tap (pc-next), 7 the seventh row laid out too (drawDenCase)
-      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8, 13], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
-        bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true], glass: [false, true], read: 'number' }, defaults: { weather: 'clear' }
+      // chapter 10: moon: 14, the full moon, round (denMoonAged: outside, and in the doorway's sky); miststone, Sprinkle's
+      // gift on the moss of her nest beside her glass and the corners of her secret bark (true: the smooth grey stone;
+      // 'flash': a band of blue and green light across it, in the moonlight from the doorway; denMistStone), and on the
+      // new `stone` camera, big in the middle of the picture
+      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8, 13, 14], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
+        bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true], glass: [false, true], read: 'number',
+        miststone: [false, true, 'flash'] }, defaults: { weather: 'clear' }
     },
     sky: {
       label: 'the Sky River', tod: 'night', draw: drawSky,
@@ -4014,6 +4205,22 @@
     snip: { ref: 'player', pose: 'up', by: 'tall', min: 0.5, max: 0.65 },
     snatch: { ref: 'player', pose: 'up', by: 'tall', min: 0.5, max: 0.65 }
   };
+  // Chapter 10: a grown Mistscale (`mistscale`, Mama and the eldest) is no cat and no dragonet: huge, her face out of the
+  // mist (about two cats tall at the island's `mama` and `eldest`) and the rest of her in it. Her spot's height is her
+  // face's height: her head box, as cats.js draws it in `lean` (what an unknown pose draws), for her variant, comes to
+  // the anchor's h, and every pose of hers is scaled alike, so her face never changes size from one panel to the next.
+  // Never capped (SIZE_CAP, SIZE_BAND); a `size` on the cast member multiplies, as for anyone.
+  var FACE_H = { mistscale: 'lean' };
+  function faceTall(S, who, variant) {
+    var memo = S.measured || (S.measured = {}), key = who + ':' + FACE_H[who] + ':face:' + (variant == null ? '' : variant);
+    if (memo[key] == null) {
+      var o = { pose: FACE_H[who], mood: 'neutral' };
+      if (variant != null) o.variant = variant;
+      var ch = getChar(who, o), hb = ch.headBox;
+      memo[key] = Math.max(1, hb ? hb.y1 - hb.y0 : ch.h * 0.36);
+    }
+    return memo[key];
+  }
   function measure(S, who, pose, by) {
     var memo = S.measured || (S.measured = {}), key = who + ':' + pose + ':' + by;
     if (memo[key] == null) {
@@ -4035,6 +4242,9 @@
     var who = m.who || 'clancat', co = charOpts(S, who, m);
     var s = sizeCap(S, who, m, a, R, a.h / R * (m.size > 0 ? +m.size : 1)), face = m.facing || a.face || 'right', ay = a.y;
     if (SIZE_BAND[who]) s = sizeBand(S, who, s);
+    if (FACE_H[who]) s = a.h / faceTall(S, who, co.variant) * (m.size > 0 ? +m.size : 1);
+    // (chapter 10: a spot that says how a cat lies there draws her so, whatever her pose: the stone close's `tail`)
+    if (a.pose && CAT_IDS[who]) co.pose = a.pose;
     if (TINY[who]) { var tc = getChar(who, co); s = a.h * TINY[who] / Math.max(1, tc.w, tc.h) * (m.size > 0 ? +m.size : 1); }
     if (who === 'moth' && !a.elev) ay = a.y - a.h * 0.55;
     if (who === 'tallone' && S.box) {
@@ -4083,7 +4293,8 @@
   // otters' and dogs' are, and her shadow under her body rather than her whole box.
   // (chapter 5: Patience, taller than any cat, and Sprinkle's brother and sister, built as she is)
   // (chapter 6: Sleet, the eldest, built on her model and about her size)
-  var BIG = { sprinkle: 1, patience: 1, puddle: 1, wisp: 1, sleet: 1 };
+  // (chapter 10: a grown Mistscale, Mama or the eldest, a great head and neck out of the mist: a dragon as they are)
+  var BIG = { sprinkle: 1, patience: 1, puddle: 1, wisp: 1, sleet: 1, mistscale: 1 };
   // Whose box is mostly tail or wings, so the shadow lies under the body as drawn, not the whole box:
   // Sprinkle, and chapter 4's fox (his brush) and littlest dragonet (his stubby wings and tail).
   // Chapter 6: Coil (his box is mostly his body trailing back from his head, at its bottom centre)
@@ -4098,8 +4309,15 @@
   // the air or the water (`glide` low over the sand, `fly` at the bank's `air`, `splash` in the shallows): this branch
   // reads no anchor's `air`, so the bank draws the sand's shadows itself, and nothing dark lies in the water under her.
   var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1, coil: 1, sleet: 1, hail: 1, snip: 1, snatch: 1, mizzle: 1 },
-    NO_SHADOW = { coil: { stone: 1 }, sleet: { hidden: 1, tail: 1 }, hail: { peek: 1 }, snip: { peek: 1 }, snatch: { peek: 1 }, squall: { hidden: 1 },
-      sprinkle: { glide: 1, fly: 1, splash: 1 } };
+    NO_SHADOW = { coil: { stone: 1 }, sleet: { hidden: 1, tail: 1 }, hail: { peek: 1 }, snip: { peek: 1, swim: 1 }, snatch: { peek: 1, swim: 1 }, squall: { hidden: 1 },
+      sprinkle: { glide: 1, fly: 1, splash: 1 }, reynard: { swim: 1 } };
+  // Chapter 10: none for Reynard, Snip or Snatch swimming off the island (`swim`: in the water, chapter 5's rule), none for
+  // Sprinkle leaning down from above (`lookdown` at an `elev` spot: the island's `paws` `above`, her claws holding the
+  // pebble over our cat's paws, nothing under her but air; chapter 5's `lookdown` on the mud keeps its shadow), and none
+  // ever for a grown Mistscale (MISTY): her body is in the mist, whatever the pose, an unknown one too. NO_SHADOW alone
+  // could not say that, as it is read only for OWN_SHADOW's cast, so she has a branch of her own at the head of the
+  // chain in drawCast, beside IN_WATER's.
+  var NO_SHADOW_UP = { sprinkle: { lookdown: 1 } }, MISTY = { mistscale: 1 };
   // Chapter 9: the spider, tiny in any scene: her drawing's longer side this share of the anchor's height (a sitting
   // cat's there), about the size of a cat's forepaw, whatever her box says; a `size` multiplies, and she casts no shadow.
   var TINY = { spider: 0.15 };
@@ -4109,7 +4327,8 @@
   // logs, his head, a log, a nose, a forepaw, two nostrils): a dark shape in the water under him is
   // the one thing the open river must never show. Sitting (his page in her book, a later chapter on
   // dry land), he has the shadow his sisters have.
-  var SHADOW_5 = { patience: 1, wisp: 1, puddle: 1 }, IN_WATER = { puddle: { foot: 1, head: 1, log: 1, sink: 1, pawup: 1, nostrils: 1 } };
+  // (chapter 10: and his `eyes`, two big eyes and the top of his head over the silver water, under the Moon Ferry)
+  var SHADOW_5 = { patience: 1, wisp: 1, puddle: 1 }, IN_WATER = { puddle: { foot: 1, head: 1, log: 1, sink: 1, pawup: 1, nostrils: 1, eyes: 1 } };
   // A face's size, for balloon tails and for keeping the lettering off it: its radius in percent of
   // the panel width (a head's `r`). A cat's is a fifth of its 200 box (chapter 1's measure, which the
   // UI used to estimate from the markup); anything else with a head box (Riffle, the otters, the
@@ -4173,14 +4392,16 @@
       // would otherwise float over it
       var seated = pl.lift > 0 && pl.lift >= S.camDef.lift.seat, restY = seated ? Math.min(ay, bx.body[3]) : ay;
       if (seated) piece += g(seat(S, bx.body, restY - 6, a.y), tint ? { filter: tint } : null);
-      if (IN_WATER[who] && IN_WATER[who][co.pose]) {
+      if (MISTY[who]) {
+        // (chapter 10: a grown Mistscale's body is in the mist: nothing is drawn under her, in any pose)
+      } else if (IN_WATER[who] && IN_WATER[who][co.pose]) {
         // (in the water: nothing dark is ever drawn under him)
       } else if (SHADOW_5[who]) {
         if (!a.air) piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
       } else if (OWN_SHADOW[who]) {
         // bigger than a cat, and her box is mostly neck, wings and tail: the shadow lies under her
         // body as drawn (none when only her eyes show in the dark)
-        if (co.pose !== 'eyes' && !(NO_SHADOW[who] && NO_SHADOW[who][co.pose])) piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
+        if (co.pose !== 'eyes' && !(NO_SHADOW[who] && NO_SHADOW[who][co.pose]) && !(a.elev && NO_SHADOW_UP[who] && NO_SHADOW_UP[who][co.pose])) piece += ell((bx.body[0] + bx.body[2]) / 2, restY - 1, (bx.body[2] - bx.body[0]) * 0.42, Math.max(3.5, a.h * 0.06), S.pal.shade, { opacity: 0.28 });
       } else if (who !== 'moth' && !TINY[who] && !a.air && co.pose !== 'fall') piece += ell(a.x, restY - 1, c.w * 0.4, Math.max(2.5, a.h * 0.045), S.pal.shade, { opacity: 0.28 });
       // `holds: 'stone'` is drawn by cats.js with the cat (in her paws, or in the mouth on her feet),
       // which reports where it is (`held`, in its box): the sparkle effect twinkles on it
@@ -4663,6 +4884,11 @@
     // scratched in the ground in the ratio of their numbers, each number by its line: the hollow's and the
     // bridge's `compare`), compareNums(v) (the two numbers it will draw, or null)
     compareLines: compareLines, compareNums: compareNums,
+    // chapter 10: crowd(S, seats, k0) -> svg for a set's back layer (the camp's crowd, given its seats by a set: each
+    // [x, y, facing, pose, size, who, variant] in world units, who and variant optional; crowdCats), and mistStone(S, x,
+    // y, r, flash, { tilt, shadow }) -> { svg, box } (Sprinkle's gift, grey, and with flash its band of blue and green)
+    crowd: function (S, seats, k0) { return crowdCats(S, Array.isArray(seats) ? seats : [], +k0 || 0); },
+    mistStone: mistStone,
     anchor: A
   };
 

@@ -3521,6 +3521,53 @@ function recapFor(flags) {
   const cat = { flags, look: { sex: 'she' } };
   return story.book.recap.filter(r => !r.when || E.matches(r.when, cat));
 }
+// chapter 10: the forepaw line's "found today" in the book only (the frames keep ANY): a cat whose only Puddle is
+// chapter 10's (`ch10Puddle`) found nobody here
+const ANY10 = { not: { ch5Roof: false, foundWisp: false, not: { foundPuddle: true, ch10Puddle: false } } };
+
+/* Chapter 10 (docs/chapters/10-the-gathering.spec.md, section 5, "The edit to chapter 5's page"): the two recap lines
+ * that read `foundPuddle` leave out a cat who met Puddle only under the Moon Ferry. The truth table over `ch5Roof`,
+ * `foundWisp` and (`foundPuddle`, `ch10Puddle`): for every live save (none holds `ch10Puddle`) each line shows exactly
+ * as its old `when` did; a cat whose only Puddle is chapter 10's gets neither; and the frames keep ANY. */
+test('book: chapter 10’s Puddle (ch10Puddle) is never chapter 5’s: the Puddle line and the forepaw line, a truth table, unchanged for every live save', () => {
+  const r = story.book.recap;
+  const puddleLine = r.find(x => /^Under the raft \{they\} found Puddle/.test(x.text)), pawLine = r.find(x => /^Under the Old Bridge, Sprinkle lit a forepaw/.test(x.text));
+  assert.deepEqual(puddleLine.when, { foundPuddle: true, ch10Puddle: false });
+  assert.deepEqual(pawLine.when, ANY10);
+  const OLD_PUDDLE = { foundPuddle: true }, ON = (w, flags) => E.matches(w, { flags, look: { sex: 'she' } });
+  const PAIRS = [[undefined, undefined], [false, undefined], [true, undefined], [true, false], [true, true], [undefined, true]];
+  let live = 0, ch10 = 0;
+  for (const ch5Roof of [true, false, undefined]) for (const foundWisp of [true, false, undefined]) for (const [foundPuddle, ch10Puddle] of PAIRS) {
+    const flags = {};
+    [['ch5Roof', ch5Roof], ['foundWisp', foundWisp], ['foundPuddle', foundPuddle], ['ch10Puddle', ch10Puddle]].forEach(([k, v]) => { if (v !== undefined) flags[k] = v; });
+    const name = JSON.stringify(flags), here = ch5Roof === true || foundWisp === true || (foundPuddle === true && ch10Puddle !== true);
+    if (ch10Puddle !== true) {
+      // a live save: exactly as before
+      live++;
+      assert.equal(ON(puddleLine.when, flags), ON(OLD_PUDDLE, flags), name + ': the Puddle line as before');
+      assert.equal(ON(pawLine.when, flags), ON(ANY, flags), name + ': the forepaw line as before');
+    } else {
+      ch10++;
+      assert.equal(ON(puddleLine.when, flags), false, name + ': chapter 10’s Puddle is not chapter 5’s');
+    }
+    assert.equal(ON(pawLine.when, flags), here, name + ': the forepaw line only for a dragonet found in chapter 5');
+    // through the engine's own book
+    const text = E.buildBook(story, { flags, look: { sex: 'she' } }).recap.join(' ');
+    assert.equal(/found Puddle/.test(text), foundPuddle === true && ch10Puddle !== true, name);
+    assert.equal(/Sprinkle lit a forepaw for everyone found so far/.test(text), here, name);
+  }
+  assert.deepEqual([live, ch10], [36, 18]);
+  // a cat whose only find is Puddle in chapter 10: neither line, and her page is chapter 5's plain one
+  const only = { foundPuddle: true, ch10Puddle: true };
+  assert.equal(recapFor(only).length, 6);
+  assert.doesNotMatch(recapFor(only).map(x => x.text).join(' '), /Puddle|forepaw for everyone/);
+  // ...with the roof or Wisp, the forepaw line is back (she found someone here), and still no Puddle line
+  assert.deepEqual(recapFor(Object.assign({ foundWisp: true }, only)).map(x => x.text).filter(t => /Puddle|forepaw/.test(t)), ['Under the Old Bridge, Sprinkle lit a forepaw for everyone found so far. Mama’s count is coming back.']);
+  // the frames keep ANY: no frame of chapter 5 reads ch10Puddle; Puddle's book page is true as it stands
+  assert.ok(!JSON.stringify(story.frames).includes('ch10Puddle'), 'only the book reads it');
+  assert.ok(Object.values(story.frames).some(f => JSON.stringify(f.when) === JSON.stringify(ANY)), 'the frames still read ANY');
+  assert.deepEqual(story.book.dragonet[0].when, { foundPuddle: true });
+});
 
 test('book: title, chapter title, a 6–10 sentence recap on every combination; Puddle’s page and Wisp’s only for a cat who found them; chapter 4’s page for a cat who went up today', () => {
   const b = story.book;
@@ -3533,10 +3580,10 @@ test('book: title, chapter title, a 6–10 sentence recap on every combination; 
     assert.deepEqual(Object.keys(r).filter(k => !['text', 'when'].includes(k)), [], 'recap ' + i);
     assert.ok(typeof r.text === 'string' && r.text.trim(), 'recap ' + i);
     // a page says "found" only for a dragonet found in this chapter: its lines read this chapter's own three flags
-    if (r.when) Object.keys(r.when).forEach(k => {
-      if (k === 'not') return Object.keys(r.when.not).forEach(kk => assert.ok(['ch5Roof', 'foundPuddle', 'foundWisp'].includes(kk), 'recap ' + i + ': not ' + kk));
-      assert.ok(['ch5Roof', 'foundPuddle', 'foundWisp'].includes(k), 'recap ' + i + ': ' + k);
-    });
+    // (chapter 10: and `ch10Puddle`, so a cat whose only Puddle is chapter 10's is left out: a `not` may hold one more)
+    const keysIn = (w, where) => Object.keys(w).forEach(k => (k === 'not' ? keysIn(w.not, where + 'not ') :
+      assert.ok(['ch5Roof', 'foundPuddle', 'foundWisp', 'ch10Puddle'].includes(k), 'recap ' + i + ': ' + where + k)));
+    if (r.when) keysIn(r.when, '');
     assert.match(r.text, /[.!?”’]$/, 'recap ' + i + ' is a whole sentence');
     assert.ok(words(r.text) <= 31, 'recap ' + i + ' is short: ' + words(r.text));
     assert.doesNotMatch(r.text, /\byou\b/i, 'recap is third person: ' + r.text);
@@ -3548,11 +3595,11 @@ test('book: title, chapter title, a 6–10 sentence recap on every combination; 
     [null, 'Tallyheart taught {name}paw {their} fifth Count, nine lives: a ten with one claw tucked in.'],
     [{ ch5Roof: true }, 'On the roof of {their} old tower, {they} found Squall, the littlest dragonet, who told {them} about two skinny shapes that go to the tracks every night.'],
     [null, '{name}paw sat through the Roar, the apprentices’ courage test, on the otters’ raft, and did not move one of nine claws. Tallyheart counted.'],
-    [{ foundPuddle: true }, 'Under the raft {they} found Puddle, who has four big feet and says he is a log. Puddle saw clever little paws picking up mice on the storm night.'],
+    [{ foundPuddle: true, ch10Puddle: false }, 'Under the raft {they} found Puddle, who has four big feet and says he is a log. Puddle saw clever little paws picking up mice on the storm night.'],
     [null, 'The old ferry otter said the fox had told him the dragon story, twice, and showed {name}paw a tuft of thin brown fur.'],
     [null, 'Patience the heron said there was no moon on the storm night, and that two small shapes crossed her mud. There were tiny prints in it. It cost eighteen fish.'],
     [{ foundWisp: true }, '{name}paw sat still until a pale reed blinked. It was Wisp, who stands on one leg like a heron, and drew a fox dropping something glittering in the reeds.'],
-    [ANY, 'Under the Old Bridge, Sprinkle lit a forepaw for everyone found so far. Mama’s count is coming back.'],
+    [ANY10, 'Under the Old Bridge, Sprinkle lit a forepaw for everyone found so far. Mama’s count is coming back.'],
     [null, 'That night, Tallyheart said every warrior has sat through the Roar. She counted through hers, very loudly.']]);
   // 6 to 10 sentences on every combination; a name only for a dragonet found today
   let n = 0;

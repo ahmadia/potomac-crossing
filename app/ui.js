@@ -366,24 +366,32 @@
     hail: 'Hail', snip: 'Snip', snatch: 'Snatch',
     // chapter 9: Thymeleaf from his first balloon (Tallyheart has just said his name); Mizzle is "The
     // sleepy dragonet" (the chapter's `names`) until "I'm Mizzle."; GroveClan's cats by variant, unnamed
-    thymeleaf: 'Thymeleaf', mizzle: 'Mizzle', groveclan: 'A GroveClan cat'
+    thymeleaf: 'Thymeleaf', mizzle: 'Mizzle', groveclan: 'A GroveClan cat',
+    // chapter 10: the Mistscales by variant (Mama; the eldest, who never speaks); ReedClan's and GroveClan's
+    // leaders are their Clans' variants 5 and 3 (below), Granny chapter 5's otter variant 3, by the chapter's `names`
+    mistscale: 'A Mistscale'
   };
   // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
   var VARIANT_NAMES = {
     otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
     dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' },
     // chapter 6: the she-cat never speaks; 3 and 4 are the watchers' two more marsh coats
-    reedclan: { 1: 'ReedClan she-cat', 2: 'Young ReedClan tom', 3: 'A ReedClan cat', 4: 'A ReedClan cat' },
+    reedclan: { 1: 'ReedClan she-cat', 2: 'Young ReedClan tom', 3: 'A ReedClan cat', 4: 'A ReedClan cat', 5: 'ReedClan’s leader' },
     // chapter 9: labels only, never names (the brief, call 11); the apprentice never speaks; no variant reads as 1
-    groveclan: { 1: 'A GroveClan elder', 2: 'A GroveClan apprentice' }
+    groveclan: { 1: 'A GroveClan elder', 2: 'A GroveClan apprentice', 3: 'GroveClan’s leader' },
+    // chapter 10: Mama and the eldest Mistscale; the Clans' leaders at the Gathering (GroveClan's crowd, 4 and 5, are
+    // "A GroveClan cat")
+    mistscale: { 1: 'Mama', 2: 'The eldest Mistscale' }
   };
   var PITCH = { waffles: 1.45, tallyheart: 0.92, glintstar: 0.85, grizzled: 0.6, player: 1.2, snorer: 1.1, mutterer: 1.3, snorter: 1.15, clancat: 1.0, tallone: 1.0,
     riffle: 1.5, otter: 1.05, dog: 0.9, sprinkle: 1.38, murmurchime: 1.3, reynard: 0.8, squall: 1.7,
     patience: 0.7, puddle: 1.32, wisp: 1.25,
     coil: 0.72, sloshbank: 0.62, sleet: 1.45, reedclan: 1.0,
     hail: 1.5, snip: 1.65, snatch: 1.35,
-    thymeleaf: 0.82, mizzle: 1.35 };
-  var VARIANT_PITCH = { otter: { 1: 0.68 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 }, reedclan: { 2: 1.12 }, groveclan: { 1: 0.78 } };
+    thymeleaf: 0.82, mizzle: 1.35,
+    mistscale: 0.7 };
+  var VARIANT_PITCH = { otter: { 1: 0.68, 3: 0.92 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 }, reedclan: { 2: 1.12, 5: 0.8 }, groveclan: { 1: 0.78, 3: 0.88 },
+    mistscale: { 2: 0.6 } };
   // Sprinkle is shy: a little slower than everyone else's 0.95. Reynard is slow and smooth; Squall
   // is high and loud (as loud as the voice goes), and in a hurry. Chapter 5: Patience is low and
   // slow; Puddle is bright and quick, a little out of breath. Chapter 6: Coil is low and very slow
@@ -391,10 +399,14 @@
   // voice's full volume, as everyone's); the young ReedClan tom a little high (VARIANT_PITCH). Chapter 8:
   // Hail bright and quick; Snip squeaky and quicker still; Snatch a little lower, his mouth full of mouse.
   // Chapter 9: Thymeleaf low, warm and slow; Mizzle sweet and sleepy, slow; GroveClan's elder old and slow
-  // (VARIANT_PITCH; the rate takes no variant, so it is every GroveClan cat's: the apprentice never speaks)
+  // (VARIANT_PITCH; the rate takes no variant, so it is every GroveClan cat's: the apprentice never speaks).
+  // Chapter 10: Mama low, soft and slow (the eldest lower still, and never speaks); ReedClan's and GroveClan's
+  // leaders a little low, at their Clans' rates; Granny, chapter 5's otter variant 3, a little low (no rate:
+  // RATE.otter would change chapter 5's otters)
   var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02, patience: 0.8, puddle: 1.05, coil: 0.7, sloshbank: 0.88, sleet: 1.04,
     hail: 1.08, snip: 1.12, snatch: 1.0,
-    thymeleaf: 0.85, mizzle: 0.82, groveclan: 0.86 };
+    thymeleaf: 0.85, mizzle: 0.82, groveclan: 0.86,
+    mistscale: 0.8 };
   function pitchOf(who, variant) {
     var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
     return v || PITCH[who] || 1;
@@ -471,12 +483,78 @@
     // (`ch3Told` false above stays as it is: after chapter 9 Tallyheart knows on both paths, but the words
     // describe the chapter 3 choice, and the goldens pin them: chapter 9's spec, section 7, item 16)
     foundMizzle: { 'true': 'found Mizzle in the old oak in GroveClan’s woods (later chapters remember)' },
-    ch9Roof: { 'true': 'met Squall in chapter 9: the roof, offered again ({their} book says so on chapter 9’s page)' }
+    ch9Roof: { 'true': 'met Squall in chapter 9: the roof, offered again ({their} book says so on chapter 9’s page)' },
+    // chapter 10: Puddle found under the Moon Ferry (set with foundPuddle, never alone), and Tallyheart's question
+    // at the end; the five card picks' flags follow, built from the stories' pick frames (UI.pickFlagWords)
+    ch10Puddle: { 'true': 'found Puddle under the Moon Ferry (chapter 10; {their} book says so on chapter 10’s page)' },
+    ch10Best: { sprinkle: 'will remember Sprinkle most', friends: 'will remember {their} friends most', truth: 'will remember finding the truth most', counts: 'will remember the Counts most' }
   };
   UI.flagWords = FLAG_WORDS;
   // flags the engine keeps for itself: never listed among "what the choices say"
   var QUIET_FLAGS = { looked: 1, caseFileOpen: 1 };
   UI.quietFlags = QUIET_FLAGS;
+
+  /* ---------------------------------------------------------------- the card pick (pure: tested in Node)
+   * Chapter 10. The corner's words for a pick's flag, built from the stories' pick frames: an entry for
+   * every card id any story defines (openGrownups reads FLAG_WORDS[k][value] and has no fallback), a right
+   * card's with its line: 'answered Reynard’s “It FLEW out of your camp!” with: Sprinkle can’t fly.', any
+   * other's (the guard's, unreachable) without. `stories` is a map like PC.story, or a list. */
+  function storyValues(stories) {
+    var list = Array.isArray(stories) ? stories : Object.keys(stories || {}).map(function (k) { return stories[k]; });
+    return list.filter(function (st) { return st && st.frames; });
+  }
+  UI.pickFlagWords = function (stories) {
+    var list = storyValues(stories), ids = [], lines = {}, out = {};
+    list.forEach(function (st) {
+      Object.keys(st.cards || {}).forEach(function (id) {
+        if (Object.prototype.hasOwnProperty.call(lines, id)) return;
+        var c = st.cards[id];
+        lines[id] = c && typeof c.line === 'string' ? c.line : '';
+        ids.push(id);
+      });
+    });
+    list.forEach(function (st) {
+      Object.keys(st.frames).forEach(function (fid) {
+        var pk = st.frames[fid] && st.frames[fid].pick;
+        if (!pk || typeof pk.flag !== 'string' || !pk.flag || typeof pk.claim !== 'string') return;
+        var said = 'answered Reynard’s “' + pk.claim + '”', right = Array.isArray(pk.right) ? pk.right : [], w = out[pk.flag] = {};
+        ids.forEach(function (id) { w[id] = right.indexOf(id) >= 0 ? said + ' with: ' + lines[id] : said; });
+      });
+    });
+    return out;
+  };
+  (function () {
+    var pw = UI.pickFlagWords(PC.story || {});
+    Object.keys(pw).forEach(function (k) { if (!FLAG_WORDS[k]) FLAG_WORDS[k] = pw[k]; });
+  })();
+  /* The pick screen as the page draws and says it, for a view (E.pickView), the wrong picks made on the
+   * frame so far, the newest nudge's line, the openings of the screen on this frame (1 the first), and
+   * whether the tap being answered was on a dimmed card after the glow:
+   *   strip: { who, text, word }, his claim, its word lit; nudge: { who, text, kind: 'whisper' } or null,
+   *   the newest, whatever `dimmed` says; cards: [{ id, glow, dim }] in her file's order (after the
+   *   glow, the right cards she holds glow and the rest are dimmed);
+   *   speech, what Read to me says as the screen opens: the first opening, the claim (his voice) and
+   *   every card's line in her file's order (the cards' lines only: no heading, no link line); a reopen,
+   *   the claim and then `said`;
+   *   said, what the newest pick says: nothing before a wrong pick; the nudge (a whisper) after one or
+   *   two; the nudge and the glowing cards' lines after three or more; after a dimmed tap (only after
+   *   the glow: before it nothing is dimmed, and `dimmed` is ignored) the glowing cards' lines alone. */
+  UI.pickPage = function (view, wrongs, nudge, opened, dimmed) {
+    view = view || {};
+    var n = typeof wrongs === 'number' && isFinite(wrongs) ? wrongs : 0;
+    var glow = n >= ((PC.engine && PC.engine.PICK_GLOW) || 3), right = view.right || [], F = view.file || { groups: [], links: [] }, all = [];
+    (F.groups || []).forEach(function (g) { all = all.concat(g.cards || []); });
+    (F.links || []).forEach(function (l) { all = all.concat(l.cards || []); });
+    var strip = { who: view.who || 'reynard', text: view.claim || '', word: view.word || null };
+    var nd = n > 0 && typeof nudge === 'string' && nudge ? { who: view.by || 'tallyheart', text: nudge, kind: 'whisper' } : null;
+    var lit = all.filter(function (c) { return glow && right.indexOf(c.id) >= 0; }).map(function (c) { return { text: c.line }; });
+    var said = n <= 0 ? [] : glow && dimmed ? lit : (nd ? [{ text: nd.text, who: nd.who, kind: 'whisper' }] : []).concat(glow ? lit : []);
+    var claim = { text: strip.text, who: strip.who };
+    var speech = !(opened > 1) ? [claim].concat(all.map(function (c) { return { text: c.line }; })) : [claim].concat(said);
+    return { strip: strip, nudge: nd,
+      cards: all.map(function (c) { var g = glow && right.indexOf(c.id) >= 0; return { id: c.id, glow: g, dim: glow && !g }; }),
+      speech: speech, said: said };
+  };
 
   /* The keypad (pure: tested in Node): what is typed after a key. Up to three digits (10 × 10 is
    * 100); a lone 0 gives way to the next digit; Delete takes the last one. OK is the caller's. */
@@ -847,8 +925,11 @@
       return head + wNum(a.right, 0) + ' of 55 right, ' + (a.passed ? 'passed' : 'not yet') + (typeof a.ms === 'number' ? '; typical time ' + secs(a.ms) : '') +
         (miss.length ? '; missed ' + miss.join(', ') : '; nothing missed');
     });
-    var sitting = S && S.state ? 'a sitting in progress: ' + (Array.isArray(S.state.log) ? S.state.log.length : wNum(S.state.pos, 0)) + ' of 55 answered' +
-      (typeof S.at === 'number' && S.at > 1e11 ? ', the last at ' + date(S.at) : '') : null;
+    // (`o.stale`, E.warriorState's: a sitting the game will not pick up says so, in the words its attempt line will use)
+    var nAns = S && S.state ? (Array.isArray(S.state.log) ? S.state.log.length : wNum(S.state.pos, 0)) : 0;
+    var sitting = !(S && S.state) ? null : o.stale === 'practice' || o.stale === 'late' ?
+      'a sitting left at ' + nAns + ' of 55 answered: it starts fresh next time (' + (o.stale === 'late' ? 'two hours went by' : 'other Counts were practiced in between') + ')' :
+      'a sitting in progress: ' + nAns + ' of 55 answered' + (typeof S.at === 'number' && S.at > 1e11 ? ', the last at ' + date(S.at) : '');
     return { line: line, attempts: lines, sitting: sitting };
   }
   UI.warrior = { corner: wCorner, PAW_WORDS: W_PAW_WORDS, QUARTERS: W_QUARTERS, pawOn: wPawOn, pawFills: wPawFills, paws: wPaws, hub: wHub, chips: wChips, slip: wSlip,
@@ -1145,7 +1226,17 @@
        * opening); 'q', a question (the opening passed over); 'sand', a question answered wrong, its help
        * counted out at once; 'halfway', a sitting picked up at its halfway page; 'result', her result's
        * page `i` (the last: -1). */
-      warrior: function (what, i) { return warriorDebug(what, i); }
+      warrior: function (what, i) { return warriorDebug(what, i); },
+      /* Chapter 10, for tools/shots.mjs: the pick screen open on the pick frame she is on, and these card
+       * ids tapped in turn through the pick's own handler, past its tap guards (#pick3: three wrong picks,
+       * then the glow). */
+      pick: function (ids) {
+        if (!cat || !pickState) return 'not on a pick frame';
+        if (!fileState && !openPick(true)) return 'not on a pick frame';
+        if (!fileState.pick) return 'her Case File is open, not the pick screen';
+        (ids || []).forEach(function (id) { pickTapCard(id, true); });
+        return true;
+      }
     };
     go('title');
   }
@@ -1182,7 +1273,7 @@
     if (fo) {
       // the second tap of a double tap never lands on a card or on Close
       fo.addEventListener('click', function (e) { if (fileState && now() - fileState.at < UI_GUARD_MS) { e.stopPropagation(); e.preventDefault(); } }, true);
-      fo.addEventListener('click', function (e) { if (e.target === fo) closeFile(); });
+      fo.addEventListener('click', function (e) { if (e.target === fo && !(fileState && fileState.pending)) closeFile(); });
     }
     $('textBtn').addEventListener('click', function () {
       save.settings.bigText = !save.settings.bigText; applySettings(); persist();
@@ -1236,7 +1327,7 @@
       var hasFile = n === 'frame' && !!cat && E.hasFile(cat) && !inLesson;
       fb.hidden = !hasFile;
       $('bar').classList.toggle('has-file', hasFile);
-      fb.classList.toggle('glow', hasFile && !!story && E.kindOf(E.currentFrame(cat, story)) === 'file');
+      fb.classList.toggle('glow', hasFile && !!story && ['file', 'pick'].indexOf(E.kindOf(E.currentFrame(cat, story))) >= 0);
       if (!hasFile) fb.classList.remove('got', 'nudge');
     }
     var t = '';
@@ -1444,7 +1535,7 @@
     // When everything fits in the panel, the panel gets the whole page (landscape especially):
     // try that first, and fall back to the two-column spread when text has to sit beside it.
     var frameEl = scr.querySelector('.frame');
-    var soloOk = kind === 'next' || kind === 'counts' || kind === 'scratch' || kind === 'file';
+    var soloOk = kind === 'next' || kind === 'counts' || kind === 'scratch' || kind === 'file' || kind === 'pick';
     // a frame that gives her a card shows it under the panel: the panel leaves it room (on a screen
     // too short for both, the card sits in the column beside the panel)
     if (f.card != null && E.cardsOn(f, cat, story, stories()).length) {
@@ -1894,6 +1985,7 @@
       return;
     }
     if (kind === 'file') return renderFileFrame(f, id, ctx, box, panel);
+    if (kind === 'pick') return renderPickFrame(f, id, ctx, box, panel, nextBtn);
     if (kind === 'scratch') return renderGlint(f, id, ctx, box, panel);
     if (kind === 'input') return renderInput(f, id, box);
     if (kind === 'look') return renderLook(f, id, box, ctx);
@@ -2457,8 +2549,12 @@
     if (!cat || fileState) return;
     stopSpeech();
     fileState = { at: o.quiet ? 0 : now(), onClose: o.onClose || null, card: o.card || null, restore: doc.activeElement };
-    drawFile();
+    // chapter 10: the pick screen (o.pick, the pick frame's page) is her file in pick mode, drawn by the card pick's section
+    if (o.pick) { fileState.pick = o.pick; drawPick(false); } else drawFile();
     $('file').hidden = false;
+    // (a pick screen opens at its top: drawPick's scroll to the top is lost while the file is hidden, and WebKit puts
+    // back the scroll the last Case File screen was left at)
+    if (o.pick) $('file').scrollTop = 0;
     doc.documentElement.classList.add('file-open');   // the page behind it stays put
   }
   /* Close it: back to the same frame, nothing changed (`silent`: the page is changing anyway). */
@@ -2466,6 +2562,8 @@
     var st = fileState, el = $('file');
     if (!st) return;
     fileState = null;
+    // (a pick screen leaves no scroll behind it, for the next claim or the plain Case File after it)
+    if (st.pick) el.scrollTop = 0;
     el.hidden = true; el.innerHTML = '';
     doc.documentElement.classList.remove('file-open');
     stopSpeech();
@@ -2474,14 +2572,16 @@
     else if (st.restore && st.restore.focus) { try { st.restore.focus({ preventScroll: true }); } catch (e) {} }
   }
   function fileKey(e) {
+    if (fileState.pick) { if (e.key === 'Escape' || e.key === 'ArrowLeft') { e.preventDefault(); if (!fileState.pending) closeFile(); } return; }
     if (e.key === 'Escape' || (e.key === 'ArrowLeft' && fileState.card)) {
       e.preventDefault();
       if (fileState.card) { fileState.card = null; drawFile(); } else closeFile();
     }
   }
-  function fileCard(c) {
-    var line = fill(c.line);
-    return '<button class="cf-card ' + c.mark + '" type="button" data-card="' + esc(c.id) + '" aria-label="' + esc(plain(line) + ' ' + E.markMeans(c.mark)) + '">' +
+  function fileCard(c, o) {
+    var line = fill(c.line), pk = o && o.pick === true;   // (the plain file's .map(fileCard) passes an index here)
+    return '<button class="cf-card ' + c.mark + '" type="button" data-card="' + esc(c.id) + '"' + (pk ? ' id="pickcard-' + esc(c.id) + '"' + (o.dim ? ' aria-disabled="true"' : '') : '') +
+      ' aria-label="' + esc(plain(line) + ' ' + E.markMeans(c.mark) + (pk ? ' Pick this card.' : '')) + '">' +
       '<span class="cf-pic" aria-hidden="true">' + cardSvg(c) + '</span><span class="cf-line" aria-hidden="true">' + rich(line) + '</span></button>';
   }
   function drawFile() {
@@ -2542,6 +2642,225 @@
     var first = big ? $('fileBack') : $('fileClose');
     if (first) { try { first.focus({ preventScroll: true }); } catch (e) {} }
     speakItems(speech);
+  }
+
+  /* ---------------------------------------------------------------- the card pick (chapter 10)
+   * `pick` (E.pickJudge): Reynard's claim, answered with a card from her Case File. On the frame, the
+   * instruction under the panel with the file's curl as its tap icon, Back, and a hidden button; a tap
+   * on the panel or the icon, the top bar's Case File button (it glows here, as on a `file` frame), or
+   * Space, Enter or → opens the pick screen: her Case File's own screen (#file) in pick mode. Its head
+   * is the claim strip (his balloon, its word lit gold; under it, once she has picked wrong, Tallyheart's
+   * whispered nudge, the newest only), which stays at the top as she scrolls; its body is her whole file
+   * laid out as drawFile lays it, every card face up and a button (fileCard). A right pick pops and turns
+   * the page 900 ms later (at once with reduced motion), every tap and key ignored till then
+   * (fileState.pending); a wrong one wiggles and nudges; after three the right cards she holds glow and
+   * the rest are dimmed (a tap on one makes the glowing ones wiggle). Back, Escape or ← closes it, the
+   * wrong picks and the openings kept while she is on the frame (the page's, never saved). The mode's
+   * class goes on the .cf-in this section writes, never on #file (which lives for the whole session).
+   * Read to me and the live region say PC.ui.pickPage's `speech` and `said`. */
+  var pickState = null;   // the pick frame on the page: { at, f, wrongs, opened, nudge, dimmed, last, view }
+  var PICK_TURN_MS = 900, PICK_WIGGLE_MS = 600;
+  function renderPickFrame(f, id, ctx, box, panel, nextBtn) {
+    var pw = E.pickWords(f), hint = pw.prompt ? fill(pw.prompt) : '';
+    pickState = { at: story.id + ':' + id, f: f, wrongs: 0, opened: 0, nudge: null, dimmed: false, last: null, view: null };
+    // the guard (a data slip the story test rules out): her file shows no card, so there is nothing to
+    // pick, and Next follows the pick's `next` (E.next's one pick branch)
+    if (!E.cards(cat, stories()).length) {
+      var adv = function () {
+        if (now() - renderedAt < 280) return;
+        if (E.next(cat, story, now(), stories())) { persist(); go('frame'); }
+      };
+      nextBtn('Next', adv);
+      panel.classList.add('tappable');
+      panel.addEventListener('click', adv);
+      keyHandler = function (e) {
+        if (isTyping(e)) return;
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); adv(); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); onBack(); }
+      };
+      return;
+    }
+    var openIt = function () {
+      if (now() - renderedAt < 280 || fileState) return;
+      openPick(false);
+    };
+    box.innerHTML = '<div class="next-row">' + backBottom() +
+      (hint ? '<p class="prompt tapline">' + rich(hint) + ' <button class="tapicon" id="tapPick" type="button" tabindex="-1" aria-hidden="true">' + fileIcon() + '</button></p>' : '') +
+      '<button class="sr" id="openPick" type="button">' + esc(pw.label) + '</button></div>';
+    wireBackBottom();
+    $('openPick').addEventListener('click', openIt);
+    if ($('tapPick')) $('tapPick').addEventListener('click', openIt);
+    fileTeach = openIt; frameTap = openIt;
+    panel.classList.add('tappable');
+    panel.addEventListener('click', openIt);
+    keyHandler = function (e) {
+      if (isTyping(e)) return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        if (e.target && (e.target.id === 'openPick' || e.target.id === 'fileBtn')) return;   // a button does it on its own click
+        e.preventDefault(); openIt();
+      } else if (e.key === 'ArrowLeft') { e.preventDefault(); onBack(); }
+    };
+    if (hint) ctx.reading.push({ text: hint });
+  }
+  /* The pick screen over the page (openFile's pick mode); closed, the frame's speech and focus come back. */
+  function openPick(quiet) {
+    var ps = pickState;
+    if (!ps || !cat || fileState || E.currentFrame(cat, story) !== ps.f) return false;
+    ps.opened++;
+    ps.dimmed = false;
+    ps.view = E.pickView(ps.f, cat, stories());
+    var frameSpeech = currentSpeech, was = doc.activeElement;
+    openFile({ pick: ps, quiet: !!quiet, onClose: function () {
+      currentSpeech = frameSpeech;
+      var b = was && was.isConnected && was !== doc.body ? was : $('openPick');
+      if (b && b.focus) { try { b.focus({ preventScroll: true }); } catch (e) {} }
+    } });
+    // (focus once the screen is shown: openFile unhides #file after drawing it)
+    var fc = fileState && fileState.pick && $('fileClose');
+    if (fc) { try { fc.focus({ preventScroll: true }); } catch (e) {} }
+    // (reopened after the glow, at its top: a glowing card brought into sight)
+    if (fc && ps.wrongs >= E.PICK_GLOW) pickShowGlow();
+    return !!(fileState && fileState.pick);
+  }
+  function pickSpeech(items) {
+    return (items || []).map(function (it) { var o = { text: fill(it.text) }; if (it.who) o.who = it.who; if (it.kind) o.kind = it.kind; return o; });
+  }
+  // the claim with its one word in capitals lit
+  function pickClaim(text, word) {
+    var i = word ? text.indexOf(word) : -1;
+    if (i < 0) return rich(fill(text));
+    return rich(fill(text.slice(0, i))) + '<b class="pick-lit">' + esc(word) + '</b>' + rich(fill(text.slice(i + word.length)));
+  }
+  function drawPick(again) {
+    var el = $('file'), st = fileState, ps = st.pick, v = ps.view, F = v.file;
+    var page = UI.pickPage(v, ps.wrongs, ps.nudge, ps.opened, ps.dimmed), state = {};
+    page.cards.forEach(function (c) { state[c.id] = c; });
+    var card = function (c) { return fileCard(c, { pick: true, dim: !!(state[c.id] && state[c.id].dim) }); };
+    var glowing = page.cards.some(function (c) { return c.glow; });
+    var shown = F.groups.filter(function (pg) { return pg.cards.length; });
+    // her whole file as drawFile lays it (its classes, so the Case File's own rules reach this screen as they are)
+    var groups = shown.map(function (pg) {
+      return '<section class="cf-group ' + pg.mark + '" aria-label="' + esc(pg.title) + '"><h3 class="cf-h"><i class="cf-mark" aria-hidden="true">' + markSvg(pg.mark) + '</i>' + esc(pg.title) + '</h3>' +
+        '<div class="cf-cards">' + pg.cards.map(card).join('') + '</div></section>';
+    }).join('');
+    var links = F.links.map(function (l) {
+      var joins = l.lines || [l.line];
+      var side = function (i) { return i === 0 ? 'j0' : i === joins.length - 1 ? 'j1' : 'jm'; };
+      if (joins.length > 1) {
+        return '<section class="cf-link row" aria-label="' + esc(plain(joins.map(fill).join(' '))) + '"><div class="cf-pair n' + l.cards.length + '">' + l.cards.map(card).join('') + '</div>' +
+          joins.map(function (t, i) { return '<p class="cf-linkline ' + side(i) + '">' + rich(fill(t)) + '</p>'; }).join('') + '</section>';
+      }
+      return '<section class="cf-link" aria-label="' + esc(plain(fill(l.line))) + '"><div class="cf-pair">' + l.cards.map(card).join('') + '</div>' +
+        '<p class="cf-linkline">' + rich(fill(l.line)) + '</p></section>';
+    });
+    links = links.length > 1 ? '<div class="cf-links">' + links.join('') + '</div>' : links.join('');
+    // the head: the claim strip (his balloon, its word lit), the newest nudge under it (her whisper from Tallyheart), and Back
+    var strip = '<div class="pick-strip"><div class="pick-claim" role="heading" aria-level="2" id="fileTitle">' + stackBalloon({ who: page.strip.who, html: pickClaim(page.strip.text, page.strip.word) }) + '</div>' +
+      (page.nudge ? '<div class="pick-nudge">' + stackBalloon({ who: page.nudge.who, text: fill(page.nudge.text), kind: 'whisper' }) + '</div>' : '') + '</div>';
+    var y = again ? el.scrollTop : 0;
+    el.innerHTML = '<div class="cf-in picking' + (glowing ? ' glowing' : '') + '"><div class="cf-head">' + strip + '<button class="btn cf-close" id="fileClose" type="button">Back</button></div>' +
+      '<div class="cf-groups' + (shown.length < 2 ? ' one' : F.links.length ? ' linked' : '') + (F.links.length > 1 ? ' many' : '') + '">' + groups + links + '</div>' +
+      '<p class="sr" id="pickSay" role="status" aria-live="polite"></p></div>';
+    el.setAttribute('aria-label', 'Pick a card');
+    el.scrollTop = y;
+    $('fileClose').addEventListener('click', function () { if (fileState && !fileState.pending) closeFile(); });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-card]'), function (b) {
+      b.addEventListener('click', function () { pickTapCard(b.getAttribute('data-card'), false); });
+    });
+    currentSpeech = pickSpeech(page.speech);
+    if (!again) {
+      var first = $('fileClose');
+      if (first) { try { first.focus({ preventScroll: true }); } catch (e) {} }
+      speakItems(currentSpeech);
+    }
+  }
+  // (lit a moment as it wiggles, so with reduced motion, where nothing wiggles, the card still answers)
+  function pickWiggle(list) {
+    list.forEach(function (b) {
+      if (!b) return;
+      b.classList.remove('pick-wiggle'); void b.offsetWidth; b.classList.add('pick-wiggle');
+      clearTimeout(b.pcWiggle);
+      b.pcWiggle = later(function () { b.classList.remove('pick-wiggle'); }, PICK_WIGGLE_MS + 100);
+    });
+  }
+  /* After the glow, a glowing card in sight: when no glowing card shows half its picture between the strip and the screen's
+   * foot (her file is long, and she picked wrong far from them), her file slides till the first in her file's order sits
+   * just under the strip (at once with reduced motion), so the glow, and a dimmed card's answer, are never all off the screen. */
+  function pickShowGlow() {
+    var el = $('file'), hd = el.querySelector('.cf-in.glowing .cf-head');
+    if (!hd || !fileState || !fileState.pick || fileState.pending) return;
+    var top = hd.getBoundingClientRect().bottom, foot = Math.min(el.getBoundingClientRect().bottom, root.innerHeight || Infinity);
+    var lit = Array.prototype.slice.call(el.querySelectorAll('.cf-card:not([aria-disabled="true"])'));
+    var seen = lit.some(function (b) { var r = b.querySelector('.cf-pic').getBoundingClientRect(); return Math.min(r.bottom, foot) - Math.max(r.top, top) >= r.height / 2; });
+    if (!lit.length || seen) return;
+    var y = el.scrollTop + lit[0].getBoundingClientRect().top - top - 12;
+    try { el.scrollTo({ top: y, behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) { el.scrollTop = y; }
+  }
+  /* What the newest pick says: Read to me cuts in with it (any tap stops what was being read), and the
+   * live region is emptied and given it 100 ms later, so a polite region reads a repeat too. */
+  function pickSay(said) {
+    var items = pickSpeech(said), live = $('pickSay');
+    stopSpeech();
+    speakItems(items);
+    if (live) live.textContent = '';
+    later(function () { var l = $('pickSay'); if (l) l.textContent = items.map(function (it) { return plain(it.text); }).join(' '); }, 100);
+  }
+  /* A tap on a card (`direct`: PC.debug.pick, past the tap guards). Returns true on a right pick. */
+  function pickTapCard(id, direct) {
+    var st = fileState, ps = st && st.pick;
+    if (!ps || st.pending) return false;
+    var el = $('file'), btn = $('pickcard-' + id);
+    // the card she just picked wrong, tapped again while it wiggles: no new pick; it wiggles again and the nudge stays
+    if (!direct && ps.last && ps.last.id === id && now() - ps.last.at < PICK_WIGGLE_MS) { pickWiggle([btn]); return false; }
+    var r = E.pick(cat, story, id, now(), ps.wrongs, stories());
+    fileState.at = now();   // a double tap picks one card, not two
+    if (!r) {
+      // after the glow, a dimmed card is no pick and gets no nudge: the glowing ones wiggle, and their lines are said again
+      if (ps.wrongs < E.PICK_GLOW) return false;
+      ps.dimmed = true;
+      pickShowGlow();
+      pickWiggle(Array.prototype.slice.call(el.querySelectorAll('.cf-card:not([aria-disabled="true"])')));
+      pickSay(UI.pickPage(ps.view, ps.wrongs, ps.nudge, ps.opened, true).said);
+      return false;
+    }
+    if (r.right) {
+      // the flag and the landing are saved at the tap; the screen holds still till the page turns
+      st.pending = true;
+      persist();
+      stopSpeech();
+      var inner = el.querySelector('.cf-in');
+      if (inner) inner.classList.add('picked');
+      if (btn) {
+        // the pop grows toward the free side: a card just under the strip grows down, one at the screen's foot grows up,
+        // so its mark never goes under the strip or off the screen at the pop's peak (1.14, 7% each side)
+        var br = btn.getBoundingClientRect(), hdr = el.querySelector('.cf-head'), mg = br.height * 0.07;
+        btn.style.transformOrigin = hdr && br.top - mg < hdr.getBoundingClientRect().bottom ? '50% 0' : br.bottom + mg > (root.innerHeight || Infinity) ? '50% 100%' : '';
+        btn.classList.add('pick-right');
+      }
+      var turn = function () { closeFile(true); go('frame'); };
+      if (reduceMotion) turn(); else later(turn, PICK_TURN_MS);
+      return true;
+    }
+    ps.wrongs = r.wrongs; ps.nudge = r.line; ps.dimmed = false; ps.last = { id: id, at: now() };
+    var y0 = btn ? btn.getBoundingClientRect().top : null;
+    var hd0 = el.querySelector('.cf-head'), hb0 = hd0 ? hd0.getBoundingClientRect().bottom : 0;
+    drawPick(true);
+    // the card stays where she tapped it (the nudge under the claim makes the head taller)
+    var nb = $('pickcard-' + id);
+    if (nb && y0 != null) el.scrollTop += nb.getBoundingClientRect().top - y0;
+    // unless the taller strip would cover it: then it moves down by the part the strip would cover, at most the strip's
+    // growth, so its picture and its mark (the wrong pick's feedback) stay in view while it wiggles
+    var hd1 = el.querySelector('.cf-head');
+    if (nb && hd1) {
+      var hb1 = hd1.getBoundingClientRect().bottom, under = Math.min(hb1 - hb0, hb1 + 4 - nb.getBoundingClientRect().top);
+      if (under > 0) el.scrollTop -= under;
+    }
+    if (nb) { try { nb.focus({ preventScroll: true }); } catch (e) {} }
+    pickWiggle([nb]);
+    pickSay(UI.pickPage(ps.view, ps.wrongs, ps.nudge, ps.opened, false).said);
+    // the third: once her card has wiggled, a glowing card brought into sight
+    if (ps.wrongs >= E.PICK_GLOW) later(pickShowGlow, PICK_WIGGLE_MS);
+    return false;
   }
 
   /* ---------------------------------------------------------------- inputs */
@@ -2703,9 +3022,15 @@
     // (chapter 5: nor one that says so, `counts: { intro: false }`: the tens warm-up, whose first
     // question may be her hardest ten: it appears with the engine's own words alone, and is timed on itself)
     var intro = lessonIntro(balloonsOf(f), !!(resume || f.counts.intro === false || E.keptSkip(story, id, cat)));
+    // (the Warrior Counts: while a sitting with an answer in it waits, an answer here sets it aside, as one in the Hollow
+    // does, so the lesson warns her first, as a round picked up in the Hollow does: Tallyheart's waiting line over the
+    // first question, the last line before it, said with it, before any answer; Back from there loses nothing. A cat
+    // with no `warrior` data, or a sitting gone stale, counts as she always did)
+    var wWait = cat.warrior ? E.hollowLines(cat, stories(), { now: now() }).waiting : null;
+    if (wWait) intro = (intro || []).concat([{ who: 'tallyheart', text: wWait }]);
     var finish = function (sum) { if (E.finishCounts(cat, story, sum, now())) { persist(); go('frame'); } };
     runLesson({
-      def: def, state: st, intro: intro, mode: 'chapter',
+      def: def, state: st, intro: intro, mode: 'chapter', waitLine: wWait,
       onDone: function (sum) {
         // a lesson inside the story (the prey pile) may have no closing line: the next frame answers
         if (def.done === '' || def.done === null) { renderedAt = now(); return finish(sum); }
@@ -2901,21 +3226,22 @@
       pauseRead = function () { if (done || !scrEl.isConnected || !('speechSynthesis' in root)) return false; spoken(); return true; };
       return true;
     }
-    /* The Warrior Counts: what this page says, for Read to me's button and PC.debug.speech (DRY=1). Set
+    /* What this page says, for Read to me's button and PC.debug.speech (DRY=1): the Warrior Counts and a
+     * chapter's or the Hollow's lesson alike (a lesson's page once said the frame's old lines). Set
      * once the page is drawn: a question asked as the screen opens is spoken here, with its own wait,
      * never a second time by go(). */
     function saying(items) { later(function () { currentSpeech = items; }, 0); }
     function fillQ(t) { return E.fill(t, cat, { a: q.a, b: q.b, answer: q.answer, groups: q.groups, per: q.per, thing: thing, things: things }); }
     function balloonLines(x) {
       return asList(x).map(function (b) { return typeof b === 'string' ? { text: b } : b; }).filter(function (b) { return b && b.text; })
-        .map(function (b) { return b.kind === 'caption' ? { text: fillQ(b.text), kind: 'caption' } : { who: b.who || teacher, text: fillQ(b.text), kind: b.kind }; });
+        .map(function (b) { return b.kind === 'caption' ? { text: fillQ(b.text), kind: 'caption' } : { who: b.who || teacher, text: fillQ(b.text), kind: b.kind, variant: b.variant }; });
     }
     /* What is said before she answers (E.promptLines: the question's own prompt, the set's first
      * question, a retry's againIntro, a borrowed question's fillIntro, or the generic question), with
      * the cat's tokens filled. */
     function promptLines() {
       return E.promptLines(def, D, q).map(function (l) {
-        return l.kind === 'caption' ? { text: fill(l.text), kind: 'caption' } : { who: l.who, text: fill(l.text), kind: l.kind };
+        return l.kind === 'caption' ? { text: fill(l.text), kind: 'caption' } : { who: l.who, text: fill(l.text), kind: l.kind, variant: l.variant };
       });
     }
     /* The clock is for the fact, not the reading: it starts again when the question has been read
@@ -2966,7 +3292,7 @@
       var tuck = q.light === 'tuck' ? E.lightSteps(D, q) : null;
       if (warrior) { fountain(); drawPaws(); }
       else if (tuck) paint(tuck.open); else picture(q.lit || 0);
-      var lines = [];
+      var lines = [], waitFirst = first;
       if (first && o.intro && o.intro.length) lines = o.intro.slice();
       lines = lines.concat(promptLines());
       first = false;
@@ -2980,8 +3306,9 @@
       // the top comes after this; so look again once go() is done: a picked-up question's keypad, under
       // "Where were we? Ah, yes.", is brought into view too; and a Training Hollow round picked up, drawn
       // inside go('hollow'), under the Counts' waiting line: only for a cat with Warrior Counts data, so
-      // the Hollow of chapters 1 to 8 is as it was)
-      if (warrior || (o.mode === 'hollow' && cat && cat.warrior)) later(function () {
+      // the Hollow of chapters 1 to 8 is as it was; and a chapter's lesson picked up, drawn inside
+      // go('frame'), under the waiting line or not: it only ever scrolls a keypad that ends below the screen)
+      if (warrior || o.mode === 'chapter' || (o.mode === 'hollow' && cat && cat.warrior)) later(function () {
         var kb2 = pad.getBoundingClientRect().bottom, vh2 = root.innerHeight || 0;
         if (vh2 && kb2 > vh2) root.scrollBy(0, kb2 - vh2 + 8);
       }, 0);
@@ -2989,9 +3316,14 @@
       var asked = q;
       if (tuck) playTuck(asked, tuck);
       else if (q.light) lightUp(asked);
+      // (the Counts' waiting line over a chapter's first question, Read to me off: she reads it first, so the
+      // clock starts again once it would have been read; never once she has started typing)
+      if (waitFirst && o.waitLine && !save.settings.readAloud) later(function () { restartClock(asked); }, wReadMs(o.waitLine, false));
       // (the Warrior Counts: Glintstar's balloon asks it in words; the question line is not read again)
       var heard = lines.map(function (l) { return { text: l.text, who: l.who, variant: l.variant }; });
-      if (warrior) saying(heard);
+      // (what the page says for Read to me's button: the lines over the question, then the question; the
+      // Warrior Counts' balloon asks it in words)
+      saying(warrior ? heard : heard.concat([{ text: E.counts.ask(def, q) }]));
       // (the Warrior Counts: her clock starts again when the question has been said, or at the latest
       // when it would have been, so a voice that never says it has finished is never timed as hers)
       var restarted = false, rc = function () { if (!restarted) { restarted = true; restartClock(asked); } };
@@ -3035,9 +3367,9 @@
           // the question's own lines go on with the story: she reads them, then taps on
           var lines = balloonLines(res.balloons);
           say(lines);
-          // (the Warrior Counts: what Read to me says from here is her shout, not the question)
-          if (warrior) saying(lines.map(function (l) { return { text: l.text, who: l.who }; }));
-          speakItems(lines.map(function (l) { return { text: l.text, who: l.who }; }));
+          // (what Read to me says from here is the lines on the page, not the question)
+          saying(lines.map(function (l) { return { text: l.text, who: l.who, variant: l.variant }; }));
+          speakItems(lines.map(function (l) { return { text: l.text, who: l.who, variant: l.variant }; }));
           pad.classList.add('away');
           $('gotIt').textContent = 'Next';
           $('lessonNext').hidden = false;
@@ -3047,6 +3379,7 @@
         var line = fill(res.line);
         // a set may have nothing to say after a right answer (the next frame answers): no empty balloon
         say(line ? [{ who: teacher, text: line }] : []);
+        saying(line ? [{ text: line, who: teacher }] : []);
         if (line) speakItems([{ text: line, who: teacher }]);
         var wait = !line ? 800 : save.settings.readAloud ? 2600 : (res.fast ? 1300 : 1500);
         // (the Warrior Counts: a long line, her hard fact remembered, stays until it can be said or read
@@ -3081,7 +3414,7 @@
       var readFirst = warrior && save.settings.readAloud && 'speechSynthesis' in root, startCount = null;
       if (readFirst) speakItems([{ text: intro, who: opener }], function () { later(function () { if (startCount) startCount(); }, 300); });
       else speakItems([{ text: intro, who: opener }]);
-      if (warrior) saying([{ text: intro, who: opener }]);
+      saying([{ text: intro, who: opener }]);
       // the scratches match the picture: a picture in rows is scratched in rows (lit a column at a
       // time, top and bottom together; a whole row at a time when the help hops by the row: the
       // pile's rows of ten). On the 10s the swipes come in pairs, one for each forepaw (E.sandOpts)
@@ -3107,7 +3440,7 @@
         typed = String(hp.answer);
         showQ(typed, 'right');
         var told = [{ text: hp.a + ' times ' + hp.b + ' is ' + hp.answer + '. ' + line, who: teacher }];
-        if (warrior) saying(told);
+        saying(told);
         speakItems(told);
         $('lessonNext').hidden = false;
         // (the Warrior Counts: the paws step aside on the help's last page, and “Got it!” sits at the top of
@@ -3840,7 +4173,7 @@
     var ws = null;
     try { ws = E.warriorState(c, stories(), now()); } catch (e) { ws = null; }
     var after = E.chapter(PC.warrior.after, stories());
-    return wCorner(c, { open: wOpen(ws), after: after ? 'chapter ' + (after.number || '') : 'chapter 10',
+    return wCorner(c, { open: wOpen(ws), after: after ? 'chapter ' + (after.number || '') : 'chapter 10', stale: ws ? ws.stale : null,
       date: function (ms) { return new Date(ms).toLocaleDateString(); }, secs: fmtMs });
   }
   function openGrownups() {
@@ -3968,6 +4301,11 @@
       case 'marble': return o + '<circle cx="50" cy="52" r="30" fill="#4f9ae8"/><path d="M28 56 C40 40 52 70 72 46" fill="none" stroke="#ffd23f" stroke-width="6"/><circle cx="40" cy="40" r="6" fill="#fff" stroke="none" opacity=".85"/>' + c;
       case 'button': return o + '<circle cx="50" cy="52" r="30" fill="#ffd23f"/><circle cx="50" cy="52" r="22" fill="none" stroke-width="2"/><circle cx="43" cy="45" r="4" fill="#1b1622"/><circle cx="57" cy="45" r="4" fill="#1b1622"/><circle cx="43" cy="59" r="4" fill="#1b1622"/><circle cx="57" cy="59" r="4" fill="#1b1622"/>' + c;
       // Riffle's lucky stone: smooth, nearly black, a white stripe all the way around, never broken
+      // chapter 10: Sprinkle's mist stone, a grey egg of a pebble with a band of blue and green across it
+      case 'mist-stone': return o + '<path d="M50 16 C70 16 81 40 81 58 C81 76 67 88 50 88 C33 88 19 76 19 58 C19 40 30 16 50 16 Z" fill="#9aa1ab"/>' +
+        '<path d="M20 50 Q50 60 80 50 L81 58 Q50 68 19 58 Z" fill="#4f9fd6" stroke="none"/><path d="M19 58 Q50 68 81 58 L80 66 Q50 76 20 66 Z" fill="#58b878" stroke="none"/>' +
+        '<path d="M50 16 C70 16 81 40 81 58 C81 76 67 88 50 88 C33 88 19 76 19 58 C19 40 30 16 50 16 Z" fill="none"/>' +
+        '<ellipse cx="39" cy="34" rx="7" ry="4" fill="#fff" stroke="none" opacity=".45"/>' + c;
       case 'riffle-stone': return o + '<ellipse cx="50" cy="58" rx="36" ry="26" fill="#2f2b33"/>' +
         '<path d="M16 52 C30 66 70 66 84 50" fill="none" stroke="#f6f1e6" stroke-width="7" stroke-linecap="butt"/>' +
         '<ellipse cx="38" cy="46" rx="9" ry="4.5" fill="#fff" stroke="none" opacity=".35"/>' + c;

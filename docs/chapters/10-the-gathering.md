@@ -257,7 +257,7 @@ last answer is always cheered but a filler’s (run in the engine to four misses
 - `8 × 1 = ?` “Tails! Eight cats.” → “Eight!” cheers {Murmur}chime.
 - `5 × 2 = ?` “Ears! Five cats.” → “Ten!” whoops the grey tom.
 - `3 × 10 = ?` “Both forepaws! Three cats.” → “Thirty!” says Riffle. “That’s a LOT of claws.”
-- `6 × 3 = ?` “Patrols! Six patrols.” → “Eighteen guards,” says the old tom. “I was one. Awake, mostly.”
+- `6 × 3 = ?` “Patrols! Six patrols.” → “Eighteen guards,” says the old tom. “Not ONE of them with a pinecone.”
 - `4 × 6 = ?` “Whiskers! Four cheeks.” → “Twenty-four,” says Glintstar. “I remember that count.”
 - `9 × 4 = ?` “Paws! Nine cats.” → *Thump!* Granny bangs her pole. “Thirty-six!”
 - `6 × 8 = ?` “Spiders’ legs! Six spiders.” → “Forty-eight!” says Thymeleaf. From the luggage: a happy puff of mist.
@@ -814,7 +814,7 @@ morning, “Mama counts the claws. Thirty-five, and nobody’s missing.”, and 
 
 *[if just one of the six found]* Out of the mist, the dragonet you found comes to stand beside you.
 
-*[if two or more of the six found]* Out of the mist, the dragonets you found come to stand beside you.
+*[if two or more of the six found]* Small shapes step out of the mist: the dragonets you found.
 
 ---
 
@@ -892,7 +892,7 @@ Riffle sniffs. “Otters don’t cry. That’s river water.”
 
 *[if ch3Told: true]* “Tallyheart. Thank you for keeping my secret.”
 
-*[if ch3Told: false]* “Tallyheart. Thank you for coming to meet me. Keep counting fish. ESPECIALLY fish.”
+*[if ch3Told: false]* “Tallyheart. Thank you for coming to meet me. Keep counting. ESPECIALLY fish.”
 
 “Thymeleaf. Thank you for my wing.”
 
@@ -1106,7 +1106,7 @@ moonlight, so she knows the real one when it is hers.*
   worry 44 to 57 more. 29.0 to 32.2 minutes (26.4 to 29.1 at the brief’s 90 a minute; cap 2,700 words).*
 - *Puddle’s scene 182–193 words (cap 300); a reading with him 2,583–2,810: 31.2 to 34.3 minutes.*
 - *21 typed answers (2 warm-up, 10 sevens, 8 ferry, the sixty), 22 with Puddle; 5 picks; 2 or 3 choices; 21 to 23
-  Taps, 23 or 24 with him; 83 or 84 screens, 90 with him (some 120 to 145 frames; cap 170); never 4 quiet running.*
+  Taps, 23 or 24 with him; 83 or 84 screens, 90 with him (as built, 114 to 122 frames a reading, 125 to 132 with him; 157 in all; cap 170); never 4 quiet running.*
 
 *Names: none new. Labels: the brief’s, “A soft voice” (Mama, until named) and “Two big eyes” (Puddle, until his
 feet); the flag `ch10Best`. Granny (Riffle’s; a title, as Mama is) speaks for the first time, drawn as chapter 5’s

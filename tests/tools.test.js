@@ -306,10 +306,11 @@ test('storyboard.mjs --check-words: words for every name chapter 6’s spec adds
     assert.equal(ok.status, 0, ok.stderr);
     assert.match(ok.stdout, /^Every set, camera, anchor, option, pose, mood, effect, cast member and cast extra has words\.$/m);
     // the title's `reeds` camera was cut (spec v0.2): it has no words, and a name nobody gave has none either
-    const bad = run({ sets: { title: { cams: ['reeds'] }, bridge: { opts: { hiss: [true] } } }, cast: ['bogwade'], otherPoses: { coil: ['strike'] }, extras: { tap: ['tongue'] }, variants: { reedclan: [5] } });
+    // (ReedClan's variant 5 was a coat nobody gave until chapter 10 gave it to ReedClan's leader: the never-given coat is 6 now)
+    const bad = run({ sets: { title: { cams: ['reeds'] }, bridge: { opts: { hiss: [true] } } }, cast: ['bogwade'], otherPoses: { coil: ['strike'] }, extras: { tap: ['tongue'] }, variants: { reedclan: [6] } });
     assert.equal(bad.status, 1);
     assert.deepEqual(bad.stderr.trim().split('\n').slice(1).map(l => l.trim()).sort(),
-      ['bridge option hiss: true', 'cast bogwade', 'cast extra tap: "tongue"', 'cast reedclan variant 5', 'pose strike', 'title camera reeds'].sort());
+      ['bridge option hiss: true', 'cast bogwade', 'cast extra tap: "tongue"', 'cast reedclan variant 6', 'pose strike', 'title camera reeds'].sort());
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -427,16 +428,78 @@ test('storyboard.mjs --check-words: words for every name chapter 9’s spec adds
     // every value of the case's `read` the spec uses (0 to 7) has words, not only the check's sample number
     const rows = run({ sets: { den: { cams: ['case'], opts: { read: [0, 1, 2, 3, 4, 5, 6, 7] } } } });
     assert.equal(rows.status, 0, rows.stderr);
-    // names nobody gave: a camera, anchors, option values, a cast member, poses, extras, a third GroveClan cat
+    // names nobody gave: a camera, anchors, option values, a cast member, poses, extras, a sixth GroveClan cat
+    // (chapter 10 gave 3, 4 and 5: GroveClan's leader and two coats for the island's crowd)
     const bad = run({
       sets: { grove: { cams: ['canopy'], anchors: ['branch'] }, camp: { opts: { remedy: ['boiled'] } }, den: { opts: { read: [8] } }, title: { opts: { tap: ['reeds'] } },
         roof: { opts: { dew: ['frost'] } }, bridge: { anchors: ['run-3'], opts: { shallows: ['deep'] } } },
-      cast: ['thistle'], otherPoses: { mizzle: ['nap'], spider: ['crawl'] }, extras: { holds: ['acorn'], tap: ['web'] }, variants: { groveclan: [3] }
+      cast: ['thistle'], otherPoses: { mizzle: ['nap'], spider: ['crawl'] }, extras: { holds: ['acorn'], tap: ['web'] }, variants: { groveclan: [6] }
     });
     assert.equal(bad.status, 1);
     assert.deepEqual(bad.stderr.trim().split('\n').slice(1).map(l => l.trim()).sort(),
-      ['bridge anchor run-3', 'bridge option shallows: "deep"', 'camp option remedy: "boiled"', 'cast extra holds: "acorn"', 'cast extra tap: "web"', 'cast groveclan variant 3', 'cast thistle',
+      ['bridge anchor run-3', 'bridge option shallows: "deep"', 'camp option remedy: "boiled"', 'cast extra holds: "acorn"', 'cast extra tap: "web"', 'cast groveclan variant 6', 'cast thistle',
         'den option read: 8', 'grove anchor branch', 'grove camera canopy', 'pose crawl', 'pose nap', 'roof option dew: "frost"', 'title option tap: "reeds"'].sort());
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+/* Chapter 10: the same, for every new name in chapter 10's spec (docs/chapters/10-the-gathering.spec.md, section 4), declared
+ * as the spec has them: the new sets `ferry` (six cameras, their anchors, `moon` a number, `clan`, `luggage`, `puff`, `low`,
+ * `home`) and `island` (eight cameras, their anchors, `crowd` seated or standing, `luggage`, `ferry`, `print`, `mist`, `tail`,
+ * `grown`, `small`, `rising`, `zip`, `drawing`, `bubbles`, its three taps); the den's full moon, the mist stone and its
+ * close-up (`stone`, its one spot `tail`); the tower's and the riverbank's moon, the flyer; the Hollow's ten marks; the
+ * grown Mistscales by variant and their poses; ReedClan's leader, GroveClan's leader and its two crowd coats; Reynard's bow
+ * and swim, the weasels' swim and hidden paws, Puddle's eyes; the stone held (with its flash) and tapped, wet fur, the
+ * dragonets' snouts (`tap: 'nose'`). Granny is chapter 5's otter variant 3: no new name. */
+test('storyboard.mjs --check-words: words for every name chapter 10’s spec adds to the art (the Moon Ferry, Gathering Island, the den’s full moon and mist stone, the tower and the riverbank by moonlight, the ten marks, the Mistscales, the leaders, the crowd’s coats, the new poses and extras), declared as the spec has them; a name the spec never gave fails', () => {
+  const fs = require('node:fs'), os = require('node:os');
+  const TOOL = path.join(ROOT, 'tools/storyboard.mjs');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-words-'));
+  try {
+    const ch10 = {
+      sets: {
+        ferry: { cams: ['shore', 'deck', 'back', 'low', 'under', 'river'],
+          anchors: ['bank-1', 'bank-2', 'bank-3', 'edge', 'log-1', 'log-2', 'pole', 'seat-1', 'seat-2', 'seat-3', 'seat-4', 'seat-5', 'seat-6', 'front', 'beside', 'back', 'heap', 'back-1', 'back-2', 'back-3',
+            'gap', 'lie', 'sit-1', 'sit-2', 'sit-3', 'water', 'lip', 'raft-1', 'raft-2'],
+          opts: { moon: 'number', clan: [false, true], luggage: [false, true], puff: [false, true], low: [false, true], home: [false, true] } },
+        island: { cams: ['shore', 'wide', 'roots', 'case', 'fox', 'mist', 'sky', 'paws'],
+          anchors: ['land-1', 'land-2', 'land-3', 'raft', 'drag', 'print', 'root-1', 'root-2', 'root-3', 'crowd-1', 'crowd-2', 'crowd-3', 'crowd-4', 'crowd-5', 'crowd-6', 'elder', 'centre', 'beside',
+            'edge', 'edge-2', 'edge-3', 'bank', 'luggage', 'step', 'near-1', 'near-2', 'speak', 'mentor', 'root', 'fox', 'weasel-1', 'weasel-2', 'front-1', 'front-2', 'front-3', 'front-4',
+            'water', 'water-2', 'water-3', 'mama', 'eldest', 'nose', 'fly', 'far', 'close', 'above'],
+          opts: { crowd: [false, true, 'standing'], luggage: ['none', 'heap', 'open'], ferry: [false, true], print: [false, true], mist: ['none', 'rolling', 'thick'], tail: [false, true],
+            grown: [false, true], small: ['none', 'one', 'some', 'coming'], rising: [false, true], zip: [false, true], drawing: ['none', 'cat'], bubbles: [false, true], tap: ['none', 'reeds', 'mist', 'print'] } },
+        den: { cams: ['stone'], anchors: ['tail'], opts: { moon: [false, true, 5, 8, 13, 14], miststone: [false, true, 'flash'] } },
+        tower: { opts: { moon: 'number' } },
+        riverbank: { opts: { moon: 'number', flyer: [false, true] } },
+        hollow: { opts: { marks: [9, 10] } }
+      },
+      cast: ['mistscale'],
+      otherPoses: { mistscale: ['lean', 'nuzzle', 'lift', 'bow'], reynard: ['bow', 'swim'], snip: ['swim', 'hidepaws'], snatch: ['swim', 'hidepaws'], puddle: ['eyes'] },
+      extras: { holds: ['miststone', 'pebble', 'pole'], flash: [true], wet: [true], tap: ['nose', 'stone', 'paw', 'leaf', 'tail', 'ears'] },
+      variants: { mistscale: [1, 2], reedclan: [5], groveclan: [3, 4, 5] }
+    };
+    const run = (x) => { const f = path.join(tmp, 'more.json'); fs.writeFileSync(f, JSON.stringify(x)); return spawnSync(process.execPath, [TOOL, '--check-words', f], { encoding: 'utf8' }); };
+    const ok = run(ch10);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.match(ok.stdout, /^Every set, camera, anchor, option, pose, mood, effect, cast member and cast extra has words\.$/m);
+    // the moon at fourteen has words of its own on each place that shows it (the check samples a number at 3)
+    const moon = run({ sets: { ferry: { opts: { moon: [14] } }, tower: { opts: { moon: [14] } }, riverbank: { opts: { moon: [14] } } } });
+    assert.equal(moon.status, 0, moon.stderr);
+    // names nobody gave: cameras, anchors, option values on both new sets (the island's own taps are its own: the title's
+    // `reeds` still has none), the den's stone in a light nobody gave, a cast member, poses, extras, a third Mistscale
+    const bad = run({
+      sets: { ferry: { cams: ['bow'], anchors: ['seat-7'], opts: { clan: ['all'], luggage: ['heap'], low: ['sunk'] } },
+        island: { cams: ['canopy'], anchors: ['root-4', 'crowd-7'], opts: { crowd: ['lying'], mist: ['dark'], small: ['many'], tap: ['tree'], luggage: [true], drawing: ['fox'] } },
+        den: { opts: { miststone: ['glow'] } }, riverbank: { opts: { flyer: ['two'] } }, title: { opts: { tap: ['reeds'] } } },
+      cast: ['badger'], otherPoses: { mistscale: ['blaze'], reynard: ['snarl'] }, extras: { holds: ['shell'], flash: ['red'], wet: ['soaked'] }, variants: { mistscale: [3] }
+    });
+    assert.equal(bad.status, 1);
+    assert.deepEqual(bad.stderr.trim().split('\n').slice(1).map(l => l.trim()).sort(),
+      ['cast badger', 'cast extra flash: "red"', 'cast extra holds: "shell"', 'cast extra wet: "soaked"', 'cast mistscale variant 3', 'den option miststone: "glow"',
+        'ferry anchor seat-7', 'ferry camera bow', 'ferry option clan: "all"', 'ferry option low: "sunk"', 'ferry option luggage: "heap"',
+        'island anchor crowd-7', 'island anchor root-4', 'island camera canopy', 'island option crowd: "lying"', 'island option drawing: "fox"', 'island option luggage: true',
+        'island option mist: "dark"', 'island option small: "many"', 'island option tap: "tree"', 'pose blaze', 'pose snarl', 'riverbank option flyer: "two"', 'title option tap: "reeds"'].sort());
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

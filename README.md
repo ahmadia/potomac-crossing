@@ -10,14 +10,14 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-31):** chapters 1 to 9 are built as a static web app (`index.html`, `app/`; the
+**Status (2026-10-31):** chapters 1 to 10, the whole of module 1, are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04). Chapter 6, *The Snake in the Stones*,
 shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`; chapter 7, *The Counts
-Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24; chapter 9, *Featherlight*, 2026-10-26.
-The Warrior Counts (decisions 48 and 49) are built and merged on top of chapter 9 (2026-10-31); they
-open once chapter 10 is finished, so they ship with it.
+Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24; chapter 9, *Featherlight*, 2026-10-26;
+chapter 10, *The Gathering*, the finale, 2026-10-31, with the Warrior Counts (decisions 48 and 49),
+which open once chapter 10 is finished. The Warrior Ceremony (chapter 11) is next.
 
 ## Docs
 
@@ -30,7 +30,7 @@ open once chapter 10 is finished, so they ship with it.
   drafted as the actual game text.
 - [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
   the Old Bridge, 04 The Glittering Scale, 05 Riffle's River, 06 The Snake in the Stones, 07 The Counts Don’t
-  Lie, 08 The Night Trail, 09 Featherlight), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
+  Lie, 08 The Night Trail, 09 Featherlight, 10 The Gathering), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
   steering calls, the budget and the names, written before drafting), its **story** (what she
   reads), and its **spec** (flags, Counts sets, cards, art needs and build notes, written once the
   story is final).
@@ -729,6 +729,112 @@ Each is Aron's to reverse.
      passes the Warrior Counts, which the hub offers from then on.
   6. Leaders and grown Mistscales stay unnamed (labels and "Mama").
 
+- **Chapter 10's story and spec** (2026-10-25 to 31; the story's *For us* and the spec's section 9
+  have every call with its reason). The story took four critique rounds (v0.5), the spec two checks
+  (v0.4). In short:
+  1. **The card pick is chapter 10's one engine need**, built as the spec designs it: a data key one
+     chapter reads, like chapter 8's `link.lines`; every hook is a branch only a pick reaches, so
+     chapters 1 to 9 play and draw as they did. Nothing new is stored: the card she picks is a flag,
+     the wrong picks are the page's, and the save stays version 2. The pick screen is her whole Case
+     File, face up; a wrong pick wiggles and gets Tallyheart's whisper; after the third only the right
+     cards glow. What answers what is the pick's own data, so no shipped card changes.
+  2. Five pick flags and one choice flag (`ch10Best`, for the Ceremony); `ch10Puddle` is sticky, and
+     chapter 5's page reads it in both of its Puddle lines.
+  3. Two new places, the Moon Ferry (`ferry`) and Gathering Island (`island`); the walk home is the
+     riverbank, the tower and the den by moonlight, by option.
+  4. The grown Mistscales are one new cast id, a head and neck out of the mist, never a body; the two
+     leaders are their Clans' new variants; the crowd wears only anonymous coats.
+  5. **Granny is chapter 5's otter variant 3**, labelled for this chapter (variant 2 is chapter 5's
+     gossiping "he"): no new drawing.
+  6. The 7s are clutches of seven (decision 51), four over three; the sand at per 7 is four and three.
+  7. The mist stone is a gift in My nest as well as on her moss; the last panel is the stone close up.
+  8. No depth rule: every crowded cast is listed back to front, the leaders' roots behind their Clans.
+
+- **Chapter 10 as built** (2026-10-31; `app/story/ch10.js`'s header has each call). 157 frames, 114 to
+  132 a reading (the cap is 170), 21 typed answers (22 with Puddle), five picks. Where the frames went
+  past the spec, each after a look:
+  - *Sprinkle sits a step back at the case* (a spot of her own, `SIDE`, a dragonet's size): at `beside` she
+    covered the fox, the weasels and the ring's front. The fox sits back across the grass with the weasels
+    nearer the river edge (the case's `fox`, `weasel-1` and `weasel-2`), so her tail ends short of him and
+    both weasels show. The dragonets she found step out a step right of her spot (`STEP`), clear of our
+    cat's chest; she lies at `beside` when she curls her tail round our cat, and our cat sits inside the loop,
+    in front of her (`LOOP`), as under the bridge in chapter 3.
+  - *On the wide clearing* Sprinkle comes out of the reeds a step right of the heap (`OUT`, so her hurt wing
+    shows), then sits in the middle a step smaller than our cat's `centre` (`MID`, clear of Glintstar on her
+    root) with our cat beside her; GroveClan's leader sits along her root toward the trunk, clear of
+    Sloshbank. The leaders take their roots at f040, so the GroveClan elder speaks as herself before.
+  - *The weasels' two lines move to the fox camera* (f072, f073): on the wide shot they could not be seen;
+    Snatch holds up his mouse at the front (f081).
+  - *The small shapes in the mist* wait in the mist band at the left, beside Mama, who stays through the
+    shapes' screens (f114 to f120); our cat holds the mist stone sitting up, so it never lands on Riffle's
+    stone in the nest.
+  - *The review's round* (2026-10-31, `~/potomac-crossing-work/ch10/review.json`, every confirmed finding):
+    Glintstar's ruling has a panel of its own (f082) and the three borders the next (f083), so with Aa on at
+    1080 x 720 and 1080 x 700 Back and Next stay on the screen (the four balloons stacked beside the crowded
+    panel ran them 12 and 18px under); the old tom's ferry cheer is “Eighteen guards. Not ONE of them with a
+    pinecone.” (he was never one of chapter 6's guards); the front raft has four logs on every camera, as
+    Puddle's riddle counts them; at `lip` our cat leans over the left log's edge, the rest of her under the
+    log; Tallyheart trails on the stones at dusk, clear of our cat; Snatch sits up with the mouse in his paws
+    for a noticing cat; our cat sits over her leaf and glass, her head clear of Sprinkle's claws; the swim is
+    a row going away from the bank; Sprinkle turns to Riffle, across the grass where the fox sat; our cat and
+    Tallyheart are nose to nose, both crouched; Riffle and our cat face each other on the way home; a
+    shiny-worry cat's stone is a close-up in her paws; the crowd's filling seats are drawn back to front.
+    On the page: Granny's “Thirty-six!” has her own face and voice (the lesson runner kept no line's
+    variant); each claim's pick screen opens at its top; a wrong pick's taller strip never covers the card
+    she tapped, and a right card's pop grows toward the free side; the strip sticks below an installed
+    iPad's status bar; with reduced motion the glowing cards brighten for a dimmed card's tap; the grown-ups
+    corner says a stale sitting starts fresh next time. The Training Hollow is re-laid for ten Counts (spec
+    call 36): held sideways (501 to 860px tall) its column is `minmax(410px, .7fr)`, so the picture is about
+    12% narrower (1080 x 720: 603.5px wide, not live's 684), on purpose, so the 7s' name keeps one line. A
+    list of nine Counts or fewer gets a 370px column at 1060px wide or less with Aa off, so Tallyheart's
+    glowing-marks line, the Counts and My nest stay on the screen as they did live; live's own column at
+    1134px wide or more (1180 x 820, 1194 x 834: the picture and its lettering live's, box for box, the final
+    review's L0); and upright with Aa the polish release's .6em padding (spec, section 6). The boards say what is drawn (the river never black, Granny a sandy otter, the mint the
+    otters', the tail hug under the bridge).
+  - *A chapter read again while a Warrior Counts sitting waits* (Claude's call under decision 46, the
+    review's): one answer in any of its lessons sets the sitting aside, as practice
+    (`docs/warrior-counts.md`, section 4), and the Hollow warns her first; a chapter's counted page did not,
+    so she could lose 40 answers without a word. **The lesson warns as the Hollow does**: after "Count them
+    again" (or a first "Let’s count!"), the lesson opens with Tallyheart's waiting line over its first
+    question, “Your Warrior Counts are waiting at the fountain. Finish them first, or practice now and start
+    them fresh later.”, the last line before the question and said with it, once, before any answer (Back
+    from there loses nothing), on the Hollow's own condition (a sitting with an answer in it that has not
+    gone stale), as a round picked up in the Hollow opens on it. Reason: an eight-year-old should never lose a
+    sitting she cannot see coming; recording it as unwarned keeps a trap the Hollow already closed. Not on the
+    counted page itself: with Aa on, a balloon over its buttons ran Back and Next 70 to 190px under a 1080 x
+    720 screen on every counted page of chapters 1 to 10. Measured in WebKit on 14 counted pages at five sizes:
+    the keypad always on the screen, the line too but for ch05 f002 at 1080 x 720 and 1080 x 700 with
+    Aa, where the page's own scroll to the keypad leaves its first two lines above the screen. A cat with no
+    Counts data, or a stale sitting, counts as she always did.
+  - Left, with reasons (the review's lows): Granny stands in front of the fox on the banishment's wide panels
+    (she holds the water's edge, where she speaks); the phone's pick strip with Aa on the longest claim after
+    a nudge (28% of the screen, not about a quarter: the fix is an Aa rule in the pick's block, which the
+    spec keeps free of them); a kept Sprinkle thanks Thymeleaf by name (chapter 9's open low above); the eldest's
+    bow and Granny's hauling (spec, section 7, items 20 and 21). Mama is not on the eldest's bow (f113: two
+    great faces would overlap); Sprinkle stays turned to Tallyheart on f126 as she thanks Thymeleaf (turning her
+    right would turn her from Tallyheart, whom she thanks first); at `lip` (f024 to f028) the log's cover stops
+    about 30px short of its inner edge, so her flank ends in a hard line on the log's top over a dark scrap of
+    shadow (a low the integration check found).
+  - *The final review's round* (2026-10-31, `~/potomac-crossing-work/ch10/final.json`): the mist stone flashes
+    blue AND green (its band's gradient laid across the stone's face: the green had fallen outside it); the
+    glass is shown close up in her paws (f065, as the stone's f122), the old tom's “Glass?” one panel on, before
+    “That’s three.”; the sixty no longer says the frame's two balloons again over its question (`intro: false`,
+    as chapter 5's bill: with Aa at 1080 x 720 Glintstar's first line went under the top bar) and asks it in
+    our cat's words, picked up too; the moonrise and the boarding (f014, f015) are by night, so the river shines
+    silver-blue as the caption says; Sprinkle's kept thanks read “Keep counting. ESPECIALLY fish.”; two or more
+    found, “Small shapes step out of the mist: the dragonets you found.” (the picture's shapes are never beside
+    her). On the page: after the third wrong pick, and on a dimmed tap or a reopening, when no glowing card
+    shows her file slides to the first (at once with reduced motion). **Two deliberate changes to chapters 1
+    to 9's lessons**: a lesson picked up (drawn as its page opens) brings the keypad back on the screen after
+    the page's scroll to the top, as the Warrior Counts do (a resumed lesson at 768 x 1024 had the keypad's last
+    row 7px under the screen; nothing moves where the keypad already shows); and Read to me's button, tapped
+    on mid-lesson, says the lesson page's own lines and question (it said the frame's old lines, or nothing).
+    The Counts' waiting line, read with Read to me off, restarts the first question's clock once it would have
+    been read. Left: Granny's wink and her hauling stay in the captions (built nearly, spec section 7, item 21
+    and the build notes: no otter face winks); the tenth claw mark stays in the board's inset (a tree panel
+    before f152 would renumber the last six frames); every pick still reads her whole file as it opens with
+    Read to me (a listening friend needs the cards to pick from; the spec accepts the length).
+
 - **Casts are listed back to front where cats meet** (2026-10-25, the depth hotfix): Charlie found the
   far grey guard drawn over the near black guard's face on chapter 8's f030. The art draws each layer
   of a cast in the order it is listed, never by depth, so twelve live pile frames (ch06 f004, f107,
@@ -845,7 +951,12 @@ Nothing here blocks the chapter being built; each chapter's own questions are in
   Moonwatcher); "Ironsnakes" (Warriors' Thundersnake; Clankers?); "leaf-drop" (Warriors' leaf-fall);
   ~~Dew~~ (renamed Mizzle by chapter 9's brief, call 11, 2026-10-24); Snip, one of the weasels
   (Warriors has a Snipkit; chapter 8 names Snip and Snatch on screen: kept, see chapter 8's brief, call
-  6). From chapter 5's names check
+  6). From chapter 10's story (its *For us*; all kept): Gathering Island's clearing under the great tree
+  (Warriors' Great Oak, its leaders in the low branches; ours sit on its three roots, and the tree is never
+  named); Tree, Root and Stone (Tree and Root are Warriors cats, Root and Stone Wings of Fire humans:
+  lowercase nouns here); "a mist stone" (Mist- and -stone, decision 18); "the truce" (the books' word:
+  Glintstar's "Tonight is the truce."); and mist over a Gathering's moon (Warriors' sign of a broken truce:
+  here the moon glows through it and Sprinkle names it first, "That's MY mist."). From chapter 5's names check
   (`docs/chapters/05-riffles-river.md`, "New names"): "skymonster," chapter 5's loudest Clan word
   (it follows Warriors' monster and water-monster pattern); "the Needle," world.md's word for the
   white monument, drawn in chapter 5 and still never on screen (Needle is a Wings of Fire dragon);

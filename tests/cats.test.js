@@ -315,8 +315,10 @@ test('chapter 2 vocabulary: otter and dog poses, variants (build.md v0.3)', () =
   // (chapter 8 appends the dogs' lie)
   assert.deepStrictEqual(A.vocab.otherPoses.dog.slice(0, DOG_POSES.length), DOG_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.tallone, ['stand', 'water', 'set-dish'], 'chapter 1 poses kept');
-  // (chapter 6 adds ReedClan's four coats; chapter 9 GroveClan's two)
-  assert.deepStrictEqual(A.vocab.variants, { clancat: [1, 2, 3, 4, 5, 6], otter: [1, 2, 3], dog: [1, 2, 3], reedclan: [1, 2, 3, 4], groveclan: [1, 2] });
+  // (chapter 6 adds ReedClan's four coats; chapter 9 GroveClan's two; chapter 10 appends ReedClan's leader, GroveClan's leader
+  // and two crowd coats, and the grown Mistscales: its own test is at the end of this file)
+  assert.deepStrictEqual({ clancat: A.vocab.variants.clancat, otter: A.vocab.variants.otter, dog: A.vocab.variants.dog, reedclan: A.vocab.variants.reedclan.slice(0, 4), groveclan: A.vocab.variants.groveclan.slice(0, 2) },
+    { clancat: [1, 2, 3, 4, 5, 6], otter: [1, 2, 3], dog: [1, 2, 3], reedclan: [1, 2, 3, 4], groveclan: [1, 2] });
   assert.deepStrictEqual(A.vocab.clanVariants, [1, 2, 3, 4, 5, 6], 'kept for chapter 1 readers');
   // the vocab is a copy: changing it changes nothing
   A.vocab.otherPoses.dog.push('nope');
@@ -2200,7 +2202,8 @@ test('chapters 1 to 4 are unchanged by chapter 5 (a fingerprint of every cast me
 test('chapter 5 vocabulary: patience, puddle and wisp and their poses; the otters’ seven new poses; Sprinkle’s lookdown; the extras (earlier ids never move)', () => {
   assert.deepStrictEqual(A.vocab.cast.slice(19, 22), ['patience', 'puddle', 'wisp']);
   assert.deepStrictEqual(A.vocab.otherPoses.patience, HERON_POSES);
-  assert.deepStrictEqual(A.vocab.otherPoses.puddle, PUDDLE_POSES);
+  // (chapter 10 appends Puddle's eyes: its own test is at the end of this file)
+  assert.deepStrictEqual(A.vocab.otherPoses.puddle.slice(0, PUDDLE_POSES.length), PUDDLE_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.wisp, WISP_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.riffle.slice(11, 18), OTTER_POSES5);
   assert.deepStrictEqual(A.vocab.otherPoses.otter, A.vocab.otherPoses.riffle);
@@ -3463,7 +3466,7 @@ test('chapter 6 vocabulary: coil, sloshbank, reedclan and sleet (earlier ids nev
   assert.deepStrictEqual(A.vocab.extras.holds.slice(0, 10), ['stone', 'pebble', 'vole', 'bark', 'fish', 'fish2', 'pole', 'pinecone', 'pebbles', 'string']);
   assert.deepStrictEqual(A.vocab.extras.starry, [true]);
   assert.deepStrictEqual(A.vocab.extras.grass, [true]);
-  assert.deepStrictEqual(A.vocab.variants.reedclan, [1, 2, 3, 4]);
+  assert.deepStrictEqual(A.vocab.variants.reedclan.slice(0, 4), [1, 2, 3, 4], '(chapter 10 appends 5, ReedClan’s leader)');
   for (const who of ['coil', 'sleet', 'sloshbank']) assert.ok(!(who in A.vocab.variants), 'one ' + who);
   // an unknown pose: Sleet sits (his page in her book), Coil puts his head out
   assert.strictEqual(strip(A.character('sleet', { pose: 'nope' }).svg), strip(A.character('sleet', { pose: 'sit' }).svg));
@@ -3498,7 +3501,8 @@ test('chapters 1 to 5 are unchanged by chapter 6 (a fingerprint of every cast me
       for (const ex of [{}, { holds: 'fish2', tear: true }, { pebbles: 5, squeeze: true, mist: true }]) rec(A.character(who, Object.assign({ pose, mood, variant, facing: mood.length % 2 ? 'left' : 'right' }, ex)));
     for (const pose of OTTER) for (const ex of [{ holds: 'pole', tap: 'pole' }, { holds: 'fish' }, { glow: true }]) rec(A.character('riffle', Object.assign({ pose, mood: 'happy' }, ex)));
     for (const pose of DZ) for (const mood of MOODS) for (const facing of FACINGS) rec(A.character('sprinkle', { pose, mood, facing }));
-    for (const pose of DZ) rec(A.character('sprinkle', { pose, mood: 'shy', holds: 'pebble', tear: true, mist: true, noArms: pose === 'sit' }));
+    // (Sprinkle looking down with the pebble left this sweep on purpose in chapter 10, which puts it in her claws: below)
+    for (const pose of DZ) if (pose !== 'lookdown') rec(A.character('sprinkle', { pose, mood: 'shy', holds: 'pebble', tear: true, mist: true, noArms: pose === 'sit' }));
     for (const who of Object.keys(OWN)) for (const pose of OWN[who]) for (const mood of MOODS) for (const facing of FACINGS)
       for (const ex of [{}, { tear: true, mist: true, squeeze: true, flick: true, dragonfly: true }, { lit: 3, pole: true, noArms: true }]) rec(A.character(who, Object.assign({ pose, mood, facing }, ex)));
     for (const who of ['tallone', 'sparrow', 'moth']) for (const pose of ['stand', 'water', 'set-dish', 'perch', 'fluffed', 'fly']) for (const facing of FACINGS) rec(A.character(who, { pose, facing }));
@@ -3526,8 +3530,13 @@ test('chapters 1 to 5 are unchanged by chapter 6 (a fingerprint of every cast me
     out.push(A.sand({ groups: 4, per: 10, counted: 40, style: 'swipe', pair: true, rubbed: 2 }), A.sand({ answers: [18, 36] }));
     for (const kind of ['mouse', 'vole', 'fish']) for (const lit of [false, true]) for (const part of [undefined, 'glow', 'body', 'spark']) out.push(JSON.stringify(A.preyFallback({ kind, lit, part, facing: lit ? 'left' : 'right' })));
   } finally { if (keepPrey) A.prey = keepPrey; }
-  assert.strictEqual(out.length, 43192);
-  assert.strictEqual(crypto.createHash('sha256').update(out.join('\n')).digest('hex'), '295647018196a13c99f84b200fd9b46e4482dd0c7504b3f08bde4fe3a5da66eb');
+  // (changed on purpose 2026-10-31, chapter 10, and re-taken: Sprinkle looking down with the pebble left the sweep, since
+  // chapter 10 puts it in her claws at the bottom of her box, where it lay on the ground before (its spec, section 4); no
+  // frame of chapters 1 to 9 draws her so. The count and the hash below were taken by running this sweep, so changed, on
+  // chapter 9's shipped snapshot's cats.js (~/potomac-crossing-work/ch10/shipped, commit 5bde0c5): one drawing fewer
+  // than 43,192, three entries, and 2956470… before it)
+  assert.strictEqual(out.length, 43189);
+  assert.strictEqual(crypto.createHash('sha256').update(out.join('\n')).digest('hex'), '3f19d2fd1bcae5a6212fcd7fc0b5b595bdd5a075374515f2d669e960fd2564de');
   // and chapter 6's options, when absent or false, change nothing
   assert.strictEqual(strip(A.character('grizzled', { pose: 'lie', mood: 'kind', starry: false, holds: 'nothing', tap: 'nothing', grass: true }).svg), strip(A.character('grizzled', { pose: 'lie', mood: 'kind' }).svg));
   assert.strictEqual(strip(A.character('riffle', { pose: 'juggle', holds: 'pebbles', tap: 'nothing' }).svg), strip(A.character('riffle', { pose: 'juggle' }).svg), 'juggle keeps its own three, and holds nothing else');
@@ -3702,7 +3711,9 @@ test('ReedClan’s four coats are marsh coats of their own: none of LOOKS.fur’
     assert.ok(/class="pc-sheen"/.test(plain) && /class="pc-mud"/.test(plain), 'sleek and wet, mud to the elbows');
     for (const look of ALL_LOOKS) assert.strictEqual(strip(A.character('reedclan', { variant: v, pose, look, taken: [v, 1, 4] }).svg), plain, 'reedclan ' + v + ': ' + look.fur + ' changes nothing');
   }
-  assert.strictEqual(strip(A.character('reedclan', { variant: 9 }).svg), strip(A.character('reedclan', { variant: 4 }).svg), 'a variant out of range clamps');
+  // (changed on purpose 2026-10-31, chapter 10: ReedClan's leader is variant 5, so a variant past 5 clamps to the leader;
+  // no frame of chapters 1 to 9 names a ReedClan variant past 4, so nothing shipped moves)
+  assert.strictEqual(strip(A.character('reedclan', { variant: 9 }).svg), strip(A.character('reedclan', { variant: 5 }).svg), 'a variant out of range clamps');
   // the watchers' picture: nine ReedClan cats, three patrols, in their own coats whatever her look
   const r = (n) => ({ who: 'reedclan', variant: n }), REED9 = [r(3), r(1), r(4), r(2), r(3), r(1), r(4), r(2), r(3)];
   const pic = (look) => strip2(A.countsPicture({ table: 3, groups: 3, highlight: 0, who: REED9, look }));
@@ -3972,6 +3983,14 @@ test('dev/gallery-cats.html: chapter 6’s sections draw (Coil, Sleet, ReedClan,
 // this function on chapter 8's shipped snapshot's cats.js (~/potomac-crossing-work/ch09/shipped, commit
 // b6a8d4f) in a fresh process: ten fewer than chapter 8's 36,769 and 0b6f1e7d…, which the snapshot still
 // gives with per 8 back in.
+// Changed on purpose 2026-10-31 (chapter 10; its spec's section 4, "Counts art", and section 7), and re-taken: (1) the plain
+// sand at per 7 left the sweep, exactly as per 4, 6 and 8 did: chapter 10 scratches seven to a group four and three, and no
+// player reaches plain per-7 sand before chapter 10 (no set before it is on table 7; the Warrior Counts' one help on the 7s,
+// 7 × 7, opens only once chapter 10 is finished), while the per-7 swipes stay in; (2) Sprinkle looking down with the pebble
+// left it (chapter 10 puts the pebble in her claws; no frame of chapters 1 to 9 draws it); (3) a ReedClan cat is asked for
+// in chapter 9's four coats (variant 5 is chapter 10's leader; 5 and 6 drew as 4 before, so the drawings are the same).
+// The count and the hash below were taken by running this function on chapter 9's shipped snapshot's cats.js
+// (~/potomac-crossing-work/ch10/shipped, commit 5bde0c5) in a fresh process: thirteen entries fewer than 36,759.
 function sweep7(A) {
   const out = [];
   // chapter 7's vocabulary, as it shipped (constants: chapter 8 appends to A.vocab)
@@ -4027,7 +4046,7 @@ function sweep7(A) {
   // ----- the sand: every ground and style, per 1 to 10 (per 6 only where it is not chapter 7's: swipes and rows)
   for (const ground of [undefined, 'earth', 'mud', 'grit', 'log']) for (const style of [undefined, 'swipe']) for (const pair of [undefined, true])
     for (const [g, p, c] of [[4, 10, 20], [6, 5, 12], [9, 2, 4], [1, 1, 0], [6, 3, 9], [3, 4, 7], [2, 7, 9], [5, 8, 13], [2, 9, 9], [10, 10, 55], [7, 6, 20], [1, 6, 6]]) {
-      if ((p === 6 || p === 4 || p === 8) && !style) continue;
+      if ((p === 4 || p === 6 || p === 7 || p === 8) && !style) continue;
       sd({ groups: g, per: p, counted: c, ground, style, pair });
     }
   for (const step of [undefined, 10, 2, 6]) for (const [g, p, c] of [[4, 10, 10], [2, 8, 6], [3, 10, 30], [2, 6, 12], [3, 6, 4]]) sd({ groups: g, per: p, counted: c, layout: 'rows', ground: 'earth', step });
@@ -4036,7 +4055,9 @@ function sweep7(A) {
   const POSES = POSES7.slice(), MOODS = MOODS7.slice();
   const CATS = ['player', 'tallyheart', 'glintstar', 'waffles', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'murmurchime', 'sloshbank', 'reedclan'];
   let k = 0;
-  for (const who of CATS) for (const pose of POSES) for (const mood of MOODS) { k++; rec(A.character(who, { pose, mood, look: LOOKS[k % 6], variant: (k % 6) + 1, facing: k % 2 ? 'left' : 'right' })); }
+  // (a ReedClan variant past 4 drew as 4 until chapter 10 made 5 its leader: chapter 9's four, as they drew)
+  const V9 = (who, v) => (who === 'reedclan' ? Math.min(v, 4) : v);
+  for (const who of CATS) for (const pose of POSES) for (const mood of MOODS) { k++; rec(A.character(who, { pose, mood, look: LOOKS[k % 6], variant: V9(who, (k % 6) + 1), facing: k % 2 ? 'left' : 'right' })); }
   const EX = [{ wink: true }, { holds: 'bark' }, { holds: 'stone', holdAt: 'chin' }, { holds: 'vole' }, { holds: 'pebble', holdAt: 'nose' }, { flatEars: true, claws: true }, { puffed: true, tear: true },
     { moss: true, mist: true, squeeze: true }, { tuck: true }, { asleep: true, snail: true }, { snail: 'in', tap: 'nose' }, { buzz: true }, { dragonfly: true }, { glow: true }, { reach: true },
     { holds: 'pinecone', tap: 'pinecone' }, { holds: 'pinecone', holdAt: 'chin', asleep: true }, { tap: 'paw' }, { tap: 'ears' }, { starry: true }, { grass: true }, { tap: 'nothing', holds: 'nothing' }];
@@ -4046,7 +4067,7 @@ function sweep7(A) {
   for (const pose of OP.riffle) for (const ex of [{ holds: 'pole', tap: 'pole' }, { holds: 'fish' }, { holds: 'fish2', tear: true }, { glow: true }, { holds: 'string' }, { holds: 'pebbles', tap: 'pebbles' }, { holds: 'pebbles', holdAt: 'paws' }, { tap: 'cheeks' }, { pebbles: 5, squeeze: true, mist: true }])
     for (const mood of ['happy', 'neutral', 'worried']) rec(A.character('riffle', Object.assign({ pose, mood }, ex)));
   for (const who of ['sprinkle', 'sleet']) for (const pose of OP[who]) for (const mood of MOODS) for (const facing of ['left', 'right']) rec(A.character(who, { pose, mood, facing }));
-  for (const pose of OP.sprinkle) for (const ex of [{ mist: true }, { holds: 'pebble', tear: true, squeeze: true }, { mist: true, mood: 'happy', facing: 'left' }, { noArms: true }]) rec(A.character('sprinkle', Object.assign({ pose, mood: 'wonder' }, ex)));
+  for (const pose of OP.sprinkle) for (const ex of [{ mist: true }, { holds: 'pebble', tear: true, squeeze: true }, { mist: true, mood: 'happy', facing: 'left' }, { noArms: true }]) if (!(pose === 'lookdown' && ex.holds)) rec(A.character('sprinkle', Object.assign({ pose, mood: 'wonder' }, ex)));
   for (const pose of OP.sleet) rec(A.character('sleet', { pose, mood: 'proud', grass: true, lit: 3 }));
   for (const who of ['reynard', 'squall', 'patience', 'puddle', 'wisp', 'coil']) for (const pose of OP[who]) for (const mood of MOODS) for (const ex of [{}, { tear: true, mist: true, squeeze: true, flick: true, dragonfly: true, facing: 'left' }, { lit: 3, pole: true, noArms: true }])
     rec(A.character(who, Object.assign({ pose, mood }, ex)));
@@ -4091,7 +4112,8 @@ test('chapter 7 vocabulary: no new cast, pose or mood; the taps gain fish and mi
   assert.deepStrictEqual(A.vocab.extras.tap.slice(0, 9), ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes']);
   assert.deepStrictEqual(A.vocab.extras.tap.slice(9, 11), ['fish', 'mist']);
   assert.deepStrictEqual(A.vocab.extras.tap.slice(11, 13), ['tail', 'leaf']);
-  assert.deepStrictEqual(Object.keys(A.vocab.extras), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach', 'starry', 'grass', 'tailUp']);
+  // (chapter 10 appends wet and flash after them)
+  assert.deepStrictEqual(Object.keys(A.vocab.extras).slice(0, 12), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach', 'starry', 'grass', 'tailUp']);
 });
 
 test('chapters 1 to 6 are unchanged by chapter 7 (every earlier Counts picture, sand tally and character, hashed against the shipped tree)', async () => {
@@ -4101,8 +4123,10 @@ test('chapters 1 to 6 are unchanged by chapter 7 (every earlier Counts picture, 
   // (re-taken 2026-10-21 on chapter 7's shipped snapshot, see sweep7: the constants alone give chapter 7's
   // 36,779 and fe481193… there; without the plain per-4 sand, ten fewer and 0b6f1e7d…; re-taken 2026-10-24
   // on chapter 8's shipped snapshot without the plain per-8 sand: ten fewer again, and the hash below)
-  assert.strictEqual(got.n, 36759, 'as many drawings as the shipped tree made');
-  assert.strictEqual(got.sha, 'b7b05777f309d7e55ce64e9d23d7008a0bf185e2312d40b2780b1e8f69124e65');
+  // (re-taken 2026-10-31 on chapter 9's shipped snapshot, see sweep7: without the plain per-7 sand, Sprinkle looking down
+  // with the pebble, and with ReedClan's variants as chapter 9 drew them: 36,746 and the hash below; b7b05777… before)
+  assert.strictEqual(got.n, 36746, 'as many drawings as the shipped tree made');
+  assert.strictEqual(got.sha, '5b21b8c424d9a125ec6bf9b33cda15980ee972d64ab8b52c8ef814fe48633d18');
   // and here, in this process: the new keys are the only way in. Per 6 with no kind and no thing is
   // still chapter 1's pebble cats; another thing changes nothing; table 3 with the patrols' thing is
   // the patrols; table 1 with the tails' thing is the tails; a skip with no thing at per 6 too
@@ -4520,7 +4544,10 @@ function sweep8(A) {
   for (const pose of DZ7) for (const mist of [true, undefined]) rec(A.character('sprinkle', { pose, mood: mist ? 'wonder' : 'happy', facing: mist ? 'right' : 'left', mist, tap: 'mist' }));
   // asleep: 'half' (our cat curling up to sleep): every cat, every pose, five moods
   let k = 0;
-  for (const who of CATS) for (const pose of POSES7) for (const mood of ['kind', 'neutral', 'happy', 'sleepy', 'sad']) { k++; rec(A.character(who, { pose, mood, asleep: 'half', look: LOOKS[k % 6], variant: (k % 6) + 1, facing: k % 2 ? 'left' : 'right' })); }
+  // (a ReedClan variant past 4 drew as 4 until chapter 10 made 5 its leader: asked for as 4, the drawings are the very
+  // ones this sweep hashed, so its hash stands)
+  const V9 = (who, v) => (who === 'reedclan' ? Math.min(v, 4) : v);
+  for (const who of CATS) for (const pose of POSES7) for (const mood of ['kind', 'neutral', 'happy', 'sleepy', 'sad']) { k++; rec(A.character(who, { pose, mood, asleep: 'half', look: LOOKS[k % 6], variant: V9(who, (k % 6) + 1), facing: k % 2 ? 'left' : 'right' })); }
   out.push(JSON.stringify(MOODS7));
   return out;
 }
@@ -4549,10 +4576,11 @@ test('chapter 8 vocabulary: hail, snip and snatch after the rest; the cats’ ru
   assert.deepStrictEqual(A.vocab.cast.slice(26, 29), ['hail', 'snip', 'snatch']);
   assert.deepStrictEqual(A.vocab.poses.slice(15), ['run']);
   assert.deepStrictEqual(A.vocab.otherPoses.hail, HAIL_POSES);
-  assert.deepStrictEqual(A.vocab.otherPoses.snip, WEASEL_POSES);
-  assert.deepStrictEqual(A.vocab.otherPoses.snatch, WEASEL_POSES);
+  // (chapter 10 appends the weasels' swim and hidepaws, and Reynard's bow and swim: its own test is at the end of this file)
+  assert.deepStrictEqual(A.vocab.otherPoses.snip.slice(0, WEASEL_POSES.length), WEASEL_POSES);
+  assert.deepStrictEqual(A.vocab.otherPoses.snatch.slice(0, WEASEL_POSES.length), WEASEL_POSES);
   assert.deepStrictEqual(A.vocab.otherPoses.dog, DOG_POSES.concat(['lie']));
-  assert.deepStrictEqual(A.vocab.otherPoses.reynard, FOX_POSES.concat(['trot']));
+  assert.deepStrictEqual(A.vocab.otherPoses.reynard.slice(0, FOX_POSES.length + 1), FOX_POSES.concat(['trot']));
   assert.deepStrictEqual(A.vocab.otherPoses.riffle.slice(-1), ['puff'], 'Riffle has no new pose: no run, no walk (on all fours he scrambles)');
   assert.deepStrictEqual(A.vocab.extras.tap.slice(11, 13), ['tail', 'leaf']);
   assert.deepStrictEqual(A.vocab.extras.holds.slice(10, 13), ['leaf', 'glass', 'mouse']);
@@ -5107,7 +5135,8 @@ const boxOfPairs = (ps) => ps.reduce((b, q) => [Math.min(b[0], q[0]), Math.min(b
 const wings = (svg) => (svg.match(/<path class="pc-wing" d="([^"]+)"/g) || []).map((m) => boxOfPairs(pairsOf(m.match(/d="([^"]+)"/)[1])));
 
 test('chapter 9 vocabulary: thymeleaf, mizzle, groveclan and spider after the rest; Mizzle’s and the spider’s poses; Sprinkle’s flights; Squall’s hidden; GroveClan’s variants; the tap wing and the hold mint (earlier ids never move)', () => {
-  assert.deepStrictEqual(A.vocab.cast.slice(29), ['thymeleaf', 'mizzle', 'groveclan', 'spider']);
+  // (chapter 10 appends mistscale after them, GroveClan's 3 to 5, the hold miststone and the extras wet and flash: its own test is at the end of this file)
+  assert.deepStrictEqual(A.vocab.cast.slice(29, 33), ['thymeleaf', 'mizzle', 'groveclan', 'spider']);
   assert.deepStrictEqual(A.vocab.poses.slice(15), ['run'], 'no new cat pose: Thymeleaf and GroveClan take every cat pose');
   assert.deepStrictEqual(A.vocab.moods, MOODS6, 'no new mood');
   assert.deepStrictEqual(A.vocab.otherPoses.mizzle, MIZZLE_POSES);
@@ -5115,15 +5144,17 @@ test('chapter 9 vocabulary: thymeleaf, mizzle, groveclan and spider after the re
   assert.deepStrictEqual(A.vocab.otherPoses.sprinkle.slice(0, 20), DZ_POSES.slice(0, 19).concat(['lookdown']));
   assert.deepStrictEqual(A.vocab.otherPoses.sprinkle.slice(20), FLIGHTS);
   assert.deepStrictEqual(A.vocab.otherPoses.squall, SQUALL_POSES.concat(['hidden']));
-  assert.deepStrictEqual(A.vocab.variants.groveclan, [1, 2]);
+  assert.deepStrictEqual(A.vocab.variants.groveclan.slice(0, 2), [1, 2]);
   assert.deepStrictEqual(A.vocab.extras.tap.slice(13), ['wing']);
-  assert.deepStrictEqual(A.vocab.extras.holds.slice(13), ['mint']);
-  assert.deepStrictEqual(Object.keys(A.vocab.extras), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach', 'starry', 'grass', 'tailUp'], 'no new extra key');
+  assert.deepStrictEqual(A.vocab.extras.holds.slice(13, 14), ['mint']);
+  assert.deepStrictEqual(Object.keys(A.vocab.extras).slice(0, 12), ['tuck', 'asleep', 'snail', 'buzz', 'dragonfly', 'glow', 'tap', 'holds', 'reach', 'starry', 'grass', 'tailUp'], 'no new extra key');
   for (const who of ['thymeleaf', 'mizzle', 'spider']) assert.ok(!(who in A.vocab.variants), 'one ' + who);
   // an unknown pose: Mizzle curls up; the spider spins; GroveClan out of range clamps
   assert.strictEqual(strip(A.character('mizzle', { pose: 'nope' }).svg), strip(A.character('mizzle', { pose: 'curl' }).svg));
   assert.strictEqual(strip(A.character('spider', { pose: 'nope' }).svg), strip(A.character('spider', { pose: 'spin' }).svg));
-  assert.strictEqual(strip(A.character('groveclan', { variant: 7 }).svg), strip(A.character('groveclan', { variant: 2 }).svg));
+  // (changed on purpose 2026-10-31, chapter 10: GroveClan's coats are five now, so a variant past 5 clamps to the fifth;
+  // no frame of chapters 1 to 9 names a GroveClan variant past 2)
+  assert.strictEqual(strip(A.character('groveclan', { variant: 7 }).svg), strip(A.character('groveclan', { variant: 5 }).svg));
   assert.strictEqual(strip(A.character('groveclan', {}).svg), strip(A.character('groveclan', { variant: 1 }).svg), 'no variant reads as 1');
   // the published lists are copies
   A.vocab.otherPoses.mizzle.push('nope');
@@ -5683,4 +5714,497 @@ test('dev/gallery-cats.html: chapter 9’s sections draw (Thymeleaf, GroveClan, 
   for (const id of ['sprinkle', 'squall', 'otters', 'poses']) assert.ok(!/undefined|NaN/.test(run('?only=' + id).out), id);
   for (const pose of ['hop', 'flap', 'glide', 'fly', 'splash']) assert.ok(new RegExp('<small title="' + pose + ' · \\w+">').test(run('?only=sprinkle').out), 'sprinkle: ' + pose);
   assert.ok(/<small title="hidden · shout">/.test(run('?only=squall').out), 'squall: hidden');
+});
+
+// ================================================================== chapter 10
+// docs/chapters/10-the-gathering.spec.md, section 4: the grown Mistscales (Mama and the eldest); ReedClan's
+// and GroveClan's leaders and two GroveClan crowd coats; Puddle's eyes; the dragonets' `tap: 'nose'`;
+// Reynard's bow and swim, the weasels' swim and hidepaws, `wet`; our cat's mist stone (`flash`, `tap:
+// 'stone'`); Sprinkle's pebble in her claws in the air and looking down; and the Counts art of the 7s: the
+// clutches, the sand at per 7, the marks at per 7 on a log, the roll call's forepaws (Hail, Mizzle, the
+// shapes in the mist, seven in a row).
+
+// Chapter 9's own cast and Counts art, unchanged by chapter 10: the sweep below, run on chapter 9's shipped
+// snapshot (~/potomac-crossing-work/ch10/shipped, commit 5bde0c5, its cats.js) in a fresh process of its own,
+// gave the count and the hash in the test (taken 2026-10-31); run here the same way, today's cats.js must
+// give the same. It covers Thymeleaf in every cat pose and mood and his extras, GroveClan's elder and
+// apprentice (every pose and mood, any look), Mizzle (every pose, mood and facing, asleep, her claws lit),
+// the spider, Sprinkle's five flights in every mood and facing and `tap: 'wing'` in every pose of hers,
+// Squall hidden (with and without the pole), Riffle's mint in every pose, and the Counts art of the 8s: the
+// spiders, one spider's two sides, the doses (drops, rubs, flaps), the acorns, and the plain sand at per 8 on
+// every ground. It reads chapter 9's vocabulary as constants (chapter 10 appends to A.vocab); it holds
+// nothing chapter 10 changes on purpose (Sprinkle's pebble in the air is chapter 10's). If any of this art
+// is ever changed on purpose, take a new hash and say so.
+function sweep10(A) {
+  const out = [];
+  const MOODS9 = ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn', 'sad', 'shy'];
+  const POSES9 = ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer', 'pawup', 'tummy', 'situp', 'run'];
+  const MIZZLE9 = ['curl', 'yawn', 'sit', 'wake', 'pawup'], SPIDER9 = ['spin', 'wave'], FLIGHTS9 = ['hop', 'flap', 'glide', 'fly', 'splash'];
+  const DZ9 = ['eyes', 'unfold', 'hide', 'sniff', 'sit', 'wings', 'flat', 'gulp', 'burp', 'pawsup', 'pawup', 'draw', 'touch', 'peek', 'curl', 'lie',
+    'check', 'tailout', 'tailup', 'lookdown', 'hop', 'flap', 'glide', 'fly', 'splash'];
+  const OTTER9 = ['stand', 'sit', 'scramble', 'swim', 'float', 'juggle', 'slide', 'hug', 'sun', 'dive', 'hush', 'whistle', 'groan', 'flip', 'hop', 'point', 'fall', 'slap', 'puff'];
+  const s = (x) => String(x).replace(/pcs?[0-9a-z]+-/g, '');
+  const LOOKS = [{ fur: 'calico', marking: 'white-chest', eyes: 'odd', sex: 'tom' }, { fur: 'ginger', marking: 'white-paws', eyes: 'amber', sex: 'she' },
+    { fur: 'tortie', marking: 'none', eyes: 'green', sex: 'she' }, { fur: 'grey', marking: 'nose-splash', eyes: 'blue', sex: 'tom' }, { fur: 'brown-tabby', marking: 'back-stripe', eyes: 'copper', sex: 'she' }, undefined];
+  const cp = (o) => out.push(s(A.countsPicture(o)));
+  const sd = (o) => out.push(s(A.sand(o)));
+  const rec = (r) => out.push(s(r.svg), JSON.stringify([r.w, r.h, r.head, r.headBox || null, r.bounds || null, r.held || null, r.chestTop || null, r.paw || null, r.pole || null, r.front || null, r.nest || null]));
+  let k = 0;
+  // ----- Thymeleaf: every cat pose, every mood, both facings; his extras
+  for (const pose of POSES9) for (const mood of MOODS9) { k++; rec(A.character('thymeleaf', { pose, mood, facing: k % 2 ? 'left' : 'right', look: LOOKS[k % 6] })); }
+  for (const pose of POSES9) for (const ex of [{ holds: 'leaf' }, { holds: 'leaf', holdAt: 'mouth' }, { claws: true, tap: 'paw' }, { tailUp: true, tap: 'tail' }, { glow: true }, { asleep: 'half' }])
+    rec(A.character('thymeleaf', Object.assign({ pose, mood: 'kind' }, ex)));
+  // ----- GroveClan's elder and apprentice: every cat pose and mood, a look changing nothing
+  for (const v of [1, 2]) for (const pose of POSES9) for (const mood of MOODS9) { k++; rec(A.character('groveclan', { variant: v, pose, mood, facing: k % 2 ? 'left' : 'right', look: LOOKS[k % 6], taken: [v] })); }
+  // ----- Mizzle: every pose, mood and facing; asleep; her claws lit
+  for (const pose of MIZZLE9) for (const mood of MOODS9) for (const facing of ['left', 'right']) rec(A.character('mizzle', { pose, mood, facing }));
+  for (const pose of MIZZLE9) for (const ex of [{ asleep: true }, { asleep: 'half', mood: 'happy' }, { tear: true, mist: true, squeeze: true }]) rec(A.character('mizzle', Object.assign({ pose, mood: 'sleepy' }, ex)));
+  for (let n = 0; n <= 5; n++) rec(A.character('mizzle', { pose: 'pawup', mood: 'kind', lit: n }));
+  // ----- the spider
+  for (const pose of SPIDER9) for (const mood of MOODS9) for (const facing of ['left', 'right']) rec(A.character('spider', { pose, mood, facing }));
+  // ----- Sprinkle: her flights in every mood and facing; tap: wing in every pose of hers
+  for (const pose of FLIGHTS9) for (const mood of MOODS9) for (const facing of ['left', 'right']) rec(A.character('sprinkle', { pose, mood, facing }));
+  for (const pose of DZ9) for (const facing of ['left', 'right']) rec(A.character('sprinkle', { pose, mood: 'happy', facing, tap: 'wing' }));
+  // ----- Squall hidden, with and without the pole; Riffle's mint
+  for (const mood of MOODS9) for (const facing of ['left', 'right']) for (const pole of [undefined, true]) rec(A.character('squall', { pose: 'hidden', mood, facing, pole }));
+  for (const pose of OTTER9) for (const holdAt of [undefined, 'paws', 'mouth']) rec(A.character('riffle', { pose, mood: 'happy', holds: 'mint', holdAt, facing: pose.length % 2 ? 'left' : 'right' }));
+  // ----- the Counts art of the 8s
+  for (let g = 1; g <= 10; g++) for (const hl of [0, 3, 8, 13, g * 8]) for (const fl of [{}, { totals: true, next: true }]) cp(Object.assign({ table: 8, per: 8, groups: g, thing: 'leg', highlight: hl }, fl));
+  for (let hl = 0; hl <= 8; hl++) cp({ table: 4, per: 4, groups: 2, thing: 'leg', who: [{ who: 'spider' }], highlight: hl, totals: hl % 2 === 0, next: hl < 8 });
+  for (const thing of ['drop', 'rub', 'flap', undefined]) for (let g = 1; g <= 10; g += 3) for (const hl of [0, 5, g * 8]) cp({ table: 8, per: 8, groups: g, kind: 'dose', layout: 'rows', thing, highlight: hl, totals: hl > 0, next: hl < g * 8 });
+  for (let g = 1; g <= 10; g++) for (const hl of [0, 8, g * 8]) cp({ table: 8, per: 8, groups: g, kind: 'acorns', highlight: hl, totals: g % 2 === 0, next: hl < g * 8 });
+  for (const ground of [undefined, 'earth', 'mud', 'grit', 'log']) for (let g = 1; g <= 10; g++) for (const c of [0, 4, 8, 13, g * 8]) sd({ groups: g, per: 8, counted: Math.min(c, g * 8), ground });
+  out.push(JSON.stringify([MOODS9, POSES9, MIZZLE9, SPIDER9, FLIGHTS9, DZ9, OTTER9]));
+  return out;
+}
+const CH10_SWEEP = new Promise((resolve) => {
+  const code = 'const PC = require(' + JSON.stringify(require('path').join(__dirname, '..', 'app', 'art', 'cats.js')) + ');\n' +
+    'const out = (' + sweep10.toString() + ')(PC.art);\n' +
+    'process.stdout.write(JSON.stringify({ n: out.length, sha: require("crypto").createHash("sha256").update(out.join("\\n")).digest("hex") }));';
+  require('child_process').execFile(process.execPath, ['-e', code], { maxBuffer: 1 << 20 }, (err, stdout, stderr) => resolve({ err, stdout, stderr }));
+});
+
+test('chapter 9’s own cast and Counts art are unchanged by chapter 10 (Thymeleaf, GroveClan’s elder and apprentice, Mizzle, the spider, Sprinkle’s flights and her wing to tap, Squall hidden, Riffle’s mint, the spiders, doses, acorns and the sand at per 8: hashed against the shipped tree)', async () => {
+  const r = await CH10_SWEEP;
+  assert.ok(!r.err, 'the sweep ran: ' + (r.err && r.err.message) + ' ' + r.stderr);
+  const got = JSON.parse(r.stdout);
+  // taken 2026-10-31 by running sweep10 on chapter 9's shipped snapshot in a fresh process
+  assert.strictEqual(got.n, 3318, 'as many drawings as the shipped tree made');
+  assert.strictEqual(got.sha, 'e39da2bb0f4991abfb4e9aade351231280e73f310e6dec9dd3bdf98cd22d67e8');
+});
+
+const MS_POSES = ['lean', 'nuzzle', 'lift', 'bow'];
+const FOX10 = ['bow', 'swim'], WEASEL10 = ['swim', 'hidepaws'];
+const NOSE_DRAGONETS = ['squall', 'puddle', 'wisp', 'sleet', 'hail', 'mizzle'];
+// the tap marks a drawing carries, as [class, x, y, w, h] for a dragonet's nose rect
+const noseRects = (svg) => (svg.match(/<rect class="pc-tap pc-tap-nose"[^>]*>/g) || []).map((m) => [Number(m.match(/ x="([-\d.]+)"/)[1]), Number(m.match(/ y="([-\d.]+)"/)[1]), Number(m.match(/width="([\d.]+)"/)[1]), Number(m.match(/height="([\d.]+)"/)[1]), /fill="none"/.test(m)]);
+// a group's matrix(…) in a character's svg, the outermost one: the drawing's own box transform
+const outerM = (svg) => (svg.match(/^<g(?: class="[^"]*")? transform="matrix\(([^)]+)\)"/) || [null, '1,0,0,1,0,0'])[1].split(',').map(Number);
+const viaM = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+const inBox10 = (b, w, h, pad) => b.x0 >= -(pad || 0) && b.y0 >= -(pad || 0) && b.x1 <= w + (pad || 0) && b.y1 <= h + (pad || 0);
+
+test('chapter 10 vocabulary: mistscale after the rest; its poses; Puddle’s eyes, Reynard’s bow and swim, the weasels’ swim and hidepaws; the variants; the hold miststone; the extras wet and flash (earlier ids never move)', () => {
+  assert.deepStrictEqual(A.vocab.cast.slice(29), ['thymeleaf', 'mizzle', 'groveclan', 'spider', 'mistscale']);
+  assert.deepStrictEqual(A.vocab.poses.slice(15), ['run'], 'no new cat pose: the leaders and the crowd take every cat pose');
+  assert.deepStrictEqual(A.vocab.moods, MOODS6, 'no new mood');
+  assert.deepStrictEqual(A.vocab.otherPoses.mistscale, MS_POSES);
+  assert.deepStrictEqual(A.vocab.otherPoses.puddle, PUDDLE_POSES.concat(['eyes']));
+  assert.deepStrictEqual(A.vocab.otherPoses.reynard, FOX_POSES.concat(['trot'], FOX10));
+  assert.deepStrictEqual(A.vocab.otherPoses.snip, WEASEL_POSES.concat(WEASEL10));
+  assert.deepStrictEqual(A.vocab.otherPoses.snatch, WEASEL_POSES.concat(WEASEL10));
+  assert.deepStrictEqual(A.vocab.variants.reedclan, [1, 2, 3, 4, 5]);
+  assert.deepStrictEqual(A.vocab.variants.groveclan, [1, 2, 3, 4, 5]);
+  assert.deepStrictEqual(A.vocab.variants.mistscale, [1, 2]);
+  assert.deepStrictEqual(A.vocab.extras.holds.slice(14), ['miststone']);
+  assert.deepStrictEqual(A.vocab.extras.tap, ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes', 'fish', 'mist', 'tail', 'leaf', 'wing'], 'no new tap name: nose and stone are chapter 5’s and 6’s');
+  assert.deepStrictEqual(Object.keys(A.vocab.extras).slice(12), ['wet', 'flash']);
+  assert.deepStrictEqual(A.vocab.extras.wet, [true]);
+  assert.deepStrictEqual(A.vocab.extras.flash, [true]);
+  // the published lists are copies
+  A.vocab.otherPoses.mistscale.push('nope');
+  assert.strictEqual(strip(A.character('mistscale', { pose: 'nope' }).svg), strip(A.character('mistscale', { pose: 'lean' }).svg), 'an unknown pose: she leans out of the mist');
+  A.vocab.otherPoses.mistscale.pop();
+});
+
+test('the grown Mistscales: every pose, mood, variant and facing draws inside her box; her head big, her face in the box; lean is what an unknown pose draws; the variants clamp', () => {
+  let n = 0;
+  for (const variant of [1, 2]) for (const pose of MS_POSES) for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    const r = A.character('mistscale', { variant, pose, mood, facing }), label = 'mistscale ' + variant + ' ' + pose + ' ' + mood + ' ' + facing;
+    checkResult(r, label);
+    assert.strictEqual(r.w, 640); assert.strictEqual(r.h, 640);
+    assert.ok(inBox10(r.headBox, r.w, r.h, 0.5), label + ': her face in her box ' + JSON.stringify(r.headBox));
+    assert.ok(inBox10(r.bounds, r.w, r.h, 0.5), label + ': inside her box');
+    // a great head: its box at least a third of hers tall and half as wide (her face is what the scene sizes her by)
+    assert.ok(r.headBox.y1 - r.headBox.y0 > r.h / 3 && r.headBox.x1 - r.headBox.x0 > r.w / 2, label + ': a great head ' + JSON.stringify(r.headBox));
+    n++;
+  }
+  assert.strictEqual(n, 256);
+  assert.strictEqual(strip(A.character('mistscale', { variant: 9 }).svg), strip(A.character('mistscale', { variant: 2 }).svg), 'a variant out of range clamps');
+  assert.strictEqual(strip(A.character('mistscale', {}).svg), strip(A.character('mistscale', { variant: 1, pose: 'lean', mood: 'kind' }).svg), 'no variant is Mama, leaning out, kind (her resting face)');
+  // mirrored for facing left
+  for (const pose of MS_POSES) {
+    const r = A.character('mistscale', { pose }), l = A.character('mistscale', { pose, facing: 'left' });
+    assert.ok(Math.abs(l.headBox.x0 - (r.w - r.headBox.x1)) < 1 && Math.abs(l.headBox.x1 - (r.w - r.headBox.x0)) < 1, pose + ': mirrored');
+    // facing right her face is at the right of her box, the neck's root in the mist at the bottom left
+    assert.ok((r.headBox.x0 + r.headBox.x1) / 2 > r.w / 2, pose + ': her face at the right');
+  }
+});
+
+test('the grown Mistscales are gentle: no body, no teeth, no claws; a mouth open only in her call (lift); stern, scared and laugh drawn her way; the mist at her neck’s root the same in every pose', () => {
+  for (const variant of [1, 2]) for (const pose of MS_POSES) for (const mood of A.vocab.moods) {
+    const s = A.character('mistscale', { variant, pose, mood }).svg;
+    assert.ok(!/pc-dclaws|pc-claws|pc-teeth|tooth/.test(s), 'no claws, no teeth: ' + pose + ' ' + mood);
+    assert.ok(/class="pc-mist"/.test(s), 'her neck goes into the mist');
+    // the open mouth is filled with her mouth's dark (Sprinkle's family's 'o'): only her call opens it
+    assert.strictEqual(s.includes('fill="' + (variant === 1 ? '#5d3844' : '#5a3a42') + '"'), pose === 'lift', pose + ' ' + mood + ': the mouth ' + (pose === 'lift' ? 'a little open' : 'shut'));
+  }
+  for (const [m, as] of [['stern', 'solemn'], ['scared', 'worried'], ['laugh', 'happy']]) for (const pose of MS_POSES)
+    assert.strictEqual(strip(A.character('mistscale', { pose, mood: m }).svg), strip(A.character('mistscale', { pose, mood: as }).svg), m + ' is drawn ' + as);
+  for (const variant of [1, 2]) {
+    const mists = MS_POSES.map((pose) => A.character('mistscale', { variant, pose }).svg.match(/<g class="pc-mist"[^]*?<\/g>/)[0]);
+    assert.ok(mists.every((m) => m === mists[0]), 'variant ' + variant + ': her neck’s root stays put, pose to pose');
+  }
+  // the bow: eyes closed, her head down at the grass; the nuzzle: her nose down low, at a small dragonet's height
+  const bow = A.character('mistscale', { variant: 2, pose: 'bow' }), lean = A.character('mistscale', { variant: 2, pose: 'lean' }), nuz = A.character('mistscale', { variant: 1, pose: 'nuzzle' });
+  assert.ok(bow.headBox.y1 > bow.h - 40, 'bowed all the way down to the grass: ' + bow.headBox.y1);
+  assert.ok(nuz.headBox.y1 > lean.headBox.y1 + 100, 'nuzzling, her head is lowered');
+  assert.ok(A.character('mistscale', { pose: 'lift' }).headBox.y0 < lean.headBox.y0 + 10, 'lifted high');
+});
+
+test('Mama and the eldest: Sprinkle’s grey grown, and grey and weathered (never silver-white: Sleet is), a paler muzzle, lichen spots and heavy lids for the eldest only', () => {
+  const mama = A.character('mistscale', { variant: 1, pose: 'lean', mood: 'kind' }).svg, eld = A.character('mistscale', { variant: 2, pose: 'lean', mood: 'kind' }).svg;
+  assert.ok(mama.includes('fill="#a2acb2"') && eld.includes('fill="#8e9290"'), 'their greys');
+  assert.ok(rgbDist('#a2acb2', '#a8b1b6') < 15, 'Mama: Sprinkle’s colour grown');
+  for (const silver of ['#e1e7ed', '#ffffff', '#fbf8f2']) assert.ok(rgbDist('#8e9290', silver) > 100, 'the eldest is never silver-white: ' + silver);
+  assert.ok(/pc-lichen/.test(eld) && !/pc-lichen/.test(mama), 'lichen-pale spots: the eldest’s');
+  assert.ok(eld.includes('fill="#dcdacd"') && !mama.includes('fill="#dcdacd"'), 'the eldest’s paler muzzle');
+  assert.notStrictEqual(strip(eld).replace(/#[0-9a-f]{6}/g, ''), strip(mama).replace(/#[0-9a-f]{6}/g, ''), 'heavy-lidded old eyes: not Mama’s face in other colours');
+  assert.ok(/class="pc-horn"/.test(mama) && count(mama, /class="pc-horn"/g) === 2, 'two soft horns');
+});
+
+test('ReedClan’s leader and GroveClan’s leader and crowd coats: coats of their own, apart from every fur, CLAN, REED, GROVE and named coat; every cat pose and mood; a look changes nothing', () => {
+  const NEW = { 'reedclan 5': '#7d4127', 'groveclan 3': '#7a7652', 'groveclan 4': '#d6ccba', 'groveclan 5': '#b8703f' };
+  const OTHERS = Object.assign({}, NAMED_BASES, { reed1: REED_BASES[0], reed2: REED_BASES[1], reed3: REED_BASES[2], reed4: REED_BASES[3], grove1: GROVE_BASES[0], grove2: GROVE_BASES[1] });
+  for (const [k, base] of Object.entries(NEW)) {
+    for (const [fur, fb] of Object.entries(FUR_BASES)) assert.ok(rgbDist(base, fb) >= (k === 'reedclan 5' ? 45 : 30), k + ' vs ' + fur + ': ' + rgbDist(base, fb).toFixed(1));
+    for (const [who, ob] of Object.entries(OTHERS)) assert.ok(rgbDist(base, ob) >= 30, k + ' vs ' + who + ': ' + rgbDist(base, ob).toFixed(1));
+    for (const [k2, b2] of Object.entries(NEW)) if (k2 !== k) assert.ok(rgbDist(base, b2) >= 30, k + ' vs ' + k2);
+  }
+  for (const [who, v] of [['reedclan', 5], ['groveclan', 3], ['groveclan', 4], ['groveclan', 5]]) {
+    for (const pose of A.vocab.poses) for (const mood of A.vocab.moods) checkResult(A.character(who, { variant: v, pose, mood, facing: mood.length % 2 ? 'left' : 'right' }), who + ' ' + v + ' ' + pose + ' ' + mood);
+    for (const pose of ['sit', 'situp', 'walk', 'stand']) {
+      const plain = strip(A.character(who, { variant: v, pose }).svg);
+      assert.ok(plain.includes('fill="' + NEW[who + ' ' + v] + '"'), who + ' ' + v + ': its own coat');
+      for (const fb of Object.values(FUR_BASES)) assert.ok(!plain.includes('fill="' + fb + '"'), who + ' ' + v + ' ' + pose + ': no ' + fb);
+      for (const look of ALL_LOOKS) assert.strictEqual(strip(A.character(who, { variant: v, pose, look, taken: [v, 1] }).svg), plain, who + ' ' + v + ': ' + look.fur + ' changes nothing');
+      if (who === 'reedclan') assert.ok(/class="pc-sheen"/.test(plain) && /class="pc-mud"/.test(plain), 'ReedClan’s leader: sleek and muddy, a marsh cat');
+      else assert.ok(count(plain, /class="pc-dapple"/g) >= 4 && !/pc-sheen|pc-mud/.test(plain), who + ' ' + v + ': dappled, a woodland cat');
+    }
+  }
+  const leader = A.character('reedclan', { variant: 5, pose: 'sit' }).svg;
+  assert.ok(leader.includes('M-13,4Q-9,-14 1,-31L7,-23'), 'a notch in one ear');
+  assert.ok(leader.includes('fill="#3d1d0f"'), 'reed-dark stripes');
+  assert.ok(leader.includes('fill="#d3cfca"'), 'a pale grey chest');
+  assert.ok(A.character('reedclan', { variant: 5, pose: 'sit' }).h - A.character('reedclan', { variant: 5, pose: 'sit' }).headBox.y0 > A.character('reedclan', { variant: 1, pose: 'sit' }).h - A.character('reedclan', { variant: 1, pose: 'sit' }).headBox.y0, 'big: taller than the ReedClan she-cat');
+  const grove = A.character('groveclan', { variant: 3, pose: 'sit' }).svg;
+  assert.ok(grove.includes('<g fill="#fcf9f3">') || grove.includes('fill="#fcf9f3"'), 'GroveClan’s leader: a white chest and paws');
+  // in a Counts picture's `who`, each in its own coat
+  const pic = A.countsPicture({ table: 3, groups: 2, highlight: 0, who: [{ who: 'reedclan', variant: 5 }, { who: 'groveclan', variant: 3 }, { who: 'groveclan', variant: 4 }, { who: 'groveclan', variant: 5 }, { who: 'reedclan', variant: 5 }, { who: 'groveclan', variant: 3 }] });
+  for (const base of Object.values(NEW)) assert.ok(pic.includes(base), 'the picture draws ' + base);
+});
+
+test('Puddle’s eyes: only his two big eyes and the top of his head above the water, ripples round them, nothing below the waterline, no nose to tap', () => {
+  for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    const r = A.character('puddle', { pose: 'eyes', mood, facing }), label = 'eyes ' + mood + ' ' + facing;
+    checkResult(r, label);
+    assert.ok(r.bounds.y1 <= r.h + 0.5 && r.headBox.y1 <= r.h + 0.5, label + ': nothing below the waterline');
+    assert.ok(/class="pc-ripple"/.test(r.svg), label + ': ripples');
+  }
+  const eyes = A.character('puddle', { pose: 'eyes', mood: 'wonder' }), head = A.character('puddle', { pose: 'head', mood: 'wonder' });
+  assert.ok(eyes.h - eyes.headBox.y0 < (head.h - head.headBox.y0) * 0.6, 'only the top of his head shows: ' + (eyes.h - eyes.headBox.y0) + ' of ' + (head.h - head.headBox.y0));
+  assert.strictEqual(eyes.w, 480, 'his water box');
+  assert.ok(Math.abs((eyes.headBox.x1 - eyes.headBox.x0) - (head.headBox.x1 - head.headBox.x0)) < 8, 'his head as big as in his other water poses');
+  assert.strictEqual(noseRects(A.character('puddle', { pose: 'eyes', tap: 'nose' }).svg).length, 0, 'his snout is under the water');
+});
+
+test('the dragonets’ goodbyes, `tap: \'nose\'`: Squall, Puddle, Wisp, Sleet, Hail and Mizzle each mark the snout with one unpainted rect, on the face, in every pose that shows it; the drawing otherwise as it was', () => {
+  const NO_SNOUT = { squall: ['hidden'], sleet: ['hidden', 'tail'], puddle: ['foot', 'eyes'] };
+  for (const who of NOSE_DRAGONETS) for (const pose of A.vocab.otherPoses[who]) for (const facing of FACINGS) {
+    const r = A.character(who, { pose, mood: 'happy', facing, tap: 'nose' }), plain = A.character(who, { pose, mood: 'happy', facing }), label = who + ' ' + pose + ' ' + facing;
+    const rects = noseRects(r.svg);
+    assert.strictEqual(noseRects(plain.svg).length, 0, label + ': no mark without the tap');
+    if ((NO_SNOUT[who] || []).includes(pose)) { assert.strictEqual(rects.length, 0, label + ': no snout shows, no mark'); continue; }
+    assert.strictEqual(rects.length, 1, label + ': one nose');
+    assert.ok(rects[0][4], label + ': unpainted');
+    // the rect, in the box, sits on the face (its middle inside the head box)
+    const m = outerM(r.svg), c = viaM(m, rects[0][0] + rects[0][2] / 2, rects[0][1] + rects[0][3] / 2), hb = r.headBox;
+    assert.ok(c[0] >= hb.x0 - 4 && c[0] <= hb.x1 + 4 && c[1] >= hb.y0 - 4 && c[1] <= hb.y1 + 6, label + ': on the face ' + c.map((v) => v.toFixed(1)) + ' in ' + JSON.stringify(hb));
+    assert.ok(rects[0][2] > 8 && rects[0][3] > 6, label + ': big enough to glow');
+    assert.strictEqual(strip(r.svg.replace(/<rect class="pc-tap pc-tap-nose"[^>]*>/, '')), strip(plain.svg), label + ': nothing else changes');
+  }
+  // the tap is theirs: Sprinkle and the cats are as they were (a cat's nose tap is chapter 5's own mark)
+  assert.strictEqual(noseRects(A.character('sprinkle', { pose: 'sit', tap: 'nose' }).svg).length, 0);
+  assert.strictEqual(noseRects(A.character('player', { pose: 'crouch', tap: 'nose', look: LOOK9 }).svg).length, 0);
+  // Hail and Mizzle take noArms (small behind a raised forepaw of their own in the roll call's picture)
+  for (const who of ['hail', 'mizzle']) assert.ok(A.character(who, { pose: 'sit', noArms: true }).svg.length < A.character(who, { pose: 'sit' }).svg.length, who + ': noArms leaves the forelegs out');
+});
+
+test('Reynard’s bow and swim, and `wet: true` on Reynard, Snip and Snatch: every mood and facing draws; swimming, nothing below the waterline and no legs; wet, darker, spiky and dripping', () => {
+  for (const pose of FOX10) for (const mood of A.vocab.moods) for (const facing of FACINGS) for (const wet of [undefined, true]) {
+    const r = A.character('reynard', { pose, mood, facing, wet }), label = 'reynard ' + pose + ' ' + mood + ' ' + facing + (wet ? ' wet' : '');
+    checkResult(r, label);
+    assert.ok(inBox10(r.bounds, r.w, r.h, 1), label + ': in his box');
+    if (pose === 'swim') assert.ok(r.bounds.y1 <= r.h + 0.5 && /class="pc-ripple"/.test(r.svg) && !/class="pc-drips"/.test(r.svg), label + ': in the water');
+  }
+  const swim = A.character('reynard', { pose: 'swim', mood: 'worried' }), sit = A.character('reynard', { pose: 'sit' });
+  assert.ok(count(swim.svg, /fill="#352d2e"/g) < count(sit.svg, /fill="#352d2e"/g) - 3, 'swimming: no black socks or paws (no legs above the water; his ear tips still black)');
+  assert.ok(swim.h - swim.bounds.y0 < (sit.h - sit.bounds.y0) * 0.6, 'swimming: only his head and back above the water');
+  const bow = A.character('reynard', { pose: 'bow', mood: 'proud' });
+  assert.ok(bow.headBox.y1 > sit.headBox.y1 + 20, 'bowing: his head low');
+  for (const pose of A.vocab.otherPoses.reynard) {
+    const w = A.character('reynard', { pose, mood: 'sad', wet: true }).svg, d = A.character('reynard', { pose, mood: 'sad' }).svg;
+    assert.ok(/class="pc-wet"/.test(w) && !/class="pc-wet"/.test(d), pose + ': wet spikes');
+    assert.ok(!w.includes('fill="#e2632a"') && d.includes('fill="#e2632a"'), pose + ': a little darker');
+    assert.strictEqual(/class="pc-drips"/.test(w), pose !== 'swim', pose + ': drips falling (none in the water)');
+  }
+  for (const who of ['snip', 'snatch']) for (const pose of A.vocab.otherPoses[who]) {
+    const w = A.character(who, { pose, mood: 'sad', wet: true }), d = A.character(who, { pose, mood: 'sad' });
+    checkResult(w, who + ' ' + pose + ' wet');
+    assert.ok(/class="pc-wet"/.test(w.svg) && !/class="pc-wet"/.test(d.svg), who + ' ' + pose + ': wet spikes');
+    assert.strictEqual(/class="pc-drips"/.test(w.svg), pose !== 'swim', who + ' ' + pose + ': drips (none in the water)');
+  }
+  assert.strictEqual(strip(A.character('reynard', { pose: 'sit', wet: false }).svg), strip(A.character('reynard', { pose: 'sit' }).svg), 'wet: false is as before');
+  assert.strictEqual(strip(A.character('player', { pose: 'sit', wet: true, look: LOOK9 }).svg), strip(A.character('player', { pose: 'sit', look: LOOK9 }).svg), 'wet is theirs (Sloshbank’s wet belly is his coat’s)');
+});
+
+test('Snip and Snatch: swim (low in the water, no mouse) and hidepaws (forepaws behind their backs, eyes wide; a mouse in the mouth); Snatch’s mouse in his mouth standing, held up in his forepaws sitting up', () => {
+  for (const who of ['snip', 'snatch']) for (const pose of WEASEL10) for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    const r = A.character(who, { pose, mood, facing }), label = who + ' ' + pose + ' ' + mood + ' ' + facing;
+    checkResult(r, label);
+    assert.ok(inBox10(r.bounds, r.w, r.h, 1), label + ': in the box');
+    if (pose === 'swim') assert.ok(r.bounds.y1 <= r.h + 0.5 && /class="pc-ripple"/.test(r.svg), label + ': in the water');
+  }
+  const held = (o) => A.character('snatch', Object.assign({ holds: 'mouse', mood: 'happy' }, o)).held;
+  assert.strictEqual(held({ pose: 'stand' }).at, 'mouth', 'standing: in his mouth (as chapter 8 drew it)');
+  assert.strictEqual(held({ pose: 'hidepaws' }).at, 'mouth', 'hiding his paws: in his mouth');
+  assert.strictEqual(held({ pose: 'hidepaws', holdAt: 'paws' }).at, 'mouth', 'his paws are behind his back');
+  assert.strictEqual(held({ pose: 'up' }).at, 'paws', '“Snatch holds up his mouse.”: in his forepaws');
+  assert.strictEqual(held({ pose: 'swim' }), undefined, 'swimming: no mouse');
+  // hiding his paws: the eyes wide (a big bead) whatever the mood but a sleepy one, and no forepaw in front of the chest
+  const hp = A.character('snip', { pose: 'hidepaws', mood: 'neutral' }).svg, up = A.character('snip', { pose: 'up', mood: 'neutral' }).svg;
+  assert.ok(/r="3.8"/.test(hp) && !/r="3.8"/.test(up), 'eyes wide and innocent');
+  assert.ok(Math.abs(A.character('snip', { pose: 'hidepaws' }).h - A.character('snip', { pose: 'up' }).h) < 1, 'standing up as tall as on the look-out');
+});
+
+test('our cat’s mist stone: `holds: \'miststone\'` at her paws sitting, held up between her forepaws sitting up, in her mouth on her feet; `flash: true` its blue and green band; `tap: \'stone\'` on it, only when she holds it', () => {
+  const look = LOOK9;
+  const sit = A.character('player', { pose: 'sit', look, holds: 'miststone' }), fl = A.character('player', { pose: 'sit', look, holds: 'miststone', flash: true });
+  assert.deepStrictEqual([sit.held.what, sit.held.at], ['miststone', 'paws']);
+  assert.ok(/class="pc-miststone"/.test(sit.svg) && !/pc-flash/.test(sit.svg), 'grey, no flash');
+  assert.ok(/class="pc-miststone pc-flashing"/.test(fl.svg) && /class="pc-flash"/.test(fl.svg), 'the flash');
+  // blue AND green (the final review's K0): the band's gradient laid across the stone's face, so its green stop lands inside
+  // the outline (across the band's bounding box, the green fell outside the stone and only blue was drawn)
+  const grad = (fl.defs || '') + fl.svg;
+  assert.match(grad, /<linearGradient id="[^"]+" gradientUnits="userSpaceOnUse" x1="-10" y1="-6" x2="10" y2="6"><stop offset="0" stop-color="#2f8fe0"\/><stop offset="\.35" stop-color="#3fd0f2"\/><stop offset="\.65" stop-color="#4fe0a0"\/><\/linearGradient>/, 'blue, cyan, then green across the face');
+  assert.strictEqual(A.character('player', { pose: 'situp', look, holds: 'miststone' }).held.at, 'paws');
+  assert.strictEqual(A.character('player', { pose: 'walk', look, holds: 'miststone' }).held.at, 'mouth');
+  assert.strictEqual(A.character('player', { pose: 'crouch', look, holds: 'miststone', holdAt: 'paws' }).held.at, 'paws');
+  for (const pose of A.vocab.poses) {
+    const t = A.character('player', { pose, look, holds: 'miststone', flash: true, tap: 'stone' });
+    checkResult(t, 'miststone ' + pose);
+    if (pose === 'fall' || pose === 'tummy') { assert.ok(!t.held && !/pc-tap-stone/.test(t.svg), pose + ': holds nothing'); continue; }
+    assert.strictEqual(count(t.svg, /class="pc-tap pc-tap-stone"/g), 1, pose + ': the stone to tap');
+    assert.ok(inBox10({ x0: t.held.x, y0: t.held.y, x1: t.held.x, y1: t.held.y }, t.w, t.h), pose + ': the stone in her box');
+  }
+  assert.ok(!/pc-tap-stone/.test(A.character('player', { pose: 'sit', look, tap: 'stone' }).svg), 'no stone, no mark');
+  assert.ok(!/pc-tap-stone/.test(A.character('player', { pose: 'sit', look, holds: 'stone', tap: 'stone' }).svg), 'Riffle’s lucky stone is not the mist stone');
+  assert.strictEqual(strip(A.character('player', { pose: 'sit', look, flash: true }).svg), strip(A.character('player', { pose: 'sit', look }).svg), 'flash without the stone changes nothing');
+});
+
+test('Sprinkle’s pebble in her claws in fly (between her forepaws) and lookdown (at the bottom of her box), each reporting `held`; Granny’s pole on an otter standing; Sprinkle’s fly with both wings up', () => {
+  for (const facing of FACINGS) {
+    const f = A.character('sprinkle', { pose: 'fly', holds: 'pebble', mood: 'happy', facing }), l = A.character('sprinkle', { pose: 'lookdown', holds: 'pebble', mood: 'kind', facing });
+    assert.deepStrictEqual([f.held.what, f.held.at], ['pebble', 'paws'], 'fly: in her forepaws');
+    assert.deepStrictEqual([l.held.what, l.held.at], ['pebble', 'paws'], 'lookdown: in her claws');
+    assert.ok(l.held.y > l.h * 0.85, 'lookdown: at the bottom of her box: ' + l.held.y);
+    assert.ok(f.held.y < f.h - 4 && f.held.y > f.bounds.y0, 'fly: up with her, not on the ground');
+    assert.ok(Math.abs(f.held.x - (facing === 'left' ? f.w - A.character('sprinkle', { pose: 'fly', holds: 'pebble', mood: 'happy' }).held.x : f.held.x)) < 1, 'mirrored');
+    assert.ok(count(f.svg, /class="pc-sprinkle-pebble"/g) === 1 && count(l.svg, /class="pc-sprinkle-pebble"/g) === 1);
+  }
+  // every other pose keeps its pebble where it was (sweep7 and chapter 6's fingerprint pin them, but lookdown)
+  assert.strictEqual(A.character('sprinkle', { pose: 'glide', holds: 'pebble' }).held.at, 'nose', 'glide: on the ground at her box’s foot, as before');
+  // Granny: chapter 5's otter variant 3, her pole held upright standing
+  const g = A.character('otter', { variant: 3, pose: 'stand', holds: 'pole' });
+  assert.strictEqual(g.held.what, 'pole');
+  assert.ok(g.pole && Math.abs(g.pole.x1 - g.pole.x0) < Math.abs(g.pole.y1 - g.pole.y0) * 0.4, 'held upright: ' + JSON.stringify(g.pole));
+  // fly (chapter 9's pose, as it shipped): both wings up mid-beat, the right (the sore one) nearly as high as the left
+  for (const facing of FACINGS) {
+    const ws = wings(A.character('sprinkle', { pose: 'fly', facing, mood: 'happy' }).svg);
+    assert.strictEqual(ws.length, 2);
+    const tall = Math.max(...ws.map((b) => b[3] - b[1]));
+    assert.ok(Math.abs(ws[0][1] - ws[1][1]) < tall * 0.15, facing + ': both wings up, within ' + Math.abs(ws[0][1] - ws[1][1]) + ' of each other');
+  }
+});
+
+test('the clutches (thing: dragonet at per 7, no kind): seven little dragonets a clutch, four over three, lit in order; totals and the next clutch glowing; one to ten clutches in rows of five, never touching', () => {
+  const lings = (s) => (s.match(/<g class="pc-clutchling( pc-lit)?">(?:<circle[^>]*\/><circle[^>]*\/>)?<g transform="translate\(([-\d.]+),([-\d.]+)\)">/g) || []).map((m) => { const q = m.match(/translate\(([-\d.]+),([-\d.]+)\)/); return [Number(q[1]), Number(q[2]), / pc-lit/.test(m)]; });
+  for (let g = 1; g <= 10; g++) for (const hl of [0, 3, 4, 7, 11, g * 7]) {
+    const s = A.countsPicture({ table: 7, per: 7, groups: g, thing: 'dragonet', highlight: hl, totals: true, next: true });
+    checkSvgDoc(s, 'clutches ' + g);
+    const L = lings(s);
+    assert.strictEqual(L.length, g * 7, g + ' clutches: seven dragonets each');
+    const lit = Math.min(hl, g * 7);
+    assert.deepStrictEqual(L.map((x) => x[2]), L.map((x, i) => i < lit), 'lit in order: ' + hl);
+    for (let c = 0; c < g; c++) {
+      const q = L.slice(c * 7, c * 7 + 7);
+      assert.ok(q.slice(0, 4).every((d) => d[1] === q[0][1]) && q.slice(4).every((d) => d[1] === q[4][1]) && q[4][1] > q[0][1], 'a row of four over a row of three');
+      const mid = (a) => (a[0][0] + a[a.length - 1][0]) / 2;
+      assert.ok(Math.abs(mid(q.slice(0, 4)) - mid(q.slice(4))) < 1, 'the three centred under the four');
+    }
+    assert.strictEqual(count(s, /class="pc-total"/g), Math.floor(lit / 7), 'a total under every clutch counted');
+    assert.strictEqual(count(s, /class="pc-next"/g), lit < g * 7 ? 1 : 0, 'the next clutch glows');
+    assert.strictEqual(labelOf(s), g === 1 ? '1 clutch, seven dragonets' : g + ' clutches, seven dragonets each');
+  }
+  // rows of five; clutches never touch (their patches apart)
+  const s10 = A.countsPicture({ table: 7, per: 7, groups: 10, thing: 'dragonet' });
+  const patches = (s10.match(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)" rx="34"/g) || []).map((m) => m.match(/[\d.]+/g).map(Number));
+  assert.strictEqual(patches.length, 10);
+  assert.strictEqual(new Set(patches.map((p) => p[1])).size, 2, 'two rows of five');
+  for (let i = 0; i < 10; i++) for (let j = i + 1; j < 10; j++) {
+    const a = patches[i], b = patches[j];
+    assert.ok(a[0] + a[2] < b[0] || b[0] + b[2] < a[0] || a[1] + a[3] < b[1] || b[1] + b[3] < a[1], 'clutches ' + i + ' and ' + j + ' apart');
+  }
+  // only `thing: 'dragonet'` with no kind at per 7: anything else at per 7 draws as it did
+  assert.ok(!/pc-clutchling/.test(A.countsPicture({ table: 7, per: 7, groups: 3, thing: 'thing' })));
+  assert.ok(!/pc-clutchling/.test(A.countsPicture({ table: 7, per: 7, groups: 3, thing: 'dragonet', kind: 'prey' })));
+  assert.ok(!/pc-clutchling/.test(A.countsPicture({ table: 7, per: 6, groups: 3, thing: 'dragonet' })));
+  // the dragonets: mist-grey, round-eyed, a closed smile (never an open mouth)
+  assert.ok(s10.includes('fill="#c4ccd0"') && !/fill="#7d5560"/.test(s10), 'mist-grey; the smile is a line, never a filled open mouth');
+});
+
+test('the sand at per 7 where plain: each group four and three, a gap between, lit in order, on any ground; marks at per 7 on a log: a row of four and three to a log, seven rows for 7 × 7', () => {
+  const xsOf = (s) => (s.match(/<path d="M([\d.]+),([\d.]+)Q[^"]*" stroke="#[0-9a-f]{6}" stroke-width="4.6"/g) || []).map((m) => Number(m.match(/M([\d.]+)/)[1]));
+  for (const ground of [undefined, 'earth', 'mud', 'grit', 'log']) for (const g of [1, 2, 5, 7, 10]) {
+    const s = A.sand({ groups: g, per: 7, counted: 9, ground });
+    checkSvgDoc(s, 'sand per 7 ' + ground);
+    const xs = xsOf(s).slice(0, 7);
+    assert.strictEqual(xsOf(s).length, g * 7, g + ' groups of seven scratches');
+    const step = xs[1] - xs[0];
+    assert.ok(xs[2] - xs[1] === step && xs[3] - xs[2] === step && xs[5] - xs[4] === step && xs[6] - xs[5] === step && xs[4] - xs[3] > step + 10, 'four and three: ' + xs);
+    assert.ok(labelOf(s).endsWith(', four and three'), labelOf(s));
+    assert.strictEqual(count(s, /stroke="#e39a12"/g), Math.min(9, g * 7), 'lit in order');
+  }
+  assert.ok(!/four and three/.test(A.sand({ groups: 3, per: 7, counted: 5, style: 'swipe' })), 'the swipes at per 7 as they were (pinned by sweep7)');
+  assert.ok(!/four and three/.test(A.sand({ groups: 3, per: 7, counted: 5, layout: 'rows', ground: 'earth' })), 'the rows at per 7 as they were');
+  // the ferry's helps on a log: every per's grouping holds there (2s, 3s, two and two, three and three, four and three, four and four, pairs of swipes)
+  for (const [per, words] of [[1, ''], [2, ''], [3, ''], [4, ', two and two'], [6, ''], [7, ', four and three'], [8, ', four and four']]) {
+    const s = A.sand({ groups: 6, per, counted: per * 2, ground: 'log' });
+    assert.ok(labelOf(s) === '6 groups of ' + per + ' scratches in the log' + words, labelOf(s));
+  }
+  assert.ok(/pairs of swipes, 5 claw lines a swipe, in the log/.test(labelOf(A.sand({ groups: 3, per: 10, counted: 10, ground: 'log', style: 'swipe', pair: true }))), '3 × 10: two swipes a cat, by tens');
+  // the marks on a log
+  for (let g = 1; g <= 10; g++) for (const hl of [0, 7, 9, g * 7]) {
+    const s = A.countsPicture({ table: 7, per: 7, groups: g, kind: 'marks', ground: 'log', highlight: hl, totals: true, next: true });
+    checkSvgDoc(s, 'log marks ' + g);
+    const rows = s.split('<g class="pc-night">').slice(1);
+    assert.strictEqual(rows.length, g, g + ' rows');
+    rows.forEach((r) => assert.strictEqual(count(r, /class="pc-mark/g), 7, 'seven marks a row'));
+    assert.strictEqual(count(s, /class="pc-mark pc-lit"/g), Math.min(hl, g * 7), 'lit in order');
+    assert.strictEqual(count(s, /class="pc-total"/g), Math.floor(Math.min(hl, g * 7) / 7));
+    assert.strictEqual(labelOf(s), ['', 'One row', 'Two rows', 'Three rows', 'Four rows', 'Five rows', 'Six rows', 'Seven rows', 'Eight rows', 'Nine rows', 'Ten rows'][g] + ' of seven marks', 'no nights: ' + labelOf(s));
+  }
+  const s7 = A.countsPicture({ table: 7, per: 7, groups: 7, kind: 'marks', ground: 'log' });
+  const mx = (s7.split('<g class="pc-night">')[1].match(/M([\d.]+),[\d.]+Q/g) || []).map((m) => Number(m.slice(1).split(',')[0]));
+  const xs = [...new Set(mx)].slice(0, 7), step = xs[1] - xs[0];
+  assert.ok(xs[4] - xs[3] > step + 10 && xs[6] - xs[5] === step, 'four and three with a gap: ' + xs);
+  assert.strictEqual(labelOf(s7), 'Seven rows of seven marks');
+  // per 7 marks on sand or mud as they always were (sweep8 pins them): no log rows there
+  assert.ok(/nights/.test(labelOf(A.countsPicture({ table: 7, per: 7, groups: 7, kind: 'marks' }))));
+  assert.ok(/nights/.test(labelOf(A.countsPicture({ table: 7, per: 7, groups: 7, kind: 'marks', ground: 'mud' }))));
+  assert.ok(/nights/.test(labelOf(A.countsPicture({ table: 6, per: 6, groups: 7, kind: 'marks', ground: 'log' }))), 'only per 7 on the log');
+});
+
+test('the roll call’s forepaws: Hail and Mizzle small behind raised forepaws of their own; a `shape: true` entry a soft faceless dragonet in the mist behind a misty forepaw lit silver; seven in one row when every entry is a dragonet', () => {
+  const ROLL = [{ who: 'sprinkle' }, { who: 'squall' }, { who: 'puddle' }, { who: 'wisp' }, { who: 'sleet' }, { who: 'hail' }, { who: 'mizzle' }];
+  const SHAPES = [{ who: 'sprinkle' }].concat(['squall', 'puddle', 'wisp', 'sleet', 'hail', 'mizzle'].map((w) => ({ who: w, shape: true })));
+  const all = A.countsPicture({ table: 5, per: 5, groups: 7, who: ROLL, highlight: 12, totals: true, next: true, thing: 'claw' });
+  checkSvgDoc(all, 'roll call');
+  assert.strictEqual(labelOf(all), 'Seven forepaws, five claws each');
+  assert.ok(/viewBox="0 0 1268 314"/.test(all), 'seven in one row: ' + all.match(/viewBox="[^"]+"/)[0]);
+  assert.ok(all.includes('#f6f4f0') && all.includes('#b4d8bf'), 'Hail’s white and Mizzle’s pearly green');
+  assert.strictEqual(count(all, /class="pc-dclaws pc-lit"/g), 3, 'twelve claws: two forepaws lit, two claws of the third');
+  assert.strictEqual(count(all, /class="pc-total"/g), 2);
+  for (const who of ['hail', 'mizzle']) {
+    const one = A.countsPicture({ table: 5, per: 5, groups: 2, who: [{ who: 'sprinkle' }, { who }], highlight: 10, totals: true });
+    assert.ok(/class="pc-dclaws pc-lit"/.test(one) && !/class="pc-claws"/.test(one), who + ': a dragonet’s forepaw, not a cat’s');
+  }
+  const shapes = A.countsPicture({ table: 5, per: 5, groups: 7, who: SHAPES, highlight: 35, totals: true, thing: 'claw' });
+  checkSvgDoc(shapes, 'shapes');
+  assert.strictEqual(count(shapes, /class="pc-shape"/g), 6, 'six soft shapes');
+  assert.strictEqual(count(shapes, /class="pc-shape-paw"/g), 6, 'six misty forepaws');
+  assert.strictEqual(count(shapes, /<radialGradient/g), count(A.countsPicture({ table: 5, per: 5, groups: 1, who: [{ who: 'sprinkle' }] }), /<radialGradient/g), 'faceless: only Sprinkle’s eyes are drawn');
+  assert.strictEqual(count(shapes, /class="pc-dclaws pc-lit" fill="#ffffff" stroke="#8fa3b6"/g), 6, 'their claws light pale silver');
+  assert.ok(/viewBox="0 0 1268 314"/.test(shapes) && labelOf(shapes) === 'Seven forepaws, five claws each');
+  // a shape never takes the found dragonet's face: the same who without shape draws them
+  const mixed = A.countsPicture({ table: 5, per: 5, groups: 2, who: [{ who: 'squall', shape: true }, { who: 'squall' }], highlight: 0 });
+  assert.strictEqual(count(mixed, /class="pc-shape"/g), 1, 'a shape and the found one, never one run');
+  // with any entry not a dragonet, rows of five as before (the cats' forepaws are pinned by sweep7)
+  const cats7 = A.countsPicture({ table: 5, per: 5, groups: 7, who: ROLL.slice(0, 6).concat([{ who: 'tallyheart' }]), highlight: 0 });
+  assert.ok(/viewBox="0 0 916 /.test(cats7) && labelOf(cats7) === '7 forepaws held up, 5 claws each', 'not all dragonets: two rows');
+  assert.ok(/viewBox="0 0 916 /.test(A.countsPicture({ table: 5, per: 5, groups: 5, who: ROLL.slice(0, 5), highlight: 0 })), 'five: one row as before');
+});
+
+test('chapter 10’s pictures and drawings: unique ids on one page, every reference resolves, none heavy', () => {
+  const ROLL = [{ who: 'sprinkle' }, { who: 'squall', shape: true }, { who: 'puddle' }, { who: 'wisp', shape: true }, { who: 'sleet' }, { who: 'hail' }, { who: 'mizzle', shape: true }];
+  const pics = [A.countsPicture({ table: 7, per: 7, groups: 10, thing: 'dragonet', highlight: 33, totals: true, next: true }), A.countsPicture({ table: 7, per: 7, groups: 7, kind: 'marks', ground: 'log', highlight: 20, totals: true, next: true }),
+    A.countsPicture({ table: 5, per: 5, groups: 7, who: ROLL, highlight: 20, totals: true, next: true }), A.sand({ groups: 10, per: 7, counted: 30 }), A.sand({ groups: 7, per: 7, counted: 49, ground: 'log' })];
+  const chars = [A.character('mistscale', { variant: 1, pose: 'nuzzle' }), A.character('mistscale', { variant: 2, pose: 'bow' }), A.character('reedclan', { variant: 5, pose: 'situp' }), A.character('groveclan', { variant: 3 }),
+    A.character('puddle', { pose: 'eyes', tap: 'nose' }), A.character('reynard', { pose: 'swim', wet: true }), A.character('snatch', { pose: 'hidepaws', holds: 'mouse', wet: true }), A.character('snip', { pose: 'swim' }),
+    A.character('player', { pose: 'sit', look: LOOK9, holds: 'miststone', flash: true, tap: 'stone' }), A.character('sprinkle', { pose: 'fly', holds: 'pebble' }), A.character('hail', { pose: 'bounce', tap: 'nose' })];
+  const all = pics.join('') + chars.map((c) => c.svg).join('');
+  const ids = idsOf(all);
+  assert.strictEqual(new Set(ids).size, ids.length, 'every id on the page is its own');
+  for (const ref of all.match(/(?:url\(#|href="#)([^)"]+)/g) || []) assert.ok(ids.includes(ref.replace(/^(url\(#|href="#)/, '')), 'dangling ' + ref);
+  pics.forEach((s, i) => { checkSvgDoc(s, 'picture ' + i); assert.ok(s.length < 250000, 'picture ' + i + ': ' + s.length); });
+  chars.forEach((c, i) => { assert.strictEqual(balanced(c.svg), null, 'drawing ' + i); assert.ok(c.svg.length < 90000, 'drawing ' + i + ': ' + c.svg.length); });
+  // the same options draw the same thing twice (but for the ids): nothing is random
+  for (const o of [{ variant: 2, pose: 'lift', mood: 'happy' }, { variant: 1, pose: 'bow' }]) assert.strictEqual(strip(A.character('mistscale', o).svg), strip(A.character('mistscale', o).svg));
+});
+
+test('dev/gallery-cats.html: chapter 10’s sections draw (the Mistscales, the leaders and the crowd, the extras, the Counts pictures), every pose labelled; the earlier sections draw the new poses', () => {
+  const fs = require('fs'), path = require('path'), vm = require('vm');
+  const dir = path.join(__dirname, '..', 'dev'), html = fs.readFileSync(path.join(dir, 'gallery-cats.html'), 'utf8');
+  const scripts = [...html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)];
+  const run = (search) => {
+    const els = {};
+    const el = (id) => els[id] || (els[id] = { id, innerHTML: '', value: id === 'size' ? '120' : '', options: [{ value: '120' }], add() {} });
+    const ctx = { URLSearchParams, document: { getElementById: el, body: { className: '' } }, location: { search } };
+    ctx.globalThis = ctx;
+    vm.createContext(ctx);
+    for (const m of scripts) vm.runInContext(m[1] ? fs.readFileSync(path.join(dir, m[1]), 'utf8') : m[2], ctx, { filename: m[1] || 'gallery-cats.html' });
+    return { out: els.out.innerHTML, nav: els.nav.innerHTML };
+  };
+  for (const [id, least] of [['mistscale', 40], ['clans10', 100], ['extras10', 36], ['counts10', 26]]) {
+    const page = run('?only=' + id);
+    assert.ok(page.nav.includes('href="?only=' + id + '"'), id + ' is in the menu');
+    assert.ok(new RegExp('<section id="' + id + '"><h2>[^<]*hapter 10').test(page.out), id + ': its section');
+    assert.ok(count(page.out, /<svg[ >]/g) >= least, id + ': ' + count(page.out, /<svg[ >]/g) + ' drawings');
+    assert.ok(!/NaN|undefined|\[object |Infinity/.test(page.out), id + ': every drawing drew');
+    assert.strictEqual(balanced(page.out.replace(/<small title="[^"]*">/g, '<small>')), null, id + ': well-formed');
+  }
+  const ms = run('?only=mistscale').out;
+  for (const pose of A.vocab.otherPoses.mistscale) assert.strictEqual(count(ms, new RegExp('<small title="' + pose + ' · ', 'g')), 2, 'mistscale: ' + pose + ', Mama and the eldest');
+  const c10 = run('?only=clans10').out;
+  for (const v of ['reedclan 5', 'groveclan 3', 'groveclan 4', 'groveclan 5']) assert.ok(c10.includes('<h3>' + v + ','), 'clans10: ' + v);
+  const counts = run('?only=counts10').out;
+  for (const label of ['5 clutches, seven dragonets each', '10 clutches, seven dragonets each', '1 clutch, seven dragonets', 'Seven rows of seven marks', 'Seven forepaws, five claws each',
+    '7 groups of 7 scratches in the sand, four and three', '7 groups of 7 scratches in the log, four and three'])
+    assert.ok(counts.includes('aria-label="' + label + '"'), 'the gallery shows: ' + label);
+  assert.ok(/pc-tap-nose"[^>]*stroke-dasharray/.test(run('?only=extras10').out), 'the noses to tap are outlined in the gallery');
+  // the earlier sections draw the new poses in their lists, with a mood each
+  for (const [id, pose] of [['puddle', 'eyes'], ['weasels', 'swim'], ['weasels', 'hidepaws'], ['reynard', 'bow'], ['reynard', 'swim']]) {
+    const page = run('?only=' + id).out;
+    assert.ok(!/undefined|NaN/.test(page), id);
+    assert.ok(new RegExp('<small title="' + pose + '[ ·"]').test(page), id + ': ' + pose);
+  }
 });

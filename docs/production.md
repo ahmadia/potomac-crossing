@@ -48,6 +48,15 @@ checks moved to an offscreen WebKit view). 140 frames (95 to 120 a reading), 15 
 30 confirmed review findings, 1437 tests. Two live fixes rode along: a player's bug (a far cat drawn
 over a near one, twelve frames) and bigger text that fits a 10.2-inch iPad.
 
+**Chapter 10** (2026-10-31), the finale, with the Warrior Counts merged beside it: the text took four
+critique rounds and the spec two checks; the build had six owners and one new engine feature (the card
+pick); the review, two fix rounds and the final review each had skeptics, a completeness critic and an
+independent checker. About 30M in all, under chapter 9's 35M though it is bigger (157 frames, 114 to
+132 a reading, 21 or 22 typed answers, five picks), because nothing was resumed: one interrupt and the
+token rules (`dev/workflows/README.md`, "Spending tokens well") kept the waste down. 26 confirmed review
+findings and 9 in the final review; 1686 tests. The polish release (v20) and the Warrior Counts' merge
+were done the same night.
+
 Chapter 1 was 98 frames and a 387-line text. The engine has grown from 841 to 2,933 lines, the page
 code from 1,635 to 3,109, the character art from 1,195 to 5,792, and `docs/build.md` to 1,254 lines.
 The suite takes about 100 seconds.

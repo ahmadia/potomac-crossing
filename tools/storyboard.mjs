@@ -64,8 +64,18 @@
  * behind the pole, Riffle's mint, the wing and the root tapped, her own nose and tail tapped; the Counts
  * pictures of spiders (and one spider's two sides), doses in rows of eight (drops, paw marks, marks), twigs of
  * acorns, the sand at the 8s four and four; the questions somebody answers himself, and the rows of her case
- * tapped out one by one. Written for an illustrator, a grown-up reading along, or anyone checking the chapter
- * without playing it. No dependencies.
+ * tapped out one by one. Chapter 10 on: the otters' Moon Ferry (`ferry`: the boarding at dusk, the deck, the
+ * luggage, the low raft and the gap under it, the river) and Gathering Island (`island`: the shore and the
+ * badger's print, the clearing under the great tree, the leaders' roots, the case, the fox at the river's
+ * edge, the mist and the Mistscales, the sky, her paws with the stone) in place words of their own, the full
+ * moon over the den, the tower and the riverbank, the mist stone and its close-up, the Hollow's ten marks;
+ * the grown Mistscales by variant (Mama, the eldest), the leaders and GroveClan's crowd by coat, Granny by the
+ * chapter's name, Puddle's eyes, Reynard's bow and the weasels' hidden paws, the swim, wet fur, the stone held
+ * and tapped, the dragonets' snouts tapped; the clutches of seven and the sand at the 7s four and three, the
+ * mixed Moon Ferry Counts on a log, the roll call's forepaws with the clutch's shapes; the two weasels' ask;
+ * and the card pick (`pick`: the claim, the right cards, the nudges, her pick remembered, and a `when` that
+ * reads it in the card's own line), which the tool's own graph follows. Written for an illustrator, a
+ * grown-up reading along, or anyone checking the chapter without playing it. No dependencies.
  */
 import { createRequire } from 'node:module';
 import { writeFileSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
@@ -103,14 +113,19 @@ const SETS = {
   // chapter 8: the trail's end, always at night, moonlit and silver, never black; nobody of the Clan on the rails
   tracks: ['the railway bank by the tracks, past the Barking Field: nobody’s land, the trains own it', 'a high grassy bank, on its flat top the ballast, the sleepers and two long rails bright in the moonlight; along its face five or six holes (dark ovals with a lip of earth), faint tiny prints round every one, the biggest low on the right, a little one left of it, two more higher up, the tunnel’s end at the very foot at the left; tall weeds along the foot, taller than a sitting cat’s ears; dark earth and short grass in front; stars and the moon; moonlit and silver, never frightening'],
   // chapter 9: GroveClan's woods, over the little bridge, always by day: green and gold, never dark
-  grove: ['GroveClan’s woods, over the little bridge from the river path', 'a little old footbridge with low stone sides over a narrow channel of clear, bright water; very old, very tall trees, wide trunks and roots like arms, ferns, dappled green-gold light on soft ground; nothing frightening, never dark']
+  grove: ['GroveClan’s woods, over the little bridge from the river path', 'a little old footbridge with low stone sides over a narrow channel of clear, bright water; very old, very tall trees, wide trunks and roots like arms, ferns, dappled green-gold light on soft ground; nothing frightening, never dark'],
+  // chapter 10: the otters' Moon Ferry upriver, and Gathering Island under the full moon (never dark, either of them)
+  ferry: ['the otters’ Moon Ferry, a line of log rafts on the moonlit river', 'logs lashed with reeds, the front raft (the ferry itself) biggest and nearest, more rafts tied behind it in a line; the river silver-blue under the full moon, bright and clear, never black, moonlight on every ripple; the far banks dark green but lit, the glass towers far off downriver; the raft never tips, nothing in the water is dark under a cat, and every otter in it is cast, never drawn by the set'],
+  island: ['Gathering Island, a round island in the river', 'one great tree in the middle, very old and wide-crowned, never named, its huge roots running out across a clearing of short moonlit grass; the three leaders sit on three big roots, never in the branches; the crowd of every Clan sits round the clearing; the shore pebbles and soft mud; everything silver under the full moon, nothing frightening']
 };
 // the art's time of day for each set when fx names none, and how a set re-reads one (camp and
 // hollow draw sunset as the last golden light); the river and the sky are always night
 const SET_TOD = { room: 'sunset', tower: 'sunset', garden: 'sunset', camp: 'golden', hollow: 'golden', den: 'night', sky: 'night', river: 'night',
-  title: 'sunset', pile: 'morning', bridge: 'day', field: 'day', crossing: 'day', riverbank: 'day', roof: 'golden', openriver: 'day', marsh: 'day', tracks: 'night', grove: 'day' };
+  title: 'sunset', pile: 'morning', bridge: 'day', field: 'day', crossing: 'day', riverbank: 'day', roof: 'golden', openriver: 'day', marsh: 'day', tracks: 'night', grove: 'day',
+  // chapter 10: the Moon Ferry is drawn at dusk (the boarding) and by night; the island is always night, under the full moon
+  ferry: 'night', island: 'night' };
 const TOD_MAP = { camp: { sunset: 'golden' }, hollow: { sunset: 'golden' }, pile: { sunset: 'golden' }, roof: { sunset: 'golden' } };
-const TOD_FIXED = { sky: 'night', river: 'night', tracks: 'night' };
+const TOD_FIXED = { sky: 'night', river: 'night', tracks: 'night', island: 'night' };
 const TOD_WORDS = { morning: 'in the morning', day: 'by day', sunset: 'at sunset', dusk: 'at dusk', night: 'at night', golden: 'in the last golden light' };
 // a set's own words for a time of day (the roof's gold is the afternoon's)
 // (chapter 9: the roof by morning is first light, when the dew lies on its puddle; GroveClan's woods by day are the bright afternoon)
@@ -118,7 +133,11 @@ const SET_TOD_WORDS = { roof: { golden: 'in the gold of the afternoon', morning:
   // (the open river has two lights: the day, and the late gold of the way home)
   openriver: { sunset: 'in the late gold of the way home', dusk: 'in the late gold of the way home', night: 'in the late gold of the way home' },
   // (chapter 8: the Barking Field at night, drawn by no earlier chapter)
-  field: { night: 'at night, silver in the moonlight' } };
+  field: { night: 'at night, silver in the moonlight' },
+  // (chapter 10: the Moon Ferry's boarding at dusk and its night, Gathering Island's night, the glass tower by night: drawn by no earlier chapter)
+  ferry: { dusk: 'at dusk, rose and lilac light on the water, the moon just up', night: 'at night, by the light of the full moon' },
+  island: { night: 'at night under the full moon, high and bright silver, never dark' },
+  tower: { night: 'at night, the glass dark blue against a starry sky, many windows lit warm gold, the balcony nineteen floors up lit by its window, the red light on the tallest tower beside' } };
 function todOf(sc) {
   const fx = sc.fx || [];
   let t = ['night', 'dusk', 'sunset', 'morning', 'day'].find(x => fx.includes(x)) || SET_TOD[sc.set] || null;
@@ -142,7 +161,10 @@ const HERBS = ['Thymeleaf’s den, a nook of the bramble dens at the camp’s ed
 const SET_COMP = { title: { end: WALL_END, meet: WALL_END }, sky: { walk: DREAM, below: DREAM }, pile: { rear: PILE_REAR, hole: PILE_HOLE },
   grove: { oak: GROVE_OAK, hollow: GROVE_HOLLOW }, camp: { herbs: HERBS },
   bridge: { wall: ['the Old Bridge’s stone leg, under the bridge beside Sprinkle’s nook', 'a wall of big old fitted stones, its foot on the dry floor, one dark gap low in it'] },
-  tracks: { crawl: TRACKS_TUNNEL, fork: TRACKS_TUNNEL, stash: TRACKS_STASH, 'stash-close': TRACKS_STASH } };
+  tracks: { crawl: TRACKS_TUNNEL, fork: TRACKS_TUNNEL, stash: TRACKS_STASH, 'stash-close': TRACKS_STASH },
+  // chapter 10: the island's shore, and the sky over it
+  island: { shore: ['Gathering Island’s shore', 'pebbles and soft mud at the water’s edge, the river silver behind; up the slope, the great tree’s crown and the clearing’s edge'],
+    sky: ['the sky over Gathering Island', 'the full moon, the great tree’s crown, the top edge of the mist'] } };
 function setWords(sc) {
   const d = (SET_COMP[sc.set] || {})[sc.cam] || SETS[sc.set], t = (SET_TOD_WORDS[sc.set] || {})[todOf(sc)] || TOD_WORDS[todOf(sc)];
   if (!d) return 'Set: ' + sc.set + '.';
@@ -164,7 +186,9 @@ const CAMS = {
 const SET_CAMS = {
   den: { outside: 'outside the den, the rosebush from the front', inside: 'inside the den',
     // chapter 9: the case laid out on the den floor
-    case: 'close, from a little above, on the den floor in front of her nest at night, the moonlight coming from the doorway out of frame; her nest at the back with its moss rolled back' },
+    case: 'close, from a little above, on the den floor in front of her nest at night, the moonlight coming from the doorway out of frame; her nest at the back with its moss rolled back',
+    // chapter 10: the chapter's last panel
+    stone: 'extreme close on the moss at her nest’s edge in the moonlight from the doorway: the mist stone big in the middle, the corner of a curl of bark, her glass’s leaf, the tip of her sleeping tail' },
   // chapter 9: Thymeleaf's den
   camp: { herbs: 'from just inside the den’s mouth, at cat height: the drying leaves at the left, the mixing stone on the floor, the little web high in the top corner' },
   tower: { up: 'looking up the tower, from the ground-floor window to a balcony nineteen floors up' },
@@ -222,6 +246,22 @@ const SET_CAMS = {
     'stash-close': 'close on the heap of glass in the stash: smooth, clear, flat pieces, the moonlight shining through them, one big piece in front',
     crawl: 'inside the tunnel, at cat height: the earth walls close round a crawling cat, just wide enough; the roof low, just clearing a sitting cat’s ears at the front, where roots hang down, and lower behind',
     fork: 'inside the tunnel where it splits in two: two dark ways, left and right, a root between them' },
+  // chapter 10: every camera of the Moon Ferry and of Gathering Island in words of its own (the global `wide`, `back`,
+  // `low` and the rest are other sets'); the den's close-up on the mist stone
+  ferry: { shore: 'the Crossing’s edge at dusk: the flat stones and pebbles at the left, the line of rafts tied along the bank, the front raft’s near end at the stones’ edge, the rafts behind it going off upriver; the full moon rising',
+    deck: 'aboard the front raft, from its back end looking forward, upriver: the logs running away from us, the Clan seated along both sides, the front end and the poler against the moonlit river, the full moon ahead and high',
+    back: 'close on the very back of the front raft: the heap of reeds (the luggage) taking the right half, its reeds loose and green-gold in the moonlight, a cat’s height and more; the river behind',
+    low: 'at cat height on the front raft’s logs, close: the water lapping at the logs’ tops in silver rings, and between two logs a gap of silver water',
+    under: 'looking straight down into the gap between two logs: the silver water filling the panel, the logs’ wet tops at the edges, the moon’s reflection, a cat’s face reflected at the top edge; never dark',
+    river: 'wide: the Moon Ferry on the river under the full moon, the front raft with its poler and its small seated cats, the line of rafts behind' },
+  island: { shore: 'at the water’s edge, looking up the slope: the shore in front, the great tree’s crown and the clearing’s edge above it',
+    wide: 'wide: the clearing under the great tree, every Clan: the trunk at the middle back, its three big roots running out, a leader on each; the crowd in a wide ring (CrystalClan at the left, ReedClan’s marsh coats at the right, GroveClan’s dappled coats at the back), the river at the far right edge',
+    roots: 'closer on the great tree’s three roots: the leaders sitting up on them, the trunk’s bark behind, moonlight through the crown',
+    case: 'at cat height in the clearing: our cat a little left of centre in the moonlight, the crowd’s front behind, and across the grass at the right the clearing’s river edge',
+    fox: 'close on the fox at the clearing’s edge, the river behind him; in the water at the right, the way off the island',
+    mist: 'the clearing’s edge by the great tree, the mist rolling in off the river: the trunk at the left, the mist a soft silver bank filling the right half, the moon glowing through it',
+    sky: 'looking up past the great tree’s crown into the sky, for the flight and the leaving',
+    paws: 'close on our cat’s forepaws held out on the moonlit grass, with room above for Sprinkle’s head and claws' },
   // chapter 9: every camera of GroveClan's woods in words of its own (the global `wide` and `meet` are other sets')
   grove: { bridge: 'the approach: the river path’s near bank at the left, the little old footbridge (low stone sides, a worn flat top) over the narrow channel of clear, bright water, and on its far side the very old trees of the woods',
     wide: 'wide, over the bridge: the bridge’s end small at the left, the woods rising across the panel, huge trunks, green-gold light, ferns; the visitors small under the trees',
@@ -256,7 +296,9 @@ const WHO = {
   thymeleaf: 'Thymeleaf, CrystalClan’s medicine cat (an old, calm tom: soft, long oatmeal-grey fur, a white chest and white paws, a little thin at the shoulders, a greyer muzzle, long white whiskers, bushy pale brows, green-gold eyes with a twinkle, and a sprig of mint tucked behind one ear)',
   mizzle: 'Mizzle, the last dragonet (a Mistscale, little: sitting no taller than you; pearly green, pale green scales with a soft pearl sheen, a pale green-white belly, soft rounded ridges, small folded wings, two soft horn nubs, a short round snout, big sleepy eyes with heavy lids; sweet, never toothy)',
   groveclan: 'a GroveClan cat (a woodland coat, dappled like sun through leaves)',
-  spider: 'a tiny garden spider (a small round smooth body, no hair, no fangs, two dot eyes and a little smile, four legs on each side, soft brown with a pale pattern on her back; friendly, never creepy, never crawling toward anyone)'
+  spider: 'a tiny garden spider (a small round smooth body, no hair, no fangs, two dot eyes and a little smile, four legs on each side, soft brown with a pale pattern on her back; friendly, never creepy, never crawling toward anyone)',
+  // chapter 10
+  mistscale: 'a grown Mistscale (huge, gentle and misty, never frightening: a great head and neck leaning out of the mist, the body never drawn; mist-grey scales like Sprinkle’s but larger and softer, ridges like rounded hills, big kind eyes, the mouth shut, two soft horns; no teeth, no claws shown)'
 };
 // otters and dogs by variant, as the game names them
 const VARIANT_WHO = {
@@ -264,10 +306,18 @@ const VARIANT_WHO = {
   dog: { 1: 'the huge shaggy dog', 2: 'the spotty dog', 3: 'the tiny dog (mostly bark)' },
   // chapter 6: ReedClan by coat, none of them hers or a Clan cat's
   reedclan: { 1: 'the ReedClan she-cat (sleek, dark grey-brown, a pale belly, calm amber eyes; mud to the elbows)', 2: 'the young ReedClan tom (lanky and sandy, big ears, eager; mud to the elbows)',
-    3: 'a ReedClan cat (smoky dark grey, mud to the elbows)', 4: 'a ReedClan cat (fawn, mud to the elbows)' },
+    3: 'a ReedClan cat (smoky dark grey, mud to the elbows)', 4: 'a ReedClan cat (fawn, mud to the elbows)',
+    // chapter 10: ReedClan's leader (a label only)
+    5: 'ReedClan’s leader (big, broad and grand: a marsh coat of deep brown with reed-dark stripes, a pale grey chest, a notch in one ear, wise amber eyes)' },
   // chapter 9: GroveClan's two, by coat, unnamed (labels only)
   groveclan: { 1: 'the GroveClan elder (a she-cat: a dappled grey-brown coat, the dapples like sun through leaves, a white muzzle, grey hairs at her ears; upright and sharp-eyed, hazel eyes, kind)',
-    2: 'the GroveClan apprentice (small, apprentice-sized: dappled fawn and cream, big eyes, a scrap of moss on one ear; shy)' }
+    2: 'the GroveClan apprentice (small, apprentice-sized: dappled fawn and cream, big eyes, a scrap of moss on one ear; shy)',
+    // chapter 10: GroveClan's leader, and two coats for the island's crowd (anonymous)
+    3: 'GroveClan’s leader (tall and lean: a dappled woodland coat, grey-brown dapples like the elder’s but darker, a white chest and white forepaws, long whiskers, calm green eyes)',
+    4: 'a GroveClan cat (light grey-brown woodland dapples)', 5: 'a GroveClan cat (ginger-brown woodland dapples)' },
+  // chapter 10: the grown Mistscales, labels only ("Mama" is a title)
+  mistscale: { 1: 'Mama, Sprinkle’s mother, a grown Mistscale (huge, gentle and misty, never frightening: a great head and neck leaning out of the mist, the rest of her in the mist; grey as a rain cloud, Sprinkle’s colour grown; ridges like rounded hills, big kind eyes, the mouth shut, two soft horns; no teeth, no claws shown)',
+    2: 'the eldest Mistscale (as big as Mama, gentle, never frightening: a great head and neck out of the mist, grey and weathered, a paler muzzle, a few lichen-pale spots, heavy-lidded old eyes; never silver-white; no teeth, no claws shown)' }
 };
 const SPEAKER = {
   player: 'You', tallyheart: 'Tallyheart', glintstar: 'Glintstar', waffles: 'Princess Waffles', tallone: 'The Tall One',
@@ -277,13 +327,15 @@ const SPEAKER = {
   patience: 'Patience', puddle: 'Puddle', wisp: 'Wisp',
   coil: 'Coil', sloshbank: 'Sloshbank', reedclan: 'A ReedClan cat', sleet: 'Sleet',
   hail: 'Hail', snip: 'Snip', snatch: 'Snatch',
-  thymeleaf: 'Thymeleaf', mizzle: 'Mizzle', groveclan: 'A GroveClan cat', spider: 'The spider'
+  thymeleaf: 'Thymeleaf', mizzle: 'Mizzle', groveclan: 'A GroveClan cat', spider: 'The spider',
+  mistscale: 'A Mistscale'
 };
 const VARIANT_SPEAKER = {
   otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
   dog: { 1: 'The shaggy dog', 2: 'The spotty dog', 3: 'The tiny dog' },
-  reedclan: { 1: 'ReedClan she-cat', 2: 'Young ReedClan tom', 3: 'A ReedClan cat', 4: 'A ReedClan cat' },
-  groveclan: { 1: 'A GroveClan elder', 2: 'A GroveClan apprentice' }
+  reedclan: { 1: 'ReedClan she-cat', 2: 'Young ReedClan tom', 3: 'A ReedClan cat', 4: 'A ReedClan cat', 5: 'ReedClan’s leader' },
+  groveclan: { 1: 'A GroveClan elder', 2: 'A GroveClan apprentice', 3: 'GroveClan’s leader', 4: 'A GroveClan cat', 5: 'A GroveClan cat' },
+  mistscale: { 1: 'Mama', 2: 'The eldest Mistscale' }
 };
 const POSES = {
   sit: 'sitting', stand: 'standing', walk: 'walking', crouch: 'crouching', curl: 'curled up', loaf: 'tucked into a loaf',
@@ -322,7 +374,9 @@ const POSES = {
   up: 'sitting up tall on the hind legs, forepaws tucked', skid: 'skidding to a stop', trot: 'trotting along',
   // chapter 9: the spider's, Mizzle's and Sprinkle's new poses, plainly (each character's own words are below)
   spin: 'spinning a thread', wave: 'one leg raised, waving', yawn: 'yawning', wake: 'wide awake',
-  glide: 'gliding, wings spread wide', splash: 'splashing in the water'
+  glide: 'gliding, wings spread wide', splash: 'splashing in the water',
+  // chapter 10: the grown Mistscales', Reynard's bow, the weasels' hidden paws, plainly (each character's own words are below)
+  nuzzle: 'nuzzling, the head lowered', lift: 'the head lifted high, calling', bow: 'bowing low', hidepaws: 'standing up, the forepaws hidden behind the back'
 };
 const OTTER_STAND = 'standing up on his hind legs';
 const SPRINKLE_POSE = { curl: 'curled up, her tail wrapped round whoever is beside her', flat: 'squeezed flat',
@@ -333,7 +387,10 @@ const SPRINKLE_POSE = { curl: 'curled up, her tail wrapped round whoever is besi
 // a pose that means something of its own for the fox or the littlest dragonet
 const REYNARD_POSE = { sit: 'sitting very neatly',
   // chapter 8: along the tracks
-  trot: 'trotting along on all fours, tail high, his smile on' };
+  trot: 'trotting along on all fours, tail high, his smile on',
+  // chapter 10: on Gathering Island, and off it (never toward her or Sprinkle, never a tooth)
+  bow: 'a low sweeping bow, one forepaw forward, his tail flourished up behind: charming, vain',
+  swim: 'swimming away: only his head and the line of his back above the water, ears flat, his tail floating behind (no splash at anyone)' };
 const SQUALL_POSE = { hug: 'sitting at the foot of the pole, forelegs and tail wrapped round it', pawup: 'one forepaw raised, five claws out',
   // chapter 9: out of sight behind the red light's pole (never his face)
   hidden: 'out of sight behind the red light’s pole: nothing of him but the tip of his slate tail with its yellow flecks, curled round the pole’s foot, and a small ring of hiccup mist rising beside it' };
@@ -342,7 +399,9 @@ const OTTER_POSE = { point: 'pointing straight down', fall: 'falling over backwa
   // chapter 6: Riffle holding his breath under the bridge
   puff: 'cheeks puffed round, holding his breath, eyes wide' };
 const PATIENCE_POSE = { stand: 'standing on one leg, neck folded', point: 'her bill pointing down at the mud', gulp: 'neck up, a fish going down as a small bump' };
-const PUDDLE_POSE = { pawup: 'one forepaw raised and his chin dipping, his eyes and his grin still above the water', sit: 'sitting, his big feet out in front of him' };
+const PUDDLE_POSE = { pawup: 'one forepaw raised and his chin dipping, his eyes and his grin still above the water', sit: 'sitting, his big feet out in front of him',
+  // chapter 10: under the Moon Ferry (nothing dark under him)
+  eyes: 'only his two big round eyes and the top of his head above the silver water, a ring of ripples round them' };
 const WISP_POSE = { blink: 'standing on one leg among the reeds, her eyes open', draw: 'one pale claw down in the mud, drawing', gulp: 'a small bump going down her long neck', pawup: 'one forepaw raised, five claws out, pale as frost' };
 // chapter 6: every pose of Coil's and of Sleet's in his own words (the global `head` is Puddle's,
 // `slide` Riffle's, `flat` a cat's, `puff` Riffle's cheeks); Coil's eyes are never shut, and his body
@@ -362,13 +421,18 @@ const COIL_MOOD = { sniff: 'an offended lift of the chin' };
 const HAIL_POSE = { sit: 'sitting up, bright-eyed', stand: 'standing on all fours, side-on', bounce: 'mid-hop, all four paws off the ground, wings half out, tail up',
   run: 'running flat out round the field, wings flapping a little', peek: 'head and shoulders up, the rest of her below', pawup: 'one forepaw raised, curious', tilt: 'head tilted, full of questions' };
 const WEASEL_POSE = { stand: 'on all fours, the long body low, side-on', up: 'sitting up tall on the hind legs, forepaws tucked: a weasel’s look-out', run: 'bounding, the back arched',
-  skid: 'skidding to a stop: front paws braced, the back end swinging round', peek: 'head and shoulders out of a hole, the hole’s lip over the rest', point: 'one forepaw out, pointing', curl: 'curled up small, nose to tail' };
+  skid: 'skidding to a stop: front paws braced, the back end swinging round', peek: 'head and shoulders out of a hole, the hole’s lip over the rest', point: 'one forepaw out, pointing', curl: 'curled up small, nose to tail',
+  // chapter 10: caught out, and off the island
+  hidepaws: 'standing up, the tiny forepaws hidden behind the back, eyes wide and innocent', swim: 'swimming, the head up, paddling after the fox' };
 const WEASEL_MOOD = { shout: 'squeaking', laugh: 'cheeky', stern: 'pouting' };
 const DOG_POSE = { lie: 'lying down, head on forepaws' };
 // chapter 9: Mizzle's poses (sweet and sleepy, never toothy) and the spider's (tiny, friendly, never crawling toward anyone)
 const MIZZLE_POSE = { curl: 'curled up on the moss, her tail round her nose', yawn: 'head up, one eye open, a big round yawn (no teeth)', sit: 'sitting up, drowsy',
   wake: 'sitting up straight, both eyes wide open, frills and ears up: wide awake for once', pawup: 'one forepaw raised, a claw pointing' };
 const SPIDER_POSE = { spin: 'in her corner on a few threads, spinning', wave: 'one front leg raised, waving' };
+// chapter 10: the grown Mistscales, a great head and neck out of the mist (her moods are drawn her way: kind is her resting face)
+const MISTSCALE_POSE = { lean: 'her great face leaning out of the mist', nuzzle: 'her great head lowered, nose down to a small dragonet’s height, eyes half shut',
+  lift: 'her great head lifted high, the mouth a little open in a call (no teeth)', bow: 'the head bowed all the way down to the grass, eyes closed, the neck a long curve' };
 const MOODS = {
   neutral: '', happy: 'happy', dreamy: 'dreamy', wonder: 'full of wonder', worried: 'worried', scared: 'scared', sleepy: 'sleepy',
   laugh: 'laughing', stern: 'stern', kind: 'kind', proud: 'proud', sniff: 'sniffing', shout: 'shouting', solemn: 'solemn',
@@ -473,7 +537,39 @@ const SET_ANCH = { bridge: { beside: 'pressed against Sprinkle’s side',
     nook: 'on the moss in the hollow', lip: 'at the hollow’s opening: head, shoulders and forepaws in, the rest cut off by the opening’s rim (below the forepaws)' },
   // chapter 9: Thymeleaf's den in the camp (`herbs`), and the case laid out on the den floor (`case`)
   camp: { 'herbs-1': 'among the drying leaves at the left', 'herbs-2': 'at the right of the den', 'herbs-3': 'at the right of the den, further right still', web: 'high in the den’s top corner, on the little web (a spot about the size of a cat’s forepaw)' },
-  den: { 'case-1': 'at the near left of the rows of bark', 'case-2': 'across the rows at the right', 'case-3': 'at the far side, standing by the doorway’s light' },
+  den: { 'case-1': 'at the near left of the rows of bark', 'case-2': 'across the rows at the right', 'case-3': 'at the far side, standing by the doorway’s light',
+    // chapter 10: on the stone close-up, her sleeping tail
+    tail: 'curled at the panel’s bottom edge: only her tail’s tip' },
+  // chapter 10: the Moon Ferry (the Crossing's stones, the deck, the raft's back, the low logs and the gap, the river) and
+  // Gathering Island (the shore, the clearing, the roots, the case, the fox's edge, the mist, the sky, her paws); a spot
+  // that reads differently through one camera is in CAM_ANCH below
+  ferry: { 'bank-1': 'on the Crossing’s flat stones, walking down to the rafts, first', 'bank-2': 'on the stones, walking down to the rafts, second', 'bank-3': 'on the stones, walking down to the rafts, third',
+    edge: 'at the stones’ edge by the front raft, about to step aboard', 'log-1': 'just aboard, on the front raft’s near logs', 'log-2': 'on the front raft’s near logs, beside the first',
+    pole: 'standing at the front raft’s far end with the long pole',
+    'seat-1': 'seated along the raft’s logs, in the first of six seats (three down each side, the near ones bigger)', 'seat-2': 'seated along the logs, in the second seat', 'seat-3': 'seated along the logs, in the third seat',
+    'seat-4': 'seated along the logs, in the fourth seat', 'seat-5': 'seated along the logs, in the fifth seat', 'seat-6': 'seated along the logs, in the sixth seat',
+    front: 'mid-raft at the left', beside: 'mid-raft, beside her', back: 'at the raft’s near right corner, beside the luggage', heap: 'beside the heap of reeds',
+    'back-1': 'at the raft’s back end, left of the heap, first', 'back-2': 'at the raft’s back end, left of the heap, second', 'back-3': 'at the raft’s back end, left of the heap, third',
+    gap: 'in the silver water between two logs (no ground shadow: the set draws its rings)', lie: 'lying flat on the logs at the gap’s edge, chin over it',
+    'sit-1': 'on the logs beside the gap, first', 'sit-2': 'on the logs beside the gap, second', 'sit-3': 'on the logs beside the gap, third',
+    water: 'in the silver water in the middle of the gap (no ground shadow)', lip: 'at the gap’s top edge, looking down: head and forepaws, the rest cut off by the edge',
+    'raft-1': 'small on the front raft, first', 'raft-2': 'small on the front raft, second' },
+  island: { 'land-1': 'stepping off onto the shore, up the slope, first', 'land-2': 'stepping off onto the shore, second', 'land-3': 'stepping off onto the shore, third',
+    raft: 'at the Moon Ferry’s front, at the water’s edge', drag: 'on the mud beside the luggage, dragging it', print: 'on the mud beside the badger’s print',
+    'root-1': 'on the great tree’s left root', 'root-2': 'on the great tree’s middle root', 'root-3': 'on the great tree’s right root',
+    'crowd-1': 'at the front of the ring, CrystalClan’s side at the left, first', 'crowd-2': 'at the front of the ring, CrystalClan’s side, second', 'crowd-3': 'at the front of the ring, CrystalClan’s side, third',
+    'crowd-4': 'at the front of the ring, ReedClan’s side at the right, first', 'crowd-5': 'at the front of the ring, ReedClan’s side, second', 'crowd-6': 'at the front of the ring, ReedClan’s side, third',
+    elder: 'at the back left of the ring, in front of the roots', centre: 'in the middle of the clearing', beside: 'beside her in the middle of the clearing',
+    edge: 'at the clearing’s river edge, at the right', 'edge-2': 'at the clearing’s river edge, second', 'edge-3': 'at the clearing’s river edge, third',
+    bank: 'at the river edge, in front of the fox’s place, by the water', luggage: 'at the clearing’s left edge, by the reed heap',
+    step: 'below the middle root, where a cat called up to the tree stands', 'near-1': 'beside the step, first', 'near-2': 'beside the step, second',
+    speak: 'a little left of centre in the moonlight', mentor: 'behind her at the left', root: 'up on a low root of the great tree behind her, where every Clan can see',
+    fox: 'at the clearing’s river edge, at the right', 'weasel-1': 'at the river edge beside the fox, first', 'weasel-2': 'at the river edge beside the fox, second',
+    'front-1': 'at the crowd’s front behind her, first', 'front-2': 'at the crowd’s front behind her, second', 'front-3': 'at the crowd’s front behind her, third', 'front-4': 'at the crowd’s front behind her, fourth',
+    water: 'in the river, swimming away, first (no ground shadow)', 'water-2': 'in the river, swimming away, second (no ground shadow)', 'water-3': 'in the river, swimming away, third (no ground shadow)',
+    mama: 'out of the mist at the right, the face about two cats tall', eldest: 'lower and further right, out of the mist, the face bowing to the grass',
+    nose: 'on the grass under Mama’s lowered nose', fly: 'in the air over the clearing, round the great tree (no ground under her)', far: 'far up the river, small, in the air',
+    close: 'close in front, the forepaws and chest filling the lower panel', above: 'leaning down from the top right, her claws over the paws below' },
   // chapter 5: on the open river, `pole` is the poling spot and `beside` is in the water (an otter's place, or a dragonet's)
   openriver: { pole: 'at the poling spot, at the raft’s end', beside: 'in the water beside the raft' } };
 // chapter 8: an anchor that reads differently through one camera of a set (the weasels' holes close up, the weeds' view
@@ -485,7 +581,13 @@ const CAM_ANCH = {
   field: { dogs: { 'trail-1': 'along the middle of the path, the nearer of two places', 'trail-2': 'along the middle of the path, the further of two places' } },
   // chapter 9: the elder and the apprentice where each camera of GroveClan's woods puts them
   grove: { wide: { elder: 'stepping out from between the trunks at the right' },
-    oak: { elder: 'beside the oak, at the right' } }
+    oak: { elder: 'beside the oak, at the right' } },
+  // chapter 10: the poler on the deck and small on the river; the island's spots on its closer cameras
+  ferry: { deck: { pole: 'standing at the front end with her pole, against the moonlit river' }, river: { pole: 'poling at the front raft’s end, small' } },
+  island: { case: { beside: 'at her right, between her and the fox' },
+    mist: { beside: 'on the grass beside her, facing the mist', speak: 'at the left, facing the mist', 'front-1': 'at the left beside her, facing the mist', 'front-2': 'at the left beside her, second, facing the mist' },
+    fox: { fox: 'at the clearing’s edge, the river behind', 'weasel-1': 'at the fox’s heels, first', 'weasel-2': 'at the fox’s heels, second' },
+    sky: { nose: 'high at the right, beside Mama’s face in the mist (in the air)' } }
 };
 const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 // chapter 5: what a one-tap frame's `tap` is, in words
@@ -500,16 +602,55 @@ const TAPS = { nose: 'the old tom’s nose', earth: 'the freshly dug earth', fur
   mouth: 'the tunnel’s round dark mouth', path: 'the path ahead, the way to the tracks', weeds: 'the tall weeds at the bank’s foot', stash: 'the biggest hole’s mouth',
   glass: 'one small piece of glass at the heap’s near edge', leaf: 'the leaf in her paws', tail: 'the tip of a tail sticking straight up',
   // chapter 9: the reed root at the wall's end, Sprinkle's hurt wing
-  root: 'the long pale root on the dry stones', wing: 'Sprinkle’s hurt right wing' };
+  root: 'the long pale root on the dry stones', wing: 'Sprinkle’s hurt right wing',
+  // chapter 10: Gathering Island's reed heap (its own words are SET_TAPS', below)
+  reeds: 'the heap of reeds over the luggage' };
 // chapter 8: a tap mark somebody else carries is theirs (Riffle's ears, his near forepaw, the friend's tail); our cat's
 // forepaw mid-run is her front paw, not a raised one. Every tap of chapters 5 to 7 reads as it did.
 // (chapter 9: a cat's ears are a cat's; only Riffle's are small and round)
 const TAP_WHO = { ears: (w, c) => w + (c && c.who !== 'riffle' ? '’s ears' : '’s small round ears'), paw: w => w + '’s near forepaw', tail: w => 'the tip of ' + w + '’s tail, sticking straight up' };
 const TAP_SELF = { paw: { run: 'her own front paw, mid-stride',
   // chapter 9: stepping onto the little bridge
-  walk: 'her own front paw, mid-step' } };
+  walk: 'her own front paw, mid-step',
+  // chapter 10: standing with every Clan, a step toward the fox
+  stand: 'her own front paw, ready to step' } };
 // chapter 9: a mark on our cat herself, in any pose: her own nose ("With your NOSE."), her own raised tail
 const TAP_MINE = { nose: 'her own nose', tail: 'the tip of her own tail, sticking straight up' };
+// chapter 10: a set's own tap marks (Gathering Island's reed heap, its mist bank, the badger's print: the global
+// `mist` and `print` are Sprinkle's), a mark on our cat through one camera (her two forepaws held out for the stone),
+// and the dragonets' snouts at their goodbyes (a cast member's `tap: 'nose'`: the old tom's nose is chapter 5's)
+const SET_TAPS = { island: { reeds: 'the heap of reeds over the luggage', mist: 'the soft silver bank of mist rolling in', print: 'the badger’s big old print in the mud' } };
+const CAM_TAPS = { island: { paws: { paw: 'her own two forepaws, held out in the moonlight' } } };
+const DRAGONETS = new Set(['sprinkle', 'squall', 'puddle', 'wisp', 'sleet', 'hail', 'mizzle']), DRAGONET_SHE = new Set(['sprinkle', 'wisp', 'hail', 'mizzle']);
+
+// chapter 10: the twenty cards every cat holds at the Gathering (the spec's section 3: the thinnest file, on every
+// path); a pick's right card outside them is one only some cats hold (`my-count` among them: a reread can drop it)
+const EVERY_CAT_HOLDS = new Set(['cant-fly', 'fox-flew', 'fox-brag', 'waffles-no-moon', 'fox-moon', 'heron-no-moon', 'tidy', 'reed-pile', 'stash', 'coil-diggers',
+  'tunnel', 'scale', 'glass', 'four-a-night', 'sprinkle-scales', 'fur', 'prints-marsh', 'prints-sprinkle', 'otter-fox', 'heron-shapes']);
+// a claim's one word in capitals (two letters or more), the word the strip lights: the engine's rule when it has one
+const claimWord = claim => (typeof E.pickWord === 'function' ? E.pickWord(claim) : ((String(claim || '').match(/[A-Z][A-Z’']*[A-Z]/g) || []).length === 1 ? String(claim).match(/[A-Z][A-Z’']*[A-Z]/)[0] : null));
+
+// chapter 10: the 7s' picture, and a lesson of every Count mixed (the Moon Ferry's: its facts carry two tables or
+// more), each fact drawn and hopped as its own Count
+const CLUTCHES = 'clutches of seven little dragonets, each a row of four over a row of three (four sisters and three brothers), small, mist-grey, round-eyed and smiling, never toothy; the clutches in rows of five with space between, never touching';
+function mixedSet(set) {
+  const t = new Set(asList(set && set.facts).map(f => (Array.isArray(f) ? null : f && f.table)).filter(Boolean));
+  return t.size > 1;
+}
+function mixedPicture(x, set) {
+  const t = x.table || set.table, n = x.b === t ? x.a : x.b, N = numWord(n), kind = x.picture && x.picture.kind;
+  if (kind === 'marks') return N + ' row' + (n === 1 ? '' : 's') + ' of ' + numWord(t) + ' marks scratched ' + (x.picture.ground === 'log' ? 'on a log’s top' : x.picture.ground === 'mud' ? 'in the mud' : 'in the sand') +
+    (t === 7 ? ', each row four and three with a gap' : '') + ', lit in order';
+  if (kind === 'cheeks' || t === 6) return N + ' cheeks close up, six whiskers on each, three on top and three below';
+  if (t === 8 && set.thing === 'leg') return N + ' spiders from above, eight legs each, four on each side';
+  if (t === 7 && set.thing === 'dragonet') return N + ' clutches of seven little dragonets';
+  const BY = { 1: ' cats’ tails', 2: ' cats’ ears', 3: ' patrols of three cats', 4: ' cats side-on, standing, four paws each, five to a row', 5: ' raised forepaws, five claws each',
+    9: ' cats’ both forepaws, one claw tucked in: nine each', 10: ' cats’ both forepaws, ten claws each' };
+  return BY[t] ? (t === 1 && n === 1 ? 'one cat’s tail' : N + BY[t]) : N + ' groups of ' + numWord(t);
+}
+const STEP_WORDS = { 1: 'the 1s one by one', 2: 'the 2s by twos', 3: 'the 3s by threes', 4: 'the 4s by fours, two and two', 5: 'the 5s by fives', 6: 'the 6s by sixes, three and three',
+  7: 'the 7s by sevens, four and three', 8: 'the 8s by eights, four and four', 9: 'the 9s by tens, one tucked in for every cat', 10: 'the 10s by tens, two swipes a cat' };
+const mixedSteps = set => [...new Set(asList(set.facts).map(f => (Array.isArray(f) ? set.table : f.table || set.table)))].map(t => STEP_WORDS[t] || 'the ' + t + 's by ' + t + 's').join('; ');
 
 /* ------------------------------------------------------------------ helpers */
 const q = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
@@ -524,11 +665,19 @@ function factWords(k) {
  * true": chapter 4's FLEW link, which reads either flag). It is asked for by a card link's condition
  * alone, so chapter 5's "found today" (`not` over three flags, all false: its frames and its book line)
  * prints as it always has. */
+/* Chapter 10: a card pick's flag (the card she answered the claim with) reads in the card's own line, whole:
+ * "she answered with “Sprinkle can’t fly.”", and a `not` of pick flags alone "unless she answered with “…”".
+ * PICK.flags holds the flags of the chapter being boarded, PICK.line a card's line (both set by board()). */
+const PICK = { flags: {}, line: () => null };
+const answered = v => 'she answered with ' + asList(v).map(id => (PICK.line(id) ? '“' + q(PICK.line(id)) + '”' : '`' + id + '`')).join(' or ');
+const pickValue = v => typeof v === 'string' || (Array.isArray(v) && v.length && v.every(x => typeof x === 'string'));
 function whenWords(w, or) {
   if (!w || typeof w !== 'object') return '';
   return Object.keys(w).map(k => {
     const v = w[k];
     if (or && k === 'not' && v && typeof v === 'object' && Object.keys(v).length && Object.keys(v).every(x => v[x] === false)) return Object.keys(v).join(' or ') + ' is true';
+    if (PICK.flags[k] && pickValue(v)) return answered(v);
+    if (k === 'not' && v && typeof v === 'object' && Object.keys(v).length && Object.keys(v).every(x => PICK.flags[x] && pickValue(v[x]))) return 'unless ' + whenWords(v);
     if (k === 'not') return 'not (' + whenWords(v) + ')';
     if (k === 'lessonClean') return asList(v).map(s => 'the ' + s + ' lesson went without help').join(' or ');
     if (k === 'firstTry') return asList(v).map(f => 'she got ' + factWords(f) + ' right the first time').join(' or ');
@@ -538,7 +687,9 @@ function whenWords(w, or) {
     return k + ' is ' + JSON.stringify(v);
   }).join(' and ');
 }
-const onlyIf = w => (w ? ' *(only if ' + whenWords(w) + ')*' : '');
+// a condition after "only if", or (chapter 10) "unless …" as it stands
+const ifWords = w => { const t = whenWords(w); return t.indexOf('unless ') === 0 ? t : 'only if ' + t; };
+const onlyIf = w => (w ? ' *(' + ifWords(w) + ')*' : '');
 const NUMW = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 const numWord = n => NUMW[n] || String(n);
 /* The pile in rows (chapter 4): `rows: [10, 10, { n: 10, gap: [3, 4, 5, 6] }]`, front to back. */
@@ -598,7 +749,9 @@ function castExtraWords(c, set) {
   if (c.buzz) out.push('buzzing all over: short zigzags along the outline (shaking, with nothing blowing)');
   if (c.dragonfly) out.push(c.who === 'patience' ? 'a dragonfly asleep on her bill' : 'a dragonfly on the nose');
   if (c.glow) out.push('glowing softly: the one she taps');
-  if (c.tap === 'nose' || c.tap === true) out.push('the nose is what she taps');
+  // (chapter 10: a dragonet's goodbye is tapped on the snout)
+  if (c.tap === 'nose' && DRAGONETS.has(c.who)) out.push('the snout is what she taps');
+  else if (c.tap === 'nose' || c.tap === true) out.push('the nose is what she taps');
   if (c.tap === 'pole') out.push('the pole, where the paws hold it, is what she taps');
   // (chapter 7: under the Old Bridge the print is Sprinkle's, and her paw is the small one)
   if (c.reach) out.push(set === 'bridge' ? 'one forepaw held out and down, touching nothing: just over the heel pad of one of Sprinkle’s big prints, the pad showing all round it and the five toes and long claws fanned out beyond, toward us, room to spare (her paw about a fifth of its length)' :
@@ -612,9 +765,14 @@ function castExtraWords(c, set) {
   if (c.tap === 'pinecone') out.push('the pinecone is what she taps');
   // (chapter 8: mid-run the paw she taps is the front one; Riffle's, scrambling, is his near forepaw)
   // (chapter 9: stepping onto the little bridge, the front paw mid-step)
-  if (c.tap === 'paw') out.push(c.pose === 'run' ? 'the front paw, mid-stride, is what she taps' : c.pose === 'scramble' ? 'the near forepaw is what she taps' : c.pose === 'walk' ? 'the front paw, mid-step, is what she taps' : 'the raised forepaw is what she taps');
+  // (chapter 10: standing, the front paw ready to step)
+  if (c.tap === 'paw') out.push(c.pose === 'run' ? 'the front paw, mid-stride, is what she taps' : c.pose === 'scramble' ? 'the near forepaw is what she taps' : c.pose === 'walk' ? 'the front paw, mid-step, is what she taps' :
+    c.pose === 'stand' && c.who === 'player' ? 'the front paw, ready to step, is what she taps' :
+    // (chapter 10: on the island's close-up of her paws, both are held out for the stone)
+    set === 'island' && c.at === 'close' ? 'her two forepaws, held out, are what she taps' : 'the raised forepaw is what she taps');
   if (c.tap === 'ears') out.push(c.who === 'riffle' ? 'his small round ears are what she taps' : 'the ears are what she taps');
-  if (c.tap === 'stone') out.push('the head, turned into the gap like one more stone of the wall, is what she taps');
+  // (chapter 10: the mist stone she holds is said with it, below; chapter 6's stone is the snake's head in the wall)
+  if (c.tap === 'stone' && c.holds !== 'miststone') out.push('the head, turned into the gap like one more stone of the wall, is what she taps');
   if (c.tap === 'eyes') out.push('the two round open eyes are what she taps');
   if (c.tap === 'pebbles') out.push('the pebbles are what she taps');
   if (c.tap === 'cheeks') out.push('the puffed-up cheeks are what she taps');
@@ -635,6 +793,12 @@ function castExtraWords(c, set) {
   // chapter 9: Riffle's river mint, Sprinkle's hurt wing tapped (the rub)
   if (c.holds === 'mint') out.push(c.holdAt === 'mouth' ? 'a bunch of river mint as big as his head, carried in the mouth' : 'a bunch of river mint as big as his head, held in the forepaws');
   if (c.tap === 'wing') out.push(c.who === 'sprinkle' ? 'her hurt right wing is what she taps' : 'the wing is what she taps');
+  // chapter 10: the mist stone in her paws (grey, until the moonlight finds it: then its flash), wet fur off the river
+  if (c.holds === 'miststone') out.push((c.holdAt === 'paws' ? 'the mist stone in one forepaw over the moss' : 'the mist stone held out in her two forepaws') + ': a smooth grey pebble, egg-shaped, the size of her paw' +
+    (c.flash === true ? ', flashing blue and green in the moonlight (a band of blue and green light across its face, the rest still grey)' : ''));
+  else if (c.flash === true) out.push('flashing blue and green in the moonlight');
+  if (c.tap === 'stone' && c.holds === 'miststone') out.push('the mist stone is what she taps');
+  if (c.wet === true) out.push('wet through: a little darker, the fur flattened and spiky at its edges, two or three drips falling');
   return out;
 }
 
@@ -667,7 +831,49 @@ function readWords(v) {
   if (v === 7) return 'all six rows lit, and a seventh laid out and lit below them, out of the face-down stack: her own count (`my-count`) and Mizzle’s card (`mizzle-wing`), each only if she holds it; nothing glowing';
   return 'read: ' + JSON.stringify(v);
 }
+// chapter 10: the full moon where each place shows it (the den's is the art's clock: full and round)
+const MOON14 = { ferry: 'the full moon, round and bright, wherever the sky or the water shows it',
+  riverbank: 'the full moon over the towers, and under it the river silver, moonlight on its ripples (never the black water of a dark night); the path pale in the moonlight',
+  tower: 'the full moon high over the towers' };
+/* Chapter 10: the Moon Ferry's and Gathering Island's options, set by set (`clan`, `crowd`, `luggage`, `bubbles`,
+ * `drawing`, `print` and `tap` read otherwise on other sets); null for a name the set does not have, which then reads
+ * as any other set's (the moon on the ferry). */
+function ferryIslandWords(set, k, v) {
+  const bare = k + ': ' + JSON.stringify(v);
+  // a flag's words, or a list's: what each value says ('' for off: false, or 'none'); a value nobody gave is bare
+  const flag = w => (v === true ? w : v === false ? '' : bare), pickOf = m => (Object.prototype.hasOwnProperty.call(m, v) ? m[v] : v === 'none' ? '' : bare);
+  if (set === 'ferry') {
+    if (k === 'clan') return flag('the rest of CrystalClan seated along the logs of the front raft and the rafts behind, small, in their coats');
+    if (k === 'luggage') return flag('the heap of reeds at the back of the front raft (the luggage), round and lumpy, nothing of Sprinkle showing');
+    if (k === 'puff') return flag('a little cloud of mist puffing out of the heap of reeds');
+    if (k === 'low') return flag('the front raft riding low: the water lapping right at the logs’ tops, never over them');
+    if (k === 'home') return flag('the raft bumping in at the Crossing’s stones, the moon high');
+    return null;
+  }
+  if (k === 'crowd') return v === false ? '' : pickOf({ true: 'every Clan in a wide ring round the clearing, small seated cats in their Clans’ coats (CrystalClan’s, ReedClan’s marsh coats, GroveClan’s dapples) and a few otters, clear of the cast',
+    standing: 'every Clan in the ring on its feet: every cat and every otter standing' });
+  if (k === 'luggage') return pickOf({ heap: 'the reed heap (the luggage), round and lumpy', open: 'the reeds pulled off the luggage, lying in a pile' });
+  if (k === 'ferry') return flag('the Moon Ferry’s front raft at the water’s edge');
+  if (k === 'print') return flag('the badger’s old track in the mud: one big print, a wide pad and five toes in a row, long digging claw marks, old and dry at its edges, in bright moonlight (never fresh, and never the animal)');
+  if (k === 'mist') return pickOf({ rolling: 'the mist coming up the river: a low silver bank over the water and the clearing’s edge, the moon glowing through it',
+    thick: 'the mist thick round the great tree too, the moon glowing through it, everything silver, never grey-dark' });
+  if (k === 'tail') return flag('the tip of a huge, soft grey tail curling through the mist');
+  if (k === 'grown') return flag('the other grown Mistscales, great soft grey shapes in the mist: gentle, no faces, no teeth or claws');
+  if (k === 'small') return pickOf({ one: 'one small dragonet shape in the mist, grey, soft and faceless', some: 'three or four small dragonet shapes in the mist, grey, soft and faceless',
+    coming: 'small dragonet shapes stepping out of the mist toward her, still misty' });
+  if (k === 'rising') return flag('the Mistscales rising into the mist and away upriver, great soft shapes going up, a small one with them');
+  if (k === 'zip') return flag('one small winged shape zipping off the other way, toward the towers far downriver, a little ring of hiccup mist behind it');
+  if (k === 'drawing') return pickOf({ cat: 'a little cat scratched in the earth in front of the dragonet beside her: four legs, two ears and a tail' });
+  if (k === 'bubbles') return flag('little bubbles rising over the otters in the crowd');
+  if (k === 'tap') return pickOf({ reeds: 'the heap of reeds over the luggage is what she taps', mist: 'the soft silver bank of mist is what she taps', print: 'the badger’s print is what she taps' });
+  return null;
+}
 function optWords(set, k, v, all, cam) {
+  if (set === 'ferry' || set === 'island') { const w = ferryIslandWords(set, k, v); if (w != null) return w; }
+  // (chapter 10: the mist stone on her moss, grey or flashing; the small shape flying off over the riverbank)
+  if (k === 'miststone') return v === true || v === 'flash' ? 'the mist stone on the moss of her nest, beside her glass in its leaf and the corners of her secret bark: a smooth grey pebble, egg-shaped, the size of her paw' +
+    (v === 'flash' ? ', flashing blue and green in the moonlight from the doorway (a band of blue and green light across its face, the rest still grey)' : '') : v === false ? '' : k + ': ' + JSON.stringify(v);
+  if (k === 'flyer') return v === true ? 'a small winged shape flying off upriver across the sky by the red light, slate-dark, wings out, a tiny ring of hiccup mist behind it' : v === false ? '' : k + ': ' + JSON.stringify(v);
   if (k === 'door') return 'the door is ' + v;
   if (k === 'reflection') return v ? 'your reflection shows in the glass' : '';
   if (k === 'clan') return v ? 'tiny Clan cats in the garden' : '';
@@ -699,7 +905,8 @@ function optWords(set, k, v, all, cam) {
     if (v === 'row' && all && Array.isArray(all.cards)) return sandRowWords(all.cards, all.blank);
     return v === 'falling' ? 'a curl of pale bark falling from the trunk' : v === 'sand' ? 'a curl of bark lying on the sand' : v === 'row' ? 'blank curls of bark in a row on the sand' : '';
   }
-  if (k === 'marks') return v === 'auto' ? 'one claw mark on the trunk for each Count she has learned' : v + ' claw mark' + (v === 1 ? '' : 's') + ' on the trunk';
+  // (chapter 10: all ten, as the art lays them, in rows of four)
+  if (k === 'marks') return v === 'auto' ? 'one claw mark on the trunk for each Count she has learned' : v === 10 ? 'ten claw marks on the trunk, in rows of four, four and two: one for every Count' : v + ' claw mark' + (v === 1 ? '' : 's') + ' on the trunk';
   if (k === 'glow') {
     if (v === 'auto') return 'each claw mark glows if its Count glows in the Training Hollow';
     if (Array.isArray(v)) { const on = v.map((x, i) => (x ? ORD[i + 1] || String(i + 1) : '')).filter(Boolean); return on.length ? 'the ' + on.join(' and ') + ' claw mark' + (on.length === 1 ? '' : 's') + ' glow' + (on.length === 1 ? 's' : '') : ''; }
@@ -709,7 +916,8 @@ function optWords(set, k, v, all, cam) {
   // (chapter 5: a number is a crescent of that many nights, drawn a little fatter than the night before's;
   // chapter 8: the eighth evening's is a half moon, bright, and the night silver, not black; chapter 9: the
   // twelfth evening's more than half, the thirteenth's nearly round, the eve of the full moon)
-  if (k === 'moon') return typeof v === 'number' ? (v === 8 ? 'a bright half moon, eight evenings old' : v === 13 ? 'the moon nearly round, thirteen evenings old' :
+  // (chapter 10: the fourteenth evening's is the full moon)
+  if (k === 'moon') return typeof v === 'number' ? (v === 14 ? MOON14[set] || 'the moon full and round, fourteen evenings old' : v === 8 ? 'a bright half moon, eight evenings old' : v === 13 ? 'the moon nearly round, thirteen evenings old' :
     v > 8 && v < 13 ? 'the moon more than half and growing, ' + numWord(v) + ' evenings old' : v > 8 ? 'the moon, ' + v + ' evenings old' : 'a crescent moon, a little fatter than last night’s') : v ? 'a moon in the sky' : 'no moon';
   if (k === 'drips') return set === 'den' ? (v ? 'sun spots and dripping leaves' : '') : (v ? 'water drips' : 'no drips');
   if (k === 'puddles') return v ? 'puddles everywhere' : '';
@@ -873,6 +1081,28 @@ function board(storyPath, outPath) {
   }
   const F = story.frames;
   const ids0 = Object.keys(F);
+  /* Chapter 10: a card by its definition: this chapter's, else a chapter's beside it, else one of the game's own
+   * (a fixture chapter beside no other); and the card picks' flags, which a `when` reads by the card's line. */
+  let gameCards = null;
+  function cardDef(id) {
+    const own = (story.cards || {})[id];
+    if (own) return own;
+    for (const st of siblings()) if (st.cards && st.cards[id]) return st.cards[id];
+    if (!gameCards) {
+      gameCards = {};
+      const dir = join(ROOT, 'app/story');
+      try {
+        readdirSync(dir).filter(x => /^ch\d+\.js$/.test(x)).sort().forEach(x => {
+          const P = require(join(dir, x)), st = ((P && P.story) || {})[basename(x, '.js')];
+          if (st && st.cards) Object.keys(st.cards).forEach(k => { if (!gameCards[k]) gameCards[k] = st.cards[k]; });
+        });
+      } catch (e) { /* no game beside it: the card's id alone */ }
+    }
+    return gameCards[id] || null;
+  }
+  PICK.flags = {};
+  PICK.line = id => { const d = cardDef(id); return d && typeof d.line === 'string' ? d.line : null; };
+  ids0.forEach(id => { const pk = F[id] && F[id].pick; if (pk && typeof pk.flag === 'string') PICK.flags[pk.flag] = true; });
   // chapter 5: the other chapters beside this one (app/story/chNN.js), loaded only when a frame here
   // runs one of their Counts sets (the roof found later: chapter 4's riddle)
   let sibs = null;
@@ -899,6 +1129,8 @@ function board(storyPath, outPath) {
     if (f.scratch) return [f.scratch.next];
     if (f.file) return [f.file.next];
     if (f.ask) return [f.ask.next];
+    // (chapter 10: a card pick turns the page only by a right pick)
+    if (f.pick) return [f.pick.next];
     return f.next ? [f.next] : [];
   }
   // every way on from a frame: its exits, and where the page turns when its `when` doesn't match (`else`)
@@ -917,17 +1149,21 @@ function board(storyPath, outPath) {
     return null;
   }
   /* Reading order: a list of { frame } and { choice, branches: [{ option, items }], merge }. */
-  function walk(start, stopAt, seen) {
+  /* (chapter 10: `lost`, the frames the walk would never board because only an `else` reaches them, a twin or a chain
+   * of counted conditions: each is boarded right after the frame whose `else` names it, and its own `else` after it;
+   * `only` keeps such a walk to those frames. Without them, as in chapters 1 to 9, the walk is as it always was.) */
+  function walk(start, stopAt, seen, lost, only) {
     const items = [];
     let id = start;
-    while (id && F[id] && id !== stopAt && !seen.has(id)) {
+    while (id && F[id] && id !== stopAt && !seen.has(id) && (!only || lost.has(id))) {
       seen.add(id);
       const f = F[id];
       items.push({ frame: id });
+      if (lost && f.else && lost.has(f.else) && !seen.has(f.else)) items.push(...walk(f.else, null, seen, lost, true));
       if (f.choice) {
         const targets = f.choice.options.map(o => o.next);
         const merge = mergePoint(targets);
-        const branches = f.choice.options.map(o => ({ option: o, items: walk(o.next, merge, new Set(seen)) }));
+        const branches = f.choice.options.map(o => ({ option: o, items: walk(o.next, merge, new Set(seen), lost, only) }));
         branches.forEach(b => b.items.forEach(function mark(it) { if (it.frame) seen.add(it.frame); if (it.branches) it.branches.forEach(bb => bb.items.forEach(mark)); }));
         items.push({ choice: id, branches, merge });
         id = merge;
@@ -935,11 +1171,18 @@ function board(storyPath, outPath) {
     }
     return items;
   }
-  const order = walk(story.start, null, new Set());
+  const order0 = walk(story.start, null, new Set());
+  const boarded = new Set();
+  (function mark(items) { items.forEach(it => { if (it.frame) boarded.add(it.frame); if (it.branches) it.branches.forEach(b => mark(b.items)); }); })(order0);
+  const lost = new Set(reach(story.start).filter(id => !boarded.has(id)));
+  const order = lost.size ? walk(story.start, null, new Set(), lost) : order0;
 
   /* -------------------------------------------------------------- text */
+  // chapter 10: the chapter names its one speaking otter (`names.otter`: Granny, chapter 5's otter variant 3), so the cast does too
+  const grannyOtter = c => !!(story.names && story.names.otter === 'Granny' && c && c.variant === 3);
   function whoWords(c) {
     if (c.who === 'player') return 'you';
+    if (c.who === 'otter' && grannyOtter(c)) return 'Granny, the old otter who poles the Moon Ferry';
     if (VARIANT_WHO[c.who]) return VARIANT_WHO[c.who][c.variant || 1] || WHO[c.who];
     return WHO[c.who] || c.who;
   }
@@ -957,6 +1200,8 @@ function board(storyPath, outPath) {
     return out.join('; ');
   }
   function poseWords(c) {
+    // (chapter 10: Granny, the chapter's own name for its one otter, is a she)
+    if (c.who === 'otter' && grannyOtter(c) && (c.pose === 'stand' || (c.pose === 'hug' && c.holds === 'pole'))) return 'standing up on her hind legs';
     if (c.pose === 'stand' && (c.who === 'otter' || c.who === 'riffle')) return OTTER_STAND;
     // (chapter 5: with the raft's pole in his arms, the hug is the pole's: the extras say so)
     if (c.pose === 'hug' && c.holds === 'pole') return OTTER_STAND;
@@ -977,6 +1222,9 @@ function board(storyPath, outPath) {
     // chapter 9
     if (c.who === 'mizzle' && MIZZLE_POSE[c.pose]) return MIZZLE_POSE[c.pose];
     if (c.who === 'spider' && SPIDER_POSE[c.pose]) return SPIDER_POSE[c.pose];
+    // chapter 10 (a pose a Mistscale was never given draws `lean`); Sprinkle leaning down with the pebble over her paws
+    if (c.who === 'mistscale') return MISTSCALE_POSE[c.pose] || MISTSCALE_POSE.lean;
+    if (c.who === 'sprinkle' && c.pose === 'lookdown' && c.holds === 'pebble') return 'leaning down from above, looking down';
     return POSES[c.pose] || c.pose;
   }
   const extraWords = (c, set) => castExtraWords(c, set);
@@ -1032,15 +1280,21 @@ function board(storyPath, outPath) {
     const notes = [];
     if (x.table) notes.push('from the ' + x.table + 's');
     if (x.groups != null || x.per != null) notes.push('pictured as ' + (x.groups != null ? x.groups : '?') + ' × ' + (x.per != null ? x.per : '?'));
-    if (x.picture) notes.push(pictureWords(x.picture, set));
+    // (chapter 10: in a lesson of every Count mixed, each fact is drawn as its own Count)
+    if (mixedSet(set)) notes.push('drawn as ' + mixedPicture(x, set));
+    else if (x.picture) notes.push(pictureWords(x.picture, set));
     // (chapter 7: in a cheeks picture its own cats are cheeks, a pair in a row one face)
     const cheeks = set && set.picture && /^cheeks/.test(set.picture.kind || '');
     if (Array.isArray(x.who) && x.who.length) notes.push(cheeks ? 'drawn as ' + cheekWords(x.who) : x.who.every(c => c && c.who === 'sprinkle') ? 'Sprinkle’s own forepaws in the picture' : 'its own cats in the picture');
     // (chapter 8: on the paws, `lit` counts paws, four to a cat)
     if (x.lit && set && set.thing === 'paw' && set.table === 4 && x.lit % 4 === 0) notes.push('its first ' + numWord(x.lit / 4) + ' cats’ paws lit as it is asked (' + x.lit + ')');
+    // (chapter 10: on the clutches, `lit` counts dragonets, seven to a clutch)
+    else if (x.lit && set && set.thing === 'dragonet' && set.table === 7 && x.lit % 7 === 0) notes.push('its first ' + numWord(x.lit / 7) + ' clutches lit as it is asked (' + x.lit + ')');
     else if (x.lit) notes.push('the first ' + x.lit + ' lit as it is asked');
     if (x.light) notes.push(x.light === 'rows' ? 'lit a row at a time as it is asked' : x.light === 'tuck' ? 'the hop and the tuck as it is asked' : 'lit a group at a time as it is asked');
-    if (x.prompt != null) notes.push('its own question' + (x.retryPrompt === true ? ', kept on its retry' : x.retryPrompt ? ', and another of its own on its retry' : ''));
+    // (chapter 10: an empty prompt is no words at all: the frame's own balloons, said again over it, ask it)
+    if (Array.isArray(x.prompt) && !x.prompt.length) notes.push('no words of its own: the frame’s balloons ask it' + (x.retryPrompt != null && x.retryPrompt !== true ? ', and its own question on its retry' : ''));
+    else if (x.prompt != null) notes.push('its own question' + (x.retryPrompt === true ? ', kept on its retry' : x.retryPrompt ? ', and another of its own on its retry' : ''));
     else if (x.retryPrompt != null && x.retryPrompt !== true) notes.push('its own question on its retry');
     if (x.right != null) notes.push('its own lines after a right answer');
     if (x.rightAgain != null) notes.push('its own lines after a right retry');
@@ -1087,9 +1341,13 @@ function board(storyPath, outPath) {
     const facts = (set.facts || []).map(x => factLabel(x, set)).join(', ');
     // (chapter 8: the paws of the 4s are the table-4 picture as drawn since chapter 1, no `kind`)
     // (chapter 9: the 8s' legs are spiders, from above, keyed on `thing: 'leg'`, no `kind`)
+    // (chapter 10: the 7s are clutches, keyed on `thing: 'dragonet'`, no `kind`)
     const pic = set.picture ? ', ' + pictureWords(set.picture, set) : set.thing === 'paw' ? ', cats side-on, standing, four paws each, five to a row, lit a cat at a time' :
-      set.thing === 'leg' ? ', spiders from above, eight legs each, four on each side, five to a row with space between, never touching, lit a leg at a time (a spider’s left four, then her right four)' : '';
-    const out = ['**Then the Counts lesson** `' + f.counts.set + '`' + (own ? '' : ', another chapter’s, run here as it is there') + ' (' + (set.things || 'things') + pic + '): ' + facts + '.'];
+      set.thing === 'leg' ? ', spiders from above, eight legs each, four on each side, five to a row with space between, never touching, lit a leg at a time (a spider’s left four, then her right four)' :
+      set.thing === 'dragonet' ? ', ' + CLUTCHES + ', lit a dragonet at a time (a clutch’s top four, then its bottom three)' : '';
+    // (chapter 10: a lesson of every Count mixed, each fact in its own Count's picture: the Moon Ferry's)
+    const mixed = mixedSet(set);
+    const out = ['**Then the Counts lesson** `' + f.counts.set + '`' + (own ? '' : ', another chapter’s, run here as it is there') + ' (' + (mixed ? 'every Count mixed, each fact in its own Count’s picture' : (set.things || 'things') + pic) + '): ' + facts + '.'];
     // a line the set's teacher says; in a set nobody speaks in (`teacher: 'caption'`), a caption
     const silent = set.teacher === 'caption', teacherSays = t => (silent ? '  - *Caption*: ' + t : '  - **' + (SPEAKER[set.teacher] || 'Tallyheart') + '**: “' + t + '”');
     const pairs = list => asList(list).map(x => fact(x).a + ' × ' + fact(x).b);
@@ -1129,6 +1387,8 @@ function board(storyPath, outPath) {
       set.help === 'picture' && set.picture && set.picture.kind === 'dose' ? 'a miss gets the set’s own picture lit a row at a time, ' + (set.teacher === 'caption' || set.helpCounter === 'you' ? 'the player keeping the count by eights,' : (SPEAKER[set.teacher] || 'Tallyheart') + ' counting it by eights,') :
       set.help === 'picture' && set.picture && set.picture.kind === 'acorns' ? 'a miss gets the set’s own picture lit a twig at a time, ' + (SPEAKER[set.teacher] || 'Tallyheart') + ' hopping it by eights,' :
       set.help === 'picture' ? 'a miss gets the set’s own picture lit a group at a time, the player keeping the count,' :
+      // (chapter 10: every Count mixed, on a log: each fact's own Count scratched and hopped in its own steps)
+      mixed && set.ground && !set.helpCounter ? 'a miss gets the fact’s own Count scratched ' + (GROUND[set.ground] || 'on the sand') + ' and hopped together in its own steps (' + mixedSteps(set) + '),' :
       set.ground || set.helpCounter ? 'a miss gets the count scratched ' + (GROUND[set.ground] || 'on the sand') +
       (set.helpCounter === 'you' ? ', ' + (set.ground === 'log' ? 'the player scratching and keeping the count herself' : (SPEAKER[set.teacher] || 'the teacher') + ' swiping and the player keeping the count') : '') + ',' :
       set.table === 9 ? 'a miss gets the sand count in two steps (two swipes for every cat, hopped by tens; then one line rubbed out of every pair, stepping back by ones)' :
@@ -1136,7 +1396,9 @@ function board(storyPath, outPath) {
       // (chapter 8: the 4s are scratched two and two, a gap between the pairs, and hopped by fours from the first)
       set.table === 4 ? 'a miss gets the sand count (four marks for every ' + (set.unit || 'group') + ', scratched two and two with a gap between the pairs, hopped by fours from the first)' :
       // (chapter 9: the 8s are scratched four and four, a gap between the fours, and hopped by eights from the first)
-      set.table === 8 ? 'a miss gets the sand count (eight marks for every ' + (set.unit || 'group') + ', scratched four and four with a gap between the fours, hopped by eights from the first)' : 'a miss gets the sand count';
+      set.table === 8 ? 'a miss gets the sand count (eight marks for every ' + (set.unit || 'group') + ', scratched four and four with a gap between the fours, hopped by eights from the first)' :
+      // (chapter 10: the 7s are scratched four and three, a gap between, and hopped by sevens from the first)
+      set.table === 7 ? 'a miss gets the sand count (seven marks for every ' + (set.unit || 'group') + ', scratched four and three with a gap between, hopped by sevens from the first)' : 'a miss gets the sand count';
     out[0] += ' She types each answer on the keypad; ' + missWords + ' and comes back two questions later' +
       (set.fillFrom ? ' (the questions in between come from `' + set.fillFrom + '`' + (set.fillOrder === 'easiest' ? ', the easiest first' : '') +
         ', never a pair asked already while there is another, each asked ' + (set.fillPicture === 'borrower' ? 'as this lesson’s own question, in its picture and its voice' :
@@ -1147,7 +1409,8 @@ function board(storyPath, outPath) {
     if (typeof set.prompt === 'string' && set.prompt) lines.push('- Asking a question with no words of its own:', teacherSays(q(set.prompt)));
     (set.facts || []).forEach(x => {
       x = fact(x);
-      if (x.prompt != null) {
+      if (Array.isArray(x.prompt) && !x.prompt.length) lines.push('- Asking ' + x.a + ' × ' + x.b + ': no more words (the frame’s own balloons, said again over the question, ask it).');
+      else if (x.prompt != null) {
         lines.push('- Asking ' + x.a + ' × ' + x.b + ':');
         if (typeof x.prompt === 'string') lines.push(teacherSays(q(x.prompt)));
         else lines.push(...balloonLines(x.prompt, f));
@@ -1278,6 +1541,23 @@ function board(storyPath, outPath) {
         (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) +
         (s.keep ? ' The running totals stay under the spiders on the pages after it.' : '') + more;
     }
+    // chapter 10: the clutches by 7s, and the clutch's forepaws (every `who` a dragonet: seven in one row, the ones she
+    // never found soft grey shapes in the mist), counted in the voice of whoever keeps the count (Mama, by her variant)
+    if (s.thing === 'dragonet' && t === 7) {
+      return '**Then she counts by 7s on the clutches** (the skip-count): ' + numWord(g) + ' ' + CLUTCHES + ' (in play they take the panel); ' + g +
+        ' taps, one on each clutch in turn (the next one glows; a tap anywhere else makes it wiggle), each lighting its seven dragonets, the row of four and then the row of three, and putting its running total under it and in ' + counter + ' balloon: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
+        (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) +
+        (s.keep ? ' The running totals stay under the clutches on the pages after it.' : '') + more;
+    }
+    if (t === 5 && g > 1 && asList(s.who).length > 1 && asList(s.who).every(c => c && DRAGONETS.has(c.who))) {
+      const keeper = ((f.scene && f.scene.cast) || []).find(c => c && c.who === s.teacher);
+      const by = s.teacher === 'player' ? 'her own' : ((VARIANT_SPEAKER[s.teacher] || {})[(keeper && keeper.variant) || 1] || SPEAKER[s.teacher] || 'Tallyheart') + '’s';
+      const each = asList(s.who).map(c => (c.shape ? 'a soft grey dragonet shape, faceless, in a wisp of mist, behind a misty grey forepaw whose five claws light pale silver' :
+        (SPEAKER[c.who] || whoWords(c)) + ', small behind a raised forepaw of ' + (DRAGONET_SHE.has(c.who) ? 'her' : 'his') + ' own') + onlyIf(c.when));
+      return '**Then she counts the clutch’s forepaws** (the skip-count, by 5s): ' + numWord(g) + ' forepaws raised in one row, the clutch in a row (in play they take the panel), one for each of these that is hers, in order: ' + each.join('; ') + '; ' + g +
+        ' taps, one on each forepaw in turn (the next one glows; a tap anywhere else makes it wiggle), each lighting its five claws and putting the running total in ' + by + ' balloon: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
+        (s.done ? ' Then: “' + q(s.done) + '”, and Next. On to ' + s.next + '.' : turns) + more;
+    }
     if (g === 1) {
       const whose = (s.who || []).map(c => SPEAKER[c.who] || whoWords(c)).join(', ');
       return '**Then she taps ' + (whose ? 'the forepaw ' + whose + ' holds up' : 'the one forepaw') + '** (one tap; the forepaw glows, and a tap anywhere else makes it wiggle): its ' + numWord(t) + ' claws light and a big ' + t + ' grows over them. Nothing can be got wrong, and nothing is logged.' +
@@ -1310,6 +1590,12 @@ function board(storyPath, outPath) {
    * member who carries it, when that is somebody other than our cat (TAP_WHO), or on her in a pose of its own (TAP_SELF). */
   function tapTarget(f) {
     const t = f.scratch.tap, c = ((f.scene && f.scene.cast) || []).find(m => m && m.tap === t);
+    const sc = f.scene || {};
+    // (chapter 10: a dragonet's snout, the mist stone she holds, her two forepaws held out, the island's own marks)
+    if (c && t === 'nose' && DRAGONETS.has(c.who)) return (SPEAKER[c.who] || whoWords(c)) + '’s snout';
+    if (c && t === 'stone' && c.holds === 'miststone') return 'the mist stone in her paws';
+    if (c && c.who === 'player' && (((CAM_TAPS[sc.set] || {})[sc.cam] || {})[t])) return CAM_TAPS[sc.set][sc.cam][t];
+    if (!c && (SET_TAPS[sc.set] || {})[t]) return SET_TAPS[sc.set][t];
     if (c && c.who !== 'player' && TAP_WHO[t]) return TAP_WHO[t](SPEAKER[c.who] || whoWords(c), c);
     if (c && c.who === 'player' && TAP_SELF[t] && TAP_SELF[t][c.pose]) return TAP_SELF[t][c.pose];
     if (c && c.who === 'player' && TAP_MINE[t]) return TAP_MINE[t];
@@ -1353,6 +1639,14 @@ function board(storyPath, outPath) {
     if (a.opt === 'read') return '**Then she taps the rows of her case, one at a time** (' + numWord(n) + ' taps, on this scene, counting nothing): the next row of bark glows (the scene marks it; ' + who + ' does not glow); a tap on it letters ' + who + '’s next question in ' + his + ' balloon and ' + answer +
       ', and lights that row (the scene’s `read` goes up by one, and the row after it glows); the pairs before stay under the panel, small, to read back. A tap anywhere else makes the glowing row hop. No number is shown, nothing can be got wrong, and nothing is logged. After the last one: Next → ' + a.next + '.' + tail +
       '\n\n' + pairs.map((pr, i) => (i + 1) + '. **' + who + '**: “' + q(pr[0]) + '” **' + to + '**: “' + q(pr[1]) + '”').join('\n');
+    // chapter 10: the two weasels telling it all, by turns: two balloons a tap, his and then hers
+    const WEASEL_SHE = { snip: 1 }, weasels = w => w === 'snip' || w === 'snatch';
+    if (weasels(a.who) && weasels(a.to) && a.who !== a.to) {
+      const hm = WEASEL_SHE[a.who] ? 'her' : 'him', hs = WEASEL_SHE[a.who] ? 'her' : 'his', theirs = WEASEL_SHE[a.to] ? 'hers' : 'his';
+      return '**Then she taps the weasels, once for each pair of lines** (' + numWord(n) + ' taps, on this scene, counting nothing): ' + who + ' glows softly; a tap on ' + hm + ' letters ' + hs + ' next line in ' + hs + ' balloon and ' + to + '’s in ' + theirs +
+        ', two balloons a tap, by turns' + (owed ? ', and adds one to what the scene shows' : ', and the scene stays as it is') + '; the pairs before stay under the panel, small, to read back. A tap anywhere else makes ' + hm + ' hop. No number is shown, nothing can be got wrong, and nothing is logged. After the last one: Next → ' + a.next + '.' + tail +
+        '\n\n' + pairs.map((pr, i) => (i + 1) + '. **' + who + '**: “' + q(pr[0]) + '” **' + to + '**: “' + q(pr[1]) + '”').join('\n');
+    }
     // chapter 9: an asker who answers himself (Thymeleaf naming his four things): two balloons of his own a tap
     if (a.to === a.who) return '**Then she taps ' + who + ', once for each pair of ' + his + ' lines** (' + numWord(n) + ' taps, on this scene, counting nothing): ' + who + ' glows softly; a tap on ' + him + ' letters ' + his + ' next line in ' + his + ' balloon and the one after it in a second balloon of ' + his + ' own' +
       (owed ? ', and adds one to what the scene shows' : ', and the scene stays as it is') + '; the pairs before stay under the panel, small, to read back. A tap anywhere else makes ' + him + ' hop. No number is shown, nothing can be got wrong, and nothing is logged. After the last one: Next → ' + a.next + '.' + tail +
@@ -1367,6 +1661,17 @@ function board(storyPath, outPath) {
     const p = f.file && f.file.prompt ? f.file.prompt : '**Tap** your Case File. You can open it any time.';
     return '**Then she opens her Case File, for the first time**: its curl of bark has appeared in the top bar, glowing (and is there on every page from now on). The instruction under the panel: “' + q(p).replace(/\*\*/g, '') +
       '” A tap on the curl opens the real screen: her cards on moss, under “What I saw myself” and “What I was told (to check)”. Closing it turns the page to ' + f.file.next + '.';
+  }
+  /* The card pick (chapter 10): Reynard's claim over her whole Case File, the cards that answer it (a card outside
+   * the twenty every cat holds marked as only some cats'), the nudges, the glow, her pick remembered. */
+  function pickWords(f) {
+    const p = f.pick, who = p.who || 'reynard', name = SPEAKER[who] || who, word = claimWord(p.claim), n = asList(p.nudges);
+    const right = asList(p.right).map(id => (PICK.line(id) ? q(PICK.line(id)) + ' ' : '') + '(`' + id + '`' + (EVERY_CAT_HOLDS.has(id) ? '' : ', a card only some cats hold') + ')');
+    const own = Object.keys(p.own || {}).map(id => (who === 'reynard' ? 'The fox’s own card' : cap(name) + '’s own card') + ' (`' + id + '`): “' + q(p.own[id]) + '”');
+    const tail = (typeof p.prompt === 'string' ? ' The instruction under the panel: “' + q(p.prompt).replace(/\*\*/g, '') + '”' : '') + (typeof p.label === 'string' && p.label ? ' For VoiceOver, a hidden button: “' + q(p.label) + '”' : '');
+    return '**Pick a card.** Her Case File opens over the panel, every card face up as her file lays them, under ' + name + '’s claim “' + q(p.claim) + '”' + (word ? ' (' + word + ' lit)' : '') + '. Right: ' + right.join(', ') + '.' +
+      (own.length ? ' ' + own.join(' ') : '') + (n[0] ? ' Any other card: “' + q(n[0]) + '”' : '') + (n[1] ? ' A second wrong card: “' + q(n[1]) + '”' : '') +
+      ' After a third, the right cards she holds glow. Her pick is remembered (`' + p.flag + '`).' + tail + ' A right pick turns the page to ' + p.next + '.';
   }
   function interaction(f) {
     if (f.end) return '**Then:** the chapter ends, and her book opens at this chapter’s page: the recap of the reader’s choices and the dream line.';
@@ -1384,6 +1689,7 @@ function board(storyPath, outPath) {
     if (f.scratch) return scratchWords(f);
     if (f.file) return fileWords(f);
     if (f.ask) return askWords(f);
+    if (f.pick) return pickWords(f);
     return '**Then:** Next → ' + f.next + '.';
   }
   function frameMd(id, level, n) {
@@ -1394,7 +1700,7 @@ function board(storyPath, outPath) {
     if (f.board) out.push('**Shot.** ' + q(f.board));
     else out.push('**Shot.** (no board written)');
     out.push('');
-    if (f.when) out.push('**Shows only if** ' + whenWords(f.when) + '; otherwise the page turns straight on to ' + (f.else || exits(f)[0]) + '.', '');
+    if (f.when) out.push('**Shows ' + ifWords(f.when).replace(/^(only if|unless) /, '$1** ') + '; otherwise the page turns straight on to ' + (f.else || exits(f)[0]) + '.', '');
     out.push('**Scene.** ' + sceneWords(f.scene));
     if (f.image) out.push('', '**Image.** `' + f.image + '` replaces the drawn panel.');
     const caps = asList(f.caption).map(c => (typeof c === 'string' ? { text: c } : c || {}));
@@ -1469,7 +1775,7 @@ function board(storyPath, outPath) {
           out.push('#'.repeat(Math.min(level + 1, 6)) + ' Branch ' + letters[i] + ' (from ' + it.choice + '): ' + quoted);
           out.push('');
           out.push('*If she chooses this' + (sets ? ' (sets ' + sets + ')' : '') + '. ' + (b.items.length ? b.items.length + ' frame' + (b.items.filter(x => x.frame).length === 1 ? '' : 's') : 'No extra frames') + ', then back to ' + (it.merge || 'the end') + '.*' +
-            (b.option.when ? ' *This option shows only if ' + whenWords(b.option.when) + '.*' : '') +
+            (b.option.when ? ' *This option shows ' + ifWords(b.option.when) + '.*' : '') +
             asList(b.option.labelWhen).map(v => ' *For a reader whose ' + whenWords(v.when) + ', the option reads: “' + q(v.label) + '”*').join(''));
           out.push('');
           out.push(render(b.items, Math.min(level + 2, 6), false));
@@ -1521,6 +1827,13 @@ function board(storyPath, outPath) {
     ids.forEach(id => note(F[id].when));
     const keys = Object.keys(vals);
     if (!keys.length) return null;
+    /* (chapter 10: a flag the frames read only as true or false needs no reader for "not set" beside the one for false:
+     * E.matches reads false as "false or not set", so the two walk alike, unless a list somewhere names the flag. The
+     * same numbers, from far fewer readers: chapter 10's six found flags alone were 729 of them.) */
+    const listed = new Set();
+    const lists = w => Object.keys(w || {}).forEach(k => { if (k === 'not') lists(w.not); else if (Array.isArray(w[k])) listed.add(k); });
+    ids.forEach(id => { lists(F[id].when); if (F[id].choice) F[id].choice.options.forEach(o => lists(o.when)); });
+    keys.forEach(k => { const vs = [...vals[k]].filter(x => x !== undefined); if (vs.includes(false) && vs.every(x => x === true || x === false) && !listed.has(k)) vals[k].delete(undefined); });
     const span = (id, cat, memo) => {
       const key = id + ' ' + JSON.stringify(cat.flags);
       if (memo[key]) return memo[key];
@@ -1697,10 +2010,15 @@ function board(storyPath, outPath) {
   const skipTaps = sk => (sk.groups == null ? (asList(sk.who).filter(c => !c.when).length || 1) + ' to ' + asList(sk.who).length + ' taps, by ' : sk.groups + (sk.groups === 1 ? ' tap, by ' : ' taps, by ')) + (sk.tuck ? 'ones, back from ' + sk.groups * 10 : sk.table + 's');
   if (skips) md.push('| Skip-counts | ' + skips + ' (' + ids.filter(id => F[id].skip).map(id => skipTaps(F[id].skip)).join('; ') + ') |');
   // (chapter 9: the rows of her case, and an asker who answers himself)
-  const askTaps = a => (a.opt === 'read' ? 'the ' + numWord(asList(a.pairs).length) + ' rows of her case' : (SPEAKER[a.who] || a.who) + '’s ' + numWord(asList(a.pairs).length) + (a.to === a.who ? ' pairs of lines' : ' questions'));
+  // (chapter 10: the two weasels, by turns)
+  const askTaps = a => (a.opt === 'read' ? 'the ' + numWord(asList(a.pairs).length) + ' rows of her case' : /^(snip|snatch)$/.test(a.who) && /^(snip|snatch)$/.test(a.to) && a.who !== a.to ? 'the weasels’ ' + numWord(asList(a.pairs).length) + ' pairs of lines' :
+    (SPEAKER[a.who] || a.who) + '’s ' + numWord(asList(a.pairs).length) + (a.to === a.who ? ' pairs of lines' : ' questions'));
   if (taps) md.push('| Other things she taps | ' + ids.filter(id => F[id].scratch || F[id].file || F[id].ask).map(id => (F[id].file ? 'her Case File' : F[id].ask ? askTaps(F[id].ask) :
     F[id].scratch.tap ? (F[id].scratch.tap === 'glint' ? 'the glitter' : TAPS[F[id].scratch.tap] ? tapTarget(F[id]) : 'the ' + F[id].scratch.tap) :
     F[id].scratch.draws && !cardList(F[id].scratch.cards).length ? 'the bark' : 'a row of bark') + ' (' + id + ')').join(', ') + ' |');
+  // (chapter 10: the card picks, a row of their own)
+  const picks = ids.filter(id => F[id].pick);
+  if (picks.length) md.push('| Card picks | ' + picks.length + ' (' + picks.join(', ') + ') |');
   if (story.cards) md.push('| Case File cards | ' + Object.keys(story.cards).length + ' (' + Object.keys(story.cards).filter(k => story.cards[k].mark !== 'ear').length + ' eyes, ' + Object.keys(story.cards).filter(k => story.cards[k].mark === 'ear').length + ' ears) |');
   if (gifts) md.push('| Gifts | ' + ids.filter(id => F[id].gift).map(id => { const g = E && E.gift(F[id].gift); return (g ? g.name.split(':')[0] : F[id].gift) + ' (' + id + ')'; }).join(', ') + ' |');
   md.push('| Captions and balloons | ' + captions + ' captions, ' + balloons + ' balloons, about ' + words + ' words in all |');

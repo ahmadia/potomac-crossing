@@ -67,6 +67,8 @@ function play(E, story, cat, script, stop) {
     else if (kind === 'scratch') { for (let n = 0; n < 12 && E.scratchTap && E.scratchTap(cat, story, t); n++); E.next(cat, story, t); }
     else if (kind === 'look') E.confirmLook(cat, story, script.look || null, t);
     else if (kind === 'choice') E.choose(cat, story, (script.choices || {})[id] || 0, t);
+    // chapter 10's card pick (2026-10-31): the first right card she holds, or on past an empty file
+    else if (kind === 'pick') { const pid = E.pickView(f, cat).right[0]; if (pid) E.pick(cat, story, pid, t, 0); else E.next(cat, story, t); }
     else if (kind === 'input') {
       const k = f.input.kind;
       E.submitInput(cat, story, k === 'petname' ? script.petname : k === 'clanname' ? script.clanname : k === 'dream' ? script.dream : '', t);

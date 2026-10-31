@@ -585,8 +585,8 @@ camera. Chapter 6's frames draw as they do.
 - **New anchors on `bank`** (additional): `run` (on the sand, mid-right: Sprinkle running, flapping, landing; at her
   heron size), `run-2` (on the sand beside `run`, on its left, facing her: our cat in the specialty chain, cat-sized),
   `skim` (between `run` and `paddle`, at the water's edge, her paws just clear of the sand: the low glide of the first
-  days; `{ elev: true, air: true }`), `air` (above `run`, her paws a little more than her own leg's length off the sand:
-  the lift of the last day only; `{ elev: true, air: true }`), `paddle` (in the bright shallows at the sand's edge: the
+  days; `{ elev: true, air: true }`), `air` (above `run`, her paws well off the sand, about 0.65 of her height (raised from her leg's length
+  in the polish release, 2026-10-31, so she reads as in the air): the lift of the last day only; `{ elev: true, air: true }`), `paddle` (in the bright shallows at the sand's edge: the
   water over her legs, rings and drops round her; `{ air: true }`), `watch-1`…`watch-4` (her friends on the bank at the
   left, side by side, facing right; cat-sized, the otter at his own size).
 - **Shadows at the new spots.** `scenes.js` lays a shadow at the anchor's foot under every cast member; an `air: true`

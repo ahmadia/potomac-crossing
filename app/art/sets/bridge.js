@@ -121,7 +121,7 @@
  *   bottom left are shorter with it, so whoever watches there shows; `reeds`' own cover is drawn only for someone there.
  *   Anchors on `bank` (`main`): `run` (on the sand, mid-right: Sprinkle at heron size), `run-2` (on the sand left of
  *   it, facing her), `skim` (between run and paddle at the water's edge, her paws just clear of the sand; elev, air),
- *   `air` (above run, her paws about a third of a cat's height off the sand: the lift; elev, air), `paddle` (in the
+ *   `air` (above run, her paws about two thirds of a cat's height off the sand: the lift; elev, air), `paddle` (in the
  *   shallows; air), `watch-1` … `watch-4` (the friends side by side on the bank at the left, in the edge of the bridge's
  *   shadow, facing right). The set lays the shadows at the spots in the air: a soft one on the sand under whoever is at
  *   `air` and a fainter one under `skim` (<g data-art="air-shadow">, "skim-shadow"), each only when someone is there
@@ -569,12 +569,13 @@
   // Chapter 9's spots on the bank (docs/chapters/09-featherlight.spec.md, section 4, "The sunny bank"): the
   // practice on the strip of sand at the water's edge, the friends watching from the bank at the left, in the
   // edge of the bridge's shadow. Their heights are the depth there (h about 0.8 (y - 580), as the others').
-  // `air` is above `run`, her paws a little more than her own leg's length off the sand (a third of a sitting
-  // cat's height there); `skim` at the water's edge, her paws just clear of the sand; `paddle` in the shallows.
+  // `air` is above `run`, her paws well off the sand: 0.65 of her height there (the polish release, 2026-10-31: at a
+  // third, her leg's length, her feet sat on the bright sand behind them and she read as standing or hopping);
+  // `skim` at the water's edge, her paws just clear of the sand; `paddle` in the shallows.
   var BANK9 = {
     run: A(960, 884, 244, 'left'), 'run-2': A(700, 850, 222, 'right'),
     skim: A(1135, 862, 236, 'left', { elev: true, air: true }),
-    air: A(960, 884 - Math.round(244 * 0.34), 244, 'left', { elev: true, air: true }),
+    air: A(960, 884 - Math.round(244 * 0.65), 244, 'left', { elev: true, air: true }),
     paddle: A(1250, 860, 226, 'left', { air: true }),
     'watch-1': A(165, 822, 196, 'right'), 'watch-2': A(300, 830, 200, 'right'), 'watch-3': A(435, 838, 204, 'right'), 'watch-4': A(570, 846, 208, 'right')
   };
@@ -722,13 +723,14 @@
   }
   // The soft shadow on the sand under whoever is in the air at `air` (and a fainter one under `skim`): scenes.js
   // lays none there (the spots are `air`), so the set lays it, as chapter 7's `over` does. Under her body as drawn,
-  // on the sand below her. Nothing when nobody is there.
+  // on the sand below her. Nothing when nobody is there. Under `air` it is darker and tighter (the polish release:
+  // a soft wide one was lost in the sand's glow, and the gap under her paws did not read).
   function sandShadow(S, name) {
     var m = atSpot9(S, name), a = BANK9[name];
     if (!m) return '';
-    var b = castEst9(S, m, a).body, cx = (b[0] + b[2]) / 2, rx = (b[2] - b[0]) * (name === 'air' ? 0.28 : 0.3), ry = Math.max(7, a.h * 0.06), y = SAND_UNDER[name];
-    var op = name === 'air' ? 0.34 : 0.22;
-    return g(ell(cx, y, rx, ry, S.pal.shade, { opacity: op, filter: S.blur('brsand', 4) }), { 'data-art': name + '-shadow' });
+    var b = castEst9(S, m, a).body, cx = (b[0] + b[2]) / 2, rx = (b[2] - b[0]) * (name === 'air' ? 0.22 : 0.3), ry = Math.max(7, a.h * 0.06), y = SAND_UNDER[name];
+    var op = name === 'air' ? 0.5 : 0.22, blur = name === 'air' ? S.blur('brsand2', 2) : S.blur('brsand', 4);
+    return g(ell(cx, y, rx, ry, S.pal.shade, { opacity: op, filter: blur }), { 'data-art': name + '-shadow' });
   }
   // Whoever is at `paddle` sits in the bright shallows: the water laid back over her legs (her chest, sitting up
   // in `splash`), its top a little wavy, rings round her and drops flying; nothing dark in it, ever (no shadow

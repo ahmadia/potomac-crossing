@@ -68,8 +68,13 @@
  * forepaws covered it, as the nest owner found). From the review (2026-10-26): while Sprinkle's wings are
  * open under the bridge (f095 to f100, one move) Tallyheart sits by the wall facing in (chapter 7's spot for
  * her open wings, BY_WALL), since across the nook she sat in front of the hurt wing, the rub Tap's target,
- * and those frames keep the lettering off the drooping wing (`wing: true`, chapter 7's); Thymeleaf sits a
- * little nearer the front (MENDER_LOW) where her peek or her claws came down to his head (f093, f095);
+ * and those frames keep the lettering off the drooping wing (`wing: true`, chapter 7's); Thymeleaf is a
+ * little nearer the front where her peek or her claws came down to his head (f093 MENDER_LOW, f095 MENDER_WING);
+ * and (the polish release, 2026-10-31) he is a grown cat's size under the bridge, h 340 to 350, not 290 (he read
+ * as a kitten), crouched low under her peek (f093) and under the hurt wing he sniffs at her open wings (f095,
+ * out past her chest, so his balloon sits beside him and its tail stays off her face), and a little to the right
+ * and nearer the front where our cat needs the room beside him (MENDER_FRONT: f091, its raised forepaw, now
+ * with its five claws out, which his tail covered; f097, its balloon, whose tail ran across his chest);
  * Riffle flops on his back a little in from the hedge's edge (FLOP), so his face stays in the panel (f007).
  * The art draws a layer's cast in the order it is listed, never by depth, so where two cats meet the one
  * further back is listed first (the README's “Casts are listed back to front”: f037, f039, f040, and f112,
@@ -149,10 +154,22 @@
   // Thymeleaf with the remedy at Sprinkle's chest, between our cat and her (a spot of his own: at the
   // bridge's `beside` he sat right behind Tallyheart across the nook, only his ears showing)
   var ACROSS = { x: 1250, y: 900, h: 330 };
-  var MENDER = { x: 820, y: 905, h: 290 };
-  // (where Sprinkle's head or claws come down to his: her `peek` (f093), his `crouch` at her open wings (f095),
-  // he sits a little nearer the front, so his head is clear of her snout and her claws)
-  var MENDER_LOW = { x: 820, y: 965, h: 290 };
+  // (the polish release, 2026-10-31: a grown cat's size there, h 340 as our cat's at `back-left`, not 290, at which
+  // the old tom read as a kitten; a little to the left, so her raised forepaws' claws (f089 to f091) stay clear of his ears)
+  var MENDER = { x: 760, y: 905, h: 340 };
+  // (where Sprinkle's head or claws come down to his, he is a little nearer the front: crouched low under her peek
+  // (f093), her forepaw's claws over his shoulder, not his head, at h 350, a grown cat's size there; and at her open
+  // wings (f095) crouched under the hurt wing he sniffs, out past her chest, at h 340: under her chest (x 980) his
+  // balloon went over her head and its tail ran down across her ear and cheek to him; here it sits beside him, low,
+  // its tail short and clear of every face, at every screen size, Aa on and off (the polish's second fix)
+  var MENDER_LOW = { x: 900, y: 985, h: 350 };
+  var MENDER_WING = { x: 1210, y: 975, h: 340 };
+  // (the polish's fixes, 2026-10-31: where our cat needs the room beside him, he sits a little to the right and nearer
+  // the front, still a grown cat's size: on f091 our cat's raised forepaw with its five claws, the panel's beat, which his
+  // tail and side covered at MENDER; on f097 our cat's balloon for a cat who met Mizzle, which at MENDER his face kept
+  // from its spot over our cat, so it went to the bottom right with its tail across his chest. Her raised claws (f091)
+  // stay clear of his ears)
+  var MENDER_FRONT = { x: 820, y: 945, h: 340 };
   // Tallyheart by the wall, facing in (chapter 7's spot for Sprinkle's open wings), while Sprinkle's wings are open
   // (f095 to f100): across the nook she sat in front of the hurt wing, the rub Tap's target
   var BY_WALL = { x: 300, y: 960, h: 330 };
@@ -1097,7 +1114,7 @@
     f091: {
       when: SQUALL,
       scene: S('bridge', 'back', BACK,
-        bridge(['pawsup', 'happy'], ['pawup', 'proud'], ['sit', 'happy'], ['sit', 'happy']), ['day']),
+        bridge(['pawsup', 'happy'], ['pawup', 'proud', { claws: true }], ['sit', 'happy', null, MENDER_FRONT], ['sit', 'happy']), ['day']),
       board: 'MEDIUM, UNDER THE OLD BRIDGE, ONLY FOR A CAT WHO KNOWS SQUALL. Our cat throws back its head and holds up one forepaw with five claws spread, roaring Squall’s message the way a very small dragon on a roof would, and Sprinkle claps her forepaws; the old tom’s ears flatten at the noise. One caption at the top.',
       caption: ['You tell her Squall’s five. LOUDLY, the Squall way.'],
       next: 'f092'
@@ -1116,8 +1133,8 @@
     f093: {
       when: KEPT,
       scene: S('bridge', 'back', BACK,
-        bridge(['peek', 'wonder'], ['sit', 'happy'], ['sit', 'kind', null, MENDER_LOW], ['sit', 'happy']), ['day']),
-      board: 'MEDIUM, UNDER THE OLD BRIDGE, THE KEPT PATH ONLY, COMEDY BEAT. One big round dragon eye peeks out from under the misty tail and fixes on Tallyheart with a very important question; Tallyheart answers it with a perfectly straight face. Caption top left; Sprinkle’s balloon muffled, Tallyheart’s firm.',
+        bridge(['peek', 'wonder'], ['sit', 'happy'], ['crouch', 'kind', null, MENDER_LOW], ['sit', 'happy']), ['day']),
+      board: 'MEDIUM, UNDER THE OLD BRIDGE, THE KEPT PATH ONLY, COMEDY BEAT. One big round dragon eye peeks out from under the misty tail and fixes on Tallyheart with a very important question; Tallyheart answers it with a perfectly straight face, and the old tom crouches low at the front of the nook with the remedy in its leaf, so as not to look big. Caption top left; Sprinkle’s balloon muffled, Tallyheart’s firm.',
       caption: ['One eye peeks out.'],
       say: [
         { who: 'sprinkle', text: '…Do you count FISH?' },
@@ -1138,7 +1155,7 @@
     f095: {
       // both paths: he sniffs her wing and talks to it; her hurt wing is the Tap
       scene: S('bridge', 'back', WINGS,
-        bridge(['wings', 'wonder', { tap: 'wing' }], ['sit', 'kind'], ['crouch', 'kind', null, MENDER_LOW], ['sit', 'kind', BY_WALL]), ['day']),
+        bridge(['wings', 'wonder', { tap: 'wing' }], ['sit', 'kind'], ['crouch', 'kind', null, MENDER_WING], ['sit', 'kind', BY_WALL]), ['day']),
       board: 'MEDIUM, UNDER THE OLD BRIDGE, THE TAP PICTURE. Sprinkle holds out her wings for the old tom, the hurt one low and crumpled, and he crouches close to sniff it and then speaks to it as kindly as to a shy leaf; our cat watches at the nook’s edge. In play her hurt wing glows softly; one tap rubs the remedy in, gently, and turns the page. Captions top left, the first for the told path; his balloon soft.',
       caption: [{ when: TOLD, text: 'Sprinkle ducks under her tail, then peeks out.' }, 'Thymeleaf sniffs Sprinkle’s wing. Then he talks to it.'],
       say: [{ who: 'thymeleaf', text: 'Hello, wing. Let’s mend you.' }],
@@ -1156,7 +1173,7 @@
 
     f097: {
       scene: S('bridge', 'back', BACK,
-        bridge(['sit', 'happy'], ['sit', 'happy'], ['sit', 'kind'], ['sit', 'kind', BY_WALL], [c('riffle', 'hop', 'happy', 'back-right', 'left', { holds: 'fish' })]), ['day']),
+        bridge(['sit', 'happy'], ['sit', 'happy'], ['sit', 'kind', null, MENDER_FRONT], ['sit', 'kind', BY_WALL], [c('riffle', 'hop', 'happy', 'back-right', 'left', { holds: 'fish' })]), ['day']),
       board: 'MEDIUM, UNDER THE OLD BRIDGE, COMEDY BEAT. Riffle pops up out of the river at the edge of the nook holding up a fish like a prize, very pleased with his own medicine, and Sprinkle leans toward it with her nose; our cat tells its news for a cat who has met a sleepy dragonet. Caption top left; his balloons loud, our cat’s proud.',
       caption: ['Riffle pops up with fish.'],
       say: [

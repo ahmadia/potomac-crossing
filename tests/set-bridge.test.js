@@ -1653,7 +1653,8 @@ test('bridge, chapter 9: the new spots on the bank: run and run-2 on the sand, s
   assert.ok(A.skim.y < B.edgeAt(A.skim.x) && B.edgeAt(A.skim.x) - A.skim.y < 20, 'skim at the water\'s edge, her paws just clear of the sand');
   assert.ok(A.air.elev === true && A.air.air === true, 'air: { elev: true, air: true }');
   assert.ok(A.air.x === A.run.x && A.air.h === A.run.h, 'air above run, at its depth');
-  assert.ok(A.run.y - A.air.y > A.run.h * 0.25 && A.run.y - A.air.y < A.run.h * 0.5, 'a little more than her leg\'s length off the sand: ' + (A.run.y - A.air.y));
+  // (the polish release, 2026-10-31: raised from a third of her height, her leg's length, at which she read as standing)
+  assert.ok(A.run.y - A.air.y > A.run.h * 0.6 && A.run.y - A.air.y < A.run.h * 0.7, 'well off the sand, about 0.65 of her height: ' + (A.run.y - A.air.y));
   assert.ok(A.paddle.air === true && !A.paddle.elev, 'paddle: { air: true }');
   const w = B.shoalAt(A.paddle.x);
   assert.ok(A.paddle.y > w[0] && A.paddle.y < w[1], 'paddle in the bright shallows at the sand\'s edge');
@@ -1692,11 +1693,12 @@ test('bridge, chapter 9: the set\'s soft shadow on the sand under whoever is at 
       assert.ok(sa && !sandShadowOf(air, 'skim'), 'air (' + pose + '): one, on the sand');
       assert.equal(sa.cy, B.shadowY.air, 'on the sand below her, where run stands');
       const bb = boxesAt({ who: 'sprinkle', pose, facing: 'left' }, A.air).body;
-      assert.ok(Math.abs(sa.cx - (bb[0] + bb[2]) / 2) < 1 && sa.rx > (bb[2] - bb[0]) * 0.25, 'under her body as drawn');
+      assert.ok(Math.abs(sa.cx - (bb[0] + bb[2]) / 2) < 1 && sa.rx > (bb[2] - bb[0]) * 0.18, 'under her body as drawn');
       assert.ok(svg9Before(air, 'data-art="air-shadow"', '<g transform="translate(' + A.air.x + ' ' + A.air.y + ')'), 'under her');
       const skim = render('bank', o, [{ who: 'sprinkle', at: 'skim', pose: pose === 'fly' ? 'glide' : pose, facing: 'left' }]).svg, ss = sandShadowOf(skim, 'skim');
       assert.ok(ss && !sandShadowOf(skim, 'air'), 'skim: one');
       assert.ok(ss.op < sa.op, 'fainter than under air');
+      assert.ok(sa.rx / (bb[2] - bb[0]) < ss.rx / (boxesAt({ who: 'sprinkle', pose: pose === 'fly' ? 'glide' : pose, facing: 'left' }, A.skim).body[2] - boxesAt({ who: 'sprinkle', pose: pose === 'fly' ? 'glide' : pose, facing: 'left' }, A.skim).body[0]), 'tighter than under skim, for her body');
       assert.ok(ss.cy > A.skim.y && ss.cy - A.skim.y < 20, 'on the sand just under her');
     }
     // a cat in the air gets the set's shadow too (scenes.js lays none at an `air` spot)
@@ -1735,3 +1737,28 @@ test('bridge, chapter 9: no shadow of scenes.js\'s under Sprinkle gliding at ski
   assert.equal(castShadows(hop, A.run), 1, 'hopping at run she keeps hers, on the sand under her');
 });
 
+
+// (the polish release, 2026-10-31) the final review: on the chapter's title moment (ch09 f115, "…and she LIFTS. …
+// Her paws are off the ground!") her feet sat on the bright sand behind them and the soft shadow under her was lost in
+// the sand's glow, so she read as standing or hopping. `air` is used on that panel only.
+test('bridge, chapter 9 (the polish release): at `air` she is in the air: her paws about 0.65 of her height off the sand, and under her a shadow darker and tighter than a soft one, on the sand where `run` stands', { skip: !art.character && 'no cats.js' }, () => {
+  const A = art.sceneInfo('bridge').anchors.main, B = art.bridgeBankInfo();
+  const bb = boxesAt({ who: 'sprinkle', pose: 'fly', facing: 'left' }, A.air).body;
+  const gap = B.shadowY.air - bb[3];
+  assert.ok(gap > A.air.h * 0.6, 'the gap under her paws, ' + Math.round(gap) + ', more than 0.6 of her height (' + A.air.h + ')');
+  const svg = render('bank', { shallows: true, drag: false }, [{ who: 'sprinkle', at: 'air', pose: 'fly', facing: 'left' }]).svg, sa = sandShadowOf(svg, 'air');
+  assert.ok(sa.op >= 0.45, 'darker: ' + sa.op);
+  assert.ok(sa.rx < (bb[2] - bb[0]) * 0.25, 'tighter: ' + sa.rx + ' for a body ' + Math.round(bb[2] - bb[0]) + ' wide');
+  // a crisper edge than the skim's soft one (each shadow's blur, read from the filter it names)
+  const blurOf = (sv, name) => {
+    const m = new RegExp('<g data-art="' + name + '-shadow"><ellipse [^>]*filter="url\\(#([^)]+)\\)').exec(sv);
+    const f = m && new RegExp('<filter id="' + m[1] + '"[^>]*><feGaussianBlur stdDeviation="([\\d.]+)"').exec(sv);
+    return f ? +f[1] : null;
+  };
+  const skim = render('bank', { shallows: true, drag: false }, [{ who: 'sprinkle', at: 'skim', pose: 'glide', facing: 'left' }]).svg;
+  assert.ok(blurOf(svg, 'air') > 0 && blurOf(svg, 'air') < blurOf(skim, 'skim'), 'a crisper edge than under skim: ' + blurOf(svg, 'air') + ' / ' + blurOf(skim, 'skim'));
+  // she stays in shot, her wing tips under the panel's top and her body over the sand
+  const r = render('bank', { shallows: true, drag: false }, [{ who: 'sprinkle', at: 'air', pose: 'fly', facing: 'left' }]);
+  assert.ok(r.heads[0] && r.heads[0].y > 10, 'her head well inside the panel: ' + JSON.stringify(r.heads[0]));
+  assert.ok(bb[1] > 0, 'her wing tips inside the panel: ' + Math.round(bb[1]));
+});

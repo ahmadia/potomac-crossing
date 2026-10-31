@@ -206,13 +206,19 @@ Letter or A4.
   the words beside or under the picture are 1.14 times plain instead of 1.2, on tighter lines (1.25;
   1.2 under 720px tall, Safari's tab bar showing) and in snugger boxes, so Back and Next share one row
   (a longer row, as on a chapter's last two pages or a Counts page, still wraps upward, Back keeping
-  the bottom left) and
+  the bottom left; on a Counts page already counted, sideways, "Count them again" goes over Next, so
+  Back and Next keep the bottom row) and
   every button, option and keypad stays on the screen without scrolling; upright, the options keep
   Bigger text's 54px, the stacked parts are a little closer, and so are the balloons under the
   picture, in snugger balloons. On a skip-count, on any screen, its "Tap to…"
   line sits beside Back while she counts. Nothing is sticky (a page of choices keeps Back under its
   options), and the panel and its words, and every page without Bigger text, are unchanged (index.html,
-  "Bigger text where the screen has little room"; tests/aa-room.test.js).
+  "Bigger text where the screen has little room"; tests/aa-room.test.js). Her Case File's words are set
+  the same way where room is little, and where a row of three or more cards is linked its middle column
+  is at least 14em wide, so no word on a card breaks inside (Aa off too, for the one file that broke one).
+  The Training Hollow's Counts (nine after chapter 9) are 56px tall and 8px apart on an iPad held
+  sideways up to 860px tall (6px under 720px; with Bigger text, upright too, 54px and 6px), so the last
+  Count and My nest are on the screen (the polish release, 2026-10-31).
 - **The Training Hollow**, once chapter 1 is done: practise the 1s again, any time. A full round
   earns a nest treasure (moss, a feather, a shell, a shiny pebble …) shown in **My nest**; the
   claw mark on the tree glows after three rounds without help.

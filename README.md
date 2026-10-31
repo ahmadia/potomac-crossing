@@ -540,12 +540,12 @@ Each is Aron's to reverse.
     already brings in the keypad; where it fits, nothing moves.
   - *Shipped* (2026-10-26, CACHE v19, on the Aa fix): the case's ask (f118) brings Next into view after
     its sixth pair, and with Aa on its list of pairs asked sits a little closer, so Next is on the screen
-    at 1080 x 720. Left for the next round, each confirmed by the final review and small: Thymeleaf reads
-    a little small under the bridge (f089 to f100; a spot at h 340 is the proposed fix); Sprinkle's lift
-    off the sand (f115) wants her a little higher with a darker shadow; with nine Counts the Training
-    Hollow's last button (the 8s) and My nest sit below the screen at 1080 x 720 (the page scrolls); and
-    the Aa fix's three leftovers (ch04 f115 for a noticing cat, an already-counted Counts page, the
-    Case File's last row), whose second round was stopped half built in ~/potomac-crossing-hotfix.
+    at 1080 x 720. The five small issues the final review left for the next round (Thymeleaf small under
+    the bridge, Sprinkle's lift off the sand, the nine-Count Hollow below the screen, and the Aa fix's
+    three leftovers) were fixed in the polish release (2026-10-31, CACHE v20; its entry under Claude's
+    calls). Still open from that review, all low: Squall's `hidden` tail at the pole (f081, f084), Riffle
+    at the open wing (f099, f100), the nearly round moon (f133 on), "It sparkles" (f082, f084), and
+    Thymeleaf unnamed to Sprinkle on the kept path (f094 is told-only).
   - *CACHE knows what is live*: `tests/fixtures/sw-shipped.json` lists every shipped `CACHE` with a
     digest of what it cached (v16, chapter 8; v17, the depth hotfix), and `tests/sw.test.js` fails until
     `CACHE` is past the last; a ship appends its own entry (production.md, step 2). Chapter 9 and the
@@ -593,16 +593,83 @@ Each is Aron's to reverse.
   in WebKit over every frame of chapters 1 to 8, every Taps page tapped through, every Counts keypad and
   the other screens, at 13 iPad and phone sizes: with Aa on no button, option or key is below the screen
   as each page opens (the look chooser's swatches, and the hub's, book's, nest's and Case File's lists,
-  scroll as before), except three left for a second round: ch04 f115 for a noticing cat (two cards
-  under the picture; Back and Next below at 1080 x 720 and 1133 x 744), a Counts page already counted
-  (Back, Count them again and Next stack, Back 1 to 5px under a 720 fold), and the Case File's last row
-  with Aa on (and its middle column breaking a long name mid-word);
+  scroll as before), except three left for a second round, all closed by the polish release (2026-10-31,
+  its entry below): ch04 f115 for a noticing cat (two cards under the picture; Back and Next below at
+  1080 x 720 and 1133 x 744), a Counts page already counted (Back, Count them again and Next stack, Back
+  1 to 5px under a 720 fold), and the Case File's last row with Aa on (and its middle column breaking a
+  long name mid-word);
   with Aa off every page is as it was, box for box at every size and pixel for pixel at 1080 x 720 and
   810 x 1080. Turned down: a smaller picture beside long pages (130 lines of layout code, a picture that
   changes size page to page, ch06 f100 still cut) and a pinned button strip (it hides words, and a page
   of choices keeps Back below, chapter 4's reason). Still cut, at sizes outside the 13: upright in Safari
   (810 x 1010) Back on ch01 f014, ch04 f095 and ch06 f100 (f014 and f100 worse with Aa off), and at
   1024 x 700 ch08 f087 by 16px. Upright choice pages want a portrait layout change, Aa off too: Aron's.
+- **The polish release** (2026-10-31, CACHE v20): six small fixes for live players, each confirmed by an
+  earlier review, each the smallest change that does it. Measured in WebKit (offscreen, silent, Read to me
+  off) at 15 iPad and phone sizes against what is live (5f0a30d); every other frame of chapters 1 to 9 draws
+  byte for byte as before (1,214 of 1,227, three cats, two looks), and with Aa off every page is box for box
+  as it was except the fixes named here.
+  1. *ch04 f115 for a noticing cat* (FLEW held beside the new wing card): under the solo picture the two
+     cards stay side by side, their lines wrapping inside them. As two rows they ran Back and Next under
+     the screen (1080 x 720, Aa on: 736 to 800; with Aa off too, 738 to 802); now 623 to 687 with Aa on and
+     624 to 688 off, and on screen at every iPad size. No other page gives two cards, so nothing else moves.
+  2. *A Counts page already counted*, Aa on, beside the picture: "Count them again" sits over Next, and
+     Back and Next share the bottom row (in page order the three stacked, Next on top, and Back ran 1 to
+     5px under a 720 fold on ch05 f002 and ch06 f002). Every counted page now has 21px or more to spare
+     on every sideways iPad. Aa alone.
+  3. *Her Case File*: no word is broken inside any more. Where a row of three or more cards is linked,
+     the middle column is at least 14em wide and its cards' lines sit closer to their edges (with Aa off
+     only a file with a single row of three needs it, the one that broke "Sloshb|ank" and "ReedCl|an's";
+     no other file moves). With Aa on where the screen has little room, its words are 1.14 times plain on
+     closer lines in snugger boxes, as the frame's are: the test cat's last row, 40px under a 1080 x 720
+     screen, now has 33px to spare (1133 x 744: 8 under, now 56 to spare; 1180 x 760: 7 under, now 73).
+     Checked on 22 files (each chapter's end for three kinds of cat, the 30-card file, a file with no link)
+     at all 15 sizes, Aa on and off: no word broken mid-word, and wherever a file fits without Aa it fits
+     with it.
+  4. *Thymeleaf under the bridge* is a grown cat's size (h 340, his face as big as our cat's; at 290 it was
+     0.85 of hers and he read as a kitten), a little to the left so Sprinkle's raised claws stay clear of his
+     ears (f089, f090, f092, f094, f096, f098 to f100). Where her peek or her claws come down (the reason for his
+     lower spot) he crouches low in front: under her peek on f093 (at 350; a grown cat sitting there met her
+     face; f093's board says so), and on f095 under the hurt wing he sniffs, out past her chest (MENDER_WING,
+     x 1210, y 975, h 340). Under her chest (x 980, h 350, as first built) his balloon went over her head and its
+     tail ran down across her right ear and cheek, grazing her eye, at every iPad size, Aa on and off (live,
+     at kitten size, it already crossed the left edge of her face); ui.js tests only a tail's centre line
+     against the square inside a face and missed it by a pixel. Now his balloon sits beside him, low (over our
+     cat's hindquarters, never a face), its tail short (77 to 156px) and clear of every face's whole circle at
+     all 15 sizes, Aa on and off, in WebKit; on a phone held upright it sits above, its tail over her wing, 7px
+     clear of her face. Her claws are further from his head than before (32px at 800 wide, from 2). Where our
+     cat needs the room beside him he sits a little to the right and nearer the front
+     (MENDER_FRONT, x 820, y 945, still h 340), a fix the regression check asked for: on f091, for a cat who
+     knows Squall, our cat's raised forepaw, the panel's beat, was behind his tail and side (35% of the paw
+     hidden; now none, and her raised claws stay clear of his ears). Its five claws, which the board names,
+     were never drawn (the frame passed no `claws: true`, live too); now they are, four over the toes and the
+     dewclaw beside them, none hidden in any of 90 looks and 26px or more (at 1600 wide) from him; on f097, for a cat
+     who met Mizzle but not Hail, his face took the room over our cat, so its balloon went to the bottom right
+     with its tail across his chest (1080 x 700 to 740 with Aa off, most sizes with Aa on, and upright, where
+     the live tree already did it); now it sits over or under her at every size, Aa on and off. Checked on
+     every bridge frame f089 to f100 and every flag variant: no forepaw or held thing is covered, and no
+     balloon's tail enters another face's circle or crosses another cat's body (the only tails over anyone are
+     over Sprinkle's body, never her face: Tallyheart's to the heap of her tail on f092, as live, and on f095
+     on an upright phone only, Thymeleaf's over her wing). Only these twelve frames change; their balloons
+     follow the faces.
+  5. *Sprinkle's lift* (f115, the bank's `air`, used by that panel only): her paws 0.65 of her height off the
+     sand, not a third, and under her a darker, tighter shadow (opacity 0.5, not 0.34; its half-width 0.22
+     of her body's, not 0.28; a crisper edge), so she reads as in the air. Her wing tips cross in front of
+     the bridge's deck.
+  6. *The Training Hollow with nine Counts*: on an iPad held sideways up to 860px tall its Counts are 56px
+     tall and 8px apart (6px under 720px tall), not 64 and 12; with Aa on, upright too, Aa's 54px, 6px
+     apart and a little narrower inside, so a long name keeps one line. With nine Counts at 1080 x 720 the
+     8s were 22px under the screen and My nest below (Aa off), 173px under with Aa on; now both have room
+     (14px off, 40px on), and eight or nine Counts fit at every sideways and upright iPad size, Aa on and
+     off (a phone still scrolls the list). This changes the live Hollow on those iPads with Aa off too, on
+     purpose. Left: with a claw mark glowing and Aa on, Tallyheart's two balloons do not fit in the
+     picture and stand in the column, so the list scrolls (as before, less: three glowing at 1080 x 720 was
+     565px under, now 346); and with all nine glowing, Aa off, My nest is 22 to 46px under at 1080 x 700 to 740.
+  Also: `node tools/shots.mjs --page` cut the page at 64 KB when it was piped (index.html passed 64 KB with
+  these rules, and the silence test read a cut page); it now writes the page whole before it stops. On a
+  phone f093's two balloons now stand under the picture (his crouch takes their place in it): upright (390 x
+  844) everything is still on the screen; held sideways (844 x 390) with Aa on, Back and Next go below it, as
+  they already did on f089, f090, f092, f100 and f115 there.
 
 ## Open questions, waiting on Aron
 

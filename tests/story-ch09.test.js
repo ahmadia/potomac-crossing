@@ -90,10 +90,18 @@ const OTHERS = { foundPuddle: true, foundWisp: true, foundSleet: true, foundHail
 // flopped on his back a little in from it (f007); Tallyheart across the nook under the bridge (chapters 6 to 8's) and
 // Thymeleaf at Sprinkle's chest
 const NOSE = { x: 860, y: 960, h: 380 }, HEDGE = { x: 1430, y: 962, h: 380 }, FLOP = { x: 1360, y: 962, h: 360 };
-const ACROSS = { x: 1250, y: 900, h: 330 }, MENDER = { x: 820, y: 905, h: 290 };
-// (the review, 2026-10-26) Thymeleaf a little nearer the front where her peek or her claws come down to his head;
+// (the polish release, 2026-10-31: a grown cat's size there, as our cat's at back-left; at h 290 he read as a kitten)
+const ACROSS = { x: 1250, y: 900, h: 330 }, MENDER = { x: 760, y: 905, h: 340 };
+// (the review, 2026-10-26) Thymeleaf a little nearer the front where her peek or her claws come down to his head:
+// crouched low under her peek (f093), and at her open wings under the hurt wing he sniffs (f095; the polish's second
+// fix moved him out past her chest, from x 980 at h 350, where his balloon's tail ran down across her face);
 // Tallyheart by the wall, facing in, while Sprinkle's wings are open (the hurt wing, the rub Tap's target, in plain sight)
-const MENDER_LOW = { x: 820, y: 965, h: 290 }, LOW = ['f093', 'f095'];
+const MENDER_LOW = { x: 900, y: 985, h: 350 }, MENDER_WING = { x: 1210, y: 975, h: 340 }, LOW = ['f093', 'f095'];
+const MENDER_WING_WAS = { x: 980, y: 965, h: 350 };
+// (the polish's fixes) a little to the right and nearer the front where our cat needs the room beside him: its raised
+// forepaw (f091) and its balloon (f097)
+const MENDER_FRONT = { x: 820, y: 945, h: 340 }, FRONT = ['f091', 'f097'];
+const menderAt = (id) => (id === 'f093' ? MENDER_LOW : id === 'f095' ? MENDER_WING : FRONT.includes(id) ? MENDER_FRONT : MENDER);
 const BY_WALL = { x: 300, y: 960, h: 330 }, WALL = ['f095', 'f096', 'f097', 'f098', 'f099', 'f100'];
 const GROVE_CAMS = ['bridge', 'wide', 'meet', 'oak', 'hollow'];
 // the roof copy: chapter 4's frames, f066 to f079 here (f076a to f089a there)
@@ -1152,7 +1160,8 @@ test('scenes use only the art vocabulary (PC.art.vocab), camera by camera: every
       }
       if (c.tailUp) assert.ok(c.tap === 'tail' || (c.who === 'player' && s.set === 'bridge' && s.cam === 'bank'), where + ': a raised tail to tap, or her cheering');
       if (c.glow) assert.ok(frames[id].ask && frames[id].ask.who === c.who, where + ': the one to tap on the page of an ask');
-      if (c.claws) assert.ok(c.who === 'tallyheart' && c.pose === 'crouch' && /^In the sand, Tallyheart scratches/.test(T(id)), where + ': claws out, scratching the sand');
+      // (and our cat's raised forepaw on f091, its five claws spread as it roars Squall's five, the board's beat)
+      if (c.claws) assert.ok((c.who === 'tallyheart' && c.pose === 'crouch' && /^In the sand, Tallyheart scratches/.test(T(id))) || (id === 'f091' && c.who === 'player' && c.pose === 'pawup'), where + ': claws out, scratching the sand, or our cat’s five on f091');
       if (c.mist) assert.deepEqual([c.who, c.pose], ['sprinkle', 'burp'], where);
       if (c.asleep === true) assert.deepEqual([c.who, c.pose], ['mizzle', 'curl'], where + ': fast asleep');
       if (c.asleep === 'half') assert.ok((c.who === 'mizzle' && camOf(id) === 'grove/hollow') || (c.who === 'player' && c.pose === 'curl' && /You curl up tight, warm and safe, and sleep\.$/.test(T(id))), where + ': half asleep');
@@ -1163,7 +1172,7 @@ test('scenes use only the art vocabulary (PC.art.vocab), camera by camera: every
         assert.ok(Object.keys(c.at).every(k => ['x', 'y', 'h', 'z'].includes(k)) && 'x' in c.at && 'y' in c.at, where + ': a spot is { x, y } (with h, as the art gives them)');
         const rear = s.set === 'pile' && s.cam === 'rear', back = s.set === 'bridge' && s.cam === 'back';
         const ok = (rear && c.who === 'player' && same(c.at, NOSE)) || (rear && c.who === 'riffle' && same(c.at, c.pose === 'fall' ? FLOP : HEDGE)) ||
-          (back && c.who === 'tallyheart' && same(c.at, WALL.includes(id) ? BY_WALL : ACROSS)) || (back && c.who === 'thymeleaf' && same(c.at, LOW.includes(id) ? MENDER_LOW : MENDER));
+          (back && c.who === 'tallyheart' && same(c.at, WALL.includes(id) ? BY_WALL : ACROSS)) || (back && c.who === 'thymeleaf' && same(c.at, menderAt(id)));
         assert.ok(ok, where + ': a spot of its own');
       } else assert.ok(mine[c.at], where + ': ' + s.set + '/' + s.cam + ' has no anchor ' + c.at + ' (its own: ' + Object.keys(mine).join(' ') + ')');
       assert.ok(['left', 'right'].includes(c.facing), where + ': facing');
@@ -1332,7 +1341,7 @@ test('staging, the remedy and the sunny bank: Sprinkle in her nook, Thymeleaf at
     assert.deepEqual(frames[id].scene.fx[0], 'day', id);
     assert.deepEqual(castOf(id, 'sprinkle').map(c => [c.at, c.facing]), [['dragon', 'left']], id);
     assert.deepEqual(castOf(id, 'player').map(c => c.at), ['back-left'], id);
-    assert.deepEqual(castOf(id, 'thymeleaf').map(c => [c.at, c.holds]), [[LOW.includes(id) ? MENDER_LOW : MENDER, 'leaf']], id + ': the remedy in its leaf');
+    assert.deepEqual(castOf(id, 'thymeleaf').map(c => [c.at, c.holds]), [[menderAt(id), 'leaf']], id + ': the remedy in its leaf');
     assert.deepEqual(castOf(id, 'tallyheart').map(c => [c.at, c.facing]), [WALL.includes(id) ? [BY_WALL, 'right'] : [ACROSS, 'left']], id + ': across the nook on both paths, by the wall facing in while her wings are open');
     assert.equal(!!frames[id].scene.opts.wing, castOf(id, 'sprinkle')[0].pose === 'wings', id + ': the lettering keeps off her drooping wing while her wings are open (chapter 7\'s `wing: true`)');
     castOf(id, 'riffle').forEach(c => assert.deepEqual([c.at, c.holds], ['back-right', 'fish'], id));
@@ -1343,6 +1352,8 @@ test('staging, the remedy and the sunny bank: Sprinkle in her nook, Thymeleaf at
   assert.deepEqual(['f092', 'f093'].map(id => castOf(id, 'sprinkle')[0].pose), ['hide', 'peek']);
   assert.deepEqual(castOf('f095', 'sprinkle').map(c => [c.pose, c.tap]), [['wings', 'wing']]);
   assert.deepEqual(castOf('f095', 'thymeleaf').map(c => [c.pose, c.mood]), [['crouch', 'kind']]);
+  // (the polish release) crouched low under her peek, so as not to look big; sitting on every other panel under the bridge
+  assert.deepEqual(back.map(id => castOf(id, 'thymeleaf')[0].pose), back.map(id => (LOW.includes(id) ? 'crouch' : 'sit')));
   assert.deepEqual(frames.f098.scene.fx, ['day', 'sparkle']);
   // the bank: bright shallows, the reeds standing again, by day; Sprinkle's flights only at their spots
   const bank = ids.filter(id => camOf(id) === 'bridge/bank');
@@ -1365,6 +1376,173 @@ test('staging, the remedy and the sunny bank: Sprinkle in her nook, Thymeleaf at
   assert.deepEqual([camOf(MONTAGE), frames[MONTAGE].scene.fx, frames[MONTAGE].scene.opts], ['pile/wide', ['dusk'], { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 12 }]);
   assert.deepEqual(castOf(MONTAGE, 'tallyheart').map(c => c.at), ['behind']);
   assert.ok(castOf(MONTAGE, 'clancat').every(c => c.facing === 'right'), 'the guards facing out');
+});
+
+// (the polish release, 2026-10-31) the final review: under the bridge Thymeleaf read as a kitten (his face 0.85 of
+// our cat's at h 290); and where her peek comes down (f093) his face met hers. Measured on the art's own heads.
+test('staging, the polish release: under the bridge Thymeleaf is a grown cat (his face as big as our cat’s and Tallyheart’s), and his face is clear of Sprinkle’s and of everyone’s, her peek (f093) included', () => {
+  const cat = E.blankCat({ id: 'g', now: 0, look: { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' } });
+  const clear = (a, b) => Math.hypot(a.x - b.x, (a.y - b.y) * 0.625) / (a.r + b.r);
+  seq('f089', 'f100').forEach(id => {
+    const sc = E.resolveScene(frames[id].scene, cat, STORIES), r = A.render(sc, { look: cat.look });
+    const head = (w) => r.heads[sc.cast.findIndex(c => c.who === w)];
+    const th = head('thymeleaf'), pl = head('player'), ta = head('tallyheart'), sp = head('sprinkle');
+    assert.ok(th.r >= pl.r * 0.97 && th.r <= pl.r * 1.12, id + ': his face as big as our cat’s: ' + (th.r / pl.r).toFixed(2));
+    assert.ok(th.r >= ta.r * 0.97, id + ': and as Tallyheart’s: ' + (th.r / ta.r).toFixed(2));
+    assert.ok(clear(th, pl) > 1.4 && clear(th, ta) > 1.4, id + ': clear of our cat and Tallyheart');
+    // (hiding, her head is under the heap of her tail, and he sits in front of it)
+    if (sc.cast.find(c => c.who === 'sprinkle').pose !== 'hide') assert.ok(clear(th, sp) > 1.5, id + ': his face clear of hers: ' + clear(th, sp).toFixed(2));
+  });
+  // where her peek and her claws come down, he is nearer the front, below them: lower in the panel than on the panels around
+  const yOf = (id) => { const sc = E.resolveScene(frames[id].scene, cat, STORIES); return A.render(sc, { look: cat.look }).heads[sc.cast.findIndex(c => c.who === 'thymeleaf')].y; };
+  assert.ok(yOf('f093') > yOf('f092') + 15 && yOf('f095') > yOf('f094') + 15, 'his face low under her peek and her claws: ' + [yOf('f092'), yOf('f093'), yOf('f094'), yOf('f095')].join(' '));
+  // and at her open wings, nearer the hurt wing he sniffs (the lettering's keep-out over it, chapter 7's `wing: true`)
+  const r95 = A.render(E.resolveScene(frames.f095.scene, cat, STORIES), { look: cat.look }), k = r95.keep[r95.keep.length - 1];
+  const th95 = r95.heads[frames.f095.scene.cast.findIndex(c => c.who === 'thymeleaf')];
+  assert.ok(th95.x > k.x - 5 && th95.x < k.x + k.w && th95.y > k.y + k.h, 'under the hurt wing: ' + JSON.stringify([th95, k]));
+});
+
+// (the polish's fixes, 2026-10-31: the regression check found two things the bigger tom at MENDER did to our cat) Where
+// our cat needs the room beside him he sits at MENDER_FRONT. f091: our cat's raised forepaw, the panel's beat, was
+// behind his tail (curled up his side) and his flank; measured on Quick Look renders, 35% of the paw was hidden at
+// MENDER and none is at MENDER_FRONT. Its five claws, which the board names, were never drawn (the frame passed no
+// `claws: true`; the second check found it): now they are, one group of five on the raised paw, none of them hidden
+// in any of 90 looks and 26px or more (at 1600 wide) from him. Here the art's own marks for the raised paw and his
+// tail's tip (`tap: 'paw'`, `tap: 'tail'`): the tail tip is beside the paw, not over it. f097, a cat who met Mizzle but not Hail:
+// with his face where MENDER puts it, our cat's balloon could not sit over or under her and went to the bottom right,
+// its tail across his chest under his chin (1080 x 700 to 740 with Aa off, and wider with Aa on and upright). Here the
+// page's own placement (ui.js layoutText's balloons, with its findSpot and tailGeom) with the sizes WebKit measured
+// for the caption and the two balloons: our cat's tail touches no other cat's face or body. f095 (the second check):
+// under her chest (x 980, h 350) his balloon went over her head and its tail ran down across her ear and cheek, grazing
+// her eye, at every iPad size, Aa on and off (ui.js tests only the tail's centre line against the square inside a
+// face, and it missed by a pixel); at MENDER_WING, under the hurt wing out past her chest, it sits beside him, low, and
+// its whole tail, as drawn, is clear of every face's circle (the WebKit sweep: 0 at all 15 sizes, Aa on and off).
+test('staging, the polish’s fixes: on f091 our cat’s raised forepaw is in plain sight beside Thymeleaf’s tail, its five claws out; on f097 our cat’s balloon stays by her, its tail clear of every other cat; on f095 his balloon’s tail is clear of every face', () => {
+  const look = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
+  // a mark the drawing carries (pc-tap-<name>), in world units at spot `at` (scenes.js castBoxes: the drawing's box
+  // stands on the spot, centred, scaled by the spot's h over a sitting cat's 200)
+  const markAt = (who, opts, name, at) => {
+    const ch = A.character(who, Object.assign({ facing: 'right', look }, opts));
+    const m = ch.svg.match(new RegExp('pc-tap-' + name + '"><circle cx="([-\\d.]+)" cy="([-\\d.]+)" r="([-\\d.]+)"'));
+    let [x, y, r] = m.slice(1).map(Number);
+    const t = ch.svg.match(/^<g transform="matrix\(([-\d.]+),0,0,([-\d.]+),([-\d.]+),([-\d.]+)\)"/);
+    if (t) { const [a, d, e, f] = t.slice(1).map(Number); x = a * x + e; y = d * y + f; r *= a; }
+    const k = at.h / 200;
+    return { x: at.x + (x - ch.w / 2) * k, y: at.y + (y - ch.h) * k, r: r * k };
+  };
+  const BL = A.sceneInfo('bridge').anchors.back['back-left'];
+  const f091 = (who) => castOf('f091', who)[0];
+  const paw = markAt('player', { pose: f091('player').pose, mood: f091('player').mood, tap: 'paw' }, 'paw', BL);
+  const tail = (at) => markAt('thymeleaf', { pose: f091('thymeleaf').pose, mood: f091('thymeleaf').mood, holds: 'leaf', tap: 'tail' }, 'tail', at);
+  assert.equal(f091('player').pose, 'pawup');
+  assert.deepEqual(f091('thymeleaf').at, MENDER_FRONT);
+  const gap = (at) => tail(at).x - paw.x - tail(at).r - paw.r;
+  assert.ok(gap(MENDER_FRONT) > 10, 'f091: his tail tip beside our cat’s raised paw, not over it: ' + gap(MENDER_FRONT).toFixed(1));
+  assert.ok(gap(MENDER) < 0, 'and at MENDER it was over it: ' + gap(MENDER).toFixed(1));
+  // its five claws: `claws: true`, as bridge() takes it, drawn as one group of five on the raised paw
+  assert.deepEqual([f091('player').pose, f091('player').claws], ['pawup', true]);
+  {
+    const c91 = E.blankCat({ id: 'g', now: 0, look });
+    Object.assign(c91.flags, { ch3Told: true, foundSquall: true });
+    const svg = A.render(E.resolveScene(frames.f091.scene, c91, STORIES), { look }).svg;
+    const groups = [...svg.matchAll(/class="pc-claws"[^>]*>(.*?)<\/g>/g)].map(m => (m[1].match(/<path/g) || []).length);
+    assert.deepEqual(groups, [5], 'f091: five claws drawn, on our cat’s raised paw only');
+  }
+  // f097: the page's placement, step 2 of layoutText, for a cat who met Mizzle but not Hail
+  const L = PC.ui.layout;
+  const cat = E.blankCat({ id: 'g', now: 0, look });
+  Object.assign(cat.flags, { ch3Told: true, foundMizzle: true, foundHail: false });
+  const bs = E.balloons(frames.f097, cat).filter(b => b.text);
+  assert.deepEqual(bs.map(b => [b.who, b.kind || 'say']), [['riffle', 'shout'], ['player', 'say']]);
+  const place = (sc, m, bs) => {
+    const { W, H, big } = m, r = A.render(sc, { look }), heads = L.castHeads(r.heads, sc.cast);
+    const fsz = Math.max(15.5, Math.min(22, W * 0.026)) * (big ? 1.18 : 1), padX = fsz * 0.95, padY = fsz * 0.62;
+    let faces = heads.filter(o => o.h).map(o => { const rr = o.h.r * W / 100; return { x: o.h.x * W / 100, y: o.h.y * H / 100, r: rr * 1.15 + 6, who: o.who, rr }; });
+    const bodies = faces.map(c => ({ x: c.x - c.rr * 1.7, y: c.y + c.rr * 0.5, w: c.rr * 3.4, h: c.rr * 4 }));
+    // (and the areas the art asks the lettering to keep off, as faces, as layoutText adds them)
+    r.keep.forEach(k => { faces = faces.concat(L.keepCircles(k, W, H)); });
+    // (the captions as placed, and their union for the first balloon's reading order)
+    const caps = m.caps || [m.cap], capBox = caps.reduce((u, q) => ({ x: Math.min(u.x, q.x), y: Math.min(u.y, q.y), w: Math.max(u.x + u.w, q.x + q.w) - Math.min(u.x, q.x), h: Math.max(u.y + u.h, q.y + q.h) - Math.min(u.y, q.y) }));
+    const placed = caps.slice(), out = [];
+    bs.forEach((b, i) => {
+      const o = heads.find(q => q.who === b.who).h, hd = { x: o.x * W / 100, y: o.y * H / 100, r: o.r * W / 100 }, ex = b.kind === 'shout' ? 12 : 0;
+      const w = m.text[i][0] + padX * 2 + ex * 2, h = m.text[i][1] + padY * 2 + ex * 2, prev = out.length ? out[out.length - 1] : null;
+      const o2 = { W, H, w, h, faces, bodies, placed, head: hd, prev, index: i, last: i === bs.length - 1, margin: 8 };
+      let spot = L.findSpot(Object.assign({ after: prev, afterCap: i === 0 ? capBox : null }, o2));
+      // (layoutText's fallbacks: past the caption; then anywhere that still reads after the balloon before it)
+      if (!spot && i === 0) spot = L.findSpot(Object.assign({}, o2, { prev: null }));
+      if (!spot && prev) { const fb = L.findSpot(o2); if (fb && L.readsAfter({ x: fb.x, y: fb.y, w, h }, prev)) spot = fb; }
+      assert.ok(spot, 'a spot in the panel for ' + b.who + ' at ' + W + ' x ' + H);
+      const box = { x: spot.x, y: spot.y, w, h };
+      placed.push(box); out.push(box);
+      const inner = { x: box.x + ex, y: box.y + ex, w: w - 2 * ex, h: h - 2 * ex }, cx = inner.x + inner.w / 2, cy = inner.y + inner.h / 2, d = Math.hypot(cx - hd.x, cy - hd.y);
+      box.tip = { x: hd.x + (cx - hd.x) / d * hd.r * 1.12, y: hd.y + (cy - hd.y) / d * hd.r * 1.12 };
+      const tg = L.tailGeom(inner, box.tip, Math.min(13, inner.w / 7));
+      box.edge = tg.edge; box.tail = tg.d;
+    });
+    return { out, faces, heads, W, H };
+  };
+  // the sizes WebKit measured (the caption at the top left, Riffle's shout, our cat's line): 1080 x 720 with Aa off and
+  // on, an upright 820 x 1180, a sideways 1180 x 820 with Aa on
+  const SIZES = [{ W: 866, H: 538, big: false, cap: { x: 10, y: 10, w: 254, h: 48 }, text: [[155, 28], [332, 52]] },
+    { W: 866, H: 538, big: true, cap: { x: 10, y: 10, w: 299, h: 56 }, text: [[183, 33], [392, 62]] },
+    { W: 780, H: 485, big: false, cap: { x: 10, y: 10, w: 235, h: 45 }, text: [[143, 25], [306, 48]] },
+    { W: 1026, H: 638, big: true, cap: { x: 10, y: 10, w: 299, h: 56 }, text: [[183, 33], [392, 62]] }];
+  const crosses = (sc, m) => {
+    const { out, faces, W, H } = place(sc, m, bs), b = out[1], hit = [];
+    // every other cat's face (the square inside its circle, ui.js tailOverFaces) and body (its drawing's whole box)
+    sc.cast.forEach((c, j) => {
+      if (c.who === 'player' || c.who === 'sprinkle') return;
+      const f = faces.find(q => q.who === c.who), sq = { x: f.x - f.rr * 0.7, y: f.y - f.rr * 0.7, w: f.rr * 1.4, h: f.rr * 1.4 };
+      const a = typeof c.at === 'object' ? c.at : A.sceneInfo('bridge').anchors.back[c.at];
+      const ch = A.character(c.who, { pose: c.pose, mood: c.mood, facing: c.facing, holds: c.holds, look }), k = a.h / 200, bb = ch.bounds;
+      const xs = [a.x + (bb.x0 - ch.w / 2) * k, a.x + (bb.x1 - ch.w / 2) * k].map(v => (c.facing === 'left' ? 2 * a.x - v : v));
+      const body = { x: Math.min(...xs) * W / 1600, y: (a.y + (bb.y0 - ch.h) * k) * H / 1000, w: Math.abs(xs[1] - xs[0]) * W / 1600, h: (bb.y1 - bb.y0) * k * H / 1000 };
+      if (L.segHitsRect(b.edge.x, b.edge.y, b.tip.x, b.tip.y, sq)) hit.push(c.who + ' face');
+      if (L.segHitsRect(b.edge.x, b.edge.y, b.tip.x, b.tip.y, body)) hit.push(c.who + ' body');
+    });
+    return hit;
+  };
+  const sc = E.resolveScene(frames.f097.scene, cat, STORIES);
+  assert.deepEqual(castOf('f097', 'thymeleaf')[0].at, MENDER_FRONT);
+  SIZES.forEach(m => assert.deepEqual(crosses(sc, m), [], 'f097 at ' + m.W + ' x ' + m.H + (m.big ? ' with Aa' : '') + ': our cat’s balloon tail crosses no other cat'));
+  // (and at MENDER, as built, it crossed his body on every one of these)
+  const was = JSON.parse(JSON.stringify(sc));
+  was.cast.find(c => c.who === 'thymeleaf').at = MENDER;
+  SIZES.forEach(m => assert.ok(crosses(was, m).includes('thymeleaf body'), 'at MENDER, ' + m.W + ' x ' + m.H + (m.big ? ' with Aa' : '') + ': ' + crosses(was, m)));
+  // f095, both paths: his balloon's tail as drawBalloon draws it (tailGeom's two curves, filled), sampled every half
+  // pixel outside his balloon, against every other face's whole circle (the art's r); the sizes WebKit measured
+  const S95 = [{ W: 866, H: 538, big: false, caps: [{ x: 14, y: 14, w: 416, h: 75 }, { x: 444, y: 14, w: 416, h: 75 }], text: [[263, 26]] },
+    { W: 866, H: 538, big: true, caps: [{ x: 14, y: 14, w: 416, h: 88 }, { x: 444, y: 14, w: 416, h: 88 }], text: [[311, 31]] },
+    { W: 780, H: 485, big: false, caps: [{ x: 14, y: 14, w: 374, h: 70 }, { x: 400, y: 14, w: 374, h: 70 }], text: [[243, 24]] },
+    { W: 1026, H: 638, big: true, caps: [{ x: 14, y: 14, w: 492, h: 88 }, { x: 528, y: 14, w: 492, h: 88 }], text: [[311, 31]] }];
+  const inPoly = (x, y, P) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) c = !c; return c; };
+  const curve = (a, c, b) => Array.from({ length: 17 }, (_, i) => { const t = i / 16; return [0, 1].map(k => (1 - t) * (1 - t) * a[k] + 2 * (1 - t) * t * c[k] + t * t * b[k]); });
+  const intoFaces = (sc, told, m) => {
+    const c95 = E.blankCat({ id: 'g', now: 0, look });
+    Object.assign(c95.flags, { ch3Told: told });
+    const b95 = E.balloons(frames.f095, c95).filter(b => b.text);
+    assert.deepEqual(b95.map(b => b.who), ['thymeleaf']);
+    const { out, heads, W, H } = place(sc, told ? m : Object.assign({}, m, { caps: m.caps.slice(0, 1) }), b95), b = out[0], hit = {};
+    const n = b.tail.match(/-?[\d.]+/g).map(Number), P = curve([n[0], n[1]], [n[2], n[3]], [n[4], n[5]]).concat(curve([n[4], n[5]], [n[6], n[7]], [n[8], n[9]]));
+    const xs = P.map(p => p[0]), ys = P.map(p => p[1]);
+    for (let y = Math.min(...ys); y <= Math.max(...ys); y += 0.5) for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.5) {
+      if (!inPoly(x, y, P) || (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h)) continue;
+      heads.forEach(o => { if (o.h && o.who !== 'thymeleaf' && Math.hypot(x - o.h.x * W / 100, y - o.h.y * H / 100) < o.h.r * W / 100) hit[o.who] = (hit[o.who] || 0) + 0.25; });
+    }
+    return hit;
+  };
+  [true, false].forEach(told => {
+    const c95 = E.blankCat({ id: 'g', now: 0, look });
+    c95.flags.ch3Told = told;
+    const sc = E.resolveScene(frames.f095.scene, c95, STORIES);
+    assert.deepEqual(sc.cast.find(c => c.who === 'thymeleaf').at, MENDER_WING);
+    S95.forEach(m => assert.deepEqual(intoFaces(sc, told, m), {}, 'f095 ' + (told ? 'told' : 'kept') + ' at ' + m.W + ' x ' + m.H + (m.big ? ' with Aa' : '') + ': his tail clear of every face'));
+    // (and under her chest, as built, it ran across her face on every one of these)
+    const was = JSON.parse(JSON.stringify(sc));
+    was.cast.find(c => c.who === 'thymeleaf').at = MENDER_WING_WAS;
+    S95.forEach(m => assert.ok((intoFaces(was, told, m).sprinkle || 0) > 100, 'under her chest, ' + m.W + ' x ' + m.H + ': ' + JSON.stringify(intoFaces(was, told, m))));
+  });
 });
 
 /* The depth rule (the README's “Casts are listed back to front where cats meet”; the depth hotfix's test at the end

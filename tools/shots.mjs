@@ -264,7 +264,8 @@ const QUIET = `var want = !!arguments[0], rb = document.getElementById('readBtn'
   return PC.debug.state().settings.readAloud === want ? true : 'Read to me is ' + (want ? 'off' : 'on') + ' and would not change';`;
 // `node tools/shots.mjs --page`: the game's page as it is served (no Safari, no server), and stop
 if (argv[0] === '--page') {
-  process.stdout.write(silenced(readFileSync(join(ROOT, 'index.html'), 'utf8')));
+  // written whole before it stops: into a pipe a page over 64 KB goes in pieces, and exit() cut it at the first
+  await new Promise((done) => process.stdout.write(silenced(readFileSync(join(ROOT, 'index.html'), 'utf8')), done));
   process.exit(0);
 }
 const server = createServer(async (req, res) => {

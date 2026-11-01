@@ -1129,11 +1129,13 @@ function finishedCat(stories, over) {
   return cat;
 }
 
-test('version 0.10.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 10 add none; the Warrior Counts add one optional field on a cat, `warrior`, absent until her first sitting)', () => {
+test('version 0.11.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 10 add none; the Warrior Counts add one optional field on a cat, `warrior`, absent until her first sitting; chapter 11 one more, `ending`, absent until she is named)', () => {
   // chapter 10 (one minor version past the Warrior Counts' merge, 0.9.1): its card pick stores nothing new, the card she picks is its flag
-  assert.equal(E.VERSION, '0.10.0 (chapter 10, 2026-10-31)');
-  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 9 store nothing new (chapter 7’s ch7Flew, chapter 8’s foundHail and chapter 9’s foundMizzle and ch9Roof are flags); the Warrior Counts’ `warrior` is optional and not in E.blankCat (docs/warrior-counts.md, section 6)');
+  // chapter 11: her warrior name stores only its ending, `ending`, optional and never in E.blankCat (spec section 6)
+  assert.equal(E.VERSION, '0.11.0 (chapter 11, 2026-11-01)');
+  assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 9 store nothing new (chapter 7’s ch7Flew, chapter 8’s foundHail and chapter 9’s foundMizzle and ch9Roof are flags); the Warrior Counts’ `warrior` is optional and not in E.blankCat (docs/warrior-counts.md, section 6); chapter 11’s `ending` is optional and not in E.blankCat (its spec, section 6)');
   assert.ok(!('warrior' in E.blankCat({ now: 1 })), 'a cat who has not sat the Counts is stored exactly as before');
+  assert.ok(!('ending' in E.blankCat({ now: 1 })), 'a cat who has not been named is stored exactly as before');
   assert.equal(E.STORAGE_KEY, 'potomac-crossing.v1');
   assert.deepEqual(E.newSave(), { version: 2, cats: [], current: null, settings: { readAloud: false, bigText: false } });
   const c = E.blankCat({ now: 5, id: 'x' });
@@ -2041,6 +2043,13 @@ function withPicks(E, list) {
     let r = null;
     for (let w = 0; w < E.PICK_GLOW && !(r && r.right); w++) r = E.pick(cat, story, held[0], now, w, list);
     return !!(r && r.right && r.guard);
+  };
+  // (2026-11-01, chapter 11's story builder: the name choice lists all thirty offered names, each shown only `when` it is
+  // one of her three, so the scripted option may be hidden: she takes the first she sees, as the test says; a shown
+  // option is taken as before, so chapters 1 to 10 play exactly as they did)
+  P.choose = (cat, story, index, now) => {
+    const seen = E.options(E.currentFrame(cat, story), cat);
+    return E.choose(cat, story, seen.some(x => x.index === index) || !seen.length ? index : seen[0].index, now);
   };
   return P;
 }
@@ -6949,7 +6958,10 @@ test('the card pick on the page (app/ui.js, index.html): the mode class only on 
   const PICK_LINE = '    // (a pick screen leaves no scroll behind it, for the next claim or the plain Case File after it)\n    if (st.pick) el.scrollTop = 0;\n';
   assert.ok(fn(ui, 'closeFile').includes(PICK_LINE));
   assert.equal(sha(fn(ui, 'closeFile').replace(PICK_LINE, '')), 'ea0bf61c9b50dd13797b6561d9f08a3951600da80afb66c244873716cd27fc67', 'closeFile is chapter 9’s, word for word, but the pick’s line');
-  assert.equal(sha(fn(ui, 'drawFile')), '299d085d821ea6347a17821684fa91bc9fd678f1f7ec7360f0e910e7ebecd84b', 'drawFile is chapter 9’s, word for word');
+  // (drawFile: chapter 9's word for word but chapter 11's long class, which tests the name the title shows, {name}paw)
+  const LONG_NOW = "((E.clanName(cat) || E.displayName(cat)).length > 12 ? ' long' : '')", LONG_WAS = "(E.displayName(cat).length > 12 ? ' long' : '')";
+  assert.ok(fn(ui, 'drawFile').includes(LONG_NOW));
+  assert.equal(sha(fn(ui, 'drawFile').replace(LONG_NOW, LONG_WAS)), '299d085d821ea6347a17821684fa91bc9fd678f1f7ec7360f0e910e7ebecd84b', 'drawFile is chapter 9’s, word for word, but chapter 11’s long class');
   assert.match(ui, /warrior: function \(what, i\) \{ return warriorDebug\(what, i\); \},\n[\s\S]{0,400}pick: function \(ids\) \{/, 'PC.debug.pick after the Warrior Counts’ entry');
 });
 
@@ -7035,4 +7047,475 @@ test('tools/shots.mjs’s card pick targets (#pick, #pick3, #pickfull): their te
   assert.match(ui, /pick: function \(ids\) \{\n        if \(!cat \|\| !pickState\) return 'not on a pick frame';/);
   // and the Warrior Counts' recipe and run line stand as they were
   assert.match(src, /run\('return PC\.debug\.warrior\(arguments\[0\], arguments\[1\]\);', \[wt\.what, wt\.page\]\)/);
+});
+
+/* ------------------------------------------------ chapter 11: her warrior name
+ * docs/chapters/11-the-warrior-ceremony.spec.md, section 6. Only the ending is stored (`cat.ending`, optional, absent
+ * until she is named); Glintstar offers three endings, one from each of her rows (E.warriorOffers), or she types her own
+ * (an input of kind 'ending': E.cleanEnding, E.checkEnding); {ending} is 'paw' until then. Nothing changes for a cat who
+ * has not been named. */
+const W11 = () => E.WARRIOR_ENDINGS;
+function named(name, flags, ending) {
+  const c = E.blankCat({ now: 1, id: 'w11' });
+  c.name = name;
+  Object.assign(c.flags, flags || {});
+  if (ending != null) c.ending = ending;
+  return c;
+}
+/* A stand-in for chapter 11's naming (the story builder's real frames are f024 to f026): the choice of three, the
+ * Type screen with its five refusals, and a page after it; every speaker of a refusal in the Type screen's cast. */
+function ceremony() {
+  const cast = ['player', 'glintstar', 'tallyheart', 'murmurchime', 'thymeleaf'].map(who => ({ who }));
+  const scene = { set: 'camp', cam: 'crowd', cast };
+  const words = [].concat(...Object.values(W11().ch10Best), ...Object.values(W11().specialty), W11().moon);
+  return {
+    id: 'ch11', number: 11, title: 'The Warrior Ceremony', opensWhen: 'warrior', start: 'f024',
+    frames: {
+      f024: { scene, choice: { options: words.map(w => ({ label: '{name}' + w, when: { offer: w }, ending: w, sets: { ch11Named: 'offer' }, next: 'f026' }))
+        .concat([{ label: '“I’ll name myself!”', sets: {}, next: 'f025' }]) } },
+      f025: { scene, say: [{ who: 'glintstar', text: 'Then you choose. {name}… what? A word you’re proud of.' }],
+        input: { kind: 'ending', sets: { ch11Named: 'self' }, next: 'f026', refuse: {
+          own: { who: 'tallyheart', text: 'That’s your name ALREADY! Give it a new ending.' },
+          star: { who: 'glintstar', text: 'Star is for leaders. Try another ending.' },
+          paw: { who: 'tallyheart', text: 'Paw? Not any more, you’re not! Try another.' },
+          kit: { who: 'murmurchime', text: 'Kit? You’re a WARRIOR now, silly! Try another.' },
+          clan: { text: 'That’s MY name! One of me is plenty. Find one all your own.' } } } },
+      f026: { scene, say: [{ who: 'glintstar', text: '{name}{ending}.' }], next: 'f027' },
+      f027: { scene, end: true }
+    }
+  };
+}
+
+test('chapter 11: the thirty endings and the guard list, as the spec has them (a row a value, the moon’s, the fallbacks); 12 letters at most', () => {
+  const W = W11();
+  assert.equal(E.ENDING_MAX, 12);
+  assert.deepEqual(W.ch10Best, { sprinkle: ['mist', 'flash', 'sky'], friends: ['purr', 'friend', 'hug'], truth: ['true', 'clear', 'brave'], counts: ['mark', 'count', 'tally'] });
+  assert.deepEqual(W.specialty, { noticing: ['bright', 'eye', 'sight'], sneaking: ['hush', 'sharp', 'spark'], climbing: ['leap', 'climb', 'reach'],
+    swimming: ['splash', 'wave', 'ripple'], friends: ['cheer', 'smile', 'kind'] });
+  assert.deepEqual(W.moon, ['moon', 'silver', 'river']);
+  assert.deepEqual(W.fallback, { ch10Best: 'truth', specialty: 'noticing' });
+  const all = [].concat(...Object.values(W.ch10Best), ...Object.values(W.specialty), W.moon);
+  assert.equal(new Set(all).size, 30, 'thirty words, none twice');
+  all.forEach(w => assert.match(w, /^[a-z]{1,12}$/));
+  assert.deepEqual(Object.keys(E.WARRIOR_GUARD), ['mist', 'sky', 'purr', 'bright', 'eye', 'sight', 'leap', 'splash', 'wave', 'ripple', 'moon', 'river']);
+  Object.keys(E.WARRIOR_GUARD).forEach(w => {
+    assert.ok(all.includes(w), w + ' is one of the thirty');
+    E.WARRIOR_GUARD[w].forEach(f => assert.ok(/^[a-z]+$/.test(f) && f.length <= E.CLAN_MAX, w + ': ' + f + ' could be a first part'));
+  });
+  assert.deepEqual(E.WARRIOR_GUARD.sky, ['bright', 'clear', 'du', 'gray', 'grey', 'night', 'pale', 'shattered'], 'the three titles too long for a first part left out');
+  assert.deepEqual(E.WARRIOR_GUARD.river, ['dark', 'dawn', 'diamondspray', 'greatfivetail', 'gullet', 'snarling', 'windingtail']);
+  assert.ok(E.WARRIOR_GUARD.moon.includes('honey'), 'Honeymoon');
+});
+
+test('chapter 11: E.warriorOffers: chapter 1’s eight first parts take every row’s first word but Moon’s moon (Moonsilver); doubled, guarded and tripled words passed over; the fallbacks; a row all out offers its third', () => {
+  const W = W11(), firsts = ['Moon', 'Fern', 'Minnow', 'Frost', 'Pebble', 'Sedge', 'Storm', 'Holly'];
+  firsts.forEach(n => Object.keys(W.ch10Best).forEach(b => Object.keys(W.specialty).forEach(sp => {
+    assert.deepEqual(E.warriorOffers(named(n, { ch10Best: b, specialty: sp })), [W.ch10Best[b][0], W.specialty[sp][0], n === 'Moon' ? 'silver' : 'moon'], n + ' ' + b + ' ' + sp);
+  })));
+  const offer = (n, fl, i) => E.warriorOffers(named(n, fl))[i];
+  // the guard's examples, the spec's
+  ['Amber', 'Honey', 'Hidden', 'Moonbeam', 'Moonlight'].forEach(n => assert.equal(offer(n, {}, 2), 'silver', n));
+  ['Mist', 'Misty', 'Mistle'].forEach(n => assert.equal(offer(n, { ch10Best: 'sprinkle' }, 0), 'flash', n));
+  ['Wiggle', 'Fox', 'Deer'].forEach(n => assert.equal(offer(n, { specialty: 'climbing' }, 1), 'climb', n));
+  assert.equal(offer('Bright', { specialty: 'noticing' }, 1), 'sight', 'Bright: bright doubled, eye guarded');
+  assert.deepEqual([offer('Dawn', { specialty: 'noticing' }, 1), offer('Dawn', { ch10Best: 'sprinkle' }, 0)], ['eye', 'flash']);
+  assert.equal(offer('Otter', { specialty: 'swimming' }, 1), 'wave');
+  assert.equal(offer('Ripple', { ch10Best: 'friends' }, 0), 'friend');
+  // a missing or unknown ch10Best reads truth, a specialty noticing
+  assert.deepEqual(E.warriorOffers(named('Fern')), ['true', 'bright', 'moon']);
+  assert.deepEqual(E.warriorOffers(named('Fern', { ch10Best: 'pizza', specialty: '__proto__' })), ['true', 'bright', 'moon']);
+  assert.deepEqual(E.warriorOffers(named('Fern', { ch10Best: 'counts' })), ['mark', 'bright', 'moon']);
+  // three of one letter at the join reads as a typo: Mosssplash, Shellleap
+  assert.equal(offer('Moss', { specialty: 'swimming' }, 1), 'wave');
+  assert.equal(offer('Shell', { specialty: 'climbing' }, 1), 'climb');
+  ['Hill', 'Gull', 'Small', 'Tall', 'Bluebell'].forEach(n => assert.equal(offer(n, { specialty: 'climbing' }, 1), 'climb', n));
+  ['Grass', 'Cypress'].forEach(n => assert.equal(offer(n, { specialty: 'swimming' }, 1), 'wave', n));
+  assert.equal(offer('Moss', { specialty: 'climbing' }, 1), 'leap', 'no triple: Mossleap');
+  // letters only, any case, for the tests: Big Fern, MOONBEAM
+  assert.equal(offer('Big Moon', {}, 2), 'silver');
+  assert.equal(offer('MOONBEAM', {}, 2), 'silver');
+  // every word of a row out: its third
+  assert.equal(offer('Mistflashsky', { ch10Best: 'sprinkle' }, 0), 'sky');
+  assert.equal(offer('Moonsilverriver', {}, 2), 'river');
+  // an unnamed cat is offered the rows' first words (nothing in a first part to double)
+  assert.deepEqual(E.warriorOffers(E.blankCat({ now: 1 })), ['true', 'bright', 'moon']);
+  assert.deepEqual(E.warriorOffers(null), ['true', 'bright', 'moon']);
+});
+
+test('chapter 11: E.cleanEnding(raw, cat): letters only, lower case, her first part dropped once from the front, at most 12; × and ÷ are not letters', () => {
+  const fern = named('Fern');
+  assert.equal(E.cleanEnding('heart', fern), 'heart');
+  assert.equal(E.cleanEnding('Big Heart', fern), 'bigheart');
+  assert.equal(E.cleanEnding('Fernheart', fern), 'heart');
+  assert.equal(E.cleanEnding('FERN HEART', fern), 'heart');
+  assert.equal(E.cleanEnding('fernfernheart', fern), 'fernheart', 'once');
+  assert.equal(E.cleanEnding('heartfern', fern), 'heartfern', 'from the front only');
+  assert.equal(E.cleanEnding('Mc-Fluff', fern), 'mcfluff');
+  assert.equal(E.cleanEnding("o'clock", fern), 'oclock');
+  assert.equal(E.cleanEnding('heart2', fern), 'heart');
+  assert.equal(E.cleanEnding('butterscotchpie', fern), 'butterscotch', 'clipped to 12');
+  assert.equal(E.cleanEnding('fern×', named('Moon')), 'fern');
+  assert.equal(E.cleanEnding('÷×', fern), '');
+  assert.equal(E.cleanEnding('Étoile', fern), 'étoile', 'a letter of any alphabet stays');
+  assert.equal(E.cleanEnding('fern', fern), '');
+  assert.equal(E.cleanEnding('  ', fern), '');
+  assert.equal(E.cleanEnding(null, fern), '');
+  // the first-part rule cuts a short name's own word: Mi typing mist is Mist, Sun typing sunny is Sunny
+  assert.equal(E.cleanEnding('mist', named('Mi')), 'st');
+  assert.equal(E.cleanEnding('sunny', named('Sun')), 'ny');
+  assert.equal(E.cleanEnding('Bigfernheart', named('Big Fern')), 'heart', 'a two-word first part, letters only');
+  assert.equal(E.cleanEnding('heart', null), 'heart');
+});
+
+test('chapter 11: E.checkEnding(raw, cat): own, star, paw, kit, clan, in that order; every trailing s dropped for the test; a typed ending is never guarded', () => {
+  const check = (n, raw) => { const r = E.checkEnding(raw, named(n)); const o = { ending: r.ending, refuse: r.refuse }; if (r.who) o.who = r.who; return o; };
+  // every case the spec's run lists (spec-writer/wname.txt)
+  [
+    ['Fern', 'heart', 'heart', null], ['Fern', 'Fernheart', 'heart', null], ['Fern', 'Big Heart', 'bigheart', null], ['Fern', 'HEART', 'heart', null],
+    ['Fern', '', '', 'own'], ['Fern', '  ', '', 'own'], ['Fern', '123', '', 'own'], ['Fern', 'fern', '', 'own'],
+    ['Fern', 'star', 'star', 'star'], ['Fern', 'Stars', 'stars', 'star'], ['Fern', 'brightstar', 'brightstar', 'star'],
+    ['Fern', 'paw', 'paw', 'paw'], ['Fern', 'paws', 'paws', 'paw'], ['Fern', 'Fernpaw', 'paw', 'paw'],
+    ['Fern', 'kit', 'kit', 'kit'], ['Fern', 'kits', 'kits', 'kit'], ['Fern', 'kitten', 'kitten', 'kit'], ['Fern', 'kittens', 'kittens', 'kit'],
+    ['Fern', 'kitty', 'kitty', 'kit'], ['Fern', 'kitties', 'kitties', 'kit'],
+    ['Murmur', 'chime', 'chime', null], ['Murmur', 'mutter', 'mutter', null], ['Mutter', 'chime', 'chime', null],
+    ['Glint', 'star', 'star', 'star'], ['Fern', 'starlight', 'starlight', null], ['Fern', 'pinecone', 'pinecone', null],
+    ['Fern', 'butterscotchpie', 'butterscotch', null], ['Big Fern', 'heart', 'heart', null], ['Fern', 'heart2', 'heart', null],
+    ['Fern', 's', 's', null], ['Fern', 'kittycat', 'kittycat', null], ['Fern', 'Mc-Fluff', 'mcfluff', null], ['Fern', "o'clock", 'oclock', null]
+  ].forEach(([n, raw, ending, refuse]) => assert.deepEqual(check(n, raw), { ending, refuse }, n + ' + ' + JSON.stringify(raw)));
+  // every trailing s, and the kit family
+  ['pawss', 'starss', 'kittenss', 'pawsss'].forEach(raw => assert.ok(check('Fern', raw).refuse, raw));
+  assert.deepEqual(['pawss', 'starss', 'kittenss', 'kittiess'].map(raw => check('Fern', raw).refuse), ['paw', 'star', 'kit', 'kit']);
+  assert.equal(check('Fern', 'starpaw').refuse, 'paw', 'by its end');
+  assert.equal(check('Fern', 'pawstar').refuse, 'star', 'star first');
+  assert.equal(check('Fern', 'Fernstar').refuse, 'star', 'her name dropped, then star');
+  // a Clan cat's whole name, with who
+  assert.deepEqual(check('Tally', 'heart'), { ending: 'heart', refuse: 'clan', who: 'tallyheart' });
+  assert.deepEqual(check('Thyme', 'leaf'), { ending: 'leaf', refuse: 'clan', who: 'thymeleaf' });
+  assert.deepEqual(check('Murm', 'urchime'), { ending: 'urchime', refuse: 'clan', who: 'murmurchime' });
+  assert.deepEqual(check('Murmur', 'chime'), { ending: 'chime', refuse: null }, 'her tortie is Mutterchime: Murmurchime is hers to be');
+  assert.deepEqual(check('Mutt', 'erchime'), { ending: 'erchime', refuse: null }, 'Mutterchime is nobody’s for a cat not named Murmur');
+  assert.deepEqual(check('Tally', 'hearts'), { ending: 'hearts', refuse: null }, 'whole names only');
+  assert.deepEqual(check('Glint', 'star'), { ending: 'star', refuse: 'star' }, 'Glintstar is already a star');
+  assert.deepEqual(check('Tally', 'Tallyheart'), { ending: 'heart', refuse: 'clan', who: 'tallyheart' });
+  // a typed ending is hers, canon or not: the guard is for the offers only
+  ['Fox leap', 'Dawn mist', 'Honey moon', 'Storm heart', 'Holly leaf'].forEach(x => { const [n, raw] = x.split(' '); assert.equal(check(n, raw).refuse, null, x); });
+  // the same argument order as E.cleanEnding and E.cleanClanName
+  assert.equal(E.checkEnding('Fernheart', named('Fern')).ending, E.cleanEnding('Fernheart', named('Fern')));
+});
+
+test('chapter 11: E.warriorName and E.displayName (her warrior name first); the token {ending}, paw until she is named; E.clanName unchanged', () => {
+  const fern = named('Fern');
+  assert.equal(E.warriorName(fern), '');
+  assert.equal(E.displayName(fern), 'Fernpaw');
+  assert.equal(E.fill('{name}{ending}', fern), 'Fernpaw');
+  assert.equal(E.tokens(fern).ending, 'paw');
+  assert.equal(E.tokens(E.blankCat({ now: 1 })).ending, 'paw');
+  fern.ending = 'heart';
+  assert.equal(E.warriorName(fern), 'Fernheart');
+  assert.equal(E.displayName(fern), 'Fernheart');
+  assert.equal(E.clanName(fern), 'Fernpaw', 'her book’s and her Case File’s titles keep the apprentice’s name');
+  assert.equal(E.fill('{name}{ending}, warrior of CrystalClan. {name}paw’s First Moon.', fern), 'Fernheart, warrior of CrystalClan. Fernpaw’s First Moon.');
+  assert.equal(E.fill('{NAME}{ending}', fern), 'FERNheart', 'no capital token of its own');
+  const big = named('Big Fern', {}, 'heart');
+  assert.equal(E.displayName(big), 'Big Fernheart');
+  // the order: warrior name, Clan name, pet name, New cat; an ending without a first part is no name
+  const pet = E.blankCat({ now: 1 }); pet.petname = 'Muffin'; pet.ending = 'heart';
+  assert.deepEqual([E.warriorName(pet), E.displayName(pet)], ['', 'Muffin']);
+  assert.equal(E.displayName(E.blankCat({ now: 1 })), 'New cat');
+  assert.equal(E.displayName(null), '');
+  assert.equal(E.warriorName(null), '');
+  const blankEnding = named('Fern', {}, '');
+  assert.deepEqual([E.warriorName(blankEnding), E.displayName(blankEnding), E.fill('{ending}', blankEnding)], ['', 'Fernpaw', 'paw']);
+  // the longest name: 14 + 12
+  assert.equal(E.warriorName(named('Thunderwhisker', {}, 'butterscotch')).length, 26);
+});
+
+test('chapter 11: E.matches’ computed keys, `offer` and `nameHas`; `ending` read as her own field (false while unnamed); inside `not` too', () => {
+  const c = named('Moonbeam', { ch10Best: 'sprinkle', specialty: 'climbing' });
+  assert.deepEqual(E.warriorOffers(c), ['mist', 'leap', 'silver']);
+  assert.equal(E.matches({ offer: 'mist' }, c), true);
+  assert.equal(E.matches({ offer: 'moon' }, c), false, 'doubled: not offered');
+  assert.equal(E.matches({ offer: ['moon', 'silver'] }, c), true);
+  assert.equal(E.matches({ offer: 'silver', nameHas: 'moon' }, c), true);
+  assert.equal(E.matches({ offer: 'silver', not: { nameHas: 'moon' } }, c), false);
+  assert.equal(E.matches({ nameHas: 'beam' }, c), true);
+  assert.equal(E.matches({ nameHas: 'fern' }, c), false);
+  assert.equal(E.matches({ nameHas: ['fern', 'beam'] }, c), true);
+  assert.equal(E.matches({ nameHas: 'moon' }, named('Big Moon')), true, 'letters only, lower case');
+  assert.equal(E.matches({ ending: 'heart' }, c), false, 'unnamed');
+  assert.equal(E.matches({ ending: ['heart', 'hearts'] }, c), false);
+  c.ending = 'hearts';
+  assert.equal(E.matches({ ending: ['heart', 'hearts'] }, c), true);
+  assert.equal(E.matches({ not: { ending: ['heart', 'hearts'] } }, c), false);
+  // the offers follow her flags as they are now
+  c.flags.ch10Best = 'counts';
+  assert.equal(E.matches({ offer: 'mark' }, c), true);
+  assert.equal(E.matches({ offer: 'mist' }, c), false);
+});
+
+test('chapter 11: the choice of three: exactly three names and hers show (definition order); an option’s `ending` is stored as given, after its sets; “I’ll name myself!” sets nothing', () => {
+  const ch11 = ceremony();
+  const c = named('Mi', { ch10Best: 'sprinkle', specialty: 'friends' });
+  E.startChapter(c, ch11, 1);
+  const shown = E.options(ch11.frames.f024, c);
+  assert.deepEqual(shown.map(o => E.fill(o.option.label, c)), ['Mimist', 'Micheer', 'Mimoon', '“I’ll name myself!”']);
+  assert.ok(E.choose(c, ch11, shown[0].index, 2));
+  assert.deepEqual([c.ending, c.flags.ch11Named, c.frame], ['mist', 'offer', 'f026'], 'Mi keeps mist: an offer is never cut by the first-part rule');
+  assert.equal(E.fill('{name}{ending}', c), 'Mimist');
+  // Back, and another: replaced
+  assert.ok(E.back(c, ch11));
+  assert.ok(E.choose(c, ch11, E.options(ch11.frames.f024, c)[2].index, 3));
+  assert.deepEqual([c.ending, c.flags.ch11Named], ['moon', 'offer']);
+  // Back, and name herself: nothing is set, her ending stays what she has until she types one
+  assert.ok(E.back(c, ch11));
+  const self = E.options(ch11.frames.f024, c)[3];
+  assert.ok(E.choose(c, ch11, self.index, 4));
+  assert.deepEqual([c.frame, c.ending, c.flags.ch11Named], ['f025', 'moon', 'offer']);
+  // an option without `ending` stores none (every chapter before)
+  const plain = named('Fern');
+  const st = { id: 'chx', start: 'a', frames: { a: { choice: { options: [{ label: 'Go.', sets: { went: true }, next: 'b' }] } }, b: { end: true } } };
+  E.startChapter(plain, st, 1);
+  assert.ok(E.choose(plain, st, 0, 2));
+  assert.equal('ending' in plain, false);
+});
+
+test('chapter 11: the Type screen (an input of kind “ending”): refused, nothing is stored, no flag is set and the page stays; accepted, her ending, then the input’s sets, then the page turns', () => {
+  const ch11 = ceremony();
+  const c = named('Fern', { ch10Best: 'truth' });
+  E.startChapter(c, ch11, 1);
+  E.go(c, ch11, 'f025', 2);
+  const before = JSON.stringify(c);
+  ['', '  ', 'Fern', 'star', 'paws', 'kitten', 'Fernpaw'].forEach(raw => {
+    assert.equal(E.submitInput(c, ch11, raw, 3), false, JSON.stringify(raw));
+    assert.equal(JSON.stringify(c), before, 'nothing changed: ' + JSON.stringify(raw));
+  });
+  const tally = named('Tally'); E.startChapter(tally, ch11, 1); E.go(tally, ch11, 'f025', 2);
+  assert.equal(E.submitInput(tally, ch11, 'heart', 3), false);
+  assert.deepEqual(['ending' in tally, tally.flags.ch11Named, tally.frame], [false, undefined, 'f025']);
+  assert.equal(E.submitInput(c, ch11, 'Big Heart', 4), true);
+  assert.deepEqual([c.ending, c.flags.ch11Named, c.frame, E.displayName(c)], ['bigheart', 'self', 'f026', 'Fernbigheart']);
+  // a cat who had an offered ending, then named herself: replaced, and `self`
+  const o = named('Fern', { ch10Best: 'truth', ch11Named: 'offer' }, 'true');
+  E.startChapter(o, ch11, 1); E.go(o, ch11, 'f025', 2);
+  assert.ok(E.submitInput(o, ch11, 'pinecone', 3));
+  assert.deepEqual([o.ending, o.flags.ch11Named], ['pinecone', 'self']);
+  // a typed ending that doubles her name: Moon typing moonmoon is stored moon (and sent again as Moonmoon, it stays moon)
+  const m = named('Moon'); E.startChapter(m, ch11, 1); E.go(m, ch11, 'f025', 2);
+  assert.ok(E.submitInput(m, ch11, 'moonmoon', 3));
+  assert.equal(m.ending, 'moon');
+  E.back(m, ch11);
+  assert.equal(E.submitInput(m, ch11, 'moon', 4), false, 'her own name');
+  assert.ok(E.submitInput(m, ch11, 'Moon' + m.ending, 5));
+  assert.equal(m.ending, 'moon');
+  // a short name's own word: Mi typing mist is Mist
+  const mi = named('Mi'); E.startChapter(mi, ch11, 1); E.go(mi, ch11, 'f025', 2);
+  assert.ok(E.submitInput(mi, ch11, 'mist', 3));
+  assert.equal(E.warriorName(mi), 'Mist');
+  // `sets` on an input is read for kind 'ending' only: chapter 1's inputs as they were
+  const st = { id: 'ch01', start: 'a', frames: { a: { input: { kind: 'clanname', sets: { x: 1 }, next: 'b' } }, b: { end: true } } };
+  const p = named(''); E.startChapter(p, st, 1);
+  assert.ok(E.submitInput(p, st, 'Fern', 2));
+  assert.deepEqual([p.name, p.flags], ['Fern', {}]);
+});
+
+test('chapter 11: chapter 1 read again, renamed: an offered ending she would no longer be offered is taken again from its row (Moonsilver, Foxclimb); a typed one stays; every other cat as today', () => {
+  const ch01 = { id: 'ch01', start: 'f', frames: { f: { input: { kind: 'clanname', suggestions: ['Moon'], next: 'g' } }, g: { end: true } } };
+  const rename = (c, to) => { c.chapter = 'ch01'; c.frame = 'f'; c.history = []; assert.ok(E.submitInput(c, ch01, to, 9)); return c; };
+  // Fern with moon, offered, renamed Moon: Moonsilver
+  let c = rename(named('Fern', { ch11Named: 'offer' }, 'moon'), 'Moon');
+  assert.deepEqual([c.name, c.ending, E.warriorName(c)], ['Moon', 'silver', 'Moonsilver']);
+  // Fern with leap (climbing), renamed Fox: Foxclimb
+  c = rename(named('Fern', { ch11Named: 'offer', specialty: 'climbing' }, 'leap'), 'Fox');
+  assert.equal(E.warriorName(c), 'Foxclimb');
+  // still offered under the new name: kept
+  c = rename(named('Fern', { ch11Named: 'offer', ch10Best: 'sprinkle' }, 'mist'), 'Frost');
+  assert.equal(E.warriorName(c), 'Frostmist');
+  // a triple at the new join: Fern with splash renamed Moss is Mosswave
+  c = rename(named('Fern', { ch11Named: 'offer', specialty: 'swimming' }, 'splash'), 'Moss');
+  assert.equal(E.warriorName(c), 'Mosswave');
+  // a later word of a row, offered once for an old name, goes back to the row's offer for the new one
+  c = rename(named('Mistle', { ch11Named: 'offer', ch10Best: 'sprinkle' }, 'flash'), 'Fern');
+  assert.equal(E.warriorName(c), 'Fernmist');
+  // a typed ending stays hers, even one that now doubles her name (spec section 7, item 15)
+  c = rename(named('Fern', { ch11Named: 'self' }, 'moon'), 'Moon');
+  assert.equal(E.warriorName(c), 'Moonmoon');
+  c = rename(named('Fern', { ch11Named: 'self' }, 'pinecone'), 'Storm');
+  assert.equal(E.warriorName(c), 'Stormpinecone');
+  // a cat with no ending: exactly as today
+  const plain = rename(named('Fern', { ch10Best: 'sprinkle' }), 'Moon');
+  assert.deepEqual([plain.name, 'ending' in plain, plain.flags], ['Moon', false, { ch10Best: 'sprinkle' }]);
+  const offerOnly = rename(named('Fern', { ch11Named: 'offer' }), 'Moon');
+  assert.equal('ending' in offerOnly, false, 'a flag without an ending changes nothing');
+});
+
+test('chapter 11: the save: an unnamed cat is saved and migrated exactly as before (no `ending` key); a named one round-trips; a bad one is dropped, she is unnamed again; still version 2', () => {
+  const save = E.newSave();
+  const a = E.addCat(save, { now: 5 }); a.name = 'Moon'; a.flags.ch10Best = 'truth';
+  const m1 = E.migrate(JSON.parse(JSON.stringify(save)));
+  assert.ok(!('ending' in m1.cats[0]));
+  assert.deepEqual(Object.keys(m1.cats[0]), Object.keys(E.blankCat({ now: 1 })), 'the blank cat’s keys, in its order');
+  assert.equal(JSON.stringify(E.migrate(JSON.parse(JSON.stringify(m1)))), JSON.stringify(m1), 'idempotent');
+  // named
+  a.ending = 'heart';
+  const m2 = E.migrate(JSON.parse(JSON.stringify(save)));
+  assert.equal(m2.cats[0].ending, 'heart');
+  assert.equal(E.displayName(m2.cats[0]), 'Moonheart');
+  assert.equal(JSON.stringify(E.migrate(JSON.parse(JSON.stringify(m2)))), JSON.stringify(m2), 'idempotent');
+  assert.equal(m2.version, 2);
+  // a hand-edited ending: its letters, lower case, at most 12; anything else dropped
+  const norm = (v) => { const s = E.newSave(); const c = E.addCat(s, { now: 5 }); c.name = 'Moon'; c.ending = v; return E.migrate(JSON.parse(JSON.stringify(s))).cats[0]; };
+  assert.equal(norm('Heart!').ending, 'heart');
+  assert.equal(norm('Big Heart').ending, 'bigheart');
+  assert.equal(norm('butterscotchpie').ending, 'butterscotch');
+  assert.equal(norm('moonheart').ending, 'moonheart', 'no first-part rule in the save');
+  [5, '', '  ', '123', '×÷', null, {}, ['heart'], true].forEach(v => assert.ok(!('ending' in norm(v)), JSON.stringify(v)));
+  // E.resetCat drops it with everything
+  const s3 = E.newSave(); const r = E.addCat(s3, { now: 5 }); r.name = 'Moon'; r.ending = 'heart';
+  assert.ok(!('ending' in E.resetCat(s3, r.id, 6)));
+  // a version-1 cat is never named
+  Object.keys(V1SAVES).forEach(k => {
+    const cats = E.migrate(JSON.parse(JSON.stringify(V1SAVES[k]))).cats;
+    assert.ok(cats.length > 0 && cats.every(c => !('ending' in c) && E.displayName(c) === (c.name ? c.name + 'paw' : c.petname || 'New cat')), k);
+  });
+});
+
+test('chapter 11: E.checkStory’s new checks: an option’s ending, the Type screen’s refusals and their speakers, its sets, `offer` and `nameHas`, a skip’s name; no sets of offer, nameHas or ending', () => {
+  assert.deepEqual(E.checkStory(ceremony()), [], 'the stand-in naming is sound');
+  const bad = (edit) => { const s = ceremony(); edit(s); return E.checkStory(s); };
+  const has = (errs, re) => assert.ok(errs.some(e => re.test(e)), errs.join(' | ') + ' should match ' + re);
+  // an option's ending: 1 to 12 lower-case letters
+  ['Mist', 'mist1', 'abcdefghijklm', '', 5].forEach(v => has(bad(s => { s.frames.f024.choice.options[0].ending = v; }), /f024 option 0: ending is 1 to 12 lower-case letters/));
+  // `offer` names one of the thirty; `nameHas` lower-case letters
+  has(bad(s => { s.frames.f024.choice.options[0].when = { offer: 'heart' }; }), /f024 option 0: offer names one of the thirty endings/);
+  has(bad(s => { s.frames.f026.say[0].when = { not: { offer: ['mist', 'Moon'] } }; }), /f026 say 0 \(not\): offer names one of the thirty endings/);
+  has(bad(s => { s.frames.f026.say[0].when = { nameHas: 'Moon' }; }), /f026 say 0: nameHas is a word in lower-case letters/);
+  // the Type screen
+  has(bad(s => { delete s.frames.f025.input.refuse; }), /f025: an ending input has refuse/);
+  has(bad(s => { delete s.frames.f025.input.refuse.kit; }), /f025: ending refuse kit is \{ who, text \}/);
+  has(bad(s => { s.frames.f025.input.refuse.star.who = 'riffle'; }), /f025: ending refuse star: riffle is not in the frame’s cast/);
+  has(bad(s => { s.frames.f025.input.refuse.clan.who = 'tallyheart'; }), /f025: ending refuse clan has no who/);
+  has(bad(s => { s.frames.f025.input.refuse.clan = { text: ' ' }; }), /f025: ending refuse clan is \{ text \}/);
+  has(bad(s => { s.frames.f025.scene = { set: 'camp', cast: [{ who: 'glintstar' }, { who: 'tallyheart' }, { who: 'murmurchime' }] }; }), /f025: ending refuse clan: thymeleaf is not in the frame’s cast/);
+  has(bad(s => { s.frames.f025.input.refuse.mine = { who: 'tallyheart', text: 'x' }; }), /f025: ending refuse has no mine/);
+  has(bad(s => { delete s.frames.f025.input.next; }), /f025 -> missing undefined/);
+  has(bad(s => { s.frames.f025.input.sets = { ch11Named: ['self'] }; }), /f025: input sets is an object of flags/);
+  has(bad(s => { s.frames.f025.input.sets = { ending: 'heart' }; }), /f025 input: sets ending, which no flag may be/);
+  has(bad(s => { s.frames.f026.sets = { named: true }; s.frames.f025.input.sets = { named: true }; }), /f025 input: sets named, which frame f026 sets for good/);
+  // sets: on another kind of input; of a computed key or her field anywhere
+  const p = { id: 'chx', start: 'a', frames: { a: { input: { kind: 'clanname', sets: { x: 1 }, next: 'b' } }, b: { end: true } } };
+  has(E.checkStory(p), /a: an input’s sets are read for kind "ending" only/);
+  has(bad(s => { s.frames.f024.choice.options[0].sets = { offer: 'mist' }; }), /f024 option 0: sets offer, which no flag may be/);
+  has(bad(s => { s.frames.f026.sets = { nameHas: 'moon' }; }), /f026: sets nameHas, which no flag may be/);
+  // a skip's name: a line
+  const sk = (name) => E.checkStory({ id: 'chx', start: 'a', frames: { a: { skip: { table: 10, groups: 5, paws: 'both', name, next: 'b' } }, b: { end: true } } });
+  assert.deepEqual(sk('{name}{ending}'), []);
+  has(sk(''), /a: skip name is a line/);
+  has(sk(5), /a: skip name is a line/);
+  // and every chapter before stands clean (none uses any of it)
+  const real = require('./_load.js').load().story;
+  Object.values(real).forEach(s => assert.deepEqual(E.checkStory(s, real), [], s.id));
+});
+
+test('chapter 11: the Type screen’s rules in Node (UI.ending): the preview, which line and speaker a refusal gets, the field’s first value, and what a tap sends', () => {
+  require('../app/ui.js');
+  const U = PC.ui.ending, input = ceremony().frames.f025.input;
+  assert.equal(U.PROMPT, 'Type your new ending.');
+  const fern = named('Fern', { ch10Best: 'truth', specialty: 'noticing' });
+  assert.equal(U.preview(fern, 'heart'), 'You will be: Fernheart');
+  assert.equal(U.preview(fern, 'Fernheart'), 'You will be: Fernheart');
+  assert.equal(U.preview(fern, ''), 'You will be: Fern…');
+  assert.equal(U.preview(fern, '12 3'), 'You will be: Fern…');
+  assert.equal(U.preview(named('Thunderwhisker'), 'butterscotchpie'), 'You will be: Thunderwhiskerbutterscotch');
+  // a refusal: its line and its speaker; null when she may be so
+  assert.equal(U.refusal(input, fern, 'heart'), null);
+  assert.deepEqual(U.refusal(input, fern, ''), { who: 'tallyheart', text: 'That’s your name ALREADY! Give it a new ending.' });
+  assert.deepEqual(U.refusal(input, fern, 'fern'), { who: 'tallyheart', text: 'That’s your name ALREADY! Give it a new ending.' });
+  assert.deepEqual(U.refusal(input, fern, 'Stars'), { who: 'glintstar', text: 'Star is for leaders. Try another ending.' });
+  assert.deepEqual(U.refusal(input, fern, 'paws'), { who: 'tallyheart', text: 'Paw? Not any more, you’re not! Try another.' });
+  assert.deepEqual(U.refusal(input, fern, 'kitties'), { who: 'murmurchime', text: 'Kit? You’re a WARRIOR now, silly! Try another.' });
+  const mine = 'That’s MY name! One of me is plenty. Find one all your own.';
+  assert.deepEqual(U.refusal(input, named('Tally'), 'heart'), { who: 'tallyheart', text: mine });
+  assert.deepEqual(U.refusal(input, named('Thyme'), 'leaf'), { who: 'thymeleaf', text: mine });
+  assert.deepEqual(U.refusal(input, named('Murm'), 'urchime'), { who: 'murmurchime', text: mine });
+  assert.equal(U.refusal(input, named('Murmur'), 'chime'), null, 'her tortie is Mutterchime');
+  // the field's first value: a typed ending comes back (`ch11Named: 'self'`); an offered one never does, even once it is no
+  // longer among her offers (a reread of chapter 10 with another answer: the review's), and a typed one comes back even
+  // when it is one of them
+  assert.equal(U.prefill(fern), '');
+  assert.equal(U.prefill(named('Fern', { ch10Best: 'truth', ch11Named: 'offer' }, 'true')), '', 'an offer she picked before');
+  assert.equal(U.prefill(named('Fern', { ch10Best: 'truth', ch11Named: 'offer' }, 'bright')), '', 'any of her three');
+  assert.equal(U.prefill(named('Fern', { ch10Best: 'counts', ch11Named: 'offer' }, 'mist')), '', 'an offer she picked, no longer offered: never handed back as typed');
+  assert.equal(U.prefill(named('Fern', { ch10Best: 'truth', ch11Named: 'self' }, 'pinecone')), 'pinecone');
+  assert.equal(U.prefill(named('Fern', { ch10Best: 'truth', ch11Named: 'self' }, 'mist')), 'mist', 'a row’s word she typed');
+  assert.equal(U.prefill(named('Fern', { ch10Best: 'truth', ch11Named: 'self' }, 'true')), 'true', 'a word she typed, though Glintstar offers it too');
+  assert.equal(U.prefill(named('Fern', { ch10Best: 'truth' }, 'pinecone')), '', 'no `ch11Named`: nothing she typed on the Type screen');
+  // what a tap sends: an unchanged first value goes as her whole name, so the first-part rule drops exactly her first part
+  const moon = named('Moon', { ch11Named: 'self' }, 'moon');
+  assert.equal(U.prefill(moon), 'moon');
+  assert.equal(U.value(moon, 'moon'), 'Moonmoon');
+  assert.equal(E.checkEnding(U.value(moon, 'moon'), moon).ending, 'moon');
+  assert.equal(U.refusal(input, moon, U.value(moon, 'moon')), null, 'her own Moonmoon is never refused as her own name');
+  assert.equal(U.preview(moon, U.value(moon, 'moon')), 'You will be: Moonmoon');
+  assert.equal(U.value(moon, 'moonbeam'), 'moonbeam', 'changed: as typed');
+  assert.equal(U.value(fern, 'heart'), 'heart', 'no first value: as typed');
+});
+
+test('chapter 11: the page’s pieces (app/ui.js, index.html): the Type screen as designed, its refusal in place, the skip’s name tag, the hub, My nest, the book’s and the Case File’s classes, the corner’s words', () => {
+  const fs = require('fs'), path = require('path');
+  const ui = fs.readFileSync(path.join(__dirname, '..', 'app', 'ui.js'), 'utf8'), html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const body = (name) => { const i = ui.indexOf('  function ' + name + '('); assert.ok(i >= 0, name); const j = ui.indexOf('\n  }\n', i); return ui.slice(i, j + 4); };
+  // renderInput is given the frame's ctx; kind 'ending' is a page of its own, before the dream's; chapter 1's inputs untouched
+  assert.match(ui, /if \(kind === 'input'\) return renderInput\(f, id, box, ctx\);/);
+  assert.match(body('renderInput'), /^  function renderInput\(f, id, box, ctx\) \{\n    var inp = f\.input, kind = inp\.kind;\n    \/\/ [^\n]*\n    if \(kind === 'ending'\) return renderEnding\(f, id, box, ctx\);\n    var sugg = /);
+  assert.match(body('renderInput'), /aria-label="The first part of your Clan name">/);
+  const R = body('renderEnding');
+  // her first part, then the field, one row; chapter 1's attributes with autocapitalize none; maxlength 30; its aria-label
+  assert.match(R, /'<div class="ending-row"><span class="ending-name">' \+ esc\(first\) \+ '<\/span>' \+/);
+  assert.match(R, /'<input class="field" id="inp" type="text" maxlength="30"' \+ \(inp\.placeholder \? ' placeholder="' \+ esc\(fill\(inp\.placeholder\)\) \+ '"' : ''\) \+/);
+  assert.match(R, /' autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" aria-label="' \+ esc\('Your new ending, after ' \+ first\) \+ '"><\/div>' \+/);
+  // the button always enabled; the prompt read aloud; the preview live
+  assert.match(R, /<button class="btn go big" id="okBtn" type="button">That’s my name!<\/button>/);
+  assert.doesNotMatch(R, /disabled/);
+  assert.match(R, /if \(ctx\.reading\) ctx\.reading\.push\(\{ text: ENDING_PROMPT \}\);/);
+  assert.match(R, /<div class="preview ending-preview" id="preview" aria-live="polite"><\/div>/);
+  // the preview: her first part, a place to break, then the ending she would have (… while it has no letter)
+  assert.match(R, /var e = E\.cleanEnding\(endingValue\(cat, field\.value\), cat\);\n      preview\.innerHTML = '<small>You will be:<\/small>' \+ esc\(first\) \+ '<wbr>' \+ esc\(e \|\| '…'\);/);
+  assert.match(R, /var pre = endingPrefill\(cat\);\n    if \(pre\) field\.value = pre;/);
+  // a refusal: ignored within the double-tap guard; a balloon by its speaker after the frame's own, replacing an earlier one;
+  // laid out by layoutText with relayoutFn set; said again by Read to me's button, and at once when it is on; the field
+  // keeps the focus, what she typed selected; the balloon scrolled into view
+  assert.match(R, /if \(now\(\) - refusedAt < UI_GUARD_MS\) return;/);
+  assert.match(R, /ctx\.balloons = \(ctx\.balloons \|\| \[\]\)\.filter\(function \(x\) \{ return !x\.refusal; \}\)\.concat\(no\.text \? \[b\] : \[\]\);\n      relayoutFn = function \(\) \{ layoutText\(ctx\); \};\n      layoutText\(ctx\);\n      currentSpeech = \(ctx\.reading \|\| \[\]\)\.concat\(\[\{ text: ENDING_PROMPT \}\]\);/);
+  assert.match(R, /var b = \{ who: no\.who, text: no\.text, kind: 'say', nth: 0, variant: member && member\.variant, refusal: true \};/);
+  assert.match(R, /field\.select\(\)/);
+  assert.match(R, /el\.scrollIntoView\(\{ block: 'nearest'/);
+  assert.match(R, /if \(no\.text && save\.settings\.readAloud\) speakItems\(\[\{ text: no\.text, who: b\.who, variant: b\.variant \}\]\);/);
+  assert.match(R, /if \(!no\) \{ if \(E\.submitInput\(cat, story, raw, now\(\)\)\) \{ persist\(\); go\('frame'\); \} return; \}/);
+  // the skip's own name tag (chapter 5's line kept, as tests/sw.test.js pins it)
+  assert.match(ui, /var tname = nameOn\(intro, teacher\);\n(    \/\/[^\n]*\n)+    if \(sk\.name != null\) tname = sk\.name;/);
+  require('../app/ui.js');
+  const sp = PC.ui.speakers, fern = named('Fern', {}, 'heart');
+  assert.equal(sp.label({ who: 'player', name: '{name}{ending}' }, { cat: fern, fill: t => E.fill(t, fern) }), 'Fernheart');
+  assert.equal(sp.nameOn([{ who: 'murmurchime', text: 'Mice…' }], 'player'), undefined, 'a frame with no balloon of hers names nothing');
+  // the hub: Warrior of CrystalClan once named; My nest's label; the book's and the Case File's long classes on the name their
+  // titles show; the corner's words; no "Warrior name" row
+  assert.match(ui, /'<\/h1><p class="note" style="text-align:left">' \+ cap1\(rank\) \+ ' of CrystalClan' \+/);
+  assert.doesNotMatch(ui, /Apprentice of CrystalClan/);
+  assert.match(ui, /panel\.setAttribute\('aria-label', E\.warriorName\(cat\) \? 'Your nest with the warriors' : 'Your nest in the apprentices’ den'\);/);
+  assert.match(ui, /'<h1' \+ \(\(E\.clanName\(cat\) \|\| E\.displayName\(cat\)\)\.length > 12 \? ' class="long"' : ''\) \+ '>' \+ esc\(b\.title\) \+ '<\/h1>' \+/);
+  assert.match(ui, /'<div class="sig">' \+ nameHtml\(cat\) \+ ' of CrystalClan<\/div>' \+/);
+  // her name as lettered: a warrior name may break between its halves (a 26-letter word broke anywhere on a phone); every
+  // other name exactly as before (the bar, Keep reading, Who's playing, the hub, the signature, My nest, the corner)
+  assert.match(ui, /function nameHtml\(c\) \{ return E\.warriorName\(c\) \? esc\(c\.name\) \+ '<wbr>' \+ esc\(c\.ending\) : esc\(E\.displayName\(c\)\); \}/);
+  assert.equal((ui.match(/nameHtml\((cat|c)\)/g) || []).length, 8, 'its definition and seven places');
+  assert.equal((ui.match(/esc\(E\.displayName\(/g) || []).length, 1, 'no name lettered without it (but in it)');
+  assert.deepEqual(PC.ui.flagWords.ch11Named, { offer: 'took one of the three names Glintstar saw in {them}', self: 'named {them}self' });
+  assert.doesNotMatch(ui, /Warrior name/);
+  // the CSS: its own block, after the inputs'; no Aa rule
+  const css = html.slice(html.indexOf('/* ---------- chapter 11: the Type screen'), html.indexOf('/* ---------- look chooser'));
+  assert.match(css, /\.ending-row\{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px\}/);
+  assert.match(css, /\.ending-row \.field\{flex:1 1 9em;width:auto;min-width:min\(9em, 100%\)\}/);
+  assert.doesNotMatch(css, /html\.big|@media/);
+  assert.match(css, /\.ending-preview\{overflow-wrap:anywhere\}/);
+  assert.equal((html.match(/\.ending-(row|name|preview)/g) || []).length, 4, 'nowhere else');
 });

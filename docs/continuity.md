@@ -1,133 +1,76 @@
 # Continuity: what a later chapter can rely on
 
-*Through chapter 10 · 2026-10-31 · the orchestrator updates this file at each ship
+*Through chapter 11 · 2026-11-01 · the orchestrator updates this file at each ship
 (`docs/production.md`, shipping checklist)*
 
-This is the digest the writers of the Warrior Ceremony (chapter 11) and of module 2 read instead of ten
-chapters' notes and specs: what happened, what the game remembers, what is drawn, and what is already
-promised. Module 1's story ends with chapter 10. Everything here was checked against `app/story/ch01.js`
-to `ch10.js`, `app/story/warrior.js` (the Warrior Counts, merged 2026-10-31) and `app/engine.js`. Where a
+This is the digest the writers of module 2 read instead of eleven chapters' notes and specs: what
+happened, what the game remembers, what is drawn, and what is already promised. Module 1's story ends with
+chapter 11, the Warrior Ceremony. Everything here was checked against `app/story/ch01.js` to `ch11.js`, `app/story/warrior.js` (the Warrior Counts, merged 2026-10-31) and `app/engine.js`. Where a
 chapter's notes (or its spec) and the code differ, the code is followed and the notes' version is in
 brackets, "(notes say …)" or "(the spec says …)". Names are the ones on screen now; frame ids (`f043`)
-are in that chapter's story file (chapter 10's run `f001` to `f157`, as built).
+are in that chapter's story file (chapter 10's run `f001` to `f157`, chapter 11's `f001` to `f058`, as built).
 
 ## Where the story stands
 
-- **When.** Bedtime on the night of the full moon, day 14: "On your very first night, there was no moon
-  at all. Tonight it’s round and full. And you’re HOME." Chapter 10 is one day: Tallyheart's head in the den
-  at morning ("Big day. Counts this morning. The Moon Ferry at dusk. And tonight, the Gathering."), the 7s in
-  the empty Training Hollow, the Moon Ferry from the Crossing at dusk, the Gathering on Gathering Island by
-  night, the ride home, the walk home past the Old Bridge and her old tower, and bedtime. Her one moon is
-  over ("Glintstar gave you one moon. Tonight, it’s over."; Glintstar: "One moon ago, you came to us from
-  behind the glass. Tonight, your moon is over."), and module 1's story with it: "End of Chapter Ten. The end
-  of {name}paw’s First Moon." No screen goes to the prey pile, so whether night 13 was quiet is never said.
-- **The Gathering.** Every Clan on Gathering Island, under one great tree (never a name): CrystalClan (the
-  whole Clan came on the Moon Ferry: "At dusk, the whole Clan pads down to the Crossing"), ReedClan, GroveClan
-  and the otters. Three leaders sit on three big roots (ReedClan's, Glintstar in the middle, GroveClan's).
-  Glintstar: "Tonight is the truce. Under the Accord, nobody hunts anybody. And every Clan hears the dragon’s
-  case." Up from the river came "a rather DAMP fox", Snip and Snatch dripping behind him (they swim: no otter
-  ferries those who don't keep the Accord, the story's call 2): "Good evening, my dear Clans! And Glintstar,
-  what lovely FUR. Nearly as lovely as mine." "Reynard, tell your story. {name}paw will answer it." "A PILLOW
-  cat? How SWEET. And where is your DRAGON?" "She’s here."
-- **Sprinkle at the Gathering.** She rode the Moon Ferry as "luggage", a heap of reeds at the very back of the
-  front raft that burps, puffs mist and giggles (Riffle: "That’s… luggage. VERY important luggage."; "Granny
-  winks. Tallyheart looks at the sky. So does Glintstar."), and on the island our cat pulled the reeds off (her
-  Tap): "Out shuffles Sprinkle, her hurt wing drooping." "Hello. I didn’t take your prey. I only ate Riffle’s
-  fish." (kept: "And one vole. {name}paw gave it to me."). "Every Clan gasps. Then every Clan goes, “Awww.”"
-  ReedClan's leader: "THAT’S the dragon?" Our cat sits beside her ("I’m right here."), and Reynard: "THERE!
-  There’s your THIEF!" The accused heard the whole case (the story's call 1).
-- **The case, answered card by card.** Five claims, each answered with a card she picks from her whole Case
-  File (the card pick: "The Case File", below), Tallyheart whispering the tally ("That’s one." to "Five."):
-  "It FLEW out of your camp!"; "By the light of the MOON."; "A dragon SCALE by your pile!"; "Only something BIG
-  could take so much!"; "I never even saw your pile! How could I get the prey OUT?" Her answer is the card's
-  own line, so which clues every Clan heard named varies by pick. On every path they heard: Sprinkle's "That
-  night, I couldn’t even FLAP." and Reynard's "Did I say FLEW? I meant… hopped. Very HIGH."; no moon, with
-  Patience the heron and Princess Waffles both named (GroveClan's leader: "Who is Princess Waffles?" "She’s
-  very sensitive."; Reynard: "A very… moony sort of dark."); the old tom's "I SAW it!", then her own glass shown
-  to every Clan ("Smooth. Clear. Flat." "Glass? I said DRAGON about GLASS?"); Sprinkle's forepaw, "as big as a
-  heron’s foot", and the weasels hiding their tiny paws behind their backs; her count, typed at last for
-  Glintstar ("And your count, {name}paw? I said bring it." … "And a dragon who eats ten fish a meal, for six
-  nights?" "SIXTY!" "A good count."), and Snatch: "Twenty-four? It was a HUNDRED, at LEAST!" "SHHH!"; and
-  Reynard's fifth claim opening on "My friends can’t count!" (after it, a talking-worry cat: "You said it ALL.
-  You never once had to shout LIAR.").
-- **The confession.** "Snip looks at Snatch. Snatch looks at Snip." "It was HER idea!" "It was the FOX’S
-  idea!" Then it all tumbles out (an ask of three taps): "Two each, every night, he said!" "Up the TUNNEL!" /
-  "Keep it TIDY!" "Leave the shiny bit by the pile!" / "Then the dragon’s dry den is HIS!" "And WE can’t even
-  COUNT!" Reynard: "Weasels." Snatch holds up his mouse: "This one’s mine, though." Glintstar: "It is NOT."
-- **The foxes sent off.** Glintstar, standing: "Reynard. You lied at my border, and you lied here. From
-  tonight, stay past the last post. Not one paw in our territory." ReedClan's leader: "Or ReedClan’s."
-  GroveClan's leader: "Or GroveClan’s." Granny: "Or the RIVER. Once you’ve swum home." "Every cat on the island
-  stands up, and every otter too." and she takes a step with every Clan (her Tap). "Well. This is all very…
-  DAMP." Back into the river he slinks, Snip and Snatch paddling after him; far away the Barking Field dogs
-  start up ("BYE, GIANT SQUIRREL!", a sound). Nobody fought and nobody was hurt: every Clan, standing together,
-  sent them away. Glintstar: "Tomorrow, CrystalClan and ReedClan bring their prey home from the stash." Then,
-  to Sprinkle: "Sprinkle of the Mistscales. Every Clan was ready to blame you. We were wrong."
-- **Sprinkle mended, and home.** The mist came up the river, the moon glowing through it ("That’s MY mist."),
-  and Mama leaned out of it ("Sprinkle?" "MAMA!"), the grown Mistscales behind her (Tallyheart: "Mistscales.
-  They keep the Accord too."; the old tom: "Now THAT is a dragon."). Sprinkle ran and flapped (her Tap: a
-  cheer): "…and she FLIES. Up over the clearing, round the great tree, all the way to her Mama’s nose." "Her
-  wing holds." "The fox said she flew. That night, she couldn’t. Tonight, at last, she can." Thymeleaf: "The
-  full moon has told us. Mended." Sloshbank: "So THAT’S what our root was for." (*Drip.*) The GroveClan elder:
-  "And our moss. I’ll remember that." Riffle: "TEN out of ten! And NO splash!" Mama: "There you are. You stayed
-  where you landed. Mostly." "And then I FLEW!" She is **mended**, and gone: after the roll call, the mist stone
-  and her goodbyes the Mistscales rose, "and the mist rolls away upriver with them, toward home." "The last
-  thing you see is Sprinkle’s tail, waving." `cant-fly` still reads "Sprinkle can't fly." (no card changes): it
-  was true of the storm night, which is when her answer says it.
-- **The clutch home.** Mama: "ROLL CALL!" Out of the mist, from near and far, small voices (HERE! HERE!
-  HERE!); seven forepaws up, the unfound as misty shapes, counted by fives: "Thirty-five. And nobody’s
-  missing." "Not ONE!" (chapter 3's sum come true; "Somewhere, Wisp nods.", or "a quiet one nods."). All seven
-  went home upriver with the Mistscales (decision 19), found or not. The ones she found came out of the mist to
-  stand beside her and said goodbye one by one (the dragonets' table); the others stayed small shapes in the
-  mist, "To be met another time."; with all seven found, "the eldest of ALL the Mistscales, older than the great
-  tree" bowed low to her, all the way to the grass, and she bowed back (the GroveClan elder: "A Mistscale,
-  bowing to a cat. I’ll remember THAT."). As they rose, "One small shape zips off the other way, toward the
-  glass towers." (*Hic!*), and on the walk home: "From the tallest tower: one last roar, and a tiny hiccup.
-  Then a small shape flies off upriver." (a Squall cat: "Squall, saying goodbye. LOUDLY."): Squall went home by
-  way of his tower, on every path.
-- **The mist stone.** Sprinkle fluttered down with her plain grey pebble, smooth as an egg: "This is for you."
-  Under the full moon "it FLASHES. Blue! Green! Blue again!" (her Tap tilts it). Mama: "A mist stone. Grey,
-  until the moonlight finds it. Our thanks. You saved one of our own." Sprinkle: "When the moonlight finds it,
-  that’s me, saying hello." (a shiny-worry cat: "It sparkles. It shines. And this one, you get to KEEP."). At
-  bedtime she lays it on the moss of her nest (her second gift in My nest, `mist-stone`); in the doorway the full
-  moon finds it: "Your stone flashes, blue and green." "Hello, Sprinkle." The real labradorite is Aron's to give
-  (decision 18).
-- **Sprinkle's goodbyes.** "Sprinkle says goodbye to everyone, by name.": "Riffle. Thank you for ALL the fish."
-  ("Otters don’t cry. That’s river water."); told, "Tallyheart. Thank you for keeping my secret."; kept,
-  "Tallyheart. Thank you for coming to meet me. Keep counting. ESPECIALLY fish."; both, "Thymeleaf. Thank
-  you for my wing." ("Goodbye, wing. Behave.") and "And tell Coil I’ll be QUIET now." Then she wraps her tail
-  round her, "the way she did under the bridge": with any of the six found, "{name}paw. You came into the dark,
-  and you found me. You promised to look for them. And you did." (chapter 3's promise kept); with none, "…And
-  now we’re ALL going home." "Goodbye, Sprinkle.", and “Fly SAFE!” or a hug back, tight (no flag). A kept
-  Sprinkle names Thymeleaf, who was never named to her (chapter 9's told "This is Thymeleaf." is the told
-  path's): left so, the README's "Chapter 10 as built".
-- **The honour.** Glintstar calls her up to the great tree: "One moon ago, you came to us from behind the
-  glass. Tonight, your moon is over." "Tallyheart said to judge you by what you do, not by where you sleep. So
-  we have." "You noticed what was missing. You fed a friend who was hungry. You found out the truth, and you
-  said it, to every Clan." "{name}paw, you belong to CrystalClan." She bows, with tremendous dignity. "The
-  whole Clan purrs your name. Then ReedClan does. Then GroveClan." "The otters try too. It sounds like
-  bubbles." Tallyheart, nose to nose: "Sharp eyes. I knew it, from the thirteenth sparrow." "Still {name}paw,
-  for now. Your warrior name is coming. And this moon will be in it." "When?" "When you pass your Warrior
-  Counts. They’re yours, whenever you’re ready. At the fountain, like {Murmur}chime." Then "Which part of this
-  moon will you remember most?" (`ch10Best`, for the Ceremony). In camp {Murmur}chime: "When you sit your Warrior
-  Counts, I’ll be right at the front." **Still {name}paw**: no warrior name (decisions 13 and 34), and no line
-  names the day of her Counts.
-- **The badger's track** (module 2's hook). On the island's shore, "your paw lands beside a BIG print in the
-  mud: five toes in a row, and claws made for digging." Granny: "Badger. An old track. From far upriver."
-  Tallyheart: "A thing to check. Another day." (her Tap: a careful sniff). Again at bedtime: "Out on the island,
-  the badger’s old track lies in the moonlight. What is a badger LIKE?" Only the old, dry print is drawn; no
-  badger is seen.
-- **The ride and the walk home.** On the Moon Ferry home, Riffle: "Best Gathering EVER." "See you tomorrow?"
-  "And the day after. And the day after THAT!" (she hugs him). Past the Old Bridge "a voice in the stones
-  whispers, “Quiet at last. I’ll miss the burps.”" (Coil, unseen). Under her old tower, Waffles: "{petname}!
-  DARLING! I saw MIST! And DRAGONS!" "Every Clan heard about you tonight! You were a WITNESS!" "ME? At the
-  GATHERING?" "She sways." "I have to lie DOWN." In camp the old tom: "I always said that dragon was innocent."
-  "You said that GLASS was a dragon’s." "An innocent mistake." In the den the grey tom: "Do the paw thing…", and
-  "He’s snoring before you can." (no bedtime count). "Ten claw marks on the tree. “One day, there’ll be ten marks
-  here,” Tallyheart said, on your third day. And today is that day."
-- **Paths.** Told and kept read the same screens; chapter 10 reads `ch3Told` in two balloons only (Sprinkle's
-  kept vole, `f046`; her thanks to Tallyheart, `f127`). Still no route flag: no line says which way she went on
-  chapter 8's trail.
-- **Who knows what.** Every Clan, everything.
+- **When.** The evening of the day she passed her Warrior Counts, and the morning after: "This morning, you passed
+  your Warrior Counts. Tonight, the Clan gathers. For your name." (`f001`). No line counts the days since the
+  Gathering. The moon is up, one evening past full in the art (`moon: 15`, waning, lit on its left), never named by
+  its shape. She keeps the watch till first light, counts the pile at dawn, and sleeps the day after, in a warrior's
+  nest "for the very first time" (`f054`). Module 1's story ends here: "End of Chapter Eleven. {name}{ending},
+  warrior of CrystalClan." "THE END." (`f058`).
+- **The ring.** Tallyheart's head in the den, "It’s time." (`f002`); the grey tom: "Warriors sleep with the warriors.
+  So who’ll do the paw thing with me now?" "I’ll do it from my new nest. LOUDLY." (`f005`); she takes the mist stone,
+  "Sprinkle will want to hear your new name." (`f006`). The whole Clan in a ring round the fountain, washed and
+  fluffed, Glintstar on it, Thymeleaf by his den ("Shh. This is the good part.", `f007`); {Murmur}chime in the front
+  row ("Front row. Like I promised. AGAIN.", `f008`), the old tom with his pinecone and the grey tom behind her
+  (`f009` to `f012`); Tallyheart's tail twitching ("Me? Never. Let’s count something.", `f010`): eight cats' ears by
+  twos (`f011`), "Sixteen!" "Phew. Nerves gone."
+- **The ceremony.** "{name}paw. Come up." (`f012`; she sets the stone down at the fountain's foot). Glintstar: "When
+  you came to us from behind the glass, not every cat was sure." (`f013`); the old tom coughs; Tallyheart: "I was
+  sure. Judge {them} by what {they} does, not by where {they} sleeps." (`f014`); chapter 10's honour said again, at
+  home (`f015`); "And this morning, you answered every Count, up to ten times ten." and the Clan's promise, "WE
+  WILL!" (the old tom: "I said it FIRST." "He didn’t.", `f016` to `f018`); hers: "Will you keep the Accord? Will you
+  look after this Clan, and every friend who needs you?" ("I will." / "I PROMISE!": nothing set).
+- **The name.** "Your warrior name keeps {name}. Only the paw goes, for a new ending. {Murmur}paw became {Murmur}…
+  CHIME." "Tallyheart promised you a name with this moon in it. Tonight, I see three." (`f019`): one from what she
+  will remember most (`ch10Best`, `f020`), one from what she does best (`specialty`, `f021`), one for the moon itself
+  (moon, silver or river, `f022`); the old tom: "Or {name}PINECONE!" "What? It’s a GOOD pinecone." (`f023`). She
+  takes one of the three (`f024`) or names herself (`f025`, the Type screen; refused kindly for her own name, star,
+  paw, kit or a Clan cat's name). "{name}{ending}." (named herself: "Your very own. I like it."; an offered name:
+  Tallyheart's "A name with this moon in it. Like I promised.", `f026`); a heart, chime, leaf or pinecone ending gets
+  its namesake's line (`f027`); "Your warrior name. Say it." "{name}{ending}." (`f028`); she BOUNCES (`f029`);
+  "Cats of CrystalClan! Our newest warrior: {name}{ending}!" and she bows (`f030`); the Clan purrs it, then calls it
+  ("{name}{ending}! {name}{ending}!", "Every cat", `f031`); every tail up, {Murmur}chime yowls, Thymeleaf: "Did you
+  hear that, leaves?" (`f032`); Tallyheart doesn't yowl: "her eyes shine." (`f033`).
+- **The cheer.** Riffle, dripping, at the camp's hedge: "{name}{ending}! Best name EVER!" "Otters don’t do
+  ceremonies. But otters DO cheer!" "See you tomorrow, {name}{ending}!", then home to the river (`f034` to `f036`).
+  Waffles, on her balcony, hears it but not the name: "WHAT did they call {them}? Speak UP, darlings! Is there a
+  CROWN?" "I shall still call {them} {petname}, of course." (`f037`). The moon finds the mist stone at the fountain's
+  foot: "It flashes. Blue! Green! Blue again!" "Hello, Sprinkle. It’s me. {name}{ending}." (`f038`). Sprinkle is not
+  seen; the stone is her hello.
+- **The watch.** Glintstar: "Welcome, warrior. A warrior named by moonlight keeps watch over the camp till the first
+  light. Tonight, that’s you." (`f039`); the old tom leaves his pinecone beside her, "For the watch. It never let ME
+  down." (`f040`); Tallyheart: "If a mouse even sneezes, wake me." (`f041`); the pile whole in the moonlight
+  (`f042`); one thought by `ch10Best`, and "Not long ago, you watched this Clan through the glass. Now you’re keeping
+  it safe." (`f043`). Never "vigil".
+- **First light.** "The sky turns pink, then gold." (`f044`); Tallyheart: "Any sneezes?" "Not one. One moth. I let it
+  go." "Hmph." (`f045`); "Good morning, {name}{ending}." and her first morning count as a warrior, 4 × 10: "Forty.
+  Not one piece gone." (`f046`); "At {Murmur}chime’s Counts, I said, ‘One day, that’ll be you.’ I was right. I’m
+  proud of you. And I’m still right here." (chapter 3's line paid; her thanks sets nothing, `f047`); the old tom:
+  "Morning, warrior. I always said you’d make a fine one." "When?" "…Just now. Can I have my pinecone back?" (she
+  gives it back, `f048`).
+- **The warriors' nest.** "Your new nest is with the warriors now, soft and deep." {Murmur}chime: "I saved you the one
+  next to MINE." "The grey tom carried your things. He only dropped Riffle’s stone TWICE." (`f049`; she lays the mist
+  stone on the moss). The grey tom, from the apprentices' den: "It’s too EARLY. Paw thing?" (`f050`); "TEN!" (`f051`),
+  then in a whisper, to fifty (`f052`); "By fifty, the grey tom’s snoring." {Murmur}chime: "Mice…" (`f053`); "Some
+  things never change." (`f054`); "You’re {name}{ending}, a warrior of CrystalClan. And you’re home." (`f055`).
+- **Paths.** Every cat reads the same ceremony: 57 frames with an offered name, 58 naming herself (`f025`); no
+  optional scene. Lines vary by `worry`, `ch10Best`, `specialty` (through the offers), `ch11Named`, her ending and
+  `ch2Stone`. Still no route flag.
+- **Who knows what.** Everything, as after chapter 10 (every Clan heard the case), and: the whole Clan gave its
+  promise and called her warrior name; Riffle cheered it; Waffles knows there was a ceremony but not the name, and
+  keeps {petname}; the mist stone said hello in the moonlight. The pick flags stay chapter 10's only. As after
+  chapter 10:
   - *Every Clan* (CrystalClan, ReedClan, GroveClan and the otters, on the island together) heard the case
     answered card by card, the sixty, Snatch's HUNDRED and the confession (two each, every night, up a tunnel,
     kept tidy, the shiny bit left by the pile, for the fox, for the dragon's dry den; and the weasels can't
@@ -143,19 +86,16 @@ are in that chapter's story file (chapter 10's run `f001` to `f157`, as built).
   - *Waffles* knows she was a witness ("ME? At the GATHERING?") and saw mist and dragons. *The Mistscales*
     know she saved one of their own. *Coil* knows the burps are over. The badger's track: she, Tallyheart and
     Granny, on the shore. Still nobody knows which way she went on chapter 8's trail.
-- **Where they are.** She is in her nest, curled up under the full moon: the mist stone on the moss, flashing
-  blue and green, beside her glass in its leaf and the corners of her secret bark; the rest of her bark along
-  the edge; Riffle's stone by her nose or under her chin; the grey tom snoring across the den; the old tom and
-  {Murmur}chime at the den's mouth; Tallyheart last on the riverbank path on the walk home (the last roar);
-  Glintstar, Thymeleaf and the Clan home from the Gathering (last seen at the great tree); Riffle and Granny on
-  the Moon Ferry, bumping home at the Crossing; Waffles lying DOWN on her balcony nineteen floors up; Coil in his
-  stones under the Old Bridge, quiet at last; Sprinkle and all six of her brothers and sisters home upriver with
-  the Mistscales, Squall after one last roar from the tallest tower; Reynard, Snip and Snatch swum off, past the
-  last post, banished from all three Clans' territories and the river; the stash in the railway bank, its prey
-  to be fetched tomorrow by CrystalClan and ReedClan (its heap of glass not mentioned again); the tunnel open
-  behind the pile and the "scale" behind the back row, as chapter 9 left them (no chapter 10 screen goes
-  there); the badger's old print on Gathering Island's shore; ReedClan, GroveClan, Patience and the three dogs
-  where they live.
+- **Where they are.** She is asleep in her warrior's nest, beside {Murmur}chime's, with everything from her old nest
+  (her bark along the edge and the corners of her secret bark under the moss, her glass in its leaf, Riffle's stone
+  by her nose or under her chin, `f054`, and the mist stone on the moss, grey by day); {Murmur}chime asleep in the next
+  nest ("Mice…"); the grey tom alone in the apprentices' den (who does the paw thing with him now is open: she does it
+  from her new nest, LOUDLY, then in a whisper); the old tom with his pinecone back; Tallyheart in camp, proud ("I’m
+  still right here."); Glintstar and Thymeleaf in camp; Riffle home at the river ("See you tomorrow"); Waffles on her
+  balcony, still calling her {petname}; the pile whole, forty, "not one piece gone"; the stash and the tunnel unshown
+  since chapter 9 (whether the prey came home and the tunnel was closed is still open); Sprinkle home upriver with her
+  clutch; Reynard, Snip and Snatch past the last post; Coil in his stones; the badger's old track on Gathering Island
+  ("Who made it? Another day.", the teaser).
 
 ## Chapter by chapter
 
@@ -484,6 +424,17 @@ Every chapter ends warm, in her nest, on the optional dream question (README 42)
   and her case), and "Will Sprinkle’s wing hold?": it holds. 157 frames: 114 to 132 a reading (114 to 122 with
   no optional scene, by the found flags and the worry; 125 to 132 with Puddle's).
 
+### 11. The Warrior Ceremony (the evening of her pass, and the morning after)
+
+- **Plain path.** As "Where the story stands" tells it: 57 frames with an offered name, 58 naming herself (`f025`);
+  no optional scene, no `when` frame; the start (`f001`) every path reads. Choices: the vow (`f018`), the name
+  (`f024`), the thanks (`f047`); the Type screen (`f025`); the dream (`f056`). Lines vary by `worry` (`f010`), the
+  offers (`offer`, `nameHas`: `f020` to `f024`), `ch11Named` (`f026`), her ending (`f027`), `ch10Best` (`f043`) and
+  `ch2Stone` (`f054`). Her book's page: seven lines, one by `ch11Named`; her book's title stays "{name}paw’s First
+  Moon". Teaser: "A new adventure" ("Out on Gathering Island, an old badger track lies in the mud. Who made it?
+  Another day.").
+- **Flags**: `ch11Named` (the Flags table). Her warrior name is `cat.ending` (What chapter 12 inherits).
+
 ## Flags
 
 All flags sit in one object for every chapter (`cat.flags`; her look, names and dreams beside it). A
@@ -524,6 +475,7 @@ reaching a frame (`sets:` on the frame, or the engine), and never unset.
 | `ch10PickScale` | `glass`, `scale`, `sprinkle-scales`, `wisp-fox` | ch10 `f063`, "A dragon SCALE by your pile!" | replaced | chapter 10's only: her line on `f064`, before her glass is shown on every path |
 | `ch10PickBig` | `prints-sprinkle`, `stash`, `tunnel`, `coil-diggers`, `heron-shapes`, `prints-marsh`, `fur`, `four-a-night`, `prints-pile`, `prints-tracks`, `squall-shapes`, `puddle-paws`, `hail-shapes`, `my-count` | ch10 `f067`, "Only something BIG could take so much!" | replaced | chapter 10's only: her line by card, with `stash` a frame of its own (`f068`, Sloshbank's "OURS?" and *Drip.*; its `else` `f069`, the thirteen others), and the sixty's question (`f071`: "And your count, {name}paw? I said bring it.", or with `my-count` "Your count. I said bring it.") |
 | `ch10PickOut` | `fox-brag`, `tunnel`, `coil-diggers`, `stash`, `heron-shapes`, `dug-earth`, `prints-pile`, `squall-shapes`, `hail-shapes`, `puddle-paws` | ch10 `f075`, "I never even saw your pile! How could I get the prey OUT?" | replaced | chapter 10's only: her line on `f076` ("You didn’t NEED to. …"), then Tallyheart's "Five." |
+| `ch11Named` | `offer`, `self` | ch11 `f024`, an offered name (each of the thirty options `sets: { ch11Named: 'offer' }`), or `f025`, the Type screen, only once her typed ending is accepted (the input's `sets`) | replaced | chapter 11's: `f026` (Glintstar's "{name}{ending}. Your very own. I like it." for `self`, "{name}{ending}." otherwise; Tallyheart's whisper "A name with this moon in it. Like I promised." for `offer`) and its book line ("…{they} chose {name}{ending}." / "…but {they} named {them}self {name}{ending}."); the grown-ups corner ("took one of the three names Glintstar saw in {them}" / "named {them}self"); the Type screen hands back only a typed ending; a chapter-1 rename re-takes an `offer` ending from its row |
 
 - Saying no sets nothing ("Not today", looking up at the sky, counting fish out loud, "Ask the elder
   which moss.", "Just the dew today."): a dragonet is found only by reading its scene to its last frame.
@@ -552,6 +504,9 @@ reaching a frame (`sets:` on the frame, or the engine), and never unset.
   `f119` five of the six ("One more small shape waits in the mist…"), and `f120` four or fewer ("Other small
   shapes wait in the mist…"), reached only by their `else`s: with none of the six found, the chain runs
   through every `else` to `f120`.
+- **Chapter 11's flag** (its spec, call 19): `ch11Named`, how she was named, the only one; the vow and the thanks set
+  nothing. Her warrior name is not a flag: `cat.ending`, the save's field. `when` gains three keys a later chapter may
+  use: `ending` (her own field, e.g. `{ ending: ['heart', 'hearts'] }`), and the computed `offer` and `nameHas`.
 - A chapter's page in her book says "found" only for a dragonet found in that chapter: a later chapter
   that offers one again sets its own found-here flag, as `ch5Roof`, `ch9Roof` and `ch10Puddle` do (chapter
   4's page reads the first two, chapter 5's the third). `foundSleet`, `foundHail` and `foundMizzle` are both, since only chapter 6 offers him,
@@ -790,14 +745,14 @@ A balloon carries its speaker's label, so a character has a stand-in label until
 
 | Who | On screen | Named |
 |---|---|---|
-| Her | `{name}paw` to the Clan; her pet name to Waffles, always | ch1 |
+| Her | `{name}paw` to the Clan through chapter 10 (and in chapters 1 to 10 read again); **{name}{ending}**, warrior of CrystalClan, from chapter 11's naming (`f026`; `E.warriorName`); her pet name to Waffles, always ("I shall still call {them} {petname}, of course.") | ch1; ch11 `f026` |
 | Princess Waffles | a fluffy white pillow cat nineteen floors up her old tower, who has never touched grass and never stops talking. In ch7 a witness: up ALL night "with my nerves" (the moon calms them); the little room that goes DING is "TERRIFYING"; "My Tall One says I'm DRAMATIC. I'm not. I'm SENSITIVE."; she sees the Tall One fill the dish every morning. In ch9, awake at dawn: "{petname}! DARLING! At DAWN?" "I’m being USEFUL. How THRILLING."; the little room "It’s TERRIFYING. Press the top button, darling. With your NOSE." In ch10, on her balcony by night after the Gathering: "{petname}! DARLING! I saw MIST! And DRAGONS!" "ME? At the GATHERING?" (she was named a witness there) "I have to lie DOWN." | ch1 |
 | The Tall One | slippers, pajama legs and a hand; never a face | ch1 |
 | Tallyheart | "The ginger cat" until "I'm Tallyheart. I count things." Big ginger tabby, torn left ear (no story given yet). As an apprentice she counted EVERYTHING at the Gathering, out loud (GroveClan's elder, ch9; "Hmph.", her wry smile, `proud`); in ch10 she says so herself ("At my first Gathering, I was so nervous, I counted EVERYTHING. Out loud."), runs the Moon Ferry's Counts, sits at the front of CrystalClan's seats on the island (`crowd-1`), whispers the case's tally and every nudge, and at the honour sits nose to nose with her (both `crouch`: no art draws two cats touching) | ch1 `f030` |
 | Glintstar | the silver leader on the dry stone fountain; in ch9 she steps into the apprentices' den on evening 13 (`case-3`), silver in the moonlight, is told everything, and rules; in ch10 she rides the Moon Ferry (knowing what the luggage is: she looks at the sky), sits on the great tree's middle root, keeps the truce, hears the sixty ("A good count."), banishes Reynard (standing), tells Sprinkle "We were wrong.", and says "{name}paw, you belong to CrystalClan." | ch1 |
 | Riffle | "An otter pup" for one balloon, then "I'm Riffle!" His "Granny" is a title. In ch9 he brings the river mint (`holds: 'mint'`) and sits below the oak ("Otters don’t climb. Otters SUPERVISE."). In ch10: "The MOON FERRY! Granny’s steering. Everybody ON!", guards the luggage ("VERY important luggage."), answers "Thirty! That’s a LOT of claws.", drags the luggage up with Granny, "TEN out of ten! And NO splash!", "Otters don’t cry. That’s river water.", and on the ride home "Best Gathering EVER." | ch2 |
 | Coil | named since ch2 (a reputation: "Nosy old thing", "he trades them like pebbles"), seen in ch6: a northern water snake in a gap low in the Old Bridge's stone leg, beside Sprinkle's nook. Brown with darker cross-bands, a cream belly, a rounded head smaller than a cat's, two round eyes shiny as wet pebbles that never shut (no eyelids), mouth always shut, no tongue or fangs; very polite, very slow; his body runs sideways along the wall's foot, away from the cats. "A voice" while he is a stone (`f074`), "The snake" at first sight (`f076`, the chapter's `names`), Coil from Riffle's "Coil," (`f077`). In ch7 his "Quietly." as a stone (`stone`) is labelled "Coil" (ch7 spec, call 19), and so is ch9's "Some of us asked for QUIET." (`f109`, a cut to `wall`, nobody else in the picture). In ch10 only a caption's quote, "a voice in the stones" on the walk home (the bridge is never drawn by night): "Quiet at last. I’ll miss the burps." | ch2; seen ch6 |
-| Murmurpaw, then Murmurchime (`{Murmur}` in the text) | the small tortoiseshell who mutters "Mice…" in her sleep: "A small apprentice" (ch1), "A voice in the dark"; named by the grey tom, then by Glintstar when she passes the Warrior Counts. In ch6 the third cat of her first border patrol ("I'm a WARRIOR!"), and on the first watch. In ch10 on the Moon Ferry ("Eight!") and in camp: "When you sit your Warrior Counts, I’ll be right at the front." | ch3 `f004`, `f024` |
+| Murmurpaw, then Murmurchime (`{Murmur}` in the text) | the small tortoiseshell who mutters "Mice…" in her sleep: "A small apprentice" (ch1), "A voice in the dark"; named by the grey tom, then by Glintstar when she passes the Warrior Counts. In ch6 the third cat of her first border patrol ("I'm a WARRIOR!"), and on the first watch. In ch10 on the Moon Ferry ("Eight!") and in camp: "When you sit your Warrior Counts, I’ll be right at the front." In ch11 in the front row ("Front row. Like I promised. AGAIN."), and her nest is next to our cat's with the warriors ("I saved you the one next to MINE."), where she sleeps lying chin on paws ("Mice…") | ch3 `f004`, `f024` |
 | Sprinkle | "A small voice", "The dragon", "A muffled voice", then "I'm Sprinkle. A Mistscale dragonet."; "The tail" whenever she hides her face under it. Her "Mama" is a title | ch3 `f060` |
 | Reynard | "The fox" until Glintstar says "You are at our border, Reynard." Not drawn in ch6 or ch7: only his old smell, Sleet's telling, and his name. Drawn again in ch8 (the caption names him: "Along the tracks trots Reynard"), only ever up on the tracks (`rails`), far above her, never looking her way and never seeing her; trots (`trot`, new), admires and fluffs his tail (`comb`), `flap` for "It FLEW off"; vain, charming, pleased with himself: "Good evening, my clever little paws." "Weasels." (a sigh) "Nap now, my little sneaks. Rob later. And keep it TIDY." Not drawn in ch9: only named, in the hook ("And Reynard, with his little story."). Drawn in ch10 on Gathering Island, at the clearing's river edge (the island's `fox`, `edge`, and across the grass on `case`), never near a cat: "a rather DAMP fox" (`wet`, swum there), `trot`, `bow` (new), `chest`, `think`, `flap`, `comb`, `swim` (new); "Good evening, my dear Clans! And Glintstar, what lovely FUR."; "A PILLOW cat? How SWEET." (he sees her at last); "THERE! There’s your THIEF!"; "Did I say FLEW? I meant… hopped. Very HIGH."; "A very… moony sort of dark."; "My friends can’t count!"; "Weasels."; "Well. This is all very… DAMP." Banished past the last post | ch4 `f036` |
 | Squall | "The little dragon" until "I'm Squall. I'm the littlest. And the LOUDEST." | ch4 `f085a`, ch5 `f031a` or ch9 `f075` |
@@ -844,11 +799,14 @@ A balloon carries its speaker's label, so a character has a stand-in label until
   Thymeleaf, {Murmur}chime, the old tom, the grey tom, Sloshbank, the ReedClan she-cat and the young tom (the
   friends' panel), the GroveClan elder, Reynard, Snip and Snatch, Waffles, Sprinkle and the dragonets she
   found, the Clans' and the otters' crowd (anonymous coats only), and the grown Mistscales.
+- **Chapter 11 names nobody new** (its brief): its one label is "Every cat" (`name` on a Clan cat's balloon: "WE WILL!",
+  the name called). On screen: Tallyheart, Glintstar, {Murmur}chime, Thymeleaf, the old tom, the grey tom, Clan cats by
+  coat, Riffle at the hedge, Waffles on her balcony.
 - **Unnamed on purpose:** the old tom ("A grizzled old tom" in ch1, "the old tom" since; an elder by his
   own word in ch5; asleep on his pinecone in ch6, never one of its guards; in ch10 "I SAW it!", "Glass? I
   said DRAGON about GLASS?", "Now THAT is a dragon.", the ferry's "Eighteen guards. Not ONE of them with a
   pinecone.", and in camp "I always said that dragon was innocent." … "An innocent mistake."; in the Warrior
-  Counts' first not-yet, "Took me THREE tries. Don’t tell anyone."); the skinny grey tom, her one denmate now ("the grey
+  Counts' first not-yet, "Took me THREE tries. Don’t tell anyone."); the skinny grey tom, alone in the apprentices' den since ch11 ("So who’ll do the paw thing with me now?"; "the grey
   tom" in ch7, where they count their whiskers); the black-and-white apprentice ("A cheeky apprentice",
   "An apprentice"); "Somebody", who scoffs at the border; the old ferry otter and one more (chapter 5's third, variant 3, is
   Granny since ch10), and the otters of the island's crowd; the third
@@ -906,6 +864,7 @@ last time (`warmHard`). Every lesson mixes both orders (3 × 2, then 2 × 5).
 | 8 | the 4s: paws, four on every cat, two front and two back ("A four is two twos."); the lesson's picture is the table-4 picture as drawn since ch1 (that many cats side-on, four paws each, five to a row) | Tallyheart's paws, a pair a tap: 2, 4 (one cat close, kept on the next page under a big 4); the rim's five cats padding past, four paws a tap: 4 to 20; at the tree, seven taps on Tallyheart, each a Count she names and our cat answers (four tails, eight ears, twenty claws, forty claws, thirty-six lives, twelve guards, twenty-four whiskers: "That's MY count!"); bedtime, the grey tom's paws and hers: 4, 8 | her hardest 6s fact from ch7 (6 × 8 when none; never 1 × 6, 2 × 6, 3 × 6, 4 × 6, 6 × 9 or 6 × 10), 2 × 6 ("Two cheeks? One whole cat."); then 2 × 4, 4 × 5, 4 × 4, 3 × 4, 4 × 7, 4 × 8, 4 × 6, 7 × 4, 8 × 4, 10 × 4 | the pile: 3 × 10; the twenty-eight: 4 × 7 (seven nights of four marks, two and two, `ch08-gone`); Hail: 4 × 4 (three dogs and her, `ch08-hail`); Snip's share: 2 × 7 (two marks a night in the mud: told `ch08-snip`, Tallyheart's help; kept `ch08-riffle`, Riffle's voice throughout) | 8 |
 | 9 | the 8s: a spider's legs, four on each side ("An eight is two fours."); the lesson's picture is that many spiders (the den's little spider, from above), eight legs each, four a side, in rows of five, all unlit (`thing: 'leg'`) | the spider's two sides in Thymeleaf's den, a side a tap: 4, 8 (one spider close; no `keep`: the next page shows its own scene under the big 8); five spiders in the sand, her eight legs a tap: 8 to 40 (`carry: false`); at the tree, eight taps on Tallyheart, each a Count she names and our cat answers (eight tails, sixteen ears, forty claws, eighty claws, seventy-two lives, twenty-four guards, forty-eight whiskers, thirty-two paws: "That was YESTERDAY!"); bedtime, the grey tom's paws and hers: 4, 8 ("Two cats make one whole spider!"). Two asks count nothing: Thymeleaf's four things (`f019`) and the case's six rows (`f118`) | her hardest 4s fact from ch8 (4 × 7 when none; never 1 × 4, 2 × 4, 4 × 9 or 4 × 6), 2 × 4 ("Eight! Just like the spider’s legs."); then 2 × 8, 8 × 5, 4 × 8, 7 × 8, 8 × 3, 8 × 8, 8 × 7, 6 × 8, 8 × 10, 9 × 8 | no pile question (the count is said, not asked); Mizzle: 6 × 8 (six twigs, eight acorns each, `ch09-mizzle`, optional); Squall: 7 × 5 again (chapter 4's `ch04-riddle`, the roof, optional); the dew: 8 × 4 (four rows of eight drops, `ch09-dew`, a silent set: the help is her own count, in captions); the rubs: 3 × 8 (three rows of eight paw marks, `ch09-rubs`) and the flaps: 8 × 8 (eight rows of eight marks, `ch09-flaps`), in Thymeleaf's voice. 15 typed answers on every reading, 16 with Mizzle or the roof, 17 with both | 9 |
 | 10 | the 7s: a clutch of seven, Sprinkle's (decision 51; "Sprinkle’s clutch! Sprinkle, and her six brothers and sisters!" "A clutch of seven. Exactly."): seven little mist-grey dragonets, a row of four over a row of three (four sisters, three brothers), the clutches in rows of five, all unlit (`thing: 'dragonet'`) | five clutches in the sand: 7 to 35 (`carry: false`); at the tree, one tap on Tallyheart, the sevens said together ("Say them with me. Seven…" "Fourteen, twenty-one, twenty-eight, thirty-five, forty-two… um… fifty-six, sixty-three, seventy!": no Count named, and 49 skipped); a water-worry cat's four paws aboard (chapter 5's `paws: 'board'`, 1 to 4); the roll call, seven forepaws by fives, Mama counting (5 to 35, the unfound as misty forepaws). Two asks count nothing: the sevens said (`f008`) and the confession (`f079`) | her hardest 8s fact from ch9 (8 × 8 when none; never 1 × 8, 2 × 8, 4 × 8, 6 × 8 or 8 × 9), 2 × 8 ("Sixteen! Eight and eight."); then 2 × 7, 7 × 5, 7 × 3, 4 × 7, 6 × 7, 10 × 7, 7 × 1, 7 × 7, 7 × 8, 9 × 7 | no pile question; Puddle: 4 × 10 again (chapter 5's `ch05-puddle`, under the Moon Ferry, optional); the Moon Ferry's eight, one from every Count, each in its own Count's picture and cheered by someone aboard (`ch10-ferry`): 8 × 1 tails ({Murmur}chime: "Eight!"), 5 × 2 ears (the grey tom: "Ten!"), 3 × 10 both forepaws (Riffle: "Thirty! That’s a LOT of claws."), 6 × 3 patrols (the old tom: "Eighteen guards. Not ONE of them with a pinecone."), 4 × 6 four cheeks (Glintstar: "Twenty-four. I remember that count."), 9 × 4 nine cats' paws ("Thump! Granny bangs her pole." "Thirty-six!"), 6 × 8 six spiders (Thymeleaf: "Forty-eight!" and a happy puff from the luggage), 7 × 7 seven rows of seven marks on a log ("And the new one. Seven sevens!" Tallyheart: "Forty-nine!" "The whole Moon Ferry cheers."); the sixty: 10 × 6, six nights of ten marks (`ch10-sixty`, at the case: Glintstar's "I said bring it.", "SIXTY!" "A good count."). 21 typed answers on every reading, 22 with Puddle; five card picks besides | 10 |
+| 11 | no new Count (the Warrior Counts passed; no lesson) | eight cats' ears by twos, 2 to 16 (`f011`: five Clan coats, {Murmur}chime fourth, the old tom seventh, chapter 1's cheeky apprentice eighth; Tallyheart counting, `carry: false`); the paw thing, both forepaws by tens, 10 to 50 (`f052`, whispered; the counter tagged with her warrior name; the 50 shown big on `f053`) | no warm-up, no lesson | the morning count, 4 × 10, the pile at first light (`ch11-pile`, `f046`, `intro: false`, read first: a miss makes it hard, a slow right never does; help lights the rows 10 · 20 · 30 · 40; "Forty. Not one piece gone."). 1 typed answer on every reading (her own ending, when she types it, is not a Count) | 10 (no new mark) |
 
 - **The Warrior Counts**, as Glintstar said it (ch3 `f018`): "To become a warrior, a cat answers every
   Count up to ten times ten, and gets nine in every ten right." Asked aloud that morning: 7 × 8, 9 × 6,
@@ -1098,20 +1057,23 @@ crowd, given its seats by a set, each seat a coat, seated, sitting up or standin
 cast; a seat with a named cat's `who` and `variant` is left out when that cat is in the cast, so no cat is in
 the picture twice). Every new option is off by default and every new camera and spot additional, so
 chapters 1 to 9 draw as they did (the chapters 1 to 9 golden, `tests/golden-ch09.test.js`, and the sets'
-fingerprints).
+fingerprints). Chapter 11 added none: the camp the option `moon` and its moonlight, the den `moon: 15` and the
+option `nextNest` (its spot `next-nest`), and the kit the moon past full (ages 15 to 27); the pile's moon is now
+held under the panel's top by its own radius, so chapter 9's f112 moved 8 units, the one named change
+(`tests/golden-ch09.test.js`); everything else in chapters 1 to 10 draws as it did (the `<ch11-fingerprint>`).
 
 | Set | In the story | Chapters | A later chapter keeps |
 |---|---|---|---|
 | `room` | her old home behind the glass patio door, ground floor of the tallest tower | 1 | |
-| `tower` | the tower from the ground, and Waffles' balcony | 1 to 5, 7, 9, 10 | the red light on its roof (`light`); the roar from the roof (`roar`); a wind chime on the balcony since ch3 (`chime`), rung in words in ch6's dream and on every ch7 panel; ch7's staging: `up` where both speak (our cat at `foot`, Waffles at `railing`), `balcony` and `balcony-close` for Waffles alone (`puffed: true` for "She fluffs herself up."); ch9: `up` at **first light** (`morning`, `light: true`, the windows lit), our cat at `foot` with her leaf, Waffles at `railing`, `roar: true` for the roar from the roof, and the ride as ch4's `f078a` (`{ chime: true, ding: true }`, nobody at the foot, the art's DING!); ch10: `up` **by night** for the first time (the glass dark blue against the stars, many windows lit gold, the balcony lit by its window), with **`moon: 14`** high over the towers, `chime` and `light`, Waffles at `railing` (`peer`), our cat at `foot` |
+| `tower` | the tower from the ground, and Waffles' balcony | 1 to 5, 7, 9, 10, 11 | the red light on its roof (`light`); the roar from the roof (`roar`); a wind chime on the balcony since ch3 (`chime`), rung in words in ch6's dream and on every ch7 panel; ch7's staging: `up` where both speak (our cat at `foot`, Waffles at `railing`), `balcony` and `balcony-close` for Waffles alone (`puffed: true` for "She fluffs herself up."); ch9: `up` at **first light** (`morning`, `light: true`, the windows lit), our cat at `foot` with her leaf, Waffles at `railing`, `roar: true` for the roar from the roof, and the ride as ch4's `f078a` (`{ chime: true, ding: true }`, nobody at the foot, the art's DING!); ch10: `up` **by night** for the first time (the glass dark blue against the stars, many windows lit gold, the balcony lit by its window), with **`moon: 14`** high over the towers, `chime` and `light`, Waffles at `railing` (`peer`), our cat at `foot`; ch11: `balcony` by night (`{ chime: true }`), Waffles at `railing` (`peer`, `shout`) |
 | `garden` | her old garden: lawn, fence, lamp post, the gap in the hedge, the patio step | 1 to 4, 7 | the dish on the step and the door open a crack (`dish`); ch7: the dish full at morning |
-| `camp` | CrystalClan's camp behind the hedge: bramble dens, ferns, the dry stone fountain | 1 to 4, 9 | Glintstar speaks from the fountain top; `crowd` is the whole Clan; **`herbs`** (ch9, `comp: 'herbs'`), Thymeleaf's den: a nook of the bramble dens at the camp's edge seen from just inside its mouth, a curtain of drying leaves across the top, bunches along the walls, a ledge of stones with leaves laid out, a flat mixing stone, and a small web high in the corner, in green morning light; `herbs-1` (Thymeleaf, among his leaves at the left, facing right), `herbs-2` (our cat), `herbs-3` (Tallyheart), `web` (the spider, tiny, no shadow); **`remedy`**: `'none'`, `'four'` (on the stone the four things in a row: a long pale root, a roll of soft silver moss, a bunch of mint, a curled leaf of dew drops) or `'mixed'` (one curled leaf of pale green remedy, the stone smeared green); `herbs` draws at every camp light |
+| `camp` | CrystalClan's camp behind the hedge: bramble dens, ferns, the dry stone fountain | 1 to 4, 9, 11 | Glintstar speaks from the fountain top; `crowd` is the whole Clan; **`herbs`** (ch9, `comp: 'herbs'`), Thymeleaf's den: a nook of the bramble dens at the camp's edge seen from just inside its mouth, a curtain of drying leaves across the top, bunches along the walls, a ledge of stones with leaves laid out, a flat mixing stone, and a small web high in the corner, in green morning light; `herbs-1` (Thymeleaf, among his leaves at the left, facing right), `herbs-2` (our cat), `herbs-3` (Tallyheart), `web` (the spider, tiny, no shadow); **`remedy`**: `'none'`, `'four'` (on the stone the four things in a row: a long pale root, a roll of soft silver moss, a bunch of mint, a curled leaf of dew drops) or `'mixed'` (one curled leaf of pale green remedy, the stone smeared green); `herbs` draws at every camp light; **`moon`** (ch11: the moon's age; drawn at `night` or `dusk`, whole, on `reveal`, `crowd`, `purr`, `fountain` and `fountain-close`, in `S.keep`; the camp moonlit and silver, never dark: the moon, its glow and one silver wash; while it shows the tower at x 1050 stands lower (top 440) and the moon sits in its gap, at (1100, 345), r 34 on the main composition; off, every camp frame draws as before); ch11's ring is `crowd: true` with `moon: 15` (`reveal`, `crowd`, `purr`), Glintstar close on `fountain-close`, the first panel and the camp asleep on `reveal` with `moon: 15` alone, first light (`reveal`, `crowd`) neither; spots as built: the Warrior Counts' FOOT and BESIDE, RING_YOU 610/905, RING_TALLY 380/900, OLD 1130/770, GREY 1290/772, THYME 1300/960 h 180, BOW 740/860, BY_FOOT 530/872, WALK_YOU 650/900, WALK_TALLY 380/892, PAD 1080/890; the sleepers at the dens Clan coats 3 (`crowd-left`) and 1 (`crowd-right`), so Tallyheart is the only ginger cat by night |
 | `hollow` | the Training Hollow: sand under the old leaning tree, five cats on the rim | 1 to 10 | the claw marks (**ten now, the tree full**, from ch10's `tree` frame `f010`, four, four and two; ch10 writes `marks: 9` before the scratch and `marks: 10` from it, with `glow: 'auto'`; ch9's ninth was `f028`); in ch10, by morning, nobody is on the rim (no `rim()`): Tallyheart at `tree-far` and our cat at `sunpatch-2` on `wide`, the tree close-up empty; in ch9 the five on the rim sit up throughout and nobody leaves it (`rim()`), and the tree close-up is empty; in ch8 the rim cats hop down and pad past her (`walk` at `rim-1`…`rim-5`), and the rim is empty after; the glow by `'auto'`; since ch5 the five on the rim sit up (`rim-1`…`rim-5`); `compare: [24, 60]` (ch7's told sum: two lines to scale in the sand between the two cats, on `lesson` and `sand`, the group in `keep` so no balloon covers it) |
-| `den` | the apprentices' den under the rosebush; her nest | 1 to 10 | Riffle's stone where she put it (`stone: 'auto'`); her bark along the nest's mossy edge (`bark: 'auto'`), and under the moss every secret card she holds (`hidden: true`): Sprinkle's two, Coil's (ch6), ch7's three eyes (`my-count`, `prints-sprinkle`, `tunnel`) and ch8's four (`stash`, `glass`, `fox-brag`, `hail-shapes`: `BARK_SECRET`), a corner showing for each; **her glass** in its leaf under the moss beside the corners (`glass: true`, the leaf's tip and a glint showing) on every den frame from ch8's bedtime (`f159`) on; **how the nest grows** (ch8, below: corners in layers, a third course, `BARK_MAX` 27); the moon by its age in evenings (ch5's `moon: 5` at dusk; ch8's `moon: 8` at night, in the doorway's patch of sky on `doorway` and `inside`, whose box leaves out `sleeper-1`): the den's `moon` takes only `false`, `true`, `5`, `8`, `13` or `14` (ch9's, nearly round: `moonT(13)` = −0.82, on `doorway` and `inside` at bedtime; ch10's, the full moon, round, on `outside`, `inside`, `doorway` and `stone`), so a later chapter adds its own number to that list in `scenes.js`; **`miststone`** (ch10: `true`, or `'flash'` for its band of blue and green in the moonlight; on `nest`, `doorway` and `stone`): the mist stone on the moss of her nest, a smooth grey egg-shaped pebble the size of her paw, beside her glass in its leaf and the corners of her secret bark, clear of Riffle's stone; off, every den frame draws as before; **`stone`** (ch10, a camera of its own): extreme close on the moss at her nest's edge in the moonlight from the doorway, the mist stone big and flashing, the corner of a curl of bark, her glass's leaf, and at `tail` (its one anchor) the tip of her sleeping tail: the chapter's last panel; ch10 at morning has Tallyheart's head at `doorway` (`peer`, as ch4's `f002`) and at night the old tom and {Murmur}chime at `entrance-left` and `entrance-right` (`outside`, "In camp:"); the grey tom at `sleeper-1`; Murmurchime's nest is empty; ch8's told waking puts Tallyheart beside the nest at a raw spot (`{ x: 1250, y: 896, h: 250 }`); `BARK_SECRET` gains `mizzle-wing` (ch9). **`case`** (ch9, `comp: 'case'`): close and a little above, on the den floor in front of her nest at night (the moonlight from the doorway, out of frame), the nest at the back with its moss rolled back and Riffle's stone in it (every `case` frame has `stone: 'auto'`); her bark laid out face up from `bark: 'auto'`, found by picture (`CASE_ROWS`): the six rows she reads, in two columns of three (the moon; FLEW, `sleet-den` at its end when held; the piles; the scale; the prints; the tunnel), and a seventh, `my-count` and `mizzle-wing` (each only if held), under the sixth, laid out only at `read: 7`; every other piece face down in a stack by the nest's edge, unread; her glass on its leaf beside the scale's row (`glass: true`, off while it is in her paws); `case-1` (our cat at the rows' near left, facing right), `case-2` (Tallyheart across them), `case-3` (Glintstar by the doorway's light: `walk` facing left is her entry, facing right her going); the rows are in `keep`. **`read`** (a number, on `case` only): the first n of the six rows lit, the next glowing as the Tap's spot (one `pc-next` rect straight before that row's group) while n < 6; `read: 7` the seventh row too, nothing glowing; every `case` frame after the ask is `read: 7`. `doorway` cannot draw the laid-out rows (its `bark: 'auto'` stands the bark along the nest's edge), so it is bedtime's |
+| `den` | the apprentices' den under the rosebush; her nest | 1 to 11 | Riffle's stone where she put it (`stone: 'auto'`); her bark along the nest's mossy edge (`bark: 'auto'`), and under the moss every secret card she holds (`hidden: true`): Sprinkle's two, Coil's (ch6), ch7's three eyes (`my-count`, `prints-sprinkle`, `tunnel`) and ch8's four (`stash`, `glass`, `fox-brag`, `hail-shapes`: `BARK_SECRET`), a corner showing for each; **her glass** in its leaf under the moss beside the corners (`glass: true`, the leaf's tip and a glint showing) on every den frame from ch8's bedtime (`f159`) on; **how the nest grows** (ch8, below: corners in layers, a third course, `BARK_MAX` 27); the moon by its age in evenings (ch5's `moon: 5` at dusk; ch8's `moon: 8` at night, in the doorway's patch of sky on `doorway` and `inside`, whose box leaves out `sleeper-1`): the den's `moon` takes only `false`, `true`, `5`, `8`, `13`, `14` or `15` (ch11's, one evening past full, waning, lit on the left: `inside` at the opening; ch9's, nearly round: `moonT(13)` = −0.82, on `doorway` and `inside` at bedtime; ch10's, the full moon, round, on `outside`, `inside`, `doorway` and `stone`), so a later chapter adds its own number to that list in `scenes.js`; **`miststone`** (ch10: `true`, or `'flash'` for its band of blue and green in the moonlight; on `nest`, `doorway` and `stone`): the mist stone on the moss of her nest, a smooth grey egg-shaped pebble the size of her paw, beside her glass in its leaf and the corners of her secret bark, clear of Riffle's stone; off, every den frame draws as before; **`stone`** (ch10, a camera of its own): extreme close on the moss at her nest's edge in the moonlight from the doorway, the mist stone big and flashing, the corner of a curl of bark, her glass's leaf, and at `tail` (its one anchor) the tip of her sleeping tail: the chapter's last panel; ch10 at morning has Tallyheart's head at `doorway` (`peer`, as ch4's `f002`) and at night the old tom and {Murmur}chime at `entrance-left` and `entrance-right` (`outside`, "In camp:"); the grey tom at `sleeper-1`; Murmurchime's nest is empty; ch8's told waking puts Tallyheart beside the nest at a raw spot (`{ x: 1250, y: 896, h: 250 }`); `BARK_SECRET` gains `mizzle-wing` (ch9). **`case`** (ch9, `comp: 'case'`): close and a little above, on the den floor in front of her nest at night (the moonlight from the doorway, out of frame), the nest at the back with its moss rolled back and Riffle's stone in it (every `case` frame has `stone: 'auto'`); her bark laid out face up from `bark: 'auto'`, found by picture (`CASE_ROWS`): the six rows she reads, in two columns of three (the moon; FLEW, `sleet-den` at its end when held; the piles; the scale; the prints; the tunnel), and a seventh, `my-count` and `mizzle-wing` (each only if held), under the sixth, laid out only at `read: 7`; every other piece face down in a stack by the nest's edge, unread; her glass on its leaf beside the scale's row (`glass: true`, off while it is in her paws); `case-1` (our cat at the rows' near left, facing right), `case-2` (Tallyheart across them), `case-3` (Glintstar by the doorway's light: `walk` facing left is her entry, facing right her going); the rows are in `keep`. **`read`** (a number, on `case` only): the first n of the six rows lit, the next glowing as the Tap's spot (one `pc-next` rect straight before that row's group) while n < 6; `read: 7` the seventh row too, nothing glowing; every `case` frame after the ask is `read: 7`. `doorway` cannot draw the laid-out rows (its `bark: 'auto'` stands the bark along the nest's edge), so it is bedtime's; **`nextNest`** (ch11, on the `nest` close-up): her warrior's nest: a second plain moss ring at the close-up's left edge with its own spot **`next-nest`** (`{ x: 880, y: 905, h: 210 }`, facing right: {Murmur}chime, `lie`), and her own nest with everything on it moved 60 right (the `nest` spot `{ x: 1120, y: 892, h: 250 }`); no new place: the warriors' den is only ever her nest close, never `inside` (that is the apprentices'); the grey tom at the apprentices' `doorway` by morning (`outside`, `peer`) |
 | `sky` | the Sky River; and (ch6) the dream, a composition of its own | 1, 6 | the dream: `walk` (our cat at `star-1` on a soft path of stars, the starry cat at `star-2`) and `below` (the glass towers far below, the tallest with its red light, one balcony nineteen floors up with a wind chime, nobody on it) |
 | `river` | the river in the storm, and the crash under the Old Bridge | 1 | |
 | `title` | the old stone wall above the river, where she walks with Tallyheart; and (ch6) its far end, where the stones stop and the reeds begin: the ReedClan border | 2 to 4, 6, 9 | the patrol walks the wall facing right, toward the reeds (`wall-2`, `wall`, `wall-3`, the leader at `wall-3`), and home facing left; at the wall's end (`end`, wide; `meet`, at cat height) CrystalClan stands on the dry ground at `end-1`…`end-3`, facing right, and ReedClan steps out of the reeds at `reed-1`…`reed-3`, facing left; `rustle: true` moves the reeds with nobody seen; nobody stands in mud or water, and the reeds never hide a face that speaks; ch9: the border by day again (`end`, `meet`, Sloshbank at `reed-1`), and `end` at **sunset** for the first time (the late gold), with **`root: true`** (a long, pale reed root lying along the dry stones and one wet pawprint, dark on the stone, beside it; never in the mud or the reeds) and **`tap: 'root'`** (the root's box, the take-the-root Tap) |
-| `pile` | the prey pile under the bramble arch; and (ch7) round the back of it, and the tunnel's mouth; (ch8) the night trail's start and end; (ch9) the morning it is whole | 2 to 9 | mice and voles only, no fish; rows of ten since ch4; the hole always in the middle of the back row (ch6's and ch7's mornings: places 3 to 6, `gap: [3, 4, 5, 6]`, a dark band in the brambles' shadow, `back: 'shadow'`, until she walks round); dug earth behind it (`dug: 'big'`); **the "scale" on the earth behind the back row** since ch4's sunset (`scale: 'behind'`), left there until the Gathering, a glimmer in `rear` and `hole`, never in or beside the mouth; full again by sunset, forty in four rows; **the moon by its age in evenings** since ch6 (a number, on `wide` and `low`, from "The moon comes out" on: ch7's `moon: 7` and ch8's `moon: 8` at dusk on `wide`; `moon: 9` next); `behind` is the back of the pile seen from the front. Since ch7: **`rear`**, round the back at cat height (no sky, so no `moon`): the low bramble roots over the heap of dug earth, the rows seen from behind, the first guards small at `guard-1`…`guard-3`, side-on, facing out over the camp; our cat at `rear-1`, Tallyheart at `rear-2`, where she sat the first watch; **`tunnel: true`**, the roots lifted and the round dark mouth under them: ch7 leaves it open on both paths, so a later chapter never draws the roots down over it unless the story hides it again; **`hole`**, close on the mouth (the roots always up, the back row's backs along the top edge; our cat at `brink`, the mouth about as wide as her shoulders, never as wide as she is long; nothing drawn in it or at its far end); `tap: 'back'` (on `rows` and `wide`) and `tap: 'roots'` (on `rear`, closed), unpainted Tap targets; **`tracks: true`** on `wide` at dusk or sunset, the train tracks far off past the towers, two thin lines in the last light; **`arch`** on `wide`, on top of the bramble arch (the climber's look). Since ch8: **`rear` and `hole` at night** (moonlit, never black: the trail's start and home); the tunnel still open on both paths (`tunnel: true`); **`poke`** on `rear` (`elev`), at the mouth's right edge, so a cat there facing left has her nose at the rim and her shoulders plainly wider than it (Tallyheart's shoulders stick; Riffle pokes his head in); **`tap: 'mouth'`**, the mouth's box (on `rear` while `tunnel` is true, and on `hole`: the wriggle-in Tap); the home talk cuts between `rear` and `hole`, Tallyheart across the mouth from our cat at a raw spot (`{ x: 1220, y: 958, h: 470 }`), our cat nose to nose with her on `rear` at `{ x: 860, y: 960, h: 380 }` (the spec says about `x: 1000`); Riffle waves goodbye at the hedge, the right edge of `rear` (`{ x: 1430, y: 962 }`). Since ch9: **by morning**, `rows` with every row whole and the back row a dark band in the brambles' shade (`{ rows: [10, 10, 10, 10], back: 'shadow', scale: 'behind', tap: 'back' }`, the walk-round Tap), `gap` with every row whole (`dug: 'big'`), and **`rear` by morning** with the tunnel open (Tallyheart's whisper, the told Riffle at the hedge at the same spot, the kept talk with our cat at the same nose-to-nose spot); the montage at **dusk** on `wide` with `moon: 12`, the first guards at the front and Tallyheart at `behind`; the "scale" behind the back row and the tunnel open on every pile frame; chapter 10 draws no pile frame (the pile's `moon` takes any number) |
+| `pile` | the prey pile under the bramble arch; and (ch7) round the back of it, and the tunnel's mouth; (ch8) the night trail's start and end; (ch9) the morning it is whole | 2 to 9, 11 | mice and voles only, no fish; rows of ten since ch4; the hole always in the middle of the back row (ch6's and ch7's mornings: places 3 to 6, `gap: [3, 4, 5, 6]`, a dark band in the brambles' shadow, `back: 'shadow'`, until she walks round); dug earth behind it (`dug: 'big'`); **the "scale" on the earth behind the back row** since ch4's sunset (`scale: 'behind'`), left there until the Gathering, a glimmer in `rear` and `hole`, never in or beside the mouth; full again by sunset, forty in four rows; **the moon by its age in evenings** since ch6 (a number, on `wide` and `low`, from "The moon comes out" on: ch7's `moon: 7` and ch8's `moon: 8` at dusk on `wide`; `moon: 9` next); `behind` is the back of the pile seen from the front. Since ch7: **`rear`**, round the back at cat height (no sky, so no `moon`): the low bramble roots over the heap of dug earth, the rows seen from behind, the first guards small at `guard-1`…`guard-3`, side-on, facing out over the camp; our cat at `rear-1`, Tallyheart at `rear-2`, where she sat the first watch; **`tunnel: true`**, the roots lifted and the round dark mouth under them: ch7 leaves it open on both paths, so a later chapter never draws the roots down over it unless the story hides it again; **`hole`**, close on the mouth (the roots always up, the back row's backs along the top edge; our cat at `brink`, the mouth about as wide as her shoulders, never as wide as she is long; nothing drawn in it or at its far end); `tap: 'back'` (on `rows` and `wide`) and `tap: 'roots'` (on `rear`, closed), unpainted Tap targets; **`tracks: true`** on `wide` at dusk or sunset, the train tracks far off past the towers, two thin lines in the last light; **`arch`** on `wide`, on top of the bramble arch (the climber's look). Since ch8: **`rear` and `hole` at night** (moonlit, never black: the trail's start and home); the tunnel still open on both paths (`tunnel: true`); **`poke`** on `rear` (`elev`), at the mouth's right edge, so a cat there facing left has her nose at the rim and her shoulders plainly wider than it (Tallyheart's shoulders stick; Riffle pokes his head in); **`tap: 'mouth'`**, the mouth's box (on `rear` while `tunnel` is true, and on `hole`: the wriggle-in Tap); the home talk cuts between `rear` and `hole`, Tallyheart across the mouth from our cat at a raw spot (`{ x: 1220, y: 958, h: 470 }`), our cat nose to nose with her on `rear` at `{ x: 860, y: 960, h: 380 }` (the spec says about `x: 1000`); Riffle waves goodbye at the hedge, the right edge of `rear` (`{ x: 1430, y: 962 }`). Since ch9: **by morning**, `rows` with every row whole and the back row a dark band in the brambles' shade (`{ rows: [10, 10, 10, 10], back: 'shadow', scale: 'behind', tap: 'back' }`, the walk-round Tap), `gap` with every row whole (`dug: 'big'`), and **`rear` by morning** with the tunnel open (Tallyheart's whisper, the told Riffle at the hedge at the same spot, the kept talk with our cat at the same nose-to-nose spot); the montage at **dusk** on `wide` with `moon: 12`, the first guards at the front and Tallyheart at `behind`; the "scale" behind the back row and the tunnel open on every pile frame; chapter 10 draws no pile frame; ch11: `wide` by moonlight (`moon: 15`, whole, nobody) and `rows` at first light (`{ rows: [10, 10, 10, 10], scale: 'behind', dug: 'big' }`, the morning count); the pile's `moonAge` clamps to 15 (16 to 27 draw as 15), and its moon's top limit is its radius plus 12, so a moon of 12 or more is whole (ch9's f112 moved) |
 | `bridge` | the Old Bridge: the bank, the mouth of the dark, under it, the very back, the paws; and (ch6) Coil's stone leg beside the nook; and (ch7) one of Sprinkle's prints close up | 2 to 9 (ch8: kept only, by day, `back` and `wall`: Riffle in `stand` with `holds: 'string'`, the fish, and `tap: 'ears'`, the whisper Tap) | the drag marks, with **Sprinkle's big five-claw prints beside them** (`prints: true`), mentioned at last in ch7: her paw fits inside one with room to spare; **Tallyheart's branch across the back on the told path** (`branch: true`), on the told path's first panel only (chapters 4, 6 and 7); the forepaws drawn in the mud (`mudPaws: 7`) when the tally is shown (ch5; ch6 and ch7 show none); trains overhead. Since ch6 **every `back` panel has `stones: true`** (the stone leg, Coil's gap low in it) and `prints: true`, and **`wall`**, a close composition of its own, is always that leg: our cat at `back-left`, Riffle at `back-right`, Sprinkle's head at `dragon`, Coil at `gap`, no spot of Tallyheart's; Coil at `gap` whenever he is there (half as big again in `back`, `size: 1.45`, so he is one size in both), never in a pose that closes his eyes. On the told path's `back` panels Tallyheart sits across the nook (`{ x: 1250, y: 900 }`) whenever our cat is at `back-left`, where `near` would put her on top of our cat. On `under`, Riffle at chapter 6's three-shot spot (`{ x: 400, y: 940 }`). Since ch7: **`print`**, close on one big print at cat height (about four-tenths of her sitting height, as big as a heron's foot), our cat at `over`, crouched with `reach: true`, her paw over its heel pad and about a fifth of its length, no spot of Tallyheart's; `tap: 'print'` on `under` (the nearest whole print); **`compare: [24, 60]`** on `under`, the kept sum scratched in the open mud right of `mud`, clear of the prints and every cast box, in `keep`; Sprinkle's tail hug puts our cat in the loop in front of her (`{ x: 750, y: 822 }`, chapter 3's spot). Ch9: `back` by day with `prints` and `stones` (the told twin of the first panel with `branch: true`), Tallyheart across the nook (`{ x: 1250, y: 900 }`) on both paths until Sprinkle opens her wings, then **by the wall facing in, chapter 7's spot for her open wings** (`{ x: 300, y: 960, h: 330 }`, facing right, `f095` to `f100`, one move: across the nook she sat in front of the hurt wing, the rub Tap's target), with `wing: true` on the four `wings` frames (the lettering keeps off the drooping wing, chapter 7's), **Thymeleaf at a spot of his own at Sprinkle's chest**, between our cat and her (`{ x: 820, y: 905, h: 290 }`, facing right, the remedy in a leaf; the spec says `beside`, where he sat hidden behind Tallyheart, ears only), a little nearer the front where her peek or her claws come down to his head (`{ x: 820, y: 965, h: 290 }`, `f093`, `f095`), Riffle at `back-right` with fish (`hop`, then `stand`); Sprinkle's `tap: 'wing'` (the rub Tap); `wall` with Coil alone as a stone; **the sunny bank**, `bank` by day with **`shallows: true`** (the water at the bank's edge bright and clear, pale green-gold over a sandy bottom you can see, sparkles and small rings, and a strip of soft pale sand, tucked at the bridge's foot and screened from the river path by the bank's reeds: no frame shows the Clan's side) and `drag: false`; new spots `run` (Sprinkle on the sand), `run-2` (a cat beside her), `skim` (the low glide, just clear of the sand), `air` (the last day's lift, this one panel only), `paddle` (in the shallows), `watch-1`…`watch-4` (her friends along the bank's edge, facing right); Sprinkle `glide` only at `skim`, `fly` only at `air`, `splash` only at `paddle` (`NO_SHADOW.sprinkle`: the bank draws a soft shadow on the sand under `air` and a fainter one under `skim` itself, and nothing dark under her in the water); the sneaking cat walks at `watch-4` (the spec says `run-2`, where Sprinkle's `flat` head covered her) |
 | `field` | the Barking Field behind its wire fence, and the border at its far corner, where the long grass begins; (ch6) the fox trail along the fence to the last post; (ch8) the field at night, the near side's path to the tracks, Hail's log, the chase home | 2, 4, 6, 8 | a hollow log far inside the fence (Hail's since ch8; by day never remarked on); **the night** (ch8, `fx: ['night']`, drawn by no earlier chapter): silver in the moonlight, the log turned toward the path so its dark mouth reads; **`moon`** (the evening's age, on `wide`, `dogs` and `fence`, at night or dusk); **`tap: 'path'`**, the way to the tracks ahead on the right (the slip-past Tap); new spots: `heap-1`…`heap-3` (`wide`: the dogs asleep in a heap, `lie` with `asleep: true`), `log` (`wide`, `dogs`: Hail popping up, the log's rim over her lower body), `wire` (`dogs`, `fence`: a dragonet at the wire), `ring-1`…`ring-4` (`wide`: the big, silly circle), `fence-top` (`wide` only: the climber on the top rail), `trail-1`, `trail-2` (the weasels on the path: right of `path-right` on `wide`, along the middle on `dogs`); on every camera the tracks are to the right and home to the left; the dogs: Good Boy (variant 1), Drop It (2), the tiny one (3); the fox is never on the Clan's side of the last post, and ch6 never draws him; **Sleet's spot `grass`** in the three border cameras, in the long grass just past the post (nearer than the fox's spot), the grass over his lower body, never on the Clan's side; a `border-two` panel is two frames by `ch3Told`, so Tallyheart is at the post only on the told path |
 | `crossing` | the Crossing: a rocky point, the otters' raft of logs tied with vines, airplanes very low | 2, 5 | the raft rides low; the tuft of thin brown fur was caught in its mooring vine (`tuft`); ch10's boarding at the Crossing, and the ride home to it, are the `ferry` set's (`shore`, `river` with `home`) |
@@ -1133,7 +1095,10 @@ and bedtime the thirteenth (`moon: 13`, nearly round, `moonT(13)` = −0.82, in 
 `inside`: "Outside, the moon is nearly round. Tomorrow, it’s full."). Chapter 10 is evening 14, the full
 moon, round (`moon: 14`: the ferry, the den's list, the tower and the riverbank by night; the island has no
 `moon` and is always under the full moon), and her first night's was new: "On your very first night, there
-was no moon at all. Tonight it’s round and full."
+was no moon at all. Tonight it’s round and full." Chapter 11 is one evening past full (`moon: 15`: the camp,
+the den's `inside`, the pile at night), the kit's waning moon (ages 15 to 27, the shape of 28 − age turned half a
+turn, lit on the left); never named in the words. The pile, field and tracks clamp the age to 15, so a later age
+there needs the clamp raised; the den (its list), tower, ferry, riverbank and camp take any age.
 
 **Counts pictures** (`app/art/cats.js`). Chapter 7 added the cheeks (`kind: 'cheeks'` and `'cheeks-top'`,
 one to ten cheeks, three whiskers on top and three below; two consecutive `who` entries with the same cat
@@ -1246,7 +1211,11 @@ the mist stone lies on the moss beside her glass (`miststone`). Laying the case 
   said once and never seen; "a clutch of seven", "Clutches of seven · the 7s", the sevens; "Mended." ("The full
   moon has told us. Mended."); a witness, for Waffles ("You were a WITNESS!"); DAMP. New labels: "Two big eyes",
   "A soft voice", "Mama", "Granny", "ReedClan’s leader", "GroveClan’s leader" (and "The eldest Mistscale", never
-  spoken). Granny speaks for herself at last; "Mama", like "Granny", is a title.
+  spoken). Granny speaks for herself at last; "Mama", like "Granny", is a title. New in ch11: **warrior**, said to
+  her ("Welcome, warrior.", "Morning, warrior."); **the watch** (never vigil); **a warrior's nest**; "with the
+  warriors" (My nest's label); "Every cat" (a label); the thirty endings as names (mist, flash, sky; purr, friend,
+  hug; true, clear, brave; mark, count, tally; bright, eye, sight; hush, sharp, spark; leap, climb, reach; splash,
+  wave, ripple; cheer, smile, kind; moon, silver, river).
 - **Coil's and Sleet's words** (ch6): small diggers, "Snakes feel footsteps", "I have no eyelids";
   the roll call (Mama calls, and every dragonet shouts HERE three times), the eldest. **The dogs'**
   (ch2 to ch8): a cat is a squirrel, "Like a squirrel, but rude." ("BYE, RUDE SQUIRREL!", ch2; "BYE,
@@ -1328,40 +1297,54 @@ the mist stone lies on the moss beside her glass (`miststone`). Laying the case 
   roots); Tree and Root are Warriors cats, Root and Stone Wings of Fire humans (lowercase nouns here); a mist
   stone joins Mist- and -stone (decision 18); the truce is the books'; mist over a Gathering's moon is
   Warriors' broken-truce sign, so here the moon glows through it and Sprinkle names it first ("That’s MY
-  mist."). Still never said, through ch10: Ironsnake, Twoleg, Thunderpath, kittypet, StarClan; no whisker- or
-  claw-length.
+  mist."). Chapter 11's echoes (the README's list at ship): endings that are halves on the books' suffix lists;
+  "Welcome, warrior"; a night's watch after the naming; the Clan calling the new name. Still never said, through
+  ch11: Ironsnake, Twoleg, Thunderpath, kittypet, StarClan, vigil, warriors' den; no whisker- or claw-length.
 
-## What the Warrior Ceremony inherits
+## What chapter 12 inherits
 
-Chapter 11, the Warrior Ceremony (decision 34; `docs/warrior-counts.md`): a chapter like any other,
-`app/story/ch11.js`, with `opensWhen: 'warrior'`, open once she has passed her Warrior Counts (`E.isOpen`; while
-it is closed `E.upNext` is null and the hub's big button is the Counts'), which open once chapter 10 is
-finished. Until it is built, the hub and her book say "Your ceremony is coming soon." after her pass. Module 1's
-story ends with chapter 10; the badger's track is module 2's. This section is chapter 10's spec, section 8,
-checked against the chapter as built, and the Warrior Counts as merged.
+Chapter 12 opens module 2; the badger's track is its hook. Module 1 ends with chapter 11, the Warrior Ceremony
+(`app/story/ch11.js`, `opensWhen: 'warrior'`). This section is chapter 11's spec, section 8, checked against the
+chapter as built (`ch11.js`, the engine, the pile, field and tracks clamps, the page's "Your nest with the
+warriors"), with chapter 10's standing rules kept.
 
-- **When.** Chapter 10 ends on the night of the full moon, day 14, the Gathering over; she sleeps at home
-  ("Tonight it’s round and full. And you’re HOME."). The Ceremony is the evening of the day she passes her
-  Warrior Counts: the pass page's Glintstar, in morning light, "Tonight, the Clan gathers again. For your
-  warrior name." (`app/story/warrior.js`), and chapter 10's teaser, "Pass your Warrior Counts, and the Clan will
-  gather for your name." That day may be the next one or weeks of play later: nothing fixes how long after the
-  Gathering it is, so the Ceremony should not count the days. **Where**: the Ceremony's own call (only the
-  Counts are taken at the fountain, chapter 3's scene; neither `docs/warrior-counts.md` nor decisions 48 and 49
-  place the Ceremony).
-- **Who she is.** {name}paw of CrystalClan: Glintstar, before every Clan, "{name}paw, you belong to
-  CrystalClan."; her one moon is over ("Tonight, your moon is over."). **Still {name}paw**: no warrior name
-  (decisions 13 and 34). **The promises the Ceremony keeps**: Tallyheart's "Still {name}paw, for now. Your
-  warrior name is coming. And this moon will be in it." and "When you pass your Warrior Counts. They’re yours,
-  whenever you’re ready. At the fountain, like {Murmur}chime."; {Murmur}chime's "When you sit your Warrior
-  Counts, I’ll be right at the front." (the Counts' first sitting has her at the front of the crowd). What she
-  did, in Glintstar's words at the great tree: "You noticed what was missing. You fed a friend who was hungry.
-  You found out the truth, and you said it, to every Clan." (and Tallyheart's chapter 1 vouching, "Judge her by
-  what she does, not by where she sleeps", quoted back).
-- **`ch10Best`** (replaced; the Ceremony's, the one choice of chapter 10 a later chapter reads): `sprinkle`,
-  `friends`, `truth` or `counts`, what she will remember most of this moon (“Sprinkle.”, “My friends.”,
-  “Finding the truth.”, “The Counts!”). It is on the main line (`f138`), so every cat who finished chapter 10
-  has it; a reread replaces it. Glintstar's first suggested ending (module-1: endings drawn from what she did),
-  for "this moon will be in it".
+- **When.** Chapter 11 is one night and the morning after: the evening of her pass, the ceremony under the moon (one evening past
+  full in the art: never named), the watch till first light, the morning count, and sleep in a warrior's nest the day after. No day
+  is counted from the Gathering.
+- **Who she is.** **{name}{ending}, warrior of CrystalClan**: her ending in `cat.ending` (an offered word, one of thirty, or her own,
+  1 to 12 letters), `{name}{ending}` in the text, `E.warriorName` and `E.displayName` on the page. Chapters 1 to 10, read again, keep
+  {name}paw, and so do her book's title, “{name}paw’s First Moon”, and her Case File's. The hub says “Warrior of CrystalClan”, and
+  shows every chapter teaser again once the Ceremony is finished (`hideSoon` read from E.progress's `finished`, so chapter 12's
+  teaser shows too). Our cat's balloon label defaults to `{name}paw`: a module-2 chapter sets `names: { player: '{name}{ending}' }`
+  (the Warrior Counts' page already labels a named cat's balloons so). `ch11Named` (`offer` or `self`): how she was named. A
+  chapter-1 reread that renames her re-takes an offered ending from its row; a typed one stays (section 7, item 15). Glintstar's words: “Welcome, warrior.”; the old tom's: “Morning, warrior.”
+- **What she keeps.** Her new nest is with the warriors, beside {Murmur}chime's; everything from her old nest moved with her (her
+  bark, her glass, Riffle's stone, the mist stone, grey by day and flashing in moonlight). My nest is unchanged but for its panel's
+  label (“Your nest with the warriors”). The pinecone is the
+  old tom's again. Her Case File is final.
+- **What the save holds.** Save version 2, with two optional fields on a cat: `warrior` (the Warrior Counts: `sitting`,
+  `attempts`, `passedAt`) and, since chapter 11, **`ending`**: her warrior ending (one of the thirty offered words or her
+  own; letters only, lower case, 1 to 12, `E.ENDING_MAX`), absent until she is named, never in `E.blankCat`; a bad one is
+  dropped on load; an unnamed cat is stored exactly as before. `E.warriorName` is `{name}{ending}`; `E.displayName`
+  shows it first. Every Warrior Counts answer is also in `counts` (`set: 'warrior'`), where the Hollow, a warm-up and the
+  grown-ups corner read it; her tricky facts are `E.warriorHard`.
+- **Where they are.** The grey tom alone in the apprentices' den (who does the paw thing with him now is open: she does it from her
+  new nest, LOUDLY, then in a whisper); {Murmur}chime asleep in the next nest (“Mice…”); Tallyheart, proud (“I’m still right
+  here.”); Riffle home at the river (“See you tomorrow”); Waffles on her balcony, still calling her {petname}; the pile whole, forty,
+  “not one piece gone”; the stash and the tunnel unshown since chapter 9 (whether the prey came home and the tunnel was closed is
+  still open); Sprinkle home with her clutch (the stone says hello in the moonlight); the badger's old track on Gathering Island
+  (“Who made it? Another day.”).
+- **What every cat knows.** Everything (Where the story stands, "Who knows what"); as after chapter 10: the Clans heard the case,
+  card by card; Snip and Snatch confessed it all (two each, every night, up the tunnel, tidy, the shiny bit by
+  the pile, the dry den, and they can't count); the dragon was innocent ("We were wrong."); the Mistscales keep
+  the Accord; Sprinkle flew, mended, and is home with her whole clutch, counted at Mama's roll call before
+  every Clan; ReedClan and GroveClan honoured her too (they purred her name), and their gifts mended the wing
+  ("So THAT’S what our root was for." / "And our moss. I’ll remember that."). Which card answered which claim is
+  the pick flags', chapter 10's only.
+- **Flags**: `ch11Named`; nothing else new. Every earlier flag stands.
+- **The Counts**: ten Counts, ten marks; the Warrior Counts passed, kept for good; a re-sit says her warrior name. Chapter 11 asks
+  one question: 4 × 10, the pile (`ch11-pile`, read first; a miss makes it hard, a slow right never does), and two skip counts by
+  taps (the ears, 2 to 16; the paw thing, 10 to 50); no new Count, no new mark.
 - **The Warrior Counts, as merged** (decisions 48 and 49; `docs/warrior-counts.md` v0.4 with the merge's four
   details, README calls 47 to 56 under "The Warrior Counts as built"; `app/story/warrior.js`, `PC.warrior`,
   `after: 'ch10'`; merged onto chapter 9 on 2026-10-31 at `E.VERSION` 0.9.1, a point release, and chapter 10
@@ -1393,70 +1376,13 @@ checked against the chapter as built, and the Warrior Counts as merged.
   under the Ceremony's button. A chapter's lesson read again while a sitting waits warns her first, as the
   Hollow does ("Your Warrior Counts are waiting at the fountain. Finish them first, or practice now and start
   them fresh later.": the README's "Chapter 10 as built").
-- **What the save holds.** Save version 2, with one optional field more, `warrior` (absent until her first
-  sitting starts): `sitting` (the sitting in progress, or null), `attempts` (every sitting that ended, the last
-  100: when, right of 55, passed, the missed pairs, her typical time, seen, and why one was set aside) and
-  `passedAt`. Every Warrior Counts answer is also in `counts` (`set: 'warrior'`, filed under its anchor Count),
-  where the Hollow, a warm-up and the grown-ups corner read it; her tricky facts are `E.warriorHard`. Chapter 10
-  stores nothing new but its flags and its gift.
-- **What every cat knows.** Everything (Where the story stands, "Who knows what"): the Clans heard the case,
-  card by card; Snip and Snatch confessed it all (two each, every night, up the tunnel, tidy, the shiny bit by
-  the pile, the dry den, and they can't count); the dragon was innocent ("We were wrong."); the Mistscales keep
-  the Accord; Sprinkle flew, mended, and is home with her whole clutch, counted at Mama's roll call before
-  every Clan; ReedClan and GroveClan honoured her too (they purred her name), and their gifts mended the wing
-  ("So THAT’S what our root was for." / "And our moss. I’ll remember that."). Which card answered which claim is
-  the pick flags', chapter 10's only.
-- **Where they are** (Where the story stands, "Where they are"). Reynard, Snip and Snatch past the last post,
-  off all three Clans' territories and the river (Glintstar's, both leaders', Granny's); the prey to come home
-  from the stash "tomorrow" (CrystalClan's and ReedClan's: no screen shows it yet); the clutch home upriver with
-  the Mistscales, all seven (decision 19), Squall by way of one last roar from his tower; the tunnel still open
-  behind the pile (no screen since chapter 9 has looked); Waffles on her balcony, a witness at the Gathering ("I
-  have to lie DOWN."); Riffle and Granny last on the Moon Ferry home at the Crossing ("See you tomorrow?" "And the
-  day after. And the day after THAT!": the spec has Riffle at the Holt, and no screen does); Coil in his stones,
-  quiet at last; the Clan in camp; she in her nest.
-- **What she keeps.** **The mist stone** on the moss of her nest and in My nest, `E.GIFTS`' second gift
-  (`mist-stone`, "Sprinkle’s mist stone: grey, until the moonlight finds it", from Sprinkle; given at `f152`):
-  grey until the moonlight finds it, then blue and green ("that’s me, saying hello"); the real labradorite is
-  Aron's to give (decision 18). Riffle's stone; her glass in its leaf and her secret bark under the moss; her
-  Case File, final at 20 to 30 cards (30 only by a reread; 29 the most on a straight reading; `puddle-paws`
-  given again to a chapter-10 Puddle cat), nothing in it marked answered.
-- **The Counts.** Ten Counts, ten claw marks ("Every Count a warrior needs."; the tree is full, `MAX_MARKS`);
-  the 7s are "Clutches of seven · the 7s" (`ch10-sevens`); the Training Hollow offers all ten; 7 × 7 met twice
-  (the lesson and the Moon Ferry). Her answers since chapter 1 are in `counts`, where the Warrior Counts read her
-  tricky facts. No Count is left to teach.
-- **Flags.** `ch10Puddle` (sticky, with `foundPuddle`), `ch10Best` (replaced: the Ceremony's), and the five pick
-  flags (`ch10PickFlew`, `ch10PickMoon`, `ch10PickScale`, `ch10PickBig`, `ch10PickOut`), **chapter 10's only**: a
-  later chapter must not read which card answered which claim. The found flags close the story: a dragonet not
-  found was never met ("To be met another time."), all seven got home, and all seven found earned the eldest's
-  bow (her book says so: "the cat who found all seven"); being sticky, they can still be set by a reread of an
-  earlier chapter, so a later chapter reads them as they stand, never as a count it remembers. Every worry has
-  had its brave moment (small's and shiny's in chapter 8, water's and talk's in chapter 10). The earlier choice
-  flags are as the Flags table has them; the Ceremony may read any (her `specialty`, `worry`, `joinReason`,
-  `ch3Told`); there is no route flag.
-- **Words on screen now.** Gathering Island, the great tree (never a name), the truce, luggage, a mist stone,
-  Mama, the eldest of all the Mistscales, ReedClan's leader, GroveClan's leader, Granny (speaking at last),
-  badger, clutches of seven. Labels: "Two big eyes", "A soft voice", "Mama", "ReedClan’s leader", "GroveClan’s
-  leader", "Granny", "The eldest Mistscale" (unspoken). Not used: StarClan, Twoleg, kittypet, Ironsnake,
-  Thunderpath, whisker-length, claw-length. Chapter 10 named nobody; Puddle's and Sleet's names still wait in the
-  README's open questions, Snip, Snatch and Hail are kept, and the third dog stays unnamed. The README's echo
-  list takes chapter 10's at ship (Words of this world).
-- **Drawn now and kept** (the places table): the `ferry` set (the line of rafts at the Crossing at dusk, aboard
-  by the full moon, the luggage heap and its puff, the low raft and its gap, under the raft, the moonlit river
-  and the ride home; four logs on every camera); the `island` set (the shore and the badger's old print, the
-  clearing under the great tree with every Clan and its crowd, the three roots, the case at cat height, the fox
-  at the river's edge and the swim, the mist with Mama and the eldest, the sky over the crown, her paws with the
-  stone); the den's `moon: 14`, `miststone` and the `stone` close-up; the tower by night; the riverbank by
-  moonlight with a small flyer; the kit's crowd helper (`K.crowd`); the grown Mistscales (Mama, the eldest),
-  ReedClan's and GroveClan's leaders and GroveClan's crowd coats, Granny speaking; Puddle's `eyes`, the
-  dragonets' `tap: 'nose'`, Reynard's `bow` and `swim`, the weasels' `swim` and `hidepaws`, `wet`; our cat's
-  `holds: 'miststone'` (with `flash`); Sprinkle's pebble in `fly` and `lookdown`; the clutches (the 7s' picture),
-  the sand and the marks at per 7, the roll call's misty forepaws; ten claw marks. The Warrior Counts' scenes are
-  chapter 3's camp and fountain (`warrior.js`).
-- **Open for the Ceremony** (not settled by chapter 10): where it is held, and who comes (CrystalClan surely;
-  whether ReedClan, GroveClan, Riffle and Waffles do; the clutch is home upriver, and the mist stone's "When the
-  moonlight finds it, that’s me, saying hello." is how Sprinkle can be there); her warrior name, with this moon
-  in it (`ch10Best` and what she did); whether the prey came home from the stash and the tunnel was closed; the
-  badger, module 2's.
+- **Drawn now** (in the places table above): the camp by moonlight (`moon`, silver, on `reveal`, `crowd`, `purr`,
+  `fountain`, `fountain-close`; in the main composition the moon in the gap of a tower drawn lower while it shows); the moon past
+  full (the kit draws 15 to 27 waning; the pile, field and tracks draw at most 15, their `moonAge` clamps, so a later age there needs
+  their clamp raised; the den, tower, ferry, riverbank and camp take any age); the den's `moon: 15`; her warrior's nest as the den's
+  `nest` close-up with `nextNest` ({Murmur}chime at `next-nest`, her own nest moved right).
+- **Words on screen now**: warrior, the watch, a warrior's nest, “with the warriors”, “Every cat” (a label), the thirty endings as
+  names. Not used: StarClan, vigil, warriors' den, Twoleg, kittypet, whisker-length, claw-length.
 - **Standing rules, still.** On the water nobody mentions lives (the Moon Ferry's Counts never ask the 9s), the
   otters' raft is never damaged (the Moon Ferry's front raft is it: four logs, never tips), a roar is an
   airplane and nothing else (ch5 notes), and the open river and the moonlit river are bright, silver-blue,
@@ -1475,3 +1401,5 @@ checked against the chapter as built, and the Warrior Counts as merged.
   Riffle) has been in the tunnel, and no line says which way she went. The starry cat stays a description;
   "Whiskers" stays a picture word; featherlight and the great tree are never names. The climber's route "from
   the bridge beams" (ch3) is unused.
+  And, since chapter 11: the camp by night is moonlit and silver, never dark; the moon's shape is never named in
+  the words.

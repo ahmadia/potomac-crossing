@@ -44,7 +44,8 @@ const FRAME_KEYS = ['scene', 'board', 'caption', 'say'];
 // a chapter frame's interactions and flags: none here (and no `when`: a result varies by its slots)
 const NOT_HERE = ['next', 'choice', 'input', 'look', 'counts', 'skip', 'scratch', 'file', 'ask', 'end', 'when', 'else', 'sets', 'card', 'gift', 'sfx'];
 const BALLOON_KINDS = [undefined, 'say', 'shout', 'whisper'];
-const CAT_TOKENS = ['name', 'petname', 'Murmur', 'murmur', 'they', 'them', 'their', 'They', 'Them', 'Their'];
+// (chapter 11: and {ending}, her warrior ending, 'paw' until the Ceremony: {name}{ending} in the three re-sit lines only, below)
+const CAT_TOKENS = ['name', 'petname', 'Murmur', 'murmur', 'they', 'them', 'their', 'They', 'Them', 'Their', 'ending'];
 const RESULT_TOKENS = ['right', 'Right', 'last', 'Last', 'short', 'tricky'];
 const FACT_TOKENS = ['a', 'b'];
 const SHOTS = ['WIDE', 'MEDIUM', 'CLOSE-UP', 'EXTREME CLOSE-UP', 'LOW ANGLE', 'HIGH ANGLE', 'POV', 'INSERT'];
@@ -549,9 +550,10 @@ test('every variant has its lines: the pass (55 or not, with the crowd or quiet)
   [['clean'], ['number'], []].forEach(keys => {
     const fs_ = play(W.afterPass, k => keys.includes(k));
     assert.equal(fs_.length, 1, 'after the pass: one page');
+    // (chapter 11: her warrior name on a re-sit, {name}{ending}: {name}paw until the Ceremony, the token reads paw)
     assert.equal(frameText(fs_[0]), keys[0] === 'clean' ? 'Every one. Not one missed. Like {Murmur}chime.'
-      : keys[0] === 'number' ? '{Right} right, {name}paw. Your pass is yours for good. These were the tricky ones.'
-        : 'Your pass is yours for good, {name}paw. These were the tricky ones.', keys.join(' '));
+      : keys[0] === 'number' ? '{Right} right, {name}{ending}. Your pass is yours for good. These were the tricky ones.'
+        : 'Your pass is yours for good, {name}{ending}. These were the tricky ones.', keys.join(' '));
   });
 });
 
@@ -653,6 +655,9 @@ test('text tokens are only the allowed ones: the cat’s anywhere on screen, the
   assert.deepEqual(where('short'), ['notYet.close']);
   assert.deepEqual(where('tricky'), ['notYet.frames[2]']);
   assert.deepEqual(where('petname'), ['pass.frames[3]'], 'Waffles says her petname');
+  // (chapter 11: her warrior name where she may have one, a re-sit's halfway and after the pass, and only as {name}{ending})
+  assert.deepEqual(where('ending'), ['afterPass.frames[0].else', 'afterPass.number', 'halfway']);
+  LINES.forEach(x => (String(x.text).match(/\{\w+\}\{ending\}|\{ending\}/g) || []).forEach(m => assert.equal(m, '{name}{ending}', x.where + ': ' + m)));
   // {Right} and {Last} start a sentence; {right}, {last}, {short} and {tricky} never do
   LINES.forEach(x => {
     const s = String(x.text);
@@ -848,7 +853,8 @@ test('the lettering is the design’s own (sections 1, 3, 4 and 5): every senten
   const missing = [];
   LINES.forEach(x => String(x.counts ? x.text.replace(/\{a\} × \{b\}(?= made)/, '7 × 8') : x.text).split(/(?<=[.!?:])\s+/).forEach(sent => {
     if (OWN.has(sent)) return;
-    const bare = norm(sent).replace(/[.!?:]$/, '');
+    // (chapter 11: the design's {name}paw, which {name}{ending} reads until the Ceremony)
+    const bare = norm(sent).replace(/[.!?:]$/, '').replace(/\{name\}\{ending\}/g, '{name}paw');
     if (!doc.includes(bare)) missing.push(x.where + ': ' + sent);
   }));
   assert.deepEqual(missing, []);
@@ -859,12 +865,13 @@ test('the lettering is the design’s own (sections 1, 3, 4 and 5): every senten
     'If one gets away from you, we’ll scratch it out together, like always. It won’t count as right. But it won’t stop you, either.',
     'The Clan gathers at the fountain again.', 'The camp is quiet. Glintstar waits on the fountain, and {Murmur}chime comes to watch.',
     'Every Count, same as before. I’m right here.', 'It’s been a while, so we start fresh.', 'You’ve been practicing, so we start fresh.', 'Where were we? Ah, yes.',
-    'One paw done. Your whiskers are wide awake now.', 'Three paws done. Just one more paw.', 'Halfway, {name}paw.', 'Big stretch first. Front paws out, tail up. Like this.',
+    'One paw done. Your whiskers are wide awake now.', 'Three paws done. Just one more paw.', 'Halfway, {name}{ending}.', 'Big stretch first. Front paws out, tail up. Like this.',
     '{name}paw. Every Count up to ten times ten, and {right} of them right.', '{Murmur}chime yowls, and the whole Clan comes running.',
     'Every tail in the crowd goes straight up.', 'Tonight, the Clan gathers again. For your warrior name.', 'Did {petname} PASS? Somebody TELL me, darlings!',
     'Not yet, {name}paw. The Counts will wait for you.', 'Took me THREE tries. Don’t tell anyone.', 'I {murmur}ed mine in the den every night, remember? You heard me.',
     'The Counts aren’t going anywhere. And neither am I.', 'You worked hard on every one.', 'These were the tricky ones.',
-    '{Right} right, {name}paw. Your pass is yours for good.', 'Your pass is yours for good, {name}paw.', 'This was the tricky one.',
+    // (chapter 11: the three re-sit lines say her warrior name, {name}{ending}, {name}paw until the Ceremony)
+    '{Right} right, {name}{ending}. Your pass is yours for good.', 'Your pass is yours for good, {name}{ending}.', 'This was the tricky one.',
     'Every one. Not one missed. Like {Murmur}chime.', 'At last:', 'Ten times ten.', 'A HUNDRED!',
     'Last time, {a} × {b} made you stop and think. Not today!', '{a} × {b}! That one used to be tricky.', 'No stopping on {a} × {b} this time.',
     'Quick! {a} × {b} used to take a while.', '{a} × {b} again, and you got it. It’s getting easier.', 'You worked out {a} × {b}. Good.',

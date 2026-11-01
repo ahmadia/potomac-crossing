@@ -22,14 +22,37 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const G9 = require('./fixtures/make-ch09-golden.js');
+const G8 = require('./fixtures/make-ch08-golden.js');
 const GOLDEN9 = require('./fixtures/ch09-golden.json');
+
+/* Chapter 11's review (2026-11-01; README, "Chapter 11 as built"): the pile's moon is never cut by the panel's top any
+ * more, so chapter 9's montage, f112 (the twelfth evening's moon over the pile's `wide`), draws its moon 8 units lower,
+ * whole: its glow, its disc and its keep box, nothing else. That one delta, by name: every drawing is compared with
+ * that moon put back where it stood (exact: the snapshot's own pile.js draws the same, byte for byte, for two cats in
+ * four looks, checked when this was written), so anything else that moves on f112, or anywhere, still fails; and the
+ * test below checks the moon where it stands now. */
+const MOON12 = { now: 68, then: 60, x: 708, keepNow: { x: 40.3, y: 0.4, h: 12.8 }, keepThen: { y: 0, h: 12.4 } };
+function moonBack(A) {
+  const A2 = Object.create(A);
+  A2.render = (scene, o) => {
+    const r = A.render(scene, o);
+    if (!(scene && scene.set === 'pile' && scene.cam === 'wide' && scene.opts && scene.opts.moon === 12)) return r;
+    const at = (y) => ['cx="' + MOON12.x + '" cy="' + y + '"', 'translate(' + MOON12.x + ' ' + y + ')'];
+    let svg = r.svg;
+    at(MOON12.now).forEach((s, i) => { svg = svg.split(s).join(at(MOON12.then)[i]); });
+    const k = MOON12.keepNow;
+    const keep = (r.keep || []).map(b => (b.x === k.x && b.y === k.y && b.h === k.h ? Object.assign({}, b, MOON12.keepThen) : b));
+    return Object.assign({}, r, { svg, keep });
+  };
+  return A2;
+}
 
 let NOW9 = null;
 function now9() {
   if (NOW9) return NOW9;
   const PC = require('./_load.js').load();
   require('../app/ui.js');
-  const ctx = G9.context9(PC);
+  const ctx = G9.context9(PC, { draw: G8.drawer8(moonBack(PC.art)) });
   NOW9 = { PC, ctx, runs: G9.SCRIPTS9.map(s => G9.run9(ctx, s)) };
   return NOW9;
 }
@@ -82,6 +105,19 @@ function same(now, then, name, moved) {
   }
   assert.deepEqual(now.tables, then.tables, name + ': the grown-ups corner’s tables (E.factTables), their headings and rows');
 }
+
+test('chapter 9’s montage (f112): the twelfth evening’s moon whole under the panel’s top, 8 units lower than recorded, and nothing else of it moved (chapter 11’s review)', () => {
+  const { PC } = now9(), E = PC.engine;
+  const sc = E.resolveScene(PC.story.ch09.frames.f112.scene, Object.assign(E.blankCat({ now: 1 }), { name: 'Moon' }), Object.values(PC.story).filter(s => s && s.frames));
+  assert.deepEqual([sc.set, sc.cam, sc.opts.moon], ['pile', 'wide', 12]);
+  const r = PC.art.render(sc, { look: E.defaultLook(0) }), b = moonBack(PC.art).render(sc, { look: E.defaultLook(0) });
+  const m = /<g data-prop="waxing-moon" data-age="12"><circle cx="([\d.]+)" cy="([\d.]+)" r="[\d.]+"[^>]*\/><g transform="translate\(([\d.]+) ([\d.]+)\)/.exec(r.svg);
+  assert.ok(m, 'the moon drawn');
+  assert.deepEqual([+m[1], +m[2], +m[3], +m[4]], [MOON12.x, MOON12.now, MOON12.x, MOON12.now], 'its middle 68 down (its radius 56, and 12)');
+  assert.ok(/<path d="M0 -56A56 56 /.test(r.svg.slice(m.index, m.index + 600)), 'radius 56: its top 12 below the panel’s');
+  assert.ok(b.svg.includes('translate(' + MOON12.x + ' ' + MOON12.then + ')') && !b.svg.includes('translate(' + MOON12.x + ' ' + MOON12.now + ')'), 'put back, where the golden has it');
+  assert.ok(r.keep.some(k => k.x === MOON12.keepNow.x && k.y === MOON12.keepNow.y && k.h === MOON12.keepNow.h), 'the lettering keeps off it where it is now');
+});
 
 test('chapters 1 to 9 play and render exactly as on the tree chapter 10 is built on: every frame and what it shows (its scene and its drawing, its captions and what Read to me says, its balloons with their labels and voices, its options, its card and its drawing, her whole Case File with every card drawn, the pages she taps), every skip-count tap by tap, what the page says round each lesson, every question, picture, line and help hop by hop, the Hollow, the book with its dragonets, the grown-ups corner and E.factTables, the hub and the cat, for fifteen readings (tests/fixtures/ch09-golden.json)', () => {
   assert.equal(GOLDEN9.engine, G9.VERSION9, 'recorded with the engine of the merged tree chapter 10 is built on (the Warrior Counts merged onto chapter 9, the polish release in), not chapter 9’s own 0.9.0');

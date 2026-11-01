@@ -85,6 +85,7 @@
 <script src="../app/story/ch08.js"></script>
 <script src="../app/story/ch09.js"></script>
 <script src="../app/story/ch10.js"></script>
+<script src="../app/story/ch11.js"></script>
 <script src="../app/story/warrior.js"></script>
 <script>
 (function () {
@@ -588,7 +589,20 @@
     ['den', 'stone', { opts: { weather: 'clear', moon: 14, miststone: 'flash' }, cast: [c('player', 'tail', 'curl', 'sleepy', { asleep: true })], fx: ['night'] }, 'chapter 10: the stone camera: the mist stone close, flashing; her tail\u2019s tip'],
     ['tower', 'up', { opts: { moon: 14, chime: true, light: true }, cast: [c('player', 'foot', 'sit', 'happy'), c('waffles', 'railing', 'peer', 'dreamy', { facing: 'left' })], fx: ['night'] }, 'chapter 10: the tower by night, moon: 14; Waffles at railing, our cat at foot'],
     ['hollow', 'tree', { opts: { marks: 10, glow: [false, false, false, false, false, false, false, false, false, true] }, cast: [], fx: ['morning'] }, 'chapter 10: marks: 10, the tenth glowing'],
-    ['hollow', 'wide', { opts: { marks: 10, glow: [false, false, false, false, false, false, false, false, false, true] }, cast: [c('tallyheart', 'tree-far', 'sit', 'kind', { size: 1.2 }), c('player', 'sunpatch-2', 'sit', 'happy')], fx: ['morning'] }, 'chapter 10: marks: 10 from across the Hollow']
+    ['hollow', 'wide', { opts: { marks: 10, glow: [false, false, false, false, false, false, false, false, false, true] }, cast: [c('tallyheart', 'tree-far', 'sit', 'kind', { size: 1.2 }), c('player', 'sunpatch-2', 'sit', 'happy')], fx: ['morning'] }, 'chapter 10: marks: 10 from across the Hollow'],
+    // chapter 11: the camp by moonlight (moon: 15), the den by the moon past full, the warriors' nest, the pile by moonlight
+    ['camp', 'reveal', { opts: { crowd: true, moon: 15 }, cast: [c('glintstar', 'fountain-top', 'stand', 'solemn'), c('thymeleaf', 'ferns', 'sit', 'kind', { facing: 'left' })], fx: ['night'] }, 'chapter 11: camp moon: 15, the ring by moonlight; Glintstar at fountain-top'],
+    ['camp', 'crowd', { opts: { crowd: true, moon: 15 }, cast: [c('murmurchime', 'crowd-right', 'sit', 'happy', { facing: 'left' }), c('glintstar', 'fountain-top', 'stand', 'proud'),
+      c('player', { x: 760, y: 860 }, 'sit', 'wonder', { holds: 'miststone', holdAt: 'paws' }), c('tallyheart', { x: 950, y: 872 }, 'sit', 'proud', { facing: 'left' })], fx: ['night'] },
+      'chapter 11: camp crowd, moon: 15; our cat at the fountain\u2019s foot with the mist stone, Tallyheart beside her'],
+    ['camp', 'fountain-close', { opts: { moon: 15 }, cast: [c('glintstar', 'fountain-top', 'sit', 'kind')], fx: ['night'] }, 'chapter 11: fountain-close, moon: 15, high beside Glintstar\u2019s head'],
+    ['camp', 'purr', { opts: { crowd: true, moon: 15 }, cast: [c('glintstar', 'fountain-top', 'stand', 'proud'), c('player', { x: 760, y: 860 }, 'sit', 'happy', { tailUp: true })], fx: ['night', 'purr'] }, 'chapter 11: the purr by moonlight, moon: 15'],
+    ['den', 'inside', { opts: { weather: 'clear', moon: 15, stone: 'auto', bark: 'auto', hidden: true, glass: true }, cast: [c('snorer', 'sleeper-1', 'curl', 'sleepy', { asleep: true }), c('player', 'nest', 'sit', 'wonder'),
+      c('tallyheart', 'doorway', 'peer', 'happy')], fx: ['night'] }, 'chapter 11: den inside, moon: 15 (waning, lit on the left) in the doorway\u2019s sky'],
+    ['den', 'doorway', { opts: { weather: 'clear', moon: 15 }, cast: [c('tallyheart', 'doorway', 'peer', 'happy')], fx: ['night', 'stars'] }, 'chapter 11: den doorway, moon: 15'],
+    ['den', 'nest', { opts: { weather: 'clear', stone: 'auto', bark: 'auto', hidden: true, glass: true, miststone: true, nextNest: true }, cast: [c('player', 'nest', 'loaf', 'happy'),
+      c('murmurchime', 'next-nest', 'curl', 'sleepy', { asleep: true })], fx: ['morning'] }, 'chapter 11: nextNest, the warriors\u2019 nest: the mist stone on her moss, {Murmur}chime asleep at next-nest'],
+    ['pile', 'wide', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 15 }, cast: [], fx: ['night'] }, 'chapter 11: the pile whole by moonlight, moon: 15']
   ];
 
   // ---- panels, rendered when they scroll into view

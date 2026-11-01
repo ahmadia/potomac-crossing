@@ -10,14 +10,15 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-10-31):** chapters 1 to 10, the whole of module 1, are built as a static web app (`index.html`, `app/`; the
+**Status (2026-11-01):** chapters 1 to 11, the whole of module 1 and its Warrior Ceremony, are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04). Chapter 6, *The Snake in the Stones*,
 shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`; chapter 7, *The Counts
 Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24; chapter 9, *Featherlight*, 2026-10-26;
 chapter 10, *The Gathering*, the finale, 2026-10-31, with the Warrior Counts (decisions 48 and 49),
-which open once chapter 10 is finished. The Warrior Ceremony (chapter 11) is next.
+which open once chapter 10 is finished; chapter 11, *The Warrior Ceremony*, 2026-11-01, which opens once
+she passes them and gives her warrior name (decision 52). Module 2 (the badger's track) is next.
 
 ## Docs
 
@@ -30,7 +31,7 @@ which open once chapter 10 is finished. The Warrior Ceremony (chapter 11) is nex
   drafted as the actual game text.
 - [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
   the Old Bridge, 04 The Glittering Scale, 05 Riffle's River, 06 The Snake in the Stones, 07 The Counts Don’t
-  Lie, 08 The Night Trail, 09 Featherlight, 10 The Gathering), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
+  Lie, 08 The Night Trail, 09 Featherlight, 10 The Gathering, 11 The Warrior Ceremony), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
   steering calls, the budget and the names, written before drafting), its **story** (what she
   reads), and its **spec** (flags, Counts sets, cards, art needs and build notes, written once the
   story is final).
@@ -168,6 +169,9 @@ which open once chapter 10 is finished. The Warrior Ceremony (chapter 11) is nex
     2,700 words, so the case and the goodbyes get room; it stays one chapter (decision 8's ten).
 51. **The 7s are a clutch of seven** (Aron, 2026-10-24; amends 42): the seven dragonets of Sprinkle's
     clutch, not "sunrises in a quarter-moon", which echoes the books' "quarter moon".
+52. **The warrior name: both** (Aron, 2026-10-31): at the Warrior Ceremony Glintstar offers names drawn
+    from her moon, and the player may choose one or name herself. Where it happens is Claude's call, and
+    the Ceremony (chapter 11) is built next.
 
 ## Claude's calls under decision 46
 
@@ -835,6 +839,142 @@ Each is Aron's to reverse.
     before f152 would renumber the last six frames); every pick still reads her whole file as it opens with
     Read to me (a listening friend needs the cards to pick from; the spec accepts the length).
 
+- **Chapter 11's brief** (2026-10-31; `docs/chapters/11-the-warrior-ceremony.brief.md`, each call with its
+  reason; call 4 is decision 52, Aron's). About 12 to 15 minutes, at most 1,300 words plain, no optional scene,
+  at most 90 frames, no new cast or place, no lesson and no new Count, one engine need (the warrior name). In short:
+  1. The evening of her pass, whenever that is: no day is counted from the Gathering; the moon is up, past full,
+     never named by its shape.
+  2. CrystalClan's camp by night, the whole Clan in a ring at the fountain, moonlit and silver, never dark.
+  3. The ceremony's words are our own: Glintstar names what she did this moon, asks the Clan's promise and hers,
+     and gives the name; never StarClan or the books' words; Tallyheart's chapter 1 vouching comes back.
+  4. (Decision 52) Glintstar sees three endings in her, from `ch10Best`, from her `specialty` and from this moon;
+     she taps one or types her own; never -star, -paw or -kit.
+  5. The Clan calls her name; Riffle cheers at the camp's edge, Waffles hears it, the mist stone flashes: Sprinkle's
+     hello.
+  6. The watch till first light (never "vigil"): calm, safe and short.
+  7. Dawn: Tallyheart finds her; she sleeps in a warrior's nest; module 1 is done; the badger only in the teaser.
+  8. From then on she is {name}{ending}; chapters 1 to 10, read again, keep {name}paw.
+  9. Toms and she-cats read alike; 10. every path has passed; `ch10Best` and `specialty` make the name.
+
+- **Chapter 11's story and spec** (2026-10-31 to 11-01; the story's *For us* and the spec's section 9 have every
+  call with its reason). The story took two critique rounds and a verify round (Draft v0.4), the spec one critic
+  round (v0.2; v0.3 records the build). In short:
+  1. **The warrior name is chapter 11's one engine need**, built as the spec's section 6 designs it, chapter 10's
+     precedent (data beside the engine and keys one chapter reads; chapters 1 to 10 play and draw as they did).
+     **Only the ending is stored**: `cat.ending`, one optional field, absent until she is named; the save stays
+     version 2 (the Warrior Counts' `warrior` precedent). `E.VERSION` 0.11.0.
+  2. One token, `{ending}`, `paw` until she has one, so `{name}{ending}` is `{name}paw` for every cat before the
+     Ceremony (`warrior.js`'s three re-sit lines use it).
+  3. The offers are a choice (f024), her own name an input of kind `'ending'` (f025, the Type screen).
+  4. The engine computes the offers (`E.warriorOffers`, `E.WARRIOR_ENDINGS`); the lines vary by two computed `when`
+     keys, `offer` and `nameHas`; a word is passed over when her first part has it, when it makes a book cat's whole
+     name, or when it makes three of one letter at the join (Mosssplash).
+  5. The guard list is the names critic's (every title on either wiki ending in one of the thirty) plus Honeymoon,
+     and guards the offers only: a typed canon name is hers (the story overrules the orchestrator's note;
+     reversible by one line in `E.checkEnding`).
+  6. Fallbacks: no `ch10Best` reads truth, no `specialty` noticing; a row with all three words out offers its third.
+  7. A typed ending: letters only, lower case, a leading first part dropped once, at most 12 (26 letters at most in
+     all); refused only for her own name or no letter, star, paw, kit (and plurals, kitten, kitty), or a Clan cat's
+     whole name, in that order, by a friend in the picture; what she typed is kept.
+  8. Her warrior name shows wherever `E.displayName` does, and the hub says "Warrior of CrystalClan"; her book's
+     title, her Case File's, chapters 1 to 10 and our cat's default balloon label keep {name}paw.
+  9. Once the Ceremony is finished the hub shows the next teaser again and her book stops saying "Your ceremony is
+     coming soon." (read from E.progress's `finished`).
+  10. The camp by night is the `camp` set with one new option, `moon` (silver; one tower drawn lower while it shows);
+      the moon one evening past full is the kit's waning moon (ages 15 to 27; `moon: 15`).
+  11. Her new nest is the den's `nest` close-up with a new option, `nextNest`: {Murmur}chime in the next nest.
+  12. The ears: chapter 2's picture with eight cats (five Clan coats, never six), Tallyheart counting.
+  13. The morning count: one fact, 4 × 10, the pile, help by the picture, no fillers.
+  14. The Clan's calls are a Clan cat's balloon labelled "Every cat".
+  15. The teaser's title is "A new adventure" (the badger's track).
+  16. The book page's seven lines are the spec's.
+  17. Two build owners (scenes, engine), no golden owner: chapter 10's frames, the kit's moon and the camp and den
+      with the new options off are fingerprinted (`<ch11-fingerprint>`).
+  18. The mist stone is always held in camp, never a camp option; the pinecone is drawn when set down and at first
+      light.
+  19. `ch11Named` (`offer` or `self`) is a new flag, past the brief's "none new": f026's two lines and the book's
+      line differ by how she was named, which cannot be computed (a typed ending may equal an offered word).
+
+- **Chapter 11 as built** (2026-11-01; `app/story/ch11.js`'s header has each call, the spec's section 7, items 16 and 17, the
+  rest). 58 frames: 57 a reading with an offered name, 58 when she names herself (the cap is 90); one typed answer, three choices,
+  CACHE v22. The brief's steering calls are in `docs/chapters/11-the-warrior-ceremony.brief.md`. Where the build went past the spec:
+  - *The story builder's five* (`~/potomac-crossing-work/ch11/frames.json`): **the story's last screen is two panels**, f057 (the
+    stone close-up) and f058 (the two warriors asleep, “End of Chapter Eleven…”, “THE END.”), no word changed: its four boxes in
+    one ran Back and Next 89 to 99px under a 1080 x 720 screen with a 26-letter name (chapter 10's f082 and f083 the precedent).
+    **Three cameras outside the spec's list**: f023 on the camp's `reveal`, f031 and f032 on `purr` (the moon whole there), or f016
+    to f030 were fifteen panels of one shot. **The spots settled by look** where the spec said “about”: RING_YOU and RING_TALLY (610
+    and 380: at 560 and 420 the two overlapped), BY_FOOT 530, THYME (1300, 960, h 180, inside `crowd`'s box), and WALK_YOU,
+    WALK_TALLY, PAD and BOW added; FOOT and BESIDE are the Warrior Counts' own. **Our cat first in f029's cast**: the art draws the
+    motion lines round the first member. **The engine test's play-through** takes the first option shown where its scripted one is
+    hidden (f024's offered names each show only for the cat they belong to); chapters 1 to 10 play as before.
+  - *The review's round* (`~/potomac-crossing-work/ch11/review.json`, all sixteen confirmed findings; notes in
+    `ch11/integrate-r1/`): **the mist stone never lies under Riffle's stone**: for a cat who put Riffle's under her chin in chapter
+    2 (half of them) the stone held at her paws on f006 and f049 was drawn under his. Now the old den draws it on the moss till she
+    takes it (f002 to f006, `miststone`; f006's Tap on her paw, sitting by it since the final round), and in her new nest she sits up holding it in both
+    forepaws, as on chapter 10's f152 (the spec's `holdAt: 'nose'` touched Riffle's on the nose path). **Glintstar sits on f039**
+    (`peer` floated her across the sky: that camera shows no fountain under her). **No sparkle on f032 or f038** (the art scatters
+    it round the first cast member: one landed on {Murmur}chime's yowling face, one on the old tom's eye). **Thymeleaf full-sized
+    on f032** at the set's `ferns` (at THYME he stood in front at half the size of the cats behind him; the grey tom sits behind
+    his shoulder, face clear). **The ring stays for the bounce** (f029: {Murmur}chime, the old tom and the grey tom left for one
+    panel and strangers sat in their places). **Tallyheart's “Ha!” after Glintstar's Counts name** on f020 (between them, Glintstar's
+    second balloon had a tail of its own across her first's words; the story's order changed to match, no word). **A long name
+    breaks at its join** (ui.js `richN`): wherever her first part runs on into her ending, one of her three offered words or a
+    shouted word (Thunderwhisker|butterscotch, Thunderwhisker|moon, Thunderwhisker|PINECONE), a line may break there, in captions,
+    the endcap, panel and stacked balloons (the Warrior Counts' too), the Tap and skip pages' captions, the choices and her book;
+    a 26-letter name ran out of its balloons, past the column and off a phone's screen on the last frame, or broke at any letter.
+    `{name}paw` and a word that only starts with her name are untouched, so chapters 1 to 10 letter exactly as before (tested
+    line by line; a one-letter first part, A or X, takes no join with a word in capitals); no `overflow-wrap` backstop, so a word that fits is never broken. **The pile's moon is never cut** by the
+    panel's top (its limit is its own radius now): f042, and **live, chapter 9's f112**, its moon 8 units lower and whole
+    (`tests/golden-ch09.test.js` names the delta: chapter 9 replays exactly as recorded with that moon put back); ages 11 and
+    under, chapters 6 to 8, do not move. **Bigger text on a page she taps once keeps “Tap to…” beside Back** on a sideways iPad
+    760px tall or less and on a phone (index.html, Aa only, `@media (max-height: 760px), (max-width: 700px)`; the final round
+    scoped it): at 1024 x 700 f019 and f034 ran Back 6 and 3px under the screen. **Live, with Aa on**, there, the Tap pages whose
+    line wrapped above Back now have it beside Back, 17 to 39px more room and nothing worse (WebKit, 107 Tap pages of chapters 1
+    to 11): at 1024 x 700 ch05 f003, f090, f091, ch06 f075, ch07 f062, f082, ch08 f030, f066, f067, f096, f097, f109, f110, f131,
+    ch09 f059, ch10 f059, f063, f113, f130, f140, f152; at 1080 x 720 a subset of those; on a phone (390 x 844) ch04 f069, ch05
+    f001, f003, f091, ch06 f075, f095, ch07 f015, f062, ch08 f007, f026, f096, f097, f131, ch09 f001, f123, ch10 f039, f045, f057,
+    f059, f063, f064, f067, f075, f084, f134, f140, f152 (on ch04 f069 and ch10 f057, f067, f075, Back at the panel's foot, only
+    the line's box widens, 1px; the card picks, ch10 f059 and f063, wrap “Pick a card from your Case File.” beside Back). Taller
+    sideways iPads (1024 x 768, 1180 x 820, 1194 x 834) and upright iPads unchanged; with Aa off nothing.
+  - *The review's lows taken*: the old den's stone on the moss from the first panel (f002 to f005); our cat shouts “TEN!” with
+    her mouth open (f051); the old tom and the grey tom purr with the ring (f031); a Clan cat still asleep at her den as Tallyheart
+    pads across (f045); a word joiner keeps the old tom's leading “…” with “Just now.” (f048); her book's “Next” once she has passed
+    and the Ceremony is built is Glintstar's pass line, “Tonight, the Clan gathers again. For your warrior name.”, not chapter
+    10's “Pass your Warrior Counts…”; the Type screen hands back only an ending she typed (`ch11Named: 'self'`), never an offered
+    one, even once a reread has changed her offers; an offered name is kept in her choices as `{name}{ending}`, so the grown-ups'
+    corner says her name after a chapter-1 rename too (Foxclimb, not Foxleap); the boards say what is drawn (f009, f029); f028's
+    “closer” recorded as the crowd shot again (no camera is closer); the spec's frame counts.
+  - *Left, with reasons*: f021 stays on `crowd` (its board's beat, our cat sitting up taller, needs her in the picture, and the
+    runs are inside the story test's limit); the `glow` on f026 and f028 (the spec's; a moonlit glow is art for later); the
+    phone's bar, which cuts a warrior name over about 10 letters (the iPad is the target; a two-line bar wants its own measured
+    design; the spec's claim corrected); the bar's chapter line cut after a 26-letter name on an upright iPad; a balloon's tail
+    through the camp's moon on f023 (the fix changes how every chapter from 4 on places balloons, and needs an Aa sweep of them
+    all); the Type screen's button partly under a sideways iPad's keyboard as the field is centred (only a real iPad's keyboard
+    settles it, and she can still tap its top or press Done).
+  - *The final review's round* (2026-11-01; `~/potomac-crossing-work/ch11/final-regress/`, `deploy-1/`, `fresh-eyes-r1/`,
+    `skeptic-regress/`, `page-after-fixes/`, `wn-check/`, `furs/`, `ship-list/`, `final.json`; the fixes in
+    `ch11/integrate-r2/`): **the Tap-line rule is scoped** to a sideways iPad 760px tall or less and a phone (at 1180 x 820
+    it re-laid 14 live Tap pages, “Pick a card / from your Case / File.” in three ragged lines beside Back, where the line had
+    room above it); **a one-letter first part takes no caps join** (richN, `n.length > 1`: for a cat named A, every capitalised
+    word starting with A was boxed as her name on 44 to 55 live frames, and ch05 f006's balloon re-wrapped upright); **the
+    endcap with a long warrior name fits a 1024 x 700 column with Aa on** (`html.big .endcap:has(.wn){font-size:1.9em}`:
+    “THUNDERWHISKER” alone ran 11px past it; every line breaks where it did, and only chapter 11's endcap has her name in a
+    `.wn`); **a re-sit's “A HUNDRED!” keeps its line** after the Ceremony (a warrior name over 12 letters labels her balloon on
+    the Warrior Counts' page on a line of its own; it broke “Thunderwhiskerbutterscotch A / HUNDRED!”); **f006 she sits by the
+    mist stone** (crouched, her reaching forepaw rested on Riffle's stone, not the one the caption names); **the old tom and
+    the grey tom stay in the ring** on f011 and f012 (squeezed in on f009, gone on f012, back on f013); **f041 to f044 the
+    sleeper at the right den is a brown tabby**, so Tallyheart is the only ginger cat by night and at first light; **f056 and
+    f058 sparkle round the new warrior** (our cat first in the cast; the art scatters it round the first member, and it had
+    clustered round {Murmur}chime); **{Murmur}chime lies asleep in the next nest** from “TEN!” to the end, chin on her paws
+    (curled, she was a tortie player's twin, eyes shut, face to face); **f053's “he” named**: “By fifty, the grey tom’s
+    snoring.” (story and frame; he is not in that panel, and its zzz are {Murmur}chime's). Left: a typed ending kept through a
+    chapter-1 rename can make a Clan cat's whole name (Fern, typed heart, renamed Tally: Tallyheart; spec section 7, item 15);
+    the mist stone held under the chin in the ring (f009 to f011) blends into a grey or silver-tabby cat's forepaw (the story
+    says she tucks it under her chin; at her paws it would contradict it, and a per-coat hold is new art). Checked and clean:
+    chapters 1 to 10 against main (every frame's art in 18 looks but the named f112; 40 seeded readings; 2,442 saved cats;
+    lettering of 1,384 frames at four sizes; Read to me on 1,390); chapter 11's pages at 15 sizes, Aa off and on (5,148
+    screens: nothing off screen, covered or clipped, said 0); saves, migrate and the service worker (deploy, Safari, 35 jobs).
+
 - **Casts are listed back to front where cats meet** (2026-10-25, the depth hotfix): Charlie found the
   far grey guard drawn over the near black guard's face on chapter 8's f030. The art draws each layer
   of a cast in the order it is listed, never by depth, so twelve live pile frames (ch06 f004, f107,
@@ -956,7 +1096,13 @@ Nothing here blocks the chapter being built; each chapter's own questions are in
   named); Tree, Root and Stone (Tree and Root are Warriors cats, Root and Stone Wings of Fire humans:
   lowercase nouns here); "a mist stone" (Mist- and -stone, decision 18); "the truce" (the books' word:
   Glintstar's "Tonight is the truce."); and mist over a Gathering's moon (Warriors' sign of a broken truce:
-  here the moon glows through it and Sprinkle names it first, "That's MY mist."). From chapter 5's names check
+  here the moon glows through it and Sprinkle names it first, "That's MY mist."). From chapter 11's story and spec
+  (its section 7, item 11, and section 10; all kept): warrior endings that are halves on the Warriors wiki's suffix
+  lists (mist, sky, bright, eye, sight, leap, splash, ripple, moon, and a typed heart: words, not names, the brief's
+  carve-out; whole book names are guarded from the offers, Honeymoon too); "Welcome, warrior" (two words of the books'
+  ceremony, Glintstar's "Welcome, warrior. A warrior named by moonlight keeps watch…"); a night's watch after the
+  naming (the books' vigil: "the watch" here, never vigil, and she may talk); and the Clan calling the new name (the
+  books' shape, our words: "{name}{ending}! {name}{ending}!"). From chapter 5's names check
   (`docs/chapters/05-riffles-river.md`, "New names"): "skymonster," chapter 5's loudest Clan word
   (it follows Warriors' monster and water-monster pattern); "the Needle," world.md's word for the
   white monument, drawn in chapter 5 and still never on screen (Needle is a Wings of Fire dragon);

@@ -77,7 +77,8 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 function readyCat(id) {
   const cat = E.blankCat({ now: 1, id: id || 'warrior-cat' });
   cat.name = 'Minnow'; cat.petname = 'Pickle';
-  E.chapters(STORIES).forEach(s => { cat.finished[s.id] = 1; });
+  // (chapter 11: never the Ceremony itself, which opens only once she has passed; a built one is in STORIES)
+  E.chapters(STORIES).filter(s => s.opensWhen !== 'warrior').forEach(s => { cat.finished[s.id] = 1; });
   E.countSets(STORIES).forEach(c => { cat.lessons[c.setId] = { set: c.setId, mode: 'chapter', answers: 10, correct: 10, fast: 10, facts: 10, firstTry: 10, helped: 0, noHelp: true, finished: true }; });
   return cat;
 }

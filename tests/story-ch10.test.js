@@ -2175,7 +2175,8 @@ test('the teaser is the Warrior Ceremony’s, with no number; chapter 9’s for 
   assert.deepEqual(story.teaser, { title: 'The Warrior Ceremony', lines: ['Pass your Warrior Counts, and the Clan will gather for your name.'] });
   assert.doesNotMatch(story.teaser.lines.join(' '), /\d/);
   const cat = E.blankCat({}); cat.name = 'Moon';
-  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'The Warrior Ceremony', lines: story.teaser.lines, built: false, next: null }, 'the Ceremony is not built: no next chapter');
+  // (chapter 11: the Ceremony is in PC.story, the stub or built, so chapter 10's teaser leads to it)
+  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'The Warrior Ceremony', lines: story.teaser.lines, built: true, next: 'ch11' }, 'the Ceremony is built: it is next');
   // chapter 9's teaser: this chapter's title, and every promise kept (the otters' Moon Ferry, every Clan at the Gathering,
   // Reynard with his little story, and our cat with her case)
   assert.equal(ch09.teaser.title, 'Chapter 10: The Gathering');

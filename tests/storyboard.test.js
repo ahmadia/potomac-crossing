@@ -1101,3 +1101,47 @@ test('a Counts frame that says none of its lines again (`intro: false`) is worde
     assert.equal(E.readFirst({ set, a, b }, S, null, true), words !== ENGINE, k + ': read first');
   }
 });
+
+test('chapter 11’s two additions: the `{ending}` sentence (the Warrior Counts’ legend always, a chapter’s only where its story has the token) and the Type screen’s line (refused in place, by the frame’s own lines and speakers); and words for the den’s next nest', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-storyboard-'));
+  try {
+    const cast = ['player', 'glintstar', 'tallyheart', 'murmurchime', 'thymeleaf'].map(who => ({ who, pose: 'sit' }));
+    const scene = { set: 'camp', cam: 'crowd', cast, fx: ['night'] };
+    const fx11 = { id: 'fx11', number: 11, title: 'The Warrior Ceremony', opensWhen: 'warrior', start: 'f024', frames: {
+      f024: { scene, board: 'MEDIUM. The choice. Three names.', choice: { options: [
+        { label: '{name}mist', when: { offer: 'mist' }, ending: 'mist', sets: { ch11Named: 'offer' }, next: 'f026' },
+        { label: '{name}true', when: { offer: 'true' }, ending: 'true', sets: { ch11Named: 'offer' }, next: 'f026' },
+        { label: '“I’ll name myself!”', sets: {}, next: 'f025' }] } },
+      f025: { scene, board: 'MEDIUM. The Type screen. She types.', say: [{ who: 'glintstar', text: 'Then you choose.' }],
+        input: { kind: 'ending', sets: { ch11Named: 'self' }, next: 'f026', refuse: {
+          own: { who: 'tallyheart', text: 'That’s your name ALREADY! Give it a new ending.' },
+          star: { who: 'glintstar', text: 'Star is for leaders. Try another ending.' },
+          paw: { who: 'tallyheart', text: 'Paw? Not any more, you’re not! Try another.' },
+          kit: { who: 'murmurchime', text: 'Kit? You’re a WARRIOR now, silly! Try another.' },
+          clan: { text: 'That’s MY name! One of me is plenty. Find one all your own.' } } } },
+      f026: { scene, board: 'MEDIUM. Her name. The Clan hears it.', say: [{ who: 'glintstar', text: '{name}{ending}.' }], end: true } } };
+    const file = path.join(tmp, 'fx11.js');
+    fs.writeFileSync(file, 'globalThis.PC = globalThis.PC || {}; PC.story = PC.story || {}; PC.story.fx11 = ' + JSON.stringify(fx11) + ';\nmodule.exports = PC;\n');
+    const md = generate(file, tmp);
+    assert.ok(md.includes(' `{ending}` is her warrior ending, `paw` until the Ceremony (Fernpaw, then Fernheart).'), 'the chapter legend has it');
+    assert.ok(md.includes('**Then she types her own ending** after her name, with a live preview (“You will be: Fernheart”); refused, kindly, with another try on the same screen: ' +
+      'her own name or no letter, Tallyheart: “That’s your name ALREADY! Give it a new ending.”; star, Glintstar: “Star is for leaders. Try another ending.”; ' +
+      'paw, Tallyheart: “Paw? Not any more, you’re not! Try another.”; kit (kitten, kitty), Murmurchime: “Kit? You’re a WARRIOR now, silly! Try another.”; ' +
+      'a Clan cat’s whole name, that cat (Tallyheart, Thymeleaf or {Murmur}chime): “That’s MY name! One of me is plenty. Find one all your own.”. Accepted, it sets `ch11Named: "self"`. On to f026.'), 'the Type screen’s line');
+    assert.match(md, /This option shows only if offer is "mist"\./, 'the computed key in the tool’s generic words');
+    // a chapter without the token: no sentence (chapters 1 to 10 regenerate byte for byte)
+    const ch10 = fs.readFileSync(path.join(ROOT, 'docs/storyboard/ch10.md'), 'utf8');
+    assert.ok(!ch10.includes('{ending}'));
+    // the Warrior Counts: always, after the cat's tokens and before the result's
+    const war = fs.readFileSync(path.join(ROOT, 'docs/storyboard/warrior.md'), 'utf8');
+    assert.ok(war.includes('the tortoiseshell’s name word (Murmur, or Mutter for a reader whose own Clan name is Murmur). `{ending}` is her warrior ending, `paw` until the Ceremony (Fernpaw, then Fernheart). The result’s own words come first'));
+    assert.equal((war.match(/\{name\}\{ending\}/g) || []).length, 3, 'its three re-sit lines');
+    // the den's next nest (the scenes owner's names): words for the option and the spot
+    const more = path.join(tmp, 'more.json');
+    fs.writeFileSync(more, JSON.stringify({ sets: { camp: { opts: { moon: 'number' } }, den: { anchors: ['next-nest'], opts: { moon: [15], nextNest: [false, true] } } } }));
+    const run = spawnSync(process.execPath, [TOOL, '--check-words', more], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});

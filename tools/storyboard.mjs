@@ -539,7 +539,9 @@ const SET_ANCH = { bridge: { beside: 'pressed against Sprinkle’s side',
   camp: { 'herbs-1': 'among the drying leaves at the left', 'herbs-2': 'at the right of the den', 'herbs-3': 'at the right of the den, further right still', web: 'high in the den’s top corner, on the little web (a spot about the size of a cat’s forepaw)' },
   den: { 'case-1': 'at the near left of the rows of bark', 'case-2': 'across the rows at the right', 'case-3': 'at the far side, standing by the doorway’s light',
     // chapter 10: on the stone close-up, her sleeping tail
-    tail: 'curled at the panel’s bottom edge: only her tail’s tip' },
+    tail: 'curled at the panel’s bottom edge: only her tail’s tip',
+    // chapter 11: the warriors' next nest (`nextNest`), beside hers on the nest close-up
+    'next-nest': 'in the next nest, at the left edge of the close-up' },
   // chapter 10: the Moon Ferry (the Crossing's stones, the deck, the raft's back, the low logs and the gap, the river) and
   // Gathering Island (the shore, the clearing, the roots, the case, the fox's edge, the mist, the sky, her paws); a spot
   // that reads differently through one camera is in CAM_ANCH below
@@ -654,6 +656,8 @@ const mixedSteps = set => [...new Set(asList(set.facts).map(f => (Array.isArray(
 
 /* ------------------------------------------------------------------ helpers */
 const q = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+// chapter 11: the legend's sentence for her warrior ending (the Warrior Counts' always; a chapter's where it has the token)
+const ENDING_WORDS = '`{ending}` is her warrior ending, `paw` until the Ceremony (Fernpaw, then Fernheart).';
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 const asList = x => (x == null ? [] : Array.isArray(x) ? x : [x]);
 function factWords(k) {
@@ -873,6 +877,8 @@ function optWords(set, k, v, all, cam) {
   // (chapter 10: the mist stone on her moss, grey or flashing; the small shape flying off over the riverbank)
   if (k === 'miststone') return v === true || v === 'flash' ? 'the mist stone on the moss of her nest, beside her glass in its leaf and the corners of her secret bark: a smooth grey pebble, egg-shaped, the size of her paw' +
     (v === 'flash' ? ', flashing blue and green in the moonlight from the doorway (a band of blue and green light across its face, the rest still grey)' : '') : v === false ? '' : k + ': ' + JSON.stringify(v);
+  // (chapter 11: the warriors' next nest beside hers, on the den's nest close-up)
+  if (k === 'nextNest') return v === true ? 'a second nest at the left edge of the close-up, a plain moss ring partly cut off by the panel’s edge (the next nest, with the warriors); her own nest a little to its right, with everything on it' : v === false ? '' : k + ': ' + JSON.stringify(v);
   if (k === 'flyer') return v === true ? 'a small winged shape flying off upriver across the sky by the red light, slate-dark, wings out, a tiny ring of hiccup mist behind it' : v === false ? '' : k + ': ' + JSON.stringify(v);
   if (k === 'door') return 'the door is ' + v;
   if (k === 'reflection') return v ? 'your reflection shows in the glass' : '';
@@ -1681,6 +1687,15 @@ function board(storyPath, outPath) {
       if (k === 'petname') return '**Then she picks or types her pet name** (' + s + '), then on to ' + f.input.next + '.';
       if (k === 'clanname') return '**Then she types the first part of her Clan name**, with a live preview (“You will be: Moonpaw”); ideas only if she asks (' + s + '). On to ' + f.input.next + '.';
       if (k === 'dream') return '**Then she may type a dream for her book**, or skip. On to ' + f.input.next + '.';
+      // chapter 11: her own warrior ending (the Type screen), refused in place by the frame's own lines
+      if (k === 'ending') {
+        const rf = f.input.refuse || {}, set = f.input.sets || {};
+        const no = [['own', 'her own name or no letter'], ['star', 'star'], ['paw', 'paw'], ['kit', 'kit (kitten, kitty)'], ['clan', 'a Clan cat’s whole name']]
+          .filter(([key]) => rf[key] && rf[key].text)
+          .map(([key, why]) => why + ', ' + (key === 'clan' ? 'that cat (Tallyheart, Thymeleaf or {Murmur}chime)' : SPEAKER[rf[key].who] || rf[key].who) + ': “' + q(rf[key].text) + '”');
+        return '**Then she types her own ending** after her name, with a live preview (“You will be: Fernheart”); refused, kindly, with another try on the same screen: ' + no.join('; ') + '.' +
+          (Object.keys(set).length ? ' Accepted, it sets ' + Object.keys(set).map(x => '`' + x + ': ' + JSON.stringify(set[x]) + '`').join(', ') + '.' : '') + ' On to ' + f.input.next + '.';
+      }
       return '**Then she types** (' + k + '). On to ' + f.input.next + '.';
     }
     if (f.look) return '**Then she chooses her look in the reflection**: she-cat or tom, fur, marking, eyes; the reflection redraws as she picks. On to ' + f.look.next + '.';
@@ -1871,7 +1886,7 @@ function board(storyPath, outPath) {
     md.push('');
     md.push('The Warrior Counts are not a chapter: no choices, one sitting of 55 questions, every pair up to ten times ten once, and the frames around it (`PC.warrior`, docs/warrior-counts.md). Each frame is boarded as a chapter’s is (**Shot**, **Scene**, **Captions**, **Balloons**, **Then**). The opening’s frames and the result’s are played in order with Next and the big Back beside it; a result page that depends on how the sitting went is listed with each of its versions.');
     md.push('');
-    md.push('`{name}` is the first part of her Clan name, `{petname}` what her Tall One calls her, and `{Murmur}`/`{murmur}` the tortoiseshell’s name word (Murmur, or Mutter for a reader whose own Clan name is Murmur). The result’s own words come first, in number words: `{right}`/`{Right}` her right answers, `{last}`/`{Last}` her last finished sitting’s, `{short}` fifty less `{right}`, and `{tricky}` the one or two Counts her misses fall in (“the 7s and the 8s”); a capital starts a sentence.');
+    md.push('`{name}` is the first part of her Clan name, `{petname}` what her Tall One calls her, and `{Murmur}`/`{murmur}` the tortoiseshell’s name word (Murmur, or Mutter for a reader whose own Clan name is Murmur). ' + ENDING_WORDS + ' The result’s own words come first, in number words: `{right}`/`{Right}` her right answers, `{last}`/`{Last}` her last finished sitting’s, `{short}` fifty less `{right}`, and `{tricky}` the one or two Counts her misses fall in (“the 7s and the 8s”); a capital starts a sentence.');
     md.push('');
     md.push('## At a glance');
     md.push('');
@@ -1994,7 +2009,9 @@ function board(storyPath, outPath) {
   md.push('- **Then**: what the reader does next (tap Next, choose, type, pick a look, count by twos, or do a Counts lesson).');
   md.push('');
   md.push('Where the reader makes a choice, each option’s frames are grouped under a **Branch** heading, and the branches meet again at the frame named after them. `{name}` is the first part of her Clan name (Moon makes Moonpaw), `{petname}` is what her Tall One calls her, and `{they}`/`{them}`/`{their}` become she/her/her or he/him/his.' +
-    (/\{(Murmur|murmur|MURMUR)\}/.test(JSON.stringify(story)) ? ' `{Murmur}`/`{murmur}` is the tortoiseshell’s name word: Murmur (Murmurpaw, Murmurchime, murmuring), or Mutter for a reader whose own Clan name is Murmur.' : ''));
+    (/\{(Murmur|murmur|MURMUR)\}/.test(JSON.stringify(story)) ? ' `{Murmur}`/`{murmur}` is the tortoiseshell’s name word: Murmur (Murmurpaw, Murmurchime, murmuring), or Mutter for a reader whose own Clan name is Murmur.' : '') +
+    // (chapter 11: her warrior ending, only where a story has it)
+    (/\{ending\}/.test(JSON.stringify(story)) ? ' ' + ENDING_WORDS : ''));
   md.push('');
   md.push('## At a glance');
   md.push('');

@@ -68,7 +68,10 @@ function sitting(cat, t, wrong, stop) {
 const missing = k => { let left = k; return q => { if (left > 0 && !(q.a === 10 && q.b === 10) && [q.a, q.b].some(x => x === 7 || x === 8)) { left--; return true; } return false; }; };
 const missAny = k => { let left = k; return q => { if (left > 0 && !(q.a === 10 && q.b === 10)) { left--; return true; } return false; }; };
 const state = (cat, t) => E.warriorState(cat, S, t);
-const hub = (cat, t) => U.hub(state(cat, t), E.progress(cat, S));
+// (chapter 11: the hub as the Warrior Counts built it, the Ceremony not yet in PC.story: E.progress over every chapter but the
+// one with `opensWhen: 'warrior'`, which is in PC.story now, a stub or built; the built Ceremony's hub has tests of its own)
+const UNBUILT = E.chapters(S).filter(s => s.opensWhen !== 'warrior');
+const hub = (cat, t) => U.hub(state(cat, t), E.progress(cat, UNBUILT));
 const fillAll = (cat, f, tokens) => [].concat(E.captions(f, cat), E.balloons(f, cat).map(b => b.text)).map(x => E.fill(x, cat, tokens));
 
 /* ------------------------------------------------------------------ the hub */
@@ -193,6 +196,79 @@ test('the hub with the Ceremony built: a stand-in Ceremony (`opensWhen: \'warrio
   assert.match(UI_SRC, /var built = E\.chapters\(stories\(\)\)\.some\(function \(s\) \{ return s\.opensWhen === 'warrior'; \}\);\n    var h = wHub\(warriorNow\(\), Object\.assign\(\{\}, p, \{ ceremonyBuilt: built \}\)\);/);
 });
 
+test('chapter 11: once the Ceremony is finished the hub shows the chapters’ teasers again (`hideSoon` from E.progress’s finished, never its latest), with a chapter 12 finished too; before it, hidden as the Counts left them; Read to me says the teaser under the slot', () => {
+  const C11 = { id: 'ch11', number: 11, title: 'Stand-in ceremony', opensWhen: 'warrior', start: 'f001', frames: { f001: { board: 'STUB.', next: 'f002' }, f002: { board: 'STUB.', end: true } },
+    teaser: { title: 'A new adventure', lines: ['An old badger track.'] } };
+  const C12 = { id: 'ch12', number: 12, title: 'Stand-in twelve', start: 'f001', frames: { f001: { board: 'STUB.', next: 'f002' }, f002: { board: 'STUB.', end: true } },
+    teaser: { title: 'Chapter 13', lines: ['Later.'] } };
+  const list = E.chapters(S).filter(s => s.opensWhen !== 'warrior').concat([C11]);
+  const c = catAfter10();
+  delete c.finished.ch11;
+  const t = Date.UTC(2026, 10, 9, 15);
+  sitting(c, t, null);
+  E.warriorSeen(c);
+  // passed, the Ceremony not read yet: its button is the hub's own, the teasers hidden
+  let p = E.progress(c, list);
+  assert.deepEqual([p.next && p.next.id, U.hub(state(c, t + HOUR), Object.assign({}, p, { ceremonyBuilt: true })).hideSoon], ['ch11', true]);
+  // the Ceremony finished: its teaser shows ("A new adventure is coming soon")
+  c.finished.ch11 = t + HOUR;
+  p = E.progress(c, list);
+  let h = U.hub(state(c, t + 2 * HOUR), Object.assign({}, p, { ceremonyBuilt: true }));
+  assert.deepEqual([p.next, p.soon && p.soon.title, h.hideSoon, h.soon], [null, 'A new adventure', false, null]);
+  // a chapter 12 finished too: E.progress's latest is chapter 12; the teasers still show
+  const list12 = list.concat([C12]);
+  c.finished.ch12 = t + 3 * HOUR;
+  p = E.progress(c, list12);
+  h = U.hub(state(c, t + 4 * HOUR), Object.assign({}, p, { ceremonyBuilt: true }));
+  assert.deepEqual([p.latest.id, p.soon && p.soon.title, h.hideSoon], ['ch12', 'Chapter 13', false]);
+  // a `p` with no `finished` hides them, as every caller before the Ceremony passed it
+  assert.equal(U.hub(state(c, t + 4 * HOUR), { next: null, ceremonyBuilt: true }).hideSoon, true);
+  // the page: hideSoon derived inside wHub (the hub's call to it unchanged), and the teaser read under the Counts' slot
+  assert.match(UI_SRC, /var hideSoon = !\(p\.finished \|\| \[\]\)\.some\(function \(s\) \{ return s\.opensWhen === 'warrior'; \}\);\n    var out = \{ big: null, quiet: null, soon: null, hideSoon: hideSoon, hideNext: unseen && !waitsQuietly \};/);
+  assert.match(UI_SRC, /if \(WH\.hideSoon\) soon = '';/);
+  assert.match(UI_SRC, /WH\.soon \? \[\{ text: WH\.soon \}\] : p\.soon && !WH\.hideSoon \? \[\{ text: p\.soon\.title \+ ' is coming soon\.' \}\] : \[\]\);/);
+});
+
+test('chapter 11: the Warrior Counts’ page labels her own balloons with her warrior name once she has one (her “A HUNDRED!” on a re-sit, beside Glintstar’s “Halfway, …”); every other label, and every unnamed cat’s, exactly as before', () => {
+  const sp = PC.ui.speakers, label = (b, cat, story) => sp.label(b, { cat, story: sp.warriorStory(story, cat), fill: t => E.fill(t, cat) });
+  const hundred = W.counts.last.right[0];
+  assert.deepEqual(hundred, { who: 'player', text: 'A HUNDRED!', kind: 'shout' }, 'the story’s balloon unchanged');
+  const c = catAfter10({ name: 'Moon' });
+  [S.ch10, S.ch09, S.ch11, null].forEach(story => {
+    assert.equal(sp.warriorStory(story, c), story, 'unnamed: the very story the page had');
+    assert.equal(label(hundred, c, story), 'Moonpaw');
+  });
+  c.ending = 'heart';
+  [S.ch10, S.ch09, S.ch11, null].forEach(story => {
+    assert.equal(label(hundred, c, story), 'Moonheart', 'named: her warrior name');
+    assert.equal(label({ who: 'tallyheart' }, c, story), 'Tallyheart');
+    assert.equal(label({ who: 'glintstar' }, c, story), 'Glintstar');
+  });
+  assert.equal(label({ who: 'otter' }, c, S.ch10), sp.label({ who: 'otter' }, { cat: c, story: S.ch10 }), 'the chapter’s own names kept (Granny)');
+  assert.equal(E.fill(W.halfway.say[0].text, c), 'Halfway, Moonheart.');
+  // the page's speakers go through it on the Warrior Counts' page only
+  assert.match(UI_SRC, /function speakerName\(s\) \{ return speakerLabel\(s, \{ cat: cat, story: view\.name === 'warrior' \? warriorLabels\(story, cat\) : story, fill: fill \}\); \}/);
+  // and the test cat of tools/shots.mjs takes an ending, so a look can be taken of a named cat
+  assert.match(SHOTS_SRC, /\['name', 'petname', 'ending'\]\.forEach\(function \(k\) \{ if \(o\[k\] != null\) c\[k\] = o\[k\]; \}\);/);
+});
+
+test('chapter 11: on a re-sit after the Ceremony a long warrior name (over 12 letters) labels her balloon on a line of its own, so “A HUNDRED!” never breaks after its A; a short name, an unnamed cat, another speaker and every page but the Counts’ letter as before', () => {
+  // ui.js's stackBalloon, run as the page runs it, with the speaker's label and face stubbed
+  const i = UI_SRC.indexOf('  function stackBalloon('), j = UI_SRC.indexOf('\n  }\n', i);
+  const make = (viewName, c) => new Function('view', 'cat', 'E', 'esc', 'speakerFace', 'speakerName', 'richN', UI_SRC.slice(i, j + 4) + '\nreturn stackBalloon;')(
+    { name: viewName }, c, E, s => String(s), () => '', b => b.who === 'player' ? E.displayName(c) : 'Glintstar', s => s);
+  const hundred = W.counts.last.right[0];
+  const long = catAfter10({ name: 'Thunderwhisker' }); long.ending = 'butterscotch';
+  assert.match(make('warrior', long)(hundred), /<span class="who long">Thunderwhiskerbutterscotch<\/span>A HUNDRED!/);
+  assert.match(make('warrior', long)({ who: 'glintstar', text: 'Ten times ten.' }), /<span class="who">Glintstar<\/span>/, 'not another speaker');
+  assert.match(make('story', long)(hundred), /<span class="who">/, 'not a chapter’s page');
+  const short = catAfter10({ name: 'Moon' }); short.ending = 'true';
+  assert.match(make('warrior', short)(hundred), /<span class="who">Moontrue<\/span>/, 'a short name keeps its line');
+  const unnamed = catAfter10({ name: 'Thunderwhisker' });
+  assert.match(make('warrior', unnamed)(hundred), /<span class="who">Thunderwhiskerpaw<\/span>/, 'before the Ceremony, as it was');
+  assert.match(HTML, /\n\.frame\[data-mode="warrior"\] \.sb \.who\.long\{display:table;margin:0 0 \.15em\}\n/);
+});
+
 test('the hub’s page: the big button’s id and its Enter key, Read to me naming whichever holds the big slot, read again on a tap and on visibilitychange; the button and the "again" in the hub before the book, chapter 8’s hub unchanged when there is none', () => {
   assert.match(UI_SRC, /var WH = hubWarrior\(p\), wbig = '', wquiet = '';/);
   assert.match(UI_SRC, /'<div class="hub">' \+ wbig \+ big \+ soon \+ wquiet \+/);
@@ -203,11 +279,14 @@ test('the hub’s page: the big button’s id and its Enter key, Read to me nami
   assert.match(UI_SRC, /\$\('warriorBtn'\)\.addEventListener\('click', function \(\) \{ tap\(WH\.big\.act\); \}\);/);
   assert.match(UI_SRC, /\$\('warriorAgain'\)\.addEventListener\('click', function \(\) \{ tap\(WH\.quiet && WH\.quiet\.act === 'result' \? 'result' : 'begin'\); \}\);/, 'the quiet slot: again, or a result after the pass');
   assert.match(UI_SRC, /hubWarrior\(E\.progress\(cat, stories\(\)\)\);\n      if \(hubWarriorSig !== was\) go\('hub', \{ keepScroll: true \}\);/);
-  assert.match(UI_SRC, /if \(WH\) currentSpeech = \[\{ text: E\.displayName\(cat\) \+ ', apprentice of CrystalClan\.' \}\]\.concat\(WH\.big \? \[\{ text: WH\.big\.says \}\] : \[\]\)/);
+  // (chapter 11: "apprentice" or "warrior" (`rank`), and the teaser under the slot once the Ceremony is finished: WH.hideSoon)
+  assert.match(UI_SRC, /if \(WH\) currentSpeech = \[\{ text: E\.displayName\(cat\) \+ ', ' \+ rank \+ ' of CrystalClan\.' \}\]\.concat\(WH\.big \? \[\{ text: WH\.big\.says \}\] : \[\]\)\n      \.concat\(p\.next && bigSays \? \[\{ text: bigSays \}\] : WH\.soon \? \[\{ text: WH\.soon \}\] : p\.soon && !WH\.hideSoon \? \[\{ text: p\.soon\.title \+ ' is coming soon\.' \}\] : \[\]\);/);
   assert.match(UI_SRC, /doc\.addEventListener\('visibilitychange', function \(\) \{\n(?:.*\n){0,4}      if \(doc\.visibilityState !== 'visible' \|\| view\.name !== 'hub' \|\| !cat \|\| hubWarriorSig == null/);
   assert.match(UI_SRC, /hubWarrior\(E\.progress\(cat, stories\(\)\)\);\n      if \(hubWarriorSig !== drawn\) return go\('hub', \{ keepScroll: true \}\);/, 'a tap reads the state again and redraws when it changed');
   // the hub as it always was when the slot is empty (WH null): the same markup and words
-  assert.match(UI_SRC, /currentSpeech = \[\{ text: E\.displayName\(cat\) \+ ', apprentice of CrystalClan\.' \}\]\.concat\(p\.next \? \[\{ text: bigSays \}\] : p\.soon \? \[\{ text: p\.soon\.title \+ ' is coming soon\.' \}\] : \[\]\);/);
+  // (chapter 11: "apprentice" until she has her warrior name, `rank`; the same words for every cat before then)
+  assert.match(UI_SRC, /currentSpeech = \[\{ text: E\.displayName\(cat\) \+ ', ' \+ rank \+ ' of CrystalClan\.' \}\]\.concat\(p\.next \? \[\{ text: bigSays \}\] : p\.soon \? \[\{ text: p\.soon\.title \+ ' is coming soon\.' \}\] : \[\]\);/);
+  assert.match(UI_SRC, /var rank = E\.warriorName\(cat\) \? 'warrior' : 'apprentice';/);
 });
 
 /* ------------------------------------------------------------------ the opening */
@@ -655,7 +734,8 @@ test('the bar, Back, the book and the corner’s chapter line: Camp on every pag
   assert.match(UI_SRC, /var hasFile = n === 'frame' && !!cat && E\.hasFile\(cat\) && !inLesson;/, 'the Case File’s button only on a chapter’s frames');
   assert.match(UI_SRC, /if \(n === 'warrior'\) return go\('hub', \{ back: true \}\);\n    go\('title', \{ back: true \}\);/);
   assert.match(UI_SRC, /hub: renderHub, hollow: renderHollow, nest: renderNest, warrior: renderWarrior \}\[name\];/);
-  assert.match(UI_SRC, /var wsBook = t && !t\.built && warriorBuilt\(\) \? warriorNow\(\) : null;\n    if \(wsBook && wPassShown\(wsBook\)\) t = Object\.assign\(\{\}, t, \{ lines: \['Your ceremony is coming soon\.'\] \}\);/, 'the book too: only once her first pass is seen (a sitting again’s unseen result gives nothing away)');
+  // (chapter 11: and only while the Ceremony is not built, so her book never promises the ceremony she had)
+  assert.match(UI_SRC, /var wsBook = t && !t\.built && warriorBuilt\(\) \? warriorNow\(\) : null;\n[^\n]*\n    if \(wsBook && wPassShown\(wsBook\) && !E\.chapters\(stories\(\)\)\.some\(function \(s\) \{ return s\.opensWhen === 'warrior'; \}\)\) t = Object\.assign\(\{\}, t, \{ lines: \['Your ceremony is coming soon\.'\] \}\);/, 'the book too: only once her first pass is seen (a sitting again’s unseen result gives nothing away)');
   assert.match(UI_SRC, /if \(wPassShown\(ws\)\) \{\n      \/\/ the Ceremony's chapter button is the hub's own/, 'the hub by the same rule');
   assert.match(UI_SRC, /s\.opensWhen === 'warrior' \? 'opens once the Warrior Counts are passed' : 'opens when the chapter before it is finished'/);
   assert.doesNotMatch(UI_SRC.match(/opens once the Warrior Counts are passed/)[0], /\b(she|her|he|him|his)\b/);

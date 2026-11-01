@@ -161,7 +161,7 @@
       c('murmurchime', 'stand', 'happy', 'crowd-right', 'left', { tailUp: true })], ['morning']),
     board: 'MEDIUM. Halfway: Murmurchime stands with her tail straight up, and Glintstar looks down from the fountain, kind. Beside our cat, Tallyheart stretches long and low, front paws out and tail up, to show how. Two balloons; one button under the panel.',
     say: [
-      { who: 'glintstar', text: 'Halfway, {name}paw.' },
+      { who: 'glintstar', text: 'Halfway, {name}{ending}.' },
       { who: 'tallyheart', text: 'Big stretch first. Front paws out, tail up. Like this.' }
     ]
   };
@@ -277,7 +277,7 @@
     scene: S('camp', 'crowd', QUIET, [glint('kind'), you('happy'), tally('kind'), chime('happy')], ['morning']),
     board: 'MEDIUM, AFTER THE PASS, ONLY WITH FIFTY TO FIFTY-FOUR RIGHT. On a quiet morning Glintstar looks down from the fountain, pleased, at our cat sitting at its foot, with Tallyheart beside it and Murmurchime watching. Under Tallyheart’s balloon the tricky ones are written out, each with its answer.',
     say: [
-      { who: 'glintstar', text: '{Right} right, {name}paw. Your pass is yours for good.' },
+      { who: 'glintstar', text: '{Right} right, {name}{ending}. Your pass is yours for good.' },
       { who: 'tallyheart', text: 'These were the tricky ones.', one: 'This was the tricky one.', chips: true }
     ]
   };
@@ -285,7 +285,7 @@
     scene: S('camp', 'crowd', QUIET, [glint('kind'), you('neutral'), tally('kind'), chime('happy')], ['morning']),
     board: 'MEDIUM, AFTER THE PASS, WITH FEWER THAN FIFTY RIGHT. On a quiet morning Glintstar looks down from the fountain, warm and steady, at our cat sitting at its foot, with Tallyheart beside it and Murmurchime watching. Her balloon has no number in it; under Tallyheart’s the tricky ones are written out, each with its answer.',
     say: [
-      { who: 'glintstar', text: 'Your pass is yours for good, {name}paw.' },
+      { who: 'glintstar', text: 'Your pass is yours for good, {name}{ending}.' },
       { who: 'tallyheart', text: 'These were the tricky ones.', chips: true }
     ]
   };

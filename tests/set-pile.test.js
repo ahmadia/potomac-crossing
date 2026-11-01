@@ -2222,3 +2222,19 @@ test('the depth hotfix (Charlie\'s bug, ch08 f030): on the pile\'s `wide` camera
   }
   t.diagnostic(frames + ' frames on `wide`, ' + pairs + ' pairs that meet');
 });
+
+// Chapter 11's review (2026-11-01): the moon over `wide` was held below the panel's top by its first radius (36 + 8), so
+// from age 12, where it has grown to 56, it was cut flat by the top edge (chapter 11's f042 at 15, by 8px at 1080 x 720;
+// chapter 9's f112 at 12, just touching). The limit is its own radius now, and 12 more; younger moons stand lower than
+// the limit and do not move (chapters 6 to 8), nor does any moon in `low`.
+test('chapter 11: the moon over the pile is never cut by the panel’s top: in `wide` and `low`, every age, the whole disc 12 below the top; up to age 11 (and in `low`, every age) where it always stood', () => {
+  const old = { wide: { y: 140, r: 36, dy: -10 }, low: { y: 128, r: 24, dy: -8 } };
+  for (const cam of ['wide', 'low']) for (let age = 1; age <= 15; age++) {
+    const svg = renderP(cam, Object.assign({ moon: age }, NIGHT_ROWS), [], ['night']).svg;
+    const top = +/viewBox="([^"]+)"/.exec(svg)[1].split(' ')[1], m = moonsOf(svg)[0];
+    assert.ok(m.y - m.r >= top + 12, cam + ' ' + age + ': the disc’s top ' + (m.y - m.r) + ', the panel’s ' + top);
+    const e = Math.min(10, Math.max(0, age - 4)), O = old[cam], was = Math.max(O.r + 8, O.y + O.dy * e);
+    if (cam === 'low' || age <= 11) assert.equal(m.y, was, cam + ' ' + age + ': where it stood');
+  }
+  assert.deepEqual([12, 15].map(age => moonsOf(renderP('wide', Object.assign({ moon: age }, NIGHT_ROWS), [], ['night']).svg)[0].y), [68, 68], 'wide, 12 and 15: 56 + 12 down (60 and 44 before)');
+});

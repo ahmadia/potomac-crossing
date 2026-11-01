@@ -1782,3 +1782,70 @@ but for `ch05.md`'s book rows.
 `{ foundPuddle: true, ch10Puddle: false }`, the forepaw line `{ not: { ch5Roof: false, foundWisp: false, not: { foundPuddle:
 true, ch10Puddle: false } } }` (the book only; the frames keep `ANY`), so a cat whose only Puddle is chapter 10's gets neither.
 No live save holds `ch10Puddle` (`tests/story-ch05.test.js`'s truth table).
+
+## Chapter 11 (v0.2)
+
+Chapter 11, *The Warrior Ceremony*, is [`chapters/11-the-warrior-ceremony.md`](chapters/11-the-warrior-ceremony.md) (Draft
+v0.4, final), built in `app/story/ch11.js`. **Its spec, [`chapters/11-the-warrior-ceremony.spec.md`](chapters/11-the-warrior-ceremony.spec.md)
+(v0.3), is the build's contract**; this section records the names as built. It opens once she has passed her Warrior Counts
+(`opensWhen: 'warrior'`), and it ends module 1.
+
+**The warrior name**, the one engine need (the spec's section 6 has it whole). Only the ending is stored: `cat.ending`, optional,
+absent until she is named (never in `E.blankCat`; `normCat` keeps its letters, lower case, at most `E.ENDING_MAX`, 12; the save
+stays version 2). Her name is `{name}{ending}`: the token `{ending}` is `paw` until she has one, so `{name}{ending}` reads
+`{name}paw` for every cat before the Ceremony (the Warrior Counts' three re-sit lines use it). `E.WARRIOR_ENDINGS` (thirty words, a
+row for each `ch10Best` and `specialty`, and the moon's) and `E.WARRIOR_GUARD` (whole names on either wiki) are data beside the
+engine; `E.warriorOffers(cat)` gives Glintstar's three, each row's first word that is not in her first part already, not
+guarded and not three of one letter at the join. `E.cleanEnding(raw, cat)` and `E.checkEnding(raw, cat)` read what she types
+(letters only, her first part dropped once from the front, 12 at most; refused for her own name or no letter, star, paw, kit, or a
+Clan cat's whole name, in that order; a typed ending is never guarded). `E.warriorName(cat)`; `E.displayName` shows it first, so
+the bar, the hub, “Who's playing?”, My nest, her book's signature and the grown-ups corner's heading say it; her book's and her
+Case File's titles keep `{name}paw` (their long classes test that name). The story's keys: an option's `ending` (an offered name,
+stored as given), an input of kind `'ending'` (the Type screen: `refuse` with `own`, `star`, `paw`, `kit` as `{ who, text }` and
+`clan` as `{ text }`, said by the Clan cat whose name it is; `sets`, applied only when an ending is accepted), two computed `when`
+keys (`offer`, `nameHas`; `ending` is read as her own field), and a skip's `name` (its counter's name tag). Chapter 1 read again,
+renamed: an offered ending she would no longer be offered is taken again from its row; a typed one stays. The flag `ch11Named`
+(`offer`, `self`) says how she was named. `E.VERSION` 0.11.0.
+
+**The page**: the Type screen (`renderEnding`: her first part, then the field, one row, the field wrapping under her first part
+where the row does not fit, CSS `.ending-row` in a block of its own; the live preview; “That’s my name!” always enabled; a refusal
+a balloon by its speaker on the panel, laid out as every balloon, what she typed kept and selected, a second tap within
+`UI.keys.GUARD_MS` ignored; `UI.ending` holds its rules for Node). Once she is named: the hub says “Warrior of CrystalClan”, My
+nest is “Your nest with the warriors”, and on the Warrior Counts' page her balloons are labelled `{name}{ending}`
+(`UI.speakers.warriorStory`); our cat's balloon label elsewhere stays `{name}paw` (chapter 11's balloons after the naming carry
+their own `name`). Once the Ceremony is finished, the hub shows the chapters' teasers again (`hideSoon` read from E.progress's
+`finished`) and her book no longer swaps the last teaser for “Your ceremony is coming soon.” `tools/shots.mjs`'s test cat takes
+`ending`.
+
+**Her name in the lettering** (the review's round): `nameHtml(cat)` letters a warrior name `{name}<wbr>{ending}`
+wherever `E.displayName` shows (the bar, the hub's "Keep reading," button, "Who's playing?", her book's heading and
+signature, My nest, the grown-ups corner), so a 26-letter name breaks only between its halves. `richN(s)` letters
+every caption, endcap, balloon (panel and stacked, the Warrior Counts' too), Tap and skip page caption, choice and
+book line: where her first part runs straight on into her ending, one of her three offered words or a shouted word
+of two or more capitals ({name}PINECONE), the joined word and its trailing punctuation are one `.wn` box (index.html:
+`display: inline-block; max-width: 100%`) with a `<wbr>` at the join, so a name that fits moves to the next line
+whole and only a longer one breaks at the join; no `overflow-wrap`. `{name}paw`, a word that only starts with her
+name, and a one-letter first part's capitals (`n.length > 1`, the final round: a cat named A boxed A|LIVE!) are
+lettered as before; Read to me keeps the plain text. With Aa, an endcap holding a `.wn` (only chapter 11's) is set at
+1.9em, not 2em (`html.big .endcap:has(.wn)`), so the first half of a 26-letter name fits a 1024 x 700 column; its lines
+break where they did. On the Warrior Counts' page, after the Ceremony, a warrior name over 12 letters labelling her own
+balloon is `.who.long` (`display: table`, a line of its own), so a re-sit's “A HUNDRED!” keeps its line.
+
+**Bigger text on a page she taps once** (index.html, Aa only, inside `@media (max-height: 760px), (max-width:
+700px)`: a sideways iPad 760px tall or less, and a phone): the Tap page's "Tap to…" line stays beside Back in the
+bottom row (`.next-row:has(> .btn.back + .tapline)` does not wrap; the line takes the rest, line-height 1.15), as
+the skip-count's does, instead of a row of its own over Back (ch11 f019 and f034 ran Back 6 and 3px under a 1024 x
+700 screen). Taller sideways iPads and upright ones are as before (at 1180 x 820 the rule re-laid fourteen live Tap
+pages that had room: the final round scoped it); `tests/aa-room.test.js` reads the block with `rulesAt`.
+
+**The art** (the spec's section 4): the camp's `moon` (the camp by moonlight), the den's `nextNest` (the warriors' next nest, its
+spot `next-nest`) and the kit's moon past full (ages 15 to 27).
+The camp's moon sits at (1100, 345), r 34, on the main composition (the tower at x 1050 drawn with its top at 440
+while it shows) and at (1010, 182), r 38, on the fountain composition (`CAMP_MOON`). The den's `moon` list
+gains 15. `nextNest` as built (`NEXT_NEST`): the second ring at (850, 899), scale 0.9; `next-nest` `{ x: 880, y:
+905, h: 210 }`, facing right; her nest and its `nest` spot 60 to the right (`{ x: 1120, y: 892, h: 250 }`), set as
+`S.spots` then `S.anchorMap = anchorsFor(S)`, so her stone, bark, glass and mist stone follow her. **The pile's
+moon** (`sets/pile.js` `pileMoon`): its top limit is its own radius plus 12 (was the base radius plus 8), so a moon
+of age 12 or more is never cut by the panel's top: chapter 11's f042 and, live, chapter 9's f112 (8 units lower,
+named in `tests/golden-ch09.test.js`); ages 11 and under do not move. `tools/storyboard.mjs` adds words for `nextNest` and `next-nest`,
+the `{ending}` legend sentence (the Warrior Counts' always, a chapter's where it has the token) and the Type screen's line.

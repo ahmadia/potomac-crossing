@@ -22,6 +22,8 @@ const UPRIGHT = '@media (orientation: portrait){\n  html.big .frame{gap:10px}';
 
 const SHORT = '@media (orientation: landscape) and (min-width: 700px) and (min-height: 501px) and (max-height: 719px){\n  html.big .frame .col{line-height:1.2}\n}';
 const SKIP = '/* Bigger text on a skip-count, on any screen:';
+// chapter 11's review (2026-11-01): a page she taps once keeps its "Tap to…" line beside Back, as the skip-count does
+const TAPONCE = '/* Bigger text on a page she taps once (chapter 11\'s review, 2026-11-01):';
 const PHONE = '@media (orientation: landscape) and (min-width: 700px) and (max-height: 500px){';
 
 /* Plain rules in a stretch of CSS: [{ sel: [selectors], body }] (comments dropped). */
@@ -38,8 +40,12 @@ function rulesAt(at) {
   while (depth && i < html.length) { if (html[i] === '{') depth++; else if (html[i] === '}') depth--; i++; }
   return rules(html.slice(open + 1, i - 1));
 }
-/* The skip-count's rules: top level, between their comment and the phone held sideways. */
-function skipRules() { return rules(html.slice(html.indexOf(SKIP), html.indexOf(PHONE))); }
+/* The skip-count's rules: top level, between their comment and the Tap pages' (chapter 11's review). */
+function skipRules() { return rules(html.slice(html.indexOf(SKIP), html.indexOf(TAPONCE))); }
+/* The Tap pages' rules: one @media block (a sideways iPad 760px tall or less, a phone), after their comment
+ * (the final review scoped them: at 1180 x 820 they re-laid fourteen live Tap pages that had room). */
+const TAPSCOPE = '@media (max-height: 760px), (max-width: 700px){';
+function tapRules() { return rulesAt(html.indexOf(TAPSCOPE, html.indexOf(TAPONCE))); }
 
 test('the block is there once, in its place: after the landscape spread, before the phone held sideways', () => {
   const at = html.indexOf(ROOM);
@@ -50,12 +56,18 @@ test('the block is there once, in its place: after the landscape spread, before 
   const short = html.indexOf(SHORT), up = html.indexOf(UPRIGHT);
   assert.ok(short > at && up > short, 'then the short screen’s closer lines, then the upright block');
   assert.ok(html.indexOf(SKIP) > up && html.indexOf(SKIP) < html.indexOf(PHONE), 'then the skip-count’s rules, at the top level');
+  assert.ok(html.indexOf(TAPONCE) > html.indexOf(SKIP) && html.indexOf(TAPONCE) < html.indexOf(PHONE), 'then the Tap pages’ comment');
+  const scope = html.indexOf(TAPSCOPE, html.indexOf(TAPONCE));
+  assert.ok(scope > 0 && scope < html.indexOf(PHONE), 'and their own block, before the phone held sideways');
+  assert.equal(html.split(TAPSCOPE).length, 2, 'that block once');
+  // nothing of theirs at the top level: between the comment and the block, only the comment
+  assert.equal(rules(html.slice(html.indexOf(TAPONCE), scope)).length, 0);
 });
 
 test('every rule is Bigger text’s alone, and none touches the picture or makes anything sticky (Aa off: nothing changes)', () => {
-  const all = rulesAt(html.indexOf(ROOM)).concat(rulesAt(html.indexOf(SHORT)), rulesAt(html.indexOf(UPRIGHT)), skipRules());
-  // 19, plus chapter 9's ask list (f118's six pairs; 2026-10-26)
-  assert.equal(all.length, 20, all.length + ' rules');
+  const all = rulesAt(html.indexOf(ROOM)).concat(rulesAt(html.indexOf(SHORT)), rulesAt(html.indexOf(UPRIGHT)), skipRules(), tapRules());
+  // 19, plus chapter 9's ask list (f118's six pairs; 2026-10-26), plus the Tap pages' two (chapter 11's review)
+  assert.equal(all.length, 22, all.length + ' rules');
   all.forEach((r) => {
     r.sel.forEach((s) => {
       assert.match(s, /^html\.big \.frame(\[data-kind="[a-z]+"\])?( |$)/, s + ': starts html.big .frame');
@@ -108,6 +120,19 @@ test('a skip-count: its "Tap to…" line beside Back only when the row holds not
   assert.equal(row.length, 3, 'the row, its line, its buttons');
   assert.ok(row.every((r) => r.sel.every((s) => s.includes(two))), 'every one of them only in that case');
   assert.match(row[0].body, /flex-direction:row-reverse/);
+});
+
+/* Chapter 11's review (2026-11-01): on a page she taps once (renderGlint: Back, then her "Tap to…" line, in one row) the
+ * line wrapped to a row of its own over Back in a narrow Aa column, and at 1024 x 700 ran Back 3 to 6px under the screen
+ * (ch11 f019, f034). With Aa, the line stays beside Back and wraps there, as the skip-count's does; where it already fit
+ * nothing moves (measured in WebKit over 107 Tap pages of chapters 1 to 11: 17 to 39px gained on 20 to 24, none worse).
+ * The final review scoped it to a sideways iPad 760px tall or less and a phone: at 1180 x 820 the line had room above Back,
+ * and beside it fourteen live Tap pages' one-line instructions broke into three ragged lines. */
+test('a page she taps once: its "Tap to…" line beside Back, with Aa alone, only where the row is Back and the line, and only on a short sideways iPad or a phone', () => {
+  const tp = tapRules();
+  assert.deepEqual(tp.map((r) => r.sel), [['html.big .frame .next-row:has(> .btn.back + .tapline)'], ['html.big .frame .next-row > .btn.back + .tapline']]);
+  assert.equal(tp[0].body, 'flex-wrap:nowrap');
+  assert.equal(tp[1].body, 'flex:1 1 0;min-width:0;line-height:1.15');
 });
 
 /* ---- the polish release (2026-10-31): the Aa fix's three leftovers, and the Training Hollow with nine Counts.

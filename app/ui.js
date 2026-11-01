@@ -17,7 +17,9 @@
  * line centred between the first, kept left, and the last, kept right), three speakers and their
  * voices (Hail, Snip, Snatch), and the corner's words for `foundHail`. Chapter 9 adds three speakers
  * and their voices (Thymeleaf, Mizzle, GroveClan's cats by variant) and the corner's words for
- * `foundMizzle` and `ch9Roof`; nothing else on the page changes.
+ * `foundMizzle` and `ch9Roof`; nothing else on the page changes. Chapter 11 adds the Type screen (her own warrior
+ * ending, typed after her first part, refused in place by a balloon: renderEnding, UI.ending) and her warrior name
+ * wherever E.displayName shows (nameHtml lets it break between its halves); nothing changes for a cat not yet named.
  *
  * Loads in Node without a DOM (it only exports the pure layout helpers there).
  */
@@ -487,7 +489,9 @@
     // chapter 10: Puddle found under the Moon Ferry (set with foundPuddle, never alone), and Tallyheart's question
     // at the end; the five card picks' flags follow, built from the stories' pick frames (UI.pickFlagWords)
     ch10Puddle: { 'true': 'found Puddle under the Moon Ferry (chapter 10; {their} book says so on chapter 10’s page)' },
-    ch10Best: { sprinkle: 'will remember Sprinkle most', friends: 'will remember {their} friends most', truth: 'will remember finding the truth most', counts: 'will remember the Counts most' }
+    ch10Best: { sprinkle: 'will remember Sprinkle most', friends: 'will remember {their} friends most', truth: 'will remember finding the truth most', counts: 'will remember the Counts most' },
+    // chapter 11: how she was named (her name itself is the corner's heading, E.displayName)
+    ch11Named: { offer: 'took one of the three names Glintstar saw in {them}', self: 'named {them}self' }
   };
   UI.flagWords = FLAG_WORDS;
   // flags the engine keeps for itself: never listed among "what the choices say"
@@ -695,7 +699,10 @@
     // (an unseen result that ended after her pass, a sitting again's, waits quietly; her first pass's, and
     // anything the state cannot tell, in the big slot)
     var unseen = wUnseen(ws), waitsQuietly = wAfterPassUnseen(ws);
-    var out = { big: null, quiet: null, soon: null, hideSoon: true, hideNext: unseen && !waitsQuietly };
+    // (chapter 11: once the Ceremony is finished the teasers show again: read from E.progress's `finished`, never
+    // `latest`, which is chapter 12 once that is finished; a `p` with no `finished` hides them, as before)
+    var hideSoon = !(p.finished || []).some(function (s) { return s.opensWhen === 'warrior'; });
+    var out = { big: null, quiet: null, soon: null, hideSoon: hideSoon, hideNext: unseen && !waitsQuietly };
     var big = function (act, label, small, says) { return { id: 'warriorBtn', act: act, label: label, small: small, says: says }; };
     if (unseen && !waitsQuietly) out.big = big('result', 'The Warrior Counts', 'Glintstar is waiting', 'The Warrior Counts. Glintstar is waiting.');
     else if (!passed && sitting) {
@@ -937,6 +944,45 @@
     afterPassUnseen: wAfterPassUnseen, passShown: wPassShown,
     variant: wVariant, tricky: wTricky, tokens: wTokens, result: wResult, pause: wPause, scene: wScene, speechMs: wSpeechMs, readMs: wReadMs };
 
+  /* ---------------------------------------------------------------- her warrior name (chapter 11; pure: tested in Node)
+   * docs/chapters/11-the-warrior-ceremony.spec.md, section 6. The Type screen's rules without a page: the preview's
+   * words, which line and speaker a refusal gets (the frame's `input.refuse`; the clan line's speaker is the Clan cat
+   * whose name it is), the field's first value (her ending only when she typed it, `ch11Named: 'self'`: one she typed comes
+   * back to be changed, an offered one she picked before is never handed back as if she had typed it, even once her
+   * offers have changed with a reread of chapter 1 or 10), and what a tap
+   * sends (that first value unchanged goes as her whole name, so the first-part rule drops exactly her first part). */
+  var ENDING_PROMPT = 'Type your new ending.';
+  // her book's “Next” once she has passed and the Ceremony is built: Glintstar's pass line (app/story/warrior.js)
+  var CEREMONY_NEXT = 'Tonight, the Clan gathers again. For your warrior name.';
+  function endingPrefill(cat) {
+    return cat && cat.flags && cat.flags.ch11Named === 'self' && typeof cat.ending === 'string' && cat.ending ? cat.ending : '';
+  }
+  function endingValue(cat, typed) {
+    var pre = endingPrefill(cat);
+    return pre && typed === pre ? (cat.name || '') + cat.ending : typed;
+  }
+  function endingPreview(cat, raw) {
+    var e = PC.engine.cleanEnding(raw, cat);
+    return 'You will be: ' + ((cat && cat.name) || '') + (e || '…');
+  }
+  function endingRefusal(input, cat, raw) {
+    var E0 = PC.engine, r = E0.checkEnding(raw, cat);
+    if (!r.refuse) return null;
+    var line = input && input.refuse && input.refuse[r.refuse];
+    var who = r.refuse === 'clan' ? r.who : line && line.who;
+    return { who: who || '', text: line && typeof line.text === 'string' ? E0.fill(line.text, cat) : '' };
+  }
+  UI.ending = { PROMPT: ENDING_PROMPT, preview: endingPreview, refusal: endingRefusal, prefill: endingPrefill, value: endingValue, ceremonyNext: CEREMONY_NEXT };
+  /* The story the Warrior Counts' page labels balloons by (the page's `story` is the last chapter read): for a cat
+   * with a warrior name, the same with her own balloons named `{name}{ending}`, so a re-sit after the Ceremony tags
+   * her "A HUNDRED!" with the name Glintstar's "Halfway, …" says; every other label, and every other cat's, as it was. */
+  function warriorLabels(story, cat) {
+    if (!(PC.engine && PC.engine.warriorName(cat))) return story;
+    var names = Object.assign({}, story && story.names, { player: '{name}{ending}' });
+    return Object.assign({}, story, { names: names });
+  }
+  UI.speakers.warriorStory = warriorLabels;
+
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
   var doc = root.document;
   if (!doc || typeof doc.createElement !== 'function') return;
@@ -970,6 +1016,35 @@
     return esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\n/g, '<br>');
   }
   function plain(s) { return String(s == null ? '' : s).replace(/\*+/g, '').replace(/×/g, ' times '); }
+  /* Her name as lettered on the page (chapter 11): a warrior name may break between its two halves, Thunderwhisker and
+   * butterscotch, where a 26-letter word would otherwise break anywhere; every other name exactly as before. */
+  function nameHtml(c) { return E.warriorName(c) ? esc(c.name) + '<wbr>' + esc(c.ending) : esc(E.displayName(c)); }
+  /* Lettering with her name in it (chapter 11): where her first part runs straight on into a word the story joins to it
+   * (her ending, Thunderwhisker|butterscotch; one of Glintstar's three names for her, {name}moon; a shouted word, the old
+   * tom's {name}PINECONE), a line may break at the join, as nameHtml's may: a 26-letter word with no break ran out of its
+   * balloon, past the column and off a phone's screen (the endcap), or broke at any letter. Nothing else changes: not
+   * `{name}paw`, not a word that only starts with her name (Fern, Ferns), so chapters 1 to 10 letter exactly as before;
+   * Read to me keeps the plain text. The joined word, with its trailing punctuation, is one .wn box (inline-block, at
+   * most the line's width): a name that fits moves to the next line whole, and only one longer than the line breaks at
+   * the join (the fix round's check: a bare break split Moon|silver at a line's end where it fit before). A one-letter
+   * first part takes no join with a shouted word (the final review: a cat named A boxed A|LIVE!, A|GAIN? on 44 to 55
+   * live frames, and ch05 f006's balloon re-wrapped upright); her ending and her offers still join. */
+  function richN(s) {
+    var h = rich(s), n = cat && typeof cat.name === 'string' && cat.name ? esc(cat.name) : '';
+    if (!n) return h;
+    var joins = E.warriorOffers(cat).concat(typeof cat.ending === 'string' && cat.ending ? [cat.ending] : []);
+    var out = '', i = 0, j, k, w, t;
+    while ((j = h.indexOf(n, i)) >= 0) {
+      k = j + n.length;
+      w = (/^[A-Za-z\u00C0-\u024F]+/.exec(h.slice(k)) || [''])[0];
+      if (w && !/[A-Za-z\u00C0-\u024F]/.test(h.charAt(j - 1)) && ((n !== n.toUpperCase() && /^[A-Z]{2,}$/.test(w)) || joins.indexOf(w) >= 0)) {
+        t = (/^[^\s<&]*/.exec(h.slice(k + w.length)) || [''])[0];
+        out += h.slice(i, j) + '<span class="wn">' + h.slice(j, k) + '<wbr>' + w + t + '</span>';
+        i = k + w.length + t.length;
+      } else { out += h.slice(i, k); i = k; }
+    }
+    return out + h.slice(i);
+  }
   function fill(s) { return E.fill(s, cat); }
   function later(fn, ms) { var t = setTimeout(fn, ms); timers.push(t); return t; }
   function clearTimers() { timers.forEach(clearTimeout); timers = []; }
@@ -1110,7 +1185,7 @@
   }
 
   /* ---------------------------------------------------------------- speakers */
-  function speakerName(s) { return speakerLabel(s, { cat: cat, story: story, fill: fill }); }
+  function speakerName(s) { return speakerLabel(s, { cat: cat, story: view.name === 'warrior' ? warriorLabels(story, cat) : story, fill: fill }); }
   /* A frame's balloons as she sees them (E.balloons: `when` applied). The nth balloon from a who
    * belongs to the nth of them in the cast (hidden balloons still count), for its coat and voice.
    * `digits` (the Warrior Counts: "7 × 8") are lettered small in Andika beside the balloon. */
@@ -1333,7 +1408,7 @@
     var t = '';
     if (n === 'title') t = '';
     else if (n === 'who') t = 'Potomac Crossing';
-    else if (cat) t = esc(E.displayName(cat)) + (n === 'frame' && story ? '<small>Chapter ' + (story.number || 1) + ' · ' + esc(story.title) + '</small>' : '') +
+    else if (cat) t = nameHtml(cat) + (n === 'frame' && story ? '<small>Chapter ' + (story.number || 1) + ' · ' + esc(story.title) + '</small>' : '') +
       (n === 'warrior' ? '<small>The Warrior Counts</small>' : '');
     title.innerHTML = t;
   }
@@ -1408,7 +1483,7 @@
       '</figure>' +
       '<p class="tagline">A pillow cat. A hidden Clan. A storm on the river.</p>' +
       '<div class="title-cta">' +
-      (cat ? '<button class="btn go big" id="resumeBtn" type="button">' + (atCampEnd(cat) ? 'Back to camp, ' : 'Keep reading, ') + esc(E.displayName(cat)) + '</button>' +
+      (cat ? '<button class="btn go big" id="resumeBtn" type="button">' + (atCampEnd(cat) ? 'Back to camp, ' : 'Keep reading, ') + nameHtml(cat) + '</button>' +
         '<button class="btn quiet" id="playBtn" type="button">Who’s playing?</button>'
         : '<button class="btn go big" id="playBtn" type="button">Play</button>') +
       '</div></section>';
@@ -1424,7 +1499,7 @@
       var status = E.status(c, stories());
       return '<button class="catcard" type="button" data-cat="' + esc(c.id) + '">' +
         '<span class="face" aria-hidden="true">' + catPortrait(c.look, 'happy') + '</span>' +
-        '<b' + (E.displayName(c).length > 12 ? ' class="long"' : '') + '>' + esc(E.displayName(c)) + '</b><span>' + esc(status) + '</span></button>';
+        '<b' + (E.displayName(c).length > 12 ? ' class="long"' : '') + '>' + nameHtml(c) + '</b><span>' + esc(status) + '</span></button>';
     });
     if (save.cats.length < E.MAX_CATS) {
       cards.push('<button class="catcard new" type="button" id="newCat"><span class="face" aria-hidden="true">+</span><b>New cat</b><span>Start a new story</span></button>');
@@ -1596,7 +1671,7 @@
       for (var ci = 0; ci < caps.length && ok; ci++) {
         var el = doc.createElement('p');
         el.className = 'ctext';
-        el.innerHTML = rich(caps[ci]);
+        el.innerHTML = richN(caps[ci]);
         el.style.maxWidth = Math.round(W * 0.48) + 'px';
         el.style.visibility = 'hidden';
         ov.appendChild(el);
@@ -1635,8 +1710,8 @@
     }
     if (layout.captions === 'column') {
       colTop.innerHTML = caps.map(function (c) {
-        if (ctx.frame.end && /^(the )?end of chapter/i.test(c)) return '<p class="endcap">' + rich(c) + '</p>';
-        return '<p class="caption">' + rich(c) + '</p>';
+        if (ctx.frame.end && /^(the )?end of chapter/i.test(c)) return '<p class="endcap">' + richN(c) + '</p>';
+        return '<p class="caption">' + richN(c) + '</p>';
       }).join('');
       heard.forEach(function (c) { reading.push({ text: c }); });
     }
@@ -1660,7 +1735,7 @@
       t.className = 'btext ' + b.kind;
       var prevB = bi > 0 ? bs[bi - 1] : null;
       // a voice from outside the panel gets a name tag, unless it continues the balloon before
-      t.innerHTML = (!hd && !(prevB && same) ? '<span class="tagin">' + esc(speakerName(b)) + '</span>' : '') + rich(b.text);
+      t.innerHTML = (!hd && !(prevB && same) ? '<span class="tagin">' + esc(speakerName(b)) + '</span>' : '') + richN(b.text);
       var len = b.text.length;
       var maxW = Math.min(W * 0.5, Math.max(fs * 6, Math.sqrt(len) * fs * 2.3));
       t.style.maxWidth = Math.round(maxW) + 'px';
@@ -1773,8 +1848,12 @@
   function stackBalloon(b, extraClass) {
     var right = b.who === 'player';
     var face = b.noFace ? '' : speakerFace(b.who, b.variant);
+    var who = speakerName(b);
+    // a long warrior name labelling her own balloon on the Warrior Counts' pages (a re-sit after the Ceremony) takes a
+    // line of its own, so her shout keeps its line: "Thunderwhiskerbutterscotch A / HUNDRED!" (the final review)
+    var longWho = view.name === 'warrior' && right && E.warriorName(cat) && who.length > 12;
     return '<div class="sbrow' + (right ? ' right' : '') + '">' + (face ? '<span class="sface" aria-hidden="true">' + face + '</span>' : '') +
-      '<div class="sb ' + esc(b.kind || '') + (right ? ' right' : '') + ' ' + (extraClass || '') + '"><span class="who">' + esc(speakerName(b)) + '</span>' + (b.html != null ? b.html : rich(b.text)) +
+      '<div class="sb ' + esc(b.kind || '') + (right ? ' right' : '') + ' ' + (extraClass || '') + '"><span class="who' + (longWho ? ' long' : '') + '">' + esc(who) + '</span>' + (b.html != null ? b.html : richN(b.text)) +
       (b.digits ? '<span class="dpill">' + esc(b.digits) + '</span>' : '') + '</div></div>';
   }
   function drawBalloon(parts, s, W, H) {
@@ -1965,7 +2044,7 @@
       var prompt = f.choice.prompt ? '<p class="prompt">' + rich(fill(f.choice.prompt)) + '</p>' : '';
       var was = E.chosen(cat, story, id), picked = was ? was.index : -1;
       box.innerHTML = prompt + '<div class="choices" role="group">' + opts.map(function (o, n) {
-        return '<button class="choice" type="button" data-i="' + o.index + '" data-n="' + (n + 1) + '"' + (o.index === picked ? ' aria-current="true"' : '') + '>' + rich(fill(E.optionLabel(o.option, cat))) + '</button>';
+        return '<button class="choice" type="button" data-i="' + o.index + '" data-n="' + (n + 1) + '"' + (o.index === picked ? ' aria-current="true"' : '') + '>' + richN(fill(E.optionLabel(o.option, cat))) + '</button>';
       }).join('') + '</div><div class="next-row">' + backBottom() + '</div>';
       wireBackBottom();
       Array.prototype.forEach.call(box.querySelectorAll('.choice'), function (b) {
@@ -1987,7 +2066,7 @@
     if (kind === 'file') return renderFileFrame(f, id, ctx, box, panel);
     if (kind === 'pick') return renderPickFrame(f, id, ctx, box, panel, nextBtn);
     if (kind === 'scratch') return renderGlint(f, id, ctx, box, panel);
-    if (kind === 'input') return renderInput(f, id, box);
+    if (kind === 'input') return renderInput(f, id, box, ctx);
     if (kind === 'look') return renderLook(f, id, box, ctx);
     if (kind === 'counts') {
       var done = cat.lessons[f.counts.set];
@@ -2033,9 +2112,12 @@
     var own = words.whisper, teacher = words.teacher, noted = false;
     // the count's name tag is the frame's own for that speaker ("Squall", once he has said his name)
     var tname = nameOn(intro, teacher);
+    // (chapter 11: or the skip's own `name`, where the frame has no balloon of the counter's to take it from: f052's
+    // whispered count is tagged with her warrior name)
+    if (sk.name != null) tname = sk.name;
     var hint = words.prompt ? fill(words.prompt) : '';
     panel.setAttribute('aria-label', words.aria);
-    $('colTop').innerHTML = caps.map(function (c) { return '<p class="caption">' + rich(c) + '</p>'; }).join('');
+    $('colTop').innerHTML = caps.map(function (c) { return '<p class="caption">' + richN(c) + '</p>'; }).join('');
     function draw(fresh) {
       var v = E.skipView(sk, taps);
       if (onScene) {
@@ -2439,7 +2521,7 @@
     panel.classList.add('bark-panel', 'tappable', 'ground-' + (/^[a-z]+$/.test(sc.ground || '') ? sc.ground : 'sand'));
     var caps = captionsOf(f), intro = balloonsOf(f);
     var hint = tw.prompt ? fill(tw.prompt) : '';
-    $('colTop').innerHTML = caps.map(function (c) { return '<p class="caption">' + rich(c) + '</p>'; }).join('');
+    $('colTop').innerHTML = caps.map(function (c) { return '<p class="caption">' + richN(c) + '</p>'; }).join('');
     $('stack').innerHTML = intro.map(function (b) { return stackBalloon(b); }).join('');
     function pieces() {
       var ps = E.scratchPieces(f, cat, story, stories());
@@ -2626,7 +2708,7 @@
           '<p class="cf-linkline">' + rich(fill(l.line)) + '</p></section>';
       });
       links = links.length > 1 ? '<div class="cf-links">' + links.join('') + '</div>' : links.join('');
-      html = '<div class="cf-in"><div class="cf-head"><h2 class="cf-title' + (E.displayName(cat).length > 12 ? ' long' : '') + '" id="fileTitle">' + esc(F.title) + '</h2>' + close + '</div>' +
+      html = '<div class="cf-in"><div class="cf-head"><h2 class="cf-title' + ((E.clanName(cat) || E.displayName(cat)).length > 12 ? ' long' : '') + '" id="fileTitle">' + esc(F.title) + '</h2>' + close + '</div>' +
         (F.count ? '<div class="cf-groups' + (shown.length < 2 ? ' one' : F.links.length ? ' linked' : '') + (F.links.length > 1 ? ' many' : '') + '">' + groups + links + '</div>'
           : '<p class="cf-none">No cards yet.</p>') + '</div>';
     }
@@ -2864,8 +2946,10 @@
   }
 
   /* ---------------------------------------------------------------- inputs */
-  function renderInput(f, id, box) {
+  function renderInput(f, id, box, ctx) {
     var inp = f.input, kind = inp.kind;
+    // chapter 11: her own warrior ending, typed after her first part (a page of its own, with refusals in place)
+    if (kind === 'ending') return renderEnding(f, id, box, ctx);
     var sugg = (inp.suggestions || []).map(fill);
     var html = '';
     if (kind === 'petname') {
@@ -2922,6 +3006,70 @@
       if (e.key === 'Enter' && !e.shiftKey && !ok.disabled) { e.preventDefault(); if (!e.repeat) submit(field.value); }
     });
     sync();
+    keyHandler = function (e) { if (!isTyping(e) && e.key === 'ArrowLeft') onBack(); };
+  }
+
+  /* The Type screen (chapter 11; docs/chapters/11-the-warrior-ceremony.spec.md, section 6): her first part, then the
+   * field, one row (the field wraps under her first part where the row does not fit); the live preview; "That’s my
+   * name!", always enabled. A refusal is a balloon by its speaker on this panel (the clan line's by the Clan cat
+   * whose name it is), after the frame's own and replacing any earlier one, laid out as the page lays out every
+   * balloon; what she typed stays, selected, and a tap within the double-tap guard of a refusal is ignored, so
+   * she always sees the real reason. Read to me says the prompt, and a refusal at once when it is on. */
+  function renderEnding(f, id, box, ctx) {
+    var inp = f.input, first = cat.name || '';
+    box.innerHTML = '<div class="look">' +
+      '<p class="prompt">' + esc(ENDING_PROMPT) + '</p>' +
+      '<div class="ending-row"><span class="ending-name">' + esc(first) + '</span>' +
+      '<input class="field" id="inp" type="text" maxlength="30"' + (inp.placeholder ? ' placeholder="' + esc(fill(inp.placeholder)) + '"' : '') +
+      ' autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" aria-label="' + esc('Your new ending, after ' + first) + '"></div>' +
+      '<div class="preview ending-preview" id="preview" aria-live="polite"></div>' +
+      '<div class="row end">' + backBottom() + '<button class="btn go big" id="okBtn" type="button">That’s my name!</button></div>' +
+      '</div>';
+    wireBackBottom();
+    var field = $('inp'), ok = $('okBtn'), preview = $('preview');
+    // her ending again, only when she typed it (an offered one is never handed back as hers)
+    var pre = endingPrefill(cat);
+    if (pre) field.value = pre;
+    // (the preview's words are UI.ending.preview's; her name may break between its two halves, as everywhere)
+    var sync = function () {
+      var e = E.cleanEnding(endingValue(cat, field.value), cat);
+      preview.innerHTML = '<small>You will be:</small>' + esc(first) + '<wbr>' + esc(e || '…');
+    };
+    var refusedAt = -1e9, quietFocus = false;
+    var submit = function () {
+      if (now() - refusedAt < UI_GUARD_MS) return;
+      var raw = endingValue(cat, field.value), no = endingRefusal(inp, cat, raw);
+      if (!no) { if (E.submitInput(cat, story, raw, now())) { persist(); go('frame'); } return; }
+      refusedAt = now();
+      var cast = (f.scene && f.scene.cast) || [];
+      var member = cast.filter(function (c) { return c && c.who === no.who; })[0];
+      var b = { who: no.who, text: no.text, kind: 'say', nth: 0, variant: member && member.variant, refusal: true };
+      ctx.balloons = (ctx.balloons || []).filter(function (x) { return !x.refusal; }).concat(no.text ? [b] : []);
+      relayoutFn = function () { layoutText(ctx); };
+      layoutText(ctx);
+      currentSpeech = (ctx.reading || []).concat([{ text: ENDING_PROMPT }]);
+      // the field keeps the focus, what she typed selected, so her next keystroke replaces it
+      quietFocus = true;
+      try { field.focus({ preventScroll: true }); } catch (e) { field.focus(); }
+      quietFocus = false;
+      try { field.select(); } catch (e) {}
+      // the balloon in view (the keyboard may be up): the last balloon, in the panel or under it
+      var els = ctx.panel.querySelectorAll('.ov .btext'), stackEls = $('stack') ? $('stack').querySelectorAll('.sbrow') : [];
+      var el = lastLayout && lastLayout.balloons === 'stack' ? stackEls[stackEls.length - 1] : els[els.length - 1];
+      if (el && el.scrollIntoView) { try { el.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) {} }
+      if (no.text && save.settings.readAloud) speakItems([{ text: no.text, who: b.who, variant: b.variant }]);
+    };
+    field.addEventListener('input', sync);
+    field.addEventListener('focus', function () {
+      if (quietFocus) return;
+      later(function () { try { field.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) {} }, 300);
+    });
+    ok.addEventListener('click', function () { submit(); });
+    field.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!e.repeat) submit(); }
+    });
+    sync();
+    if (ctx.reading) ctx.reading.push({ text: ENDING_PROMPT });
     keyHandler = function (e) { if (!isTyping(e) && e.key === 'ArrowLeft') onBack(); };
   }
 
@@ -3568,6 +3716,8 @@
     // chapter, with a quiet "The Warrior Counts again" under it (UI.warrior.hub). Null for every cat
     // before then: the hub is as it always was
     var WH = hubWarrior(p), wbig = '', wquiet = '';
+    // chapter 11: a warrior once she has her warrior name (the hub's line and what Read to me says)
+    var rank = E.warriorName(cat) ? 'warrior' : 'apprentice';
     if (WH) {
       // (a result waiting to be seen: the Ceremony's chapter button waits too, so the hub never tells her
       // she passed before Glintstar does)
@@ -3581,7 +3731,7 @@
     $('screen').innerHTML =
       '<section class="page center">' +
       '<div class="hero"><span class="face" aria-hidden="true">' + catPortrait(cat.look, 'proud') + '</span>' +
-      '<div><h1 class="h1" style="text-align:left">' + esc(E.displayName(cat)) + '</h1><p class="note" style="text-align:left">Apprentice of CrystalClan' +
+      '<div><h1 class="h1" style="text-align:left">' + nameHtml(cat) + '</h1><p class="note" style="text-align:left">' + cap1(rank) + ' of CrystalClan' +
       (latest ? ' · Chapter ' + (latest.number || 1) + ' finished' : '') + '</p></div></div>' +
       // "… is coming soon" stands where the big button goes, so it never sinks below the screen
       '<div class="hub">' + wbig + big + soon + wquiet +
@@ -3601,10 +3751,11 @@
     });
     if ($('nextChapter')) $('nextChapter').addEventListener('click', function () { readChapter(p.next, true); });
     if ($('hubFile')) $('hubFile').addEventListener('click', function () { openFile(); });
-    currentSpeech = [{ text: E.displayName(cat) + ', apprentice of CrystalClan.' }].concat(p.next ? [{ text: bigSays }] : p.soon ? [{ text: p.soon.title + ' is coming soon.' }] : []);
+    currentSpeech = [{ text: E.displayName(cat) + ', ' + rank + ' of CrystalClan.' }].concat(p.next ? [{ text: bigSays }] : p.soon ? [{ text: p.soon.title + ' is coming soon.' }] : []);
     // (the Warrior Counts' slot, when it holds the big button or the coming-soon line: Read to me names it)
-    if (WH) currentSpeech = [{ text: E.displayName(cat) + ', apprentice of CrystalClan.' }].concat(WH.big ? [{ text: WH.big.says }] : [])
-      .concat(p.next && bigSays ? [{ text: bigSays }] : WH.soon ? [{ text: WH.soon }] : []);
+    // (chapter 11: once the Ceremony is finished, the teaser under it too: WH.hideSoon)
+    if (WH) currentSpeech = [{ text: E.displayName(cat) + ', ' + rank + ' of CrystalClan.' }].concat(WH.big ? [{ text: WH.big.says }] : [])
+      .concat(p.next && bigSays ? [{ text: bigSays }] : WH.soon ? [{ text: WH.soon }] : p.soon && !WH.hideSoon ? [{ text: p.soon.title + ' is coming soon.' }] : []);
     if (WH) wireHubWarrior(WH);
     // Enter: whichever holds the big slot (the Warrior Counts' button, else the next chapter's); with the
     // Warrior Counts' slot, also once a tap has put the focus on the page itself (main#screen)
@@ -3627,19 +3778,25 @@
     // (once Glintstar has said it: never while her first pass's result is unseen; a sitting again's
     // unseen result gives nothing away, as on the hub)
     var wsBook = t && !t.built && warriorBuilt() ? warriorNow() : null;
-    if (wsBook && wPassShown(wsBook)) t = Object.assign({}, t, { lines: ['Your ceremony is coming soon.'] });
+    // (chapter 11: only while the Ceremony is not built: after it, her book never promises the ceremony she had)
+    if (wsBook && wPassShown(wsBook) && !E.chapters(stories()).some(function (s) { return s.opensWhen === 'warrior'; })) t = Object.assign({}, t, { lines: ['Your ceremony is coming soon.'] });
+    // (the Ceremony built, its teaser next, her pass seen: chapter 10's teaser would ask her to pass Counts she has
+    // passed; Glintstar's pass line, which she has read, stands in its place till she reads the chapter)
+    var wsNext = t && t.built && warriorBuilt() && (E.chapter(t.next, stories()) || {}).opensWhen === 'warrior' ? warriorNow() : null;
+    if (wsNext && wPassShown(wsNext)) t = Object.assign({}, t, { lines: [CEREMONY_NEXT] });
     $('screen').innerHTML =
       '<article class="book" aria-label="' + esc(b.title) + '">' +
-      // a long Clan name ("Thunderwhiskerpaw’s") gets a smaller title, so the word never breaks
-      '<h1' + (E.displayName(cat).length > 12 ? ' class="long"' : '') + '>' + esc(b.title) + '</h1>' +
+      // a long Clan name ("Thunderwhiskerpaw’s") gets a smaller title, so the word never breaks (the name the title
+      // shows: {name}paw, her warrior name or not, chapter 11)
+      '<h1' + ((E.clanName(cat) || E.displayName(cat)).length > 12 ? ' class="long"' : '') + '>' + esc(b.title) + '</h1>' +
       '<div class="portrait" aria-hidden="true">' + catPortrait(cat.look, 'happy') + '</div>' +
       (b.pages.length ? b.pages.map(function (pg) {
         return '<section class="bookpage" id="book-' + esc(pg.id) + '"><h2 class="chap">' + esc(pg.heading) + '</h2>' +
-          pg.recap.map(function (p) { return '<p>' + rich(p) + '</p>'; }).join('') +
-          (pg.dream ? '<p class="dream">' + rich(pg.dream) + '</p>' : '') + '</section>';
+          pg.recap.map(function (p) { return '<p>' + richN(p) + '</p>'; }).join('') +
+          (pg.dream ? '<p class="dream">' + richN(pg.dream) + '</p>' : '') + '</section>';
       }).join('') : '<p class="chap">Finish a chapter, and it goes in your book.</p>') +
       dragonetPages(b.dragonets) +
-      '<div class="sig">' + esc(E.displayName(cat)) + ' of CrystalClan</div>' +
+      '<div class="sig">' + nameHtml(cat) + ' of CrystalClan</div>' +
       '</article>' +
       '<div class="links no-print"><button class="btn" id="printBtn" type="button">Print my book</button></div>' +
       (t ? '<section class="coming" aria-label="Coming next">' +
@@ -4074,7 +4231,7 @@
     var scr = $('screen');
     scr.innerHTML = '<section class="page">' +
       '<div class="solo-panel"><figure class="panel" id="panel"><div class="art" aria-hidden="true"></div><div class="ov"></div></figure></div>' +
-      '<h1 class="h1">' + esc(E.displayName(cat)) + '’s nest</h1>' +
+      '<h1 class="h1">' + nameHtml(cat) + '’s nest</h1>' +
       // gifts from friends come first
       (g.gifts.length ? '<h2 class="h2 nest-h">From friends</h2><div class="nest-grid">' + g.gifts.map(card).join('') + '</div>' : '') +
       (g.treasures.length ? (g.gifts.length ? '<h2 class="h2 nest-h">Treasures</h2>' : '') + '<div class="nest-grid">' + g.treasures.map(card).join('') + '</div>' : '') +
@@ -4085,7 +4242,8 @@
     var panel = $('panel');
     var f = { scene: { set: 'den', cam: 'nest', cast: [{ who: 'player', pose: 'curl', mood: 'happy', at: 'nest' }], fx: ['night'] } };
     drawArt(panel, f, cat.look);
-    panel.setAttribute('aria-label', 'Your nest in the apprentices’ den');
+    // (chapter 11: her nest is with the warriors once she is named)
+    panel.setAttribute('aria-label', E.warriorName(cat) ? 'Your nest with the warriors' : 'Your nest in the apprentices’ den');
     Array.prototype.forEach.call(doc.querySelectorAll('[data-go]'), function (b) { b.addEventListener('click', function () { go(b.getAttribute('data-go'), { from: 'nest' }); }); });
     if ($('nestFile')) $('nestFile').addEventListener('click', function () { openFile(); });
     currentSpeech = [{ text: E.displayName(cat) + '’s nest.' }]
@@ -4216,7 +4374,7 @@
         var r = E.hollowTable(c, k.table);
         return 'the ' + k.table + 's ' + r.rounds + ' (' + r.cleanRounds + ' without help' + (r.glow ? ', claw mark glowing' : '') + ')';
       }).join('; ') : '');
-      html += '<h3>' + esc(E.displayName(c)) + '</h3>' +
+      html += '<h3>' + nameHtml(c) + '</h3>' +
         '<dl><dt>Clan name</dt><dd>' + esc(c.name ? c.name + 'paw' : '(not yet)') + '</dd>' +
         '<dt>Pet name</dt><dd>' + esc(c.petname || '(not yet)') + '</dd>' +
         '<dt>Look</dt><dd>' + esc(lookTxt) + '</dd>' +

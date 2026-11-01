@@ -6,7 +6,7 @@
 
 The Warrior Counts are not a chapter: no choices, one sitting of 55 questions, every pair up to ten times ten once, and the frames around it (`PC.warrior`, docs/warrior-counts.md). Each frame is boarded as a chapter’s is (**Shot**, **Scene**, **Captions**, **Balloons**, **Then**). The opening’s frames and the result’s are played in order with Next and the big Back beside it; a result page that depends on how the sitting went is listed with each of its versions.
 
-`{name}` is the first part of her Clan name, `{petname}` what her Tall One calls her, and `{Murmur}`/`{murmur}` the tortoiseshell’s name word (Murmur, or Mutter for a reader whose own Clan name is Murmur). The result’s own words come first, in number words: `{right}`/`{Right}` her right answers, `{last}`/`{Last}` her last finished sitting’s, `{short}` fifty less `{right}`, and `{tricky}` the one or two Counts her misses fall in (“the 7s and the 8s”); a capital starts a sentence.
+`{name}` is the first part of her Clan name, `{petname}` what her Tall One calls her, and `{Murmur}`/`{murmur}` the tortoiseshell’s name word (Murmur, or Mutter for a reader whose own Clan name is Murmur). `{ending}` is her warrior ending, `paw` until the Ceremony (Fernpaw, then Fernheart). The result’s own words come first, in number words: `{right}`/`{Right}` her right answers, `{last}`/`{Last}` her last finished sitting’s, `{short}` fifty less `{right}`, and `{tricky}` the one or two Counts her misses fall in (“the 7s and the 8s”); a capital starts a sentence.
 
 ## At a glance
 
@@ -176,7 +176,7 @@ Each stays 2.5 s, or 3.5 s when its line is over six words, or as long as its wo
 
 **Balloons**
 
-- **Glintstar**: “Halfway, {name}paw.”
+- **Glintstar**: “Halfway, {name}{ending}.”
 - **Tallyheart**: “Big stretch first. Front paws out, tail up. Like this.”
 
 **Then:** one button, “Keep going”, and the 29th question. No Back: the page comes after an answer.
@@ -433,7 +433,7 @@ Every page has the big Back beside Next; the last has two buttons, and either ma
 
 **Balloons**
 
-- **Glintstar**: “{Right} right, {name}paw. Your pass is yours for good.”
+- **Glintstar**: “{Right} right, {name}{ending}. Your pass is yours for good.”
 - **Tallyheart**: “These were the tricky ones.” *(under it, her missed pairs written out in Andika, each with its answer (“7 × 8 = 56”), up to six, the tricky Counts’ first, a pair with a 1 last)* *(over a single chip: “This was the tricky one.”)*
 
 **Then:** her buttons, “The Training Hollow” and “Camp” (the big one).
@@ -448,7 +448,7 @@ Every page has the big Back beside Next; the last has two buttons, and either ma
 
 **Balloons**
 
-- **Glintstar**: “Your pass is yours for good, {name}paw.”
+- **Glintstar**: “Your pass is yours for good, {name}{ending}.”
 - **Tallyheart**: “These were the tricky ones.” *(under it, her missed pairs written out in Andika, each with its answer (“7 × 8 = 56”), up to six, the tricky Counts’ first, a pair with a 1 last)*
 
 **Then:** her buttons, “The Training Hollow” and “Camp” (the big one).

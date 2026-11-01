@@ -57,6 +57,12 @@ token rules (`dev/workflows/README.md`, "Spending tokens well") kept the waste d
 findings and 9 in the final review; 1686 tests. The polish release (v20) and the Warrior Counts' merge
 were done the same night.
 
+**Chapter 11** (2026-11-01), the Warrior Ceremony: a short chapter (58 frames, about 13 minutes), its one
+engine need the warrior name (decision 52). About 20M in all, more than its size suggests: an overnight
+sign-in expiry cut the review's last agents (finished by a fresh small run, not a resume), and the
+warrior name's lettering took two fix rounds plus a check of its own (a long name breaking at the join,
+a short one kept whole). 16 confirmed review findings, 8 in the final review; 1766 tests.
+
 Chapter 1 was 98 frames and a 387-line text. The engine has grown from 841 to 2,933 lines, the page
 code from 1,635 to 3,109, the character art from 1,195 to 5,792, and `docs/build.md` to 1,254 lines.
 The suite takes about 100 seconds.

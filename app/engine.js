@@ -31,7 +31,12 @@
  * one card can join two rows' ends over two different lines (docs/build.md, "Chapter 8 (v0.1)").
  * Chapter 10 adds the card pick (`pick`: Reynard's claim answered with a card from her Case File; its
  * own section, after `ask`'s; docs/chapters/10-the-gathering.spec.md, section 6), which stores nothing
- * new: the card she picks is its flag.
+ * new: the card she picks is its flag. Chapter 11 adds her warrior name (docs/chapters/11-the-warrior-
+ * ceremony.spec.md, section 6): an optional `ending` on a cat, absent until she is named (the save stays
+ * version 2), the thirty endings Glintstar draws her three from (E.warriorOffers), the ending she types
+ * (an input of kind 'ending': E.cleanEnding, E.checkEnding), the token {ending} ('paw' until then), two
+ * computed `when` keys (`offer`, `nameHas`), an option's `ending`, a skip's `name`, and E.warriorName,
+ * which E.displayName shows first. Nothing changes for a cat who has not been named.
  *
  * Functions that change a cat change the object they are given (and return it or a result).
  * Nothing here reads the clock on its own: callers pass `now` (ms since epoch) where it matters,
@@ -43,7 +48,7 @@
   var PC = root.PC || (root.PC = {});
   var E = {};
 
-  E.VERSION = '0.10.0 (chapter 10, 2026-10-31)';
+  E.VERSION = '0.11.0 (chapter 11, 2026-11-01)';
   E.STORAGE_KEY = 'potomac-crossing.v1';   // the key stays: renaming it would strand every save
   E.SAVE_VERSION = 2;
   E.MAX_CATS = 4;
@@ -55,6 +60,7 @@
   E.CLAN_MAX = 14;
   E.PET_MAX = 24;
   E.DREAM_MAX = 200;
+  E.ENDING_MAX = 12;         // chapter 11: her warrior name's ending (14 + 12: the longest name is 26 letters)
   E.GLOW_ROUNDS = 3;         // Training Hollow rounds of one Count without help before its claw mark glows
   E.MAX_MARKS = 10;          // claw marks on the tree: one per Count, the 1s to the 10s (every table to 10 × 10)
   E.DRAGONETS = 7;           // the clutch: a page in her book for each, a silhouette until she finds it
@@ -166,7 +172,10 @@
       They: cap1(p.they), Them: cap1(p.them), Their: cap1(p.their), Shecat: cap1(p.shecat),
       THEY: p.they.toUpperCase(), THEM: p.them.toUpperCase(), THEIR: p.their.toUpperCase(),
       SHECAT: p.shecat.toUpperCase(), NAME: name.toUpperCase(), PETNAME: pet.toUpperCase(),
-      Murmur: cap1(murmur), murmur: murmur, MURMUR: murmur.toUpperCase()
+      Murmur: cap1(murmur), murmur: murmur, MURMUR: murmur.toUpperCase(),
+      // chapter 11: her warrior ending, 'paw' until she has one, so {name}{ending} is {name}paw for every cat
+      // who has not been named (no other token: {NAME}{ending} is never written)
+      ending: hasEnding(cat) ? cat.ending : 'paw'
     };
     return t;
   };
@@ -271,12 +280,113 @@
     return s;
   };
   E.clanName = function (cat) { return cat && cat.name ? cat.name + 'paw' : ''; };
+  /* Her name on the page: her warrior name once she has one (chapter 11), else her Clan name, else her
+   * pet name, else "New cat". */
   E.displayName = function (cat) {
     if (!cat) return '';
+    var w = E.warriorName(cat);
+    if (w) return w;
     if (cat.name) return cat.name + 'paw';
     if (cat.petname) return cat.petname;
     return 'New cat';
   };
+
+  /* ------------------------------------------------------------ her warrior name (chapter 11)
+   * docs/chapters/11-the-warrior-ceremony.spec.md, section 6. Only the ending is stored (`cat.ending`,
+   * optional, absent until she is named: never in E.blankCat); her name is `{name}{ending}`. Glintstar
+   * offers three endings, one a row: her `ch10Best`'s, her `specialty`'s and the moon's (E.warriorOffers);
+   * or she types her own (an input of kind 'ending': E.cleanEnding, E.checkEnding). */
+  // the thirty endings (the story's For us): a row a value; the first offered, the next two standing by
+  E.WARRIOR_ENDINGS = {
+    ch10Best: { sprinkle: ['mist', 'flash', 'sky'], friends: ['purr', 'friend', 'hug'], truth: ['true', 'clear', 'brave'],
+      counts: ['mark', 'count', 'tally'] },
+    specialty: { noticing: ['bright', 'eye', 'sight'], sneaking: ['hush', 'sharp', 'spark'], climbing: ['leap', 'climb', 'reach'],
+      swimming: ['splash', 'wave', 'ripple'], friends: ['cheer', 'smile', 'kind'] },
+    moon: ['moon', 'silver', 'river'],
+    fallback: { ch10Best: 'truth', specialty: 'noticing' }
+  };
+  // a first part (letters only, lower case) that makes, with the word, a whole name on either wiki (the names critic's
+  // guard list, critic-names-tone-r2/guardlist.txt: every title ending in one of the thirty words; grey spelled both ways)
+  // or a word already (honey: Honeymoon). (Four titles are left out: 15 to 21 letters, never a first part, which is at
+  // most E.CLAN_MAX, 14.)
+  E.WARRIOR_GUARD = {
+    mist: ['alightinthe', 'cloud', 'dawn', 'echo', 'gray', 'grey', 'lightinthe', 'lightsinthe', 'morning'],
+    sky: ['bright', 'clear', 'du', 'gray', 'grey', 'night', 'pale', 'shattered'],
+    purr: ['ripple', 'stalk'],
+    bright: ['dawn'],
+    eye: ['arch', 'bright', 'lion', 'one', 'white'],
+    sight: ['bookofclear', 'clear', 'far', 'shadow', 'spire', 'templeofclear', 'the'],
+    leap: ['branch', 'deer', 'druids', 'fin', 'fish', 'fox', 'frog', 'hound', 'hunt', 'light', 'rabbit', 'rain', 'song', 'stag',
+      'tumble', 'vixen', 'wiggle'],
+    splash: ['clover', 'lark', 'mud', 'nettle', 'otter', 'rain', 'rapid'],
+    wave: ['lapping'],
+    ripple: ['brook', 'river', 'stream'],
+    moon: ['amber', 'half', 'harvey', 'hidden', 'honey', 'rising', 'signofthe'],
+    river: ['dark', 'dawn', 'diamondspray', 'greatfivetail', 'gullet', 'snarling', 'windingtail']
+  };
+  /* Every letter, lower case: spaces, hyphens, apostrophes and digits dropped, and the × and ÷ signs too
+   * (inside LETTER's range; here only, so E.cleanClanName is unchanged). */
+  function lettersOf(s) {
+    var str = String(s == null ? '' : s), out = '';
+    for (var i = 0; i < str.length; i++) {
+      var c = str.charAt(i);
+      if (LETTER.test(c) && c !== '\u00d7' && c !== '\u00f7') out += c;
+    }
+    return out.toLowerCase();
+  }
+  function hasEnding(cat) { return !!cat && typeof cat.ending === 'string' && cat.ending !== ''; }
+  // her rows, in Glintstar's order: her ch10Best's, her specialty's, the moon's (an unknown value reads the fallback)
+  function warriorRows(cat) {
+    var W = E.WARRIOR_ENDINGS, fl = cat && isObj(cat.flags) ? cat.flags : {};
+    var best = own(W.ch10Best, fl.ch10Best) ? fl.ch10Best : W.fallback.ch10Best;
+    var spec = own(W.specialty, fl.specialty) ? fl.specialty : W.fallback.specialty;
+    return [W.ch10Best[best], W.specialty[spec], W.moon];
+  }
+  // a row's offer for a first part (letters only): the first word not doubled (in her first part already), not
+  // guarded (a whole name on a wiki) and not tripled (three of one letter at the join: Mosssplash); else its third
+  function rowOffer(row, f) {
+    for (var i = 0; i < row.length; i++) {
+      var w = row[i];
+      if (f && f.indexOf(w) >= 0) continue;
+      if (own(E.WARRIOR_GUARD, w) && E.WARRIOR_GUARD[w].indexOf(f) >= 0) continue;
+      if (/(.)\1\1/.test(f.slice(-2) + w.slice(0, 2))) continue;
+      return w;
+    }
+    return row[2];
+  }
+  // every row of the thirty, in the data's order
+  function allRows() {
+    var W = E.WARRIOR_ENDINGS;
+    return Object.keys(W.ch10Best).map(function (k) { return W.ch10Best[k]; })
+      .concat(Object.keys(W.specialty).map(function (k) { return W.specialty[k]; }), [W.moon]);
+  }
+  E.warriorOffers = function (cat) {
+    var f = lettersOf(cat && cat.name);
+    return warriorRows(cat).map(function (row) { return rowOffer(row, f); });
+  };
+  /* What she typed, as an ending: letters only, lower case, a leading copy of her first part dropped once
+   * (Fernheart typed by Fern is "heart"), at most E.ENDING_MAX letters. */
+  E.cleanEnding = function (raw, cat) {
+    var e = lettersOf(raw), f = lettersOf(cat && cat.name);
+    if (f && e.indexOf(f) === 0) e = e.slice(f.length);
+    return e.slice(0, E.ENDING_MAX);
+  };
+  /* { ending, refuse, who }: refuse null, or the first that holds of 'own' (no letter left), 'star', 'paw',
+   * 'kit' (the ending, every trailing s dropped, ends so: kitten, kitty and kittie are kit), 'clan' (her first
+   * part and the ending make a Clan cat's whole name; `who` that cat). A typed ending is never guarded. */
+  E.checkEnding = function (raw, cat) {
+    var e = E.cleanEnding(raw, cat), f = lettersOf(cat && cat.name), out = { ending: e, refuse: null, who: null };
+    var bare = e.replace(/s+$/, ''), whole = f + e;
+    if (!e) out.refuse = 'own';
+    else if (/star$/.test(bare)) out.refuse = 'star';
+    else if (/paw$/.test(bare)) out.refuse = 'paw';
+    else if (/(kit|kitten|kitty|kittie)$/.test(bare)) out.refuse = 'kit';
+    else if (whole === 'tallyheart' || whole === 'thymeleaf') { out.refuse = 'clan'; out.who = whole; }
+    else if (whole === E.tortieWord(cat) + 'chime') { out.refuse = 'clan'; out.who = 'murmurchime'; }
+    return out;
+  };
+  /* Her warrior name, `{name}{ending}`, once she has both halves; '' until then. */
+  E.warriorName = function (cat) { return cat && cat.name && hasEnding(cat) ? cat.name + cat.ending : ''; };
 
   /* ------------------------------------------------------------ chapters
    * Each chapter is one story file (app/story/chNN.js) defining PC.story.chNN. They are read in
@@ -559,6 +669,13 @@
       out.warrior = normWarrior(c.warrior);
       if (out.warrior.sitting && C.done(out.warrior.sitting.state)) E.warriorFinish(out, out.warrior.sitting.state);
     }
+    // her warrior ending (chapter 11): optional, absent until she is named; kept as its letters, lower case, at
+    // most E.ENDING_MAX (no first-part rule: that is for what she types); anything else is dropped (a hand-edited
+    // save only: she is unnamed again)
+    if (own(c, 'ending') && typeof c.ending === 'string') {
+      var ending = lettersOf(c.ending).slice(0, E.ENDING_MAX);
+      if (ending) out.ending = ending;
+    }
     return out;
   }
   /* Bring any stored value up to the current save shape: version 1 (chapter 1's) or 2. Lossless
@@ -704,6 +821,10 @@
       if (k === 'not') return isObj(want) ? !E.matches(want, cat) : true;
       if (k === 'lessonClean') return anyOf(want, function (s) { return E.lessonClean(cat, s); });
       if (k === 'firstTry') return anyOf(want, function (f) { return E.firstTry(cat, f); });
+      // chapter 11: one of the three endings Glintstar offers her; her first part has the word in it (her own
+      // `ending` needs no key of its own: it is her field, read below)
+      if (k === 'offer') { var offers = E.warriorOffers(cat); return anyOf(want, function (w) { return offers.indexOf(w) >= 0; }); }
+      if (k === 'nameHas') { var f1 = lettersOf(cat.name); return anyOf(want, function (w) { return typeof w === 'string' && !!w && f1.indexOf(w) >= 0; }); }
       if (cat.flags && own(cat.flags, k)) have = cat.flags[k];
       else if (cat.look && own(cat.look, k)) have = cat.look[k];
       else if (own(cat, k) && k !== 'flags' && k !== 'look') have = cat[k];
@@ -1426,7 +1547,12 @@
     if (!E.options(f, cat).some(function (o) { return o.index === index; })) return false;
     var opt = f.choice.options[index];
     var label = E.optionLabel(opt, cat);   // as she read it, before her pick changes anything
+    // (chapter 11: an offered name is stored as her warrior name, so the grown-ups' corner says the name she has, even
+    // once a chapter-1 reread renames her and her ending is taken again from its row: Fernleap renamed Fox, Foxclimb)
+    if (typeof opt.ending === 'string' && opt.ending) label = '{name}{ending}';
     if (isObj(opt.sets)) Object.keys(opt.sets).forEach(function (k) { cat.flags[k] = opt.sets[k]; });
+    // chapter 11: an offered name sets her ending as given (never through the first-part rule, which is for typing)
+    if (typeof opt.ending === 'string' && opt.ending) cat.ending = opt.ending;
     cat.choices[E.choiceKey(story, id)] = { index: index, label: label };
     return E.go(cat, story, E.landing(cat, story, opt.next), now);
   };
@@ -1436,8 +1562,26 @@
     var id = E.frameId(cat, story), f = story.frames[id];
     if (!f || !f.input) return false;
     var kind = f.input.kind;
+    // chapter 11: her own ending. Refused, nothing is stored, no flag is set and the page stays (the page says
+    // why, by the line of `refuse`); accepted, her ending, then the input's `sets` (read for this kind only)
+    if (kind === 'ending') {
+      var chk = E.checkEnding(value, cat);
+      if (chk.refuse) return false;
+      cat.ending = chk.ending;
+      if (isObj(f.input.sets)) Object.keys(f.input.sets).forEach(function (k) { cat.flags[k] = f.input.sets[k]; });
+      return E.go(cat, story, E.landing(cat, story, f.input.next), now);
+    }
     if (kind === 'petname') cat.petname = E.cleanPetName(value, f.input.suggestions && f.input.suggestions[0]);
-    else if (kind === 'clanname') cat.name = E.cleanClanName(value, f.input.suggestions && f.input.suggestions[0]);
+    else if (kind === 'clanname') {
+      cat.name = E.cleanClanName(value, f.input.suggestions && f.input.suggestions[0]);
+      // chapter 11: chapter 1 read again, renamed. An offered ending she no longer would be offered (doubled,
+      // guarded or tripled by the new first part) is taken again from its row (Fern with moon renamed Moon is
+      // Moonsilver); an ending she typed stays hers
+      if (isObj(cat.flags) && cat.flags.ch11Named === 'offer' && hasEnding(cat) && E.warriorOffers(cat).indexOf(cat.ending) < 0) {
+        var row = allRows().filter(function (r) { return r.indexOf(cat.ending) >= 0; })[0];
+        if (row) cat.ending = rowOffer(row, lettersOf(cat.name));
+      }
+    }
     else if (kind === 'dream') { if (!isObj(cat.dreams)) cat.dreams = {}; cat.dreams[story.id] = E.cleanDream(value); }
     else if (kind) { cat.flags[kind] = E.cleanDream(value); }
     return E.go(cat, story, E.landing(cat, story, f.input.next), now);
@@ -3454,6 +3598,17 @@
       if (isObj(w.not)) checkWhen(where + ' (not)', w.not);
       asList(w.lessonClean).forEach(function (s) { if (!E.countsSet(s, story)) errs.push(where + ': lessonClean names no counts set here: ' + s); });
       asList(w.firstTry).forEach(function (k) { if (!/^\d+\s*[x×]\s*\d+$/.test(String(k))) errs.push(where + ': firstTry wants "AxB": ' + k); });
+      // chapter 11: the two computed keys
+      asList(w.offer).forEach(function (v) { if (THIRTY.indexOf(v) < 0) errs.push(where + ': offer names one of the thirty endings (E.WARRIOR_ENDINGS), not ' + JSON.stringify(v)); });
+      asList(w.nameHas).forEach(function (v) { if (!(typeof v === 'string' && /^[a-z]+$/.test(v))) errs.push(where + ': nameHas is a word in lower-case letters, not ' + JSON.stringify(v)); });
+    }
+    // chapter 11: the thirty endings an offer may name; flags no `sets` may name (E.matches computes the first
+    // two, and `ending` is her own field, set only by an option's `ending` or the Type screen)
+    var THIRTY = [].concat.apply([], allRows());
+    var COMPUTED = ['offer', 'nameHas', 'ending'];
+    function checkSets(where, sets) {
+      if (!isObj(sets)) return;
+      Object.keys(sets).forEach(function (k) { if (COMPUTED.indexOf(k) >= 0) errs.push(where + ': sets ' + k + ', which no flag may be (offer and nameHas are computed, ending is her own field)'); });
     }
     // chapter 10: the card pick. Its flag is set only by its pick: no frame `sets` it, no option, no other pick
     var optSets = {}, pickFlags = {};
@@ -3463,6 +3618,31 @@
       if (f && isObj(f.pick) && typeof f.pick.flag === 'string') (pickFlags[f.pick.flag] = pickFlags[f.pick.flag] || []).push(id);
     });
     function isLine(v) { return typeof v === 'string' && !!v.trim(); }
+    function checkEndingInput(id, f) {
+      var inp = f.input, cast = (f.scene && f.scene.cast) || [];
+      var inCast = function (w) { return cast.some(function (c) { return c && c.who === w; }); };
+      var rf = inp.refuse;
+      if (!isObj(rf)) errs.push(id + ': an ending input has refuse: { own, star, paw, kit: { who, text }, clan: { text } }');
+      else {
+        ['own', 'star', 'paw', 'kit'].forEach(function (k) {
+          var r = rf[k];
+          if (!(isObj(r) && isLine(r.who) && isLine(r.text))) errs.push(id + ': ending refuse ' + k + ' is { who, text }');
+          else if (!inCast(r.who)) errs.push(id + ': ending refuse ' + k + ': ' + r.who + ' is not in the frame’s cast');
+        });
+        if (!(isObj(rf.clan) && isLine(rf.clan.text))) errs.push(id + ': ending refuse clan is { text }: the Clan cat whose name it is says it');
+        else if (rf.clan.who != null) errs.push(id + ': ending refuse clan has no who: the Clan cat whose name it is says it');
+        ['tallyheart', 'thymeleaf', 'murmurchime'].forEach(function (w) { if (!inCast(w)) errs.push(id + ': ending refuse clan: ' + w + ' is not in the frame’s cast (each may say it)'); });
+        Object.keys(rf).forEach(function (k) { if (['own', 'star', 'paw', 'kit', 'clan'].indexOf(k) < 0) errs.push(id + ': ending refuse has no ' + k + ' (own, star, paw, kit, clan)'); });
+      }
+      if (inp.sets != null) {
+        if (!(isObj(inp.sets) && Object.keys(inp.sets).every(function (k) { var v = inp.sets[k]; return typeof v === 'string' || typeof v === 'boolean' || typeof v === 'number'; }))) {
+          errs.push(id + ': input sets is an object of flags, like { ch11Named: "self" }');
+        } else {
+          Object.keys(inp.sets).forEach(function (k) { if (own(sticky, k)) errs.push(id + ' input: sets ' + k + ', which frame ' + sticky[k] + ' sets for good'); });
+          checkSets(id + ' input', inp.sets);
+        }
+      }
+    }
     function checkPick(id, f) {
       var pk = f.pick;
       if (!isObj(pk)) { errs.push(id + ': pick is { claim, right, nudges, flag, next }'); return; }
@@ -3538,11 +3718,22 @@
           });
         }
         if (isObj(o.sets)) Object.keys(o.sets).forEach(function (k) { if (own(sticky, k)) errs.push(id + ' option ' + i + ': sets ' + k + ', which frame ' + sticky[k] + ' sets for good'); });
+        checkSets(id + ' option ' + i, o.sets);
+        // chapter 11: an offered name's ending, as given
+        if (o.ending != null && !(typeof o.ending === 'string' && new RegExp('^[a-z]{1,' + E.ENDING_MAX + '}$').test(o.ending))) {
+          errs.push(id + ' option ' + i + ': ending is 1 to ' + E.ENDING_MAX + ' lower-case letters, like "mist"');
+        }
       });
+      // chapter 11: the Type screen (an input of kind 'ending'): where to go, the five refusals and who says
+      // each (every speaker in the frame's cast), and the flags an accepted ending sets
+      if (f.input && f.input.kind === 'ending') checkEndingInput(id, f);
+      else if (f.input && f.input.sets != null) errs.push(id + ': an input’s sets are read for kind "ending" only');
+      if (f.skip && f.skip.name != null && !isLine(f.skip.name)) errs.push(id + ': skip name is a line (the name tag on the counter’s balloon, like "{name}{ending}")');
       // chapter 4: flags set by reaching the frame, the cards it gives, the bark Taps, her Case File
       if (f.sets != null && !(isObj(f.sets) && Object.keys(f.sets).every(function (k) { var v = f.sets[k]; return typeof v === 'string' || typeof v === 'boolean' || typeof v === 'number'; }))) {
         errs.push(id + ': sets is an object of flags, like { foundSquall: true }');
       }
+      checkSets(id, f.sets);
       checkCards(id, f.card, false, true);
       if (f.scratch) {
         var sc = f.scratch;

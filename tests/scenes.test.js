@@ -1455,6 +1455,12 @@ const CH10_NEW = {
   den: { cams: ['stone'], anchors: ['tail'], opts: ['miststone'] },
   tower: { cams: [], anchors: [], opts: ['moon'] }
 };
+// What chapter 11 adds to chapter 1's sets, by name: the camp's moon, and the den's next nest with its spot (`next-nest`, a
+// spot of the den's `inside` composition, so it stands after `sleeper-2`, not at the end)
+const CH11_NEW = {
+  camp: { cams: [], anchors: [], opts: ['moon'] },
+  den: { cams: [], anchors: ['next-nest'], opts: ['nextNest'] }
+};
 // (chapter 9: and its new cameras, as chapter 6's are) (chapter 10: and chapter 10's)
 const ch1Cams = (set) => art.vocab.sets[set].cams.filter((c) => !((CH6_NEW[set] || {}).cams || []).concat((CH9_NEW[set] || {}).cams || [], (CH10_NEW[set] || {}).cams || []).includes(c));
 function ch13Fingerprint(art, crypto) {
@@ -2396,7 +2402,8 @@ test('vocab, chapter 5: the den\'s moon takes its age in evenings (5: a little f
   // (chapter 10: and chapter 10's, named in CH10_NEW, after those)
   for (const set of CH1_SETS) {
     assert.deepEqual(v[set].cams, CH1_CAMS[set].concat((CH6_NEW[set] || {}).cams || [], (CH9_NEW[set] || {}).cams || [], (CH10_NEW[set] || {}).cams || []), set + ': cameras');
-    assert.deepEqual(v[set].anchors, CH1_ANCHORS[set].concat((CH6_NEW[set] || {}).anchors || [], (CH9_NEW[set] || {}).anchors || [], (CH10_NEW[set] || {}).anchors || []), set + ': anchors');
+    // (chapter 11: and the den's `next-nest`, among the inside composition's spots: tested with chapter 11's vocabulary)
+    assert.deepEqual(v[set].anchors.filter((a) => !((CH11_NEW[set] || {}).anchors || []).includes(a)), CH1_ANCHORS[set].concat((CH6_NEW[set] || {}).anchors || [], (CH9_NEW[set] || {}).anchors || [], (CH10_NEW[set] || {}).anchors || []), set + ': anchors');
   }
   // (chapter 10: the tower's `moon` after them: tested with chapter 10's vocabulary)
   assert.deepEqual(Object.keys(v.tower.opts).slice(0, 4), ['chime', 'light', 'roar', 'ding'], 'the tower as chapter 4 left it');
@@ -3684,8 +3691,8 @@ test('vocab, chapter 7: the hollow\'s `compare`, declared as the bridge\'s ([fal
   assert.deepEqual(Object.keys(v.den.opts).slice(0, 6), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden'], 'the den: three more cards under the moss, by their pictures; no new option');
   // (chapter 8 adds one, `glass`, after them, and the moon's eighth evening: tested with chapter 8's vocabulary)
   // (chapter 9: and `read`, the case's rows, after it: tested with chapter 9's)
-  // (chapter 10: and its `miststone` after them)
-  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read', 'miststone'], 'and chapter 8\'s `glass`, and chapter 9\'s `read`, last but chapter 10\'s');
+  // (chapter 10: and its `miststone` after them) (chapter 11: and its `nextNest` last: tested with chapter 11's vocabulary)
+  assert.deepEqual(Object.keys(v.den.opts).slice(0, 9), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read', 'miststone'], 'and chapter 8\'s `glass`, and chapter 9\'s `read`, then chapter 10\'s');
   assert.deepEqual(v.hollow.cams, ['wide', 'lesson', 'sand', 'tree']);
   assert.equal(typeof art.kit.compareLines, 'function', 'kit.compareLines, the one drawing for the hollow and the bridge');
   assert.equal(typeof art.kit.compareNums, 'function');
@@ -3985,7 +3992,8 @@ test('vocab, chapter 8: the den\'s moon takes the eighth evening (8) and the den
   const v = art.vocab.sets;
   // (chapter 9: and `read`, the case's rows, after `glass`; the moon's thirteenth evening after the eighth: chapter 9's vocabulary)
   // (chapter 10: and `miststone` after `read`, and the stone close's camera and spot: chapter 10's vocabulary)
-  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read', 'miststone']);
+  // (chapter 11: and `nextNest` after `miststone`, and the next nest's spot after `sleeper-2`: chapter 11's vocabulary)
+  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read', 'miststone', 'nextNest']);
   assert.deepEqual(v.den.opts.moon.slice(0, 4), [false, true, 5, 8], 'no moon, chapter 4\'s sliver, the fifth evening\'s crescent, the eighth evening\'s half moon');
   assert.deepEqual(v.den.opts.glass, [false, true]);
   assert.deepEqual(v.den.opts.hidden, [false, true], 'more under the moss is the bark\'s own: no new value');
@@ -3994,7 +4002,7 @@ test('vocab, chapter 8: the den\'s moon takes the eighth evening (8) and the den
   // (chapter 9: and the case laid out, its camera and its three spots, after them) (chapter 10: and the stone close and its
   // one spot, `tail`, after those)
   assert.deepEqual(v.den.cams, ['outside', 'inside', 'nest', 'doorway', 'case', 'stone']);
-  assert.deepEqual(v.den.anchors, ['entrance-left', 'entrance-right', 'doorway', 'nest', 'sleeper-1', 'sleeper-2', 'case-1', 'case-2', 'case-3', 'tail']);
+  assert.deepEqual(v.den.anchors, ['entrance-left', 'entrance-right', 'doorway', 'nest', 'sleeper-1', 'sleeper-2', 'next-nest', 'case-1', 'case-2', 'case-3', 'tail']);
   assert.deepEqual(Object.keys(v.hollow.opts), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap', 'compare'], 'the hollow: eight marks as markSpots has laid them since chapter 1');
   assert.ok(v.hollow.opts.marks.includes(8), 'marks: 8');
   assert.deepEqual({ snip: art.sizeBands.snip, snatch: art.sizeBands.snatch }, {
@@ -5037,9 +5045,10 @@ function moonOf(svg, age) {
 
 test('vocab, chapter 10: the den\'s full moon (14), its `miststone` (false, true, \'flash\') and the stone close (`stone`, its one spot `tail`); the tower\'s `moon` (a number); every one off unless a frame asks; the kit\'s crowd helper and mist stone; as the spec names them', () => {
   const v = art.vocab.sets, di = art.sceneInfo('den');
-  assert.deepEqual(v.den.opts.moon, [false, true, 5, 8, 13, 14], 'and the full moon, round');
+  // (chapter 11: and 15 after it, one evening past full; and `nextNest` after the mist stone: chapter 11's vocabulary)
+  assert.deepEqual(v.den.opts.moon.slice(0, 6), [false, true, 5, 8, 13, 14], 'and the full moon, round');
   assert.deepEqual(v.den.opts.miststone, [false, true, 'flash']);
-  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read', 'miststone'], 'the mist stone last');
+  assert.deepEqual(Object.keys(v.den.opts).slice(0, 9), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read', 'miststone'], 'the mist stone last of chapter 10\'s');
   assert.deepEqual(v.den.cams, ['outside', 'inside', 'nest', 'doorway', 'case', 'stone']);
   assert.equal(di.cams.stone.comp, 'stone', 'a composition of its own');
   assert.deepEqual([di.cams.stone.x, di.cams.stone.y, di.cams.stone.w], [0, 0, 1600]);
@@ -5301,4 +5310,425 @@ test('chapter 10\'s other scene rules: no shadow under Reynard, Snip or Snatch s
     assert.ok(Math.abs(r.heads[0].r - Math.round(0.2 * ch.h * a.h / R / 1600 * 100 * 100) / 100) < 0.02, who + ' ' + variant + ': a cat\'s face size: ' + r.heads[0].r);
     assert.equal(shade(r.svg) - shade(art.render(Object.assign({}, sc, { cast: [] }), { look: LOOK }).svg), 1, who + ' ' + variant + ': a cat\'s shadow');
   }
+});
+
+
+// ================================================================ chapter 11 (docs/chapters/11-the-warrior-ceremony.spec.md, sections 4 and 7)
+
+// The proof that chapters 1 to 10 and the Warrior Counts look exactly as they shipped (spec section 7, item 3: the scenes
+// owner's fingerprint). The numbers were taken once from the snapshot of main's commit 2dee6a4, the tree chapter 11 is built
+// on (chapters 1 to 10 live with the Warrior Counts: ~/potomac-crossing-work/ch11/shipped), loaded in a process of its own,
+// before any edit for chapter 11, and are kept here: this test never reads that tree.
+// <ch11-fingerprint>
+// Every frame of chapter 10, on every set it uses (each 'auto' filled as chapter 10's fingerprint fills one: a mark a Count,
+// the first glowing, her stone by her nose, and her file: chapter 9's, the thinnest (20) and the fullest of all (30)), and
+// every scene of the Warrior Counts, walked as chapter 10's fingerprint walks them. The kit's moon (`kit.waxingMoon`) for ages
+// 1 to 14 and 28 to 30, at a fixed S (its glow's gradient recorded with it) and two tilts: every set's moon goes through it
+// (the den's, tower's, pile's, field's, tracks', ferry's, riverbank's and island's). Every camera and composition of the camp
+// with no `moon`, in each light (golden, sunset, dusk, night, morning, day, and the night with the purr, the glow and
+// sparkles), with the crowd on and off, with a cast at its spots (the main composition's raw spots too: the fountain's foot
+// and beside it, as the Warrior Counts' page stands them) and with nobody. Every camera of the den with no `nextNest`, in four
+// sets of options (her nest as a warrior's would hold it: her file, the moss over the secret ones, her glass, Riffle's stone
+// and the mist stone; a plain nest with drips; under cloud, the mist stone flashing; in the storm), every `moon` the den
+// knows at night and at dusk and none by morning, with a cast at its spots facing right and facing left, and with nobody.
+// One hash a chapter and set, a Warrior Counts list, a moon's age, and a set and camera.
+function ch11Fingerprint(PC, crypto) {
+  const art = PC.art, out = {}, LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
+  const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+  const F28 = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes',
+    'prints-marsh', 'prints-tracks', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel', 'stash', 'glass', 'fox-brag', 'hail-shapes'];
+  const F30 = F28.slice(0, 10).concat(['puddle-paws'], F28.slice(10), ['mizzle-wing']);
+  const F20 = F28.filter((p) => !['my-count', 'hail-shapes', 'dug-earth', 'squall-shapes', 'prints-pile', 'prints-tracks', 'wisp-fox', 'sleet-den'].includes(p));
+  const EAR = ['fox-flew', 'fox-moon', 'squall-shapes', 'otter-fox', 'heron-no-moon', 'heron-shapes', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'fox-brag', 'hail-shapes',
+    'puddle-paws', 'mizzle-wing'];
+  const card = (p) => ({ picture: p, mark: EAR.includes(p) ? 'ear' : 'eye' });
+  const hash = (key) => out[key] || (out[key] = crypto.createHash('sha1'));
+  function add(key, tag, scene) {
+    const r = art.render(scene, { look: LOOK });
+    hash(key).update(tag + ':' + strip(r.svg) + JSON.stringify(r.heads) + JSON.stringify(r.keep));
+  }
+  function fill(sc, n, fl) {
+    const o = Object.assign({}, sc.opts || {}), m = typeof o.marks === 'number' ? o.marks : n;
+    if (o.marks === 'auto') o.marks = n;
+    if (o.glow === 'auto') o.glow = Array.from({ length: m }, (v, i) => i === 0);
+    if (o.stone === 'auto') o.stone = 'nose';
+    if (fl) o.bark = fl.map(card);
+    return Object.assign({}, sc, { opts: o });
+  }
+  // every frame of chapter 10, every set
+  for (const [id, f] of Object.entries(PC.story.ch10.frames)) {
+    const sc = f.scene;
+    if (!sc || !sc.set) continue;
+    const files = sc.opts && sc.opts.bark === 'auto' ? [F28.concat(['mizzle-wing']), F20, F30] : [null];
+    files.forEach((fl, j) => add('frames/ch10/' + sc.set, id + ' ' + j, fill(sc, 10, fl)));
+  }
+  // the Warrior Counts: the question panel and the halfway frame with the crowd and quiet, and every other frame as written
+  const W = PC.warrior, seen = new Set();
+  const both = (sc) => [true, false].map((crowd) => Object.assign({}, sc, { opts: Object.assign({}, sc.opts, { crowd }) }));
+  both(W.scene).forEach((sc, j) => add('warrior/scene', 'crowd ' + !j, sc));
+  both(W.halfway.scene).forEach((sc, j) => add('warrior/halfway', 'crowd ' + !j, sc));
+  (function walk(o, where) {
+    if (!o || typeof o !== 'object' || seen.has(o)) return;
+    seen.add(o);
+    if (o.scene && o.scene.set) add('warrior/' + where.split('.')[0], where, o.scene);
+    for (const k of Object.keys(o)) if (k !== 'scene') walk(o[k], where ? where + '.' + k : k);
+  })({ open: W.open, aside: W.aside, beats: W.beats, pass: W.pass, notYet: W.notYet, afterPass: W.afterPass }, '');
+  // the kit's moon, ages 1 to 14 and 28 to 30, at a fixed S: its one def (the glow's gradient) recorded as it is asked for
+  for (const age of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 28, 29, 30]) {
+    for (const [r, tilt] of [[40, 20], [56, -18]]) {
+      const defs = [], S = { radU: (stops, cx, cy, rr) => { defs.push([stops, cx, cy, rr]); return 'url(#moonglow' + defs.length + ')'; } };
+      hash('moon/' + age).update(r + ' ' + tilt + ':' + art.kit.waxingMoon(S, 800, 500, r, tilt, age) + JSON.stringify(defs));
+    }
+  }
+  // the camp: every camera and composition, no `moon`, each light, the crowd on and off, a cast and nobody
+  const LIGHTS = [[], ['sunset'], ['dusk'], ['night'], ['morning'], ['day'], ['night', 'purr', 'glow', 'sparkle']];
+  const campCast = {
+    main: [{ who: 'clancat', variant: 2, at: 'crowd-left', pose: 'walk', mood: 'happy' }, { who: 'glintstar', at: 'fountain-top', pose: 'stand', mood: 'solemn' },
+      { who: 'murmurchime', at: 'crowd-right', pose: 'sit', mood: 'happy', facing: 'left' }, { who: 'thymeleaf', at: 'ferns', pose: 'sit', mood: 'kind', facing: 'left' },
+      { who: 'riffle', at: 'entrance', pose: 'scramble', mood: 'shout' }, { who: 'player', at: { x: 760, y: 860 }, pose: 'sit', mood: 'wonder', holds: 'miststone', holdAt: 'paws' },
+      { who: 'tallyheart', at: { x: 950, y: 872 }, pose: 'sit', mood: 'proud', facing: 'left' }],
+    fountain: [{ who: 'glintstar', at: 'fountain-top', pose: 'peer', mood: 'kind' }],
+    entrance: [{ who: 'player', at: 'entrance', pose: 'sit', mood: 'worried' }],
+    herbs: [{ who: 'thymeleaf', at: 'herbs-1', pose: 'sit', mood: 'kind' }, { who: 'player', at: 'herbs-2', pose: 'sit', mood: 'wonder', facing: 'left' },
+      { who: 'tallyheart', at: 'herbs-3', pose: 'sit', mood: 'kind', facing: 'left' }]
+  };
+  const ci = art.sceneInfo('camp');
+  for (const cam of Object.keys(ci.cams)) {
+    for (const fx of LIGHTS) for (const crowd of [true, false]) for (const cast of [campCast[ci.cams[cam].comp], []]) {
+      add('camp/' + cam, fx.join(',') + ' ' + crowd + ' ' + cast.length, { set: 'camp', cam, opts: { crowd }, cast, fx });
+    }
+  }
+  // the den: every camera, no `nextNest`, three sets of options, every moon at night and dusk, none by morning
+  const di = art.sceneInfo('den');
+  const denOpts = [{ weather: 'clear', stone: 'nose', bark: F20.map(card), hidden: true, glass: true, miststone: true },
+    { weather: 'clear', stone: true, bark: 12, drips: true, read: 3 }, { weather: 'cloudy', stone: 'chin', bark: 'auto', miststone: 'flash' }, { weather: 'storm', stone: true }];
+  const denCast = (comp, facing) => ({
+    outside: [{ who: 'tallyheart', at: 'doorway', pose: 'peer', mood: 'happy', facing }, { who: 'snorer', at: 'entrance-left', pose: 'sit', mood: 'sleepy' }],
+    inside: [{ who: 'snorer', at: 'sleeper-1', pose: 'curl', mood: 'sleepy', asleep: true }, { who: 'murmurchime', at: 'sleeper-2', pose: 'lie', mood: 'sleepy', facing },
+      { who: 'player', at: 'nest', pose: facing === 'left' ? 'curl' : 'loaf', mood: 'kind', facing, asleep: facing === 'left' }, { who: 'tallyheart', at: 'doorway', pose: 'peer', mood: 'happy' }],
+    case: [{ who: 'player', at: 'case-1', pose: 'crouch', mood: 'wonder' }, { who: 'tallyheart', at: 'case-2', pose: 'sit', mood: 'kind' }, { who: 'glintstar', at: 'case-3', pose: 'stand', mood: 'solemn', facing }],
+    stone: [{ who: 'player', at: 'tail', pose: 'curl', mood: 'sleepy', asleep: true, facing }]
+  })[comp];
+  for (const cam of Object.keys(di.cams)) {
+    for (const [o, opts] of denOpts.entries()) for (const facing of ['right', 'left']) {
+      const cast = denCast(di.cams[cam].comp, facing);
+      for (const fx of [['night'], ['dusk'], ['night', 'stars', 'skyriver', 'zzz']]) for (const moon of [false, true, 5, 8, 13, 14]) {
+        add('den/' + cam, o + ' ' + facing + ' ' + fx.join(',') + ' ' + moon, { set: 'den', cam, opts: Object.assign({}, opts, { moon }), cast, fx });
+      }
+      add('den/' + cam, o + ' ' + facing + ' morning', { set: 'den', cam, opts, cast, fx: ['morning'] });
+      add('den/' + cam, o + ' ' + facing + ' nobody', { set: 'den', cam, opts: Object.assign({}, opts, { moon: 14 }), cast: [], fx: ['night'] });
+    }
+  }
+  for (const k of Object.keys(out)) out[k] = out[k].digest('hex').slice(0, 12);
+  return out;
+}
+// </ch11-fingerprint>
+
+// Recorded 2026-11-01 from the snapshot (~/potomac-crossing-work/ch11/shipped, commit 2dee6a4) by
+// ~/potomac-crossing-work/ch11/build-scenes/record-ch11.js, which runs ch11Fingerprint above on that tree's own scripts, loaded as
+// its page loads them (its tests/_load.js), in a process of its own, before any edit for chapter 11
+const CH11_FINGERPRINT = {
+  'frames/ch10/den': '544000445258', 'frames/ch10/hollow': 'd63dde8e833a', 'frames/ch10/ferry': '19be7ec0e403', 'frames/ch10/island': '05a11f9f2321',
+  'frames/ch10/riverbank': '19037feb33d8', 'frames/ch10/tower': 'ab6836e6104d', 'warrior/scene': '3541115a7fd6', 'warrior/halfway': '12b416aa677a',
+  'warrior/open': 'b2ed7608a950', 'warrior/pass': '40a758c4d6c1', 'warrior/notYet': '53c632c2b393', 'warrior/afterPass': '71a322daa485',
+  'moon/1': '275fb7da584d', 'moon/2': '95fca888ff1b', 'moon/3': '10151f7948b6', 'moon/4': 'a3f4eb99becc', 'moon/5': 'c0dd61f2ec1f',
+  'moon/6': 'd00e324855d3', 'moon/7': '2f47dbb8e0bb', 'moon/8': '84581090e56d', 'moon/9': 'be0dc58915e5', 'moon/10': '9dc0f979abff',
+  'moon/11': 'c22b44fc0b47', 'moon/12': '13b90c2b8f61', 'moon/13': '7d893db0dbf8', 'moon/14': 'ce8d7aaa5fd1', 'moon/28': '1bd4eccac4af',
+  'moon/29': '97599e038bd0', 'moon/30': '2d27bcfc1640', 'camp/reveal': '6507a34b08bc', 'camp/crowd': '16bbadbe2e67', 'camp/fountain': '72aa46378c95',
+  'camp/entrance': '6874bd9594c4', 'camp/fountain-close': 'f6463010fcf3', 'camp/ferns': 'e925bc31db6d', 'camp/purr': '40792f54d642',
+  'camp/herbs': '4d50ddabaf53', 'den/outside': '81e909e49521', 'den/inside': 'd308b5807d59', 'den/nest': '68a5a7c22d39',
+  'den/doorway': 'a07e53beacfc', 'den/case': '20a81e70ac71', 'den/stone': '00b98ea51611'
+};
+
+test('chapter 11: chapters 1 to 10 and the Warrior Counts draw byte for byte as they shipped: every frame of chapter 10, every Warrior Counts scene, the kit\'s moon at every age up to full and past 27, every camp camera and composition with no `moon` (each light, the crowd on and off), and every den camera with no `nextNest`', { skip: !art.character && 'no cats.js' }, () => {
+  for (let i = 1; i <= 10; i++) require(path.join(ROOT, 'app/story/ch' + String(i).padStart(2, '0') + '.js'));
+  require(path.join(ROOT, 'app/story/warrior.js'));
+  const now = ch11Fingerprint(PC, require('crypto'));
+  assert.deepEqual(Object.keys(now), Object.keys(CH11_FINGERPRINT), 'the same frames, lists, ages and cameras, in the same order');
+  for (const k of Object.keys(CH11_FINGERPRINT)) assert.equal(now[k], CH11_FINGERPRINT[k], k + ' draws something else than it did on the tree chapter 11 is built on');
+  const keys = Object.keys(CH11_FINGERPRINT);
+  assert.deepEqual(keys.filter((k) => /^moon\//.test(k)), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 28, 29, 30].map((a) => 'moon/' + a), 'the kit\'s moon: 1 to 14, and 28 to 30');
+  assert.deepEqual(keys.filter((k) => /^camp\//.test(k)), art.vocab.sets.camp.cams.map((c) => 'camp/' + c), 'every camp camera');
+  assert.deepEqual(keys.filter((k) => /^den\//.test(k)), art.vocab.sets.den.cams.map((c) => 'den/' + c), 'every den camera');
+  for (const k of ['frames/ch10/den', 'frames/ch10/island', 'frames/ch10/ferry', 'frames/ch10/tower', 'frames/ch10/riverbank', 'frames/ch10/hollow', 'warrior/scene', 'warrior/pass']) assert.ok(CH11_FINGERPRINT[k], k);
+});
+
+// ---------------------------------------------------------------- chapter 11: the new names (spec section 4)
+
+// the camp's moon: its group's spot (data-at: x y r) and age, or null
+function campMoonOf(svg) {
+  const m = /<g data-prop="camp-moon" data-age="([^"]+)" data-at="([^"]+)">/.exec(svg);
+  return m ? { age: +m[1], x: +m[2].split(' ')[0], y: +m[2].split(' ')[1], r: +m[2].split(' ')[2], at: m.index } : null;
+}
+// the main composition's tower at x 1050 (110 wide, a plain cap): its top as drawn
+const tower1050 = (svg) => { const m = /<path d="M1050 640V([\d.]+)H1160V640Z"/.exec(svg); return m ? +m[1] : null; };
+const RING_SPOTS = { x: 760, y: 860 };
+// chapter 11's camp casts: the ring on `crowd` (our cat at the fountain's foot with her stone, Tallyheart beside her,
+// {Murmur}chime at crowd-right, Glintstar on the fountain), and Glintstar alone on the fountain's cameras
+const CH11_CROWD = [{ who: 'murmurchime', at: 'crowd-right', pose: 'sit', mood: 'happy', facing: 'left' }, { who: 'glintstar', at: 'fountain-top', pose: 'stand', mood: 'proud' },
+  { who: 'player', at: { x: 760, y: 860 }, pose: 'sit', mood: 'wonder', holds: 'miststone', holdAt: 'paws', flash: true }, { who: 'tallyheart', at: { x: 950, y: 872 }, pose: 'sit', mood: 'proud', facing: 'left' }];
+const campNight = (cam, opts, cast, fx) => ({ set: 'camp', cam, opts: Object.assign({ crowd: true, moon: 15 }, opts), cast: cast || (cam === 'fountain-close' || cam === 'fountain' ? [{ who: 'glintstar', at: 'fountain-top', pose: 'sit', mood: 'kind' }] : CH11_CROWD), fx: fx || ['night'] });
+
+test('vocab, chapter 11: the camp\'s `moon` (a number, off by default), the den\'s moon at 15 and its `nextNest` (off by default) with the next nest\'s spot, `next-nest`; no new camera, set or cast; as the spec names them', () => {
+  const v = art.vocab.sets, ci = art.sceneInfo('camp'), di = art.sceneInfo('den');
+  assert.deepEqual(Object.keys(v.camp.opts), ['puddles', 'rainFountain', 'crowd', 'remedy', 'moon'], 'the moon last');
+  assert.equal(v.camp.opts.moon, 'number', 'moon: a number, the moon\'s age in evenings (as the pile\'s, the field\'s and the tower\'s)');
+  assert.deepEqual(ci.defaults, {}, 'no moon unless a frame asks');
+  assert.deepEqual(v.camp.cams, ['reveal', 'crowd', 'fountain', 'entrance', 'fountain-close', 'ferns', 'purr', 'herbs'], 'no new camera on the camp');
+  assert.deepEqual(v.den.opts.moon, [false, true, 5, 8, 13, 14, 15], 'and 15, one evening past full');
+  assert.deepEqual(v.den.opts.nextNest, [false, true]);
+  assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read', 'miststone', 'nextNest'], 'the next nest last');
+  assert.deepEqual(di.defaults, { weather: 'clear' }, 'no next nest unless a frame asks');
+  assert.deepEqual(v.den.cams, ['outside', 'inside', 'nest', 'doorway', 'case', 'stone'], 'no new camera on the den: the next nest is the `nest` close-up\'s');
+  assert.deepEqual(Object.keys(di.anchors.inside), ['entrance-left', 'entrance-right', 'doorway', 'nest', 'sleeper-1', 'sleeper-2', 'next-nest'], 'a spot of the inside composition');
+  const nn = di.anchors.inside['next-nest'];
+  assert.equal(nn.face, 'right', 'a cat lying in it faces her');
+  assert.ok(nn.placed, 'a spot the drawing places: never the depth scale\'s, nor a cast member\'s who names none');
+  assert.ok(Math.abs(nn.y - 905) <= 10 && Math.abs(nn.h - 210) <= 20 && nn.x >= 820 && nn.x <= 900, 'about { x: 820, y: 905, h: 210 }, settled with frames.mjs: ' + JSON.stringify(nn));
+  for (const id of ['camp', 'den']) assert.ok(v[id], id);
+  assert.ok(!v.camp.anchors.includes('next-nest'), 'the camp takes no new spot');
+  const md = fs.readFileSync(path.join(ROOT, 'docs/chapters/11-the-warrior-ceremony.spec.md'), 'utf8').replace(/\s+/g, ' ');
+  for (const s of ['**Option `moon`** (`\'number\'`, the moon\'s age in evenings, as the pile\'s, the field\'s and the tower\'s; default off)',
+    '**the moon is drawn when `moon` is set and the light is `night` or `dusk`**',
+    'the tower `{ x: 1050, w: 110, top: 320 }` is drawn lower (top 420 or more, behind the tree ring) or left out, and the moon sits in that gap at about (1100, 345), r about 34',
+    'high beside the fountain-top cat\'s head, never behind her face, and whole inside `fountain-close`',
+    '**the moon, its glow, and at most one screen-blend silver wash from the moon\'s side**',
+    '**No change to `fernClump`, `bramble`, `stonePath`, `denMound`, `crowdCats`, `castTint` or `CAST_TINT`**',
+    '**Ages 15 to 27 draw the waning moon**: the shape of age 28 − age turned half a turn (its lit side on the left), the same glow',
+    '**`moon` gains 15** (`[false, true, 5, 8, 13, 14, 15]`)',
+    '**Option `nextNest`** (`true` or off, default off; the `inside` composition, for the `nest` close-up), **new**',
+    '**`next-nest`** (facing right, `{ x: 880, y: 905, h: 210 }` as built)']) assert.ok(md.includes(s), 'the spec: ' + s);
+});
+
+test('kit.waxingMoon past full: 15 to 27 evenings draw the waning moon, the shape and glow of 28 - age turned half a turn (lit on the left), with data-age its own age; 15 nearly round; up to 14 and from 28 as before', () => {
+  const draw = (age, tilt) => {
+    const defs = [], S = { radU: (stops, cx, cy, rr) => { defs.push([stops, cx, cy, rr]); return 'url(#g)'; } };
+    return { svg: art.kit.waxingMoon(S, 600, 400, 40, tilt, age), defs };
+  };
+  for (let age = 15; age <= 27; age++) for (const tilt of [0, 8, -18]) {
+    const w = draw(age, tilt), m = draw(28 - age, tilt + 180);
+    assert.equal(w.svg, m.svg.replace('data-age="' + (28 - age) + '"', 'data-age="' + age + '"'), age + ': the evening ' + (28 - age) + '\'s moon, turned half a turn');
+    assert.deepEqual(w.defs, m.defs, age + ': the same glow');
+    assert.ok(w.svg.includes('rotate(' + (tilt + 180) + ')'), age + ': turned half a turn');
+    assert.ok(w.svg.includes('data-prop="waxing-moon" data-age="' + age + '"'), age + ': every finder still finds it');
+  }
+  // lit on the left: the lit limb is the half the path's first arc draws, the right half at no turn
+  const m15 = moonOf(draw(15, 0).svg, 15);
+  assert.ok(m15 && m15.sweep === 1 && m15.t > 0.75 && m15.t < 0.9, 'fifteen: nearly round (the mirror of the thirteenth evening\'s): ' + JSON.stringify(m15));
+  assert.deepEqual(moonOf(draw(15, 0).svg, 15), moonOf(draw(13, 0).svg, 13), 'the thirteenth evening\'s shape');
+  for (const age of [4, 5, 8, 13, 14, 28, 30]) assert.ok(draw(age, 8).svg.includes('rotate(8)'), age + ': not turned');
+  assert.ok(Math.abs(moonOf(draw(14, 0).svg, 14).t - 1) < 0.01, 'fourteen: round, as ever');
+});
+
+test('the camp by moonlight (`moon: 15`, night or dusk): the moon whole and in keep on reveal, crowd, purr, fountain and fountain-close; in the main composition in the gap of the lowered tower, clear of the towers beside it, of the cat on the fountain and of the caption corner; on the fountain\'s, beside her head, never behind her face', { skip: !art.character && 'no cats.js' }, () => {
+  for (const fx of [['night'], ['dusk'], ['night', 'purr', 'glow']]) for (const cam of ['reveal', 'crowd', 'purr', 'fountain', 'fountain-close']) for (const crowd of [true, false]) {
+    const scene = campNight(cam, { crowd }, null, fx), r = art.render(scene, { look: LOOK }), lab = cam + ' ' + fx.join('+') + (crowd ? ' crowd' : '');
+    checkRender(r, scene, lab);
+    const m = campMoonOf(r.svg), vb = viewBox(r.svg);
+    assert.ok(m && m.age === 15, lab + ': the moon');
+    const disc = [m.x - m.r, m.y - m.r, m.x + m.r, m.y + m.r];
+    assert.ok(insideVb(disc, vb), lab + ': whole in the picture: ' + disc + ' in ' + vb);
+    assert.ok(keptWorld(r, disc), lab + ': the lettering keeps off it');
+    assert.ok(r.svg.indexOf('data-prop="waxing-moon" data-age="15"') > m.at, lab + ': drawn by the kit, its age 15');
+    const main = cam !== 'fountain' && cam !== 'fountain-close';
+    if (main) {
+      assert.ok(m.r >= 30 && m.r <= 38 && Math.abs(m.x - 1100) <= 20 && Math.abs(m.y - 345) <= 20, lab + ': at about (1100, 345), r about 34');
+      assert.ok(disc[0] > 1030 + 10 && disc[2] < 1170 - 10, lab + ': clear of the towers at 880-1030 and 1170-1310');
+      assert.ok(tower1050(r.svg) >= 420, lab + ': the tower between them lower, behind the tree ring: ' + tower1050(r.svg));
+      assert.ok(insideVb(disc, [240, 280, 1120, 700]), lab + ': inside crowd\'s box');
+      assert.ok(disc[0] > vb[0] + vb[2] * 0.5, lab + ': in the right half, far from the caption corner at the top left');
+    } else assert.ok(Math.abs(m.x - 800) > 150 && m.y < 250, lab + ': high, to one side of the fountain top');
+  }
+  // never behind a face: clear of the fountain-top cat's head in every pose and facing, and of the ring's faces
+  for (const cam of ['crowd', 'fountain-close', 'fountain']) for (const pose of ['stand', 'sit', 'peer']) for (const facing of ['left', 'right']) {
+    const scene = campNight(cam, {}, [{ who: 'glintstar', at: 'fountain-top', pose, mood: 'kind', facing }]), r = art.render(scene, { look: LOOK }), m = campMoonOf(r.svg);
+    const a = art.sceneInfo('camp').anchors[cam === 'crowd' ? 'main' : 'fountain']['fountain-top'], me = landed(r.svg, scene.cast[0], a);
+    assert.ok(me, cam + ' ' + pose + ' ' + facing + ': she is drawn');
+    const disc = [m.x - m.r, m.y - m.r, m.x + m.r, m.y + m.r], lab = cam + ' ' + pose + ' ' + facing;
+    assert.ok(!boxMeets(disc, me.head, 24), lab + ': the moon clear of her head: ' + disc.map(Math.round) + ' / ' + me.head.map(Math.round));
+    assert.ok(disc[3] <= me.body[1] || !boxMeets(disc, me.body), lab + ': and of her body (above it, or beside it)');
+    if (cam !== 'crowd') assert.ok(facing === 'left' ? m.x > (me.head[0] + me.head[2]) / 2 : m.x < (me.head[0] + me.head[2]) / 2, lab + ': on the side away from her face');
+  }
+  const r = art.render(campNight('crowd'), { look: LOOK }), m = campMoonOf(r.svg), disc = [m.x - m.r, m.y - m.r, m.x + m.r, m.y + m.r];
+  CH11_CROWD.forEach((c, i) => {
+    const a = typeof c.at === 'string' ? art.sceneInfo('camp').anchors.main[c.at] : null;
+    if (a) assert.ok(!boxMeets(disc, landed(r.svg, c, a).head, 24), c.who + ': the moon clear of her face');
+  });
+});
+
+test('the camp\'s moon only while it is drawn: by day, in the golden light or at sunset, with no `moon` or one that is not a number, and on `entrance` and `herbs`, nothing changes: the tower stands at 320 and the picture is the moonless one; `ferns`, a close camera of the main composition, has its moonlight and no moon in sight', { skip: !art.character && 'no cats.js' }, () => {
+  const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+  for (const fx of [[], ['sunset'], ['morning'], ['day'], ['morning', 'purr']]) for (const cam of ['reveal', 'crowd', 'purr', 'fountain', 'fountain-close']) {
+    const on = campNight(cam, {}, null, fx), off = Object.assign({}, on, { opts: { crowd: true } });
+    assert.equal(strip(art.render(on, { look: LOOK }).svg), strip(art.render(off, { look: LOOK }).svg), cam + ' ' + fx.join('+') + ': no moon by day');
+  }
+  for (const moon of [0, true, false, '15', null, -3]) {
+    const on = campNight('reveal', { moon }), off = Object.assign({}, on, { opts: { crowd: true } });
+    assert.equal(strip(art.render(on, { look: LOOK }).svg), strip(art.render(off, { look: LOOK }).svg), JSON.stringify(moon) + ': no moon');
+  }
+  for (const cam of ['entrance', 'herbs']) {
+    const cast = cam === 'herbs' ? [{ who: 'thymeleaf', at: 'herbs-1', pose: 'sit', mood: 'kind' }] : [{ who: 'player', at: 'entrance', pose: 'sit', mood: 'wonder' }];
+    const on = campNight(cam, {}, cast), off = Object.assign({}, on, { opts: { crowd: true } });
+    assert.equal(strip(art.render(on, { look: LOOK }).svg), strip(art.render(off, { look: LOOK }).svg), cam + ': nothing new');
+  }
+  for (const fx of [['night'], ['dusk'], ['morning']]) assert.equal(tower1050(art.render(Object.assign(campNight('reveal', {}, null, fx), { opts: { crowd: true } }), { look: LOOK }).svg), 320, fx + ': the tower as it was, without the moon');
+  const fe = art.render(campNight('ferns'), { look: LOOK }), fo = art.render(Object.assign(campNight('ferns'), { opts: { crowd: true } }), { look: LOOK });
+  assert.ok(campMoonOf(fe.svg) && /data-prop="camp-moonlight"/.test(fe.svg), 'ferns: the main composition\'s moon and moonlight');
+  assert.deepEqual(fe.keep, fo.keep, 'ferns: the moon out of this close camera, nothing kept for it');
+});
+
+test('the camp by moonlight is never darker than without it: the moonlit picture is the moonless one with the moon (light colours, after the sky), one screen-blend silver wash (last of the set\'s layers, under the cast) and the one tower lowered, nothing else; the light the moon and its glow add is more than the lowered tower\'s top takes away', { skip: !art.character && 'no cats.js' }, () => {
+  const K = art.kit, P = K.PAL.night, lum = (hex) => { const c = K.hexRgb(hex); return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255; };
+  const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+  // the moon's group and the wash, cut out with the gradients only they use; then every id renumbered in the order it first
+  // appears, so the two pictures compare whatever ids the moon's gradients took
+  const MOON_G = /<g data-prop="camp-moon"[^>]*><g data-prop="waxing-moon"[^>]*>.*?<\/g><\/g><\/g>/, WASH = /<rect [^>]*data-prop="camp-moonlight"\/>/;
+  const cutOut = (s, re) => {
+    const m = re.exec(s);
+    if (!m) return s;
+    let out = s.replace(m[0], '');
+    for (const u of m[0].match(/url\(#[^)]+\)/g) || []) out = out.replace(new RegExp('<radialGradient id="' + u.slice(5, -1) + '"[^>]*>.*?</radialGradient>'), '');
+    return out;
+  };
+  const cutMoon = (s) => cutOut(s, MOON_G), cutWash = (s) => cutOut(s, WASH);
+  const canon = (s) => { const ids = new Map(); return s.replace(/(id="|url\(#|href="#)([^")]+)/g, (m, p, id) => { if (!ids.has(id)) ids.set(id, 'i' + ids.size); return p + ids.get(id); }); };
+  const cutTower = (s) => { const a = s.indexOf('<path d="M1050 640V'), b = s.indexOf('<path d="M330 640V200H460V640Z"'); return a > 0 && b > a ? s.slice(0, a) + s.slice(b) : s; };
+  for (const cam of ['reveal', 'crowd', 'purr', 'fountain', 'fountain-close']) for (const fx of [['night'], ['dusk']]) {
+    const on = campNight(cam, {}, null, fx), off = Object.assign({}, on, { opts: { crowd: true } });
+    const a = strip(art.render(on, { look: LOOK }).svg), b = strip(art.render(off, { look: LOOK }).svg), main = cam !== 'fountain' && cam !== 'fountain-close';
+    const wash = /<rect [^>]*data-prop="camp-moonlight"\/>/.exec(a);
+    assert.ok(wash && /style="mix-blend-mode:screen"/.test(wash[0]) && /x="0" y="0" width="1600" height="1000"/.test(wash[0]), cam + ': one screen-blend wash over the whole set');
+    assert.equal((a.match(/data-prop="camp-moonlight"/g) || []).length, 1, cam + ': at most one');
+    assert.ok(MOON_G.test(a), cam + ': the moon\'s group');
+    const rest = main ? cutTower(cutWash(cutMoon(a))) : cutWash(cutMoon(a));
+    assert.equal(canon(rest), canon(main ? cutTower(b) : b), cam + ' ' + fx + ': nothing else changes');
+    const body = a.slice(a.indexOf('</defs>'));
+    assert.ok(body.indexOf('data-prop="camp-moon"') < body.indexOf(main ? '<path d="M1050 640V' : 'skewX('), cam + ': the moon behind the towers');
+    assert.ok(body.indexOf('data-prop="camp-moonlight"') > body.indexOf('data-prop="camp-moon"'), cam + ': the wash after it');
+    for (const c of (MOON_G.exec(a)[0].match(/fill="#[0-9A-Fa-f]{6}"/g) || [])) assert.ok(Math.min(...K.hexRgb(c.slice(6, -1))) >= 0xC0, cam + ': the moon is light: ' + c);
+  }
+  // the screen wash only lightens; its colour is silver (light, a little blue)
+  const silver = K.hexRgb('#C9D8FF');
+  assert.ok(silver[2] >= silver[0] && Math.min(...silver) >= 0xC0, 'silver');
+  // the light budget where the tower stood (sRGB luminance, as the measured looks): gained, the moon's disc and its glow over
+  // the lightest night sky; lost at most, the glass of the tower's top (its lightest colour, the top of its gradient) and its
+  // lit windows there, over the darkest sky, with a quarter more for the reflections
+  const a = strip(art.render(campNight('reveal'), { look: LOOK }).svg), b = strip(art.render(Object.assign(campNight('reveal'), { opts: { crowd: true } }), { look: LOOK }).svg);
+  const m = campMoonOf(a), top = tower1050(a), skyHi = lum(P.sky[P.sky.length - 1]), skyLo = lum(P.sky[0]);
+  const lit = Math.min(0.36, 0.2 + 0.03 * (28 - 15 - 4));
+  const gain = Math.PI * m.r * m.r * (lum('#FFF3D2') - skyHi) + lit * Math.PI * Math.pow(m.r * 2.6, 2) / 3 * (lum('#FFF6DE') - skyHi);
+  const seg = b.slice(b.indexOf('<path d="M1050 640V'), b.indexOf('<path d="M330 640V200H460V640Z"'));
+  const winM = /<path d="([^"]*)" fill="#FFD27F" opacity="([\d.]+)"\/>/.exec(seg);
+  const wins = winM ? (winM[1].match(/M[\d.]+ ([\d.]+)h12v14h-12z/g) || []).filter((w) => +w.split(' ')[1].split('h')[0] < top).length : 0;
+  const glass = lum(K.mix(P.glassTop, P.haze, 0.7 * 0.55));
+  const loss = 1.25 * (110 * (top - 320) * (glass - skyLo) + wins * 12 * 14 * (winM ? +winM[2] : 1) * (lum(P.lit) - glass));
+  assert.ok(seg && winM, 'the moonless tower found, with its lit windows');
+  assert.ok(gain > loss, 'the moon gives more light than the tower\'s top took: ' + Math.round(gain) + ' > ' + Math.round(loss) + ' (' + wins + ' lit windows)');
+  // (measured with tools/frames.mjs, the mean luminance of the whole picture, Rec. 709 on sRGB 0-255, 2026-11-01: reveal
+  // 62.9 -> 97.0, crowd 66.5 -> 100.1, fountain-close 69.4 -> 107.4; bluer than red in every one: silver)
+});
+
+test('the den\'s moon at 15, one evening past full: waning, nearly round and lit on the left, where the full moon hangs (outside over the towers, inside in the doorway\'s sky), at night and at dusk, in keep; none under cloud or by day', () => {
+  for (const [cam, fx] of [['outside', ['night']], ['outside', ['dusk']], ['inside', ['night']], ['doorway', ['night', 'stars']], ['doorway', ['dusk']]]) {
+    const scene = { set: 'den', cam, opts: { weather: 'clear', moon: 15, stone: 'auto', bark: 'auto', hidden: true, glass: true }, cast: [{ who: 'player', at: cam === 'outside' ? 'doorway' : 'nest', pose: 'sit', mood: 'wonder' }], fx };
+    const r = art.render(scene, { look: LOOK }), lab = cam + ' ' + fx.join('+');
+    checkRender(r, scene, lab);
+    const m = moonOf(r.svg, 15);
+    assert.ok(m && m.sweep === 1 && m.t > 0.75 && m.t < 0.9, lab + ': nearly round: ' + JSON.stringify(m));
+    assert.ok(/data-prop="waxing-moon" data-age="15"><circle[^>]*\/><g transform="translate\([\d.]+ [\d.]+\) rotate\(188\)"/.test(r.svg), lab + ': turned half a turn: lit on the left');
+    const full = art.render(Object.assign({}, scene, { opts: Object.assign({}, scene.opts, { moon: 14 }) }), { look: LOOK });
+    const at = (s, age) => /<g data-prop="waxing-moon" data-age="\d+"><circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/.exec(s.slice(s.indexOf('data-age="' + age + '"') - 40)).slice(1).join(' ');
+    assert.equal(at(r.svg, 15), at(full.svg, 14), lab + ': where the full moon hangs');
+    assert.deepEqual(r.keep, full.keep, lab + ': in keep as the full moon is');
+  }
+  assert.equal(moonOf(art.render({ set: 'den', cam: 'outside', opts: { weather: 'cloudy', moon: 15 }, cast: [], fx: ['night'] }).svg, 15), null, 'hidden under cloud');
+  for (const fx of [['morning'], ['day']]) assert.equal(moonOf(art.render({ set: 'den', cam: 'outside', opts: { moon: 15 }, cast: [], fx }).svg, 15), null, 'none by day: ' + fx);
+});
+
+// the warriors' nest (`nextNest`): her nest's spot moved, the next nest's spot, and the two cats placed there
+const NEST_W = () => { const s = art.sceneInfo('den').anchors.inside, nn = s['next-nest']; return { nest: Object.assign({}, s.nest, { x: s.nest.x + 60 }), next: nn }; };
+const nestW = (mine, hers, opts, fx) => ({ set: 'den', cam: 'nest', opts: Object.assign({ weather: 'clear', stone: 'nose', bark: 'auto', hidden: true, glass: true, nextNest: true }, opts),
+  cast: [Object.assign({ who: 'murmurchime', at: 'next-nest', mood: 'sleepy' }, hers), Object.assign({ who: 'player', at: 'nest', mood: 'kind' }, mine)], fx: fx || ['morning'] });
+
+test('den nextNest (the warriors\' nest, on the `nest` close-up): a second plain moss ring at the picture\'s left edge, partly cropped, with its own front rim over the cat in it at `next-nest`; her own nest, its spot and everything on it moved about 60 right; both cats\' faces in the picture', { skip: !art.character && 'no cats.js' }, () => {
+  const W = NEST_W();
+  for (const fx of [['morning'], ['night'], ['morning', 'zzz', 'sparkle']]) for (const miststone of [false, true]) {
+    const scene = nestW({ pose: 'crouch', holds: miststone ? undefined : 'miststone', holdAt: 'paws', facing: 'left' }, { pose: 'lie' }, { miststone }, fx), r = art.render(scene, { look: LOOK }), lab = fx.join('+') + ' ' + miststone;
+    checkRender(r, scene, lab);
+    const vb = viewBox(r.svg);
+    // the rings: hers at 1120, the next one at its own spot, its middle left of the picture's edge
+    const rings = [...r.svg.matchAll(/<ellipse cx="([\d.]+)" cy="([\d.]+)" rx="([\d.]+)" ry="([\d.]+)" fill="#[0-9a-f]{6}"\/><ellipse cx="\1" cy="[\d.]+" rx="[\d.]+" ry="[\d.]+" fill="#[0-9a-f]{6}"\/>/g)].map((m) => m.slice(1).map(Number));
+    const next = rings.filter((q) => q[0] < vb[0] + 60).sort((p, q) => q[0] - p[0])[0], mine = rings.find((q) => q[0] === W.nest.x);
+    assert.ok(next && next[0] - next[2] < vb[0] && next[0] + next[2] > vb[0] + 40, lab + ': the next nest, partly cropped at the left edge: ' + JSON.stringify(rings));
+    assert.ok(mine, lab + ': her nest, moved right to ' + W.nest.x);
+    assert.ok(next[0] + next[2] <= mine[0] - mine[2] + 12, lab + ': two nests, side by side');
+    // the cats: each where her spot is, each face in the picture
+    const her = landed(r.svg, scene.cast[0], W.next), me = landed(r.svg, scene.cast[1], W.nest);
+    assert.ok(her && me, lab + ': both drawn at their spots');
+    assert.ok(r.heads.every((h) => h && h.x > 2 && h.x < 98), lab + ': both faces in the picture: ' + JSON.stringify(r.heads));
+    assert.ok(her.head[0] >= vb[0], lab + ': the next nest\'s cat\'s face wholly in');
+    // her front rim covers her, after her in the drawing; ours covers ours
+    const rim = r.svg.indexOf('<path d="M' + n1(next[0] - next[2]) + ' ' + n1(next[1]) + 'A');
+    assert.ok(rim > her.idx && rim < me.idx, lab + ': the next nest\'s rim in front of her (drawn with her, before our cat)');
+    if (miststone) {
+      const ms = mistStones(r.svg);
+      assert.equal(ms.length, 1, lab + ': one mist stone');
+      assert.ok(ms[0].box[0] > W.nest.x - 160 && ms[0].box[2] < W.nest.x + 160, lab + ': on her own moss: ' + ms[0].box);
+      for (const c of [her, me]) assert.ok(!boxMeets(ms[0].box, c.head, 0), lab + ': off both faces');
+    }
+    assert.ok(/data-prop="nest-bark"/.test(r.svg), lab + ': her bark along her own nest');
+  }
+});
+const n1 = (v) => String(Math.round(v * 10) / 10);
+
+test('den nextNest: the two cats never touch, whatever she does in her nest (loaf, crouch, sit, curl, asleep; facing either way) and however {Murmur}chime lies in the next (lie, curl, asleep)', { skip: !art.character && 'no cats.js' }, () => {
+  const W = NEST_W();
+  let least = Infinity;
+  for (const [pose, more] of [['loaf', {}], ['crouch', {}], ['crouch', { holds: 'miststone', holdAt: 'paws' }], ['sit', {}], ['curl', {}], ['curl', { asleep: true }], ['lie', { asleep: true }], ['loaf', { asleep: true }]]) {
+    for (const facing of ['left', 'right']) for (const [hp, hm] of [['lie', {}], ['curl', {}], ['curl', { asleep: true }], ['lie', { asleep: true }]]) {
+      const scene = nestW(Object.assign({ pose, facing }, more), Object.assign({ pose: hp }, hm), { miststone: true }), r = art.render(scene, { look: LOOK });
+      const her = landed(r.svg, scene.cast[0], W.next), me = landed(r.svg, scene.cast[1], W.nest), lab = pose + JSON.stringify(more) + ' ' + facing + ' / ' + hp + JSON.stringify(hm);
+      assert.ok(her && me, lab);
+      const gap = me.body[0] - her.body[2];
+      least = Math.min(least, gap);
+      assert.ok(gap >= 40, lab + ': apart, ' + Math.round(gap) + ' between them');
+      assert.ok(me.body[2] <= 1260 + 4, lab + ': and she is wholly in the picture at the right: ' + Math.round(me.body[2]));
+    }
+  }
+  assert.ok(least < 120, 'side by side, the next nest beside hers: the nearest ' + Math.round(least));
+});
+
+test('den nextNest off: every den picture as it was (the fingerprint above); the next nest\'s spot never sizes a raw spot nor takes a cast member who names none; on, a raw spot in the nest close-up is sized as without it', { skip: !art.character && 'no cats.js' }, () => {
+  const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+  const raw = (opts) => art.render({ set: 'den', cam: 'nest', opts: Object.assign({ weather: 'clear' }, opts), cast: [{ who: 'player', at: { x: 920, y: 900 }, pose: 'sit', mood: 'kind' }], fx: ['night'] }, { look: LOOK }).svg;
+  const scaleOf = (svg) => +/translate\(920 900\) scale\(([\d.]+)/.exec(svg)[1];
+  assert.equal(scaleOf(raw({ nextNest: true })), scaleOf(raw({})), 'a raw spot sized by the den\'s own spots, as ever (chapter 3\'s {x: 920, y: 900})');
+  // nobody named: the first free spots, never the next nest's
+  const sc = { set: 'den', cam: 'inside', opts: { weather: 'clear' }, cast: Array.from({ length: 7 }, (v, i) => ({ who: 'clancat', variant: (i % 6) + 1, pose: 'sit', mood: 'neutral' })), fx: ['night'] };
+  assert.ok(!/translate\(880 905\)/.test(art.render(sc, { look: LOOK }).svg), 'seven unnamed cats: none at the next nest\'s spot');
+  // off: nothing of it, her nest where it always was
+  for (const cam of ['inside', 'nest', 'doorway']) {
+    const off = { set: 'den', cam, opts: { weather: 'clear', stone: 'nose', bark: 12, glass: true, miststone: true }, cast: [{ who: 'player', at: 'nest', pose: 'curl', mood: 'sleepy', asleep: true }], fx: ['night'] };
+    assert.equal(strip(art.render(Object.assign({}, off, { opts: Object.assign({}, off.opts, { nextNest: false }) }), { look: LOOK }).svg), strip(art.render(off, { look: LOOK }).svg), cam + ': nextNest false is no option at all');
+    assert.ok(art.render(off, { look: LOOK }).svg.includes('translate(1060 892)'), cam + ': her nest where it was');
+  }
+});
+
+test('the gallery shows chapter 11: the camp by moonlight (reveal with the ring and Glintstar on the fountain, the ring close with our cat and Tallyheart, Glintstar close, the purr), the den by the moon at 15 (inside and doorway), the warriors\' nest with {Murmur}chime asleep in the next, and the pile by moonlight', () => {
+  const page = fs.readFileSync(path.join(ROOT, 'dev/gallery.html'), 'utf8');
+  const js = page.slice(page.lastIndexOf('<script>') + 8, page.lastIndexOf('</script>'));
+  const from = js.indexOf('// ---- a sample cast'), to = js.indexOf('// ---- panels');
+  const { EXTRA } = new Function(js.slice(from, to) + '\nreturn { SAMPLES: SAMPLES, EXTRA: EXTRA };')();
+  const ch11 = EXTRA.filter((e) => /^chapter 11: /.test(e[3]));
+  const at = EXTRA.indexOf(ch11[0]);
+  assert.ok(at > 0 && EXTRA.slice(at).every((e) => /^chapter 11: /.test(e[3])), 'appended after every earlier extra, each labelled');
+  const has = (set, cam, test) => ch11.some((e) => e[0] === set && e[1] === cam && test(e[2].opts || {}, e[2].cast || [], e[2].fx || []));
+  assert.ok(has('camp', 'reveal', (o, c, f) => o.crowd === true && o.moon === 15 && c.some((m) => m.who === 'glintstar' && m.at === 'fountain-top') && f.includes('night')), 'reveal');
+  assert.ok(has('camp', 'crowd', (o, c) => o.moon === 15 && c.some((m) => m.who === 'player' && m.holds === 'miststone' && m.at.x === 760 && m.at.y === 860) && c.some((m) => m.who === 'tallyheart' && m.at.x === 950 && m.at.y === 872)), 'the ring close');
+  assert.ok(has('camp', 'fountain-close', (o, c) => o.moon === 15 && c.some((m) => m.who === 'glintstar')), 'Glintstar close');
+  assert.ok(has('camp', 'purr', (o, c, f) => o.moon === 15 && f.includes('purr')), 'the purr');
+  for (const cam of ['inside', 'doorway']) assert.ok(has('den', cam, (o) => o.moon === 15), 'the den ' + cam + ' by the moon at 15');
+  assert.ok(has('den', 'nest', (o, c) => o.nextNest === true && o.miststone === true && c.some((m) => m.who === 'player' && m.at === 'nest') && c.some((m) => m.who === 'murmurchime' && m.at === 'next-nest' && m.asleep)), 'the warriors\' nest');
+  if (art.vocab.sets.pile) assert.ok(has('pile', 'wide', (o) => o.moon === 15 && o.dug === 'big' && o.scale === 'behind' && JSON.stringify(o.rows) === '[10,10,10,10]'), 'the pile by moonlight');
+  for (const e of ch11) if (art.vocab.sets[e[0]]) checkRender(art.render({ set: e[0], cam: e[1], opts: e[2].opts || {}, cast: e[2].cast || [], fx: e[2].fx || [] }, { look: LOOK }), { cast: e[2].cast || [] }, e[3]);
 });

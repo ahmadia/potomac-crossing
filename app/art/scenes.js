@@ -1590,11 +1590,13 @@
   // ------------------------------------------------------------------ CAMP
 
   function drawCampWide(S) {
-    var p = S.pal, back = '', front = '', r = rng(101);
+    var p = S.pal, back = '', front = '', r = rng(101), moonAge = campMoonAge(S);
     back += sky(S, 0, 0, 1600, 660, { sun: [1000, 540], sunR: 560 });
+    // chapter 11: the moon, at night or dusk with `moon`, in the gap the tower at x 1050 leaves when it stands lower
+    if (moonAge) back += campMoon(S, CAMP_MOON.main, moonAge);
     back += towers(S, [
       { x: 470, w: 120, top: 300, base: 640, far: 0.65 }, { x: 610, w: 90, top: 350, base: 640, far: 0.75, cap: 'slant' },
-      { x: 880, w: 150, top: 250, base: 640, far: 0.6, cap: 'step' }, { x: 1050, w: 110, top: 320, base: 640, far: 0.7 },
+      { x: 880, w: 150, top: 250, base: 640, far: 0.6, cap: 'step' }, { x: 1050, w: 110, top: moonAge ? CAMP_MOON.main.tower : 320, base: 640, far: 0.7 },
       { x: 330, w: 130, top: 200, base: 640, far: 0.45, cap: 'spire' }, { x: 1170, w: 140, top: 180, base: 640, far: 0.45, cap: 'slant' }
     ]);
     back += g(towers(S, [
@@ -1646,10 +1648,47 @@
     var avoid = spotBoxes(S, 'ferns');
     back += fernClump(S, 1440, 905, 330, { seed: 134, count: 9, spread: 2.6 });
     S.covers.ferns = fernClump(S, 1360, 940, 200, { seed: 135, count: 5, spread: 1.6, lean: -0.15, avoid: avoid });
+    // chapter 11: the moonlight, silver over the whole camp from the moon's side (under the cast)
+    if (moonAge) back += campSilver(S, CAMP_MOON.main);
     // foreground ferns framing the corners
     front += fernClump(S, -70, 1010, 300, { seed: 136, count: 6, spread: 1.6, lean: 0.45, avoid: avoid }) +
       fernClump(S, 1690, 1015, 300, { seed: 137, count: 6, spread: 1.6, lean: -0.45, avoid: avoid });
     return { back: back, over: '', front: g(front, { filter: S.shadow('m') }) };
+  }
+
+  /* Chapter 11, the camp by moonlight (docs/chapters/11-the-warrior-ceremony.spec.md, section 4): `moon: n`, the moon n
+   * evenings old (kit.waxingMoon: 15, one evening past full, nearly round and lit on the left), drawn at night or at dusk,
+   * whole on `reveal`, `crowd` and `purr` (the main composition) and on `fountain` and `fountain-close` (the fountain's), and
+   * in keep. The main composition had no room for it among its towers: while it is drawn (only then) the tower at x 1050
+   * stands lower, behind the tree ring, and the moon hangs in that gap near the light rays' apex, so they read as moonbeams.
+   * The fountain's hangs high beside the head of the cat on the fountain top, on the side away from her face (the mirror
+   * when she faces right). The moonlight is the moon, its glow (the kit's) and one screen-blend silver wash from the moon's
+   * side over the set, under the cast (which keeps CAST_TINT.night): never darker than the camp without it. Off (or by day,
+   * or on `entrance` and `herbs`) nothing of it is drawn, and every camp picture is as it was.
+   * <g data-prop="camp-moon" data-age="n" data-at="x y r"> round the kit's moon; the wash <rect data-prop="camp-moonlight">. */
+  var CAMP_MOON = { main: { x: 1100, y: 345, r: 34, tilt: 8, tower: 440, wash: 1500 }, fountain: { x: 1010, y: 182, r: 38, tilt: 8, wash: 1500 } };
+  var CAMP_SILVER = '#C9D8FF';
+  function campMoonAge(S) {
+    var m = S.opts.moon;
+    return typeof m === 'number' && isFinite(m) && m > 0 && (S.tod === 'night' || S.tod === 'dusk') ? m : 0;
+  }
+  // where the moon hangs in this picture: the fountain's spot turns to the cat on the fountain top's back
+  function campMoonAt(S, M) {
+    if (S.comp !== 'fountain') return M;
+    var m = null, a = S.anchorMap && S.anchorMap['fountain-top'];
+    (S.cast || []).forEach(function (c) { if (c && c.at === 'fountain-top' && !m) m = c; });
+    var right = !!(m && a && castPlan(S, m, a, refH()).face === 'right');
+    return right ? { x: WORLD_W - M.x, y: M.y, r: M.r, tilt: M.tilt, wash: M.wash } : M;
+  }
+  function campMoon(S, M0, age) {
+    var M = campMoonAt(S, M0);
+    (S.keep = S.keep || []).push({ x: M.x - M.r - 8, y: M.y - M.r - 8, w: 2 * M.r + 16, h: 2 * M.r + 16 });
+    return g(waxingMoon(S, M.x, M.y, M.r, M.tilt, age), { 'data-prop': 'camp-moon', 'data-age': n(age), 'data-at': n(M.x) + ' ' + n(M.y) + ' ' + n(M.r) });
+  }
+  function campSilver(S, M0) {
+    var M = campMoonAt(S, M0);
+    return rect(0, 0, WORLD_W, WORLD_H, S.radU([[0, CAMP_SILVER, 0.38], [0.3, CAMP_SILVER, 0.21], [1, CAMP_SILVER, 0.09]], M.x, M.y, M.wash),
+      { style: 'mix-blend-mode:screen', 'data-prop': 'camp-moonlight' });
   }
 
   function denMound(S, x0, x1, base, top, openings, seed) {
@@ -2176,11 +2215,14 @@
   // the half moon, below 0 when it bulges the other way). (x, y) its middle, r its radius, `tilt`
   // degrees as thinMoon's.
   function moonT(age) { return clamp(0.8 - 0.18 * (age - 4), -1, 0.9); }
+  // (chapter 11: past full, 15 to 27 evenings, the moon wanes: the shape and glow of the evening as far before full as this
+  // one is after it, 28 - age, turned half a turn, so its lit side is on the left. Up to 14, and from 28, as before.)
   function waxingMoon(S, x, y, r, tilt, age) {
-    var t = moonT(age), d = 'M0 ' + n(-r) + 'A' + n(r) + ' ' + n(r) + ' 0 0 1 0 ' + n(r) + 'A' + n(Math.abs(t) * r) + ' ' + n(r) + ' 0 0 ' + (t >= 0 ? 0 : 1) + ' 0 ' + n(-r) + 'Z';
-    var lit = clamp(0.2 + 0.03 * (age - 4), 0.2, 0.36);
+    var wane = age > 14 && age < 28, shape = wane ? 28 - age : age;
+    var t = moonT(shape), d = 'M0 ' + n(-r) + 'A' + n(r) + ' ' + n(r) + ' 0 0 1 0 ' + n(r) + 'A' + n(Math.abs(t) * r) + ' ' + n(r) + ' 0 0 ' + (t >= 0 ? 0 : 1) + ' 0 ' + n(-r) + 'Z';
+    var lit = clamp(0.2 + 0.03 * (shape - 4), 0.2, 0.36);
     return g(circ(x, y, r * 2.6, S.radU([[0, '#FFF6DE', lit], [1, '#FFF6DE', 0]], x, y, r * 2.6)) +
-      g(circ(0, 0, r * 0.98, '#FFF3D2', { opacity: 0.07 }) + path(d, '#FFF3D2'), { transform: 'translate(' + n(x) + ' ' + n(y) + ') rotate(' + n(tilt || 0) + ')' }), { 'data-prop': 'waxing-moon', 'data-age': n(age) });
+      g(circ(0, 0, r * 0.98, '#FFF3D2', { opacity: 0.07 }) + path(d, '#FFF3D2'), { transform: 'translate(' + n(x) + ' ' + n(y) + ') rotate(' + n((tilt || 0) + (wane ? 180 : 0)) + ')' }), { 'data-prop': 'waxing-moon', 'data-age': n(age) });
   }
   // Over the den at dusk: each evening it stands a little higher over the towers and a little
   // further from where the sun went down, and is a little bigger. The fifth evening's (chapter 5:
@@ -2258,6 +2300,13 @@
   }
 
   var DEN_DOOR = 'M1210 900C1196 640 1270 430 1390 420C1510 430 1584 640 1570 900Z';
+  // Chapter 11 (docs/chapters/11-the-warrior-ceremony.spec.md, section 4, "The den"): the warriors' next nest (`nextNest`), a
+  // plain moss ring (no bark, no stones), its middle and size [x, y, k] as nest() takes them, partly cropped at the nest
+  // close-up's left edge; its spot [x, y, h] (a cat lying in it facing right); and how far right her own nest moves.
+  var NEXT_NEST = { ring: [850, 899, 0.9], spot: [880, 905, 210], shift: 60 };
+  function nextNestSpots() {
+    return { nest: A(1060 + NEXT_NEST.shift, 892, 250), 'next-nest': A(NEXT_NEST.spot[0], NEXT_NEST.spot[1], NEXT_NEST.spot[2], 'right', { placed: true }) };
+  }
 
   // Riffle's stone in her nest (the den's `stone` option), drawn on the moss in front of whoever
   // lies there: true (or 'auto' left unfilled) between her front paws, 'nose' just past her nose,
@@ -2863,6 +2912,14 @@
     }
     // three moss nests (the front rims hold the sleepers)
     var N = [['sleeper-1', 330, 808, 0.98], ['sleeper-2', 640, 850, 1.02], ['nest', 1060, 886, 1.06]];
+    // chapter 11, `nextNest`: the warriors' next nest at the nest close-up's left edge, and hers moved right, its spot with it
+    // (her stone, bark, glass and mist stone find her there: they read the `nest` spot), so two cats lie in them apart
+    if (S.opts.nextNest) {
+      N[2] = ['nest', 1060 + NEXT_NEST.shift, 886, 1.06];
+      N.push(['next-nest', NEXT_NEST.ring[0], NEXT_NEST.ring[1], NEXT_NEST.ring[2]]);
+      S.spots = nextNestSpots();
+      S.anchorMap = anchorsFor(S);
+    }
     for (i = 0; i < N.length; i++) {
       var nn = nest(S, N[i][1], N[i][2], N[i][3], N[i][0] === 'nest');
       back += nn.back;
@@ -3541,8 +3598,10 @@
   // Low angle, looking up at the leader on her fountain against the golden towers.
 
   function drawCampFountain(S) {
-    var p = S.pal, back = '', front = '', r = rng(161), i;
+    var p = S.pal, back = '', front = '', r = rng(161), i, moonAge = campMoonAge(S);
     back += sky(S, 0, 0, 1600, 1000, { sun: [1090, 420], sunR: 720 });
+    // chapter 11: the moon, high beside the head of the cat on the fountain top (CAMP_MOON)
+    if (moonAge) back += campMoon(S, CAMP_MOON.fountain, moonAge);
     function lean(list, ang) { return g(towers(S, list), { transform: 'translate(0 1000) skewX(' + ang + ') translate(0 -1000)' }); }
     back += g(lean([{ x: -120, w: 300, top: -300, base: 1000, far: 0.12 }, { x: 190, w: 170, top: 80, base: 1000, far: 0.3, cap: 'slant' }], -11) +
       lean([{ x: 1240, w: 170, top: 40, base: 1000, far: 0.3, cap: 'step' }, { x: 1420, w: 300, top: -300, base: 1000, far: 0.12 }], 11), { filter: S.shadow('m') });
@@ -3578,6 +3637,8 @@
     back += g(f, { filter: S.shadow('l') });
     // the whole Clan (crowd: true): heads and ears along the bottom, looking up at her
     if (S.opts.crowd) back += crowdHeads(S);
+    // chapter 11: the moonlight, silver from the moon's side (under the cast)
+    if (moonAge) back += campSilver(S, CAMP_MOON.fountain);
     front += g(fernClump(S, -60, 1060, 420, { seed: 166, count: 7, spread: 1.4, lean: 0.55 }) + fernClump(S, 1680, 1060, 420, { seed: 167, count: 7, spread: 1.4, lean: -0.55 }), { filter: S.shadow('m') });
     return { back: back, over: '', front: front };
   }
@@ -3944,7 +4005,10 @@
       // fountain; more watching shadows from above
       // chapter 9: remedy, on Thymeleaf's mixing stone (`herbs`): 'four' the four things in a row, 'mixed' the remedy
       // in a curled leaf; 'none' (left out) the bare stone
-      opts: { puddles: [true, false], rainFountain: [true, false], crowd: [true, false], remedy: ['none', 'four', 'mixed'] }, defaults: {}
+      // chapter 11: moon, a number, the moon that many evenings old in the camp's sky at night or dusk (15: one evening past
+      // full), with its silver light, and in the main composition the tower at x 1050 lower while it shows; left out, no moon
+      // (CAMP_MOON)
+      opts: { puddles: [true, false], rainFountain: [true, false], crowd: [true, false], remedy: ['none', 'four', 'mixed'], moon: 'number' }, defaults: {}
     },
     hollow: {
       label: 'the Training Hollow', tod: 'golden', todMap: { sunset: 'golden' }, draw: drawHollow,
@@ -3995,7 +4059,11 @@
         outside: { 'entrance-left': A(540, 870, 270), 'entrance-right': A(1060, 870, 270, 'left'), doorway: A(800, 830, 250, 'left') },
         inside: {
           'entrance-left': A(1310, 898, 190), 'entrance-right': A(1476, 898, 190, 'left'), doorway: A(1392, 896, 250, 'left'),
-          nest: A(1060, 892, 250), 'sleeper-1': A(330, 814, 245), 'sleeper-2': A(640, 856, 250, 'left')
+          nest: A(1060, 892, 250), 'sleeper-1': A(330, 814, 245), 'sleeper-2': A(640, 856, 250, 'left'),
+          // chapter 11: next-nest, the warriors' next nest beside hers (`nextNest`, on the `nest` close-up): a cat lying in it,
+          // facing right, at the close-up's left edge. A spot the drawing places (`placed`: never a ground anchor for the
+          // depth scale, nor a spot given to a cast member who names none), so with the option off every den picture is as it was
+          'next-nest': A(NEXT_NEST.spot[0], NEXT_NEST.spot[1], NEXT_NEST.spot[2], 'right', { placed: true })
         },
         // chapter 9, the case: case-1 our cat at the rows' near left, facing right; case-2 Tallyheart across the rows at the
         // right, facing left; case-3 a standing cat at the far side by the doorway's light (out of frame), facing left:
@@ -4026,9 +4094,13 @@
       // gift on the moss of her nest beside her glass and the corners of her secret bark (true: the smooth grey stone;
       // 'flash': a band of blue and green light across it, in the moonlight from the doorway; denMistStone), and on the
       // new `stone` camera, big in the middle of the picture
-      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8, 13, 14], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
+      // chapter 11: moon: 15, one evening past full (the kit's moon past full: lit on the left), outside and in the doorway's
+      // sky as 14 is; nextNest, the warriors' next nest (the `inside` composition, for the `nest` close-up): a second plain
+      // moss ring at the close-up's left edge with its own spot, `next-nest`, and her own nest, its spot and everything on it
+      // moved right (NEXT_NEST)
+      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8, 13, 14, 15], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
         bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true], glass: [false, true], read: 'number',
-        miststone: [false, true, 'flash'] }, defaults: { weather: 'clear' }
+        miststone: [false, true, 'flash'], nextNest: [false, true] }, defaults: { weather: 'clear' }
     },
     sky: {
       label: 'the Sky River', tod: 'night', draw: drawSky,
@@ -4108,7 +4180,7 @@
   // Height of a sitting cat at a ground point y, from this composition's ground anchors.
   function depthAt(S, y) {
     var A0 = S.anchorMap, xs = [], ys = [];
-    for (var k in A0) if (!A0[k].elev && A0[k].z !== 'behind' && A0[k].z !== 'far') { xs.push(A0[k].y); ys.push(A0[k].h); }
+    for (var k in A0) if (!A0[k].elev && !A0[k].placed && A0[k].z !== 'behind' && A0[k].z !== 'far') { xs.push(A0[k].y); ys.push(A0[k].h); }
     if (xs.length === 0) return 220;
     if (xs.length === 1) return ys[0] * clamp(y / xs[0], 0.3, 2);
     var mx = 0, my = 0;
@@ -4134,7 +4206,7 @@
       for (var c in set.anchors) if (set.anchors[c][at]) return null;   // that spot is out of this camera's sight
     }
     // no spot given (or an unknown one): take the first free anchor here
-    for (var k in S.anchorMap) if (!used[k] && !S.anchorMap[k].elev) { used[k] = true; return S.anchorMap[k]; }
+    for (var k in S.anchorMap) if (!used[k] && !S.anchorMap[k].elev && !S.anchorMap[k].placed) { used[k] = true; return S.anchorMap[k]; }
     for (k in S.anchorMap) return S.anchorMap[k];
     return null;
   }

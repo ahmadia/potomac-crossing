@@ -111,7 +111,8 @@
  * CAT='{"at":"ch02:f028","lesson":{"chapter":"ch02","frame":"f028","answers":[20]}}' shows 8 × 2).
  * `cards` lists the Case File cards she holds, in order (any chapter's ids), and the flags `caseFileOpen`
  * (her Case File's button is in the top bar), `foundSquall` and `ch4CaughtFly` go in `flags`, as do
- * chapter 5's (`ch5First`, `ch5Roof`, `foundPuddle`, `foundWisp`).
+ * chapter 5's (`ch5First`, `ch5Roof`, `foundPuddle`, `foundWisp`). Chapter 11: `ending`, her warrior ending, set as
+ * `name` is (CAT='{"ending":"heart"}': Moonheart on the bar, the hub, her book and My nest).
  * The Warrior Counts: `warrior` is a recipe for her Counts, run through the engine as the page runs a
  * sitting (WARRIOR): every built chapter and the one they open after (`PC.warrior.after`, chapter 10, a
  * stand-in until it is built) finished, every Count learned, then `{ sittings: [rights of each finished
@@ -430,7 +431,7 @@ const SETUP = `
   var first = E.firstChapter(PC.story);
   PC.debug.goto(first.start, first.id);
   var c = PC.debug.cat(), t = Date.now();
-  ['name', 'petname'].forEach(function (k) { if (o[k] != null) c[k] = o[k]; });
+  ['name', 'petname', 'ending'].forEach(function (k) { if (o[k] != null) c[k] = o[k]; });
   if (o.look) Object.keys(o.look).forEach(function (k) { c.look[k] = o.look[k]; });
   if (o.flags) Object.keys(o.flags).forEach(function (k) { c.flags[k] = o.flags[k]; });
   (Array.isArray(o.finished) ? o.finished : Object.keys(o.finished || {})).forEach(function (id, i) { c.finished[id] = t - 86400000 * (5 - i); });

@@ -809,7 +809,8 @@ test('the gallery: every tracks camera sampled with a cast and its options; the 
   // chapter 8's extras: the ones after chapter 7's 111, up to the first of a later chapter's (chapter 9 appends its own)
   const later = EXTRA.findIndex((e, i) => i >= 111 && !/^chapter 8:/.test(e[3]));
   const added = EXTRA.slice(111, later < 0 ? undefined : later), opts = new Set(), spotsSeen = new Set();
-  if (later >= 0) assert.ok(EXTRA.slice(later).every((e) => /^chapter (9|10):/.test(e[3])), 'only later chapters\' extras after chapter 8\'s');
+  // chapter 11 (2026-11-01) appends its own 'chapter 11: ' extras, after chapter 10's
+  if (later >= 0) assert.ok(EXTRA.slice(later).every((e) => /^chapter (9|10|11):/.test(e[3])), 'only later chapters\' extras after chapter 8\'s');
   for (const e of added) {
     assert.ok(/^chapter 8:/.test(e[3]), 'a chapter 8 extra: ' + e[3]);
     if (e[0] !== 'tracks') continue;

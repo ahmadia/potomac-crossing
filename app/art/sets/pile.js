@@ -597,7 +597,9 @@
   function pileMoon(S, cam) {
     var age = moonAge(S.opts), M = MOON_AT[cam];
     if (!age || !M || !(S.tod === 'night' || S.tod === 'dusk' || S.tod === 'golden' || S.tod === 'sunset')) return '';
-    var e = clamp(age - 4, 0, 10), x = M.x + M.dx * e, y = Math.max(M.r + 8, M.y + M.dy * e), r = Math.min(M.rmax, M.r + M.dr * e);
+    // (the top limit by the moon's own radius at this age, so a grown moon is never cut by the panel's top edge: ages 12
+    // and on, chapter 9's f112 and chapter 11's watch; younger moons stand lower than the limit and do not move)
+    var e = clamp(age - 4, 0, 10), x = M.x + M.dx * e, r = Math.min(M.rmax, M.r + M.dr * e), y = Math.max(r + 12, M.y + M.dy * e);
     (S.keep = S.keep || []).push({ x: x - r - 8, y: y - r - 8, w: 2 * r + 16, h: 2 * r + 16 });
     return K.waxingMoon(S, x, y, r, Math.max(8, 38 - 3 * e), age);
   }

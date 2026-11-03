@@ -24,7 +24,9 @@ drafting); chapter 11's is the latest (2026-10-31).
   **Bump `CACHE` in `sw.js` whenever a cached file changes**, or installed iPads keep the old
   version.
 - Run the tests with `node --test` from the repo root (it finds `tests/*.test.js`; on Node 22+
-  `node --test tests/` fails, because a directory argument is read as a file). On the mini, Node
+  `node --test tests/` fails, because a directory argument is read as a file). Agents use the tiers instead,
+  four files at a time: `node tools/test.mjs --fast` while working (all but the slow golden and fingerprint files),
+  `node tools/test.mjs --full` once at the end, only where their prompt says so. On the mini, Node
   is the official LTS build installed in user space at `~/.local/node` (not Homebrew), put on
   PATH by `~/.zprofile`. Regenerate the storyboards with `node tools/storyboard.mjs` (every
   chapter) whenever `app/story/` or the tool changes; never hand-edit `docs/storyboard/`
@@ -60,6 +62,13 @@ drafting); chapter 11's is the latest (2026-10-31).
   muted; never unmute it, never play sound, never ask for the screen to be unlocked.
   `tools/shots.mjs` is silent by construction and handles the lock.
 - **Contact sheets**: `node tools/sheet.mjs OUT-%.png a.png b.png …` (six frames a sheet).
+- **Whole-tree renders and measurements come from the shared cache** (2026-11-02, after agents each rendering
+  everything filled the disk and took the load to 150): `node tools/sweep.mjs` (every frame's art and contact sheets,
+  `--only chNN` for one chapter), `--pages` (every page measured at four sizes, Aa off and on, with a list of problems),
+  `--compare DIR` (against another tree), cached in `~/potomac-crossing-work/cache/<key>/` per state of the tree. The
+  offscreen WebKit tool (the real page in WebKit, silent, works locked) is `dev/webkit/` (its README): the one copy.
+  One heavy renderer runs at a time: `tools/shots.mjs`, `tools/frames.mjs`, the WebKit tool and the sweep share the
+  render lock (`tools/lock.mjs`; `node tools/lock.mjs` says who holds it); a tool kept waiting 5 minutes exits 75.
 - **Visual checks from a session on the mini.** `node tools/frames.mjs ch02 OUTDIR [frames]`
   renders frames' art (no lettering) to PNG through Quick Look; `--scene '<json>'` renders one
   scene. `node tools/shots.mjs OUTDIR f077 ch02:f010 hub book` screenshots the real game in Safari
@@ -70,8 +79,8 @@ drafting); chapter 11's is the latest (2026-10-31).
   target in a fresh short session of its own, a few seconds each (`LOCKED=1`/`0` overrides).
   `SHEET=1` puts four targets on a contact sheet, one screenshot each, its panes fitted to the page
   as measured. Check flows and timing in Node with the engine, not by tapping in Safari. Only one
-  Safari automation session runs at a time: to wait for it, ask `pgrep -x safaridriver` (never
-  `pgrep -f`, which matches the waiting shell too, and other agents' waiting shells). A busy Mac can
+  Safari automation session runs at a time: the render lock waits for it (to see who holds it, `node tools/lock.mjs`;
+  `pgrep -x safaridriver`, never `pgrep -f`, which matches the waiting shell too, and other agents' waiting shells). A busy Mac can
   hand back a blank screenshot (one flat colour): `shots.mjs` reads each one before keeping it, takes
   a blank one again in a fresh session, takes a blank sheet as its single pages, and says `blank:` on
   stderr (exit 1) for a target that never paints; `node tools/shots.mjs --blank a.png` checks a PNG

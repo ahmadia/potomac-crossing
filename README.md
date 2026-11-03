@@ -45,7 +45,9 @@ she passes them and gives her warrior name (decision 52). Module 2 (the badger's
   chapter (what happened, the flags, the cards, the names), for whoever writes the next one.
 - [`docs/production.md`](docs/production.md): how a chapter gets made, what the first five cost,
   and the plan for chapters 6 to 10. The workflow script and its runbook are in
-  [`dev/workflows/`](dev/workflows/).
+  [`dev/workflows/`](dev/workflows/); the offscreen WebKit tool is [`dev/webkit/`](dev/webkit/), and
+  `tools/sweep.mjs` (the shared render cache), `tools/test.mjs` (the test tiers) and `tools/lock.mjs`
+  (one heavy renderer at a time) keep a chapter's build from overwhelming the mini (2026-11-02).
 
 ## Decisions (Aron, 2026-10-03)
 

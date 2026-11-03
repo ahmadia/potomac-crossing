@@ -102,6 +102,11 @@
  * screen is too small for that (portrait at 115%), it says so and SHEET scales its panes to fit.
  * Only one Safari automation session can run at a time: a busy one is waited for (about 90 s).
  *
+ * The render lock (tools/lock.mjs, 2026-11-02): one heavy renderer at a time on this Mac, across this tool, Quick Look
+ * frames (tools/frames.mjs), the offscreen WebKit tool and the sweep. A run that would start Safari takes it first,
+ * waits at most 5 minutes (LOCK_WAIT seconds) for another to finish, else says who holds it and exits 75; --lock,
+ * --blank and --page start nothing and never wait.
+ *
  * The test cat (save version 2): CAT's fields are set on it; `finished` lists finished chapters,
  * `dreams` maps a chapter to her dream, `lessons` lists finished lessons (clean), `nest` her
  * treasures and gifts, `hollow` maps a table to { rounds, cleanRounds, glow }, `at` is where she is
@@ -134,6 +139,7 @@ import { inflateSync } from 'zlib';
 import { createRequire } from 'module';
 import { join, resolve, dirname, extname, normalize } from 'path';
 import { fileURLToPath } from 'url';
+import { holdOrExit } from './lock.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -293,6 +299,8 @@ if (argv[0] === '--page') {
   await new Promise((done) => process.stdout.write(silenced(readFileSync(join(ROOT, 'index.html'), 'utf8')), done));
   process.exit(0);
 }
+// one heavy renderer at a time on this Mac (the header): the render lock, or exit 75 after 5 minutes
+await holdOrExit('tools/shots.mjs ' + targets.join(' ').slice(0, 80));
 const server = createServer(async (req, res) => {
   const p = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
   const file = join(ROOT, p.endsWith('/') ? p + 'index.html' : p);
@@ -312,6 +320,7 @@ const site = 'http://localhost:' + server.address().port + '/';
 
 const dport = 4500 + Math.floor(Math.random() * 400);
 const driver = spawn('safaridriver', ['-p', String(dport)], { stdio: 'ignore' });
+process.on('exit', () => { try { driver.kill(); } catch {} });   // never left running, however this run ends
 const WD = 'http://localhost:' + dport;
 async function wd(method, path, body) {
   const r = await fetch(WD + path, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });

@@ -184,6 +184,11 @@ repo.
 - Skeptics only for high and medium findings; lows go to the integrator as optional.
 - Final: keep the **regression** and **deploy** lenses always. Drop the separate fresh-eyes
   playthrough when the visual review was clean; the orchestrator's own look replaces it.
+- Since 2026-11-02 (building chapters overwhelmed the mini): the Counts and every-path lenses are one `engine` lens and
+  continuity is inside fidelity; regression and deploy are one lens; reviewers run in waves of four; whole-tree renders
+  and measurements come from the shared cache (`tools/sweep.mjs`), never from each reviewer; the full suite runs only
+  for the builders, the story builder and the integrator (`tools/test.mjs`). `dev/workflows/README.md`, "Spending
+  tokens well", has the rules and the measured costs.
 
 ### 7. Pace against the session limit
 
@@ -217,7 +222,9 @@ to ask.
 
 ## Shipping checklist
 
-1. `node --test` green; storyboards current (`node tools/storyboard.mjs` changes nothing).
+0. Before the final review (phase 8), the sweep of the integrated tree against the live one, in the background:
+   `node tools/sweep.mjs --all --compare <work>/live` (`dev/workflows/README.md`); the final's lenses read it.
+1. `node tools/test.mjs --full` green (or `node --test`, alone on the Mac); storyboards current (`node tools/storyboard.mjs` changes nothing).
 2. `CACHE` in `sw.js` past the live value; every script in `index.html` in `ASSETS`. The live value is the last entry of
    `tests/fixtures/sw-shipped.json` (not a worktree's own `HEAD`: two trees built side by side both read the same one);
    `tests/sw.test.js` fails until `CACHE` is past it. At ship, append `{ commit, shipped, what, cache, assets }` to the ledger
@@ -226,4 +233,6 @@ to ask.
 4. README: status line, docs list, calls made under decision 46. `docs/continuity.md` updated.
 5. `git add -A` (new files are untracked until then), commit, push with the deploy key.
 6. Poll the live `sw.js` for the new cache name and fetch every `ASSETS` entry (all 200).
-7. `ps` for stray `safaridriver` and local servers; note the ship in the memory system's journal.
+7. `ps` for stray `safaridriver`, `snap` and local servers; note the ship in the memory system's journal.
+8. `python3 ~/potomac-crossing-work/tools/clean-work.py`: renders and dumps over two days old, scratch copies of the app,
+   and render caches beyond the two newest, once two days old, go (it also runs daily under launchd, `com.potomac.workclean`).

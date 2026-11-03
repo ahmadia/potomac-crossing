@@ -21,12 +21,18 @@
  * (scenes.js, drawHollow; the same picture in Safari). A new set that zooms close on a big shadowed
  * group can hit it again: if a frame here is missing a whole layer, check it in Safari
  * (tools/shots.mjs) before fixing the art.
+ *
+ * One heavy renderer at a time on this Mac (tools/lock.mjs): it takes the render lock before Quick Look, waits at
+ * most 5 minutes for another (Safari shots, the WebKit tool, the sweep), else says who holds it and exits 75. For a
+ * whole chapter, read the shared cache instead (node tools/sweep.mjs: every frame drawn in WebKit, the engine Safari
+ * uses, once per state of the tree).
  */
 import { createRequire } from 'module';
 import { execFileSync } from 'child_process';
 import { mkdirSync, writeFileSync, renameSync, existsSync, rmSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { holdOrExit } from './lock.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -52,6 +58,8 @@ function png(svg, out) {
   rmSync(tmp, { force: true });
   return existsSync(out);
 }
+
+await holdOrExit('tools/frames.mjs ' + argv.join(' ').slice(0, 80));
 
 if (argv[0] === '--scene') {
   const scene = JSON.parse(argv[1]);

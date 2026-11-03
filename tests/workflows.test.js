@@ -132,14 +132,15 @@ test('chapter.js review and final: only high and medium findings go to a skeptic
   };
   const gapsNone = (p, o) => /:gaps$/.test(o.label) ? { gaps: [] } : reply(p, o);
   const { result, calls } = await run(Object.assign({ phase: 'review', frames: ['f1', 'f2'] }, BASE), gapsNone);
-  assert.equal(calls.filter(c => c.opts.label.startsWith('review:') && c.opts.label !== 'review:gaps').length, 6);
-  assert.equal(result.kept.length, 6, 'one confirmed finding per reviewer');
+  assert.deepEqual(calls.filter(c => c.opts.label.startsWith('review:') && c.opts.label !== 'review:gaps').map(c => c.opts.label).sort(),
+    ['review:engine', 'review:fidelity', 'review:screens', 'review:visual-1', 'review:visual-2'], 'five lenses: the Counts and every path are one engine lens');
+  assert.equal(result.kept.length, 5, 'one confirmed finding per reviewer');
   assert.ok(result.kept.every(f => f.problem === 'p1' && f.severity === 'medium'));
-  assert.equal(result.lows.length, 6);
+  assert.equal(result.lows.length, 5);
   const fin = await run(Object.assign({ phase: 'final' }, BASE), gapsNone);
-  assert.deepEqual(fin.calls.filter(c => /^final:(?!gaps)/.test(c.opts.label)).map(c => c.opts.label), ['final:regress', 'final:deploy', 'final:play'], 'the playtest runs unless play: false');
+  assert.deepEqual(fin.calls.filter(c => /^final:(?!gaps)/.test(c.opts.label)).map(c => c.opts.label), ['final:regress', 'final:play'], 'regression and deploy are one lens; the playtest runs unless play: false');
   const noPlay = await run(Object.assign({ phase: 'final', play: false }, BASE), gapsNone);
-  assert.equal(noPlay.calls.filter(c => /^final:(?!gaps)/.test(c.opts.label)).length, 2);
+  assert.equal(noPlay.calls.filter(c => /^final:(?!gaps)/.test(c.opts.label)).length, 1);
 });
 
 test('chapter.js: no prompt carries an unfilled ${…}, and args.model names the chapter the agents follow', async () => {
@@ -155,13 +156,19 @@ test('chapter.js: no prompt carries an unfilled ${…}, and args.model names the
   assert.ok(calls.some(c => c.opts.label === 'judge:2' && /the voice of chapter 6/.test(c.prompt)), 'the second judge hears chapter 6');
 });
 
-test('chapter.js: every agent runs at args.effort, xhigh by default', async () => {
+test('chapter.js: every agent runs at xhigh but the engine lens, regression and deploy, and the integrate checker, at high; args.effort sets every agent', async () => {
+  const HIGH = ['review:engine', 'final:regress', 'integrate:r1:check'];
+  const seen = new Set();
   for (const [phase, extra] of Object.entries(PHASES)) {
     const { calls } = await run(Object.assign({ phase }, BASE, extra));
-    for (const c of calls) assert.equal(c.opts.effort, 'xhigh', `${c.opts.label}: xhigh`);
-    const high = await run(Object.assign({ phase, effort: 'high' }, BASE, extra));
-    for (const c of high.calls) assert.equal(c.opts.effort, 'high', `${c.opts.label}: args.effort`);
+    for (const c of calls) { seen.add(c.opts.label); assert.equal(c.opts.effort, HIGH.includes(c.opts.label) ? 'high' : 'xhigh', `${c.opts.label}: its effort`); }
+    for (const e of ['high', 'xhigh', 'medium']) {
+      const set = await run(Object.assign({ phase, effort: e }, BASE, extra));
+      for (const c of set.calls) assert.equal(c.opts.effort, e, `${c.opts.label}: args.effort`);
+    }
   }
+  for (const l of HIGH.concat(['review:visual-1', 'review:visual-2', 'review:screens', 'review:fidelity', 'final:play', 'verify:engine', 'verify:visual-1', 'review:gaps', 'review:gap-x', 'verify:gap-x', 'final:gaps', 'integrate:r1']))
+    assert.ok(seen.has(l), l + ' ran in the stand-in');
 });
 
 test('chapter.js review: the completeness critic sees what each reviewer checked, and each gap (at most four) gets a reviewer and a skeptic', async () => {
@@ -172,10 +179,10 @@ test('chapter.js review: the completeness critic sees what each reviewer checked
     return { findings: [{ severity: 'high', file: 'a', where: o.label, problem: 'p', evidence: 'e', fix: 'f' }], checked: [`what ${o.label} checked`] };
   });
   const critic = calls.find(c => c.opts.label === 'review:gaps');
-  assert.ok(/what review:counts checked/.test(critic.prompt) && /what review:visual-1 checked/.test(critic.prompt));
+  assert.ok(/what review:engine checked/.test(critic.prompt) && /what review:visual-1 checked/.test(critic.prompt));
   assert.deepEqual(calls.filter(c => /^review:gap-/.test(c.opts.label)).map(c => c.opts.label), ['review:gap-g0', 'review:gap-g1', 'review:gap-g2', 'review:gap-g3']);
   assert.equal(calls.filter(c => /^verify:gap-/.test(c.opts.label)).length, 4);
-  assert.equal(result.kept.length, 6 + 4);
+  assert.equal(result.kept.length, 5 + 4);
   assert.deepEqual(result.gaps, ['g0', 'g1', 'g2', 'g3']);
   const failed = await run(Object.assign({ phase: 'review', frames: ['f1'] }, BASE), (p, o) => o.label === 'review:gaps' ? null : fake(o.schema));
   assert.match(failed.result.stopped, /completeness critic/);
@@ -210,11 +217,70 @@ test('chapter.js spec: args.extra reaches the writer and args.specLenses adds cr
   assert.ok(!calls.some(c => /about 16 typed answers/.test(c.prompt)));
 });
 
-test('chapter.js: every prompt asks for a short report, and every build-side prompt for one full suite, a Safari limit and no leftover process', async () => {
+test('chapter.js: every prompt asks for a short report, and every build-side prompt for the shared cache, the fast tier, the one WebKit tool, a Safari limit and no leftover process', async () => {
   for (const [phase, extra] of Object.entries(PHASES)) {
     const { calls } = await run(Object.assign({ phase }, BASE, extra));
     for (const c of calls) assert.match(c.prompt, /Keep your returned report short/, `${c.opts.label}: a short report`);
     if (['build', 'frames', 'review', 'integrate', 'final'].includes(phase))
-      for (const c of calls) assert.match(c.prompt, /the whole suite once at the end[\s\S]*Safari at most 5 minutes[\s\S]*leave no process running/, `${c.opts.label}: spend tokens well`);
+      for (const c of calls) {
+        for (const re of [/`node tools\/sweep\.mjs`/, /`node tools\/sweep\.mjs --pages`/, /Read the cache instead of rendering everything yourself/, /Render only the frames you change/,
+          /`node tools\/test\.mjs --fast` while you work/, /dev\/webkit\/run\.mjs[\s\S]{0,200}the only copy; never build your own/, /Safari at most 5 minutes/, /leave no process running/, /exit 75/])
+          assert.match(c.prompt, re, `${c.opts.label}: ${re}`);
+        assert.doesNotMatch(c.prompt, /aa-layout\/judge|earlier checkers built/, `${c.opts.label}: no private copy of the WebKit tool`);
+      }
   }
+});
+
+test('chapter.js: the full suite runs once, at the end, only for the builders, the story builder and the integrator; reviewers, skeptics, critics and the checker never run it', async () => {
+  const FULL = /Run the full suite once, at the end: `node tools\/test\.mjs --full`/, NEVER = /You never run the full suite/;
+  const makers = new Set(), checkers = new Set();
+  for (const [phase, extra] of Object.entries({ build: PHASES.build, frames: PHASES.frames, review: PHASES.review, integrate: PHASES.integrate, final: PHASES.final })) {
+    const { calls } = await run(Object.assign({ phase }, BASE, extra));
+    for (const c of calls) {
+      const maker = /^(build:|story-builder$|integrate:r\d+$)/.test(c.opts.label);
+      (maker ? makers : checkers).add(c.opts.label);
+      assert.match(c.prompt, maker ? FULL : NEVER, c.opts.label);
+      assert.doesNotMatch(c.prompt, maker ? NEVER : FULL, c.opts.label);
+      assert.doesNotMatch(c.prompt, /run the whole suite|Run the whole suite/, `${c.opts.label}: no bare "whole suite"`);
+    }
+  }
+  assert.deepEqual([...makers].sort(), ['build:cast', 'build:set-field', 'integrate:r1', 'story-builder']);
+  for (const l of ['review:visual-1', 'verify:visual-1', 'review:gaps', 'final:regress', 'final:play', 'integrate:r1:check']) assert.ok(checkers.has(l), l);
+});
+
+test('chapter.js review and final: reviewers run in waves of at most four, each wave with its skeptics before the next; a failed wave stops the run before the next starts', async () => {
+  const more = Array.from({ length: 4 }, (_, i) => ({ key: `extra${i}`, prompt: `EXTRA ${i}` }));
+  for (const [phase, extra] of [['review', { frames: ['f1', 'f2'], reviewers: more }], ['final', {}]]) {
+    let now = 0, most = 0;
+    const order = [];
+    const { calls } = await run(Object.assign({ phase }, BASE, extra), async (p, o) => {
+      now++; most = Math.max(most, now); order.push(o.label);
+      await new Promise(r => setImmediate(r));
+      now--;
+      return /:gaps$/.test(o.label) ? { gaps: [{ key: 'g', prompt: 'gap' }] } : fake(o.schema);
+    });
+    assert.ok(most <= 4, `${phase}: at most four agents at once (saw ${most})`);
+    assert.ok(calls.length > 0);
+    if (phase === 'review') {
+      // nine lenses: waves of 4, 4 and 1; the fifth lens starts only after the first wave's skeptics
+      const first = order.indexOf('review:engine'), lastSkeptic = Math.max(...['visual-1', 'visual-2', 'screens', 'engine'].map(k => order.indexOf('verify:' + k)));
+      assert.ok(order.indexOf('review:fidelity') > lastSkeptic && first < lastSkeptic, 'the second wave after the first wave\'s skeptics');
+      assert.equal(calls.filter(c => /^review:(?!gap)/.test(c.opts.label)).length, 9, 'every lens ran');
+      assert.ok(order.indexOf('review:gaps') > order.indexOf('verify:extra3'), 'the completeness critic after the last wave');
+    }
+  }
+  const failed = await run(Object.assign({ phase: 'review', frames: ['f1', 'f2'] }, BASE), (p, o) => o.label === 'review:visual-1' ? null : fake(o.schema));
+  assert.match(failed.result.stopped, /failed/);
+  assert.ok(failed.calls.some(c => c.opts.label === 'review:engine') && !failed.calls.some(c => c.opts.label === 'review:fidelity'), 'the first wave ran; the second never starts');
+});
+
+test('chapter.js review: fidelity carries continuity; the engine lens carries the Counts and every path; the visual and screens reviewers read the cache', async () => {
+  const { calls } = await run(Object.assign({ phase: 'review', frames: ['f1', 'f2'] }, BASE), (p, o) => /:gaps$/.test(o.label) ? { gaps: [] } : fake(o.schema));
+  const get = l => calls.find(c => c.opts.label === l).prompt;
+  assert.match(get('review:fidelity'), /FIDELITY AND CONTINUITY[\s\S]*docs\/continuity\.md/);
+  assert.match(get('review:engine'), /THE COUNTS[\s\S]*Training Hollow[\s\S]*Every path[\s\S]*Back through every path/);
+  assert.match(get('review:visual-1'), /contact sheets from the shared cache[\s\S]*art\/ch06\/index\.md/);
+  assert.match(get('review:screens'), /pages\/summary\.md[\s\S]*--compare \/tmp\/pc-work\/ch06\/live/);
+  const fin = await run(Object.assign({ phase: 'final' }, BASE), (p, o) => /:gaps$/.test(o.label) ? { gaps: [] } : fake(o.schema));
+  assert.match(fin.calls.find(c => c.opts.label === 'final:regress').prompt, /REGRESSION AND DEPLOY[\s\S]*--all --compare \/tmp\/pc-work\/ch06\/live[\s\S]*sw-shipped\.json/);
 });

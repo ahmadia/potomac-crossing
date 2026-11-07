@@ -4961,6 +4961,10 @@
     // y, r, flash, { tilt, shadow }) -> { svg, box } (Sprinkle's gift, grey, and with flash its band of blue and green)
     crowd: function (S, seats, k0) { return crowdCats(S, Array.isArray(seats) ? seats : [], +k0 || 0); },
     mistStone: mistStone,
+    // the take-aways kit: quick(x, y, scale, { hundreds, tens, ones, ground }) -> a group, the quick picture's marks (a
+    // square, a line, a dot) with their middle at (x, y), for a set to place: the badger's counts by her holes
+    // (PC.art.quickMarks in cats.js draws them; '' without it)
+    quick: function (x, y, scale, o) { return typeof art.quickMarks === 'function' ? art.quickMarks(x, y, scale, o) : ''; },
     anchor: A
   };
 

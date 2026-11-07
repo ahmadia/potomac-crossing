@@ -31,6 +31,24 @@
  *                                                         fox-brag then glow); open, on the fullest file (thirty cards
  *                                                         under the sticky strip). Each sets up its own test cat's file
  *                                                         through the engine (PICK_CATS; CAT's `cards` win)
+ *   node tools/shots.mjs OUTDIR take:first take:q take:show take:tap take:spread take:echo take:sand take:done
+ *   node tools/shots.mjs OUTDIR hollow:shelf store:q take:sand#1 take:sand#-1 take:show#2
+ *                                                         the take-aways kit (docs/take-aways.md, sections 1, 2, 5 and 6),
+ *                                                         each opened on the test cat through the page's own
+ *                                                         PC.debug.takes (its definitions inline: no chapter has a take
+ *                                                         set yet): chapter 12's worked example on its first column, the
+ *                                                         prompt joined and a waiting Warrior Counts re-sit's line over it
+ *                                                         (take:first sets that re-sit up through WARRIOR: a pass, then a
+ *                                                         sitting again with ten answers in it; CAT's `warrior` wins); a
+ *                                                         three-digit problem with marks; a worked spread; a tapped one;
+ *                                                         a spread landing; Chispapaw's stub echo; a help in the sand;
+ *                                                         a problem done; the Hollow's shelf; a Count the store round.
+ *                                                         `#n` is a step (1 the first, -1 the last), passed as
+ *                                                         PC.debug.takes(what, { step }): the help's steps (take:sand#1
+ *                                                         its first line; take:sand alone, its last, "Got it!" under
+ *                                                         three balloons), a worked spread's steps (take:show#n). @keys=…
+ *                                                         types on the take page's keypad as on a lesson's. DRY=1 on
+ *                                                         take:first prints what Read to me would say, in its order
  *   node tools/shots.mjs --lock                           is the screen locked (so: a session a shot)? no Safari
  *   node tools/shots.mjs --blank a.png b.png              is each PNG a blank screenshot (one flat colour)? no Safari
  *   node tools/shots.mjs --page                           the game's page as this tool serves it to Safari (the
@@ -397,6 +415,31 @@ function warriorTarget(fid, anchor) {
   return { recipe: CAT.warrior || w[0], what: w[1], page: n > 0 ? n - 1 : n };
 }
 
+/* The take-aways kit's targets (the header): each opens a screen through the page's PC.debug.takes(what, { step }),
+ * the UI's own builder of the take page from definitions it holds inline (docs/take-aways.md, section 8; it returns
+ * true or what is wrong, as PC.debug.warrior does). take:first also sets the test cat's Counts up through WARRIOR
+ * first (the recipe here, unless CAT has one): a pass, then a sitting again with ten answers in it, so the take
+ * lesson opens under the Warrior Counts' waiting line. dev/webkit/run.mjs reads this table and TAKES verbatim
+ * (its `takes` job: the page review's screens, measured). */
+const TAKE_TARGETS = {
+  'take:first': ['first', { sittings: [52], answers: 10 }], 'take:q': ['q'], 'take:show': ['show'], 'take:tap': ['tap'], 'take:spread': ['spread'],
+  'take:echo': ['echo'], 'take:sand': ['sand'], 'take:done': ['done'], 'hollow:shelf': ['shelf'], 'store:q': ['store']
+};
+function takeTarget(target, anchor) {
+  const t = TAKE_TARGETS[target];
+  if (!t) return null;
+  // `#n`: a step, 1 the first, -1 the last (PC.debug.takes' `step` counts from 0, and from the end below 0); none: its own
+  const n = anchor != null && anchor !== '' && !isNaN(+anchor) ? +anchor : null;
+  return { what: t[0], step: n == null || n === 0 ? null : n > 0 ? n - 1 : n, recipe: t[1] ? CAT.warrior || t[1] : null };
+}
+// runs in the page: the take screen `arguments[0]`, at step `arguments[1]` (PC.debug.takes' options, { step }; none:
+// the page's own default)
+const TAKES = `var what = arguments[0], i = arguments[1];
+  if (!PC.debug || typeof PC.debug.takes !== 'function') return 'no take-aways in this build (PC.debug.takes)';
+  if (!PC.debug.cat()) return 'no cat';
+  var r = i == null ? PC.debug.takes(what) : PC.debug.takes(what, { step: i });
+  return r === true ? true : String(r);`;
+
 /* Chapter 10's card pick (docs/chapters/10-the-gathering.spec.md, section 6): a pick frame's target with
  * `#pick` (the pick screen open on its claim), `#pick3` (three wrong picks, none of the first claim's right
  * cards nor its own: its right cards she holds then glow) or `#pickfull` (open, on the fullest file). The
@@ -564,7 +607,7 @@ async function sheet(S, run, four) {
   }
   const res = await run(`
     var out = [], frames = document.querySelectorAll('iframe'), targets = arguments[0], still = arguments[1], fixture = arguments[2];
-    var setup = arguments[3], cat = arguments[4], read = arguments[5], warriorJs = arguments[6], warriors = arguments[7], pickJs = arguments[8], picks = arguments[9];
+    var setup = arguments[3], cat = arguments[4], read = arguments[5], warriorJs = arguments[6], warriors = arguments[7], pickJs = arguments[8], picks = arguments[9], takesJs = arguments[10], takes = arguments[11];
     for (var i = 0; i < frames.length; i++) {
       var w = frames[i].contentWindow, PC = w.PC, t = targets[i].split('@'), target = t[0];
       try {
@@ -572,7 +615,13 @@ async function sheet(S, run, four) {
         // the test cat, set up in the pane's own window (its PC, its storage), as SETUP does a page
         var made = new w.Function(setup).apply(null, [cat, fixture, read]);
         if (made !== true) { out.push(targets[i] + ': setting up the test cat: ' + made); continue; }
-        if (/^(hub|book|hollow|nest|who|title)$/.test(target)) PC.debug.go(target, { from: 'hub' });
+        if (takes[i]) {
+          // the take-aways kit: the pane's own test cat's Counts first (take:first's re-sit), then the screen
+          var tm = takes[i].recipe ? new w.Function(warriorJs).apply(null, [takes[i].recipe]) : true;
+          var td = tm === true ? new w.Function(takesJs).apply(null, [takes[i].what, takes[i].step]) : tm;
+          if (td !== true) { out.push(targets[i] + ': ' + td); continue; }
+        }
+        else if (/^(hub|book|hollow|nest|who|title)$/.test(target)) PC.debug.go(target, { from: 'hub' });
         else if (/^file(#|$)/.test(target)) { var fr = PC.debug.file(target.split('#')[1] || null); if (fr !== true) { out.push(targets[i] + ': ' + fr); continue; } }
         else if (warriors[i]) {
           // the Warrior Counts: the pane's own test cat's Counts, then the screen
@@ -591,7 +640,8 @@ async function sheet(S, run, four) {
     }
     return out;`, [four, '(function(){' + STILL.replace(/return true;$/, '') + '})()', FIXTURE, SETUP, CAT, READ, WARRIOR,
     four.map(t => { const [c0, f0] = t.split('@')[0].split('#')[0].split(':'); return f0 && c0 === 'warrior' ? warriorTarget(f0, t.split('@')[0].split('#')[1]) : null; }), PICK,
-    four.map(t => { const [t0, a0] = t.split('@')[0].split('#'); return t0.includes(':') && !t0.startsWith('warrior:') ? pickTarget(a0) : null; })]);
+    four.map(t => { const [t0, a0] = t.split('@')[0].split('#'); return t0.includes(':') && !t0.startsWith('warrior:') && !TAKE_TARGETS[t0] ? pickTarget(a0) : null; }), TAKES,
+    four.map(t => { const [t0, a0] = t.split('@')[0].split('#'); return takeTarget(t0, a0); })]);
   res.forEach((r) => { if (r !== true) console.error(r); });
   if (four.some(t => t.includes('@'))) {
     await sleep(450);   // past each page's double-tap guard
@@ -640,6 +690,13 @@ async function shoot(S, run, t) {
   const [target, anchor] = target0.split('#');
   const screen = /^(hub|book|hollow|nest|who|title)$/.test(target);
   const [ch, fid] = target.includes(':') ? target.split(':') : ['ch01', target];
+  // the take-aways kit: take:first's re-sit first (WARRIOR), then the screen (PC.debug.takes)
+  const tt = takeTarget(target, anchor);
+  if (!tt && /^(take|store|hollow):/.test(target)) { console.error(t + ': the take-aways kit’s targets: ' + Object.keys(TAKE_TARGETS).join(', ')); return; }
+  if (tt && tt.recipe) {
+    const made = await run(WARRIOR, [tt.recipe]);
+    if (made !== true) { console.error(t + ': ' + made); return; }
+  }
   // the Warrior Counts: its own test cat's Counts first, then the screen (PC.debug.warrior)
   const wt = ch === 'warrior' ? warriorTarget(fid, anchor) : null;
   if (ch === 'warrior') {
@@ -648,12 +705,12 @@ async function shoot(S, run, t) {
     if (made !== true) { console.error(t + ': ' + made); return; }
   }
   // chapter 10's card pick: its own test cat's Case File first (PICK), then the frame, then the pick screen
-  const pt = !screen && ch !== 'warrior' && target !== 'file' ? pickTarget(anchor) : null;
+  const pt = !screen && !tt && ch !== 'warrior' && target !== 'file' ? pickTarget(anchor) : null;
   if (pt) {
     const made = await run(PICK, [pt.recipe]);
     if (made !== true) { console.error(t + ': ' + made); return; }
   }
-  const ok = wt ? await run('return PC.debug.warrior(arguments[0], arguments[1]);', [wt.what, wt.page]) : await run(target === 'file' ? 'if (!PC.debug.cat()) return "no cat"; return PC.debug.file(arguments[1]);' : screen
+  const ok = tt ? await run(TAKES, [tt.what, tt.step]) : wt ? await run('return PC.debug.warrior(arguments[0], arguments[1]);', [wt.what, wt.page]) : await run(target === 'file' ? 'if (!PC.debug.cat()) return "no cat"; return PC.debug.file(arguments[1]);' : screen
     ? 'if (!PC.debug.cat()) PC.debug.go("who"); else PC.debug.go(arguments[0], { from: "hub" });' +
       'var a = arguments[1] && document.getElementById("book-" + arguments[1]); if (arguments[1] && !a) return "no page " + arguments[1]; if (a) a.scrollIntoView({ block: "start" }); return true;'
     : 'var r = PC.debug.goto(arguments[1], arguments[0]); return r === arguments[1] || r;', screen || target === 'file' ? [target, anchor || null] : [ch, fid]);

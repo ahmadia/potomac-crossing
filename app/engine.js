@@ -36,7 +36,11 @@
  * version 2), the thirty endings Glintstar draws her three from (E.warriorOffers), the ending she types
  * (an input of kind 'ending': E.cleanEnding, E.checkEnding), the token {ending} ('paw' until then), two
  * computed `when` keys (`offer`, `nameHas`), an option's `ending`, a skip's `name`, and E.warriorName,
- * which E.displayName shows first. Nothing changes for a cat who has not been named.
+ * which E.displayName shows first. Nothing changes for a cat who has not been named. The take-aways kit
+ * (docs/take-aways.md, built before chapter 12) adds three-digit subtraction: a Counts set with `op: '-'`,
+ * its own runner (E.takes), plan, slips, help in the sand and twins, and an optional `takes` on a cat, its
+ * own log, absent until her first take-away (its own section, after the Warrior Counts'). No chapter 1 to 11
+ * has a take set, so nothing it adds is reached before chapter 12.
  *
  * Functions that change a cat change the object they are given (and return it or a result).
  * Nothing here reads the clock on its own: callers pass `now` (ms since epoch) where it matters,
@@ -64,6 +68,7 @@
   E.GLOW_ROUNDS = 3;         // Training Hollow rounds of one Count without help before its claw mark glows
   E.MAX_MARKS = 10;          // claw marks on the tree: one per Count, the 1s to the 10s (every table to 10 × 10)
   E.DRAGONETS = 7;           // the clutch: a page in her book for each, a silhouette until she finds it
+  E.SLEEPERS = 7;            // book two: the winter sleepers, a page in her second book for each, a silhouette until found
 
   /* ------------------------------------------------------------ helpers */
   function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
@@ -616,6 +621,9 @@
     if ((st.pool != null && !Array.isArray(st.pool)) || (st.asked != null && !Array.isArray(st.asked))) return false;
     if (st.avoid != null && !Array.isArray(st.avoid)) return false;
     if (st.own != null && !Array.isArray(st.own)) return false;
+    // the take-aways kit: a take state (`op: '-'`) also needs each problem in range, `col` within its
+    // columns, and `got`, `first`, `slips` and `cols` lists (okTakeState); a Counts state has no `op`
+    if (st.op != null && !okTakeState(st)) return false;
     return true;
   }
   E.okLesson = okLesson;
@@ -682,6 +690,9 @@
       var ending = lettersOf(c.ending).slice(0, E.ENDING_MAX);
       if (ending) out.ending = ending;
     }
+    // the take-aways kit (docs/take-aways.md, section 4): optional, absent until her first take-away is
+    // logged; her own key only, as every key above (normTakes)
+    if (own(c, 'takes') && isObj(c.takes)) out.takes = normTakes(c.takes);
     return out;
   }
   /* Bring any stored value up to the current save shape: version 1 (chapter 1's) or 2. Lossless
@@ -768,6 +779,9 @@
   };
   E.treasure = function (id) {
     for (var i = 0; i < E.TREASURES.length; i++) if (E.TREASURES[i].id === id) return E.TREASURES[i];
+    // the take-aways kit: a full Count the store round's frost-time treasures (docs/take-aways.md, section 5)
+    var F = E.FROST_TREASURES || [];
+    for (var j = 0; j < F.length; j++) if (F[j].id === id) return F[j];
     return E.gift(id);
   };
   /* Put a gift in her nest, once. Returns true when it is new. */
@@ -2282,6 +2296,8 @@
     var facts = (def.facts || []).slice();
     var w = def.warmHard;
     if (!isObj(w) || !facts.length) return facts;
+    // the take-aways kit (docs/take-aways.md, section 4): a chapter's Counts warm-up across every table
+    if (w.table === 'all') return warmAcross(cat, def, facts, w, stories);
     // chapter 5: the hard pick may have an `avoid` list of its own (`warmHard.avoid`), read in place
     // of the set's (which then only governs the questions it borrows: 4 × 10 may be the hard pick)
     var avoid = pairSet(w.avoid != null ? w.avoid : def.avoid);
@@ -2311,6 +2327,41 @@
       return f;
     });
   };
+  /* The take-aways kit's Counts warm-up across both strands (docs/take-aways.md, section 4; `warmHard: { table: 'all',
+   * at: [0, 1] }`, chapters 12 on): her hardest facts over the 54 pairs other than 10 × 10 (E.warriorHard, which reads
+   * only `counts`, never a take-away), passing over the set's `avoid` pairs (or the pick's own), the hardest at the
+   * first of `at`, the next at the second (`at` a number: one pick), each marked `hard` (a right one earns the
+   * `remembered` line) and given its anchor Count as `table` (E.warriorAnchor), so E.questionDef asks and helps it in
+   * that Count's words and picture. Fewer hard facts than places: the set's own facts stand in the rest; none, the set as
+   * written. Another of the set's facts that is the same pair as a pick gives way to the set's `alt` (one pair, or a
+   * list: its first entry that is no pick's pair nor already asked). */
+  function warmAcross(cat, def, facts, w, stories) {
+    var avoid = pairSet(w.avoid != null ? w.avoid : def.avoid);
+    var hard = E.warriorHard(cat, stories).filter(function (f) { return !avoid[pairKey(f[0], f[1])]; });
+    var at = [];
+    (Array.isArray(w.at) ? w.at : [w.at]).forEach(function (x) {
+      var i = Math.max(0, Math.min(facts.length - 1, num(x, 0) | 0));
+      if (at.indexOf(i) < 0) at.push(i);
+    });
+    var picks = hard.slice(0, at.length);
+    if (!picks.length) return facts;
+    var rank = taughtRank(stories), mine = {}, pk = function (f) { var p = factPair(f); return pairKey(p[0], p[1]); };
+    picks.forEach(function (p) { mine[pairKey(p[0], p[1])] = true; });
+    var alts = (altList(w.alt) ? w.alt : w.alt ? [w.alt] : []).filter(function (f) { var p = factPair(f); return p[0] >= 0 && p[1] >= 0 && !mine[pk(f)]; });
+    var out = facts.map(function (f, i) {
+      var j = at.indexOf(i);
+      if (j >= 0 && j < picks.length) { var p = picks[j]; return { a: p[0], b: p[1], hard: true, table: E.warriorAnchor(p[0], p[1], stories, rank) }; }
+      return f;
+    });
+    return out.map(function (f, i) {
+      var j = at.indexOf(i);
+      if ((j >= 0 && j < picks.length) || !mine[pk(f)]) return f;
+      var used = {};
+      out.forEach(function (g, k) { if (k !== i) used[pk(g)] = true; });
+      var alt = alts.filter(function (x) { return !used[pk(x)]; })[0] || alts[0];
+      return alt ? clone(alt) : f;
+    });
+  }
   /* The fillers a set lends another (its `fillFrom`): her right answers there, most recent first,
    * then its facts. Each carries `from: setId`, so it is asked as that set's question. `order:
    * 'easiest'` (the borrowing set's `fillOrder`) sorts them by product instead, smallest first (a
@@ -2364,6 +2415,8 @@
   /* Start a chapter lesson: the set's definition (with its id) and a fresh lesson state. */
   E.chapterLesson = function (cat, story, setId, now, stories) {
     var raw = E.countsSet(setId, story, stories) || {};
+    // the take-aways kit: a take set (`op: '-'`) has its own runner and lesson (docs/take-aways.md, section 8)
+    if (raw.op === '-') return E.takeLesson(cat, story, setId, now, stories);
     var def = Object.assign({ id: setId }, raw);
     var opts = { facts: E.lessonFacts(cat, def, stories || story), set: setId, mode: 'chapter', now: now };
     if (def.fillFrom) {
@@ -2392,7 +2445,17 @@
    * Chapter 5, `fillPicture: 'borrower'` beside it: a borrowed pair takes nothing from its lender but
    * the pair. It is drawn and worded as the borrowing set's own ("One answer. How many fish?"). */
   var VOICE_PICTURE = ['table', 'thing', 'things', 'unit', 'units', 'picture', 'who'];
+  /* The take-aways kit (docs/take-aways.md, section 4): a Counts warm-up across every table (`warmHard: { table: 'all' }`)
+   * asks a question whose numeric `table` is not the set's in its anchor Count's way, as the Warrior Counts' sittings do
+   * (E.warriorAsk's W_ASK_KEYS from E.hollowDef: the picture, the thing and things, the unit and units, the help's
+   * openings), the set's own lines kept, on Tallyheart's sand. Every other set and question as before. */
   E.questionDef = function (def, q, story, stories) {
+    if (def && isObj(def.warmHard) && def.warmHard.table === 'all' && q && !q.from && okNum(q.table) && q.table !== def.table) {
+      var A = E.hollowDef(stories, q.table), D = Object.assign({}, def);
+      W_ASK_KEYS.forEach(function (k) { if (A[k] != null) D[k] = clone(A[k]); else delete D[k]; });
+      if (D.ground == null) D.ground = 'sand';
+      return D;
+    }
     if (!q || !q.from || (def && def.id === q.from)) return def;
     var lend = E.countsSet(q.from, story, stories);
     if (!lend) return def;
@@ -2638,6 +2701,20 @@
       var w = E.warriorFinish(cat, st);
       return w ? { mode: 'warrior', summary: C.summary(st), hollow: null, warrior: w } : null;
     }
+    // the take-aways kit (docs/take-aways.md, section 8): a take state is summed by its own runner; a chapter's
+    // goes under its set, as any lesson's; a Count the store round (`mode: 'hollow'`) goes to E.takeRoundFinish
+    // (the kit's second pass) and never reaches E.hollowFinish, module 1's treasures and `byTable['1']`
+    if (st.op === '-') {
+      var ts = T.summary(st);
+      if (st.mode === 'hollow') {
+        var store = typeof E.takeRoundFinish === 'function' ? E.takeRoundFinish(cat, st) : null;
+        if (isObj(cat.lesson) && cat.lesson.state === st) cat.lesson = null;
+        return { mode: 'store', summary: ts, hollow: null, store: store };
+      }
+      if (st.set) cat.lessons[st.set] = ts;
+      cat.lesson = null;
+      return { mode: st.mode || 'chapter', summary: ts, hollow: null };
+    }
     if (st.mode === 'hollow') {
       var h = E.hollowFinish(cat, st);
       return { mode: 'hollow', summary: h.summary, hollow: h };
@@ -2734,22 +2811,186 @@
     };
   };
   /* Her whole book: the title once, then a page per finished chapter, in order, then the latest
-   * finished chapter's teaser. */
-  E.buildFullBook = function (cat, stories) {
-    var list = E.chapters(stories);
+   * finished chapter's teaser.
+   * Book two (docs/take-aways.md, section 7): one volume a module, `vol` (default 1). Module 1's is the book as it
+   * always was, key for key ({ title, pages, dragonets, teaser }), from module 1's chapters only; module 2's adds
+   * `sleepers`, `badger` and `keepsake`, and `store` on a page whose chapter has one (`book.store`). A volume's teaser is
+   * its latest finished chapter's, left out once she has finished the chapter it points to (chapter 11's "A new
+   * adventure" in the first volume, once chapter 12 is in the second): her book never promises what she has read. With
+   * one module there is no such chapter, so the first volume is today's book exactly. */
+  E.buildFullBook = function (cat, stories, vol) {
+    var all = E.chapters(stories), v = bookVol(vol);
+    var list = all.filter(function (s) { return E.moduleOf(s) === v; });
     var first = list[0];
     var pages = list.filter(function (s) { return E.isFinished(cat, s.id); }).map(function (s) {
       var b = E.buildBook(s, cat);
-      return { id: s.id, number: s.number || 1, heading: b.chapter, recap: b.recap, dream: b.dream, dreamText: b.dreamText };
+      var pg = { id: s.id, number: s.number || 1, heading: b.chapter, recap: b.recap, dream: b.dream, dreamText: b.dreamText };
+      if (v > 1 && isStore(s.book && s.book.store)) pg.store = s.book.store;
+      return pg;
     });
     var latest = pages.length ? E.chapter(pages[pages.length - 1].id, list) : null;
-    return {
-      title: E.fill((first && first.book && first.book.title) || '{name}paw’s First Moon', cat),
+    var teaser = latest ? E.teaser(latest, cat, all) : null;
+    if (teaser && teaser.next && E.isFinished(cat, teaser.next)) teaser = null;
+    var out = {
+      title: bookTitle(first, v, cat),
       pages: pages,
       dragonets: E.dragonets(cat, list),
-      teaser: latest ? E.teaser(latest, cat, list) : null
+      teaser: teaser
     };
+    if (v > 1) {
+      out.sleepers = E.sleepers(cat, list);
+      out.badger = E.badgerPage(cat, list);
+      out.keepsake = keepsakeOf(cat, list);
+    }
+    return out;
   };
+
+  /* ------------------------------------------------------------ book two (docs/take-aways.md, section 7)
+   * Read my book in volumes, one a module: a chapter's `module` (chapters 12 to 21 say 2; absent is 1, so chapters 1
+   * to 11 are module 1's, as they always were). Nothing else reads it: E.chapters, E.upNext, E.progress and the hub go
+   * on by `number`. Book two adds nothing to the save. */
+  var BOOK_TITLES = { 1: '{name}paw’s First Moon', 2: '{name}{ending}’s First Frost-Time' };
+  E.moduleOf = function (story) {
+    var m = story && story.module;
+    return typeof m === 'number' && m >= 1 && m === Math.floor(m) ? m : 1;
+  };
+  function bookVol(vol) { return typeof vol === 'number' && vol > 1 && vol === Math.floor(vol) ? vol : 1; }
+  function isStore(n) { return typeof n === 'number' && n === Math.floor(n) && n >= 0 && n <= 999; }
+  // a volume's title: its first chapter's `book.title` (chapter 1's "{name}paw’s First Moon", chapter 12's
+  // "{name}{ending}’s First Frost-Time"), else the module's own
+  function bookTitle(first, v, cat) {
+    return E.fill((first && first.book && first.book.title) || BOOK_TITLES[v] || BOOK_TITLES[1], cat);
+  }
+  /* The volumes she has a finished chapter in, in module order: [{ module, title }]. Read my book shows the buttons that
+   * switch them once there are two. */
+  E.books = function (cat, stories) {
+    var by = {}, out = [];
+    E.chapters(stories).forEach(function (s) {
+      var m = E.moduleOf(s);
+      if (!by[m]) { by[m] = { module: m, first: s, any: false }; out.push(by[m]); }
+      if (E.isFinished(cat, s.id)) by[m].any = true;
+    });
+    return out.filter(function (x) { return x.any; }).sort(function (a, b) { return a.module - b.module; })
+      .map(function (x) { return { module: x.module, title: bookTitle(x.first, x.module, cat) }; });
+  };
+  /* The winter sleepers she has found, as the dragonets' pages are: a finished chapter's `book.sleeper: { id, name,
+   * lines, when?, pose? }` (the groundhog is chapter 13's, `when: { foundGroundhog: true }`), in chapter order; the rest
+   * (E.SLEEPERS in all) silhouettes, still sleeping. Null until she has found one. Unlike a dragonet's, a sleeper's `when`
+   * never stands in for the chapter being finished: each is its chapter's own optional find, so its page comes with
+   * that chapter's page, never before it. */
+  E.sleepers = function (cat, stories) {
+    var found = [], seen = {};
+    E.chapters(stories).forEach(function (s) {
+      var d = s.book && s.book.sleeper;
+      if (!isObj(d) || typeof d.id !== 'string' || !d.id || seen[d.id] || !E.isFinished(cat, s.id)) return;
+      if (d.when != null && !E.matches(d.when, cat)) return;
+      seen[d.id] = true;
+      var page = { id: d.id, name: E.fill(d.name || d.id, cat), lines: asList(d.lines).map(function (l) { return E.fill(l, cat); }), chapter: s.id };
+      if (typeof d.pose === 'string' && d.pose) page.pose = d.pose;
+      found.push(page);
+    });
+    return found.length ? { found: found, toFind: Math.max(0, E.SLEEPERS - found.length) } : null;
+  };
+  /* The badger page, "What is a badger LIKE?" (from chapter 13): a chapter's `book.badger` is a list of `{ row, say:
+   * { text, who } }` (They say, an ear) and `{ row, saw: { text } }` (I saw, an eye). Only lines of finished chapters show;
+   * a row shows once one of its lines does, the rows in the order first seen (chapter order, then each list's), one row
+   * per answer (`row` names it: the three "as big as" rumours share one), and a row's rumours are `crossed` once one of
+   * its sightings shows. { rows: [{ row, say: [{ text, who, chapter }], saw: [{ text, chapter }], crossed }] }, or null
+   * until there is a row. */
+  E.badgerPage = function (cat, stories) {
+    var rows = [], by = {};
+    E.chapters(stories).forEach(function (s) {
+      if (!E.isFinished(cat, s.id) || !(s.book && Array.isArray(s.book.badger))) return;
+      s.book.badger.forEach(function (l) {
+        if (!isObj(l) || typeof l.row !== 'string' || !l.row) return;
+        var say = isObj(l.say) && typeof l.say.text === 'string' ? l.say : null, saw = isObj(l.saw) && typeof l.saw.text === 'string' ? l.saw : null;
+        if (!say === !saw) return;
+        var r = own(by, l.row) ? by[l.row] : null;
+        if (!r) { r = by[l.row] = { row: l.row, say: [], saw: [], crossed: false }; rows.push(r); }
+        if (say) r.say.push({ text: E.fill(say.text, cat), who: E.fill(typeof say.who === 'string' ? say.who : '', cat), chapter: s.id });
+        else { r.saw.push({ text: E.fill(saw.text, cat), chapter: s.id }); r.crossed = true; }
+      });
+    });
+    return rows.length ? { rows: rows } : null;
+  };
+  /* E.checkStory's guards for book two's keys, as every earlier story key has: `module` is 1 or 2 and module 2's chapters
+   * come after module 1's; `book.store`, `book.sleeper`, `book.badger` and `book.keepsake` only on a module 2 chapter;
+   * `book.store` a whole number 0 to 999; `book.sleeper` is { id, name, lines, when?, pose? }, its id distinct across the
+   * chapters, at most E.SLEEPERS of them; each `book.badger` line has a string `row` and exactly one of `say: { text,
+   * who }` or `saw: { text }`; `book.keepsake` is { id, name, lines }. `others`: every chapter handed in with it. */
+  function checkBookTwo(story, others, checkWhen) {
+    var errs = [], bk = isObj(story.book) ? story.book : {}, two = E.moduleOf(story) === 2, n = num(story.number, 0);
+    var rest = others.filter(function (o) { return o !== story && o.id !== story.id; });
+    function str(x) { return typeof x === 'string' && !!x.trim(); }
+    function linesOk(x) { return str(x) || (Array.isArray(x) && x.length > 0 && x.every(str)); }
+    function onlyKeys(where, o, keys) {
+      Object.keys(o).forEach(function (k) { if (keys.indexOf(k) < 0) errs.push(where + ' takes ' + keys.join(', ') + ': not ' + k); });
+    }
+    if (story.module != null && story.module !== 1 && story.module !== 2) errs.push('module is 1 or 2 (absent: 1), not ' + JSON.stringify(story.module));
+    rest.forEach(function (o) {
+      var m = E.moduleOf(o), on = num(o.number, 0);
+      if (two && m === 1 && on > n) errs.push('module 2’s chapters come after module 1’s: chapter ' + on + ' (' + o.id + ') is module 1');
+      if (!two && m === 2 && on < n) errs.push('module 2’s chapters come after module 1’s: chapter ' + on + ' (' + o.id + ') is module 2');
+    });
+    ['store', 'sleeper', 'badger', 'keepsake'].forEach(function (k) {
+      if (bk[k] != null && !two) errs.push('book.' + k + ' is book two’s: the chapter needs module: 2');
+    });
+    if (bk.store != null && !isStore(bk.store)) errs.push('book.store is the store’s count, a whole number 0 to 999');
+    var sl = bk.sleeper;
+    if (sl != null) {
+      if (!(isObj(sl) && str(sl.id) && str(sl.name) && linesOk(sl.lines))) errs.push('book.sleeper is { id, name, lines, when?, pose? }');
+      else {
+        onlyKeys('book.sleeper ' + sl.id, sl, ['id', 'name', 'lines', 'when', 'pose']);
+        checkWhen('book.sleeper ' + sl.id, sl.when);
+        if (sl.pose != null && !str(sl.pose)) errs.push('book.sleeper ' + sl.id + ': pose is one of its poses, like "sleep"');
+        var ids = {};
+        ids[sl.id] = true;
+        rest.forEach(function (o) {
+          var d = o.book && o.book.sleeper;
+          if (!(isObj(d) && str(d.id))) return;
+          if (d.id === sl.id) errs.push('book.sleeper ' + sl.id + ': chapter ' + (o.number || o.id) + ' has this sleeper too');
+          ids[d.id] = true;
+        });
+        if (Object.keys(ids).length > E.SLEEPERS) errs.push('book.sleeper ' + sl.id + ': more than ' + E.SLEEPERS + ' sleepers across the chapters (E.SLEEPERS)');
+      }
+    }
+    if (bk.badger != null) {
+      if (!Array.isArray(bk.badger)) errs.push('book.badger is a list of { row, say: { text, who } } and { row, saw: { text } }');
+      else bk.badger.forEach(function (l, i) {
+        var at = 'book.badger ' + i;
+        if (!isObj(l)) { errs.push(at + ': is { row, say: { text, who } } or { row, saw: { text } }'); return; }
+        onlyKeys(at, l, ['row', 'say', 'saw']);
+        if (!str(l.row)) errs.push(at + ': row is a string, the same on every line of one answer');
+        if ((l.say != null) === (l.saw != null)) errs.push(at + ': exactly one of say or saw');
+        if (l.say != null) {
+          if (!(isObj(l.say) && str(l.say.text) && str(l.say.who))) errs.push(at + ': say is { text, who }');
+          else onlyKeys(at + ' say', l.say, ['text', 'who']);
+        }
+        if (l.saw != null) {
+          if (!(isObj(l.saw) && str(l.saw.text))) errs.push(at + ': saw is { text }');
+          else onlyKeys(at + ' saw', l.saw, ['text']);
+        }
+      });
+    }
+    var ks = bk.keepsake;
+    if (ks != null) {
+      if (!(isObj(ks) && str(ks.id) && str(ks.name) && linesOk(ks.lines))) errs.push('book.keepsake is { id, name, lines }');
+      else onlyKeys('book.keepsake ' + ks.id, ks, ['id', 'name', 'lines']);
+    }
+    return errs;
+  }
+  // the keepsake that closes a volume (chapter 21's stone tooth): the last finished chapter's `book.keepsake: { id, name,
+  // lines }`, drawn as a nest treasure is; null until then
+  function keepsakeOf(cat, list) {
+    var k = null;
+    list.forEach(function (s) {
+      var d = s.book && s.book.keepsake;
+      if (isObj(d) && typeof d.id === 'string' && d.id && E.isFinished(cat, s.id)) {
+        k = { id: d.id, name: E.fill(d.name || d.id, cat), lines: asList(d.lines).map(function (l) { return E.fill(l, cat); }), chapter: s.id };
+      }
+    });
+    return k;
+  }
   /* The dragonets she has found: a page in her book for each, from the finished chapter that finds
    * it (`book.dragonet: { id, name, lines }`, Sprinkle in chapter 3), in chapter order; the rest of the
    * clutch (E.DRAGONETS in all) are silhouettes, still to find. Null until she has found one.
@@ -3256,17 +3497,20 @@
     if (lines.length) D.missLast = pick(lines, misses); else delete D.missLast;
     return D;
   };
-  // the time of her latest logged Counts answer (chapters, the Hollow, the sittings), else 0
+  // the time of her latest logged Counts answer (chapters, the Hollow, the sittings), else 0; and, the take-aways kit
+  // (docs/take-aways.md, section 4), her latest take-away's (`cat.takes.log`: absent, nothing more is read)
   function lastAnswerAt(cat) {
     var t = 0;
-    ((cat && cat.counts) || []).forEach(function (e) { if (e && okNum(e.at) && e.at > t) t = e.at; });
+    ((cat && cat.counts) || []).concat(takeLog(cat)).forEach(function (e) { if (e && okNum(e.at) && e.at > t) t = e.at; });
     return t;
   }
   // a sitting left partway: why it no longer picks up ('practice': a Counts answer from anything else
-  // came after its last answer, before its two hours were up; 'late': two hours went by), or null
+  // came after its last answer, before its two hours were up; 'late': two hours went by), or null. A take-away is
+  // practice as any lesson answer is (section 4: a problem is the answer, logged when its last column is in, so a
+  // digit typed and its problem left sets nothing aside); a cat with no `takes` reads `counts` alone, as before
   function warriorStale(cat, S, now) {
     var at = num(S.at, 0), first = null;
-    ((cat && cat.counts) || []).forEach(function (e) {
+    ((cat && cat.counts) || []).concat(takeLog(cat)).forEach(function (e) {
       if (e && e.set !== 'warrior' && num(e.at, 0) > at && (first == null || e.at < first)) first = e.at;
     });
     if (first != null && first < at + E.WARRIOR_PAUSE_MS) return 'practice';
@@ -3577,6 +3821,1133 @@
     }
     return out;
   }
+
+  /* ------------------------------------------------------------ the take-aways kit
+   * docs/take-aways.md (v0.3; decisions 53 and 54): three-digit subtraction with regrouping, written in a
+   * column and answered a column at a time, ones first, with OK. A take set is a Counts set with `op: '-'`
+   * on an ordinary Counts frame (section 3), run by its own runner (E.takes) on its own page. The plan
+   * (E.takePlan) is the US decomposition column by column; a wrong digit is named (E.takeSlip) and helped
+   * in the sand (E.takeHelp), and the problem comes back as a twin (E.takeTwin) of the same shape. Every
+   * answer goes into its own log, `cat.takes` (optional, absent until her first take-away is logged: the
+   * save stays version 2), never `counts`, so nothing that reads `counts` ever sees a take-away (section
+   * 4). Every word the kit says is in E.TAKE_LINES, the maths words as tokens filled at call time from
+   * E.TAKE_WORDS, which reads PC.words (chapter 12 brings it) over the English. Nothing here is reached
+   * before chapter 12: no chapter 1 to 11 has a take set. Columns are numbered ones first (0 the ones, 1
+   * the tens, 2 the hundreds) everywhere: a plan's `cols`, a state's `got`, `first` and `cols`, a slip's
+   * `col`, the marks. A log entry's `given` is the one thing written left to right, as an answer reads.
+   * The kit's second pass (section 10, step 3) adds the Hollow's shelf and Count the store (E.hollowShelf,
+   * E.takeRoundStart, E.takeRoundFinish), the cross-table Counts warm-up (E.lessonFacts and E.questionDef, behind
+   * `warmHard.table === 'all'`), a take-away read as practice by a waiting Warrior Counts re-sit (warriorStale,
+   * lastAnswerAt) and the grown-ups' table (E.takeTable). */
+  E.TAKE_KINDS = ['none', 'ones', 'tens', 'both', 'zero', 'zeros'];
+  E.TAKE_STEPS = ['none', 'ones2', 'ones', 'tens', 'both', 'mixed', 'zero', 'zeros'];
+  E.TAKE_SLIPS = ['zero', 'flip', 'nospread', 'kept', 'extra', 'fact'];   // named in this order: the first that matches
+  E.TAKE_REGROUP = ['show', 'tap', 'hers'];
+  // Count the store's templates by step (section 5): the chapters' own problems, and two of the store's own
+  E.TAKE_TEMPLATES = {
+    none: [[58, 23], [475, 132]], ones2: [[43, 16], [70, 34]], ones: [[352, 127], [640, 218], [352, 28]],
+    tens: [[526, 254], [607, 283]], both: [[432, 178], [811, 356]], mixed: [[382, 345], [731, 696]],
+    zero: [[702, 345], [403, 57]], zeros: [[400, 156], [500, 412]]
+  };
+  E.TAKE_TRIES = 400;        // a twin's draws, read at call time; then the problem itself, asked again
+  E.TAKE_ROUND = 5;          // problems in a Count the store round
+  E.TAKE_LOG_CAP = 2000;     // take-aways kept per cat
+  E.FROST_TREASURES = [      // a full store round's treasures, in turn by the store's own rounds (section 5)
+    { id: 'frost-leaf', name: 'A frosted leaf' },
+    { id: 'snow-feather', name: 'A snow-white feather' },
+    { id: 'acorn-cap', name: 'An acorn cap' },
+    { id: 'river-pebble', name: 'A smooth river pebble' }
+  ];
+  var TAKE_OK_MS = 400;                          // keys ignored after every OK (the guard "Got it!" has: padLockedUntil)
+  var TAKE_COLS = ['ones', 'tens', 'hundreds'];  // the columns, ones first: their names in E.TAKE_WORDS' keys
+
+  /* E.TAKE_WORDS: the kit's maths words, each form a key (the token that says it in E.TAKE_LINES: {rows},
+   * {Spread} …). Read at call time from PC.words, whose top-level keys of these names win over the English
+   * (any other key, Spanish beside them, is the chapters' own); a lower-case form given alone brings its
+   * capital with it ("trade" gives "Trade"). The regrouping word is used in its base form only, before what
+   * it acts on or after it, never before a pronoun (section 8), so any of "spread", "trade", "regroup",
+   * "break apart" fits every slot. */
+  var TAKE_WORDS_EN = {
+    loose: 'loose', row: 'row', rows: 'rows', Row: 'Row', square: 'square', squares: 'squares',
+    ones: 'ones', tens: 'tens', hundreds: 'hundreds', takeAway: 'take away', TakeAway: 'Take away',
+    spread: 'spread', Spread: 'Spread', OnesFirst: 'Ones first'
+  };
+  var TAKE_CAPS = { Row: 'row', TakeAway: 'takeAway', Spread: 'spread' };
+  function wordOk(v) { return typeof v === 'string' && v !== ''; }
+  function takeWords() {
+    var w = {}, src = isObj(PC.words) ? PC.words : null;
+    Object.keys(TAKE_WORDS_EN).forEach(function (k) { w[k] = src && own(src, k) && wordOk(src[k]) ? src[k] : TAKE_WORDS_EN[k]; });
+    if (src) Object.keys(TAKE_CAPS).forEach(function (k) {
+      var lo = TAKE_CAPS[k];
+      if (!(own(src, k) && wordOk(src[k])) && own(src, lo) && wordOk(src[lo])) w[k] = cap1(src[lo]);
+    });
+    return w;
+  }
+  Object.defineProperty(E, 'TAKE_WORDS', { enumerable: true, configurable: true, get: takeWords });
+
+  /* E.TAKE_LINES: every line the kit says. A value is a line, a list (taken in turn: praise, again), or an
+   * object of forms: by the column whose turn it is ('ones', 'tens', 'hundreds'), with 'Zero' after it
+   * where her top there is 0 ("No rows." where "Only zero rows" would stand), by the step
+   * (rememberedStep), or 'some' and 'none' (what a sweep leaves). Number tokens are number words: {top}
+   * (the top as it stands, or after its spread where a line says so), {bottom}, {first}, {rest}, {left},
+   * {digit}, and {A} and {B}, the problem's own numbers; a capital ({Top}) starts a sentence ({A} always
+   * does, {B} never). A count before a noun agrees with it ("one row", "two rows"). The word tokens are
+   * E.TAKE_WORDS' keys; no maths word is written into a line. The cat's tokens ({name} …) are left for the
+   * page. A set's `lines` may override any key, with a value of the same kind. */
+  E.TAKE_LINES = {
+    // the column's line as it is outlined (section 1): its name, then what it asks
+    colName: { ones: '{OnesFirst}.', tens: 'Now the {tens}.', hundreds: 'Now the {hundreds}.' },
+    colFirst: '{OnesFirst}. {Top} {takeAway} {bottom}.',
+    colHers: '{TakeAway} {bottom}.',
+    colShown: '{Top} {takeAway} {bottom}.',
+    nothingHers: 'Nothing to take.',
+    nothingShown: 'Nothing to take: {top}.',
+    ask: '{A} {takeAway} {B}.',
+    schoolWords: 'A {row} is a ten. A {square} is a hundred.',
+    blank: { tens: 'No {rows} left. We don’t write a zero in front.', hundreds: 'No {squares} left. We don’t write a zero in front.' },
+    onesFirst: '{OnesFirst}: this box, on the right.',
+    // 'tap': the zone to tap glows (tapHere's forms are by that zone)
+    tap: { ones: 'Not enough {loose}. {Spread} a {row}: tap it.', tens: 'Not enough {rows}. {Spread} a {square}: tap it.' },
+    tapSquare: 'Not enough {loose}, and no {rows}. {Spread} a {square}: tap it.',
+    tapRow: 'Now tap a {row}.',
+    tapHere: { tens: 'The {rows}: up here.', hundreds: 'The {squares}: up here.' },
+    // 'show', and the spreads a help draws
+    showOpen: {
+      ones: '{Top} {takeAway} {bottom}? Only {top} {loose}. Not enough.', tens: '{Top} {takeAway} {bottom}? Only {top} {rows}. Not enough.',
+      onesZero: '{Top} {takeAway} {bottom}? No {loose}. Not enough.', tensZero: '{Top} {takeAway} {bottom}? No {rows}. Not enough.'
+    },
+    showSpread: {
+      ones: 'So I {spread} a {row}: ten more {loose}.', tens: 'So I {spread} a {square}: ten more {rows}.',
+      onesZero: 'So I {spread} a {row}: ten {loose}.', tensZero: 'So I {spread} a {square}: ten {rows}.'
+    },
+    chainSquare: 'So a {square} first: ten {rows}.',
+    chainRow: { ones: 'Now a {row}: ten more {loose}.', onesZero: 'Now a {row}: ten {loose}.' },
+    spread: {
+      ones: '{Spread} a {row}: ten more {loose}.', tens: '{Spread} a {square}: ten more {rows}.',
+      onesZero: '{Spread} a {row}: ten {loose}.', tensZero: '{Spread} a {square}: ten {rows}.'
+    },
+    // the slips' first lines (section 2): `zero` at the chain's turn (the ones) and at the lent zero (the tens)
+    zero: {
+      ones: '{Top} {takeAway} {bottom}? Not enough {loose}, and no {rows} to {spread}.',
+      onesZero: '{Top} {takeAway} {bottom}? No {loose}, and no {rows} to {spread}.',
+      tens: 'Careful. That zero became ten {rows}, then gave one away. Nine {rows} now.'
+    },
+    flip: {
+      ones: 'Careful: it’s {top} {takeAway} {bottom}, the top {takeAway} the bottom. Only {top} {loose}. Not enough.',
+      tens: 'Careful: it’s {top} {takeAway} {bottom}, the top {takeAway} the bottom. Only {top} {rows}. Not enough.',
+      onesZero: 'Careful: it’s {top} {takeAway} {bottom}, the top {takeAway} the bottom. No {loose}. Not enough.',
+      tensZero: 'Careful: it’s {top} {takeAway} {bottom}, the top {takeAway} the bottom. No {rows}. Not enough.'
+    },
+    nospread: {
+      ones: '{Top} {takeAway} {bottom}? Not enough {loose}. But we can {spread} a {row}.',
+      tens: '{Top} {takeAway} {bottom}? Not enough {rows}. But we can {spread} a {square}.',
+      onesZero: 'No {loose} to take {bottom} from? But we can {spread} a {row}.',
+      tensZero: 'No {rows} to take {bottom} from? But we can {spread} a {square}.'
+    },
+    kept: {
+      tens: 'Careful. One {row} went to the {loose}. {Top} {rows} now.',
+      hundreds: 'Careful. One {square} became ten {rows}. {Top} {squares} now.',
+      tensZero: 'Careful. One {row} went to the {loose}. No {rows} now.',
+      hundredsZero: 'Careful. One {square} became ten {rows}. No {squares} now.'
+    },
+    extra: {
+      tens: 'Careful. The {loose} had enough, so no {row} went. {Top} {rows} still.',
+      hundreds: 'Careful. The {rows} had enough, so no {square} went. {Top} {squares} still.'
+    },
+    fact: 'Let’s scratch it out.',
+    factSpread: { ones: '{Top} {takeAway} {bottom}: we {spread} a {row}, then take {bottom}.', tens: '{Top} {takeAway} {bottom}: we {spread} a {square}, then take {bottom}.' },
+    factChain: 'Across the zero: {top} {loose}. {TakeAway} {bottom}.',
+    factZero: '{Top} {takeAway} {bottom}: let’s scratch it out.',
+    // the take: to ten, then the rest; by ones for five or less; one sweep otherwise
+    takeTeen: { ones: '{Top} {loose}. {TakeAway} {bottom}.', tens: '{Top} {rows}. {TakeAway} {bottom}.', hundreds: '{Top} {squares}. {TakeAway} {bottom}.' },
+    takeFirst: 'Take {first}: ten left.',
+    takeRest: '{Rest} more: {left} left.',
+    takeSmall: { ones: '{Top} {loose} {takeAway} {bottom} {loose}.', tens: '{Top} {rows} {takeAway} {bottom} {rows}.', hundreds: '{Top} {squares} {takeAway} {bottom} {squares}.' },
+    takeBack: '{Left}.',
+    takeSweep: { some: 'Take {bottom}: {left} left.', none: 'Take {bottom}: none left.' },
+    takeNothing: 'Nothing to take.',
+    digit: {
+      ones: '{Digit} {loose}.', tens: '{Digit} {rows}.', hundreds: '{Digit} {squares}.',
+      onesZero: 'No {loose}: zero.', tensZero: 'No {rows}: zero.', hundredsZero: 'No {squares}: zero.'
+    },
+    // the problem's end, and what comes before a problem
+    twinIntro: 'One like it.',
+    warmIntro: 'One to warm up your whiskers.',
+    again: ['There it is. You remembered how.', 'The one like it, and every column was yours.'],
+    rememberedStep: {
+      none: 'Every column yours, and no sand needed!',
+      ones2: 'A {row} to {spread}, and no sand needed!',
+      ones: 'Three columns and a {row} to {spread}: no sand needed!',
+      tens: 'A {square} to {spread}, and no sand needed!',
+      both: 'A {row} and a {square} to {spread}, and no sand needed!',
+      mixed: 'No {squares} left, and no sand needed!',
+      zero: 'Across the zero, and no sand needed!',
+      zeros: 'Across two zeros, and no sand needed!'
+    },
+    miss: 'And you finished it. We’ll do one like it soon.',
+    missLast: 'And you finished it.',
+    praise: ['Yes!', '', 'That’s it.', '', 'Every column.', '']
+  };
+  function takeLine(def, key) {
+    return def && isObj(def.lines) && def.lines[key] != null ? def.lines[key] : E.TAKE_LINES[key];
+  }
+  function takeForm(v, keys) {
+    if (!isObj(v)) return v;
+    for (var i = 0; i < keys.length; i++) if (own(v, keys[i]) && v[keys[i]] != null) return v[keys[i]];
+    var k = Object.keys(v);
+    return k.length ? v[k[0]] : '';
+  }
+  function formKeys(name, zero) { return zero ? [name + 'Zero', name] : [name]; }
+  function takeNum(nums, k) {
+    if (!nums) return null;
+    var lo = k === 'A' || k === 'B' ? k.toLowerCase() : k.charAt(0).toLowerCase() + k.slice(1);
+    return own(nums, lo) && typeof nums[lo] === 'number' ? nums[lo] : null;
+  }
+  /* A line with its tokens filled: E.TAKE_WORDS' forms, and the numbers in `nums` as number words. */
+  function takeFill(text, nums, words) {
+    words = words || takeWords();
+    var s = String(text == null ? '' : text);
+    s = s.replace(/\{([A-Za-z]+)\} \{(rows|squares)\}/g, function (m, k, noun) {
+      return !own(words, k) && takeNum(nums, k) === 1 ? '{' + k + '} {' + noun.slice(0, -1) + '}' : m;
+    });
+    return s.replace(/\{([A-Za-z]+)\}/g, function (m, k) {
+      if (own(words, k)) return words[k];
+      var v = takeNum(nums, k);
+      if (v == null) return m;
+      var w = E.numberWords(v);
+      return /^[A-Z]/.test(k) && k !== 'B' ? cap1(w) : w;
+    });
+  }
+  E.takeFill = takeFill;
+  // a line from a list taken in turn, never blank where the kit's own must not be
+  function takeTurn(list, i, fallback) {
+    var L = asList(list).filter(function (x) { return typeof x === 'string' && x.trim(); });
+    return L.length ? L[((i % L.length) + L.length) % L.length] : pick(fallback, i);
+  }
+
+  /* Number words 0 to 1,000, American ("five hundred three", "one hundred eighteen", never "and"); the
+   * same as E.countWords to 100. */
+  E.numberWords = function (n) {
+    if (!(typeof n === 'number' && n === Math.floor(n) && n >= 0 && n <= 1000)) return String(n);
+    if (n === 1000) return 'one thousand';
+    var h = Math.floor(n / 100), r = n % 100, s = h ? ONES[h] + ' hundred' : '';
+    if (r || !h) s = (s ? s + ' ' : '') + (r < 20 ? ONES[r] : TENS[Math.floor(r / 10)] + (r % 10 ? '-' + ONES[r % 10] : ''));
+    return s;
+  };
+
+  /* The plan (section 3), or null for a problem the kit does not ask: whole numbers, 10 ≤ a ≤ 999,
+   * 1 ≤ b < a, b no longer than a. Column by column, ones first, as the algorithm goes: a column whose top
+   * as it stands is below its bottom digit spreads from the next; if that one is 0, the one after spreads
+   * into it first (a square into ten rows), then it gives a row. Each column: `top` as written, `before`
+   * (as it stands when it is outlined), `at` (after its own spreads: what it is taken from), `bottom`
+   * (null: none), `digit`, `spreads` [{ from, to }], `chain` (across a zero), `lent` (it gave to the
+   * right), `end` (what it ends as: its gold mark once it has changed), `toZero` (brought to 0 by lending)
+   * and `blank` (its answer digit is a leading zero). */
+  function digitsOf(n) { return String(n).split('').reverse().map(Number); }
+  function okTake(a, b) {
+    return typeof a === 'number' && typeof b === 'number' && a === Math.floor(a) && b === Math.floor(b) &&
+      a >= 10 && a <= 999 && b >= 1 && b < a && String(b).length <= String(a).length;
+  }
+  E.takePlan = function (a, b) {
+    if (!okTake(a, b)) return null;
+    var T = digitsOf(a), B = digitsOf(b), n = T.length, cur = T.slice(), cols = [];
+    for (var i = 0; i < n; i++) {
+      var bot = i < B.length ? B[i] : null, bv = bot == null ? 0 : bot, before = cur[i], spreads = [], chain = false;
+      if (cur[i] < bv) {
+        if (cur[i + 1] === 0) { cur[i + 2] -= 1; cur[i + 1] += 10; spreads.push({ from: i + 2, to: i + 1 }); chain = true; }
+        cur[i + 1] -= 1; cur[i] += 10; spreads.push({ from: i + 1, to: i });
+      }
+      cols.push({ col: i, top: T[i], before: before, at: cur[i], bottom: bot, digit: cur[i] - bv, spreads: spreads, chain: chain });
+    }
+    var answer = a - b, nd = String(answer).length;
+    cols.forEach(function (c, i) {
+      c.lent = cols.some(function (d) { return d.spreads.some(function (s) { return s.from === i; }); });
+      c.end = cur[i];
+      c.toZero = c.top > 0 && c.before === 0;
+      c.blank = i >= nd;
+    });
+    return { a: a, b: b, answer: answer, n: n, cols: cols };
+  };
+  /* The kind (section 3), by which turns spread. */
+  E.takeKind = function (p) {
+    if (!p || !p.cols) return null;
+    if (p.cols.some(function (c) { return c.chain; })) return p.cols[0].top === 0 ? 'zeros' : 'zero';
+    var o = p.cols[0].spreads.length > 0, t = p.n > 1 && p.cols[1].spreads.length > 0;
+    return o && t ? 'both' : o ? 'ones' : t ? 'tens' : 'none';
+  };
+  /* The flags the chapters' rules read (only the true ones): leavesZero, toZero, idleZero, noHundreds, noLoose. */
+  E.takeFlags = function (p) {
+    var f = {};
+    if (!p || !p.cols) return f;
+    p.cols.forEach(function (c, i) {
+      if (c.toZero) f.toZero = true;
+      if (c.toZero && c.spreads.length && !c.chain) f.leavesZero = true;
+      if (c.top === 0 && !c.spreads.length && !c.lent && !p.cols.some(function (d) { return d.spreads.some(function (s) { return s.to === i; }); })) f.idleZero = true;
+    });
+    if (p.n === 3 && p.cols[2].blank) f.noHundreds = true;
+    if (p.cols[0].top === 0) f.noLoose = true;
+    return f;
+  };
+  /* The shape a twin keeps exactly (section 3). */
+  E.takeShape = function (p) {
+    if (!p || !p.cols) return null;
+    return {
+      n: p.n, nb: String(p.b).length,
+      cols: p.cols.map(function (c) {
+        return { zero: c.top === 0, bottom: c.bottom == null ? 'none' : c.bottom === 0 ? 'zero' : 'some', spreads: c.spreads.length,
+          chain: c.chain, toZero: c.toZero, digitZero: !c.blank && c.digit === 0, blank: c.blank };
+      }),
+      flags: Object.keys(E.takeFlags(p)).sort()
+    };
+  };
+  function shapeKey(p) { return JSON.stringify(E.takeShape(p)); }
+  /* The step a problem belongs to (her hard steps, the guards, the store's templates). */
+  E.takeStepOf = function (p) {
+    var k = E.takeKind(p);
+    if (!k) return null;
+    if (p.n === 2 && k === 'ones') return 'ones2';
+    if (k === 'zero' || k === 'zeros') return k;
+    if (E.takeFlags(p).noHundreds) return 'mixed';
+    return k;
+  };
+  // a turn whose flip (bottom − top, the smaller from the bigger) lands on its right digit (section 1)
+  function flipLands(p) { return p.cols.some(function (c) { return c.spreads.length > 0 && (c.bottom || 0) - c.before === c.digit; }); }
+  E.takeFlipLands = function (p) { return !!(p && p.cols && flipLands(p)); };
+
+  /* A twin (section 3): the same shape, new digits, built column by column, ones first: each top digit drawn
+   * to the zero pattern, each bottom digit from the range that makes the turn spread or not as the
+   * original's did (a 0 answer digit or a blank: the bottom equals the top as it stands), the spreads
+   * applied as drawn, the whole checked against the shape. Never the original's top, nor its answer nor
+   * one in `avoid`; for `mode` 'hers' (the default), never one whose flip lands on a right digit. At most
+   * E.TAKE_TRIES draws (read at call time), then the original itself: { a, b, tries, fallback: true }. */
+  E.takeTwin = function (plan, seed, avoid, mode) {
+    if (!plan || !plan.cols) return null;
+    var rnd = mulberry32(num(seed, 0)), want = shapeKey(plan), nb = String(plan.b).length, n = plan.n;
+    var avoidSet = {}, noLand = (mode == null ? 'hers' : mode) === 'hers';
+    asList(avoid).forEach(function (x) { avoidSet[x] = true; });
+    var tries = Math.max(0, Math.floor(num(E.TAKE_TRIES, 400)));
+    var pickIn = function (lo, hi) { return hi < lo ? null : lo + Math.floor(rnd() * (hi - lo + 1)); };
+    for (var k = 0; k < tries; k++) {
+      var td = plan.cols.map(function (c) { return c.top === 0 ? 0 : 1 + Math.floor(rnd() * 9); });
+      var cur = td.slice(), bd = [], bad = false;
+      for (var i = 0; i < n && !bad; i++) {
+        if (i >= nb) continue;
+        var c = plan.cols[i], need = c.spreads.length > 0, zeroDigit = !c.blank && c.digit === 0, d;
+        if (c.bottom === 0) d = 0;
+        else if (need) d = pickIn(Math.max(1, cur[i] + 1), 9);
+        else if (zeroDigit || c.blank) d = cur[i] >= 1 ? cur[i] : null;
+        else d = pickIn(1, cur[i] - 1 >= 1 ? cur[i] - 1 : cur[i]);
+        if (d == null || (i === nb - 1 && d === 0)) { bad = true; break; }
+        bd.push(d);
+        if (need) {
+          if (i + 1 >= n) { bad = true; break; }
+          if (cur[i + 1] === 0) {
+            if (i + 2 >= n || cur[i + 2] === 0) { bad = true; break; }
+            cur[i + 2] -= 1; cur[i + 1] += 10;
+          }
+          cur[i + 1] -= 1; cur[i] += 10;
+        }
+      }
+      if (bad) continue;
+      var a = +td.slice().reverse().join(''), b = +bd.slice().reverse().join('');
+      if (!(b >= 1 && b < a)) continue;
+      var q = E.takePlan(a, b);
+      if (!q || shapeKey(q) !== want) continue;
+      if (a === plan.a || avoidSet[q.answer] || q.answer === plan.answer) continue;
+      if (noLand && flipLands(q)) continue;
+      return { a: a, b: b, tries: k + 1 };
+    }
+    return { a: plan.a, b: plan.b, tries: tries, fallback: true };
+  };
+  /* The made warm-up (section 3): a twin of 43 − 16, 'hers', its flip never landing. */
+  E.takeWarm = function (seed, avoid) {
+    var t = E.takeTwin(E.takePlan(43, 16), seed, avoid, 'hers');
+    return { a: t.a, b: t.b };
+  };
+  // a twin's seed: the lesson's start, its place and the requeue count
+  function takeSeed(t, pos, used) {
+    var s = Math.floor(Math.abs(num(t, 0))) % 4294967296;
+    return (s ^ Math.imul(pos + 1, 2654435761) ^ Math.imul(used + 1, 40503)) >>> 0;
+  }
+
+  /* Her slip in a column (section 2's table, in its order), or null for the right digit. `given` is a
+   * digit; '' (OK on the empty leftmost box) is read as 0. `shown`: the turn's spreads were shown or
+   * tapped, so they are in the sand already and never her slip: no `flip`, `nospread` or chain's `zero`. */
+  E.takeSlip = function (plan, col, given, shown) {
+    var c = plan && plan.cols && plan.cols[col];
+    if (!c) return null;
+    var bv = c.bottom || 0, g = given === '' || given == null ? 0 : +given;
+    if (g === c.digit) return null;
+    var needs = c.spreads.length > 0;
+    if (needs && c.chain) return !shown && (g === bv - c.before || g === 0) ? 'zero' : 'fact';
+    if (c.top === 0 && c.lent) return g === 10 - bv || g === bv || g === 0 ? 'zero' : 'fact';
+    if (needs && !shown && g === bv - c.before) return 'flip';
+    if (needs && !shown && g === 0) return 'nospread';
+    if (c.lent && g === (c.top >= bv ? c.top - bv : c.top + 10 - bv)) return 'kept';
+    if (col > 0 && !c.lent && !needs && g === c.before - 1 - bv) return 'extra';
+    return 'fact';
+  };
+
+  /* The column's gold marks (section 1): per column, ones first, { struck, mark } (mark null: nothing
+   * lettered). In 'show' and 'tap' (the scaffold) every spread letters the columns it touches as it lands
+   * (a zero "10", then "9"); in 'hers' a turn that spread strikes its lenders, and a column's value is
+   * lettered once its own digit is in; a help is the scaffold too, for the spreads of its own turn
+   * (`helped`: { col: true }). Columns before `col` are done; `k` of col's own spreads have landed. */
+  function marksInit(p) { return p.cols.map(function (c) { return { struck: false, mark: null, cur: c.top }; }); }
+  function marksSpread(M, s, letter) {
+    M[s.from].cur -= 1; M[s.to].cur += 10;
+    M[s.from].struck = true; M[s.to].struck = true;
+    if (letter) { M[s.from].mark = M[s.from].cur; M[s.to].mark = M[s.to].cur; }
+  }
+  function marksDone(M, i) { if (M[i].struck) M[i].mark = M[i].cur; }
+  function marksOut(M) { return M.map(function (m) { return { struck: m.struck, mark: m.mark }; }); }
+  function marksTo(p, mode, helped, col, k) {
+    var M = marksInit(p);
+    helped = helped || {};
+    for (var i = 0; i < col && i < p.n; i++) {
+      var all = mode !== 'hers' || !!helped[i];
+      p.cols[i].spreads.forEach(function (s) { marksSpread(M, s, all); });
+      marksDone(M, i);
+    }
+    if (col < p.n && k > 0) p.cols[col].spreads.slice(0, k).forEach(function (s) { marksSpread(M, s, mode !== 'hers'); });
+    return M;
+  }
+  E.takeMarks = function (plan, mode, helped, col, k) {
+    if (!plan || !plan.cols) return null;
+    return marksOut(marksTo(plan, E.TAKE_REGROUP.indexOf(mode) >= 0 ? mode : 'hers', helped, num(col, 0), num(k, 0)));
+  };
+  function spreadName(s) { return { from: TAKE_COLS[s.from], to: TAKE_COLS[s.to] }; }
+
+  /* The store picture as PC.art.placeValue takes it (section 8's pinned object): the counts as they
+   * stand, `taken` per zone, `fresh` (a spread's ten: 10, or 9 once a row of it has spread on across a
+   * zero), `spread` (the last spread landed, in flight at `stage.flight`: the counts are its end), `glow`,
+   * `kind`, `small`. `q` is a question (T.question) or a problem ({ a, b, picture? }); `stage` says how far
+   * the problem has gone: 'start', 'done', or 'before' / 'after' / 'taken' (q's column: outlined, its
+   * spreads landed, its take gone pale), or { col, spreads, taken, flight, glow, small } (columns before
+   * `col` spread and taken; `spreads` of col's own landed). */
+  function takeKindOf(def, q) {
+    var k = (q && isObj(q.picture) && q.picture.kind) || (def && isObj(def.picture) && def.picture.kind);
+    return k === 'marks' ? 'marks' : 'store';
+  }
+  E.takePicture = function (def, q, stage) {
+    var p = q && (q.plan && q.plan.cols ? q.plan : E.takePlan(q.a, q.b));
+    if (!p) return null;
+    var qc = num(q.col, 0), s = stage;
+    if (s === 'done') s = { col: p.n };
+    else if (s === 'before' || s == null) s = { col: qc };
+    else if (s === 'after') s = { col: qc, spreads: 9 };
+    else if (s === 'taken') s = { col: qc, spreads: 9, taken: true };
+    else if (s === 'start') s = { col: 0 };
+    else if (!isObj(s)) s = { col: qc };
+    var col = Math.max(0, Math.min(p.n, num(s.col, qc)));
+    var cur = [0, 0, 0], old = [0, 0, 0], fresh = [0, 0, 0], taken = [0, 0, 0], last = null;
+    p.cols.forEach(function (c, i) { cur[i] = c.top; old[i] = c.top; });
+    var land = function (sp) {
+      cur[sp.from] -= 1; cur[sp.to] += 10;
+      if (old[sp.from] > 0) old[sp.from] -= 1; else fresh[sp.from] -= 1;   // an old piece goes first
+      fresh[sp.to] += 10;
+      last = sp;
+    };
+    for (var i = 0; i < col; i++) { p.cols[i].spreads.forEach(land); taken[i] = p.cols[i].bottom || 0; last = null; }
+    if (col < p.n) {
+      p.cols[col].spreads.slice(0, Math.max(0, num(s.spreads, 0))).forEach(land);
+      if (s.taken) taken[col] = p.cols[col].bottom || 0;
+    }
+    var o = {
+      hundreds: cur[2], tens: cur[1], ones: cur[0],
+      taken: { hundreds: taken[2], tens: taken[1], ones: taken[0] },
+      fresh: { tens: fresh[1], ones: fresh[0] },
+      spread: null, glow: null, kind: takeKindOf(def, q), small: !!s.small
+    };
+    if (s.flight && last) o.spread = { from: TAKE_COLS[last.from], to: TAKE_COLS[last.to], stage: s.flight === 'slide' || s.flight === 'open' ? s.flight : 'end' };
+    if (s.glow === 'hundreds' || s.glow === 'tens') o.glow = s.glow;
+    return o;
+  };
+
+  /* The help's sand as PC.art.sand takes it (`kind: 'quick'`, section 8's pinned object): the number as it
+   * stands, the marks spent by spreads (`crossed`) and the ten new marks each spread drew (`fresh`), from
+   * the first column on (so the sand agrees with the column and the store picture), `take` of column
+   * `col`'s marks being taken, `lit` of them so far. */
+  var SAND_KEYS = ['kind', 'hundreds', 'tens', 'ones', 'crossed', 'fresh', 'take', 'lit', 'col', 'ground'];
+  function takeGround(def) { return def && (def.ground === 'earth' || def.ground === 'sand') ? def.ground : 'sand'; }
+  function sandInit(p) {
+    var cur = [0, 0, 0];
+    p.cols.forEach(function (c, i) { cur[i] = c.top; });
+    return { cur: cur, crossed: { squares: 0, lines: 0 }, fresh: { lines: 0, dots: 0 } };
+  }
+  function sandSpread(S, s) {
+    S.cur[s.from] -= 1; S.cur[s.to] += 10;
+    if (s.from === 2) { S.crossed.squares++; S.fresh.lines += 10; } else { S.crossed.lines++; S.fresh.dots += 10; }
+  }
+  function sandOf(S, col, take, lit, ground) {
+    return { kind: 'quick', hundreds: S.cur[2], tens: S.cur[1], ones: S.cur[0], crossed: clone(S.crossed), fresh: clone(S.fresh),
+      take: take, lit: lit, col: col, ground: ground };
+  }
+  E.takeSandOpts = function (step) {
+    var s = step && isObj(step.sand) ? step.sand : step;
+    if (!isObj(s)) return null;
+    var o = {};
+    SAND_KEYS.forEach(function (k) { o[k] = clone(s[k]); });
+    o.kind = 'quick';
+    if (o.ground == null) o.ground = 'sand';
+    return o;
+  };
+
+  /* The column's line (section 1). 'hers': the column and its bottom digit, never its top (the first
+   * column its top as written); 'show' and 'tap': the top as it stands, and at a turn that spreads, the new
+   * top 'after' its show or taps. 'Before' them, a 'show' turn says the column's name alone (the show's first
+   * step says its top: "Three take away eight? Only three loose."); a 'tap' turn says its top as it stands, as
+   * any column does, since the tap line says none ("Ones first. Three take away eight." then "Not enough
+   * loose. Spread a row: tap it."). `full` false: the column's name alone. The cat's tokens are left for the
+   * page. */
+  E.takeLine = function (def, plan, col, stage, mode, full) {
+    var c = plan && plan.cols && plan.cols[col];
+    if (!c) return '';
+    mode = E.TAKE_REGROUP.indexOf(mode) >= 0 ? mode : 'hers';
+    var words = takeWords(), bv = c.bottom;
+    var name = takeFill(takeForm(takeLine(def, 'colName'), [TAKE_COLS[col]]), {}, words);
+    if (mode !== 'hers' && c.spreads.length && (stage === 'after' || mode === 'show')) return stage === 'after' ? takeFill(takeLine(def, 'colShown'), { top: c.at, bottom: bv || 0 }, words) : name;
+    if (full === false) return name;
+    if (col === 0) return takeFill(takeLine(def, 'colFirst'), { top: c.before, bottom: bv || 0 }, words);
+    var part = mode === 'hers' ? takeLine(def, bv == null ? 'nothingHers' : 'colHers') : takeLine(def, bv == null ? 'nothingShown' : 'colShown');
+    return name + ' ' + takeFill(part, { top: c.before, bottom: bv || 0 }, words);
+  };
+
+  /* 'show''s steps and 'tap''s lines for a turn that spreads (null for one that does not). `steps`
+   * [{ say, spread, marks, picture }] ('show': Tallyheart works it, the last step the new top, then the
+   * keypad wakes); `taps` [{ say, glow, spread, marks, picture }], one a spread; `here` the line for a tap
+   * off the glowing zone, by that zone; `line` the column's line after. `opts.mode` 'show' (the default) or
+   * 'tap', `opts.helped` the columns helped before. */
+  E.takeShow = function (def, plan, col, opts) {
+    var c = plan && plan.cols && plan.cols[col];
+    if (!c || !c.spreads.length) return null;
+    opts = opts || {};
+    var mode = opts.mode === 'tap' ? 'tap' : 'show', helped = opts.helped || {};
+    var words = takeWords(), name = TAKE_COLS[col], zero = c.before === 0, bv = c.bottom || 0, nums = { top: c.before, bottom: bv };
+    var q = { plan: plan, col: col, picture: opts.picture };
+    var fill = function (key, keys, n) { return takeFill(takeForm(takeLine(def, key), keys || []), n || nums, words); };
+    var M = marksTo(plan, mode, helped, col, 0), k = 0, steps = [];
+    var push = function (say, s) {
+      steps.push({ say: say, spread: s ? spreadName(s) : null, marks: marksOut(M), picture: E.takePicture(def, q, { col: col, spreads: k, flight: s ? 'end' : null }) });
+    };
+    var land = function (s) { marksSpread(M, s, true); k++; };
+    var oneKeys = zero ? ['onesZero', 'ones'] : ['ones'];
+    if (c.chain) {
+      push(fill('zero', oneKeys), null);
+      land(c.spreads[0]); push(fill('chainSquare'), c.spreads[0]);
+      land(c.spreads[1]); push(fill('chainRow', oneKeys), c.spreads[1]);
+    } else {
+      push(fill('showOpen', formKeys(name, zero)), null);
+      land(c.spreads[0]); push(fill('showSpread', formKeys(name, zero)), c.spreads[0]);
+    }
+    var after = takeFill(takeLine(def, 'colShown'), { top: c.at, bottom: bv }, words);
+    push(after, null);
+    var T2 = marksTo(plan, mode, helped, col, 0), taps = [];
+    c.spreads.forEach(function (s, i) {
+      var say = c.chain ? (i === 0 ? fill('tapSquare') : fill('tapRow')) : fill('tap', [name]);
+      var glow = TAKE_COLS[s.from];
+      var before = { say: say, glow: glow, spread: spreadName(s), marks: marksOut(T2), picture: E.takePicture(def, q, { col: col, spreads: i, glow: glow }) };
+      marksSpread(T2, s, true);
+      taps.push(before);
+    });
+    var here = {};
+    c.spreads.forEach(function (s) { var z = TAKE_COLS[s.from]; here[z] = fill('tapHere', [z]); });
+    return { col: col, steps: steps, taps: taps, here: here, line: after };
+  };
+
+  /* The help (section 2): { col, slip, intro, steps: [{ say, sand, marks, n?, hop?, glow?, write? }], digit,
+   * blank, line }. The first step is the slip's line (`intro`, which stays above the steps to the end), the
+   * last writes the digit into the box (`line`, `write: true`; a blank column's is the "no zero in front"
+   * line, and its digit null). `sand` is E.takeSandOpts' object; `marks` the column's gold marks at that
+   * step; `n` the counter after a hop of the take; `hop` a step that is only a number (775 ms). The spreads
+   * the sand draws are lettered as `'show'` letters them, in every mode (the help is the scaffold), and a
+   * column that lent has its value lettered with the first line (`glow` for `kept` and `zero`). `opts`:
+   * `mode` the problem's, `helped` the columns helped before, `shown` its spreads were shown or tapped (so
+   * the sand starts with them drawn and the help starts at the take). */
+  E.takeHelp = function (def, plan, col, slip, opts) {
+    var c = plan && plan.cols && plan.cols[col];
+    if (!c) return null;
+    opts = opts || {};
+    var mode = E.TAKE_REGROUP.indexOf(opts.mode) >= 0 ? opts.mode : 'hers';
+    var shown = !!opts.shown && c.spreads.length > 0;
+    if (E.TAKE_SLIPS.indexOf(slip) < 0) slip = 'fact';
+    var words = takeWords(), name = TAKE_COLS[col], bv = c.bottom || 0, ground = takeGround(def);
+    var S = sandInit(plan), M = marksTo(plan, mode, opts.helped || {}, col, 0), take = 0, lit = 0, steps = [];
+    for (var i = 0; i < col; i++) plan.cols[i].spreads.forEach(function (s) { sandSpread(S, s); });
+    var zero = c.before === 0, keys = formKeys(name, zero), nums = { top: c.before, bottom: bv };
+    var fill = function (key, k, n) { return takeFill(takeForm(takeLine(def, key), k || []), n || nums, words); };
+    var push = function (say, more) {
+      var st = { say: say, sand: sandOf(S, col, take, lit, ground), marks: marksOut(M) };
+      if (more) Object.keys(more).forEach(function (x) { st[x] = more[x]; });
+      steps.push(st);
+    };
+    var land = function (s) { sandSpread(S, s); marksSpread(M, s, true); };
+    var chainFact = slip === 'fact' && c.chain;
+    var pre = shown || chainFact;
+    if (pre) c.spreads.forEach(land);
+    var intro;
+    if (slip === 'zero') intro = c.chain ? fill('zero', zero ? ['onesZero', 'ones'] : ['ones']) : fill('zero', ['tens']);
+    else if (slip === 'flip' || slip === 'nospread' || slip === 'kept' || slip === 'extra') intro = fill(slip, keys);
+    else if (c.chain) intro = fill('factChain', null, { top: c.at, bottom: bv });
+    else if (c.top === 0 && c.lent) intro = fill('factZero');
+    else if (c.spreads.length && !pre) intro = fill('factSpread', keys);
+    else intro = fill('fact');
+    var glow = (slip === 'kept' || slip === 'zero') && c.lent;
+    if (c.lent) M[col].mark = M[col].cur;
+    push(intro, glow ? { glow: true } : null);
+    if (!pre) {
+      if (c.chain) {
+        land(c.spreads[0]); push(fill('chainSquare'));
+        land(c.spreads[1]); push(fill('chainRow', zero ? ['onesZero', 'ones'] : ['ones']));
+      } else c.spreads.forEach(function (s) { land(s); push(fill('spread', keys)); });
+    }
+    // the take: a teen top to ten, then the rest (the old marks first); five or less from a top under ten
+    // by ones; a sweep otherwise
+    var top = c.at;
+    if (bv === 0) push(fill('takeNothing'));
+    else if (top >= 10 && bv > top - 10) {
+      take = bv;
+      if (!chainFact) push(fill('takeTeen', [name], { top: top, bottom: bv }));
+      if (top === 10) { lit = bv; push(fill('takeSweep', ['some'], { bottom: bv, left: 10 - bv }), { n: 10 - bv }); }
+      else {
+        var first = top - 10, rest = bv - first;
+        lit = first; push(fill('takeFirst', null, { first: first }), { n: 10 });
+        lit = bv; push(fill('takeRest', null, { rest: rest, left: 10 - rest }), { n: 10 - rest });
+      }
+    } else {
+      take = bv;
+      push(fill('takeSmall', [name], { top: top, bottom: bv }));
+      if (bv <= 5) for (var h = 1; h <= bv; h++) { lit = h; push(fill('takeBack', null, { left: top - h }), { n: top - h, hop: true }); }
+      else { lit = bv; push(fill('takeSweep', [top - bv === 0 ? 'none' : 'some'], { bottom: bv, left: top - bv }), { n: top - bv }); }
+    }
+    marksDone(M, col);
+    var line = c.blank ? fill('blank', [name]) : c.digit === 0 ? fill('digit', [name + 'Zero', name]) : fill('digit', [name], { digit: c.digit });
+    push(line, { write: true });
+    return { col: col, slip: slip, intro: intro, steps: steps, digit: c.blank ? null : c.digit, blank: c.blank, line: line };
+  };
+
+  /* What comes before the first column (sections 1 and 6): the prompt's balloons and a twin's or the
+   * warm-up's introduction, lettered and said (`balloons`), then the problem in words, said only (`ask`);
+   * `heard` is the speech in its order. `q` is a question (T.question) or a queue item. */
+  E.takeQuestion = function (def, q) {
+    def = def || {}; q = q || {};
+    var teacher = E.teacherOf(def), words = takeWords(), balloons = [];
+    asList(q.prompt).forEach(function (b) {
+      if (typeof b === 'string') { if (b) balloons.push({ who: teacher, text: b }); }
+      else if (isObj(b) && b.text) balloons.push(clone(b));
+    });
+    var intro = q.of || q.twin ? takeLine(def, 'twinIntro') : q.warm ? takeLine(def, 'warmIntro') : null;
+    if (intro) balloons.push({ who: teacher, text: takeFill(intro, {}, words) });
+    var ask = { who: teacher, text: takeFill(takeLine(def, 'ask'), { a: q.a, b: q.b }, words) };
+    return { balloons: balloons, ask: ask, heard: balloons.concat([ask]) };
+  };
+
+  /* ------------------------------------------------------------ the runner: E.takes (T)
+   * A take state: { op: '-', set, mode, queue: [{ a, b, regroup, prompt?, right?, picture?, of?, warm?,
+   * hard? }], pos, col, got, first, slips, cols, tapped, requeues, log, lineIdx, missed, onesFirst,
+   * startedAt, logged, okAt, tapHere, round? }. `pos` moves only when a problem is done, so T.done and
+   * E.counts.done agree and the slot machinery takes the state as it is; `col` is the column she is on
+   * (ones first); `got` the digits in her boxes, `first` her first digit in each, `slips` this problem's
+   * [{ col, given, slip }], `cols` its columns' times; `tapped` the spreads tapped in this column;
+   * `requeues` by lineage (a twin's `of`, its original's 'a-b'); `lineIdx` the praise and again lines'
+   * turn; `onesFirst` whether this problem's pointer was given; `logged` the take-aways in her log when
+   * the lesson began (the pointer's first five); `okAt` the last OK's time (the 400 ms guard); `tapHere`
+   * whether this column's "up here" was said; `hard` (a store round's) the step a problem asks her about. */
+  var T = {};
+  function takeItem(f, def) {
+    var it = Array.isArray(f) ? { a: +f[0], b: +f[1] } : isObj(f) ? { a: +f.a, b: +f.b } : { a: NaN, b: NaN };
+    var reg = isObj(f) && E.TAKE_REGROUP.indexOf(f.regroup) >= 0 ? f.regroup : E.TAKE_REGROUP.indexOf(def.regroup) >= 0 ? def.regroup : 'hers';
+    it.regroup = reg;
+    if (isObj(f)) {
+      ['prompt', 'right', 'picture'].forEach(function (k) { if (f[k] != null) it[k] = clone(f[k]); });
+      if (typeof f.of === 'string' && f.of) it.of = f.of;
+      if (f.warm === true) it.warm = true;
+      if (E.TAKE_STEPS.indexOf(f.hard) >= 0) it.hard = f.hard;
+    }
+    return it;
+  }
+  T.start = function (def, opts) {
+    def = def || {}; opts = opts || {};
+    var facts = opts.facts || def.facts || [];
+    var st = {
+      op: '-', set: opts.set || def.id || null, mode: opts.mode || 'chapter',
+      queue: asList(facts).map(function (f) { return takeItem(f, def); }).filter(function (q) { return !!E.takePlan(q.a, q.b); }),
+      pos: 0, col: 0, got: [], first: [], slips: [], cols: [], tapped: 0,
+      requeues: {}, log: [], lineIdx: { praise: 0, again: 0, remembered: 0 }, missed: false, onesFirst: false,
+      startedAt: opts.now || 0, logged: Math.max(0, Math.floor(num(opts.logged, 0))), okAt: 0, tapHere: false
+    };
+    if (opts.round != null) st.round = opts.round;
+    return st;
+  };
+  T.done = function (st) { return C.done(st); };
+  function takeKey(a, b) { return a + '-' + b; }
+  function helpedCols(st) { var h = {}; (st.slips || []).forEach(function (s) { if (s) h[s.col] = true; }); return h; }
+  function stateItem(st) {
+    if (T.done(st)) return null;
+    var q = st.queue[st.pos], p = q && E.takePlan(q.a, q.b);
+    return p ? { q: q, p: p, mode: E.TAKE_REGROUP.indexOf(q.regroup) >= 0 ? q.regroup : 'hers', col: Math.max(0, Math.min(p.n - 1, num(st.col, 0) | 0)) } : null;
+  }
+  /* The problem as it stands: its plan, the column she is on, the line's mode and form (`full`: a set's
+   * first two problems, every 'show' and 'tap' one, a twin, and the column after a help; the page words it
+   * with E.takeLine), `stage` for E.takeLine, `show` (this column has a show to play first: E.takeShow),
+   * `tap` (spreads still to tap), her digits so far (`got`, ones first; '' for a blank), the marks lettered
+   * as the column is outlined, `okEmpty` (OK is lit on an empty box: the leftmost only), and its prompt
+   * (with a prompt and `full` false, the first column says nothing past the prompt's balloon),
+   * `right` lines, picture, `twin` (its lineage), `warm`, `worked` and `hard`. */
+  T.question = function (st) {
+    var it = stateItem(st);
+    if (!it) return null;
+    var q = it.q, p = it.p, mode = it.mode, col = it.col, c = p.cols[col], helped = helpedCols(st);
+    var pending = mode === 'tap' ? Math.max(0, c.spreads.length - num(st.tapped, 0)) : 0;
+    var hl = []; Object.keys(helped).forEach(function (k) { hl.push(+k); });
+    // (a set's first two problems: the made warm-up counts among them, a twin does not: it has its full line anyway)
+    var own = st.queue.slice(0, st.pos).filter(function (x) { return !x.of; }).length;
+    return {
+      a: q.a, b: q.b, answer: p.answer, plan: p, kind: E.takeKind(p), step: E.takeStepOf(p),
+      number: st.pos + 1, total: st.queue.length, col: col, n: p.n, mode: mode,
+      full: mode !== 'hers' || !!q.of || own < 2 || (col > 0 && !!helped[col - 1]),
+      stage: mode === 'tap' && c.spreads.length && !pending ? 'after' : 'before',
+      show: mode === 'show' && c.spreads.length > 0, tap: pending, tapped: num(st.tapped, 0),
+      got: st.got.slice(), helped: hl.sort(),
+      marks: marksOut(marksTo(p, mode, helped, col, mode === 'tap' ? num(st.tapped, 0) : 0)),
+      okEmpty: col === p.n - 1, onesFirst: !!st.onesFirst,
+      prompt: q.prompt != null ? clone(q.prompt) : null, right: q.right != null ? clone(q.right) : null,
+      picture: q.picture != null ? clone(q.picture) : null,
+      twin: q.of || null, warm: !!q.warm, worked: mode === 'show', hard: q.hard || null
+    };
+  };
+  function pointerOn(st, def) { return (def && def.teach === 'none') || num(st.logged, 0) + (st.log || []).length < 5; }
+  /* One column's OK (`digit` 0 to 9, or '' for OK on the empty leftmost box). Ignored (`{ ignored }`)
+   * within 400 ms of the last OK ('guard'), before a 'tap' turn's spreads ('tap': the zone wiggles), on an
+   * empty box that is not the leftmost ('empty'). Her first digit of a problem, wrong and the answer's
+   * leading digit, in her first five take-aways or a `teach: 'none'` set, is pointed at once (`pointer`,
+   * its `line`): not checked, not logged. Otherwise: `right`, the `slip` and the `help` (the column is
+   * done with the right digit either way), `spread` (the 'hers' spreads the picture plays now), `blank`
+   * and its `blankLine`, the `marks` after the column, `next` (the next column), and at a problem's end
+   * `problemDone`, its log `entry` (the caller logs it: E.logTake), `twin` (the twin queued), its one
+   * line (`line`, `lineKind`: 'again', 'rememberedStep', 'praise', 'miss'; or `balloons` for its own
+   * `right` lines, 'right') and `done` (the lesson is over). */
+  T.digit = function (st, def, digit, ms, now) {
+    var it = stateItem(st);
+    if (!it) return null;
+    def = def || {};
+    var q = it.q, p = it.p, mode = it.mode, col = it.col, c = p.cols[col];
+    now = num(now, 0);
+    if (st.okAt && now >= st.okAt && now - st.okAt < TAKE_OK_MS) return { ignored: 'guard' };
+    if (mode === 'tap' && c.spreads.length > num(st.tapped, 0)) return { ignored: 'tap' };
+    var g = digit === '' || digit == null ? '' : +digit;
+    if (g !== '' && !(g === Math.floor(g) && g >= 0 && g <= 9)) return { ignored: 'digit' };
+    if (g === '' && col !== p.n - 1) return { ignored: 'empty' };
+    st.okAt = now;
+    var val = g === '' ? 0 : g, words = takeWords();
+    if (col === 0 && !st.onesFirst && val !== c.digit && pointerOn(st, def) && val === +String(p.answer).charAt(0)) {
+      st.onesFirst = true;
+      return { pointer: true, col: 0, line: takeFill(takeLine(def, 'onesFirst'), {}, words) };
+    }
+    var right = val === c.digit, shown = mode !== 'hers' && c.spreads.length > 0, before = helpedCols(st);
+    st.first[col] = g;
+    st.cols[col] = Math.max(0, Math.round(num(ms, 0)));
+    st.got[col] = c.blank ? '' : c.digit;
+    var res = { col: col, right: right, given: g, digit: c.blank ? null : c.digit, blank: c.blank, slip: null, help: null, spread: null };
+    if (right) {
+      if (mode === 'hers' && c.spreads.length) res.spread = c.spreads.map(spreadName);
+      if (c.blank) res.blankLine = takeFill(takeForm(takeLine(def, 'blank'), [TAKE_COLS[col]]), {}, words);
+    } else {
+      res.slip = E.takeSlip(p, col, g, shown);
+      st.slips.push({ col: col, given: g, slip: res.slip });
+      st.missed = true;
+      res.help = E.takeHelp(def, p, col, res.slip, { mode: mode, helped: before, shown: shown });
+    }
+    res.marks = marksOut(marksTo(p, mode, helpedCols(st), col + 1, 0));
+    st.col = col + 1; st.tapped = 0; st.tapHere = false;
+    if (st.col < p.n) { res.next = st.col; return res; }
+    // the problem is done: its log entry, its twin, its one line
+    var correct = st.slips.length === 0, given = '', ms2 = 0;
+    for (var i = p.n - 1; i >= 0; i--) given += st.first[i] == null ? '' : String(st.first[i]);
+    st.cols.forEach(function (x) { ms2 += num(x, 0); });
+    var entry = {
+      set: st.set, a: q.a, b: q.b, answer: p.answer, given: given, correct: correct, helped: !correct,
+      slips: clone(st.slips), ms: ms2, cols: st.cols.slice(), at: now, kind: E.takeKind(p), digits: p.n, regroup: mode
+    };
+    if (q.of) entry.twin = q.of;
+    if (q.warm) entry.warm = true;
+    if (mode === 'show') entry.worked = true;
+    if (st.round != null) entry.round = st.round;
+    st.log.push(entry);
+    res.entry = entry;
+    res.requeued = false;
+    if (!correct && def.twins !== false) {
+      var key = q.of || takeKey(q.a, q.b), used = st.requeues[key] || 0;
+      if (used < E.MAX_REQUEUE) {
+        st.requeues[key] = used + 1;
+        var tmode = mode === 'show' ? 'tap' : 'hers';
+        var tw = E.takeTwin(p, takeSeed(st.startedAt, st.pos, used), st.queue.map(function (x) { return x.a - x.b; }), tmode);
+        var item = { a: tw.a, b: tw.b, regroup: tmode, of: key };
+        if (q.picture != null) item.picture = clone(q.picture);
+        var at = Math.min(st.pos + 1 + E.REQUEUE_GAP, st.queue.length);
+        st.queue.splice(at, 0, item);
+        res.requeued = true;
+        res.twin = { a: tw.a, b: tw.b, at: at, of: key };
+      }
+    }
+    var L = isObj(st.lineIdx) ? st.lineIdx : (st.lineIdx = { praise: 0, again: 0, remembered: 0 });
+    if (correct) {
+      if (q.of) { var ai = num(L.again, 0); L.again = ai + 1; res.line = takeTurn(takeLine(def, 'again'), ai, E.TAKE_LINES.again); res.lineKind = 'again'; }
+      else if (q.hard) {
+        var rs = takeLine(def, 'rememberedStep'), kit = E.TAKE_LINES.rememberedStep[q.hard];
+        var r = isObj(rs) ? rs[q.hard] : rs;
+        res.line = typeof r === 'string' && r.trim() ? r : kit;
+        L.remembered = num(L.remembered, 0) + 1;
+        res.lineKind = 'rememberedStep';
+      } else if (q.right != null) {
+        res.balloons = asList(q.right).map(function (b) { return typeof b === 'string' ? { text: b } : clone(b); }).filter(function (b) { return b && b.text; });
+        res.lineKind = 'right';
+      } else {
+        var pi = num(L.praise, 0); L.praise = pi + 1;
+        res.line = pick(def.praise != null ? def.praise : takeLine(def, 'praise'), pi);
+        res.lineKind = 'praise';
+      }
+    } else {
+      res.line = takeLine(def, res.requeued ? 'miss' : 'missLast');
+      res.lineKind = 'miss';
+    }
+    if (res.line != null && typeof res.line !== 'string') res.line = pick(res.line, 0);
+    if (res.line != null) res.line = takeFill(res.line, {}, words);
+    if (res.balloons) res.balloons.forEach(function (b) { b.text = takeFill(b.text, {}, words); });
+    st.pos++;
+    st.col = 0; st.got = []; st.first = []; st.slips = []; st.cols = []; st.onesFirst = false; st.tapped = 0; st.tapHere = false;
+    res.problemDone = true;
+    res.done = T.done(st);
+    return res;
+  };
+  /* One spread of a 'tap' turn: { spread, tapped, left, glow (the next zone to tap), marks }, or null when
+   * there is none to tap. `off`: a tap elsewhere, which makes the zone glow again: { off, glow, say }, `say`
+   * true the first time in the column (E.takeShow's `here` has the line). */
+  T.tap = function (st, off) {
+    var it = stateItem(st);
+    if (!it || it.mode !== 'tap') return null;
+    var c = it.p.cols[it.col], done = num(st.tapped, 0);
+    if (done >= c.spreads.length) return null;
+    if (off) {
+      var say = !st.tapHere;
+      st.tapHere = true;
+      return { off: true, glow: TAKE_COLS[c.spreads[done].from], say: say };
+    }
+    var s = c.spreads[done];
+    st.tapped = done + 1;
+    var left = c.spreads.length - st.tapped;
+    return {
+      spread: spreadName(s), tapped: st.tapped, left: left, glow: left ? TAKE_COLS[c.spreads[st.tapped].from] : null,
+      marks: marksOut(marksTo(it.p, 'tap', helpedCols(st), it.col, st.tapped))
+    };
+  };
+  /* E.counts.summary's keys, from the take-aways (`facts` the first asks, `firstTry` those right in every
+   * column; no take-away is fast), with `op: '-'`. */
+  T.summary = function (st) {
+    var log = (st && st.log) || [], firsts = log.filter(function (e) { return e && !e.twin; });
+    var helped = log.filter(function (e) { return e && e.helped; }).length;
+    return {
+      set: st.set, mode: st.mode, op: '-',
+      answers: log.length, correct: log.filter(function (e) { return e && e.correct; }).length, fast: 0,
+      facts: firsts.length, firstTry: firsts.filter(function (e) { return e.correct; }).length,
+      helped: helped, noHelp: helped === 0, finished: T.done(st)
+    };
+  };
+  E.takes = T;
+
+  // the answers of every take set in a chapter (its lessons and its stories)
+  function chapterAnswers(story) {
+    var out = [];
+    Object.keys((story && story.counts) || {}).forEach(function (id) {
+      var d = story.counts[id];
+      if (!isObj(d) || d.op !== '-') return;
+      asList(d.facts).forEach(function (f) {
+        var a = Array.isArray(f) ? f[0] : isObj(f) ? f.a : NaN, b = Array.isArray(f) ? f[1] : isObj(f) ? f.b : NaN;
+        if (okTake(a, b)) out.push(a - b);
+      });
+    });
+    return out;
+  }
+  /* A chapter's take lesson: the set (with its id), its made warm-up first when it says `warm` (seeded
+   * by the lesson's start, avoiding the chapter's answers), and a fresh take state. */
+  E.takeLesson = function (cat, story, setId, now, stories) {
+    var raw = E.countsSet(setId, story, stories) || {};
+    var def = Object.assign({ id: setId }, raw);
+    var facts = asList(def.facts).slice();
+    if (def.warm === true) {
+      var w = E.takeWarm(takeSeed(now, -1, 0), chapterAnswers(story));
+      facts.unshift({ a: w.a, b: w.b, regroup: 'hers', warm: true });
+    }
+    var logged = cat && isObj(cat.takes) && Array.isArray(cat.takes.log) ? cat.takes.log.length : 0;
+    return { def: def, state: T.start(def, { facts: facts, set: setId, mode: 'chapter', now: now, logged: logged }) };
+  };
+
+  /* ------------------------------------------------------------ the record: cat.takes (section 4)
+   * { log: [entry…] (the last E.TAKE_LOG_CAP), rounds, cleanRounds }, created on her first take-away.
+   * An entry: { set, a, b, answer, given, correct, helped, slips: [{ col, given, slip }], ms, cols, at,
+   * kind, digits, regroup, twin?, warm?, worked?, round? }. Never `counts`: E.hardFacts, E.warriorHard,
+   * E.firstTry, E.fillPool, E.siblingAsked, E.readFirst, E.factTable, E.tableOf, E.factTables,
+   * E.hollowStart, the corner's "a slip?" and E.LOG_CAP never see a take-away. */
+  E.logTake = function (cat, entry) {
+    if (!cat || !isObj(entry)) return;
+    if (!isObj(cat.takes)) cat.takes = { log: [], rounds: 0, cleanRounds: 0 };
+    if (!Array.isArray(cat.takes.log)) cat.takes.log = [];
+    cat.takes.log.push(entry);
+    if (cat.takes.log.length > E.TAKE_LOG_CAP) cat.takes.log.splice(0, cat.takes.log.length - E.TAKE_LOG_CAP);
+  };
+  function takeLog(cat) { return cat && isObj(cat.takes) && Array.isArray(cat.takes.log) ? cat.takes.log : []; }
+  /* Her hard steps: the steps whose most recent first ask (not a twin, not worked, not 'tap': she was told
+   * to spread) was helped, the most recent first. Speed never makes a take-away hard. */
+  E.hardTakes = function (cat) {
+    var log = takeLog(cat), seen = {}, out = [];
+    for (var i = log.length - 1; i >= 0; i--) {
+      var e = log[i];
+      if (!isObj(e) || e.twin || e.worked || e.regroup === 'tap' || e.regroup === 'show') continue;
+      var s = E.takeStepOf(E.takePlan(e.a, e.b));
+      if (!s || seen[s]) continue;
+      seen[s] = true;
+      if (e.helped) out.push(s);
+    }
+    return out;
+  };
+  /* The grown-ups' table by kind: [{ kind, problems, firstAsks, rightFirst, helped, ms (the median, of
+   * every answer), slip (her commonest, or null) }] in E.TAKE_KINDS' order, and `teen`: the facts her
+   * `fact` slips missed at a top of ten or more, [{ top, bottom, n, text: '13 − 8 ×2' }], the most first. */
+  E.takeTable = function (cat) {
+    var rows = {}, teen = {}, order = [];
+    takeLog(cat).forEach(function (e) {
+      var p = isObj(e) && E.takePlan(e.a, e.b);
+      if (!p) return;
+      var k = E.takeKind(p), r = rows[k] || (rows[k] = { kind: k, problems: 0, firstAsks: 0, rightFirst: 0, helped: 0, times: [], slips: {} });
+      r.problems++;
+      if (!e.twin) { r.firstAsks++; if (e.correct) r.rightFirst++; }
+      if (e.helped) r.helped++;
+      if (okNum(e.ms)) r.times.push(e.ms);
+      asList(e.slips).forEach(function (s) {
+        if (!isObj(s) || E.TAKE_SLIPS.indexOf(s.slip) < 0) return;
+        r.slips[s.slip] = (r.slips[s.slip] || 0) + 1;
+        var c = p.cols[s.col];
+        if (s.slip === 'fact' && c && c.at >= 10) {
+          var key = c.at + '-' + (c.bottom || 0);
+          if (!teen[key]) { teen[key] = { top: c.at, bottom: c.bottom || 0, n: 0 }; order.push(key); }
+          teen[key].n++;
+        }
+      });
+    });
+    var out = E.TAKE_KINDS.filter(function (k) { return rows[k]; }).map(function (k) {
+      var r = rows[k], best = null;
+      E.TAKE_SLIPS.forEach(function (s) { if (r.slips[s] && (best == null || r.slips[s] > r.slips[best])) best = s; });
+      return { kind: k, problems: r.problems, firstAsks: r.firstAsks, rightFirst: r.rightFirst, helped: r.helped,
+        ms: r.times.length ? Math.round(median(r.times)) : null, slip: best };
+    });
+    var tl = order.map(function (k, i) { var t = teen[k]; return { top: t.top, bottom: t.bottom, n: t.n, i: i }; })
+      .sort(function (x, y) { return y.n - x.n || x.i - y.i; })
+      .map(function (t) { return { top: t.top, bottom: t.bottom, n: t.n, text: t.top + ' − ' + t.bottom + ' ×' + t.n }; });
+    return { rows: out, teen: tl };
+  };
+  /* ------------------------------------------------------------ the Hollow's shelf and Count the store (section 5)
+   * Once she has finished a take set with `teach` (E.storeOpen: chapter 12's lesson), the Training Hollow opens on a
+   * shelf: Count the store, One Count at a time (the Counts page, word for word as before) and My nest; before that the
+   * Hollow is exactly as it was. A store round is five problems, each a twin of a template of a step she has learned
+   * (E.TAKE_TEMPLATES, the chapters' own problems, and the store's own 352 − 28 and 403 − 57), seeded by the round's
+   * number and its place, every answer different, all 'hers', none with a flip that lands; it lives in the lesson slot as
+   * a Hollow round does (`{ mode: 'hollow', state }`, its state a take state with `round`), gives way to a chapter lesson
+   * and comes back through `hollowWaiting` (E.holdLesson and E.hollowRound, untouched). A full round earns a frost-time
+   * treasure, in turn by the store's own rounds (`takes.rounds`); module 1's rounds, glow and treasures are never touched
+   * (E.recordLesson sends a store round here, never to E.hollowFinish). */
+  E.STORE_LINES = {
+    greet: 'Count the store, or one Count at a time? A full round earns a treasure for your nest.',
+    again: 'Another round? I’ve got all evening.',
+    intro: 'Five from the store. Ready? Here we go.',
+    done: 'The whole store, counted! That deserves a treasure for your nest.'
+  };
+  /* The steps her finished `teach` sets taught, in E.TAKE_STEPS' order (the order the chapters teach them). A set is
+   * finished as a Count's own set is (E.learnedCounts): its summary is in `lessons` and not unfinished. */
+  E.takeSteps = function (cat, stories) {
+    var got = {}, L = cat && isObj(cat.lessons) ? cat.lessons : {};
+    E.chapters(stories).forEach(function (s) {
+      Object.keys(s.counts || {}).forEach(function (id) {
+        var d = s.counts[id];
+        if (isObj(d) && d.op === '-' && E.TAKE_STEPS.indexOf(d.teach) >= 0 && own(L, id) && isObj(L[id]) && L[id].finished !== false) got[d.teach] = true;
+      });
+    });
+    return E.TAKE_STEPS.filter(function (s) { return got[s]; });
+  };
+  E.storeOpen = function (cat, stories) { return E.takeSteps(cat, stories).length > 0; };
+  /* The shelf (null while the store is closed): Tallyheart's greeting (after a round, `opts.reward`, the reward line; while
+   * a Warrior Counts sitting waits, its waiting line in that place: `waiting`, from E.hollowLines, reused, with `opts.now`
+   * to tell a stale one), `line` the one she says, and the buttons in their order (chapter 14 puts Tricky Counts between
+   * the two big ones). `opts.stories` stands in for `stories` (PC.debug.takes: a stub chapter, never registered). */
+  E.hollowShelf = function (cat, stories, opts) {
+    opts = opts || {};
+    var S = opts.stories || stories;
+    if (!E.storeOpen(cat, S)) return null;
+    var greet = opts.reward ? E.STORE_LINES.again : E.STORE_LINES.greet;
+    var out = { greet: greet, line: greet, steps: E.takeSteps(cat, S),
+      buttons: [{ id: 'store', label: 'Count the store' }, { id: 'counts', label: 'One Count at a time' }, { id: 'nest', label: 'My nest' }] };
+    if (cat && isObj(cat.warrior)) {
+      var w = E.hollowLines(cat, S, opts.now != null ? { now: opts.now } : {}).waiting;
+      if (w) { out.waiting = w; out.line = w; }
+    }
+    return out;
+  };
+  /* A store round's set: Tallyheart's, the store picture, the kit's praise, its own closing line and its introduction. */
+  E.takeRoundDef = function () {
+    return { id: 'store', op: '-', teacher: 'tallyheart', picture: { kind: 'store' }, praise: clone(E.TAKE_LINES.praise),
+      done: E.STORE_LINES.done, intro: E.STORE_LINES.intro };
+  };
+  /* A round (section 5): 1 an easy one (a `none` template); 2 her hardest step (E.hardTakes, among the steps she has
+   * learned), else the newest; 3 her next hardest, else an older step; 4 the newest; 5 an older step (an older step is
+   * one learned before the newest; with one step learned, that one). A problem picked for a hard step carries it
+   * (`hard`), so right in every column it earns that step's `rememberedStep` line. Each a twin of a template of its
+   * step (a twin keeps its shape, so no answer without hundreds comes before `mixed` is learned), seeded by the round's
+   * number and its place, avoiding the round's answers so far ('hers': its flip never lands). Its entries carry `round`
+   * and are first asks. Returns { def, state }. */
+  E.takeRoundStart = function (cat, stories, now, opts) {
+    opts = opts || {};
+    var learned = E.takeSteps(cat, opts.stories || stories);
+    if (!learned.length) learned = ['none'];
+    var n = (cat && isObj(cat.takes) ? wholeNum(cat.takes.rounds) : 0) + 1;
+    var rnd = mulberry32(Math.imul(n, 2654435761) >>> 0);
+    var newest = learned[learned.length - 1], older = learned.slice(0, -1);
+    var hard = E.hardTakes(cat).filter(function (s) { return learned.indexOf(s) >= 0; }).slice(0, 2);
+    var anOlder = function () { return older.length ? older[Math.floor(rnd() * older.length)] : newest; };
+    var slots = [{ step: 'none' }, { step: hard[0] || newest, hard: hard[0] }];
+    slots.push({ step: hard[1] || anOlder(), hard: hard[1] }, { step: newest }, { step: anOlder() });
+    var answers = [], facts = [];
+    slots.forEach(function (sl, place) {
+      var list = E.TAKE_TEMPLATES[sl.step], t = list[Math.floor(rnd() * list.length)], p = E.takePlan(t[0], t[1]), tw = null;
+      for (var k = 0; k < 8 && (!tw || tw.fallback || answers.indexOf(tw.a - tw.b) >= 0); k++) tw = E.takeTwin(p, takeSeed(n, place, k), answers, 'hers');
+      answers.push(tw.a - tw.b);
+      var f = { a: tw.a, b: tw.b, regroup: 'hers' };
+      if (sl.hard) f.hard = sl.hard;
+      facts.push(f);
+    });
+    var def = E.takeRoundDef();
+    return { def: def, state: T.start(def, { facts: facts, set: def.id, mode: 'hollow', now: now, round: n, logged: takeLog(cat).length }) };
+  };
+  /* A finished store round, once (its state is marked `recorded`): `takes.rounds` and, with no help, `takes.cleanRounds`
+   * counted, and the next frost treasure in her nest. No claw mark, no glow, nothing of module 1's touched. Returns
+   * { awarded (null for a round not finished, or recorded already), summary, rounds, clean }. */
+  E.takeRoundFinish = function (cat, st) {
+    var sum = T.summary(st || {});
+    var none = { awarded: null, summary: sum, rounds: cat && isObj(cat.takes) ? wholeNum(cat.takes.rounds) : 0, clean: false };
+    if (!cat || !isObj(st) || st.op !== '-' || st.mode !== 'hollow' || !sum.finished || st.recorded) return none;
+    st.recorded = true;
+    if (!isObj(cat.takes)) cat.takes = { log: [], rounds: 0, cleanRounds: 0 };
+    var K = cat.takes;
+    K.rounds = wholeNum(K.rounds) + 1;
+    if (sum.noHelp) K.cleanRounds = wholeNum(K.cleanRounds) + 1;
+    var t = E.FROST_TREASURES[(K.rounds - 1) % E.FROST_TREASURES.length];
+    if (!Array.isArray(cat.nest)) cat.nest = [];
+    cat.nest.push(t.id);
+    return { awarded: t, summary: sum, rounds: K.rounds, clean: !!sum.noHelp };
+  };
+  /* The saved `takes` (normCat): her own key only; entries that are objects with a problem the kit asks and
+   * a numeric `at`, `kind` recomputed when missing or wrong, the last E.TAKE_LOG_CAP; `rounds` and
+   * `cleanRounds` whole numbers. */
+  function wholeNum(v) { return okNum(v) && v >= 0 ? Math.floor(v) : 0; }
+  function normTakes(t) {
+    var log = (Array.isArray(t.log) ? t.log : []).filter(function (e) { return isObj(e) && okNum(e.at) && okTake(e.a, e.b); });
+    log.forEach(function (e) { var k = E.takeKind(E.takePlan(e.a, e.b)); if (e.kind !== k) e.kind = k; });
+    if (log.length > E.TAKE_LOG_CAP) log = log.slice(log.length - E.TAKE_LOG_CAP);
+    return { log: log, rounds: wholeNum(t.rounds), cleanRounds: wholeNum(t.cleanRounds) };
+  }
+  // a saved take state the runner can take up (okLesson, for a state with `op`)
+  function okTakeState(st) {
+    if (st.op !== '-') return false;
+    if (!st.queue.every(function (q) { return okTake(q.a, q.b); })) return false;
+    if (!Array.isArray(st.got) || !Array.isArray(st.first) || !Array.isArray(st.slips) || !Array.isArray(st.cols)) return false;
+    if (!st.slips.every(isObj)) return false;
+    if (!okNum(st.col) || st.col !== Math.floor(st.col) || st.col < 0) return false;
+    if (st.pos < st.queue.length && st.col >= String(st.queue[st.pos].a).length) return false;
+    if (st.tapped != null && !(okNum(st.tapped) && st.tapped >= 0)) return false;
+    return true;
+  }
+
+  /* The guards (section 3), as a list of errors: none for a chapter with no take set. */
+  var TAKE_NOT_KEYS = ['table', 'fillFrom', 'fillOrder', 'warmHard', 'light', 'help'];
+  function okTakePicture(p) { return isObj(p) && (p.kind === 'store' || p.kind === 'marks'); }
+  function firstBalloon(x) {
+    var list = asList(x);
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i];
+      if (typeof b === 'string') return b;
+      if (isObj(b) && b.kind !== 'caption' && typeof b.text === 'string') return b.text;
+    }
+    return null;
+  }
+  function wordCount(s) { return String(s).split(/\s+/).filter(function (w) { return w; }).length; }
+  E.checkTakes = function (story, stories) {
+    var errs = [];
+    if (!story || !isObj(story.counts)) return errs;
+    var ids = Object.keys(story.counts).filter(function (sid) { return isObj(story.counts[sid]) && story.counts[sid].op != null; });
+    if (!ids.length) return errs;
+    var all = storyList(stories).filter(function (s) { return s !== story && s.id !== story.id; }).concat([story]);
+    var number = num(story.number, 0), taught = {};
+    all.forEach(function (s) {
+      if (num(s.number, 0) > number) return;
+      Object.keys(s.counts || {}).forEach(function (id) { var d = s.counts[id]; if (isObj(d) && d.op === '-' && E.TAKE_STEPS.indexOf(d.teach) >= 0) taught[d.teach] = true; });
+    });
+    var answers = {};
+    ids.forEach(function (sid) {
+      var d = story.counts[sid], w = 'counts ' + sid + ': ';
+      if (d.op !== '-') { errs.push(w + 'op is "-" (a take set)'); return; }
+      TAKE_NOT_KEYS.forEach(function (k) { if (d[k] != null) errs.push(w + 'a take set has no ' + k); });
+      if (d.teach != null && E.TAKE_STEPS.indexOf(d.teach) < 0) errs.push(w + 'teach is one of ' + E.TAKE_STEPS.join(', '));
+      ['twins', 'warm'].forEach(function (k) { if (d[k] != null && typeof d[k] !== 'boolean') errs.push(w + k + ' is true or false'); });
+      if (d.regroup != null && E.TAKE_REGROUP.indexOf(d.regroup) < 0) errs.push(w + 'regroup is "show", "tap" or "hers"');
+      if (d.picture != null && !okTakePicture(d.picture)) errs.push(w + 'picture is { kind: "store" } or { kind: "marks" }');
+      if (d.lines != null) {
+        if (!isObj(d.lines)) errs.push(w + 'lines is { key: words }, with E.TAKE_LINES’ keys');
+        else Object.keys(d.lines).forEach(function (k) { if (!own(E.TAKE_LINES, k)) errs.push(w + 'lines: unknown key ' + k); });
+      }
+      all.forEach(function (s) {
+        Object.keys(s.counts || {}).forEach(function (id) { var o = s.counts[id]; if (isObj(o) && o.fillFrom === sid) errs.push(w + 'the Counts set ' + id + ' fills from it (a take set lends nothing)'); });
+      });
+      if (!(Array.isArray(d.facts) && d.facts.length)) errs.push(w + 'facts is a list of take-aways');
+      var plans = [];
+      asList(d.facts).forEach(function (f, i) {
+        var at = w + 'fact ' + i + ': ';
+        if (!(Array.isArray(f) && f.length === 2) && !isObj(f)) { errs.push(at + 'is [a, b] or { a, b }'); return; }
+        var a = Array.isArray(f) ? f[0] : f.a, b = Array.isArray(f) ? f[1] : f.b, p = E.takePlan(a, b);
+        if (!p) { errs.push(at + a + ' − ' + b + ' is not a take-away the kit asks (whole numbers, 10 ≤ a ≤ 999, 1 ≤ b < a, b no longer than a)'); return; }
+        if (String(p.answer).length < p.n - 1) errs.push(at + a + ' − ' + b + ': the answer is more than one digit shorter than the top');
+        if (isObj(f)) {
+          if (f.table != null) errs.push(at + 'a take-away has no table');
+          if (f.regroup != null && E.TAKE_REGROUP.indexOf(f.regroup) < 0) errs.push(at + 'regroup is "show", "tap" or "hers"');
+          if (f.picture != null && !okTakePicture(f.picture)) errs.push(at + 'picture is { kind: "store" } or { kind: "marks" }');
+          if (f.prompt != null) {
+            var fb = firstBalloon(f.prompt);
+            if (fb == null) errs.push(at + 'prompt is a line, or balloons and captions');
+            else if (wordCount(fb) > 12) errs.push(at + 'its prompt’s first balloon is ' + wordCount(fb) + ' words (12 at most: the first column’s line joins it)');
+          }
+        }
+        plans.push(p);
+        if (answers[p.answer]) errs.push(at + a + ' − ' + b + ': the answer ' + p.answer + ' is asked twice in the chapter (' + answers[p.answer] + ')');
+        else answers[p.answer] = sid + ' fact ' + i;
+        if (E.takeFlags(p).noHundreds && !taught.mixed) errs.push(at + a + ' − ' + b + ' has no hundreds left, before the chapter that teaches "mixed"');
+      });
+      var steps = plans.map(E.takeStepOf), kinds = plans.map(E.takeKind);
+      if (d.teach === 'none') {
+        if (!kinds.every(function (k) { return k === 'none'; })) errs.push(w + 'teach "none": every take-away needs no spread');
+      } else if (d.teach === 'mixed') {
+        var ks = {};
+        kinds.forEach(function (k) { ks[k] = true; });
+        if (Object.keys(ks).length < 4 || !ks.none) errs.push(w + 'teach "mixed": four kinds or more, one of them "none"');
+        if (!plans.some(function (p) { return E.takeFlags(p).noHundreds; })) errs.push(w + 'teach "mixed": one take-away with no hundreds left');
+        if (!plans.some(function (p) { return E.takeFlags(p).leavesZero; })) errs.push(w + 'teach "mixed": one take-away that leaves a zero');
+      } else if (E.TAKE_STEPS.indexOf(d.teach) >= 0) {
+        var ti = E.TAKE_STEPS.indexOf(d.teach), mine = steps.filter(function (s) { return s === d.teach; }).length;
+        if (mine !== 3) errs.push(w + 'teach "' + d.teach + '": exactly three take-aways of that step, not ' + mine);
+        if (!steps.every(function (s) { return s === d.teach || E.TAKE_STEPS.indexOf(s) < ti; })) errs.push(w + 'teach "' + d.teach + '": every other take-away an earlier step');
+        if (number >= 13 && kinds.indexOf('none') < 0) errs.push(w + 'teach "' + d.teach + '": from chapter 13, one take-away that needs no spread');
+      } else if (d.teach == null) {
+        steps.forEach(function (s, i) { if (!taught[s]) errs.push(w + 'fact ' + i + ': its step "' + s + '" is taught by no take set of this chapter or an earlier one'); });
+      }
+    });
+    return errs;
+  };
 
   /* ------------------------------------------------------------ story checks */
   /* Problems with a story's frame graph, as strings (empty = fine). Used by tests and the UI's
@@ -3922,6 +5293,10 @@
         if (f.rightAgain === true && f.right == null) errs.push('counts ' + sid + ': fact ' + i + ': rightAgain: true keeps right lines it does not have');
       });
     });
+    // book two's guards (docs/take-aways.md, section 7): none for a chapter with no `module` and none of the four keys
+    checkBookTwo(story, others, checkWhen).forEach(function (e) { errs.push(e); });
+    // the take-aways kit's guards (docs/take-aways.md, section 3): none for a chapter with no take set
+    E.checkTakes(story, stories).forEach(function (e) { errs.push(e); });
     return errs;
   };
 

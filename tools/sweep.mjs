@@ -10,6 +10,10 @@
  *                                     Counts' screens, at 1080x720, 1180x820, 820x1180 and 390x844, Aa off and on;
  *                                     pages/summary.json lists the problems (below)
  *   node tools/sweep.mjs --all        both
+ *   node tools/sweep.mjs --takes      the take-aways kit's screens (docs/take-aways.md, section 6) at the page review's
+ *                                     four more sizes, 1080x700, 1024x768, 768x1024 and 844x390, Aa off and on
+ *                                     (takes/summary.json, the same problems; --pages has them at its own four sizes,
+ *                                     in its screens group); with --pages or --all, both
  *   node tools/sweep.mjs --only ch12  the art of these chapters only (a comma list; `warrior` for its scenes): about
  *                                     30 seconds a chapter, into the same cache (a later whole sweep reuses them)
  *   node tools/sweep.mjs --path       where this tree's cache is and what it holds (builds nothing)
@@ -38,6 +42,13 @@
  *   sideways            the page scrolls sideways
  *   page-error          an error in the page, or a step of the run that failed
  *   said-aloud          anything said, Read to me on, or a page that was not silenced before the game booted
+ *   col-off             on a take page, the column, the outlined box or the stack's last balloon not wholly between
+ *                       the bar's bottom and the viewport's (measure.js's `tcol`, `tbox`, `tsb`): the controls alone
+ *                       would let a page that pushed its column or its line under the bar pass
+ *   keypad-moved        on a take page, the keypad's box not the same at a column and the next (`@next`: the right
+ *                       digit typed on the page's own keypad), so a finger could land on the wrong key
+ * A take screen the engine cannot show yet (the Hollow's shelf and Count the store, before the kit's second pass) is
+ * listed under `skipped`, not as a problem.
  * The screens that scroll by design (the hub, the book, My nest, her Case File, the grown-ups corner; chapter 1's
  * look chooser, f011) list their off-screen controls under `scrolls`, not as problems.
  */
@@ -47,7 +58,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, s
 import { homedir, setPriority } from 'os';
 import { dirname, join, relative, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { REPO, SIZES, pageScripts, serve, runJobs, measureJobs, sweepCat, collect, call, fontSteps } from '../dev/webkit/run.mjs';
+import { REPO, SIZES, TAKE_SIZES, pageScripts, serve, runJobs, measureJobs, sweepCat, collect, call, fontSteps } from '../dev/webkit/run.mjs';
 import { EXIT_LOCKED } from './lock.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -92,7 +103,7 @@ export function status(dir) {
   const read = (f) => { try { return JSON.parse(readFileSync(join(dir, f), 'utf8')); } catch { return null; } };
   const b = read('building/holder.json'), top = read('art/index.json');
   const groups = existsSync(join(dir, 'art')) ? readdirSync(join(dir, 'art')).filter((g) => groupDone(dir, g)) : [];
-  return { art: !!top && top.groups.every((g) => groups.includes(g.id)), groups, pages: existsSync(join(dir, 'pages/summary.json')), building: b && alive(b.pid) ? b : null, tree: read('tree.json') };
+  return { art: !!top && top.groups.every((g) => groups.includes(g.id)), groups, pages: existsSync(join(dir, 'pages/summary.json')), takes: existsSync(join(dir, 'takes/summary.json')), building: b && alive(b.pid) ? b : null, tree: read('tree.json') };
 }
 function alive(pid) { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } }
 const atomicWrite = (file, data) => { const tmp = file + '.part-' + process.pid; writeFileSync(tmp, data); renameSync(tmp, file); };
@@ -202,30 +213,35 @@ async function buildArt(root, dir, S, tree, log, only) {
 
 /* ------------------------------------------------------------------ the pages */
 const SCROLLS = { 'ch01:f011': 'the look chooser scrolls by design', 'screen:hub': 'the hub scrolls', 'screen:book': 'the book scrolls', 'screen:nest': 'My nest scrolls', 'screen:file': 'her Case File scrolls', 'screen:corner': 'the grown-ups corner scrolls' };
-const GROUPS = [['plain', ['plain']], ['taps', ['taps', 'lessons']], ['screens', ['screens', 'warrior']]];
+const GROUPS = [['plain', ['plain']], ['taps', ['taps', 'lessons']], ['screens', ['screens', 'warrior', 'takes']]];
+// the take-aways kit's screens at the page review's four more sizes (--takes): their own folder, `takes/`
+const TAKES_RUN = { sub: 'takes', sizes: TAKE_SIZES, groups: [['takes', ['takes']]], title: 'The take-aways kit’s screens at the page review’s four more sizes' };
 const VARIES = /^warrior:(q|sand|notyet|afterpass)\b/;
 
-async function buildPages(root, dir, S, log) {
-  const pages = join(dir, 'pages');
+/* The pages measured (`pages/`, the four SIZES, every group), or the take screens at the review's four more sizes
+ * (`takes/`, TAKES_RUN): a run a size, an Aa and a group, each kept as it lands so a stopped sweep picks up there. */
+async function buildPages(root, dir, S, log, { sub = 'pages', sizes = SIZES, groups = GROUPS, title } = {}) {
+  const pages = join(dir, sub);
   mkdirSync(pages, { recursive: true });
   const srv = await serve(root, S.SILENT);
   const cat = sweepCat(S);
   try {
-    for (const size of SIZES) for (const big of [false, true]) for (const [g, what] of GROUPS) {
+    for (const size of sizes) for (const big of [false, true]) for (const [g, what] of groups) {
       const file = join(pages, size + '-aa' + (big ? 1 : 0) + '-' + g + '.json');
       if (existsSync(file)) continue;
       const [W, H] = size.split('x').map(Number);
       const jobs = measureJobs(S, srv.site, what, { aas: [big], cat });
-      const run = await runJobs({ width: W, height: H, silent: S.SILENT, jobs }, { what: 'tools/sweep.mjs pages ' + size + ' Aa ' + (big ? 'on' : 'off') + ' ' + g, dir: pages });
+      // (a tree with no take screens, measured for them: nothing to run, an empty record)
+      const run = jobs.length ? await runJobs({ width: W, height: H, silent: S.SILENT, jobs }, { what: 'tools/sweep.mjs ' + sub + ' ' + size + ' Aa ' + (big ? 'on' : 'off') + ' ' + g, dir: pages }) : { jobs: [], warn: [], code: 0, secs: 0 };
       const res = collect(jobs, run);
-      if (run.code !== 0 && !res.some((r) => r.rows || r.ms)) throw new Error('pages ' + size + ' ' + g + ': WebKit exit ' + run.code + '; ' + run.warn.join(' | '));
+      if (run.code !== 0 && !res.some((r) => r.rows || r.ms)) throw new Error(sub + ' ' + size + ' ' + g + ': WebKit exit ' + run.code + '; ' + run.warn.join(' | '));
       atomicWrite(file, JSON.stringify({ size: [W, H], big, group: g, secs: run.secs, warn: run.warn, code: run.code, jobs: res }));
-      log('pages ' + size + ' Aa ' + (big ? 'on ' : 'off') + ' ' + g + ': ' + res.reduce((n, r) => n + ((r.rows || r.ms || []).length), 0) + ' measured in ' + run.secs + ' s');
-      await sleep(1500);
+      log(sub + ' ' + size + ' Aa ' + (big ? 'on ' : 'off') + ' ' + g + ': ' + res.reduce((n, r) => n + ((r.rows || r.ms || []).length), 0) + ' measured in ' + run.secs + ' s');
+      if (jobs.length) await sleep(1500);
     }
   } finally { await srv.close(); }
-  const summary = summarize(pages);
-  writeFileSync(join(pages, 'summary.md'), summaryMd(summary, dir) + '\n');
+  const summary = summarize(pages, sizes);
+  writeFileSync(join(pages, 'summary.md'), summaryMd(summary, dir, title) + '\n');
   atomicWrite(join(pages, 'summary.json'), JSON.stringify(summary, null, 1));
   return summary;
 }
@@ -237,17 +253,47 @@ function rowsOf(pages) {
     const d = JSON.parse(readFileSync(join(pages, f), 'utf8')), size = d.size.join('x'), aa = d.big ? 'on' : 'off';
     for (const j of d.jobs) {
       for (const n of j.notes) out.push({ size, aa, job: j.name, note: n });
+      for (const k of j.skipped || []) out.push({ size, aa, job: j.name, skip: k });
       for (const r of j.rows || j.ms || []) out.push({ size, aa, job: j.name, row: r });
     }
   }
   return out;
 }
-export function summarize(pages) {
-  const problems = [], scrolls = [], counts = {};
+/* A take page's column, outlined box and stack's last balloon (measure.js's `tcol`, `tbox`, `tsb`) not wholly between
+ * the bar's bottom (`tbar`) and the viewport's: each as a line ("the column 30-180: 18px under the bar"). A take page
+ * with no column shown says so. Nothing for a row that is not a take page. */
+export function colOff(r) {
+  if (!r || !(r.take || r.tcol)) return [];
+  const out = [], top = Math.max(0, r.tbar || 0);
+  if (r.take && !r.tcol) out.push('no column (.tcol) shown on the take page');
+  for (const [k, what] of [['tcol', 'the column'], ['tbox', 'the outlined box'], ['tsb', 'the stack’s last balloon']]) {
+    const b = r[k];
+    if (!Array.isArray(b)) continue;
+    const f = [];
+    if (b[1] < top - 0.5) f.push((top - b[1]) + 'px under the bar');
+    if (b[3] > r.vh + 0.5) f.push((b[3] - r.vh) + 'px below the fold');
+    if (b[0] < -0.5 || b[2] > r.vw + 0.5) f.push('off the screen sideways');
+    if (f.length) out.push(what + ' ' + b[1] + '-' + b[3] + ': ' + f.join(', '));
+  }
+  return out;
+}
+/* The keypad at a column and at the next (`<screen>` and `<screen>@next`, measured in one page): the same box, or what
+ * moved. Null when it stayed put. */
+export function keypadMoved(before, after) {
+  if (!before || !after) return null;
+  if (!Array.isArray(before.kp) || !Array.isArray(after.kp)) return 'no keypad ' + (!Array.isArray(before.kp) ? 'at the first column' : 'at the next column');
+  if (before.kp.every((v, i) => v === after.kp[i])) return null;
+  return 'the keypad moved from ' + before.kp[1] + '-' + before.kp[3] + ' (x ' + before.kp[0] + '-' + before.kp[2] + ') to ' + after.kp[1] + '-' + after.kp[3] + ' (x ' + after.kp[0] + '-' + after.kp[2] + ') between one column and the next';
+}
+export function summarize(pages, sizes = SIZES) {
+  const problems = [], scrolls = [], skipped = [], counts = {};
   const add = (kind, size, aa, at, detail) => { problems.push({ kind, size, aa, at, detail }); counts[kind] = (counts[kind] || 0) + 1; };
   let measured = 0;
-  for (const x of rowsOf(pages)) {
+  const all = rowsOf(pages), seen = new Map();
+  for (const x of all) if (x.row && x.row.t) seen.set(x.size + ' ' + x.aa + ' ' + x.row.t, x.row);
+  for (const x of all) {
     if (x.note) { add('page-error', x.size, x.aa, x.job, x.note); continue; }
+    if (x.skip) { skipped.push({ size: x.size, aa: x.aa, why: x.skip }); continue; }
     const r = x.row, at = r.t, base = String(at).replace(/@.*$/, '');
     measured++;
     if (r.err) { add('page-error', x.size, x.aa, at, r.err); continue; }
@@ -259,11 +305,15 @@ export function summarize(pages) {
     if (r.sw > r.vw + 1) add('sideways', x.size, x.aa, at, 'the page is ' + r.sw + 'px wide in a ' + r.vw + 'px screen');
     if (r.errs) add('page-error', x.size, x.aa, at, r.errs + ' error(s) in the page');
     if (r.said || r.read || r.silent === false) add('said-aloud', x.size, x.aa, at, 'said ' + r.said + ', Read to me ' + (r.read ? 'on' : 'off') + ', silenced ' + r.silent);
+    // the take-aways kit's page: its column and its line on the screen, and the keypad put at the next column
+    for (const c of colOff(r)) add('col-off', x.size, x.aa, at, c);
+    if (/@next$/.test(at)) { const kp = keypadMoved(seen.get(x.size + ' ' + x.aa + ' ' + base), r); if (kp) add('keypad-moved', x.size, x.aa, base, kp); }
   }
-  return { measured, sizes: SIZES, counts, problems, scrolls };
+  return { measured, sizes, counts, problems, scrolls, skipped };
 }
-function summaryMd(s, dir) {
-  const md = ['# The pages, measured (' + dir + ')', '', s.measured + ' pages measured at ' + s.sizes.join(', ') + ', Aa off and on. Problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, n]) => k + ' ' + n).join(', ') : 'none') + '.', ''];
+function summaryMd(s, dir, title) {
+  const md = ['# ' + (title || 'The pages, measured') + ' (' + dir + ')', '', s.measured + ' pages measured at ' + s.sizes.join(', ') + ', Aa off and on. Problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, n]) => k + ' ' + n).join(', ') : 'none') + '.', ''];
+  if (s.skipped && s.skipped.length) md.push('Skipped (not built yet, so not problems): ' + [...new Set(s.skipped.map((k) => k.why))].join('; ') + '.', '');
   const by = {};
   for (const p of s.problems) (by[p.kind] = by[p.kind] || []).push(p);
   for (const [k, list] of Object.entries(by)) {
@@ -309,15 +359,17 @@ async function ensure(root, want, { force, waitMin, log }) {
   const key = cacheKey(root), dir = cacheDir(key);
   mkdirSync(dir, { recursive: true });
   const artDone = () => (want.only ? want.only.every((g) => groupDone(dir, g)) : status(dir).art);
-  const need = () => ({ art: want.art && !artDone(), pages: want.pages && !status(dir).pages });
+  const need = () => ({ art: want.art && !artDone(), pages: want.pages && !status(dir).pages, takes: !!want.takes && !status(dir).takes });
+  const none = () => { const n = need(); return !n.art && !n.pages && !n.takes; };
   if (force) {
     if (want.art) { if (want.only) { for (const g of want.only) rmSync(join(dir, 'art', g), { recursive: true, force: true }); rmSync(join(dir, 'art/index.json'), { force: true }); } else rmSync(join(dir, 'art'), { recursive: true, force: true }); }
     if (want.pages) rmSync(join(dir, 'pages'), { recursive: true, force: true });
+    if (want.takes) rmSync(join(dir, 'takes'), { recursive: true, force: true });
   }
   log('cache: ' + dir);
   // a cache in use is a new one, to the pruning here and to clean-work.py
   if (existsSync(join(dir, 'tree.json'))) { const t = new Date(); try { utimesSync(join(dir, 'tree.json'), t, t); } catch {} }
-  if (!need().art && !need().pages) return dir;
+  if (none()) return dir;
   // one builder a tree: another sweep of it is waited for (it may finish what we need), a dead one taken over
   const lock = join(dir, 'building');
   const t0 = Date.now();
@@ -329,13 +381,13 @@ async function ensure(root, want, { force, waitMin, log }) {
     if ((Date.now() - t0) / 60000 > waitMin) { console.error('sweep: another sweep of this tree (pid ' + (h && h.pid) + ') is still building ' + dir + ' after ' + waitMin + ' min; try again later'); process.exit(EXIT_LOCKED); }
     if (Date.now() - told > 60000) { told = Date.now(); log('another sweep of this tree (pid ' + (h && h.pid) + ') is building it; waiting (' + progress(dir) + ')'); }
     await sleep(3000);
-    if (!need().art && !need().pages) return dir;
+    if (none()) return dir;
   }
   const release = () => rmSync(lock, { recursive: true, force: true });
   process.on('exit', release);
   try {
     const n = need();
-    if (!n.art && !n.pages) return dir;
+    if (none()) return dir;
     const S = pageScripts(root);
     if (!existsSync(join(dir, 'tree.json'))) writeFileSync(join(dir, 'tree.json'), JSON.stringify({ key, root, files: treeFiles(root).length, made: new Date().toISOString() }) + '\n');
     const t1 = Date.now();
@@ -343,6 +395,10 @@ async function ensure(root, want, { force, waitMin, log }) {
     if (n.pages) {
       const s = await buildPages(root, dir, S, log);
       log('pages: ' + s.measured + ' measured; problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, v]) => k + ' ' + v).join(', ') : 'none') + ' (pages/summary.md)');
+    }
+    if (n.takes) {
+      const s = await buildPages(root, dir, S, log, TAKES_RUN);
+      log('takes: ' + s.measured + ' measured at ' + TAKE_SIZES.join(', ') + '; problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, v]) => k + ' ' + v).join(', ') : 'none') + (s.skipped.length ? '; skipped ' + s.skipped.length : '') + ' (takes/summary.md)');
     }
     log('built in ' + Math.round((Date.now() - t1) / 1000) + ' s');
     // the tree must not have changed under the sweep, or the cache would lie about it
@@ -354,7 +410,8 @@ async function ensure(root, want, { force, waitMin, log }) {
 function progress(dir) {
   const a = status(dir).groups.length;
   const p = existsSync(join(dir, 'pages')) ? readdirSync(join(dir, 'pages')).filter((f) => /-aa[01]-\w+\.json$/.test(f)).length : 0;
-  return 'art: ' + a + ' chapters done; pages: ' + p + ' of ' + SIZES.length * 2 * GROUPS.length + ' runs';
+  const t = existsSync(join(dir, 'takes')) ? readdirSync(join(dir, 'takes')).filter((f) => /-aa[01]-\w+\.json$/.test(f)).length : 0;
+  return 'art: ' + a + ' chapters done; pages: ' + p + ' of ' + SIZES.length * 2 * GROUPS.length + ' runs' + (t ? '; takes: ' + t + ' of ' + TAKE_SIZES.length * 2 + ' runs' : '');
 }
 /* Keep the newest KEEP caches (and any being built). */
 function prune(keep) {
@@ -375,12 +432,14 @@ async function main() {
   if (!existsSync(join(root, 'index.html'))) { console.error('sweep: no index.html in ' + root); process.exit(2); }
   const all = argv.includes('--all');
   const only = opt('--only') ? opt('--only').split(',').filter(Boolean) : null;
-  const want = { art: all || !argv.includes('--pages') || !!only, pages: all || argv.includes('--pages'), only };
+  const takes = argv.includes('--takes');
+  const want = { art: all || (!argv.includes('--pages') && !takes) || !!only, pages: all || argv.includes('--pages'), takes, only };
   const log = (s) => console.log(s);
   if (argv.includes('--path')) {
     const dir = cacheDir(cacheKey(root)), s = status(dir);
     console.log(dir);
-    console.log('art: ' + (s.art ? 'ready (' + join(dir, 'art/index.md') + ')' : s.groups.length ? 'only ' + s.groups.join(', ') + ' (' + join(dir, 'art') + ')' : 'not built') + '; pages: ' + (s.pages ? 'ready (' + join(dir, 'pages/summary.md') + ')' : 'not built') + (s.building ? '; being built by pid ' + s.building.pid + ' (' + progress(dir) + ')' : ''));
+    console.log('art: ' + (s.art ? 'ready (' + join(dir, 'art/index.md') + ')' : s.groups.length ? 'only ' + s.groups.join(', ') + ' (' + join(dir, 'art') + ')' : 'not built') + '; pages: ' + (s.pages ? 'ready (' + join(dir, 'pages/summary.md') + ')' : 'not built') +
+      (s.takes ? '; takes: ready (' + join(dir, 'takes/summary.md') + ')' : '') + (s.building ? '; being built by pid ' + s.building.pid + ' (' + progress(dir) + ')' : ''));
     return;
   }
   try { setPriority(10); } catch {}
@@ -391,7 +450,7 @@ async function main() {
     if (other) {
       const o = resolve(other);
       if (!existsSync(join(o, 'index.html'))) { console.error('sweep: --compare needs a tree (a folder with index.html): ' + o); process.exit(2); }
-      const odir = await ensure(o, want, { force: false, waitMin, log });
+      const odir = await ensure(o, Object.assign({}, want, { takes: false }), { force: false, waitMin, log });
       const c = compareCaches(dir, odir);
       const file = join(dir, 'compare-' + cacheKey(o) + '.json');
       writeFileSync(file, JSON.stringify(c, null, 1));
@@ -402,6 +461,7 @@ async function main() {
     const s = status(dir);
     if (s.art) log('art: ' + join(dir, 'art/index.md'));
     if (s.pages) log('pages: ' + join(dir, 'pages/summary.md'));
+    if (s.takes && want.takes) log('takes: ' + join(dir, 'takes/summary.md'));
   } catch (e) {
     if (e.code === 'ELOCKED') { console.error(e.message + ' (The sweep keeps what it finished: run it again to go on.)'); process.exit(EXIT_LOCKED); }
     throw e;

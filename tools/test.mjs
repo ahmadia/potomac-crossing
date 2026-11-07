@@ -25,7 +25,7 @@ import { basename, dirname, join, resolve } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-export const SLOW = ['scenes.test.js', 'cats.test.js', 'golden-ch07.test.js', 'golden-ch08.test.js', 'golden-ch09.test.js', 'warrior-engine.test.js'];
+export const SLOW = ['scenes.test.js', 'cats.test.js', 'golden-ch07.test.js', 'golden-ch08.test.js', 'golden-ch09.test.js', 'warrior-engine.test.js', 'takes-exhaustive.test.js'];
 export const MAX_CONCURRENCY = 4;
 
 /* Every test file node --test would run, in its order (tests/*.test.js). */

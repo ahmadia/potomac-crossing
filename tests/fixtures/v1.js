@@ -74,6 +74,9 @@ function play(E, story, cat, script, stop) {
       E.submitInput(cat, story, k === 'petname' ? script.petname : k === 'clanname' ? script.clanname : k === 'dream' ? script.dream : '', t);
     } else if (kind === 'counts') {
       const setId = f.counts.set;
+      // the take-aways kit (docs/take-aways.md): a take set's frame is answered column by column
+      const raw = E.takes && E.countsSet ? E.countsSet(setId, story) : null;
+      if (raw && raw.op === '-') { if (!playTakes(E, story, cat, id, setId, script)) return seen; continue; }
       let def, st;
       if (cat.lesson && cat.lesson.frame === id && cat.lesson.state && !E.counts.done(cat.lesson.state)) {
         def = Object.assign({ id: setId }, story.counts[setId]); st = cat.lesson.state;
@@ -94,6 +97,34 @@ function play(E, story, cat, script, stop) {
   throw new Error('chapter did not end');
 }
 
+/* A take frame (the new engine only): the lesson taken up at its frame or started, each column answered
+ * as the page answers it (a 'tap' turn's spreads tapped first; the leftmost blank box OK'd empty; the ones
+ * of the problems in `script.takeMiss` ("503-278") typed wrong the first time asked, never a twin's), each
+ * entry logged (E.logTake), the lesson recorded at its last answer, then the frame's Next. False when it
+ * stopped partway (`script.stopIn[frame]` columns). */
+function playTakes(E, story, cat, id, setId, script) {
+  const T = E.takes;
+  let def, st;
+  const L = cat.lesson;
+  if (L && L.frame === id && L.state && L.state.op === '-' && !T.done(L.state)) { def = Object.assign({ id: setId }, E.countsSet(setId, story)); st = L.state; }
+  else { ({ def, state: st } = E.chapterLesson(cat, story, setId, script.t)); cat.lesson = { mode: 'chapter', frame: id, state: st }; }
+  const steps = script.stopIn && script.stopIn[id];
+  let n = 0, rec = null;
+  while (!T.done(st) && (steps == null || n < steps)) {
+    while (T.question(st).tap > 0) T.tap(st);
+    const q = T.question(st), c = q.plan.cols[q.col];
+    const miss = (script.takeMiss || []).includes(q.a + '-' + q.b) && !q.twin && q.col === 0 && !st.slips.length;
+    const res = T.digit(st, def, c.blank ? '' : miss ? (c.digit + 1) % 10 : c.digit, script.ms || 3000, script.t += 1000);
+    if (res.entry) E.logTake(cat, res.entry);
+    if (res.done) rec = E.recordLesson(cat, st);
+    else cat.lesson = { mode: 'chapter', frame: id, state: st };
+    n++;
+  }
+  if (!T.done(st)) return false;
+  E.finishCounts(cat, story, rec ? rec.summary : T.summary(st), script.t += 1000);
+  return true;
+}
+
 /* A Hollow round of the 1s through either engine (the v1 signature is (cat, story, now)). */
 function hollowRound(E, cat, story, script, steps) {
   const r = E.hollowStart(cat, story, script.t += 1000, 1);
@@ -110,4 +141,4 @@ function script(over) {
   }, over || {});
 }
 
-module.exports = { v1, play, runLesson, hollowRound, script, LOOK, ROOT };
+module.exports = { v1, play, playTakes, runLesson, hollowRound, script, LOOK, ROOT };

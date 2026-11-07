@@ -376,15 +376,21 @@
    * part and the ending make a Clan cat's whole name; `who` that cat). A typed ending is never guarded. */
   E.checkEnding = function (raw, cat) {
     var e = E.cleanEnding(raw, cat), f = lettersOf(cat && cat.name), out = { ending: e, refuse: null, who: null };
-    var bare = e.replace(/s+$/, ''), whole = f + e;
+    var bare = e.replace(/s+$/, ''), clan = clanCat(f + e, cat);
     if (!e) out.refuse = 'own';
     else if (/star$/.test(bare)) out.refuse = 'star';
     else if (/paw$/.test(bare)) out.refuse = 'paw';
     else if (/(kit|kitten|kitty|kittie)$/.test(bare)) out.refuse = 'kit';
-    else if (whole === 'tallyheart' || whole === 'thymeleaf') { out.refuse = 'clan'; out.who = whole; }
-    else if (whole === E.tortieWord(cat) + 'chime') { out.refuse = 'clan'; out.who = 'murmurchime'; }
+    else if (clan) { out.refuse = 'clan'; out.who = clan; }
     return out;
   };
+  // the Clan cat whose whole name this is (letters, lower case: tallyheart, thymeleaf, the tortoiseshell's murmurchime or,
+  // for a cat named Murmur, mutterchime), or null
+  function clanCat(whole, cat) {
+    if (whole === 'tallyheart' || whole === 'thymeleaf') return whole;
+    if (whole === E.tortieWord(cat) + 'chime') return 'murmurchime';
+    return null;
+  }
   /* Her warrior name, `{name}{ending}`, once she has both halves; '' until then. */
   E.warriorName = function (cat) { return cat && cat.name && hasEnding(cat) ? cat.name + cat.ending : ''; };
 
@@ -1580,6 +1586,14 @@
       if (isObj(cat.flags) && cat.flags.ch11Named === 'offer' && hasEnding(cat) && E.warriorOffers(cat).indexOf(cat.ending) < 0) {
         var row = allRows().filter(function (r) { return r.indexOf(cat.ending) >= 0; })[0];
         if (row) cat.ending = rowOffer(row, lettersOf(cat.name));
+      }
+      // ... and a typed ending that now makes a Clan cat's whole name with her new first part (Fern, typed heart, renamed
+      // Tally: Tallyheart; Thymeleaf; {Murmur}chime), which the Type screen refuses, gives way to the first name
+      // Glintstar sees in her (her best at the Gathering's row, as offered for the new first part: Tallytrue), and is
+      // an offered one from then on (the polish release v23). Every other typed ending stays hers, a doubled one too
+      else if (isObj(cat.flags) && cat.flags.ch11Named === 'self' && hasEnding(cat) && clanCat(lettersOf(cat.name) + cat.ending, cat)) {
+        cat.ending = E.warriorOffers(cat)[0];
+        cat.flags.ch11Named = 'offer';
       }
     }
     else if (kind === 'dream') { if (!isObj(cat.dreams)) cat.dreams = {}; cat.dreams[story.id] = E.cleanDream(value); }

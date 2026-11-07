@@ -190,6 +190,11 @@
     return { slosh: c('sloshbank', 'sit', mood || 'stern', 'crowd-4', 'left'), she: c('reedclan', 'sit', 'neutral', 'crowd-5', 'left', { variant: 1 }),
       tom: c('reedclan', 'sit', 'neutral', 'crowd-6', 'left', { variant: 2 }) };
   }
+  // Granny by the water on the banishment's wide panels (f082 to f084): at the river's edge a step behind the fox and to his
+  // right, so he shows whole as he gets smaller, and Snip in front of her (at the set's `bank` she stood in front of him).
+  // From here her border's balloon (f083) crosses no face; at the front of the water's edge its tail ran across the young
+  // tom's face (the polish release v23)
+  var GRANNY = { x: 1545, y: 690, h: 230 };
   // The clearing at the case, back to front: the leaders on their roots, Snatch, Sloshbank, Reynard, the she-cat,
   // Tallyheart at the front of CrystalClan's seats, Snip, our cat in the middle, the young tom, Granny by the water.
   // Once Sprinkle is out of the reeds she sits in the middle (MID, `centre` a step smaller) and our cat beside her
@@ -201,11 +206,11 @@
     var p = o.player || [];
     var me = c('player', p[0] || 'sit', p[1] || 'proud', o.sprinkle ? 'crowd-2' : 'centre', p[3] || 'right', p[2]);
     var tally = c('tallyheart', 'sit', o.tally || 'solemn', o.tallyAt || 'crowd-1', 'right');
-    out = out.concat([o.snatchAt ? null : e[0], r.slosh, e[1], r.she, o.tallyAt ? null : tally, e[2]]);
+    // (Granny by the water, as far back as Sloshbank and a step behind the fox: listed between them)
+    out = out.concat([o.snatchAt ? null : e[0], r.slosh, o.granny ? c('otter', 'stand', o.granny, GRANNY, 'left', { variant: 3, holds: 'pole' }) : null, e[1], r.she, o.tallyAt ? null : tally, e[2]]);
     if (o.sprinkle) out.push(c('sprinkle', o.sprinkle[0], o.sprinkle[1], MID, o.sprinkle[2] || 'left'));
     // (Tallyheart at `crowd-2`, a step nearer than our cat in the middle, while Sprinkle is at the heap's place)
     out.push(me, o.tallyAt ? tally : null, r.tom);
-    if (o.granny) out.push(c('otter', 'stand', o.granny, 'bank', 'left', { variant: 3, holds: 'pole' }));
     if (o.snatchAt) out.push(merge(e[0], { at: o.snatchAt }));
     return out.filter(Boolean);
   }

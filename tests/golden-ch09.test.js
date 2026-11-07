@@ -47,20 +47,32 @@ function moonBack(A) {
   return A2;
 }
 
+/* The polish release v23 (2026-11-07; README, its entry under Claude's calls): one of chapter 9's lows staged again, by
+ * name. On f081 and f084, for a cat who never met Squall, our cat faces left, to the voice and the tail behind the pole.
+ * Every reading is compared with those two scenes put back as they shipped (our cat facing right), so anything else
+ * that moves still fails; the staging itself is tested in tests/story-ch09.test.js. (Riffle's move at the open wing,
+ * f099 and f100, was taken back: the check found him cut by the panel's edge.) */
+function stagedBack(ch09) {
+  const frames = Object.assign({}, ch09.frames);
+  const put = (id, fn) => { frames[id] = Object.assign({}, frames[id], { scene: Object.assign({}, frames[id].scene, { cast: frames[id].scene.cast.map(fn) }) }); };
+  ['f081', 'f084'].forEach(id => put(id, c => (c.who === 'player' ? Object.assign({}, c, { facing: 'right' }) : c)));
+  return Object.assign({}, ch09, { frames });
+}
 let NOW9 = null;
 function now9() {
   if (NOW9) return NOW9;
   const PC = require('./_load.js').load();
   require('../app/ui.js');
-  const ctx = G9.context9(PC, { draw: G8.drawer8(moonBack(PC.art)) });
-  NOW9 = { PC, ctx, runs: G9.SCRIPTS9.map(s => G9.run9(ctx, s)) };
+  const back9 = stagedBack(PC.story.ch09);
+  const ctx = G9.context9(PC, { draw: G8.drawer8(moonBack(PC.art)), list: G9.CH9.map(id => (id === 'ch09' ? back9 : PC.story[id])) });
+  NOW9 = { PC, ctx, back9, runs: G9.SCRIPTS9.map(s => G9.run9(ctx, s)) };
   return NOW9;
 }
 let ALL9 = null;
 function all9() {
   if (ALL9) return ALL9;
-  const { PC, ctx } = now9();
-  const all = Object.assign({}, ctx, { read: G9.CH9.map(id => PC.story[id]), list: PC.story });
+  const { PC, ctx, back9 } = now9();
+  const all = Object.assign({}, ctx, { read: G9.CH9.map(id => (id === 'ch09' ? back9 : PC.story[id])), list: Object.assign({}, PC.story, { ch09: back9 }) });
   ALL9 = G9.SCRIPTS9.map(s => G9.run9(all, s));
   return ALL9;
 }
@@ -106,6 +118,12 @@ function same(now, then, name, moved) {
   assert.deepEqual(now.tables, then.tables, name + ': the grown-ups corner’s tables (E.factTables), their headings and rows');
 }
 
+test('chapter 9’s staging, the polish release v23: only f081 and f084 (our cat facing left) differ from the scenes as shipped, and only in that field', () => {
+  const PC = require('./_load.js').load(), ch09 = PC.story.ch09, back = stagedBack(ch09);
+  const moved = Object.keys(ch09.frames).filter(id => JSON.stringify(ch09.frames[id]) !== JSON.stringify(back.frames[id]));
+  assert.deepEqual(moved, ['f081', 'f084']);
+  assert.deepEqual(['f081', 'f084'].map(id => ch09.frames[id].scene.cast.find(c => c.who === 'player').facing), ['left', 'left']);
+});
 test('chapter 9’s montage (f112): the twelfth evening’s moon whole under the panel’s top, 8 units lower than recorded, and nothing else of it moved (chapter 11’s review)', () => {
   const { PC } = now9(), E = PC.engine;
   const sc = E.resolveScene(PC.story.ch09.frames.f112.scene, Object.assign(E.blankCat({ now: 1 }), { name: 'Moon' }), Object.values(PC.story).filter(s => s && s.frames));

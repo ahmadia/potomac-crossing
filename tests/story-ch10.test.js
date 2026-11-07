@@ -1248,7 +1248,8 @@ test('scenes use only the art vocabulary (PC.art.vocab), camera by camera: every
         const ok = (camOf(id) === 'island/case' && c.who === 'sprinkle' && same(c.at, SIDE)) || (camOf(id) === 'island/case' && DRAGONETS.includes(c.who) && same(c.at, STEP)) || (camOf(id) === 'island/sky' && c.who === 'player' && same(c.at, RISE)) ||
           (camOf(id) === 'island/case' && c.who === 'player' && same(c.at, LOOP) && castOf(id, 'sprinkle').some(m => m.pose === 'curl')) ||
           (camOf(id) === 'island/case' && c.who === 'tallyheart' && same(c.at, NOSE) && c.pose === 'crouch') ||
-          (camOf(id) === 'island/wide' && c.who === 'sprinkle' && (same(c.at, MID) || (same(c.at, OUT) && /^Out shuffles Sprinkle|^Every Clan gasps\./.test(T(id)))));
+          (camOf(id) === 'island/wide' && c.who === 'sprinkle' && (same(c.at, MID) || (same(c.at, OUT) && /^Out shuffles Sprinkle|^Every Clan gasps\./.test(T(id))))) ||
+          (camOf(id) === 'island/wide' && c.who === 'otter' && c.variant === 3 && ['f082', 'f083', 'f084'].includes(id) && same(c.at, { x: 1545, y: 690, h: 230 }));
         assert.ok(ok, where + ': a spot of its own');
         spots.push(id + ':' + c.who);
       } else assert.ok(mine[c.at], where + ': ' + s.set + '/' + s.cam + ' has no anchor ' + c.at + ' (its own: ' + Object.keys(mine).join(' ') + ')');
@@ -2305,5 +2306,24 @@ test('the golden’s fifteen cats, each at the end of chapter 9 as tests/fixture
     assert.equal(cat.counts.length - n0, 21 + (rows.some(x => x.id === countsAt('ch05-puddle')[0]) ? 1 : 0), name);
     assert.equal(E.warriorState(cat, STORIES, 2e12).open, true, name);
     rows.filter(x => x.pick).forEach(x => assert.ok(x.pick.right.length >= 2, name + ' ' + x.id));
+  });
+});
+
+// (the polish release v23) On the banishment's wide panels Granny stood at the set's `bank`, in front of the fox: only his
+// ears showed over her while the story says he gets smaller. At the water's edge a step behind him and to his right he
+// shows whole, and Snip in front of her; she is still in the picture to give her border (f083), her face in the panel.
+test('staging, the polish release v23: Granny by the water on f082 to f084, the fox whole in front of her (at `bank` she stood in front of him)', () => {
+  const cat = catFor({});
+  ['f082', 'f083', 'f084'].forEach(id => {
+    const sc = E.resolveScene(frames[id].scene, cat, STORIES), r = A.render(sc, { look: cat.look });
+    const head = (w) => r.heads[sc.cast.findIndex(c => c.who === w)];
+    const gr = head('otter'), fox = head('reynard'), snip = head('snip');
+    assert.deepEqual(castOf(id, 'otter').map(c => [c.at, c.holds, c.variant]), [[{ x: 1545, y: 690, h: 230 }, 'pole', 3]], id);
+    // her face to the right of his and of Snip's, clear of both (in panel percent, x across 100, y down 100)
+    assert.ok(gr.x - gr.r > fox.x + fox.r, id + ': the fox’s face clear of hers: ' + JSON.stringify([fox, gr]));
+    assert.ok(Math.hypot(gr.x - snip.x, (gr.y - snip.y) * 0.625) > gr.r + snip.r, id + ': Snip’s too: ' + JSON.stringify([snip, gr]));
+    // drawn behind the fox (listed before him) and Snip, as far back as she stands
+    assert.ok(sc.cast.findIndex(c => c.who === 'otter') < sc.cast.findIndex(c => c.who === 'reynard'), id + ': behind the fox');
+    assert.ok(gr.x + gr.r < 100 && gr.y > 0, id + ': her face in the panel: ' + JSON.stringify(gr));
   });
 });

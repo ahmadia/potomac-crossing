@@ -2657,3 +2657,37 @@ test('every kind of cat on a spread of routes plays through the engine: the fram
   assert.deepEqual([back.flags, back.cards, back.frame, back.lessons], [mid.flags, mid.cards, mid.frame, mid.lessons]);
   assert.deepEqual(idsOf(read(back, { sleet: true })), idsOf(read(mid, { sleet: true })), 'and reads on to the same end');
 });
+
+// (the polish release v23) f100 for a cat who kept the secret, on a phone held upright (390 x 844, Aa off): its caption,
+// four balloons stacked under the picture and two options ran Back 21px under the screen as the page opened (the sweep's
+// only control off a screen). ui.js's snugChoice marks a page of choices on an upright phone whose Back is under the
+// screen, and only that page; its column and stacked balloons then sit as Bigger text already sets them upright, and
+// Back comes up (measured in WebKit: 801 to 865 before, 762 to 826 after). Back stays under the options, never sticky.
+test('a page of choices on an upright phone whose Back is under the screen sits a little snugger, so Back comes up (ch06 f100, 390 x 844; the polish release v23); every other page untouched', () => {
+  const UI_SRC = fs.readFileSync(path.join(ROOT, 'app/ui.js'), 'utf8'), HTML = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const i = UI_SRC.indexOf('  function snugChoice('), j = UI_SRC.indexOf('\n  }\n', i);
+  assert.ok(i > 0 && j > i);
+  const run = ({ kind = 'choice', phone = true, bottom, inner = 844, scrolled = 0, back = true }) => {
+    const cls = new Set(['frame', 'snug']);
+    const frameEl = { getAttribute: (k) => (k === 'data-kind' ? kind : null), classList: { add: (c) => cls.add(c), remove: (c) => cls.delete(c) } };
+    const root = { matchMedia: (q) => ({ matches: phone && q === '(max-width: 520px)' }), innerHeight: inner, pageYOffset: scrolled };
+    const $ = (id) => (id === 'backBottom' && back ? { getBoundingClientRect: () => ({ bottom: bottom - scrolled }) } : null);
+    // eslint-disable-next-line no-new-func
+    new Function('root', '$', UI_SRC.slice(i, j + 4) + '\nreturn snugChoice;')(root, $)(frameEl);
+    return cls.has('snug');
+  };
+  assert.equal(run({ bottom: 865 }), true, 'f100 as measured: Back 21px under a 390 x 844 screen');
+  assert.equal(run({ bottom: 865, scrolled: 120 }), true, 'weighed as the page opens, wherever it is scrolled');
+  assert.equal(run({ bottom: 826 }), false, 'Back on the screen: nothing changes');
+  assert.equal(run({ bottom: 865, phone: false }), false, 'an iPad: nothing changes');
+  ['next', 'skip', 'lesson', 'input', 'file'].forEach(kind => assert.equal(run({ kind, bottom: 900 }), false, kind + ': only a page of choices'));
+  assert.equal(run({ bottom: 900, back: false }), false);
+  // run after every layout, and after the options are drawn (a turn of the phone, a late font)
+  assert.ok(UI_SRC.includes('      } else layoutText(ctx);\n      snugChoice(frameEl);\n    };') && UI_SRC.includes('    renderInteraction(f, kind, id, ctx);\n    snugChoice(frameEl);'));
+  // the page's rules: Bigger text's upright values, on a phone only; Back's row stays static on a page of choices
+  assert.match(HTML, /@media \(max-width: 520px\)\{\n  \.frame\.snug\{gap:10px\}\n  \.frame\.snug \.stack\{gap:8px\}\n  \.frame\.snug \.sb\{padding:\.34em \.74em \.38em\}\n\}/);
+  assert.match(HTML, /\n  html\.big \.frame\{gap:10px\}\n[\s\S]*?\n  html\.big \.frame \.stack\{gap:8px\}\n  html\.big \.frame \.sb\{padding:\.34em \.74em \.38em\}\n/);
+  assert.match(HTML, /\.frame\[data-kind="choice"\] \.next-row\{position:static\}/);
+  // f100 is that page: a caption for a cat who kept the secret, four balloons, two options
+  assert.deepEqual([frames.f100.caption.length, frames.f100.say.length, frames.f100.choice.options.length], [1, 4, 2]);
+});

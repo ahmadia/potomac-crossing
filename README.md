@@ -174,6 +174,16 @@ she passes them and gives her warrior name (decision 52). Module 2 (the badger's
 52. **The warrior name: both** (Aron, 2026-10-31): at the Warrior Ceremony Glintstar offers names drawn
     from her moon, and the player may choose one or name herself. Where it happens is Claude's call, and
     the Ceremony (chapter 11) is built next.
+53. **Module 2's maths: multiplication kept fresh, and long subtraction, with some Spanish** (Aron,
+    2026-11-07): it reinforces her multiplication and teaches long subtraction, three-digit with
+    regrouping (borrowing across a zero; two-digit regrouping as the warm-up). She learns maths in Spanish
+    at school, so a Spanish-speaking friend counts and says the facts in Spanish in the story. Her class's
+    words for regrouping are not known: use the common US-immersion words (reagrupar, desagrupar) and keep
+    them easy to change.
+54. **Module 2's four open questions** (Aron, 2026-11-07; `docs/module-2.md`): she gets an apprentice of her own,
+    Chispapaw, on her first day as a warrior, and Tallyheart still teaches them both; one badger, Harrumph, keeps the
+    Accord for one frost-time (decision 7's bad guys stay wary of badgers as a kind); Reynard is the hidden hand
+    behind the rumours, seen only far off; the real reward at the end is a fossil shark tooth.
 
 ## Claude's calls under decision 46
 
@@ -554,9 +564,11 @@ Each is Aron's to reverse.
     at 1080 x 720. The five small issues the final review left for the next round (Thymeleaf small under
     the bridge, Sprinkle's lift off the sand, the nine-Count Hollow below the screen, and the Aa fix's
     three leftovers) were fixed in the polish release (2026-10-31, CACHE v20; its entry under Claude's
-    calls). Still open from that review, all low: Squall's `hidden` tail at the pole (f081, f084), Riffle
-    at the open wing (f099, f100), the nearly round moon (f133 on), "It sparkles" (f082, f084), and
-    Thymeleaf unnamed to Sprinkle on the kept path (f094 is told-only).
+    calls). Still open from that review, all low: Squall's `hidden` tail at the pole (f081, f084: our cat
+    turns to it since the polish release v23, but the tail alone still reads as a dropped hook, new art), the
+    nearly round moon (f133 on), "It sparkles" (f082, f084; a puddle that sparkles is new art), and
+    Thymeleaf unnamed to Sprinkle on the kept path (f094 is told-only). Riffle at the open wing (f099, f100)
+    stays open: the polish release v23 tried him out at the right, and the panel's edge cut him.
   - *CACHE knows what is live*: `tests/fixtures/sw-shipped.json` lists every shipped `CACHE` with a
     digest of what it cached (from v16, chapter 8, to v19, chapter 9), and `tests/sw.test.js` fails until
     `CACHE` is past the last; a ship appends its own entry (production.md, step 2). Chapter 9 and the
@@ -812,8 +824,8 @@ Each is Aron's to reverse.
     the keypad always on the screen, the line too but for ch05 f002 at 1080 x 720 and 1080 x 700 with
     Aa, where the page's own scroll to the keypad leaves its first two lines above the screen. A cat with no
     Counts data, or a stale sitting, counts as she always did.
-  - Left, with reasons (the review's lows): Granny stands in front of the fox on the banishment's wide panels
-    (she holds the water's edge, where she speaks); the phone's pick strip with Aa on the longest claim after
+  - Left, with reasons (the review's lows; Granny in front of the fox on the banishment's wide panels, once left here, was
+    fixed in the polish release v23): the phone's pick strip with Aa on the longest claim after
     a nudge (28% of the screen, not about a quarter: the fix is an Aa rule in the pick's block, which the
     spec keeps free of them); a kept Sprinkle thanks Thymeleaf by name (chapter 9's open low above); the eldest's
     bow and Granny's hauling (spec, section 7, items 20 and 21). Mama is not on the eldest's bow (f113: two
@@ -948,11 +960,10 @@ Each is Aron's to reverse.
     “closer” recorded as the crowd shot again (no camera is closer); the spec's frame counts.
   - *Left, with reasons*: f021 stays on `crowd` (its board's beat, our cat sitting up taller, needs her in the picture, and the
     runs are inside the story test's limit); the `glow` on f026 and f028 (the spec's; a moonlit glow is art for later); the
-    phone's bar, which cuts a warrior name over about 10 letters (the iPad is the target; a two-line bar wants its own measured
-    design; the spec's claim corrected); the bar's chapter line cut after a 26-letter name on an upright iPad; a balloon's tail
-    through the camp's moon on f023 (the fix changes how every chapter from 4 on places balloons, and needs an Aa sweep of them
-    all); the Type screen's button partly under a sideways iPad's keyboard as the field is centred (only a real iPad's keyboard
-    settles it, and she can still tap its top or press Done).
+    bar's chapter line cut after a 26-letter name on an upright iPad; the Type screen's button partly under a sideways iPad's
+    keyboard as the field is centred (only a real iPad's keyboard settles it, and she can still tap its top or press Done).
+    The phone's bar cutting a warrior name and the balloon's tail through the camp's moon on f023, left here, were fixed in
+    the polish release v23 (its entry under Claude's calls).
   - *The final review's round* (2026-11-01; `~/potomac-crossing-work/ch11/final-regress/`, `deploy-1/`, `fresh-eyes-r1/`,
     `skeptic-regress/`, `page-after-fixes/`, `wn-check/`, `furs/`, `ship-list/`, `final.json`; the fixes in
     `ch11/integrate-r2/`): **the Tap-line rule is scoped** to a sideways iPad 760px tall or less and a phone (at 1180 x 820
@@ -969,13 +980,14 @@ Each is Aron's to reverse.
     f058 sparkle round the new warrior** (our cat first in the cast; the art scatters it round the first member, and it had
     clustered round {Murmur}chime); **{Murmur}chime lies asleep in the next nest** from “TEN!” to the end, chin on her paws
     (curled, she was a tortie player's twin, eyes shut, face to face); **f053's “he” named**: “By fifty, the grey tom’s
-    snoring.” (story and frame; he is not in that panel, and its zzz are {Murmur}chime's). Left: a typed ending kept through a
-    chapter-1 rename can make a Clan cat's whole name (Fern, typed heart, renamed Tally: Tallyheart; spec section 7, item 15);
-    the mist stone held under the chin in the ring (f009 to f011) blends into a grey or silver-tabby cat's forepaw (the story
+    snoring.” (story and frame; he is not in that panel, and its zzz are {Murmur}chime's). Left: the mist stone held under
+    the chin in the ring (f009 to f011) blends into a grey or silver-tabby cat's forepaw (the story
     says she tucks it under her chin; at her paws it would contradict it, and a per-coat hold is new art). Checked and clean:
     chapters 1 to 10 against main (every frame's art in 18 looks but the named f112; 40 seeded readings; 2,442 saved cats;
     lettering of 1,384 frames at four sizes; Read to me on 1,390); chapter 11's pages at 15 sizes, Aa off and on (5,148
     screens: nothing off screen, covered or clipped, said 0); saves, migrate and the service worker (deploy, Safari, 35 jobs).
+    A typed ending kept through a chapter-1 rename that made a Clan cat's whole name (Tallyheart), once left here, was fixed in
+    the polish release v23 (its entry under Claude's calls).
 
 - **Casts are listed back to front where cats meet** (2026-10-25, the depth hotfix): Charlie found the
   far grey guard drawn over the near black guard's face on chapter 8's f030. The art draws each layer
@@ -1079,6 +1091,69 @@ Each is Aron's to reverse.
   phone f093's two balloons now stand under the picture (his crouch takes their place in it): upright (390 x
   844) everything is still on the screen; held sideways (844 x 390) with Aa on, Back and Next go below it, as
   they already did on f089, f090, f092, f100 and f115 there.
+- **The polish release v23** (2026-11-07, CACHE v23): seven small fixes from the 'Left' lists above and the sweep's summary,
+  each the smallest change that does it. Measured with the shared sweep against what is live (6b3410a: `node tools/sweep.mjs
+  --all --compare`, every frame's art and every page at 1080 x 720, 1180 x 820, 820 x 1180 and 390 x 844, Aa off and on): the
+  sweep's seven problems (six broken words, one control off the screen) are gone and none is new; 7 of 1,466 pictures differ,
+  all named below; every page whose boxes moved is named below (the Warrior Counts' sittings, which differ run to run, apart).
+  Notes, the before-and-after measures and pictures: `~/potomac-crossing-work/polish-v23/builder/`.
+  1. *A dash stays with its word*: ui.js's lettering puts a word joiner between a word and an em dash after it, so a line may
+     break after the dash, never before. ch05 f051a's “Ten. Twenty. Thirty. FORTY—” had its dash on a line alone at every
+     iPad size, Aa off and on. The six lines with a dash after a word (ch03 f039, f089b, ch04 f031, f038, ch05 f051a, f121)
+     carry the joiner; only f051a's lines change; every box is where it was. Read to me keeps the story's words.
+  2. *ch06 f100 on a phone*: for a cat who kept the secret, its caption, four balloons stacked under the picture and two
+     options ran Back 21px under a 390 x 844 screen as the page opened. A page of choices on an upright phone (520px wide or
+     less) whose Back is under the screen as it opens now sits a little snugger (ui.js `snugChoice`, index.html
+     `.frame.snug`: Bigger text's upright spacing, the column 10px apart, the stack 8px, the balloons' padding), and Back is
+     on the screen with 18px to spare. Back stays under the options, never sticky (chapter 4's rule); a page whose Back is on
+     the screen is never marked: in the sweep only f100 at 390 x 844, Aa off, changed.
+  3. *A balloon's tail keeps off what the picture is about*: in ui.js `findSpot`, a spot whose tail (the wedge drawBalloon
+     draws, to the speaker's face) would cross an art's keep area (the claw marks, the camp's moon, a glint, the hurt wing;
+     not a face, and not the 4px of room a box keeps) is ruled out on a first pass, as a box over one always was, and taken
+     only when nothing else fits; a face under a tail stays a cost, as before. Spots whose tail missed every keep area are
+     exactly as they were, so only these move, each tail now clear of what the picture is about (measured: the area of each
+     tail inside the kept areas, before and after, at every size it moved; most tails 5 to 30px longer, some much shorter): ch11
+     f023 (the old tom's tail ran through the moon, with Aa on at 1080 x 720 and 820 x 1180; now the moon is whole beside it);
+     the claw-marked tree, Tallyheart's tail down its marks: ch02 f021, ch05 f011, ch06 f005, f007, f016, ch07 f023, ch09
+     f024, ch10 f004 on a phone, and ch04 f014 (her “Oh! I forgot you were there.” crossed the marks and the grey tom's face
+     from the far side; it sits beside her now, its tail 40px, not 222), ch07 f024, f029, ch08 f010, f017, f020, ch09 f026,
+     ch10 f008, f011 on the iPads; ch04 f010 (a phone, 6px aside), ch05 f047 (Aa on, upright), ch07 f087 and f090 (their
+     tails off the pile's rows, and off a Clan cat's face), ch07 f068 (Riffle's off the hurt wing), ch08 f082 (Hail's: at
+     1180 x 820 32px, not 213), ch08 f157 (Aa on, upright: off the marks, and less of it across a Clan cat's face), ch09 f001
+     and f012 (the glint's Tap pages: f012's tail 34px, not 97). The ch09 test's counterfactual (Thymeleaf under her chest on f095) now places clear of her face too; its
+     check of the old fault takes the wing's keep away.
+  4. *A warrior name in the phone's bar*: on a phone (520px wide or less) the bar's title gives a warrior name two lines,
+     broken at the join (nameHtml's <wbr>), in the bar's own height, a long half set smaller till it fits (ui.js
+     `fitBarName`, again on a turn of the phone and once the fonts are in; index.html `.bar-title.wname`). With the Case File
+     and Camp shown the title has 92px at 390 x 844, and one line cut every name over about 10 letters. Measured in WebKit
+     on ch11 f020: Moon|bright two lines at 22px, the bar still 56px; Thunderwhisker|butterscotch two lines at 14px. On an
+     iPad, and for a cat not yet named, the title is one line as before (the sweep's cat has no warrior name: no page moved).
+  5. *A rename never makes a Clan cat's name*: at chapter 1's name, read again, a typed ending whose new first part makes
+     Tallyheart, Thymeleaf or {Murmur}chime's whole name (Fern, typed heart, renamed Tally) gives way to the first name
+     Glintstar sees in her, her best at the Gathering's row, as offered for the new first part (Tallytrue; Tallymark for a
+     cat whose best was the counts), and is an offered one from then on (`ch11Named: 'offer'`, so the Type screen never
+     hands it back as typed and a later rename takes it again from its row). The rule the Type screen refuses by, one helper
+     now (engine.js `clanCat`). Every other typed ending stays hers, a doubled one too (spec section 7, item 15). For a cat
+     named Murmur the tortoiseshell is Mutterchime, so Murmurchime is hers.
+  6. *Chapter 9's lows, staging only*: on f081 and f084, for a cat who never met Squall, our cat turns to the voice and the
+     tail behind the pole (facing the puddle, her back was to it; the board's “our cat looks at it, amused”); on f086 she
+     counts the dew facing the puddle, as before. With Aa on, f081's balloon now sits over the roof right of the pole, its
+     tail down to it, where her turned head took its old place. Left: Riffle at the open wing (f099, f100; the spot tried,
+     out at the right, cut him at the panel's edge, the check found, so he stays at `back-right`); Squall's tail alone still reads as a dropped hook (something to hide behind,
+     or the too-thin-pole gag, is new art), and “It sparkles” over a dew that hardly does (the one staging lever, the
+     `sparkle` effect, scatters round the first cast member over the whole roof, for every cat, not only the shiny-loving
+     ones the caption speaks to; a puddle that sparkles is the roof's art).
+  7. *Granny by the water* (ch10 f082 to f084): at the set's `bank` she stood in front of the fox, only his ears showing,
+     while the story says he gets smaller. She stands at the water's edge a step behind him and to his right (GRANNY, x 1545,
+     y 690, h 230, listed between Sloshbank and the fox), so he shows whole, and Snip in front of her. Her border (f083)
+     is lettered from there: its tail crosses no face (at `bank` it crossed the ReedClan she-cat's at three of the four
+     sizes), though it is longer (509px at 1080 x 720, not 407). A spot at the front of the water's edge was tried first: its
+     tail ran across the young tom's face.
+  Pictures that differ: ch09 f081, f084, f099, f100 and ch10 f082, f083, f084, no other. The storyboards for chapters 9 and
+  10 regenerated (their scenes' words only). Tests: each behaviour in the file that owns it (engine: the rename and the
+  tail's keep-out; story-ch05: the dash; story-ch06: the snug page; story-ch09 and story-ch10: the staging; story-ch11: the
+  bar); the chapter 9 golden and chapter 11's fingerprint of chapter 10 name the staging's deltas, each scene put back as it
+  shipped, so anything else that moves still fails. The suite: 39 files, 1,790 tests, all pass.
 
 ## Open questions, waiting on Aron
 

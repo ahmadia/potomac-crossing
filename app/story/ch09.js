@@ -1018,8 +1018,9 @@
     f081: {
       // a cat who has never met him: only his tail tip behind the pole, and an airplane high over it ("A voice")
       when: NO_SQUALL,
+      // (she turns to the voice behind the pole: the polish release v23; facing the puddle her back was to it)
       scene: S('roof', 'two', DEW_PLANE,
-        [c('squall', 'hidden', 'shout', 'pole', 'right'), c('player', 'crouch', 'wonder', 'puddle', 'right', { holds: 'leaf', holdAt: 'paws' })], ['morning']),
+        [c('squall', 'hidden', 'shout', 'pole', 'right'), c('player', 'crouch', 'wonder', 'puddle', 'left', { holds: 'leaf', holdAt: 'paws' })], ['morning']),
       board: 'MEDIUM, THE ROOF AT FIRST LIGHT, ONLY FOR A CAT WHO HAS NEVER MET SQUALL. By the red light’s pole the rain puddle has turned silver with dew, and our cat crouches at its edge with its leaf; an airplane sweeps high over the roof, and from behind the pole comes a shout, with nothing of the shouter but a slate tail tip flecked with yellow and a little ring of hiccup mist. Captions top left; the balloon’s tail points behind the pole.',
       caption: ['By the red light, the rain puddle is silver with dew.', 'From behind the red light:'],
       say: [{ who: 'squall', name: 'A voice', text: 'AND STAY OUT, giant dragon!', kind: 'shout' }],
@@ -1047,8 +1048,9 @@
 
     f084: {
       when: NO_SQUALL,
+      // (she looks at the tail, as the board says: the polish release v23; facing the puddle her back was to it)
       scene: S('roof', 'two', DEW_PLANE,
-        [c('squall', 'hidden', 'shout', 'pole', 'right'), c('player', 'crouch', 'wonder', 'puddle', 'right', { holds: 'leaf', holdAt: 'paws' })], ['morning']),
+        [c('squall', 'hidden', 'shout', 'pole', 'right'), c('player', 'crouch', 'wonder', 'puddle', 'left', { holds: 'leaf', holdAt: 'paws' })], ['morning']),
       board: 'MEDIUM, ONLY FOR A CAT WHO HAS NEVER MET SQUALL. The same silver puddle at first light, and at the foot of the red light’s pole the slate tail tip twitches importantly beside its ring of mist; our cat looks at it, amused, and keeps its own business at the puddle. Captions top left, the second for a cat who loves shiny things.',
       caption: ['Somebody small is busy guarding.', { when: SHINY, text: 'It sparkles. You don’t stare. Much.' }],
       next: 'f085'

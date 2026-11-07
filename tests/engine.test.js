@@ -625,6 +625,44 @@ test('a voice from outside the panel: placed as it always was, except that the p
   assert.deepEqual(L.findSpot(Object.assign({}, inPic, { last: true })), L.findSpot(inPic));
 });
 
+test('a balloon’s tail keeps off what the picture is about (a keep circle, not a face): such a spot is ruled out on a first pass, as a box over one always was, and taken only when nothing else fits (PC.ui.layout.tailOverKeep; ch11 f023: the old tom’s tail ran through the camp’s moon; the polish release v23)', () => {
+  require('../app/ui.js');
+  const L = PC.ui.layout;
+  const head = { x: 400, y: 420, r: 30 }, face = { x: 400, y: 420, r: 30 * 1.15 + 6, who: 'grizzled', rr: 30 };
+  const moon = { x: 420, y: 250, r: 34, who: '', rr: 0 };
+  // the wedge as drawBalloon draws it: from the box to a tip 1.12 of the face's radius short of the face's middle
+  assert.equal(L.tailOverKeep({ x: 330, y: 100, w: 200, h: 60 }, head, [face, moon]), true, 'down from above, through the moon');
+  assert.equal(L.tailOverKeep({ x: 470, y: 330, w: 200, h: 60 }, head, [face, moon]), false, 'from beside him, short and clear');
+  assert.equal(L.tailOverKeep({ x: 330, y: 100, w: 200, h: 60 }, head, [face, Object.assign({}, moon, { who: 'tallyheart', rr: 30 })]), false, 'a face is not a keep circle (a face under a tail stays a cost)');
+  assert.equal(L.tailOverKeep({ x: 330, y: 100, w: 200, h: 60 }, head, [face, Object.assign({}, moon, { x: 452 })]), true, 'the wedge, not only its middle line: the moon a little to the side of it');
+  assert.equal(L.tailOverKeep({ x: 330, y: 100, w: 200, h: 60 }, head, [face, Object.assign({}, moon, { x: 500 })]), false, 'past the wedge’s width');
+  // against the area the art keeps: the 4px of room a box keeps from it (keepCircles' + 4) is not counted for a tail
+  assert.equal(L.tailOverKeep({ x: 330, y: 100, w: 200, h: 60 }, head, [face, Object.assign({}, moon, { x: 458 })]), false, 'through the room alone');
+  assert.equal(L.tailOverKeep({ x: 330, y: 100, w: 200, h: 60 }, head, [face, Object.assign({}, moon, { x: 458, r: 38 })]), true, 'four pixels more of kept area');
+  // in findSpot, as on f023: two cats either side of him, the moon a little to the right above him, too low to leave room
+  // under it. The old spot sat over the moon, its tail's middle line just missing the square inside the circle (no cost)
+  // but its wedge over the moon's edge; it moves aside till the tail is clear, as the old tom's did (18px at 1080 x 720, Aa on)
+  const others = [{ x: 250, y: 410, r: 52, who: 'a', rr: 40 }, { x: 560, y: 410, r: 52, who: 'b', rr: 40 }];
+  const low = { x: 430, y: 300, r: 30, who: '', rr: 0 }, asFace = (k) => Object.assign({}, k, { who: 'x', rr: 1 });
+  const o = { W: 800, H: 500, w: 200, h: 60, faces: [face, low].concat(others), placed: [{ x: 8, y: 8, w: 300, h: 60 }], head, margin: 8 };
+  const was = L.findSpot(Object.assign({}, o, { faces: [face, asFace(low)].concat(others) }));
+  assert.ok(L.tailOverKeep(was, head, o.faces), 'the old spot hung its tail over the moon: ' + JSON.stringify(was));
+  const spot = L.findSpot(o);
+  assert.ok(spot && !L.tailOverKeep(spot, head, o.faces), 'its tail clear of the moon: ' + JSON.stringify(spot));
+  assert.deepEqual([spot.y, spot.x < was.x], [was.y, true], 'still over the moon, a little aside');
+  // nothing else fits (a keep circle round the speaker's own head: every tail crosses it): the spot is found anyway
+  const round = { x: 400, y: 405, r: 46, who: '', rr: 0 };
+  const any = L.findSpot(Object.assign({}, o, { faces: [face, round] }));
+  assert.ok(any && L.tailOverKeep(any, head, [round]), 'taken when nothing else fits: ' + JSON.stringify(any));
+  // no keep circle, or one no tail reaches: exactly the spot it always was
+  const far = { x: 60, y: 460, r: 20, who: '', rr: 0 };
+  assert.deepEqual(L.findSpot(Object.assign({}, o, { faces: [face, far].concat(others) })), L.findSpot(Object.assign({}, o, { faces: [face, asFace(far)].concat(others) })));
+  // an off-panel voice (no tail to a head) and a chained balloon (its neck is not a tail) are weighed as before
+  assert.deepEqual(L.findSpot(Object.assign({}, o, { head: null })), L.findSpot(Object.assign({}, o, { head: null, faces: [face, asFace(low)].concat(others) })));
+  const first = { x: 300, y: 100, w: 200, h: 60 };
+  const chained = (k) => L.findSpot(Object.assign({}, o, { faces: [face, k].concat(others), near: first, after: first, prev: first, placed: [first] }));
+  assert.deepEqual(chained(low), chained(asFace(low)));
+});
 test('what the picture is about (the art’s keep areas): one circle round an area up to four times as long as it is wide, as chapters 1 to 3 always had; a longer band (a row of the pile) is kept clear along its length (PC.ui.layout.keepCircles)', () => {
   const L = PC.ui.layout, W = 1034, H = 646;
   // the claw marks on the tree (chapter 1), the newest mark, a curl of bark on the sand, and a box 3.1 to 1 on the
@@ -7346,6 +7384,39 @@ test('chapter 11: chapter 1 read again, renamed: an offered ending she would no 
   assert.deepEqual([plain.name, 'ending' in plain, plain.flags], ['Moon', false, { ch10Best: 'sprinkle' }]);
   const offerOnly = rename(named('Fern', { ch11Named: 'offer' }), 'Moon');
   assert.equal('ending' in offerOnly, false, 'a flag without an ending changes nothing');
+});
+test('chapter 11: chapter 1 read again, renamed: a typed ending that now makes a Clan cat’s whole name (Tallyheart, Thymeleaf, {Murmur}chime) gives way to the first name Glintstar sees in her, an offered one from then on; every other typed ending stays (the polish release v23)', () => {
+  const ch01 = { id: 'ch01', start: 'f', frames: { f: { input: { kind: 'clanname', suggestions: ['Moon'], next: 'g' } }, g: { end: true } } };
+  const rename = (c, to) => { c.chapter = 'ch01'; c.frame = 'f'; c.history = []; assert.ok(E.submitInput(c, ch01, to, 9)); return c; };
+  // Fern typed heart, renamed Tally: not Tallyheart, but her best at the Gathering's first word (the fallback, truth's: true)
+  let c = rename(named('Fern', { ch11Named: 'self' }, 'heart'), 'Tally');
+  assert.deepEqual([c.name, c.ending, E.warriorName(c), c.flags.ch11Named], ['Tally', 'true', 'Tallytrue', 'offer']);
+  assert.equal(E.checkEnding('heart', c).refuse, 'clan', 'the name the Type screen refuses');
+  assert.equal(E.warriorOffers(c)[0], c.ending, 'the first of the three Glintstar offers the renamed cat');
+  // her own row's first word: counts for a cat whose best was the counts (Tallymark: tally is in her first part)
+  c = rename(named('Fern', { ch11Named: 'self', ch10Best: 'counts' }, 'heart'), 'Tally');
+  assert.equal(E.warriorName(c), 'Tallymark');
+  // Thymeleaf, and the tortoiseshell's whole name, Murmurchime (letters only: Mur Mur with chime is hers too)
+  c = rename(named('Fern', { ch11Named: 'self', ch10Best: 'sprinkle' }, 'leaf'), 'Thyme');
+  assert.deepEqual([E.warriorName(c), c.flags.ch11Named], ['Thymemist', 'offer']);
+  c = rename(named('Fern', { ch11Named: 'self', ch10Best: 'friends' }, 'chime'), 'Mur Mur');
+  assert.deepEqual([E.warriorName(c), c.flags.ch11Named], ['Mur Murpurr', 'offer']);
+  // (for a cat named Murmur the tortoiseshell is Mutterchime, so Murmurchime is free, and hers)
+  const murmur = rename(named('Fern', { ch11Named: 'self', ch10Best: 'friends' }, 'chime'), 'Murmur');
+  assert.deepEqual([E.warriorName(murmur), murmur.flags.ch11Named], ['Murmurchime', 'self']);
+  // an offered one from then on: the Type screen hands nothing back as typed, and a later rename takes it again from its row
+  require('../app/ui.js');
+  assert.equal(PC.ui.ending.prefill(c), '');
+  c = rename(c, 'Fern');
+  assert.equal(E.warriorName(c), 'Fernpurr');
+  // every other typed ending stays hers, a doubled one too (spec section 7, item 15), and a Clan name under the old first part
+  c = rename(named('Fern', { ch11Named: 'self' }, 'heart'), 'Storm');
+  assert.deepEqual([E.warriorName(c), c.flags.ch11Named], ['Stormheart', 'self']);
+  c = rename(named('Fern', { ch11Named: 'self' }, 'moon'), 'Moon');
+  assert.equal(E.warriorName(c), 'Moonmoon');
+  // an offered ending is weighed as before (Tally with heart can only be typed: no row holds heart)
+  c = rename(named('Fern', { ch11Named: 'offer', ch10Best: 'friends' }, 'purr'), 'Tally');
+  assert.deepEqual([E.warriorName(c), c.flags.ch11Named], ['Tallypurr', 'offer']);
 });
 
 test('chapter 11: the save: an unnamed cat is saved and migrated exactly as before (no `ending` key); a named one round-trips; a bad one is dropped, she is unnamed again; still version 2', () => {

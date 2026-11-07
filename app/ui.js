@@ -61,8 +61,45 @@
   /* Find a spot for a w×h box inside a W×H panel: never over a face, never over a placed box,
    * close above its speaker's head, in reading order after the previous box. Returns the box
    * {x, y, w, h, cost} (so readsAfter can judge it) or null when nothing fits (the caller then
-   * stacks the balloons under the panel). */
+   * stacks the balloons under the panel).
+   * What the picture is about (a `keep` circle: the claw marks, the camp's moon) is kept off by the
+   * tail too: a balloon whose tail would cross one is ruled out on a first pass, as a box over one
+   * always was, and such a spot is taken only when nothing else fits (ch11 f023: the old tom's tail
+   * ran through the moon; the polish release v23). A face under a tail stays a cost (tailOverFaces). */
   function findSpot(o) {
+    if (o.head && !o.near && (o.faces || []).some(isKeep)) {
+      var clear = spotScan(o, true);
+      if (clear) return clear;
+    }
+    return spotScan(o, false);
+  }
+  // a keep circle (keepCircles: no speaker, no face radius), not a face
+  function isKeep(c) { return !c.who && !c.rr; }
+  /* Whether a balloon's tail, as drawBalloon draws it, crosses a keep circle: the wedge from the box (its middle) to
+   * its tip (1.12 of the face's radius short of the face's middle), min(13, w / 7) wide each side where it leaves the box
+   * (and its 3px stroke), narrowing to the tip, against the area the art keeps (the circle less the 4px of room a box
+   * keeps from it, keepCircles: a tail through that room alone hides nothing, and moving for it only lengthened tails).
+   * Sampled along its length. Pure: tested in Node. */
+  function tailOverKeep(box, head, faces) {
+    var keeps = (faces || []).filter(isKeep);
+    if (!keeps.length || !head) return false;
+    var cx = box.x + box.w / 2, cy = box.y + box.h / 2, dx = cx - head.x, dy = cy - head.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var reach = (head.r || 0) * 1.12;
+    if (d <= reach) return false;
+    var tx = head.x + dx / d * reach, ty = head.y + dy / d * reach, ux = tx - cx, uy = ty - cy;
+    var tEdge = Math.min(Math.abs(ux) > 1e-6 ? (box.w / 2) / Math.abs(ux) : Infinity, Math.abs(uy) > 1e-6 ? (box.h / 2) / Math.abs(uy) : Infinity);
+    if (tEdge >= 1) return false;   // the tip inside the box: no tail
+    var half = Math.min(13, box.w / 7) + 1.5;
+    for (var k = 0; k <= 24; k++) {
+      var t = tEdge + (1 - tEdge) * k / 24, px = cx + ux * t, py = cy + uy * t, hw = half * (1 - k / 24);
+      for (var i = 0; i < keeps.length; i++) {
+        var ex = px - keeps[i].x, ey = py - keeps[i].y, rr = Math.max(0, keeps[i].r - 4) + hw;
+        if (ex * ex + ey * ey < rr * rr) return true;
+      }
+    }
+    return false;
+  }
+  function spotScan(o, keepTails) {
     var W = o.W, H = o.H, w = o.w, h = o.h, m = o.margin == null ? 8 : o.margin;
     if (w > W - 2 * m || h > H - 2 * m) return null;
     var faces = o.faces || [], placed = o.placed || [], bodies = o.bodies || [];
@@ -85,6 +122,7 @@
           var ac = o.afterCap;
           if (!(y >= ac.y + ac.h || (x >= ac.x + ac.w * 0.6 && y >= ac.y - 10))) bad = true;
         }
+        if (!bad && keepTails && tailOverKeep(r, head, faces)) bad = true;
         if (bad) continue;
         var cx = x + w / 2, bottom = y + h, cost = 0;
         if (o.near) {
@@ -326,7 +364,7 @@
   }
   UI.layout = { findSpot: findSpot, tailGeom: tailGeom, rectCircle: rectCircle, overlap: overlap, segHitsRect: segHitsRect, castHeads: castHeads,
     speakerSlot: speakerSlot, speakerRuns: speakerRuns, readsAfter: readsAfter, sfxFit: sfxFit, sfxPlace: sfxPlace,
-    tailOverFaces: tailOverFaces, keepCircles: keepCircles };
+    tailOverFaces: tailOverFaces, keepCircles: keepCircles, tailOverKeep: tailOverKeep };
 
   /* Keys that turn pages (Enter, Space, → and ←) get the guard taps have: held down, Enter's
    * auto-repeat would go title → hub → chapter 2 in one press, so a repeated Enter or Space is never
@@ -1012,8 +1050,11 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  /* Lettering: **bold**, *italic*, line breaks, and a dash kept with the word it follows (a word joiner, U+2060, between
+   * them: ch05 f051a's "…Thirty. FORTY—" put the dash on a line alone at every iPad size, the polish release v23). */
   function rich(s) {
-    return esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\n/g, '<br>');
+    return esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\n/g, '<br>')
+      .replace(/([A-Za-z0-9À-ɏ])—/g, '$1⁠—');
   }
   function plain(s) { return String(s == null ? '' : s).replace(/\*+/g, '').replace(/×/g, ' times '); }
   /* Her name as lettered on the page (chapter 11): a warrior name may break between its two halves, Thunderwhisker and
@@ -1234,13 +1275,14 @@
     // Safari's toolbar collapsing, the on-screen keyboard and rotation all fire resize; only a panel
     // that changed size needs its lettering laid out again (which would also replay the sound effect)
     root.addEventListener('resize', debounce(function () {
+      fitBarName();
       if (!relayoutFn) return;
       var p = $('panel');
       if (p && lastLayout && p.clientWidth === lastLayout.W && p.clientHeight === lastLayout.H) return;
       relayoutFn();
     }, 120));
-    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { if (relayoutFn) relayoutFn(); });
-    if (doc.fonts && doc.fonts.addEventListener) doc.fonts.addEventListener('loadingdone', function () { if (relayoutFn) relayoutFn(); });
+    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { fitBarName(); if (relayoutFn) relayoutFn(); });
+    if (doc.fonts && doc.fonts.addEventListener) doc.fonts.addEventListener('loadingdone', function () { fitBarName(); if (relayoutFn) relayoutFn(); });
     doc.addEventListener('keydown', function (e) {
       // her Case File is open over the page: its own keys only (Escape: back to her cards, then closed)
       if (fileState) { fileKey(e); return; }
@@ -1410,7 +1452,28 @@
     else if (n === 'who') t = 'Potomac Crossing';
     else if (cat) t = nameHtml(cat) + (n === 'frame' && story ? '<small>Chapter ' + (story.number || 1) + ' · ' + esc(story.title) + '</small>' : '') +
       (n === 'warrior' ? '<small>The Warrior Counts</small>' : '');
+    title.classList.toggle('wname', !!cat && n !== 'title' && n !== 'who' && !!E.warriorName(cat));
     title.innerHTML = t;
+    fitBarName();
+  }
+  /* Her warrior name in the bar on a phone (chapter 11 on; the polish release v23): there the title is two lines, broken at
+   * the join (nameHtml's <wbr>: Moon / bright), as large as fits up to the bar's own size (index.html, `.bar-title.wname`).
+   * With the Case File and Camp shown the title has 92px at 390 x 844, and one line cut every name over about 10 letters
+   * (THUNDERWH…); Thunderwhisker alone is set a little smaller, till it fits. On an iPad, and for a cat not yet named, the
+   * title is one line, as before (nothing is set). Weighed again on a turn of the phone and once the fonts are in. */
+  function fitBarName() {
+    var t = $('barTitle');
+    if (!t) return;
+    t.style.fontSize = '';
+    if (!t.classList.contains('wname') || !root.matchMedia || !root.matchMedia('(max-width: 520px)').matches || !t.clientWidth) return;
+    var over = function () { return t.scrollWidth > t.clientWidth || t.scrollHeight > t.clientHeight + 1; };
+    if (!over()) return;
+    var fs = parseFloat(root.getComputedStyle(t).fontSize) || 22;
+    // the widest line scaled to the room at once, then down a half pixel at a time while a line still runs over (or a
+    // name with a space in it takes a third line)
+    fs = Math.max(12, Math.min(fs, Math.floor(fs * t.clientWidth / t.scrollWidth * 2) / 2));
+    t.style.fontSize = fs + 'px';
+    for (var i = 0; i < 20 && fs > 12 && over(); i++) { fs -= 0.5; t.style.fontSize = fs + 'px'; }
   }
   function onBack() {
     var n = view.name;
@@ -1623,12 +1686,28 @@
         var L = layoutText(ctx);
         if ((L.captions === 'column' && ctx.caps.length) || L.balloons === 'stack') { frameEl.classList.remove('solo'); layoutText(ctx); }
       } else layoutText(ctx);
+      snugChoice(frameEl);
     };
     relayoutFn();
     playFx(panel, f);
     renderInteraction(f, kind, id, ctx);
+    snugChoice(frameEl);
     currentSpeech = ctx.reading || [];
     persist();
+  }
+
+  /* A page of choices on an upright phone whose Back is under the screen as the page opens (ch06 f100 for a cat who kept
+   * the snake's secret: a caption, four balloons stacked under the picture and two options ran Back 21px under a 390 x
+   * 844 screen, Aa off): its column sits a little closer and its stacked balloons a little snugger, as Bigger text
+   * already sets them upright (index.html, `.frame.snug`), so Back comes up onto the screen. Back stays under the
+   * options, never sticky (chapter 4's rule); a page whose Back is on the screen is never touched (the polish release
+   * v23). Run after every layout, so a turn of the phone or a late font weighs it again. */
+  function snugChoice(frameEl) {
+    if (!frameEl) return;
+    frameEl.classList.remove('snug');
+    if (frameEl.getAttribute('data-kind') !== 'choice' || !root.matchMedia || !root.matchMedia('(max-width: 520px)').matches) return;
+    var b = $('backBottom');
+    if (b && b.getBoundingClientRect().bottom + (root.pageYOffset || 0) > (root.innerHeight || Infinity)) frameEl.classList.add('snug');
   }
 
   /* Captions and balloons: in the panel when they fit, otherwise in the column. */

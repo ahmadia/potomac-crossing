@@ -3824,3 +3824,25 @@ test('every kind of cat on a spread of routes plays through the engine: the fram
   assert.deepEqual([back.flags, back.cards, back.frame, back.lessons], [mid.flags, mid.cards, mid.frame, mid.lessons]);
   assert.deepEqual(idsOf(read(back, { raft: 'lean', first: 'otters', wait: 3 })), idsOf(read(mid, { raft: 'lean', first: 'otters', wait: 3 })), 'and reads on to the same end');
 });
+
+// (the polish release v23) ch05 f051a: “Ten. Twenty. Thirty. FORTY—” put its dash on a line alone at every iPad size
+// (the sweep's broken-word, 1080 x 720, 1180 x 820 and 820 x 1180, Aa off and on). The lettering (ui.js rich, under
+// richN) keeps a dash with the word it follows by a word joiner; Read to me keeps the story's text.
+test('the lettering keeps a dash with the word before it (a word joiner), so “FORTY—” never puts its dash on a line alone (f051a; the polish release v23)', () => {
+  const UI_SRC = fs.readFileSync(path.join(ROOT, 'app/ui.js'), 'utf8');
+  const grab = (name) => { const i = UI_SRC.indexOf('  function ' + name + '('), j = UI_SRC.indexOf('\n  }\n', i); assert.ok(i > 0 && j > i, name); return UI_SRC.slice(i, j + 4); };
+  // eslint-disable-next-line no-new-func
+  const rich = new Function(grab('esc') + grab('rich') + '\nreturn rich;')();
+  const say = frames.f051a.say.map(b => b.text);
+  assert.deepEqual(say, ['Ten. Twenty. Thirty. FORTY—']);
+  assert.equal(rich(say[0]), 'Ten. Twenty. Thirty. FORTY⁠—');
+  // wherever a dash follows a word (six lines in chapters 3 to 5): a line may still break after it, never before
+  assert.equal(rich('Heavy today. It’s because of Pud— PUDDLES.'), 'Heavy today. It’s because of Pud⁠— PUDDLES.');
+  assert.equal(rich('not one paw—'), 'not one paw⁠—');
+  // a dash after a space, or after other punctuation, and every other line, exactly as before
+  assert.equal(rich('Wait — what?'), 'Wait — what?');
+  assert.equal(rich('Oh…— no.'), 'Oh…— no.');
+  assert.equal(rich('**Tap** the reeds.\nTwo.'), '<strong>Tap</strong> the reeds.<br>Two.');
+  // Read to me says the story's own words: the joiner is only in the lettering
+  assert.ok(!E.balloons(frames.f051a, E.blankCat({ now: 1 })).some(b => /⁠/.test(b.text)));
+});

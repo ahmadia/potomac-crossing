@@ -1778,3 +1778,43 @@ test('Bigger text on a page she taps once: its “Tap to…” line stays beside
   // the Tap page's row as the page builds it: Back, then her “Tap to…” line
   assert.match(UI_SRC, /box\.innerHTML = '<div class="next-row">' \+ backBottom\(\) \+ \(hint \? '<p class="prompt tapline">'/);
 });
+
+// (the polish release v23) On a phone the bar's title has 92px beside Back, her Case File, Camp, Read to me, Aa and Who's
+// playing (390 x 844), and one line cut every warrior name over about 10 letters (THUNDERWH…, MOONBRI…). There, for a
+// warrior name, the title is two lines broken at the join (nameHtml's <wbr>), in the bar's own height, a long half set
+// smaller till it fits (ui.js fitBarName). Measured in WebKit at 390 x 844 on f020, the Case File shown: Moon|bright two
+// lines at 22px (44px tall, the bar still 56); Thunderwhisker|butterscotch two lines at 14px. On an iPad and for a cat
+// not yet named, the title is one line as before.
+test('the phone’s bar gives a warrior name two lines, broken at the join, a long half a little smaller (fitBarName; the polish release v23); an iPad and an unnamed cat as before', () => {
+  const HTML = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const i = UI_SRC.indexOf('  function fitBarName('), j = UI_SRC.indexOf('\n  }\n', i);
+  assert.ok(i > 0 && j > i);
+  // a title whose lines are as wide as their letters at its font size (Bangers about 0.48em a letter, with its spacing)
+  const title = (halves, { wname = true, room = 92, max = 22 } = {}) => {
+    const t = { style: { fontSize: '' }, clientWidth: room, classList: { contains: (c) => c === 'wname' && wname } };
+    const fs0 = () => parseFloat(t.style.fontSize) || max;
+    Object.defineProperty(t, 'scrollWidth', { get: () => Math.max(room, Math.ceil(Math.max(...halves.map(h => h.length)) * 0.48 * fs0() * 10) / 10) });
+    Object.defineProperty(t, 'clientHeight', { get: () => 2 * fs0() });
+    Object.defineProperty(t, 'scrollHeight', { get: () => halves.length * fs0() });
+    return t;
+  };
+  const fit = (t, phone = true) => {
+    const root = { matchMedia: (q) => ({ matches: phone && q === '(max-width: 520px)' }), getComputedStyle: () => ({ fontSize: '22px' }) };
+    // eslint-disable-next-line no-new-func
+    new Function('root', '$', UI_SRC.slice(i, j + 4) + '\nreturn fitBarName;')(root, () => t)();
+    return t.style.fontSize;
+  };
+  assert.equal(fit(title(['Moon', 'bright'])), '', 'Moon / bright fits at the bar’s own size');
+  const tw = title(['Thunderwhisker', 'butterscotch']), px = fit(tw);
+  assert.ok(parseFloat(px) >= 12 && parseFloat(px) < 22 && tw.scrollWidth <= tw.clientWidth, 'Thunderwhisker a little smaller, till it fits: ' + px);
+  assert.equal(fit(title(['Thunderwhisker', 'butterscotch']), false), '', 'an iPad: one line, as before');
+  assert.equal(fit(title(['Thunderwhiskerpaw'], { wname: false })), '', 'a cat not yet named: as before');
+  // the class: only for a warrior name, never on the title or who's-playing screens; fitted again on a turn and once the fonts are in
+  assert.ok(UI_SRC.includes("title.classList.toggle('wname', !!cat && n !== 'title' && n !== 'who' && !!E.warriorName(cat));\n    title.innerHTML = t;\n    fitBarName();"));
+  assert.ok(UI_SRC.includes("root.addEventListener('resize', debounce(function () {\n      fitBarName();"));
+  assert.ok(UI_SRC.includes("doc.fonts.ready.then(function () { fitBarName();"));
+  // the page's rule: on a phone only, two lines in the bar's height
+  const phone = HTML.slice(HTML.indexOf('  .bar{gap:4px}'), HTML.indexOf('  .iconbtn{width:42px;height:42px}'));
+  assert.match(phone, /\.bar-title\.wname\{white-space:normal;line-height:1;max-height:2em\}/);
+  assert.equal((HTML.match(/\.bar-title\.wname/g) || []).length, 1, 'nowhere else');
+});

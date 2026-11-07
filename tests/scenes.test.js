@@ -5443,7 +5443,17 @@ const CH11_FINGERPRINT = {
 test('chapter 11: chapters 1 to 10 and the Warrior Counts draw byte for byte as they shipped: every frame of chapter 10, every Warrior Counts scene, the kit\'s moon at every age up to full and past 27, every camp camera and composition with no `moon` (each light, the crowd on and off), and every den camera with no `nextNest`', { skip: !art.character && 'no cats.js' }, () => {
   for (let i = 1; i <= 10; i++) require(path.join(ROOT, 'app/story/ch' + String(i).padStart(2, '0') + '.js'));
   require(path.join(ROOT, 'app/story/warrior.js'));
-  const now = ch11Fingerprint(PC, require('crypto'));
+  // (the polish release v23, by name: Granny on the banishment's wide panels, f082 to f084, stands by the water a step
+  // behind the fox, listed before him; fingerprinted as shipped, at the set's `bank` and last in the cast, so anything else
+  // that moves still fails; her new spot is tested in tests/story-ch10.test.js)
+  const ch10 = PC.story.ch10, frames = Object.assign({}, ch10.frames), BY_WATER = { x: 1545, y: 690, h: 230 };
+  const moved = Object.keys(frames).filter(id => (frames[id].scene && frames[id].scene.cast || []).some(c => c && c.who === 'otter' && JSON.stringify(c.at) === JSON.stringify(BY_WATER)));
+  assert.deepEqual(moved, ['f082', 'f083', 'f084'], 'Granny by the water on the banishment’s wide panels, and nowhere else');
+  moved.forEach(id => {
+    const cast = frames[id].scene.cast, g = cast.find(c => c.who === 'otter');
+    frames[id] = Object.assign({}, frames[id], { scene: Object.assign({}, frames[id].scene, { cast: cast.filter(c => c !== g).concat([Object.assign({}, g, { at: 'bank' })]) }) });
+  });
+  const now = ch11Fingerprint(Object.assign({}, PC, { story: Object.assign({}, PC.story, { ch10: Object.assign({}, ch10, { frames }) }) }), require('crypto'));
   assert.deepEqual(Object.keys(now), Object.keys(CH11_FINGERPRINT), 'the same frames, lists, ages and cameras, in the same order');
   for (const k of Object.keys(CH11_FINGERPRINT)) assert.equal(now[k], CH11_FINGERPRINT[k], k + ' draws something else than it did on the tree chapter 11 is built on');
   const keys = Object.keys(CH11_FINGERPRINT);

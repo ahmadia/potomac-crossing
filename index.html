@@ -816,6 +816,14 @@ html.file-open,html.file-open body{overflow:hidden}
   html.big .frame .stack{gap:8px}
   html.big .frame .sb{padding:.34em .74em .38em}
 }
+/* (a page of choices on an upright phone whose Back would be under the screen, Aa off too: ui.js's snugChoice marks it,
+   and its column and stacked balloons sit as Bigger text's do upright, so Back comes up; ch06 f100 for a cat who kept
+   the secret ran it 21px under a 390 x 844 screen. Nothing else is marked) */
+@media (max-width: 520px){
+  .frame.snug{gap:10px}
+  .frame.snug .stack{gap:8px}
+  .frame.snug .sb{padding:.34em .74em .38em}
+}
 /* Bigger text on a skip-count, on any screen: its count grows a line at a time as she taps (ch05
    f049, with a caption and two balloons above it, ran Back below the screen even on a 1194 x 834
    iPad), so its "Tap to…" line sits beside Back, not over it, and its balloons are a little closer */
@@ -856,6 +864,9 @@ html.big .frame .next-row > .btn.back + .tapline{flex:1 1 0;min-width:0;line-hei
   :root{--gap:12px}
   .bar{gap:4px}   /* room for the name beside Camp, Read to me, Aa and Who's playing */
   .bar-title small{display:none}
+  /* her warrior name (chapter 11 on): two lines, broken at the join, in the bar's own height (ui.js fitBarName sets a
+     long half smaller till it fits); an unnamed cat's title is one line, as before */
+  .bar-title.wname{white-space:normal;line-height:1;max-height:2em}
   .iconbtn{width:42px;height:42px}
   .iconbtn svg{width:24px;height:24px}
   .key{min-height:58px;font-size:30px}

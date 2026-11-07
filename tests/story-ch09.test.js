@@ -595,11 +595,16 @@ test('every combination reaches the end with no frame that shows nothing; a pair
   [['f080', 'f081'], ['f085', 'f086']].forEach(([a, b]) => {
     assert.deepEqual([frames[a].scene.opts, frames[b].scene.opts], [{ dew: true }, { dew: true, plane: true }], a + ' ' + b);
     assert.deepEqual([castOf(a, 'squall').map(c => [c.pose, c.at]), castOf(b, 'squall').map(c => [c.pose, c.at])], [[['roar', 'pole']], [['hidden', 'pole']]], a + ' ' + b);
-    assert.deepEqual(castOf(a, 'player'), castOf(b, 'player'), a + ' ' + b + ': our cat at the puddle in both');
+    // (our cat at the puddle in both; where the voice shouts from behind the pole she turns to it, the polish release v23)
+    assert.deepEqual(castOf(a, 'player').map(c => Object.assign({}, c, { facing: 'right' })), castOf(b, 'player').map(c => Object.assign({}, c, { facing: 'right' })), a + ' ' + b + ': our cat at the puddle in both');
   });
   // the trailing captions on the same pictures
   assert.deepEqual([frames.f082.scene, frames.f083.scene, frames.f085.scene], [frames.f080.scene, frames.f080.scene, frames.f080.scene]);
-  assert.deepEqual([frames.f084.scene, frames.f086.scene], [frames.f081.scene, frames.f081.scene]);
+  assert.deepEqual(frames.f084.scene, frames.f081.scene);
+  // a cat who never met Squall: she looks at the voice and the tail behind the pole on f081 and f084 (the board's “our cat
+  // looks at it, amused”), and at the puddle again as she counts the dew (f086); everyone else's cat faces the puddle
+  assert.deepEqual(seq('f080', 'f086').map(id => castOf(id, 'player')[0].facing), ['right', 'left', 'right', 'right', 'left', 'right', 'right']);
+  assert.deepEqual(frames.f086.scene, Object.assign({}, frames.f081.scene, { cast: frames.f081.scene.cast.map(c => c.who === 'player' ? Object.assign({}, c, { facing: 'right' }) : c) }));
 });
 
 test('choices: four kinds, two or three a reading, labels short, none sets a flag; the oak read her way by a cat who has found Mizzle; the roar only for a cat who has never met Squall', () => {
@@ -1344,6 +1349,7 @@ test('staging, the remedy and the sunny bank: Sprinkle in her nook, Thymeleaf at
     assert.deepEqual(castOf(id, 'thymeleaf').map(c => [c.at, c.holds]), [[menderAt(id), 'leaf']], id + ': the remedy in its leaf');
     assert.deepEqual(castOf(id, 'tallyheart').map(c => [c.at, c.facing]), [WALL.includes(id) ? [BY_WALL, 'right'] : [ACROSS, 'left']], id + ': across the nook on both paths, by the wall facing in while her wings are open');
     assert.equal(!!frames[id].scene.opts.wing, castOf(id, 'sprinkle')[0].pose === 'wings', id + ': the lettering keeps off her drooping wing while her wings are open (chapter 7\'s `wing: true`)');
+    // (out at the right while her wings are open, so the open wing's tip ends short of his whiskers: the polish release v23)
     castOf(id, 'riffle').forEach(c => assert.deepEqual([c.at, c.holds], ['back-right', 'fish'], id));
     assert.equal(castOf(id, 'coil').length, 0, id);
   });
@@ -1538,10 +1544,14 @@ test('staging, the polish’s fixes: on f091 our cat’s raised forepaw is in pl
     const sc = E.resolveScene(frames.f095.scene, c95, STORIES);
     assert.deepEqual(sc.cast.find(c => c.who === 'thymeleaf').at, MENDER_WING);
     S95.forEach(m => assert.deepEqual(intoFaces(sc, told, m), {}, 'f095 ' + (told ? 'told' : 'kept') + ' at ' + m.W + ' x ' + m.H + (m.big ? ' with Aa' : '') + ': his tail clear of every face'));
-    // (and under her chest, as built, it ran across her face on every one of these)
+    // (and under her chest, as built, it ran across her face on every one of these: so it still does with the hurt wing's
+    // keep-out taken away; with it, since the polish release v23 keeps a balloon's tail off what the picture is about,
+    // even that spot's balloon goes where its tail is clear)
     const was = JSON.parse(JSON.stringify(sc));
     was.cast.find(c => c.who === 'thymeleaf').at = MENDER_WING_WAS;
-    S95.forEach(m => assert.ok((intoFaces(was, told, m).sprinkle || 0) > 100, 'under her chest, ' + m.W + ' x ' + m.H + ': ' + JSON.stringify(intoFaces(was, told, m))));
+    const bare = Object.assign({}, was, { opts: Object.assign({}, was.opts, { wing: false }) });
+    S95.forEach(m => assert.ok((intoFaces(bare, told, m).sprinkle || 0) > 100, 'under her chest, ' + m.W + ' x ' + m.H + ': ' + JSON.stringify(intoFaces(bare, told, m))));
+    S95.forEach(m => assert.deepEqual(intoFaces(was, told, m), {}, 'under her chest with the wing kept clear, ' + m.W + ' x ' + m.H));
   });
 });
 

@@ -230,7 +230,7 @@ two columns, each line with a little picture: **They say** (an ear, as the Case 
 | "A badger SAT on my whole patrol!" (the old tom, ch13) | "She sat on them by accident. It was dark. She said sorry." (ch18) |
 | "As big as a FOX!" (the ferry otters, ch13); "As big as a DOG." (ReedClan, ch14); "As big as a TALLWALKER!" (the pups, ch15) | "As big as three cats. And grumpy." (Granny, ch15; seen, ch17) |
 | "A HUNDRED claws!" (Snip and Snatch, ch16) | "Five toes on a paw, four paws: twenty claws." (ch16) |
-| "It ate EIGHT HUNDRED ELEVEN mice!" (Snip and Snatch, ch16) | "Shallow holes, turned earth, no fur or feathers: she digs for worms." (ch13); "Mice are FURRY." (ch17) |
+| "It ate EIGHT HUNDRED ELEVEN mice!" (Snip and Snatch, ch16) | "Shallow holes, turned earth, no fur or feathers: it digs for worms." (ch13); "Mice are FURRY." (ch17) |
 | "It ATE them!" (the Clan, ch17) | "Thirty-seven gone, thirty-seven in her room. Not one eaten." (ch17) |
 | "Those scratches are claw marks." (ch13) | "They're a COUNT." (ch16); "She counts her worms." (ch18) |
 | "The cats' den was empty, and she was welcome." (a polite fox, ch18) | "The fox wanted our store." (Waffles and the weasels, ch19) |

@@ -1154,6 +1154,14 @@ Each is Aron's to reverse.
   tail's keep-out; story-ch05: the dash; story-ch06: the snug page; story-ch09 and story-ch10: the staging; story-ch11: the
   bar); the chapter 9 golden and chapter 11's fingerprint of chapter 10 name the staging's deltas, each scene put back as it
   shipped, so anything else that moves still fails. The suite: 39 files, 1,790 tests, all pass.
+- **The Warrior Counts' difficulty, after the first real sittings** (2026-11-07, from the grown-ups corner Aron sent;
+  the numbers stay off this public repo, in `~/potomac-crossing-work/difficulty/`): a not-yet a few short of the pass,
+  then a pass the same day, the shape section 5 of `docs/warrior-counts.md` designs for. No fact was missed in both
+  sittings; about half the misses were one group off (a skip-count that lost its place) and a third within two of the
+  answer; none was cut short, so the corner's "a slip?" mark never showed. **Kept as it is**: the pass stays 50 of 55 and
+  no slip is forgiven, since none of the misses was a keypad slip and forgiving the near ones would have taken the
+  not-yet away. Module 2 keeps her missed facts fresh from her own log (the warm-ups' hardest-first order, the Hollow's
+  cross-table warm-up), and chapter 13's lullaby is one of them.
 
 ## Open questions, waiting on Aron
 

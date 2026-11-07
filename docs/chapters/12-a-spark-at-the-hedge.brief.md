@@ -1,10 +1,11 @@
 # Chapter 12 brief: A Spark at the Hedge
 
-*DRAFT v0.2 · 2026-11-07 · Claude's proposal; nothing here is decided until Aron approves it (decision 46 covers chapter calls, not a module's arc or its maths)*
+*v1 · 2026-11-07 · decisions 53 and 54 are Aron's (the maths; her own apprentice, the badger, Reynard, the shark tooth); the rest
+are Claude's calls under decision 46*
 
 *The orchestrator's brief for the text workflow, once module 2 (`docs/module-2.md`) is approved. Every drafter, judge,
 critic and editor reads this. Decision 53 is Aron's (the maths: multiplication kept fresh, long subtraction, a
-Spanish-speaking friend); call 9 waits on module 2's open question 1; the rest are Claude's calls under decision 46, to
+Spanish-speaking friend); call 9 is settled by decision 54 (Chispapaw is her own apprentice); the rest are Claude's calls under decision 46, to
 be recorded in the README when the chapter is built. Aron can reverse any of them. v0.2 applies the module critic's
 findings for this chapter.*
 
@@ -92,7 +93,7 @@ new one." and "Every Count a warrior needs.", and the Counts are the times table
   store, one square, three rows, three loose.
 - The words: take-aways, loose, a row, a square, ones first. **Never "borrow"**, and no spreading yet (chapter 13's).
 
-## Steering calls (Claude's, under decision 46; call 9 waits on module 2's open question 1)
+## Steering calls (Claude's, under decision 46; call 9 settled by decision 54)
 
 1. **Day 1, the day after the ceremony.** She kept the watch till first light and slept the morning in her new nest; she
    wakes at midday ({Murmur}chime, back from patrol: "Warriors don't sleep till NOON. Usually."). The afternoon, sunset at

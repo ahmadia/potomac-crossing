@@ -1,7 +1,12 @@
 # Module 2: The Badger Under the Bridge
 
-*v0.3 · 2026-11-07 · Claude's plan. The maths is Aron's decision 53 and its four open questions are his decision 54;
+*v0.4 · 2026-11-07 · Claude's plan. The maths is Aron's decision 53 and its four open questions are his decision 54;
 the arc stands as written unless he changes it, and chapter calls are Claude's under decision 46*
+
+*v0.4 brings the chapter table and the maths section into line with the take-aways kit (`docs/take-aways.md` v0.3):
+chapter 15's third lesson problem is 607 − 283 (was 649 − 275), chapter 17's lesson opens on 764 − 321, which needs no
+spread, and asks 731 − 696, with no hundreds left, fourth, chapter 19's second older problem is 815 − 69 (was
+815 − 469), and a lesson's time and the order a long one is cut in are the kit's.*
 
 *Solo · ten chapters (12 to 21) of about 20–22 minutes, the last a finale of about 30 · in the game the player is "you";
 these notes say "she" because Lissa is the first player. The maths and the Spanish-speaking friend are Aron's decision
@@ -538,11 +543,11 @@ Five amendments:
 | 12 | loose, rows, squares; the column; no spread | worked on a planned store: 254 − 131; then 58 − 23, 76 − 42, 475 − 132, 368 − 145 (589 − 267 only if play shows it fast) | 175 − 42 = 133; reading the store | three: her two hardest, then one more | counting; the first right answer echoed ("¡Siete por ocho, cincuenta y seis!" if it is 7 × 8); "¡A contar!"; the paw thing to "¡cincuenta!" |
 | 13 | spread a row, two digits | 43 − 16, 70 − 34, 85 − 39; 97 − 52, 486 − 253 | 52 − 27 = 25 | 3 × 4 paws; 6 × 8 hunters; the groundhog's 7 × 8 | «la resta» (take-aways); "¡No alcanza!" (not enough!) at the first spread |
 | 14 | spread a row, three digits | 352 − 127, 640 − 218, 462 − 135; 768 − 315, 586 − 231 | 473 − 245 = 228 | **Tricky Counts run 1**; 3 × 7 watches; 6 × 9 | «desagrupar» ("It means spread."); echoes in the run |
-| 15 | spread a square | 526 − 254, 418 − 162, 649 − 275; 879 − 346, 563 − 128 | 735 − 391 = 344 | 6 × 7 stones (plain path, on land); the turtle's 8 × 6 | «unidades, decenas, centenas» (loose, rows, squares); "¡Eso es!" |
+| 15 | spread a square | 526 − 254, 418 − 162, 607 − 283 (a written zero at the tens); 879 − 346, 563 − 128 | 735 − 391 = 344 | 6 × 7 stones (plain path, on land); the turtle's 8 × 6 | «unidades, decenas, centenas» (loose, rows, squares); "¡Eso es!" |
 | 16 | both spreads; one leaves a zero | 432 − 178, 523 − 247, 645 − 278; 798 − 465, 917 − 653 | 811 − 356 = 455 (leaves a zero); 624 − 357 = 267 | 4 × 5 claws; "Is he right?" 7 × 8; the skunk's 7 × 9 | «reagrupar» (regroup); "¿Cuántos quedan?" (how many are left?) "¡Cuatro!" |
-| 17 | mixed; two steps; no hundreds left | 731 − 696 (no hundreds left), 764 − 321, 371 − 145, 614 − 253, 513 − 248 (leaves a zero): four kinds | 382 − 345 = 37 (the old tom's 43); 6 × 8 = 48, 48 − 19 = 29 | **Tricky Counts run 2**, whispered; the bat's 9 × 8 | «¿Hay que desagrupar?» (does it need a spread?), the chapter's own question; whispered echoes; «el tejón» (badger), the story word |
+| 17 | mixed; two steps; no hundreds left | 764 − 321 (no spread: it opens on a "no"), 371 − 145, 614 − 253, 731 − 696 (no hundreds left), 513 − 248 (leaves a zero): four kinds | 382 − 345 = 37 (the old tom's 43); 6 × 8 = 48, 48 − 19 = 29 | **Tricky Counts run 2**, whispered; the bat's 9 × 8 | «¿Hay que desagrupar?» (does it need a spread?), the chapter's own question; whispered echoes; «el tejón» (badger), the story word |
 | 18 | across a zero | 702 − 345, 604 − 137, 801 − 263; 305 − 102 (a zero that needs nothing), 710 − 254 (leaves a zero) | 503 − 278 = 225 (the homework); 8 × 9 = 72, 72 − 18 = 54 (Harrumph's worms) | the two-step's 8 × 9; the woolly bear's 6 × 7 | "Una centena son diez decenas." (a square is ten rows), in the zero's chain |
-| 19 | two zeros | 400 − 156, 600 − 248, 300 − 158; 857 − 431, 815 − 469 (leaves a zero) | 500 − 412 = 88; 7 × 7 = 49, 88 − 49 = 39; the ladybugs' 300 − 126 = 174 | warm-up; the two-step's 7 × 7 | «la diferencia» (how many more); "quinientos" |
+| 19 | two zeros | 400 − 156, 600 − 248, 300 − 158; 857 − 431, 815 − 69 (leaves a zero; a two-digit bottom) | 500 − 412 = 88; 7 × 7 = 49, 88 − 49 = 39; the ladybugs' 300 − 126 = 174 | warm-up; the two-step's 7 × 7 | «la diferencia» (how many more); "quinientos" |
 | 20 | mixed with zeros; "about" | 503 − 478, 700 − 349, 912 − 468; 410 − 136 (leaves a zero), 786 − 452 | 497 − 427 = 70 (no spread), about 100, not 700 | **Tricky Counts run 3** (Harrumph's "PROVE it."); Yawnpaw's three | «más o menos» (about); "¡Tú puedes!" |
 | 21 | the finale: both strands, can't fail | the story's | 700 − 463 = 237; 4 × 5 = 20; 500 − 382 = 118; 500 − 467 = 33 | the ferry's Counts, asked in Spanish, no 9s on the water | "¡NIEVE!"; "¡Quinientos! Five hundred." |
 
@@ -551,7 +556,9 @@ v0.2 asserts the rules rather than printing them): each spreads exactly where it
 lacks hundreds before chapter 17; no answer comes twice in a chapter; each lesson from chapter 13 is three of the new
 step and two older, at least one needing no spread (chapter 17, the mixed one: four kinds, one with no hundreds left);
 from chapter 16 a chapter has a spread that leaves a zero behind, and from chapter 17 its lesson does; a story problem
-that is also a lesson problem is asked once, in the story.
+that is also a lesson problem is asked once, in the story. v0.4's three changed rows are the kit's (section 3 of
+`docs/take-aways.md`), checked by its scripts (`~/potomac-crossing-work/take-aways/editor/check-v0.2.js`, and
+`editor3/check-v0.3.js`, which also checks this table against the kit's, row by row).
 
 **The store's running count** (fixed story numbers; the ones in brackets are only drawn on her book's page): 133 (day 1)
 → [178] (day 2) → 245 (day 4) → [301] (day 7) → 356 (day 10) → 382, 345 after the fall, 382 again once the thirty-seven
@@ -566,11 +573,15 @@ Chispa says one in Spanish); from chapter 14 one two-digit spread as the take-aw
 two-step's take-away is it); the new step worked once on the store, Chispa saying the column in Spanish; five problems,
 three of the new step and two older, at least one of them needing no spread, so she must ask "does this one need a
 spread?" (chapter 12, the first step, has four and its worked example; chapter 17, the mixed one, five of four kinds);
-then one or two of the story's own. About 4 to 4½ minutes, about 20% of a chapter: about seven or eight take-aways in
-all with the story's (the study budgets three Counts and seven, at 25 to 40 seconds a take-away). Each chapter is
-measured as played, and one that drags drops an older lesson problem first. Chapter 12 plans three Counts and six
-take-aways (the worked example, four problems, the store's), trims to five if it drags (368 − 145 goes) and takes
-589 − 267 only if it is fast (the study's own rule).
+then one or two of the story's own: about seven or eight take-aways in all with the story's. The study budgets three
+Counts and seven, at 25 to 40 seconds a take-away, about 4 to 4½ minutes; counted with what a chapter really holds (the
+made warm-up, the worked example's lines, a help and a twin to expect), the kit makes it about 4½ to 7 minutes, 22 to
+35% of a chapter (`docs/take-aways.md`, section 3). Each chapter is measured as played, and one that drags is cut in the
+kit's fixed order, which never breaks the rules above: a lesson problem only where the chapter's rules can spare one
+(chapters 17, 18 and 19 have none: each problem there carries a rule); then the made warm-up in a chapter with a Tricky
+Counts run; then the story's optional problem; then the Counts warm-up's third fact. The new step's three are never cut.
+Chapter 12 plans three Counts and six take-aways (the worked example, four problems, the store's), trims to five if it
+drags (368 − 145 goes) and takes 589 − 267 only if it is fast (the study's own rule).
 
 **The Tricky Counts runs** (chapters 14, 17 and 20, all on land) are the Moon Ferry's shape: eight facts, her tricky
 ones first, each in its own Count's picture, help on the sand, can't fail, somebody cheering. In chapter 17's tunnel she

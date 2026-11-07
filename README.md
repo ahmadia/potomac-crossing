@@ -184,6 +184,10 @@ she passes them and gives her warrior name (decision 52). Module 2 (the badger's
     Chispapaw, on her first day as a warrior, and Tallyheart still teaches them both; one badger, Harrumph, keeps the
     Accord for one frost-time (decision 7's bad guys stay wary of badgers as a kind); Reynard is the hidden hand
     behind the rumours, seen only far off; the real reward at the end is a fossil shark tooth.
+55. **Her word for a spread** (Aron, 2026-11-07): Lissa prefers *desagrupo*, "breaking it into groups". So the kit's
+    method stands (a spread, the US decomposition method; "me llevo una" is not hers), and *desagrupar* is her class's
+    word, said as she says it: «desagrupo». Claude's calls on it are under "Claude's calls" (her word at chapter 13's
+    first spread).
 
 ## Claude's calls under decision 46
 
@@ -1154,6 +1158,20 @@ Each is Aron's to reverse.
   tail's keep-out; story-ch05: the dash; story-ch06: the snug page; story-ch09 and story-ch10: the staging; story-ch11: the
   bar); the chapter 9 golden and chapter 11's fingerprint of chapter 10 name the staging's deltas, each scene put back as it
   shipped, so anything else that moves still fails. The suite: 39 files, 1,790 tests, all pass.
+- **The Warrior Counts' difficulty, after the first real sittings** (2026-11-07, from the grown-ups corner Aron sent;
+  the numbers stay off this public repo, in `~/potomac-crossing-work/difficulty/`): a not-yet a few short of the pass,
+  then a pass the same day, the shape section 5 of `docs/warrior-counts.md` designs for. No fact was missed in both
+  sittings; about half the misses were one group off (a skip-count that lost its place) and a third within two of the
+  answer; none was cut short, so the corner's "a slip?" mark never showed. **Kept as it is**: the pass stays 50 of 55 and
+  no slip is forgiven, since none of the misses was a keypad slip and forgiving the near ones would have taken the
+  not-yet away. Module 2 keeps her missed facts fresh from her own log (the warm-ups' hardest-first order, the Hollow's
+  cross-table warm-up), and chapter 13's lullaby is one of them.
+- **Her word at the first spread** (2026-11-07, on decision 55): «¡Desagrupo!» comes in chapter 13, the first chapter
+  with a spread, where it means most, not in chapter 14 as planned: Chispapaw whispers it as the row spreads, glossed with
+  Lissa's own words ("breaking it into groups"), beside «¡No alcanza!». The English stays the kit's "spread a row" (her
+  class works in Spanish, so the English is ours, and "spread" is what the store's picture shows). Chapter 14 has it again
+  as Chispapaw's word at a spread; chapter 17's «¿Hay que desagrupar?» is unchanged. `docs/module-2.md`'s table follows.
+  Still open and not blocking: how her class marks a spread on paper and whether it heads the columns C D U.
 
 ## Open questions, waiting on Aron
 

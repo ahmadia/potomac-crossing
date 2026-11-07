@@ -184,6 +184,10 @@ she passes them and gives her warrior name (decision 52). Module 2 (the badger's
     Chispapaw, on her first day as a warrior, and Tallyheart still teaches them both; one badger, Harrumph, keeps the
     Accord for one frost-time (decision 7's bad guys stay wary of badgers as a kind); Reynard is the hidden hand
     behind the rumours, seen only far off; the real reward at the end is a fossil shark tooth.
+55. **Her word for a spread** (Aron, 2026-11-07): Lissa prefers *desagrupo*, "breaking it into groups". So the kit's
+    method stands (a spread, the US decomposition method; "me llevo una" is not hers), and *desagrupar* is her class's
+    word, said as she says it: «desagrupo». Claude's calls on it are under "Claude's calls" (her word at chapter 13's
+    first spread).
 
 ## Claude's calls under decision 46
 
@@ -1162,6 +1166,12 @@ Each is Aron's to reverse.
   no slip is forgiven, since none of the misses was a keypad slip and forgiving the near ones would have taken the
   not-yet away. Module 2 keeps her missed facts fresh from her own log (the warm-ups' hardest-first order, the Hollow's
   cross-table warm-up), and chapter 13's lullaby is one of them.
+- **Her word at the first spread** (2026-11-07, on decision 55): «¡Desagrupo!» comes in chapter 13, the first chapter
+  with a spread, where it means most, not in chapter 14 as planned: Chispapaw whispers it as the row spreads, glossed with
+  Lissa's own words ("breaking it into groups"), beside «¡No alcanza!». The English stays the kit's "spread a row" (her
+  class works in Spanish, so the English is ours, and "spread" is what the store's picture shows). Chapter 14 has it again
+  as Chispapaw's word at a spread; chapter 17's «¿Hay que desagrupar?» is unchanged. `docs/module-2.md`'s table follows.
+  Still open and not blocking: how her class marks a spread on paper and whether it heads the columns C D U.
 
 ## Open questions, waiting on Aron
 

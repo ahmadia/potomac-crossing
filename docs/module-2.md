@@ -541,8 +541,8 @@ Five amendments:
 | Ch | Take-aways step | Lesson problems (new step; older) | Story uses (checked) | Counts kept fresh | Spanish (from the words table) |
 |---|---|---|---|---|---|
 | 12 | loose, rows, squares; the column; no spread | worked on a planned store: 254 − 131; then 58 − 23, 76 − 42, 475 − 132, 368 − 145 (589 − 267 only if play shows it fast) | 175 − 42 = 133; reading the store | three: her two hardest, then one more | counting; the first right answer echoed ("¡Siete por ocho, cincuenta y seis!" if it is 7 × 8); "¡A contar!"; the paw thing to "¡cincuenta!" |
-| 13 | spread a row, two digits | 43 − 16, 70 − 34, 85 − 39; 97 − 52, 486 − 253 | 52 − 27 = 25 | 3 × 4 paws; 6 × 8 hunters; the groundhog's 7 × 8 | «la resta» (take-aways); "¡No alcanza!" (not enough!) at the first spread |
-| 14 | spread a row, three digits | 352 − 127, 640 − 218, 462 − 135; 768 − 315, 586 − 231 | 473 − 245 = 228 | **Tricky Counts run 1**; 3 × 7 watches; 6 × 9 | «desagrupar» ("It means spread."); echoes in the run |
+| 13 | spread a row, two digits | 43 − 16, 70 − 34, 85 − 39; 97 − 52, 486 − 253 | 52 − 27 = 25 | 3 × 4 paws; 6 × 8 hunters; the groundhog's 7 × 8 | «la resta» (take-aways); "¡No alcanza!" (not enough!) and her word «¡Desagrupo!» (breaking it into groups) at the first spread (decision 55) |
+| 14 | spread a row, three digits | 352 − 127, 640 − 218, 462 − 135; 768 − 315, 586 − 231 | 473 − 245 = 228 | **Tricky Counts run 1**; 3 × 7 watches; 6 × 9 | «¡Desagrupo!» again, Chispapaw's word at a spread now that she knows it; echoes in the run |
 | 15 | spread a square | 526 − 254, 418 − 162, 607 − 283 (a written zero at the tens); 879 − 346, 563 − 128 | 735 − 391 = 344 | 6 × 7 stones (plain path, on land); the turtle's 8 × 6 | «unidades, decenas, centenas» (loose, rows, squares); "¡Eso es!" |
 | 16 | both spreads; one leaves a zero | 432 − 178, 523 − 247, 645 − 278; 798 − 465, 917 − 653 | 811 − 356 = 455 (leaves a zero); 624 − 357 = 267 | 4 × 5 claws; "Is he right?" 7 × 8; the skunk's 7 × 9 | «reagrupar» (regroup); "¿Cuántos quedan?" (how many are left?) "¡Cuatro!" |
 | 17 | mixed; two steps; no hundreds left | 764 − 321 (no spread: it opens on a "no"), 371 − 145, 614 − 253, 731 − 696 (no hundreds left), 513 − 248 (leaves a zero): four kinds | 382 − 345 = 37 (the old tom's 43); 6 × 8 = 48, 48 − 19 = 29 | **Tricky Counts run 2**, whispered; the bat's 9 × 8 | «¿Hay que desagrupar?» (does it need a spread?), the chapter's own question; whispered echoes; «el tejón» (badger), the story word |
@@ -595,9 +595,9 @@ Spanish follows her classroom's words. Rules: a Spanish line stays short (eight 
 English nearby the first time a chapter uses it; no story information is in Spanish only; Latin American spelling and
 words; lettered in italics, `lang="es"`; read by the iPad's Spanish voice, or its English gloss when there is none,
 never by an English voice; never said aloud on the mini. Every word, Spanish and English, lives in one table
-(`PC.words`), so a class word changes in one line (decision 53: the regrouping words are *reagrupar* and *desagrupar*
-until her class's are known). **Never a different method:** take-aways are decomposition, the US method; if Lissa says
-"me llevo una" for a take-away, her class may teach the Spain-style method, which needs a note before chapter 13.
+(`PC.words`), so a class word changes in one line (decision 53; decision 55: her word for a spread is *desagrupo*,
+"breaking it into groups"). **Never a different method:** take-aways are decomposition, the US method, and decision 55
+confirms it is hers ("me llevo una", the Spain-style method, is not).
 
 **Rules** (module 1's, kept): she types every answer; both orders for Counts; no clock on screen (Tallyheart notices
 speed out loud); after a miss, the sand, then the twin later; the Counts never block the story; praise is specific, and
@@ -809,5 +809,7 @@ recommendation; the plan is written to it.
    ready.
 
 *Not a decision, but a fact only you can find out:* the words Lissa's class uses for regrouping, and whether she ever
-says "me llevo una" when subtracting. Until then the plan uses *reagrupar* and *desagrupar* (decision 53); either answer
-is one line in the words table, or a note before chapter 13.
+says "me llevo una" when subtracting. **Answered by decision 55** (2026-11-07): she prefers *desagrupo*, "breaking it into
+groups", so the US method stands and her word comes at chapter 13's first spread. Still open, and not blocking: how her
+class marks a spread on paper (13 above a struck 3, the kit's way, or a small 1 before the 3) and whether it heads the
+columns C D U; either is one CSS rule and the heads.

@@ -101,7 +101,8 @@ new one." and "Every Count a warrior needs.", and the Counts are the times table
    coming; the frost itself is chapter 13's first morning. A title panel over her nest ("Chapter 12: A Spark at the
    Hedge") so the start frame shows.
 2. **Module 1's last thread is paid in one screen** at the midday count, one caption and Sloshbank's word: "Yesterday,
-   while you sat your Counts, both Clans carried their prey home from the stash." (chapter 10: "Tomorrow, CrystalClan
+   after your Counts, both Clans carried their prey home from the stash." (the story's v0.4 wording: "after", not
+   "while you sat", since her Warrior Counts may have been sat on another day; decision 49) (chapter 10: "Tomorrow, CrystalClan
    and ReedClan bring their prey home from the stash."; Sloshbank sent word: "OURS came home. *Drip.*"), and "This
    morning, while you slept, the weasels' tunnel was filled with stones." No raft: the stash is in the railway bank,
    inland. No line changes chapter 11's dawn count (forty, the pile whole), and no line says which way she went on

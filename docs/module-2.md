@@ -284,7 +284,7 @@ is the new moon** (age 0 of the next cycle: no night scene falls on days 12 to 1
 **12. A Spark at the Hedge** · day 1 · camp, the hedge, the Training Hollow, the store under the Old Bridge (a new camera)
 - *The duty:* her first day as a warrior: the store, and an apprentice.
 - *Story:* She wakes at midday in her warrior's nest ({Murmur}chime: "Warriors don't sleep till NOON. Usually."). The
-  midday count pays module 1's last thread in one screen: yesterday, while she sat her Counts, both Clans carried their
+  midday count pays module 1's last thread in one screen: yesterday, after her Counts, both Clans carried their
   prey home from the stash (chapter 10's "Tomorrow"; Sloshbank sent word: "OURS came home. *Drip.*"), and this morning,
   while she slept, the weasels' tunnel was filled with stones. Glintstar: "Thymeleaf's whiskers say snow by the full
   moon." So she makes a frost-time store in the dry den under the Old Bridge ("It kept a dragon dry."): five hundred

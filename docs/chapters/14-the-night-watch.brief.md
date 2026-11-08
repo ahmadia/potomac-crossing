@@ -68,7 +68,8 @@ never told. The badger is a sneeze, a voice and some prints: heard, never seen, 
   (1,450 to 1,650), chapter 13's length, on one reading, measured as chapters 12 and 13 were (123 words a minute, 2 s a
   screen, 3 a Tap, 6 a choice, 10 the dream). The draft measures the maths' share on every path: about a quarter at the
   middle maths, never past a third at the top; past it, the warm-up's third Count goes, and the words never go down to
-  make room. Decision 47's cap of about 2,000 words stands, but would play 25½ to 28½;
+  make room. The share counts the Counts and take-away pages she types on, as chapters 12 and 13 were measured; the story
+  screens around them (the why's sand, Tallyheart's lines) are story, which is how decision 10's mentor teaches. Decision 47's cap of about 2,000 words stands, but would play 25½ to 28½;
   module-2's row (1,900 words, 21 minutes) predates the kit's timing, as chapter 13's did.
 - **The maths, cut to decision 56.** Nine Counts (three in the warm-up, 3 × 7, the run's five) and five take-aways (four
   lesson problems and the wall's): the run is five, not eight, 586 − 231 is cut (decision 56) and the made warm-up with it
@@ -83,7 +84,7 @@ never told. The badger is a sneeze, a voice and some prints: heard, never seen, 
 - **New cast: one**, the salamander; the young ReedClan tom gains a pebble on a string. On screen otherwise: Tallyheart,
   Glintstar, {Murmur}chime, Chispapaw, the grey tom, Sloshbank, the young ReedClan tom (the ReedClan she-cat only if the
   wall's panel needs her, silent). No Riffle, Granny, Waffles, Thymeleaf, the old tom or GroveClan.
-- **Cut to fit**, in this order, past 1,350 words: the walk along the wall (to one screen); {Murmur}chime's lines at the
+- **Cut to fit**, in this order, past 1,650 words: the walk along the wall (to one screen); {Murmur}chime's lines at the
   wall (one kept); Chispa's question at the fountain; "Badgers say THANK YOU?" to one line; the morning callback in the
   nest. Never the lesson's story lines, the holes and their marks, the pebble, the boast, the suspicion, the rumour, the
   watches, the grey tom asleep, the ear, the run, the sneeze and its thank-yous, the prints, the grey tom's plant or the
@@ -137,7 +138,7 @@ and the Counts kept fresh twice: the warm-up in the Hollow in the morning, the f
   picture (chapter 6's patrols of three), its right line counting guards.
 - **The run (Tricky Counts run 1), at night by the store** (call 8): **five Counts** (decision 56; the Moon Ferry's eight), Tallyheart asking, **her three hardest
   over the 54 pairs first** (the kit's cross-table keys on a story set, `warmHard: { table: 'all', at: [0, 1, 2],
-  avoid: [[3, 7]] }`: data only), then the set's own. Its own five, the first three standing in for hard facts she lacks:
+  avoid: [[3, 7], [5, 7], [10, 8]] }`: data only; the run's two echoed pairs are never her picks, so they always end the run), then the set's own. Its own five, the first three standing in for hard facts she lacks:
   **6 × 6, 3 × 9, 4 × 8**, then **5 × 7, 10 × 8** (two Counts' pictures to end on, so the run ends on two she knows, the
   Moon Ferry's cheer; no neighbours sharing a number, every answer new to the chapter: a subset of v1's eight, `check.txt`,
   section 4; the spec adds `alt`s). Each in its anchor

@@ -16,7 +16,10 @@
  * SLOW: measured on the mini (2026-11-02, one file at a time, nothing else running): tests/scenes.test.js 37 s and
  * 2.5 GB (the byte-for-byte fingerprints of every shipped frame); cats.test.js 8 s and 1.4 GB (every cast member's
  * fingerprints); golden-ch07, -ch08 and -ch09 6 to 9 s each (whole recorded readings); warrior-engine.test.js 9 s
- * (the goldens' cats migrated). Every other file is under 8 s and 520 MB, most under 3 s.
+ * (the goldens' cats migrated). takes-exhaustive.test.js (2026-11-07) about 7 s and 0.5 GB: all 498,465 plans, 2,000
+ * helps of each kind, 1,000 seeds of twins (and the chapter-7 golden's end cats, after a take lesson). Slow by design,
+ * docs/take-aways.md section 9; the by-value cases are in takes-engine.test.js, in the fast tier. Every other file is
+ * under 8 s and 520 MB, most under 3 s.
  */
 import { spawn, execFileSync } from 'child_process';
 import { createWriteStream, mkdirSync, readdirSync, existsSync } from 'fs';
@@ -25,7 +28,7 @@ import { basename, dirname, join, resolve } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-export const SLOW = ['scenes.test.js', 'cats.test.js', 'golden-ch07.test.js', 'golden-ch08.test.js', 'golden-ch09.test.js', 'warrior-engine.test.js'];
+export const SLOW = ['scenes.test.js', 'cats.test.js', 'golden-ch07.test.js', 'golden-ch08.test.js', 'golden-ch09.test.js', 'warrior-engine.test.js', 'takes-exhaustive.test.js'];
 export const MAX_CONCURRENCY = 4;
 
 /* Every test file node --test would run, in its order (tests/*.test.js). */

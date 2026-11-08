@@ -213,6 +213,11 @@
  *     `who` of dragonets: Hail and Mizzle behind their forepaws, `shape: true` (a soft faceless dragonet in the
  *     mist, a misty forepaw), up to seven in one row. The sand at per 7 where plain: four and three.
  *
+ * The take-aways kit (docs/take-aways.md v0.3, section 8; its own section near the end of this file, "the take-aways
+ * kit"): PC.art.placeValue(o) (the store: squares, rows and loose; taken, fresh, a spread in flight, the tap page's
+ * glow, as marks, small), PC.art.sand({ kind: 'quick', … }) (the help's sand drawn the quick way: one new branch, every
+ * other call as it was) and PC.art.quickMarks(x, y, scale, o) (the same marks as a group for a set; art.kit.quick).
+ *
  * `svg` is markup for a group (no outer <svg>) drawn in a local box 0..w x 0..h, with the
  * character's feet centred at (w/2, h). Every character is drawn facing right and mirrored for
  * facing left. Ids (clip paths, shapes) carry a module counter, so many characters can share
@@ -8748,6 +8753,8 @@
     var o = opts || {};
     // chapter 5: answers scratched in the sand (`answers: [18, 36]`: the picture of "Every nines answer hides a nine!")
     if (o.kind === 'answers' || Array.isArray(o.answers)) return answersPicture(o);
+    // the take-aways kit: the help's sand drawn the quick way (squares, lines and dots; quickSand, below)
+    if (o.kind === 'quick') return quickSand(o);
     var groups = clamp(intOr(o.groups, 1), 0, 20), per = clamp(intOr(o.per, 1), 1, 10);
     var counted = clamp(intOr(o.counted, 0), 0, groups * per);
     var G = GROUNDS[o.ground] || GROUNDS.sand, rows = o.layout === 'rows';
@@ -8907,6 +8914,480 @@
     if (rubbed) label += ': one line rubbed out of ' + (rubbed === groups ? 'every pair' : rubbed + (rubbed === 1 ? ' pair' : ' pairs'));
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + N(W) + ' ' + N(H) + '" role="img" aria-label="' + label + '">' + s + '</svg>';
   }
+
+  // ================================================================== the take-aways kit
+  //
+  // docs/take-aways.md v0.3 (sections 1, 2 and 8): the store picture, the help's sand drawn the quick way, and the
+  // quick marks for a set to place, built from the option objects pinned in section 8. Nothing here is reached by
+  // any call chapters 1 to 11 make: `PC.art.sand` takes one new branch, `kind: 'quick'`, and the rest is new.
+  //
+  // PC.art.placeValue(o) -> '<svg …>' (the store picture, in the lesson panel or, `small`, on a book page)
+  //   o = { hundreds, tens, ones, taken: { hundreds, tens, ones }, fresh: { tens, ones }, spread: null | { from:
+  //   'hundreds' | 'tens', to: 'tens' | 'ones', stage: 'slide' | 'open' | 'end' }, glow: null | 'hundreds' | 'tens',
+  //   kind: 'store' | 'marks', small: bool }.
+  //   - Three zones in the column's order, left to right: squares (a hundred: a flat 10 x 10 of tiny prey on a
+  //     pressed square, two to a row), rows (ten: chapter 4's rows of prey, all facing one way, mice and voles
+  //     turn about, a little gap after five) and loose (the pile's own prey, PC.art.prey, looked up when drawn, else
+  //     preyFallback). The squares' zone is left out when there are no squares to show (no hundreds, none taken,
+  //     no rows fresh from a square, no square spreading or glowing): a two-digit problem gets the room.
+  //   - Counts are as they stand, a spread counted as landed: `fresh` (10, or 9 once a row of a square's ten has
+  //     spread on across a zero) is how many of a zone's pieces are a spread's ten, drawn as a block of its own on a
+  //     pressed tray under the old ones in the zone (a ten-frame of loose, two rows of five; a block of ten rows),
+  //     with one place empty (a smooth pressed mark) for a 9. `taken` goes pale and dashed (a pressed ghost of the
+  //     piece, never eaten), the old pieces first, then the fresh, each from its block's end (so what is left is a
+  //     block filled from its start: thirteen take eight leaves the ten-frame's top row).
+  //   - `spread`: the fresh block of the `to` zone is the piece in flight. 'slide': one row (or one square) drawn
+  //     where the block will be, its CSS animation sliding it there from the place it left (600 ms); 'open': the
+  //     ten pieces drawn in their places, each animated out of the row (or the square) into its place (400 ms);
+  //     'end' draws what no spread draws. The animation lives in a <style> inside the picture, all of it under
+  //     prefers-reduced-motion: no-preference (as PC.art.css), so a Reduce Motion page sees each stage's end.
+  //   - `glow`: the zone the 'tap' page asks for, lit gold over the picture's full height (class pc-pv-glow, with
+  //     art.css's soft pulse). Every zone carries an unpainted <rect class="pc-zone" data-zone="hundreds|tens|
+  //     ones">, the full height and, between them, the full width: the page's tap targets.
+  //   - Each piece is one group with a class (pc-pv-square, pc-pv-row, pc-pv-loose; plus pc-pv-fresh, pc-pv-taken,
+  //     pc-pv-empty, pc-pv-moving) and `data-box="x y w h"`, its box in the picture, for the tests and the tools.
+  //   - `kind: 'marks'`: the same zones as the quick picture on sand (a square, a line, a dot), never as prey.
+  //   - `small`: a book page's: nothing reserved for spreads that did not happen, the picture cropped to its pieces.
+  // PC.art.sand({ kind: 'quick', hundreds, tens, ones, crossed: { squares, lines }, fresh: { lines, dots }, take, lit,
+  //   col: 0 | 1 | 2, ground }) -> '<svg …>' (the help's sand, section 2): the number as it stands drawn the quick
+  //   way in the sand's own strokes, one box a column (col 0 the ones, 1 the tens, 2 the hundreds, as the plan
+  //   counts them; the column on lit). Crossed marks are drawn struck through and dim, the old ones first and
+  //   each block's last: the lines drawn are `tens` + `crossed.lines`, the fresh among them `fresh.lines`, so a
+  //   crossed line past the old ones is a fresh one (503 - 278 after the chain: ten lines, all fresh, the last
+  //   crossed). The ten new marks a spread drew sit in a scratched frame under the old ones (dots two rows of
+  //   five). `take` of column `col`'s standing marks are being taken, old first, each from its block's end: the
+  //   first `lit` of them are taken (lit gold and struck), the rest glow softly, waiting. `ground` as GROUNDS.
+  // PC.art.quickMarks(x, y, scale, o) -> '<g …>…</g>', o = { hundreds, tens, ones, ground }: the same marks as one
+  //   group for a set to place (scenes.js's art.kit.quick delegates here), its middle at (x, y); at scale 1 a
+  //   square is 56 across, as in the sand. PC.art.quickMarks.size(o) -> { w, h } at scale 1.
+
+  var PV_W = 1600, PV_ZONES = ['hundreds', 'tens', 'ones'];
+  var PV = {
+    mat: '#dcc18b', matEdge: '#c4a269', tray: '#cfb07a', trayEdge: '#a8874f', cell: '#b9985f', press: '#c5a46c',
+    ghost: '#f4e9cf', ghostEdge: '#a3845a', tinyGhost: '#ecdcb9', glow: '#fff3c2', glowEdge: '#f2b23a', shadow: '#2A2236'
+  };
+  // A piece of a row, drawn small: the pile set's mouse and vole (app/art/sets/pile.js, PREY), the same outlines in
+  // the same frame (110 x 64, resting on y = 64, facing right), with the few parts that read at this size
+  var PV_PREY = {
+    mouse: { body: 'M10 64C2 50 4 22 26 12C40 5 62 4 76 14C86 21 94 31 101 44Q106 52 106 57Q104 64 92 64Z', back: [58, 12, 10], ear: [71, 15, 12.5],
+      belly: 'M68 64Q68 50 82 46Q97 45 102 55Q103 64 92 64Z', eye: 'M83 30Q88 35 93 30', nose: [105, 55, 3.8],
+      fur: '#AE998A', dark: '#8C7666', bellyC: '#F2E6D6', inner: '#F2B6B4', noseC: '#E58C9C' },
+    vole: { body: 'M8 64C0 46 8 16 36 10C60 4 86 12 98 32C104 42 106 52 102 58Q98 64 88 64Z', back: null, ear: [70, 13, 7],
+      belly: 'M64 64Q64 50 78 46Q93 45 99 54Q100 64 90 64Z', eye: 'M80 31Q85 36 90 31', nose: [101, 51, 3.6],
+      fur: '#8E6448', dark: '#6E4C36', bellyC: '#E3C59E', inner: '#C99480', noseC: '#B8707C' }
+  };
+  function pvNum(v, lo, hi) { v = Math.round(+v); return isFinite(v) ? clamp(v, lo, hi) : lo; }
+  function pvBox(b) { return ' data-box="' + N(b.x) + ' ' + N(b.y) + ' ' + N(b.w) + ' ' + N(b.h) + '"'; }
+  function pvCirc(c) { return 'M' + N(c[0] - c[2]) + ',' + N(c[1]) + 'a' + N(c[2]) + ',' + N(c[2]) + ' 0 1,0 ' + N(c[2] * 2) + ',0a' + N(c[2]) + ',' + N(c[2]) + ' 0 1,0 ' + N(-c[2] * 2) + ',0Z'; }
+  // the kit's picture words, read when drawn from the engine's words table when it has them (decision 53: a class
+  // word changes in one place), else English
+  function pvWord(k, d) {
+    var w = null;
+    try { w = PC.engine && PC.engine.TAKE_WORDS; if (typeof w === 'function') w = w(); } catch (e) { w = null; }
+    return w && typeof w[k] === 'string' && w[k] ? w[k] : d;
+  }
+  // which of a block's places are taken: `n` of a zone whose old block holds `a` and fresh block `b`, the old first,
+  // each block from its end
+  function pvTake(a, b, n) { var o = Math.min(n, a); return { old: o, fresh: Math.min(b, n - o) }; }
+
+  // ----- the pieces (each drawn in the picture's units)
+
+  // one row piece, its middle-bottom at (cx, base), `wd` across
+  function pvPreySmall(kind, cx, base, wd) {
+    var p = PV_PREY[kind] || PV_PREY.mouse, k = wd / 110, s = '';
+    s += '<path d="' + p.body + '" transform="translate(0 2.5)" fill="' + PV.shadow + '" opacity=".22"/>';
+    if (p.back) s += '<circle cx="' + p.back[0] + '" cy="' + p.back[1] + '" r="' + p.back[2] + '" fill="' + p.dark + '"/>';
+    s += '<path d="' + p.body + '" fill="' + p.fur + '"/><path d="' + p.belly + '" fill="' + p.bellyC + '"/>' +
+      '<circle cx="' + p.ear[0] + '" cy="' + p.ear[1] + '" r="' + p.ear[2] + '" fill="' + p.fur + '"/>' +
+      '<circle cx="' + N(p.ear[0] + 1) + '" cy="' + N(p.ear[1] + 1) + '" r="' + N(p.ear[2] * 0.58) + '" fill="' + p.inner + '"/>' +
+      '<path d="' + p.eye + '" stroke="#3B2C27" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+      '<circle cx="' + p.nose[0] + '" cy="' + p.nose[1] + '" r="' + N(p.nose[2] * 1.3) + '" fill="' + p.noseC + '"/>';
+    return '<g transform="translate(' + N(cx - 55 * k) + ' ' + N(base - 64 * k) + ') scale(' + N3(k) + ')">' + s + '</g>';
+  }
+  function N3(v) { return String(Math.round(v * 1000) / 1000); }
+  // a piece gone: a pale pressed ghost with a dashed edge (`press` true: an empty place, no edge)
+  function pvGhost(kind, cx, base, wd, press) {
+    var p = PV_PREY[kind] || PV_PREY.mouse, k = wd / 110, sil = p.body + pvCirc(p.ear) + (p.back ? pvCirc(p.back) : '');
+    var s = '<path d="' + sil + '" fill="' + (press ? PV.press : PV.ghost) + '"' + (press ? ' opacity=".85"' : '') + '/>';
+    if (!press) s += '<path d="' + p.body + '" fill="none" stroke="' + PV.ghostEdge + '" stroke-width="' + N(1.7 / k) + '" stroke-dasharray="' + N(5 / k) + ' ' + N(4 / k) + '" stroke-linecap="round" opacity=".9"/>';
+    return '<g transform="translate(' + N(cx - 55 * k) + ' ' + N(base - 64 * k) + ') scale(' + N3(k) + ')">' + s + '</g>';
+  }
+  // which prey sits at a place: the pile's rule (the same place always holds the same piece; neighbours differ)
+  function pvKind(i, j) { return (i + j) % 2 ? 'vole' : 'mouse'; }
+  // a row of ten in box b (its pieces 0.9 of a place across, a gap after five); `state` 'taken' | 'empty' | ''
+  function pvRow(b, seed, state) {
+    var p = (b.w - b.g5) / 10, wd = p * 0.9, base = b.y + 64 * wd / 110, s = '';
+    if (state === 'taken') s += '<rect x="' + N(b.x - p * 0.12) + '" y="' + N(b.y - p * 0.1) + '" width="' + N(b.w + p * 0.24) + '" height="' + N(b.h + p * 0.2) + '" rx="' + N(b.h * 0.5) + '" fill="none" stroke="' + PV.ghostEdge + '" stroke-width="' + N(Math.max(1.6, p * 0.06)) + '" stroke-dasharray="' + N(p * 0.22) + ' ' + N(p * 0.16) + '" opacity=".55"/>';
+    for (var i = 0; i < 10; i++) {
+      var cx = b.x + p / 2 + i * p + (i >= 5 ? b.g5 : 0), kind = pvKind(i, seed);
+      s += state === 'taken' ? pvGhost(kind, cx, base, wd) : state === 'empty' ? pvGhost(kind, cx, base, wd, true) : pvPreySmall(kind, cx, base, wd);
+    }
+    return s;
+  }
+  // a loose piece in cell b: the pile set's prey (its body layer), else our own
+  function pvLoose(b, seed, state) {
+    var kind = pvKind(seed, 0), wd = Math.min(b.w * 0.86, b.h * 1.42), base = b.y + b.h * 0.5 + wd * 0.29;
+    if (state) return pvGhost(kind, b.x + b.w / 2, base, wd, state === 'empty');
+    var fn = typeof art.prey === 'function' ? art.prey : preyFallback, q = null, q0 = { kind: kind, lit: false, seed: 700 + seed, facing: 'right', part: 'body' };
+    try { q = fn(q0); } catch (e) { q = null; }
+    if (!q || typeof q.svg !== 'string' || !q.svg || !(q.w > 0) || !(q.h > 0)) q = preyFallback(q0);
+    var k = wd / (q.w - 24 > 0 ? q.w - 24 : q.w), svg = q.svg.replace(/^\s*<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+    // (the pile's box has a margin of 12 at the left, right and top for its glow: the body is w - 24 across)
+    return '<g transform="translate(' + N(b.x + b.w / 2 - q.w * k / 2) + ' ' + N(base - q.h * k) + ') scale(' + N3(k) + ')">' + svg + '</g>';
+  }
+  // a hundred: ten rows of ten tiny prey pressed together on a square, drawn small and simple: each a round-capped
+  // stroke (a soft body lying down) and a dot of an ear, every mouse in one path and every vole in another
+  function pvSquare(b, state) {
+    var t = b.w / 10.6, v = b.w / 10.35, gap = t * 0.6, rx = t * 0.42, ry = v * 0.27, er = t * 0.15, body = { mouse: '', vole: '' }, ear = { mouse: '', vole: '' };
+    for (var r = 0; r < 10; r++) for (var c = 0; c < 10; c++) {
+      var cx = b.x + t * 0.5 + c * t + (c >= 5 ? gap : 0) + t * 0.04, cy = b.y + v * 0.62 + r * v, k = state ? 'mouse' : pvKind(c, r);
+      body[k] += 'M' + N(cx - rx + ry) + ',' + N(cy) + 'h' + N(2 * (rx - ry));
+      ear[k] += 'M' + N(cx + t * 0.2) + ',' + N(cy - ry * 0.85) + 'h.1';
+    }
+    var s = '<rect x="' + N(b.x - t * 0.3) + '" y="' + N(b.y - t * 0.3) + '" width="' + N(b.w + t * 0.6) + '" height="' + N(b.h + t * 0.6) + '" rx="' + N(t * 0.9) + '" fill="' + (state ? PV.ghost : PV.tray) + '" stroke="' + (state ? PV.ghostEdge : PV.trayEdge) + '" stroke-width="' + N(Math.max(2, t * 0.22)) + '"' +
+      (state ? ' stroke-dasharray="' + N(t * 0.8) + ' ' + N(t * 0.55) + '"' : '') + '/>';
+    (state ? ['mouse'] : ['mouse', 'vole']).forEach(function (k) {
+      var col = state ? PV.tinyGhost : PV_PREY[k].fur;
+      s += '<path d="' + body[k] + '" stroke="' + col + '" stroke-width="' + N(2 * ry) + '" stroke-linecap="round" fill="none"/><path d="' + ear[k] + '" stroke="' + col + '" stroke-width="' + N(2 * er) + '" stroke-linecap="round" fill="none"/>';
+    });
+    return s;
+  }
+
+  // ----- the quick marks: a square, a line, a dot, in the sand's strokes (art.sand's groove and shine)
+  function qkStroke(L) { return Math.max(3.4, Math.min(9, 4.6 * L / 56)); }
+  function qkSquareD(b) {
+    var L = b.w, x = b.x, y = b.y, w = L * 0.03;
+    return 'M' + N(x + w) + ',' + N(y + w * 2) + 'Q' + N(x + L / 2) + ',' + N(y - w) + ' ' + N(x + L - w) + ',' + N(y + w) +
+      'Q' + N(x + L + w) + ',' + N(y + L / 2) + ' ' + N(x + L - w * 2) + ',' + N(y + L - w) + 'Q' + N(x + L / 2) + ',' + N(y + L + w) + ' ' + N(x + w) + ',' + N(y + L - w * 1.5) + 'Q' + N(x - w) + ',' + N(y + L / 2) + ' ' + N(x + w) + ',' + N(y + w * 2) + 'Z';
+  }
+  function qkLineD(b) { var cx = b.x + b.w / 2, L = b.h; return 'M' + N(cx + L * 0.07) + ',' + N(b.y) + 'Q' + N(cx + L * 0.02) + ',' + N(b.y + L / 2) + ' ' + N(cx - L * 0.07) + ',' + N(b.y + L); }
+  function qkDotR(b) { return Math.min(b.w, b.h) * 0.3; }
+  // one mark: `what` 'square' | 'line' | 'dot'; `how` '' (scratched), 'lit' (taken: gold), 'pale' (the store's taken:
+  // pale and dashed); `strike` a slash through it (crossed: spent by a spread, or taken)
+  function qkMark(G, what, b, L, how, strike) {
+    var sw = qkStroke(L), lit = how === 'lit', pale = how === 'pale', s = '', col = lit ? '#e39a12' : G.groove, sh = lit ? '#fff4c2' : G.shine;
+    var dash = pale ? ' stroke-dasharray="' + N(sw * 1.6) + ' ' + N(sw * 1.3) + '"' : '', op = pale ? ' opacity=".45"' : strike && !lit ? ' opacity=".55"' : '';
+    if (what === 'dot') {
+      var c = [b.x + b.w / 2, b.y + b.h / 2, qkDotR(b)];
+      if (lit) s += '<circle cx="' + N(c[0]) + '" cy="' + N(c[1]) + '" r="' + N(c[2] + sw * 1.2) + '" fill="#ffd25e" opacity=".55"/>';
+      // (a pale dot's dashes: six round the ring, thin, so it reads as a dot gone pale, not a cog)
+      s += pale ? '<circle cx="' + N(c[0]) + '" cy="' + N(c[1]) + '" r="' + N(c[2]) + '" fill="' + G.shine + '" stroke="' + G.groove + '" stroke-width="' + N(sw * 0.32) + '" stroke-dasharray="' + N(Math.PI * c[2] / 4.5) + ' ' + N(Math.PI * c[2] / 9) + '"' + op + '/>' :
+        '<circle cx="' + N(c[0]) + '" cy="' + N(c[1]) + '" r="' + N(c[2]) + '" fill="' + col + '"' + op + '/><circle cx="' + N(c[0] - c[2] * 0.3) + '" cy="' + N(c[1] - c[2] * 0.3) + '" r="' + N(c[2] * 0.32) + '" fill="' + sh + '"' + op + '/>';
+    } else {
+      var d = what === 'square' ? qkSquareD(b) : qkLineD(b);
+      if (lit) s += '<path d="' + d + '" stroke="#ffd25e" stroke-width="' + N(sw * 2.8) + '" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".55"/>';
+      s += '<path d="' + d + '" stroke="' + col + '" stroke-width="' + N(sw) + '" stroke-linecap="round" stroke-linejoin="round" fill="none"' + dash + op + '/>';
+      if (!pale) s += '<path d="' + d + '" transform="translate(' + N(sw * 0.4) + ',0)" stroke="' + sh + '" stroke-width="' + N(sw * 0.3) + '" stroke-linecap="round" fill="none" opacity=".9"/>';
+    }
+    if (strike) {
+      // a slash, never a level line (a level line would read as a minus): lower left to upper right
+      var x0 = b.x + b.w / 2, y0 = b.y + b.h / 2, hx = what === 'line' ? L * 0.24 : what === 'dot' ? qkDotR(b) * 1.7 : L * 0.5, hy = what === 'line' ? L * 0.2 : hx;
+      s += '<path d="M' + N(x0 - hx) + ',' + N(y0 + hy) + 'L' + N(x0 + hx) + ',' + N(y0 - hy) + '" stroke="' + (lit ? '#b86a08' : G.groove) + '" stroke-width="' + N(sw * 1.1) + '" stroke-linecap="round"/>';
+    }
+    return s;
+  }
+
+  // ----- the layouts: each zone an old block and, under it, a block for a spread's ten
+
+  // the store's: `three` with the squares' zone
+  function pvStoreGeom(three) {
+    var P = three ? { s: 110, gs: 16, p: 43, g5: 14, rp: 36, cw: 130, ch: 96, fp: 12, lp: 10 } : { p: 65, g5: 20, rp: 52, cw: 146, ch: 104, fp: 14, lp: 12 };
+    var R = 10 * P.p + P.g5, rowH = 66.5 * (0.9 * P.p) / 110, zs = [];
+    if (three) zs.push({ id: 'hundreds', cw: 2 * P.s + P.gs, oldH: 5 * P.s + 4 * P.gs, freshH: 0 });
+    zs.push({ id: 'tens', cw: R + (three ? 2 * P.fp : 0), oldH: 8 * P.rp + rowH, freshH: three ? 9 * P.rp + rowH + 2 * P.fp : 0 });
+    zs.push({ id: 'ones', cw: 5 * P.cw + 2 * P.lp, oldH: 2 * P.ch, freshH: 2 * P.ch + 2 * P.lp });
+    return pvPlace(zs, function (z, cx, y0, bg) {
+      var i;
+      if (z.id === 'hundreds') for (i = 0; i < 9; i++) z.old.push({ x: cx + (i % 2) * (P.s + P.gs), y: y0 + Math.floor(i / 2) * (P.s + P.gs), w: P.s, h: P.s });
+      if (z.id === 'tens') {
+        var ox = cx + (three ? P.fp : 0);
+        for (i = 0; i < 9; i++) z.old.push({ x: ox, y: y0 + i * P.rp, w: R, h: rowH, g5: P.g5 });
+        if (three) {
+          var fy = y0 + z.oldH + bg;
+          z.tray = { x: cx, y: fy, w: R + 2 * P.fp, h: z.freshH };
+          for (i = 0; i < 10; i++) z.fresh.push({ x: ox, y: fy + P.fp + i * P.rp, w: R, h: rowH, g5: P.g5 });
+        }
+      }
+      if (z.id === 'ones') {
+        var lx = cx + P.lp, fy2 = y0 + z.oldH + bg;
+        for (i = 0; i < 10; i++) z.old.push({ x: lx + (i % 5) * P.cw, y: y0 + Math.floor(i / 5) * P.ch, w: P.cw, h: P.ch });
+        z.tray = { x: cx, y: fy2, w: 5 * P.cw + 2 * P.lp, h: z.freshH, cells: true };
+        for (i = 0; i < 10; i++) z.fresh.push({ x: lx + (i % 5) * P.cw, y: fy2 + P.lp + Math.floor(i / 5) * P.ch, w: P.cw, h: P.ch });
+      }
+    }, { W: PV_W, zp: 18, zg: 36, my: 30, bg: 28 });
+  }
+  // the quick picture's (the store as marks, and the help's sand): L the square's side and the line's length
+  function qkGeom(L, three, opt) {
+    var lp = L * 0.34, g5 = L * 0.26, dp = L * 0.5, pad = L * 0.13, zs = [], bw = 9 * lp + g5 + lp;
+    if (three) zs.push({ id: 'hundreds', cw: 3 * L + 2 * L * 0.28, oldH: 3 * L + 2 * L * 0.28, freshH: 0 });
+    zs.push({ id: 'tens', cw: bw + 2 * pad, oldH: L, freshH: L + 2 * pad });
+    zs.push({ id: 'ones', cw: 5 * dp + 2 * pad, oldH: 2 * dp, freshH: 2 * dp + 2 * pad });
+    return pvPlace(zs, function (z, cx, y0, bg) {
+      var i;
+      if (z.id === 'hundreds') for (i = 0; i < 9; i++) z.old.push({ x: cx + (i % 3) * L * 1.28, y: y0 + Math.floor(i / 3) * L * 1.28, w: L, h: L });
+      if (z.id === 'tens') {
+        var fy = y0 + z.oldH + bg;
+        for (i = 0; i < 10; i++) z.old.push({ x: cx + pad + i * lp + (i >= 5 ? g5 : 0), y: y0, w: lp, h: L });
+        z.tray = { x: cx, y: fy, w: z.cw, h: z.freshH };
+        for (i = 0; i < 10; i++) z.fresh.push({ x: cx + pad + i * lp + (i >= 5 ? g5 : 0), y: fy + pad, w: lp, h: L });
+      }
+      if (z.id === 'ones') {
+        var fy2 = y0 + z.oldH + bg;
+        for (i = 0; i < 10; i++) z.old.push({ x: cx + pad + (i % 5) * dp, y: y0 + Math.floor(i / 5) * dp, w: dp, h: dp });
+        z.tray = { x: cx, y: fy2, w: z.cw, h: z.freshH };
+        for (i = 0; i < 10; i++) z.fresh.push({ x: cx + pad + (i % 5) * dp, y: fy2 + pad + Math.floor(i / 5) * dp, w: dp, h: dp });
+      }
+    }, opt);
+  }
+  // the zones side by side, each its old block over its fresh one, every stack hanging from the same top (so the old
+  // blocks line up, and a zone's ten sits right under its old pieces)
+  function pvPlace(zs, fill, o) {
+    zs.forEach(function (z) { z.h = z.oldH + (z.freshH ? o.bg + z.freshH : 0); z.old = []; z.fresh = []; z.tray = null; });
+    var CH = Math.max.apply(null, zs.map(function (z) { return z.h; }));
+    var total = zs.reduce(function (a, z) { return a + z.cw + 2 * o.zp; }, 0) + o.zg * (zs.length - 1);
+    var W = o.W || total + 2 * o.mx, x = (W - total) / 2, H = CH + 2 * (o.my + o.zp);
+    zs.forEach(function (z) {
+      z.x = x; z.w = z.cw + 2 * o.zp; z.y = o.my; z.hh = CH + 2 * o.zp;
+      fill(z, x + o.zp, o.my + o.zp, o.bg);
+      x += z.w + o.zg;
+    });
+    return { W: W, H: H, zones: zs, byId: zs.reduce(function (m, z) { m[z.id] = z; return m; }, {}) };
+  }
+
+  // the moving pieces' CSS, one animation a distance, named by it (the same name is the same animation)
+  function pvAnim(A, dx, dy, k, ms) {
+    var nm = 'pcpv-' + [N(dx), N(dy), N3(k), String(ms)].join('_').replace(/-/g, 'n').replace(/\./g, 'p');
+    if (!A.seen[nm]) {
+      A.seen[nm] = true;
+      A.css.push('.' + nm + '{animation:' + nm + ' ' + ms + 'ms ' + (ms > 500 ? 'ease-in-out' : 'ease-out') + ' both}@keyframes ' + nm + '{from{transform:translate(' + N(dx) + 'px,' + N(dy) + 'px) scale(' + N3(k) + ')}to{transform:translate(0px,0px) scale(1)}}');
+    }
+    return nm;
+  }
+  function pvMoving(A, b, from, k, ms, cls, inner) {
+    // drawn at its place, its middle the group's origin, animated from `from` (its middle) at scale k
+    var cx = b.x + b.w / 2, cy = b.y + b.h / 2, nm = pvAnim(A, from[0] - cx, from[1] - cy, k, ms);
+    return '<g class="' + cls + ' pc-pv-moving"' + pvBox(b) + ' transform="translate(' + N(cx) + ' ' + N(cy) + ')"><g class="' + nm + '"><g transform="translate(' + N(-cx) + ' ' + N(-cy) + ')">' + inner + '</g></g></g>';
+  }
+
+  function pvState(o) {
+    o = o || {};
+    var t = o.taken && typeof o.taken === 'object' ? o.taken : {}, f = o.fresh && typeof o.fresh === 'object' ? o.fresh : {};
+    var st = { hundreds: pvNum(o.hundreds, 0, 9), tens: pvNum(o.tens, 0, 18), ones: pvNum(o.ones, 0, 18), marks: o.kind === 'marks', small: !!o.small };
+    st.fresh = { hundreds: 0, tens: pvNum(f.tens, 0, Math.min(10, st.tens)), ones: pvNum(f.ones, 0, Math.min(10, st.ones)) };
+    // (an old block holds nine rows, or ten loose: more than that is drawn as the block of a spread's ten)
+    if (st.tens - st.fresh.tens > 9) st.fresh.tens = 10;
+    if (st.ones - st.fresh.ones > 10) st.fresh.ones = 10;
+    st.taken = { hundreds: pvNum(t.hundreds, 0, st.hundreds), tens: pvNum(t.tens, 0, st.tens), ones: pvNum(t.ones, 0, st.ones) };
+    var sp = o.spread && typeof o.spread === 'object' ? o.spread : null;
+    st.spread = sp && (sp.from === 'hundreds' || sp.from === 'tens') && (sp.stage === 'slide' || sp.stage === 'open') ? { from: sp.from, to: sp.from === 'hundreds' ? 'tens' : 'ones', stage: sp.stage } : null;
+    st.glow = o.glow === 'hundreds' || o.glow === 'tens' ? o.glow : null;
+    st.three = st.hundreds > 0 || st.taken.hundreds > 0 || st.fresh.tens > 0 || !!(st.spread && st.spread.from === 'hundreds') || st.glow === 'hundreds';
+    return st;
+  }
+
+  art.placeValue = function (opts) {
+    var st = pvState(opts), G = st.marks ? GROUNDS.sand : null, L = 0, geo;
+    if (st.marks) {
+      // the quick picture filling the store's width (a two-digit one is capped, so its marks stay marks)
+      // (the zones' widths in L: squares 3.56, lines 3.92, dots 2.76; their patches and the gaps between them fixed)
+      L = Math.min(st.three ? 150 : 190, (PV_W - 48 - (st.three ? 6 * 18 + 2 * 36 : 4 * 18 + 36)) / (st.three ? 10.24 : 6.68));
+      geo = qkGeom(L, st.three, { W: PV_W, zp: 18, zg: 36, my: 30, bg: L * 0.3 });
+    } else geo = pvStoreGeom(st.three);
+    var A = { css: [], seen: {} }, pieces = [], under = '', trays = '', glow = '', W = geo.W, H = geo.H, kinds = { hundreds: 'square', tens: 'row', ones: 'loose' };
+    var mk = { hundreds: 'square', tens: 'line', ones: 'dot' };
+    function draw(zid, b, i, state) {
+      if (st.marks) return qkMark(G, mk[zid], b, L, state === 'taken' ? 'pale' : '', false);
+      return zid === 'hundreds' ? pvSquare(b, state) : zid === 'tens' ? pvRow(b, i, state) : pvLoose(b, i, state);
+    }
+    function piece(zid, b, i, cls, state) {
+      pieces.push({ box: b, svg: '<g class="pc-pv-' + kinds[zid] + cls + '"' + pvBox(b) + '>' + (st.marks && state === 'empty' ? '' : draw(zid, b, i, state)) + '</g>' });
+    }
+    geo.zones.forEach(function (z) {
+      var id = z.id, n = st[id], fr = st.fresh[id], old = n - fr, tk = pvTake(old, fr, st.taken[id]);
+      var landing = st.spread && st.spread.to === id;
+      for (var i = 0; i < old && i < z.old.length; i++) piece(id, z.old[i], i, i >= old - tk.old ? ' pc-pv-taken' : '', i >= old - tk.old ? 'taken' : '');
+      if (z.tray && (fr > 0 || landing || !st.small)) {
+        var tr = z.tray;
+        if (fr > 0 || landing) {
+          trays += st.marks ? '<rect x="' + N(tr.x) + '" y="' + N(tr.y) + '" width="' + N(tr.w) + '" height="' + N(tr.h) + '" rx="' + N(L * 0.16) + '" fill="none" stroke="' + G.groove + '" stroke-width="' + N(qkStroke(L) * 0.55) + '" opacity=".5"/>' :
+            '<rect class="pc-pv-tray" x="' + N(tr.x) + '" y="' + N(tr.y) + '" width="' + N(tr.w) + '" height="' + N(tr.h) + '" rx="16" fill="' + PV.tray + '" stroke="' + PV.trayEdge + '" stroke-width="3"/>';
+          if (tr.cells && !st.marks) {
+            var c0 = z.fresh[0], d = '';
+            for (var cc = 1; cc < 5; cc++) d += 'M' + N(c0.x + cc * c0.w) + ',' + N(c0.y + 6) + 'V' + N(c0.y + 2 * c0.h - 6);
+            d += 'M' + N(c0.x + 6) + ',' + N(c0.y + c0.h) + 'H' + N(c0.x + 5 * c0.w - 6);
+            trays += '<path d="' + d + '" stroke="' + PV.cell + '" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".7"/>';
+          }
+        }
+      }
+      if (landing) return;
+      for (var j = 0; j < 10 && j < z.fresh.length; j++) {
+        if (j < fr) piece(id, z.fresh[j], j + 3, ' pc-pv-fresh' + (j >= fr - tk.fresh ? ' pc-pv-taken' : ''), j >= fr - tk.fresh ? 'taken' : '');
+        else if (fr > 0 && id === 'tens') piece(id, z.fresh[j], j + 3, ' pc-pv-fresh pc-pv-empty', 'empty');
+      }
+    });
+    // the spread in flight: the `to` zone's fresh block, from the place the row (or square) left
+    if (st.spread) {
+      var zf = geo.byId[st.spread.from], zt = geo.byId[st.spread.to], tray = zt.tray, from;
+      if (st.spread.from === 'hundreds') from = zf.old[Math.min(8, st.hundreds)];
+      else from = st.fresh.tens === 9 && zf.fresh.length ? zf.fresh[9] : zf.old[Math.min(zf.old.length - 1, st.tens - st.fresh.tens)];
+      var fc = [from.x + from.w / 2, from.y + from.h / 2], ms = st.spread.stage === 'slide' ? 600 : 400;
+      // the row (or the square) slides to the middle of the block it opens into, and opens from there
+      var mb = { x: tray.x + tray.w / 2 - from.w / 2, y: tray.y + tray.h / 2 - from.h / 2, w: from.w, h: from.h, g5: from.g5 };
+      if (st.spread.stage === 'slide') {
+        var inner = st.marks ? qkMark(G, mk[st.spread.from], mb, L, '', false) : st.spread.from === 'hundreds' ? pvSquare(mb, '') : pvRow(mb, 1, '');
+        pieces.push({ box: mb, svg: pvMoving(A, mb, fc, 1, ms, 'pc-pv-' + kinds[st.spread.from], inner) });
+      } else {
+        // the ten, each out of its place in the row (or the square) into its own
+        for (var m = 0; m < 10; m++) {
+          var b = zt.fresh[m], src, k;
+          if (st.marks) {
+            // ten lines out of the square, side by side; ten dots out of the line, along it
+            src = st.spread.from === 'hundreds' ? [mb.x + (m + 0.5) * mb.w / 10, mb.y + mb.h / 2] : [mb.x + mb.w / 2, mb.y + (m + 0.5) * mb.h / 10];
+            k = st.spread.from === 'hundreds' ? 0.6 : 0.45;
+          } else if (st.spread.from === 'hundreds') {
+            // each row out of its row of the square, as small as it was there
+            src = [mb.x + mb.w / 2, mb.y + mb.w / 10.35 * (m + 0.62)];
+            k = mb.w / b.w;
+          } else {
+            // each piece out of its place in the row, as small as it was there
+            var p = (mb.w - mb.g5) / 10;
+            src = [mb.x + p / 2 + m * p + (m >= 5 ? mb.g5 : 0), mb.y + mb.h / 2];
+            k = (p * 0.9) / Math.min(b.w * 0.86, b.h * 1.42);
+          }
+          var body = st.marks ? qkMark(G, mk[st.spread.to], b, L, '', false) : st.spread.to === 'tens' ? pvRow(b, m + 3, '') : pvLoose(b, m + 3, '');
+          pieces.push({ box: b, svg: pvMoving(A, b, src, k, ms, 'pc-pv-' + kinds[st.spread.to] + ' pc-pv-fresh', body) });
+        }
+      }
+    }
+    // a book page's: cropped to its pieces
+    var top = 0;
+    if (st.small) {
+      var y1 = 0;
+      pieces.forEach(function (q) { y1 = Math.max(y1, q.box.y + q.box.h); });
+      geo.zones.forEach(function (z) { if (z.tray && (st.fresh[z.id] > 0)) y1 = Math.max(y1, z.tray.y + z.tray.h); });
+      var y0 = geo.zones.reduce(function (a, z) { return Math.min(a, z.old.length ? z.old[0].y : a); }, H);
+      if (!pieces.length) y1 = y0 + 40;
+      top = Math.max(0, y0 - 48);
+      H = Math.min(H, y1 + 48) - top;
+      geo.zones.forEach(function (z) { z.y = top + 14; z.hh = H - 28; });
+    }
+    // the zones: a pressed patch each (the sand for marks), the glow, the tap targets
+    var bounds = [], zl = geo.zones;
+    zl.forEach(function (z, i) { bounds.push(i ? (zl[i - 1].x + zl[i - 1].w + z.x) / 2 : 0); });
+    bounds.push(W);
+    if (st.marks) {
+      var edge = [];
+      for (var e = 0; e < 28; e++) {
+        var a = Math.PI * 2 * e / 28, kk = 0.97 + 0.03 * rand(e * 3 + 1), co = Math.cos(a), sn = Math.sin(a);
+        edge.push([W / 2 + (co < 0 ? -1 : 1) * Math.pow(Math.abs(co), 0.42) * (W / 2 - 5) * kk, top + H / 2 + (sn < 0 ? -1 : 1) * Math.pow(Math.abs(sn), 0.42) * (H / 2 - 5) * kk]);
+      }
+      under += groundPatch(G, W, H, edge);
+    }
+    zl.forEach(function (z) {
+      under += '<rect x="' + N(z.x) + '" y="' + N(z.y) + '" width="' + N(z.w) + '" height="' + N(z.hh) + '" rx="22" fill="' + (st.marks ? G.box : PV.mat) + '"' + (st.marks ? ' opacity=".55"' : ' stroke="' + PV.matEdge + '" stroke-width="3"') + '/>';
+      if (st.glow === z.id) glow += '<rect class="pc-pv-glow pcs-pulse" x="' + N(z.x - 10) + '" y="' + N(top + 6) + '" width="' + N(z.w + 20) + '" height="' + N(H - 12) + '" rx="26" fill="' + PV.glow + '" opacity=".85" stroke="' + PV.glowEdge + '" stroke-width="5" stroke-dasharray="16 11"/>';
+    });
+    var hits = '';
+    zl.forEach(function (z, i) { hits += '<rect class="pc-zone" data-zone="' + z.id + '" x="' + N(bounds[i]) + '" y="' + N(top) + '" width="' + N(bounds[i + 1] - bounds[i]) + '" height="' + N(H) + '" fill="none"/>'; });
+    var body = pieces.map(function (q) { return q.svg; }).join('');
+    var style = A.css.length ? '<style>@media (prefers-reduced-motion: no-preference){' + A.css.join('') + '}</style>' : '';
+    // what the picture says to a screen reader (the page may say it its own way)
+    var label;
+    if (st.marks) label = 'The quick picture: ' + st.hundreds + (st.hundreds === 1 ? ' square, ' : ' squares, ') + st.tens + (st.tens === 1 ? ' line and ' : ' lines and ') + st.ones + (st.ones === 1 ? ' dot' : ' dots');
+    else label = 'The store: ' + (st.three ? st.hundreds + ' ' + (st.hundreds === 1 ? pvWord('square', 'square') : pvWord('squares', 'squares')) + ', ' : '') +
+      st.tens + ' ' + (st.tens === 1 ? pvWord('row', 'row') : pvWord('rows', 'rows')) + ', ' + st.ones + ' ' + pvWord('loose', 'loose');
+    var gone = PV_ZONES.filter(function (id) { return st.taken[id]; });
+    if (gone.length) label += '; taken: ' + gone.map(function (id) { return st.taken[id] + ' ' + (id === 'hundreds' ? (st.marks ? 'squares' : pvWord('squares', 'squares')) : id === 'tens' ? (st.marks ? 'lines' : pvWord('rows', 'rows')) : (st.marks ? 'dots' : pvWord('loose', 'loose'))); }).join(', ');
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ' + N(top) + ' ' + N(W) + ' ' + N(H) + '" role="img" aria-label="' + label + '" data-art="place-value">' + style + under + glow + trays + body + hits + '</svg>';
+  };
+
+  // ----- the help's sand, drawn the quick way (PC.art.sand's `kind: 'quick'`)
+  function quickSand(o) {
+    var G = GROUNDS[o.ground] || GROUNDS.sand, cr = o.crossed && typeof o.crossed === 'object' ? o.crossed : {}, fr = o.fresh && typeof o.fresh === 'object' ? o.fresh : {};
+    var h = pvNum(o.hundreds, 0, 9), t = pvNum(o.tens, 0, 19), u = pvNum(o.ones, 0, 19), col = pvNum(o.col, 0, 2);
+    var cs = pvNum(cr.squares, 0, 9 - h), cl = pvNum(cr.lines, 0, 19 - t);
+    var lines = t + cl, fl = pvNum(fr.lines, 0, Math.min(10, lines)), fd = pvNum(fr.dots, 0, Math.min(10, u));
+    if (lines - fl > 10) fl = 10;
+    if (u - fd > 10) fd = 10;
+    var three = h + cs > 0 || col === 2, L = 56, geo = qkGeom(L, three, { zp: 16, zg: 18, my: 22, mx: 26, bg: L * 0.3 }), W = geo.W, H = geo.H;
+    // per column: [old, fresh] marks, and which of them are crossed (old first, each block from its end)
+    var ol = lines - fl, cOld = Math.min(cl, ol), cFresh = Math.min(fl, cl - cOld);
+    var zone = {
+      hundreds: { old: h + cs, fresh: 0, xo: cs, xf: 0, what: 'square' },
+      tens: { old: ol, fresh: fl, xo: cOld, xf: cFresh, what: 'line' },
+      ones: { old: u - fd, fresh: fd, xo: 0, xf: 0, what: 'dot' }
+    };
+    // the take: column `col`'s standing marks, old first, each from its block's end; the first `lit` of them taken
+    var cid = PV_ZONES[2 - col], cz = zone[cid], stOld = cz.old - cz.xo, stFresh = cz.fresh - cz.xf;
+    var take = pvNum(o.take, 0, stOld + stFresh), lit = pvNum(o.lit, 0, take), tk = pvTake(stOld, stFresh, take), lk = pvTake(stOld, stFresh, lit);
+    var s = '', edge = [];
+    for (var i = 0; i < 28; i++) {
+      var a = Math.PI * 2 * i / 28, k = 0.97 + 0.03 * rand(i * 3 + 1), c = Math.cos(a), sn = Math.sin(a);
+      edge.push([W / 2 + (c < 0 ? -1 : 1) * Math.pow(Math.abs(c), 0.42) * (W / 2 - 5) * k, H / 2 + (sn < 0 ? -1 : 1) * Math.pow(Math.abs(sn), 0.42) * (H / 2 - 5) * k]);
+    }
+    s += groundPatch(G, W, H, edge);
+    var dots = '';
+    for (var dd = 0; dd < Math.round(W * H / 900); dd++) dots += '<circle cx="' + N(W / 2 + (rand(dd * 5 + 2) - 0.5) * (W - 60)) + '" cy="' + N(H / 2 + (rand(dd * 5 + 3) - 0.5) * (H - 40)) + '" r="' + N(0.8 + rand(dd) * 1.4) + '"/>';
+    if (!G.log) s += '<g fill="' + G.dots + '" opacity=".7">' + dots + '</g>';
+    var marks = '';
+    geo.zones.forEach(function (z) {
+      var Z = zone[z.id], on = z.id === cid;
+      s += '<rect x="' + N(z.x) + '" y="' + N(z.y) + '" width="' + N(z.w) + '" height="' + N(z.hh) + '" rx="18" fill="' + G.box + '" opacity=".55"/>';
+      if (on) s += '<rect class="pc-col-on" x="' + N(z.x - 4) + '" y="' + N(z.y - 4) + '" width="' + N(z.w + 8) + '" height="' + N(z.hh + 8) + '" rx="22" fill="#fff3c2" opacity=".6" stroke="#f2b23a" stroke-width="3.5" stroke-dasharray="12 9"/>';
+      if (Z.fresh > 0) s += '<rect x="' + N(z.tray.x) + '" y="' + N(z.tray.y) + '" width="' + N(z.tray.w) + '" height="' + N(z.tray.h) + '" rx="' + N(L * 0.16) + '" fill="none" stroke="' + G.groove + '" stroke-width="2.4" opacity=".45"/>';
+      [['old', z.old, Z.old, Z.xo, on ? stOld : 0, on ? tk.old : 0, on ? lk.old : 0], ['fresh', z.fresh, Z.fresh, Z.xf, on ? stFresh : 0, on ? tk.fresh : 0, on ? lk.fresh : 0]].forEach(function (B) {
+        var slots = B[1], n = B[2], crossed = B[3], stand = n - crossed, tkn = B[5], ltn = B[6], wait = [];
+        for (var j = 0; j < n && j < slots.length; j++) {
+          var b = slots[j], isX = j >= stand, isLit = !isX && j >= stand - ltn, isWait = !isX && !isLit && j >= stand - tkn;
+          if (isWait) wait.push(b);
+          marks += '<g class="pc-quick-' + Z.what + (B[0] === 'fresh' ? ' pc-quick-fresh' : '') + (isX ? ' pc-quick-crossed' : '') + (isLit ? ' pc-quick-lit' : '') + (isWait ? ' pc-quick-wait' : '') + '"' + pvBox(b) + '>' +
+            qkMark(G, Z.what, b, L, isLit ? 'lit' : '', isX || isLit) + '</g>';
+        }
+        // the marks still to take, softly lit together, waiting
+        if (wait.length) {
+          var x0 = Math.min.apply(null, wait.map(function (b) { return b.x; })), y0 = Math.min.apply(null, wait.map(function (b) { return b.y; }));
+          var x1 = Math.max.apply(null, wait.map(function (b) { return b.x + b.w; })), y1 = Math.max.apply(null, wait.map(function (b) { return b.y + b.h; }));
+          s += '<rect class="pc-quick-waiting" x="' + N(x0 - 5) + '" y="' + N(y0 - 5) + '" width="' + N(x1 - x0 + 10) + '" height="' + N(y1 - y0 + 10) + '" rx="12" fill="#ffd96b" opacity=".55" stroke="#e39a12" stroke-width="2.6" stroke-dasharray="7 5"/>';
+        }
+      });
+    });
+    var label = 'The quick picture in the ' + G.word + ': ' + h + (h === 1 ? ' square, ' : ' squares, ') + t + (t === 1 ? ' line and ' : ' lines and ') + u + (u === 1 ? ' dot' : ' dots');
+    if (cs || cl) label += '; crossed out: ' + [cs ? cs + (cs === 1 ? ' square' : ' squares') : '', cl ? cl + (cl === 1 ? ' line' : ' lines') : ''].filter(Boolean).join(', ');
+    if (take) label += '; taking ' + take + ', ' + lit + ' taken';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + N(W) + ' ' + N(H) + '" role="img" aria-label="' + label + '" data-art="quick-sand">' + s + marks + '</svg>';
+  }
+
+  // ----- the quick marks as one group, for a set to place (the badger's counts by her holes)
+  function quickMarksLayout(o) {
+    o = o || {};
+    var L = 56, h = pvNum(o.hundreds, 0, 9), t = pvNum(o.tens, 0, 19), u = pvNum(o.ones, 0, 19), lp = L * 0.34, g5 = L * 0.26, dp = L * 0.5, gap = L * 0.6;
+    var groups = [], x = 0, H = 0;
+    if (h) {
+      var sq = [];
+      for (var i = 0; i < h; i++) sq.push({ x: x + (i % 5) * L * 1.28, y: Math.floor(i / 5) * L * 1.28, w: L, h: L, what: 'square' });
+      groups.push(sq); x += Math.min(5, h) * L * 1.28 - L * 0.28 + gap; H = Math.max(H, Math.ceil(h / 5) * L * 1.28 - L * 0.28);
+    }
+    if (t) {
+      var ln = [];
+      for (var j = 0; j < t; j++) { var r = Math.floor(j / 10), c = j % 10; ln.push({ x: x + c * lp + (c >= 5 ? g5 : 0), y: r * L * 1.3, w: lp, h: L, what: 'line' }); }
+      groups.push(ln); x += (Math.min(10, t) - 1) * lp + (t > 5 ? g5 : 0) + lp + gap; H = Math.max(H, Math.ceil(t / 10) * L * 1.3 - L * 0.3);
+    }
+    if (u) {
+      var dt = [];
+      for (var m = 0; m < u; m++) dt.push({ x: x + (m % 5) * dp, y: Math.floor(m / 5) * dp, w: dp, h: dp, what: 'dot' });
+      groups.push(dt); x += Math.min(5, u) * dp + gap; H = Math.max(H, Math.ceil(u / 5) * dp);
+    }
+    var W = Math.max(0, x - gap);
+    // each group in the middle of the tallest
+    groups.forEach(function (g) { var gh = Math.max.apply(null, g.map(function (b) { return b.y + b.h; })); g.forEach(function (b) { b.y += (H - gh) / 2; }); });
+    return { W: W, H: H, L: L, marks: [].concat.apply([], groups) };
+  }
+  art.quickMarks = function (x, y, scale, o) {
+    var lay = quickMarksLayout(o), G = GROUNDS[(o || {}).ground] || GROUNDS.sand, k = +scale > 0 ? +scale : 1, s = '';
+    lay.marks.forEach(function (b) { s += qkMark(G, b.what, b, lay.L, '', false); });
+    return '<g class="pc-quick" data-art="quick" transform="translate(' + N((+x || 0) - lay.W * k / 2) + ' ' + N((+y || 0) - lay.H * k / 2) + ') scale(' + N3(k) + ')">' + s + '</g>';
+  };
+  art.quickMarks.size = function (o) { var lay = quickMarksLayout(o); return { w: lay.W, h: lay.H }; };
 
   // ------------------------------------------------------------------ vocabulary
 

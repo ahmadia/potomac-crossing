@@ -1849,3 +1849,141 @@ moon** (`sets/pile.js` `pileMoon`): its top limit is its own radius plus 12 (was
 of age 12 or more is never cut by the panel's top: chapter 11's f042 and, live, chapter 9's f112 (8 units lower,
 named in `tests/golden-ch09.test.js`); ages 11 and under do not move. `tools/storyboard.mjs` adds words for `nextNest` and `next-nest`,
 the `{ending}` legend sentence (the Warrior Counts' always, a chapter's where it has the token) and the Type screen's line.
+
+## The take-aways kit
+
+The take-aways kit (decisions 53 to 55) is [`take-aways.md`](take-aways.md) (Design v0.3, with the review's fixes
+written in), built in `app/engine.js`, `app/art/cats.js` (one entry in `app/art/scenes.js`), `app/ui.js` and
+`index.html` on the `take-aways` branch, reviewed in six lenses (25 findings, all taken) and integrated on 2026-11-07:
+`E.VERSION = '0.11.1 (the take-aways kit, 2026-11-07)'`, CACHE v24. **That design is the build's contract** (section 3
+the sets and the guards, section 4 the record, section 8 every piece with its guard, section 9 the tests); the calls
+are in the README, under decision 46. No chapter 1 to 11 has a take set, so no player reaches any of it until chapter
+12: every changed function takes its old path for every live save. This section is what a chapter codes against.
+
+**A take set** sits in a chapter's `counts` beside its Counts sets, on a plain Counts frame (`counts: { set, next }`).
+- Set keys: `op: '-'` (required; any other `op` is an error), `teach` (one of `E.TAKE_STEPS`), `picture` (`{ kind:
+  'store' }`, the default, or `{ kind: 'marks' }`), `regroup` (the problems' default: `'hers'` unless `'show'` or
+  `'tap'`), `warm: true` (a made two-digit spread first, `E.takeWarm`, logged `warm`), `twins: false` (a helped
+  problem does not come back), `teacher`, `praise` (blanks allowed between lines), `done` (`''` goes straight on),
+  `lines` (any of `E.TAKE_LINES`' keys). Never `table`, `fillFrom`, `fillOrder`, `warmHard`, `light` or `help`.
+- A fact: `[a, b]` or `{ a, b, regroup?, prompt?, right?, picture? }`, whole numbers, 10 ≤ a ≤ 999, 1 ≤ b < a, b with
+  no more digits than a, the answer at most one digit shorter than the top, no `table`. `prompt` is a line or balloons
+  and captions, each balloon at most 12 words (captions apart): the first column's line joins the last balloon when it
+  is the teacher's. `right`: balloons in place of praise when every column is right first time (they wait for Next).
+- The kinds (`E.TAKE_KINDS`, `E.takeKind(plan)`, by which turns spread): `none`, `ones`, `tens`, `both`, `zero`
+  (across one zero), `zeros` (a top of x00). The flags (`E.takeFlags`): `leavesZero`, `toZero`, `idleZero`,
+  `noHundreds`, `noLoose`. The steps (`E.TAKE_STEPS`, in the order the chapters teach them): `none`, `ones2`, `ones`,
+  `tens`, `both`, `mixed`, `zero`, `zeros`; `E.takeStepOf(plan)` is `ones2` for a two-digit spread, `mixed` only for a
+  problem with no hundreds left of kind `none`, `ones`, `tens` or `both`, else its kind.
+- What the kit does for every chapter, so none carries an override: a take state knows the steps taught (`taught`: in
+  a lesson those of every take set with `teach` in this chapter and the earlier ones, by `number`; in a store round
+  those she has learned), and `E.takeSlip` names `extra` only once its spread is taught (the tens from `ones2`, the
+  hundreds from `tens`), else `fact`, so no line says "no row went" before chapter 13 or "no square went" before
+  chapter 15; and no twin, nor the made warm-up, takes one of the chapter's answers (`avoid`: every take set's in the
+  chapter, lessons and stories). The full column line ("Ones first. Five take away nine.") comes on a set's first two
+  problems of her own (`'hers'`, not a twin; the made warm-up is one), on every `'show'` and `'tap'` problem, on a
+  twin and after a help; otherwise the column's name. The ones-first pointer is on while she has fewer than five
+  logged, and always in a `teach: 'none'` set.
+
+**The words** (decision 53: a class word changes in one line). `E.TAKE_WORDS` is a getter, read at call time: each of
+`PC.words`' top-level keys `loose`, `row`, `rows`, `Row`, `square`, `squares`, `ones`, `tens`, `hundreds`, `takeAway`,
+`TakeAway`, `spread`, `Spread` and `OnesFirst` (a non-empty string) wins over the English, and a lower-case form given
+alone brings its capital (`row`, `takeAway`, `spread`); any other key of `PC.words` (the Spanish beside them) is the
+chapters' own. `PC.words` does not exist until chapter 12 brings it. The regrouping word is used in its base form
+only, before what it acts on or after it, never before a pronoun ("Spread a row: tap it."; "no rows to spread"), so
+"trade", "regroup" or "break apart" fits every slot; a chapter line that says it keeps the same rule. `E.TAKE_LINES`,
+the heads' and boxes' `aria-label`s, the `'tap'` page's hidden button, the panel's label and the page's `plain()`
+(U+2212 read as `takeAway`) all read it.
+
+**`E.TAKE_LINES`**, every line the kit says. A value is a line, a list (taken in turn: `praise`, `again`), or an
+object of forms: by the column whose turn it is (`ones`, `tens`, `hundreds`, with `Zero` after it where the top there
+is 0), by the step (`rememberedStep`), or `some` and `none` (`takeSweep`). Tokens: the numbers as number words
+(`{top}`, `{bottom}`, `{first}`, `{rest}`, `{left}`, `{digit}`, `{A}`, `{B}`; a capital starts a sentence, and a count
+before `rows` or `squares` agrees with it), the words as `E.TAKE_WORDS`' keys (`{row}`, `{Spread}`, `{OnesFirst}` …);
+the cat's tokens are left for the page. Its keys: `colName`, `colFirst`, `colHers`, `colShown`, `nothingHers`,
+`nothingShown`, `ask`, `schoolWords`, `blank`, `onesFirst`, `tap`, `tapSquare`, `tapRow`, `tapHere`, `showOpen`,
+`showSpread`, `chainSquare`, `chainRow`, `spread`, the slips' `zero`, `flip`, `nospread`, `kept`, `extra` and `fact`,
+`factSpread`, `factChain`, `factZero`, `takeTeen`, `takeFirst`, `takeRest`, `takeSmall`, `takeBack`, `takeSweep`,
+`takeNothing`, `digit`, `twinIntro`, `warmIntro`, `again`, `rememberedStep`, `miss`, `missLast`, `praise`. A set's
+`lines` replaces a whole key (a form it leaves out falls back to the first form it gives). `schoolWords` ("A row is a
+ten. A square is a hundred.") is defined but never said: chapter 12 wires it into `E.takeLine` (its spec's engine
+need: a `'show'` problem's tens, in a `teach: 'none'` or `'ones2'` set).
+
+**The frame's take mode.** `E.chapterLesson` sends a set with `op: '-'` to `E.takeLesson(cat, story, setId, now,
+stories)` (its warm-up, a fresh take state with `taught` and `avoid`); `startChapterLesson` runs `runTakes` with the
+same `intro`, `waitLine` (`wWait`) and `onDone`, and the frame takes `data-mode="take"` (index.html's take block; on a
+phone held sideways, `TAKE_PHONE`, `(orientation: landscape) and (max-height: 500px)`, the stack stands over the
+panel). The runner is `E.takes` (`T.start`, `T.question`, `T.digit`, `T.tap`, `T.done`, `T.summary`); its state is a
+lesson in the slot (`okLesson` checks it), saved after every column; `E.recordLesson` files a chapter's under
+`lessons[set]` (`T.summary` has `noHelp` and `finished`, so `when: { lessonClean }` reads a take set). `runTakes`'
+`o.echo`, absent (the no-op) until chapter 12, is called with each right column (`{ col, top, written, bottom, digit,
+a, b }`) and each problem right in every column (`{ problem: true, a, b, answer }`) and returns a balloon (`{ who,
+text, lang?, variant? }`, Chispapaw's by default) or nothing; when it is given, the stack's held height keeps an
+echo's room. `startChapterLesson` passes none: chapter 12 wires it.
+
+**The Hollow's shelf and Count the store** (section 5). `E.takeSteps(cat, stories)`: the steps her finished `teach`
+sets taught; `E.storeOpen` once there is one (chapter 12's lesson). Then `renderHollow` opens on the shelf,
+`E.hollowShelf(cat, stories, opts)` (`{ greet, line, steps, buttons, waiting? }`, null while the store is closed):
+`#storeBtn` (Count the store, the quick marks as its icon), `#countsBtn` (One Count at a time: `go('hollow', { counts:
+true })`, the Counts page word for word, its ‹ back to the shelf), `#shelfNest`; chapter 14 puts Tricky Counts between
+the two big buttons. A round, `E.takeRoundStart(cat, stories, now, opts)`: `E.TAKE_ROUND` (5) twins of
+`E.TAKE_TEMPLATES` (an easy `none`, her hardest step, her next hardest or an older step that spreads, the newest, an
+older one), all `'hers'`, no flip landing, set `E.takeRoundDef()` (id `store`, `E.STORE_LINES`' `intro` and `done`),
+in the slot as a Hollow round is (`{ mode: 'hollow', state }`). `E.recordLesson` sends it to `E.takeRoundFinish`
+(once: `takes.rounds`, `takes.cleanRounds`, the next of `E.FROST_TREASURES` into `cat.nest`; module 1's `hollow`
+untouched) and returns `{ mode: 'store', summary, hollow: null, store }`; `storeReward` (`data-mode="store-reward"`)
+has "Another round" back to the shelf. `opts.stories` stands in for the stories in `E.hollowShelf`, `E.takeRoundStart`
+and `renderHollow` (`PC.debug.takes`' stub). Chispapaw's shelf line and echo are chapter 12's.
+
+**The record and the corner** (section 4). `cat.takes: { log, rounds, cleanRounds }`, optional, absent until her first
+take-away is logged (not in `E.blankCat`; `normTakes` in `normCat`; the save stays version 2); never `counts`. One
+entry a problem, when its last column is in: `{ set, a, b, answer, given, correct, helped, slips, ms, cols, at, kind,
+digits, regroup, twin?, warm?, worked?, round? }`; the last `E.TAKE_LOG_CAP` (500) kept. `E.hardTakes(cat)`: the steps
+whose latest own first ask (not a twin, not worked, not `'tap'`) was helped. `warriorStale` and `lastAnswerAt` read
+the log's `at` beside `counts`. The grown-ups corner, for a cat with `takes` only: `takeCorner(c.takes,
+E.takeTable(c), fmtMs)` puts a Take-aways table by kind after the Counts' tables (Problems; Right first time, "N of M"
+of her own first asks, "–" with none; Helped; Typical time, the median of her right `'hers'` answers; Commonest slip),
+a note on what the columns count, "(her last 500)" in its heading when `E.takeTable`'s `capped`, and a "Teen facts
+missed" line under it; the Training Hollow's line reads "One Count at a time N rounds: …; Count the store N (M without help)".
+
+**The Counts warm-up across the tables** (section 4), behind `warmHard.table === 'all'` only: `E.lessonFacts` puts her
+hardest facts over the 54 pairs at `at` (a list allowed, `[0, 1]`), each with its anchor Count as `table`, and
+`E.questionDef` gives such a question that Count's picture, things and help (`W_ASK_KEYS`), the set's own lines kept.
+
+**Book two** (section 7). A chapter's keys: `module: 2` (absent is 1; `E.moduleOf`), and on a module 2 chapter only
+`book.store` (a whole number 0 to 999, drawn under the recap by `PC.art.placeValue`), `book.sleeper: { id, name,
+lines, when?, pose? }` (`E.SLEEPERS`, 7, across the chapters), `book.badger: [{ row, say: { text, who } } | { row,
+saw: { text } }]` and `book.keepsake: { id, name, lines }`; a volume's title is its first chapter's `book.title`
+(chapter 12's "{name}{ending}’s First Frost-Time"). `E.books(cat, stories)`, `E.buildFullBook(cat, stories, vol)` (no
+`vol`: module 1's, today's object key for key), `E.sleepers`, `E.badgerPage`. `renderBook` takes `opts.vol` (else her
+latest finished chapter's volume), with `.vols` buttons (`data-vol`, 44 px) once there are two; `.storepic`, the
+sleepers' pages (the dragonets' classes), `.badger`, and a chapter a printed page. The Hollow's `#countsBtn` and
+`onBack` carry `vol`, so Back from the shelf lands on the volume she came from. The guards, in `E.checkStory`:
+`module` 1 or 2, module 2's chapters after module 1's; the four `book` keys only on a module 2 chapter, each of its
+shape and no other keys; a sleeper's id distinct across the chapters, at most `E.SLEEPERS`; each badger line exactly
+one of `say` or `saw`.
+
+**`E.checkTakes(story, stories)`**, added to `E.checkStory`'s errors (none for a chapter with no take set), as section
+3 spells out: each fact in range as above, its `regroup` and `picture` valid, no `table`, each prompt balloon at most
+12 words; each set without the multiplication keys, `teach` one of `E.TAKE_STEPS`, `twins` and `warm` booleans,
+`regroup` and `picture` valid, `lines` only `E.TAKE_LINES`' keys, `facts` not empty, and no Counts set in any chapter
+filling from it; a set's step: `teach: 'none'`, every problem of kind `none`; `teach: 'mixed'`, four kinds or more,
+one `none`, one `noHundreds`, one `leavesZero`; any other `teach`, exactly three problems of that step, every other
+one an earlier step, and from chapter 13 one of kind `none`; no `teach`, every problem's step taught by a take set of
+this chapter or an earlier one; the chapter: no answer twice across its take sets, and no `noHundreds` problem before
+the chapter that teaches `mixed`.
+
+**Art**: `PC.art.placeValue(o)` (the store picture), `PC.art.sand`'s `kind: 'quick'` (the help's sand),
+`PC.art.quickMarks(x, y, scale, o)` and `PC.art.kit.quick`; their option objects are pinned in section 8 and come from
+`E.takePicture(def, q, stage)` and `E.takeSandOpts(step)`. The frost treasures are drawn in `treasureSvg`.
+
+**Tools**: `PC.debug.takes(what, opts)` (`first`, `q`, `show`, `tap`, `spread`, `echo`, `sand`, `done`, `shelf`,
+`store`, on definitions of its own); `tools/shots.mjs`' `take:*`, `hollow:shelf` and `store:q`; `dev/webkit/run.mjs`'s
+`takes` job (in `--pages`' screens group) and `node tools/sweep.mjs --takes` at the page review's four more sizes
+(`TAKE_SIZES`), with `col-off` and `keypad-moved`; `tools/storyboard.mjs` writes a take set's lesson in a Counts
+frame's place ("**Then the take-aways**").
+
+**Tests**: `tests/takes-engine.test.js`, `takes-art`, `takes-ui`, `takes-tools`, `book2` and `book2-ui`, on the stubs
+in `tests/fixtures/takes-stub.js` (never served); `takes-exhaustive.test.js` is in `SLOW`. The chapter-7, -8 and -9
+goldens, the fingerprints and the Warrior Counts' three files pass untouched; the version pin is in
+`tests/engine.test.js`.

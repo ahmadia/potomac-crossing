@@ -1021,6 +1021,245 @@
   }
   UI.speakers.warriorStory = warriorLabels;
 
+  /* ---------------------------------------------------------------- the take-aways kit (pure: tested in Node)
+   * docs/take-aways.md v0.3, sections 1, 2, 6 and 8: what the take page shows and says, from what the engine hands
+   * it (E.takes' question, E.takeLine, E.takeQuestion, E.takeShow, E.takeHelp, E.takePicture) and nothing from the
+   * screen, so Node checks the column, its boxes and marks, the lines at every stage, the waits and the reading
+   * order. Columns are counted ones first, as the engine counts them (0 the ones, 1 the tens, 2 the hundreds); the
+   * column is drawn left to right. Nothing here runs before chapter 12: no chapter 1 to 11 has a take set. */
+  var TAKE_ZONES = ['ones', 'tens', 'hundreds'];
+  var TAKE_HEADS = ['dot', 'line', 'square'];                              // the quick picture's marks over each column
+  var TAKE_PIC = { ones: 'loose', tens: 'rows', hundreds: 'squares' };     // each column's picture word (E.TAKE_WORDS)
+  // the page's times (sections 1 and 2): the next column 0.9 s after the last spread lands; the help 650 ms after a
+  // miss; keys ignored 400 ms after every OK; a hop of the count 775 ms; a row slides 600 ms and opens 400 ms; a line
+  // stays 0.6 s and 0.38 s a word (1.8 s at the least at a problem's end, 1.6 s for a step), or, Read to me on, until it
+  // has been said and 0.4 s (a step 0.3 s) more, at most twice the reading time; a tap on the sand counts after 350 ms
+  var TAKE_MS = { outline: 900, miss: 650, ok: 400, hop: 775, slide: 600, open: 400, tapGuard: 350, endMin: 1800, stepMin: 1600,
+    endSaid: 400, stepSaid: 300, word: 380, base: 600, quiet: 1000 };
+  // the kit's words as the engine reads them now (E.TAKE_WORDS, a getter over PC.words): one place for the class words
+  // (decision 53). PC.engine, not E: PC.ui.takes can be called before boot sets E
+  function takeWordsNow() { return PC.engine.TAKE_WORDS; }
+  function tEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function tWords(s) { return String(s == null ? '' : s).trim().split(/\s+/).filter(Boolean).length; }
+  /* One digit a box: a new digit replaces the one there (no Delete hunt), Delete empties it. OK is the caller's. */
+  function takePress(typed, k) {
+    if (k === 'del') return '';
+    if (/^[0-9]$/.test(String(k))) return String(k);
+    return String(typed == null ? '' : typed);
+  }
+  /* How long a line stays (section 1's problem end, section 2's steps): `kind` 'end', 'step' or 'hop'. `read` without
+   * Read to me; with it, `after` once it has been said, never longer than `cap`. */
+  function takeWaits(text, kind) {
+    if (kind === 'hop') return { read: TAKE_MS.hop, after: 0, cap: TAKE_MS.hop };
+    var min = kind === 'end' ? TAKE_MS.endMin : TAKE_MS.stepMin, n = tWords(text);
+    var read = n ? Math.max(min, TAKE_MS.base + TAKE_MS.word * n) : TAKE_MS.quiet;
+    return { read: read, after: kind === 'end' ? TAKE_MS.endSaid : TAKE_MS.stepSaid, cap: read * 2 };
+  }
+  /* A head: the quick picture's own mark (PC.art.quickMarks, in the sand's strokes), on its sand chip (index.html). */
+  function takeHeadSvg(zone) {
+    var o = { ground: 'sand' }, g = '';
+    o[zone] = 1;
+    try { g = PC.art && typeof PC.art.quickMarks === 'function' ? PC.art.quickMarks(32, 32, 0.9, o) : ''; } catch (e) { g = ''; }
+    if (!g) g = zone === 'hundreds' ? '<rect x="9" y="9" width="46" height="46" fill="none" stroke="#7a5b2e" stroke-width="5"/>' :
+      zone === 'tens' ? '<path d="M34 6 L30 58" stroke="#7a5b2e" stroke-width="5" stroke-linecap="round"/>' : '<circle cx="32" cy="32" r="12" fill="#7a5b2e"/>';
+    // (cropped to the mark, so each fills its chip: the art's dot is half a square's size, too small to read there)
+    var vb = zone === 'ones' ? '17 17 30 30' : '4 4 56 56';
+    return '<svg viewBox="' + vb + '" aria-hidden="true" focusable="false">' + g + '</svg>';
+  }
+  /* The column as the page draws it (section 1): `plan` (E.takePlan), and from the page `marks` (per column, ones
+   * first: { struck, mark }, as the engine letters them by the mode), `boxes` (per column: { v, cls }: her digit and
+   * 'right', 'miss', 'blank' or 'pulse'), `on` (the outlined column, -1 for none), `glow` (a help's `kept` or `zero` at a
+   * column that lent: its struck digit and gold mark glow) and `ask` (the problem in words, the group's label). Cells left to right: the head and its label ("hundreds, squares"), the gold mark, the top digit
+   * (struck or not), the bottom digit ('' where the bottom has none), and the box with its label ("ones: 5"). */
+  function takeView(plan, o) {
+    o = o || {};
+    var W = o.words || takeWordsNow(), cells = [];
+    for (var i = plan.n - 1; i >= 0; i--) {
+      var c = plan.cols[i], m = (o.marks && o.marks[i]) || {}, b = (o.boxes && o.boxes[i]) || {}, z = TAKE_ZONES[i];
+      var v = b.v == null ? '' : String(b.v), cls = (o.on === i ? 'on' : '') + (b.cls ? (o.on === i ? ' ' : '') + b.cls : '');
+      cells.push({ col: i, zone: z, head: TAKE_HEADS[i], headLabel: W[z] + ', ' + W[TAKE_PIC[z]],
+        top: String(c.top), bottom: c.bottom == null ? '' : String(c.bottom), struck: !!m.struck, mark: m.mark == null ? '' : String(m.mark),
+        box: v, boxCls: cls, boxLabel: W[z] + (v !== '' ? ': ' + v : ''), current: o.on === i, glow: o.glow === i });
+    }
+    return { n: plan.n, cells: cells, label: o.ask || '' };
+  }
+  /* The column's markup (index.html's .tcol: a grid, the sign's column and one a digit; rows for the heads, the marks,
+   * the top, the bottom, the rule and the boxes, every row reserved from the start, so nothing moves). */
+  function takeHtml(v) {
+    var s = '<span class="tsign" aria-hidden="true">−</span>';
+    v.cells.forEach(function (c, k) {
+      var gc = ' style="grid-column:' + (k + 2) + '"';
+      s += '<span class="thead" role="img" aria-label="' + tEsc(c.headLabel) + '"' + gc + '>' + takeHeadSvg(c.zone) + '</span>' +
+        '<span class="tmark' + (c.glow ? ' tglow' : '') + '" aria-hidden="true"' + gc + '>' + tEsc(c.mark) + '</span>' +
+        '<span class="tdig ttop' + (c.struck ? ' tstruck' : '') + (c.glow ? ' tglow' : '') + '" data-col="' + c.col + '" aria-hidden="true"' + gc + '>' + tEsc(c.top) + '</span>' +
+        '<span class="tdig tbot" aria-hidden="true"' + gc + '>' + tEsc(c.bottom) + '</span>' +
+        '<span class="tbox' + (c.boxCls ? ' ' + c.boxCls : '') + '" data-col="' + c.col + '" role="img" aria-label="' + tEsc(c.boxLabel) + '"' + (c.current ? ' aria-current="true"' : '') + gc + '>' +
+        (c.box !== '' ? tEsc(c.box) : ' ') + '</span>';
+    });
+    return s + '<span class="trule" aria-hidden="true"></span>';
+  }
+  function tHasPrompt(p) { return asList0(p).some(function (b) { return typeof b === 'string' ? !!b : !!(b && b.text); }); }
+  /* The column's line as it is outlined (section 1, E.takeLine), '' where it says nothing: the first column of a
+   * problem with a prompt, when the line is short (its prompt's balloon is what she reads). */
+  function takeColLine(def, q) {
+    if (q.col === 0 && !q.full && tHasPrompt(q.prompt)) return '';
+    return PC.engine.takeLine(def, q.plan, q.col, q.stage, q.mode, q.full);
+  }
+  function tBalloon(b, teacher, fill) {
+    var o = { who: b.who || teacher, text: fill(b.text) };
+    if (b.kind) o.kind = b.kind;
+    if (b.variant) o.variant = b.variant;
+    if (b.name) o.name = b.name;
+    return o;
+  }
+  /* What the first column of a problem letters and says (sections 1 and 6). Lettered: `o.intro` (the page's own: a
+   * frame's balloons, the Warrior Counts' waiting line), the prompt's balloons with the column's line joined to the
+   * last of them when that one is the teacher's (else the line follows in a balloon of its own), a twin's or the
+   * warm-up's introduction, the column's line. Heard: the same in order, but the question in words ("Five hundred
+   * three take away two hundred seventy-eight.", said only) comes before the column's line, which is split out of
+   * the joined balloon for speech. `o.line` stands in for the column's line (the ones-first pointer); `o.fill` fills
+   * the cat's tokens. */
+  function takeFirst(def, q, o) {
+    o = o || {};
+    var E0 = PC.engine, fill = o.fill || function (s) { return s; }, teacher = E0.teacherOf(def);
+    var tq = E0.takeQuestion(def, q), intro = !!(q.twin || q.of || q.warm), B = tq.balloons;
+    var prompts = (intro ? B.slice(0, -1) : B).map(function (b) { return tBalloon(b, teacher, fill); });
+    var introB = intro && B.length ? [tBalloon(B[B.length - 1], teacher, fill)] : [];
+    var line = o.line != null ? o.line : takeColLine(def, q);
+    line = line ? fill(line) : '';
+    var pre = asList0(o.intro).map(function (b) { return Object.assign({}, b); });
+    var lines = pre.concat(prompts.map(function (b) { return Object.assign({}, b); }));
+    var last = prompts.length ? lines[lines.length - 1] : null;
+    var joined = !!(line && last && !introB.length && last.who === teacher && (!last.kind || last.kind === 'say'));
+    if (joined) last.text = last.text + ' ' + line;
+    lines = lines.concat(introB);
+    if (line && !joined) lines.push({ who: teacher, text: line });
+    var ask = tBalloon(tq.ask, teacher, fill);
+    var heard = pre.concat(prompts, introB, [ask], line ? [{ who: teacher, text: line }] : []);
+    return { lines: lines, heard: heard, joined: joined, line: line, ask: ask.text };
+  }
+  function tOnesFirst(def) {
+    var E0 = PC.engine, L = def && def.lines && def.lines.onesFirst != null ? def.lines.onesFirst : E0.TAKE_LINES.onesFirst;
+    return E0.takeFill(typeof L === 'string' ? L : asList0(L)[0], {});
+  }
+  /* The stacks she may type under in this problem, from the column she is on to its last (section 6, "The keypad
+   * stays put"): the page sets the stack's min-height to the tallest of them on the first column, so the keypad never
+   * moves within a problem. The first column's (and its ones-first pointer's, while it can come); every later column's
+   * line in its full form (as after a help), under the echo's room on a page with an echo (`o.echo`); a 'show'
+   * column's steps and a 'tap' column's lines, each under its column's lettering (the keypad is away then, but its
+   * place must not move when it wakes). A balloon `{ room: true }` is the echo's room: Chispapaw's two lines; when
+   * `o.echo` is a function (the page's hook, called with the column before), the echo itself is measured too, since
+   * an eight-word Spanish line runs to three lines in the lesson column at 1080 x 720. */
+  function takeReserve(def, q, o) {
+    o = o || {};
+    var E0 = PC.engine, p = q.plan, teacher = E0.teacherOf(def), fill = o.fill || function (s) { return s; }, out = [];
+    var B = function (t) { return { who: teacher, text: fill(t) }; };
+    var room = o.echo ? [{ who: o.echoWho || 'chispapaw', room: true }] : [];
+    for (var c = q.col; c < p.n; c++) {
+      var bases;
+      if (c === q.col && c === 0) {
+        bases = [takeFirst(def, q, o).lines];
+        if (!q.onesFirst) out.push(takeFirst(def, q, Object.assign({}, o, { line: tOnesFirst(def) })).lines);
+      } else if (c === q.col) {
+        var l0 = takeColLine(def, q);
+        bases = [asList0(o.intro).concat(l0 ? [B(l0)] : [])];
+      } else {
+        var L = [B(E0.takeLine(def, p, c, 'before', q.mode, true))], e = typeof o.echo === 'function' ? o.echo(c - 1) : null;
+        bases = [room.concat(L)].concat(e ? [[e].concat(L)] : []);
+      }
+      var extra = [];
+      if (p.cols[c].spreads.length && q.mode === 'show') extra = E0.takeShow(def, p, c, { mode: 'show' }).steps.map(function (s) { return s.say; });
+      if (p.cols[c].spreads.length && q.mode === 'tap') {
+        var sh = E0.takeShow(def, p, c, { mode: 'tap' });
+        extra = sh.taps.map(function (t) { return t.say; }).concat(Object.keys(sh.here).map(function (k) { return sh.here[k]; }), [sh.line]);
+      }
+      bases.forEach(function (base) {
+        out.push(base);
+        extra.forEach(function (t) { out.push(base.concat([B(t)])); });
+      });
+    }
+    return out;
+  }
+  /* The help's stack at step `i` (section 2): the slip's line, which stays above the steps to the end (glowing for
+   * `kept` and `zero` at a column that lent); from the first step on, the counter in a balloon of its own (as the
+   * lesson's help puts it: "10 · 5", growing a hop at a time; "…" before the first) when the help counts; and the
+   * step's line: three balloons. `join` (a phone held sideways with Aa on, section 6's named fallback): the counter
+   * joins the step's line, two balloons. */
+  function takeHelpStack(help, i, teacher, join) {
+    var steps = help.steps, s = steps[Math.max(0, Math.min(steps.length - 1, i))], out = [{ who: teacher, text: help.intro, glow: !!steps[0].glow }];
+    if (i <= 0) return out;
+    var counts = steps.some(function (x) { return x.n != null; });
+    var nums = steps.slice(1, i + 1).filter(function (x) { return x.n != null; }).map(function (x) { return x.n; });
+    var counter = counts ? (nums.length ? nums.join(' · ') : '…') : null;
+    if (counter != null && join) return out.concat([{ who: teacher, text: s.say, counter: counter }]);
+    if (counter != null) out.push({ who: teacher, counter: counter });
+    out.push({ who: teacher, text: s.say });
+    return out;
+  }
+  /* The problem's end (section 1): its one line (`res.line`; a blank praise letters nothing), or its own `right`
+   * lines (`res.balloons`, which wait for Next), with an echo of Chispapaw's after a right problem (chapter 12 on). */
+  function takeEnd(def, res, o) {
+    o = o || {};
+    var teacher = PC.engine.teacherOf(def), fill = o.fill || function (s) { return s; };
+    var echo = o.echo ? [o.echo] : [];
+    if (res.balloons && res.balloons.length) return { lines: res.balloons.map(function (b) { return tBalloon(b, teacher, fill); }).concat(echo), next: true };
+    var line = res.line ? fill(res.line) : '';
+    return { lines: (line ? [{ who: teacher, text: line }] : []).concat(echo), next: false };
+  }
+  /* The panel's label (section 6): the store in words, what is left ("Five squares, three loose"). */
+  function takeStoreLabel(po, W) {
+    W = W || takeWordsNow();
+    var E0 = PC.engine, t = (po && po.taken) || {}, parts = [];
+    var left = function (k) { return Math.max(0, ((po && po[k]) || 0) - (t[k] || 0)); };
+    var h = left('hundreds'), r = left('tens'), l = left('ones');
+    if (h) parts.push(E0.numberWords(h) + ' ' + (h === 1 ? W.square : W.squares));
+    if (r) parts.push(E0.numberWords(r) + ' ' + (r === 1 ? W.row : W.rows));
+    if (l) parts.push(E0.numberWords(l) + ' ' + W.loose);
+    var s = parts.join(', ');
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+  }
+  /* The 'tap' page's hidden button for VoiceOver ("Spread a row", "Spread a square"): the zone that spreads. */
+  function takeSpreadLabel(zone, W) {
+    W = W || takeWordsNow();
+    return W.Spread + ' a ' + (zone === 'hundreds' ? W.square : W.row);
+  }
+  /* plain()'s minus (section 6): U+2212 read as the words table's "take away", read at call time. */
+  function takeMinus(s) {
+    s = String(s == null ? '' : s);
+    return s.indexOf('−') < 0 ? s : s.replace(/\s*−\s*/g, ' ' + takeWordsNow().takeAway + ' ');
+  }
+  /* The grown-ups corner's take-aways (section 8, openGrownups): `takes` the cat's (null: nothing at all, for a cat who has
+   * not met a take-away), `table` E.takeTable's. `line` goes on the Training Hollow's line ("Count the store 3 (2 without
+   * help)"); `html` the table by kind (problems, right first time of her own first asks, helped, typical time, her
+   * commonest slip) under a note on what its columns count, its heading "(her last 500)" once the log is at its cap
+   * (`table.capped`, `table.cap`: the table reads only the log, the line every round), and under it the teen facts her
+   * `fact` slips missed ("13 − 8 ×2"), for grown-ups only. A ratio and a fact never break inside (a phone wrapped "36 of"
+   * from its "40"). `secs` formats a time. */
+  var TAKE_KIND_WORDS = { none: 'No regrouping', ones: 'Regroup a ten', tens: 'Regroup a hundred', both: 'Regroup both',
+    zero: 'Across a zero', zeros: 'Across two zeros' };
+  var TAKE_SLIP_WORDS = { zero: 'across the zero', flip: 'smaller from bigger', nospread: 'did not regroup', kept: 'kept the ten it gave',
+    extra: 'regrouped when not needed', fact: 'a fact slipped' };
+  // (what the columns count: E.takeTable's own-ask rule and its typical time, docs/take-aways.md section 4)
+  var TAKE_CORNER_NOTE = '<p class="muted">“Right first time” is her own first try at a problem with every column right; worked problems, ones where she was told to regroup, and second goes are left out. “Problems” and “Helped” count them all (“helped”: a column slipped and Tallyheart helped). Typical time is of her right answers she regrouped herself.</p>';
+  function takeCorner(takes, table, secs) {
+    if (!takes || typeof takes !== 'object') return null;
+    secs = secs || function (ms) { return ms == null ? '–' : (ms / 1000).toFixed(1) + ' s'; };
+    var n = function (v) { return typeof v === 'number' && v >= 0 ? Math.floor(v) : 0; };
+    var line = 'Count the store ' + n(takes.rounds) + ' (' + n(takes.cleanRounds) + ' without help)';
+    var T0 = table || { rows: [], teen: [] };
+    var html = '<h4>Take-aways' + (T0.capped ? ' <span class="muted">(her last ' + T0.cap + ')</span>' : '') + '</h4>' + (T0.rows.length ? TAKE_CORNER_NOTE +
+      '<div class="scroll"><table><thead><tr><th>Kind</th><th>Problems</th><th>Right first time</th><th>Helped</th><th>Typical time</th><th>Commonest slip</th></tr></thead><tbody>' +
+      T0.rows.map(function (r) {
+        return '<tr><td>' + tEsc(TAKE_KIND_WORDS[r.kind] || r.kind) + '</td><td>' + r.problems + '</td><td>' + (r.firstAsks ? r.rightFirst + '&nbsp;of&nbsp;' + r.firstAsks : '–') + '</td><td>' + r.helped + '</td><td>' +
+          tEsc(secs(r.ms)) + '</td><td>' + tEsc(r.slip ? TAKE_SLIP_WORDS[r.slip] || r.slip : '–') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      (T0.teen.length ? '<p class="muted">Teen facts missed: ' + tEsc(T0.teen.map(function (t) { return t.text.replace(/ /g, '\u00a0'); }).join(', ')) + '</p>' : '') : '<p class="muted">No take-aways yet.</p>');
+    return { line: line, html: html };
+  }
+  UI.takes = { press: takePress, waits: takeWaits, view: takeView, html: takeHtml, colLine: takeColLine, first: takeFirst,
+    reserve: takeReserve, helpStack: takeHelpStack, end: takeEnd, storeLabel: takeStoreLabel, spreadLabel: takeSpreadLabel,
+    minus: takeMinus, words: takeWordsNow, corner: takeCorner, MS: TAKE_MS, ZONES: TAKE_ZONES };
+
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
   var doc = root.document;
   if (!doc || typeof doc.createElement !== 'function') return;
@@ -1056,7 +1295,9 @@
     return esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\n/g, '<br>')
       .replace(/([A-Za-z0-9À-ɏ])—/g, '$1⁠—');
   }
-  function plain(s) { return String(s == null ? '' : s).replace(/\*+/g, '').replace(/×/g, ' times '); }
+  // (the take-aways kit: a minus sign, U+2212, is read as the words table's "take away", read at call time, so a changed
+  // word reaches the reading too; no line of chapters 1 to 11 or the Warrior Counts has one: UI.takes.minus)
+  function plain(s) { return takeMinus(String(s == null ? '' : s).replace(/\*+/g, '').replace(/×/g, ' times ')); }
   /* Her name as lettered on the page (chapter 11): a warrior name may break between its two halves, Thunderwhisker and
    * butterscotch, where a 26-letter word would otherwise break anywhere; every other name exactly as before. */
   function nameHtml(c) { return E.warriorName(c) ? esc(c.name) + '<wbr>' + esc(c.ending) : esc(E.displayName(c)); }
@@ -1353,7 +1594,12 @@
         if (!fileState.pick) return 'her Case File is open, not the pick screen';
         (ids || []).forEach(function (id) { pickTapCard(id, true); });
         return true;
-      }
+      },
+      /* The take-aways kit, for the tools (tools/shots.mjs's take: targets, dev/webkit/run.mjs's `takes` job): the take page
+       * on the cat on screen, from definitions of its own, never saved (takesDebug: first, q, show, tap, spread, echo, sand,
+       * done; the Hollow's shelf and a Count the store round, from a stub chapter of its own; `opts.keys === false`: nothing
+       * typed). */
+      takes: function (what, opts) { return takesDebug(what, opts); }
     };
     go('title');
   }
@@ -1484,7 +1730,10 @@
       return go(E.hasFinished(cat) ? 'hub' : 'who', { back: true });
     }
     if (n === 'book') return view.opts.from === 'end' ? go('frame', { back: true }) : go('hub', { back: true });
-    if (n === 'hollow' || n === 'nest') return go(view.opts.from === 'book' ? 'book' : 'hub', { back: true });
+    // (book two: the Hollow and My nest, opened from her book, go back to the volume she left)
+    // (the take-aways kit: One Count at a time's page, under the Hollow's shelf, goes back to the shelf)
+    if (n === 'hollow' && hollowSub === 'counts') return go('hollow', { from: view.opts.from, vol: view.opts.vol, back: true, stories: view.opts.stories });
+    if (n === 'hollow' || n === 'nest') return go(view.opts.from === 'book' ? 'book' : 'hub', view.opts.from === 'book' && view.opts.vol ? { back: true, vol: view.opts.vol } : { back: true });
     if (n === 'hub') return go('who', { back: true });
     // the Warrior Counts: to camp, the sitting kept (E.warriorKeep has it after every answer)
     if (n === 'warrior') return go('hub', { back: true });
@@ -3256,29 +3505,29 @@
     var wWait = cat.warrior ? E.hollowLines(cat, stories(), { now: now() }).waiting : null;
     if (wWait) intro = (intro || []).concat([{ who: 'tallyheart', text: wWait }]);
     var finish = function (sum) { if (E.finishCounts(cat, story, sum, now())) { persist(); go('frame'); } };
-    runLesson({
-      def: def, state: st, intro: intro, mode: 'chapter', waitLine: wWait,
-      onDone: function (sum) {
-        // a lesson inside the story (the prey pile) may have no closing line: the next frame answers
-        if (def.done === '' || def.done === null) { renderedAt = now(); return finish(sum); }
-        // the scene again, with the teacher's last line in a balloon over it (the lesson was
-        // recorded on the cat at its last answer, so a page closed now loses nothing)
-        renderedAt = now();
-        var scr = $('screen');
-        scr.innerHTML = frameShell('counts', id);
-        var panel = $('panel');
-        var heads = drawArt(panel, shownFrame(f), cat.look);
-        var line = fill(def.done || 'Good work.');
-        var ctx = { panel: panel, frame: { scene: f.scene, sfx: '' }, heads: heads, caps: [], balloons: [{ who: def.teacher || 'tallyheart', text: line, kind: 'say' }] };
-        relayoutFn = function () { layoutText(ctx); };
-        layoutText(ctx);
-        $('interact').innerHTML = '<div class="next-row"><button class="btn go big" id="nextBtn" type="button">Next</button></div>';
-        $('nextBtn').addEventListener('click', function () { finish(sum); });
-        keyHandler = function (e) { if (!isTyping(e) && (e.key === 'Enter' || e.key === 'ArrowRight')) $('nextBtn').click(); };
-        persist();
-        speakItems([{ text: line, who: def.teacher || 'tallyheart' }]);
-      }
-    });
+    var onDone = function (sum) {
+      // a lesson inside the story (the prey pile) may have no closing line: the next frame answers
+      if (def.done === '' || def.done === null) { renderedAt = now(); return finish(sum); }
+      // the scene again, with the teacher's last line in a balloon over it (the lesson was
+      // recorded on the cat at its last answer, so a page closed now loses nothing)
+      renderedAt = now();
+      var scr = $('screen');
+      scr.innerHTML = frameShell('counts', id);
+      var panel = $('panel');
+      var heads = drawArt(panel, shownFrame(f), cat.look);
+      var line = fill(def.done || 'Good work.');
+      var ctx = { panel: panel, frame: { scene: f.scene, sfx: '' }, heads: heads, caps: [], balloons: [{ who: def.teacher || 'tallyheart', text: line, kind: 'say' }] };
+      relayoutFn = function () { layoutText(ctx); };
+      layoutText(ctx);
+      $('interact').innerHTML = '<div class="next-row"><button class="btn go big" id="nextBtn" type="button">Next</button></div>';
+      $('nextBtn').addEventListener('click', function () { finish(sum); });
+      keyHandler = function (e) { if (!isTyping(e) && (e.key === 'Enter' || e.key === 'ArrowRight')) $('nextBtn').click(); };
+      persist();
+      speakItems([{ text: line, who: def.teacher || 'tallyheart' }]);
+    };
+    // (the take-aways kit: a take set, `op: '-'`, runs on its own page, runTakes, with the same options and the same end)
+    if (st && st.op === '-') return runTakes({ def: def, state: st, intro: intro, mode: 'chapter', waitLine: wWait, onDone: onDone });
+    runLesson({ def: def, state: st, intro: intro, mode: 'chapter', waitLine: wWait, onDone: onDone });
   }
 
   /* One lesson, used by the chapter and the Training Hollow alike. A borrowed question (a filler
@@ -3770,6 +4019,597 @@
     return s + '</svg>';
   }
 
+  /* ================================================================ the take-aways kit: the take page
+   * docs/take-aways.md v0.3, sections 1, 2, 6 and 8 (PC.ui.takes, above, has its words, stacks and waits). One take
+   * set on its own page: a chapter's lesson (startChapterLesson, a set with `op: '-'`) and a Count the store round
+   * (storeLesson). The lesson page's shape, kept: the panel (the store picture, PC.art.placeValue; on a miss
+   * the help's sand, PC.art.sand's `quick`), the stack of balloons, the keypad where her fingers know it; the question
+   * line's place holds the column, answered one box at a time, ones first, with OK. Within a problem nothing above the
+   * keypad changes height (the stack's min-height, the column's reserved rows), so a digit typed fast never lands on
+   * the wrong key. `o`: { def, state, intro, waitLine, mode ('chapter'; 'hollow' (a Count the store round); 'debug': nothing
+   * is saved, PC.debug.takes), frameId, onDone(summary, recorded), echo (chapter 12's Chispapaw: called with each right
+   * column and each right problem, returning a balloon or nothing; absent, the no-op), debug ({ quick, stop }) }.
+   * Nothing here runs before chapter 12: no chapter 1 to 11 has a take set. */
+  var TAKE_PHONE = '(orientation: landscape) and (max-height: 500px)';   // index.html's phone held sideways
+  function takeKeys() {
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return '<button class="key" type="button" data-k="' + n + '">' + n + '</button>'; }).join('') +
+      '<button class="key del" type="button" data-k="del" aria-label="Delete"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h11v14H9l-6-7z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 9l5 6M17 9l-5 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>' +
+      '<button class="key" type="button" data-k="0">0</button>' +
+      '<button class="key ok" type="button" data-k="ok" aria-label="OK">OK</button>';
+  }
+  // (the store and the sand drawn plainly, should the art not draw them: a number of each, in place)
+  function takeStoreFallback(po) {
+    var t = po.taken || {}, z = [['hundreds', po.hundreds, t.hundreds], ['tens', po.tens, t.tens], ['ones', po.ones, t.ones]];
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 800"><rect width="1600" height="800" fill="#e8cf98"/>' +
+      z.map(function (x, i) { return '<text x="' + (270 + i * 530) + '" y="440" font-size="160" text-anchor="middle" fill="#5a4326" font-family="Andika, sans-serif">' + ((x[1] || 0) - (x[2] || 0)) + '</text>'; }).join('') + '</svg>';
+  }
+  function takeSandFallback(s) {
+    var o = (s && s.sand) || {};
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 600"><rect width="1600" height="600" fill="#e2c084"/><text x="800" y="340" font-size="150" text-anchor="middle" fill="#5a4326" font-family="Andika, sans-serif">' +
+      [o.hundreds || 0, o.tens || 0, o.ones || 0].join(' · ') + '</text></svg>';
+  }
+  function runTakes(o) {
+    var def = o.def, st = o.state, T = E.takes, teacher = E.teacherOf(def), keep = o.mode !== 'debug';
+    var dbg = o.debug || null, quick = !!(dbg && dbg.quick), frozen = false;
+    var scr = $('screen');
+    scr.innerHTML = frameShell('lesson', o.frameId || '');
+    var frameEl = scr.querySelector('.frame');
+    frameEl.setAttribute('data-mode', 'take');
+    inLesson = true;      // the keypad screen: no Case File button, as on a lesson
+    fileTeach = null; frameTap = null;
+    renderedAt = now();
+    var panel = $('panel'), art = panel.querySelector('.art'), stack = $('stack'), box = $('interact');
+    panel.classList.add('lesson-panel');
+    box.innerHTML = '<div class="counts takes"><div class="tcol" id="tcol" role="group"></div>' +
+      '<div class="padwrap"><div class="keypad" id="keypad">' + takeKeys() + '</div>' +
+      '<div class="gotit" id="lessonNext" hidden><button class="btn go big" id="gotIt" type="button">Got it!</button></div></div>' +
+      '<button class="sr" id="tspread" type="button" hidden></button></div>';
+    var tcol = $('tcol'), pad = $('keypad'), okKey = pad.querySelector('[data-k="ok"]'), gotBtn = $('gotIt'), nextWrap = $('lessonNext'), spreadBtn = $('tspread');
+    // the problem as it stands (E.takes' question), her digit in the outlined box, the boxes and the marks as drawn
+    var q = null, typed = '', boxes = [], marks = [], on = -1, glowCol = -1, askText = '';
+    // 'line' (a column outlined), 'show', 'tap', 'type' (the keypad awake), 'busy' (a spread landing), 'help', 'end'
+    var phase = 'idle', padLockedUntil = 0, t0 = 0, firstAsk = true, firstIntro = [];
+    // (`base` the lines on the page over the column; `baseHeard` what Read to me's button says of them: on a first column the
+    // question in words before the column's line, section 6's order, which every later line of the column is said after)
+    var base = [], baseHeard = [], echoLines = [], advance = null, gotAct = null, tapWant = null, tapShow = null, flying = null;
+    relayoutFn = null;
+
+    // the page's own timers: none moves the page on once PC.debug.takes has stopped it for a picture (`quick`: at once), nor
+    // once the page is gone (Camp or ‹: a speech `end` that comes after go() never brings a dead page back, as the
+    // Warrior pause's `!scrEl.isConnected`)
+    function wait(fn, ms) { return later(function () { if (!frozen && frameEl.isConnected) fn(); }, quick ? 0 : ms); }
+    // a tap that moves the page on: every wait begun before it is withdrawn (its timers cleared, its speech stopped, and a
+    // speech `end` that still comes, from cancel() or late, finds its generation gone and runs nothing)
+    var waitGen = 0;
+    function hush() { waitGen++; clearTimers(); stopSpeech(); }
+    function stop(tag) { if (dbg && dbg.stop === tag) { frozen = true; return true; } return false; }
+    function stackHtml(list) {
+      return list.map(function (l) {
+        if (l.kind === 'caption' || l.who === 'caption') return '<p class="caption">' + rich(l.text) + '</p>';
+        // (the echo's room, for measuring only: Chispapaw's balloon two lines tall)
+        if (l.room) return stackBalloon({ who: l.who, html: 'M<br>M' }, 'troom');
+        var cnt = l.counter != null ? '<span class="counter">' + esc(l.counter) + '</span>' : '';
+        if (cnt) return stackBalloon({ who: l.who || teacher, html: l.text ? cnt + ' ' + richN(l.text) : cnt });
+        return stackBalloon({ who: l.who || teacher, text: l.text, kind: l.kind, name: l.name, variant: l.variant });
+      }).join('');
+    }
+    function say(list) { stack.innerHTML = stackHtml(list); }
+    // what Read to me's button says (PC.debug.speech): the page's lines, never the counter's numbers alone
+    function heard(list) {
+      return list.filter(function (l) { return !l.room && l.text; }).map(function (l) { var h = { text: l.text, who: l.who || teacher }; if (l.variant) h.variant = l.variant; if (l.lang) h.lang = l.lang; return h; });
+    }
+    function saying(items) { later(function () { currentSpeech = items; }, 0); }
+    function T1(text) { return { who: teacher, text: fill(text) }; }
+    function helpedMap() { var h = {}; ((q && q.helped) || []).forEach(function (c) { h[c] = true; }); return h; }
+    function qAt(col) { return { plan: q.plan, col: col == null ? q.col : col, picture: q.picture }; }
+
+    function drawCol() {
+      if (!q) return;
+      tcol.style.setProperty('--tn', String(q.plan.n));
+      tcol.innerHTML = takeHtml(takeView(q.plan, { marks: marks, boxes: boxes, on: on, glow: glowCol, ask: askText }));
+      tcol.setAttribute('aria-label', askText);
+      // OK is dim while the box is empty, except on the leftmost box (lit there on every problem: an empty OK is a 0)
+      okKey.disabled = phase === 'tap' || (typed === '' && !(q.okEmpty && on === q.col));
+    }
+    function paintStore(po) {
+      if (!po) return;
+      art.innerHTML = artCall('placeValue', po) || takeStoreFallback(po);
+      panel.setAttribute('aria-label', takeStoreLabel(po) || 'The store');
+    }
+    function store(stage, col) { paintStore(E.takePicture(def, qAt(col), stage)); }
+    function paintSand(step) {
+      art.innerHTML = artCall('sand', E.takeSandOpts(step)) || takeSandFallback(step);
+      panel.setAttribute('aria-label', 'Tallyheart’s sand');
+    }
+    /* A spread landing in the store: a row (or a square) slides (600 ms), opens into ten (400 ms), and lands; with
+     * Reduce Motion, and on a tap (`flying()`), its end at once. */
+    function flyTo(po, then) {
+      flying = null;
+      if (!po) return then();
+      var sp = po.spread, endPo = Object.assign({}, po, { spread: null });
+      if (!sp || reduceMotion || quick) { paintStore(endPo); return then(); }
+      var me = function () { if (flying !== me) return; flying = null; paintStore(endPo); then(); };
+      flying = me;
+      paintStore(Object.assign({}, po, { spread: Object.assign({}, sp, { stage: 'slide' }) }));
+      wait(function () {
+        if (flying !== me) return;
+        paintStore(Object.assign({}, po, { spread: Object.assign({}, sp, { stage: 'open' }) }));
+        wait(me, TAKE_MS.open);
+      }, TAKE_MS.slide);
+    }
+    function landNow() { if (flying) { var f = flying; clearTimers(); f(); } }
+    /* A line on the page until it can be read, or, Read to me on, said and a little more (at most twice as long). */
+    function timedWait(items, kind, fn) {
+      var text = items.map(function (i) { return i.text || ''; }).join(' '), w = takeWaits(text, kind), done = false, g = ++waitGen;
+      var next = function () { if (done || g !== waitGen) return; done = true; fn(); };
+      if (save.settings.readAloud && 'speechSynthesis' in root && items.length) {
+        speakItems(items, function () { wait(next, w.after); });
+        wait(next, w.cap);
+      } else { speakItems(items); wait(next, w.read); }
+    }
+    /* The column's clock (section 4's `cols`): it starts again once the column's line has been said, or would have
+     * been read, and never while she is typing. */
+    function startClock(items) {
+      var forCol = q.col, forPos = st.pos;
+      t0 = perfNow();
+      var rc = function () { if (q && q.col === forCol && st.pos === forPos && phase === 'type' && typed === '') t0 = perfNow(); };
+      var text = items.map(function (i) { return i.text || ''; }).join(' ');
+      if (save.settings.readAloud && 'speechSynthesis' in root && items.length) speakItems(items, rc);
+      else { speakItems(items); if (text) later(rc, takeWaits(text, 'step').read); }
+    }
+    function bringIn(el) {
+      var b = el.getBoundingClientRect().bottom, vh = root.innerHeight || 0;
+      if (vh && b > vh) root.scrollBy(0, b - vh + 8);
+    }
+    // the keypad, and "Got it!", brought into view (after go()'s scroll to the top too: a lesson picked up is drawn inside it)
+    function bringPad() { bringIn(pad); later(function () { bringIn(pad); }, 0); }
+    function bringGot() { bringIn(gotBtn); }
+    function keepSlot() {
+      if (!keep) return;
+      if (o.mode === 'chapter') cat.lesson = { mode: 'chapter', frame: cat.frame, chapter: story.id, state: st };
+      else cat.lesson = { mode: o.mode, state: st };
+      persist();
+    }
+    /* The stack held through a problem (section 6): its min-height the tallest it will be while she types the problem,
+     * from the column she is on (PC.ui.takes.reserve), each candidate measured where the stack stands (and what it
+     * holds now: a relayout mid-problem). */
+    function reserve() {
+      stack.style.minHeight = '';
+      if (!q) return;
+      // (each height up to the next whole pixel: offsetHeight rounds, so a stack 0.11 px over its held height moved the
+      // keypad, measured at 1024 x 768 with Aa on once the gold marks' row was 17px)
+      var tall = function () { return Math.ceil(stack.getBoundingClientRect().height - 0.01); };
+      var was = stack.innerHTML, max = tall();
+      var echoAt = typeof o.echo === 'function' ? function (c) { return echoOf(echoInfo(c)); } : false;
+      takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt }).forEach(function (L) {
+        stack.innerHTML = stackHtml(L);
+        max = Math.max(max, tall());
+      });
+      stack.innerHTML = was;
+      if (max) stack.style.minHeight = max + 'px';
+    }
+    // what the echo hook is told of a right column: its top at her turn (and as written), its bottom and its digit
+    function echoInfo(col) { var c = q.plan.cols[col]; return { col: col, top: c.at, written: c.top, bottom: c.bottom, digit: c.digit, a: q.a, b: q.b }; }
+    /* The fallbacks (section 6), only when this problem's held stack leaves the keypad under the screen: first the heads
+     * row; then sideways the keys at 56px, upright the panel shorter (never under half its height); then the keypad is
+     * brought into view, as a lesson's is under a long intro. Set before she types, so nothing moves within a problem;
+     * a phone held sideways never needs them (the stack stands over the panel). */
+    function fit() {
+      frameEl.classList.remove('tnohead', 'tkeys');
+      panel.style.height = '';
+      var vh = root.innerHeight || 0, mm = root.matchMedia;
+      if (!vh || !pad.getBoundingClientRect || (mm && mm(TAKE_PHONE).matches)) return;
+      var over = function () { return pad.getBoundingClientRect().bottom + (root.scrollY || root.pageYOffset || 0) - vh; };
+      if (over() <= 0) return;
+      frameEl.classList.add('tnohead');
+      var left = over();
+      if (left <= 0) return;
+      if (mm && mm('(orientation: portrait)').matches) {
+        var ph = panel.getBoundingClientRect().height;
+        panel.style.height = Math.max(Math.round(ph / 2), Math.floor(ph - left)) + 'px';
+      } else frameEl.classList.add('tkeys');
+    }
+    function echoOf(info) {
+      if (typeof o.echo !== 'function') return null;
+      var e = null;
+      try { e = o.echo(info); } catch (x) { e = null; }
+      if (typeof e === 'string') e = e ? { text: e } : null;
+      if (!e || !e.text) return null;
+      var b = { who: e.who || 'chispapaw', text: fill(e.text), lang: e.lang || 'es' };
+      if (e.variant) b.variant = e.variant;
+      return b;
+    }
+    function wiggle() {
+      panel.classList.remove('twiggle'); void panel.offsetWidth; panel.classList.add('twiggle');
+      later(function () { panel.classList.remove('twiggle'); }, 700);
+    }
+
+    /* A problem: the next one in the queue, at the column she is on (a lesson picked up comes back at its column). */
+    function ask() {
+      q = T.question(st);
+      if (!q) return finish();
+      typed = ''; echoLines = []; glowCol = -1; marks = q.marks;
+      boxes = q.plan.cols.map(function (c, i) { return i < q.col ? (q.got[i] === '' ? { v: '', cls: 'blank' } : { v: String(q.got[i]), cls: 'right' }) : { v: '', cls: '' }; });
+      askText = fill(E.takeQuestion(def, q).ask.text);
+      firstIntro = firstAsk ? asList(o.intro) : [];
+      pad.classList.remove('locked');
+      on = q.col; phase = 'line';
+      drawCol();
+      stack.innerHTML = '';
+      reserve();
+      outline(true);
+      fit();
+      bringPad();
+    }
+    /* A column outlined: its line (section 1), then 'show''s steps, 'tap''s taps, or the keypad awake. */
+    function outline(fresh) {
+      advance = null; gotAct = null; glowCol = -1;
+      on = q.col; typed = ''; boxes[q.col] = { v: '', cls: '' };
+      marks = q.marks;
+      store({ col: q.col, spreads: q.mode === 'tap' ? q.tapped : 0 });
+      var lines, said;
+      if (q.col === 0 && fresh) {
+        var F = takeFirst(def, q, { intro: firstIntro, fill: fill });
+        lines = F.lines; said = F.heard;
+      } else {
+        var lt = takeColLine(def, q), L = lt ? [T1(lt)] : [];
+        var pre = fresh ? firstIntro : echoLines;
+        lines = pre.concat(L); said = (fresh ? heard(pre) : []).concat(L);
+      }
+      firstAsk = false;
+      base = lines;
+      // (Read to me's button: the first column in section 6's order, the question in words before the column's line,
+      // split out of the joined balloon; a later column, what is on the page, Chispapaw's echo with it. A 'show' step, a
+      // 'tap' line or "up here" is said after it, so a first column's question in words is never dropped)
+      baseHeard = q.col === 0 && fresh ? said : heard(lines);
+      phase = 'line';
+      say(lines); saying(baseHeard);
+      drawCol();
+      if (q.show) {
+        phase = 'show'; pad.classList.add('away'); drawCol();
+        advance = function () { hush(); playShow(); };
+        // (Read to me off: the first column waits for what is lettered, not for the question in words, which is only said)
+        return timedWait(save.settings.readAloud || !(q.col === 0 && fresh) ? said : heard(lines), 'step', playShow);
+      }
+      if (q.tap) return startTap(said);
+      wake(said);
+    }
+    function wake(said) {
+      phase = 'type'; typed = ''; on = q.col; advance = null;
+      pad.classList.remove('away', 'dim', 'locked'); nextWrap.hidden = true; spreadBtn.hidden = true;
+      boxes[q.col] = { v: '', cls: '' };
+      drawCol();
+      startClock(said || []);
+    }
+    /* 'show': Tallyheart works the column's spreads before she types it, a step a line; a tap moves on. */
+    function playShow() {
+      var S = E.takeShow(def, q.plan, q.col, { mode: 'show', helped: helpedMap(), picture: q.picture }), steps = S ? S.steps : [];
+      if (!steps.length) return wake([]);
+      phase = 'show'; pad.classList.add('away');
+      var step = function (j) {
+        var s = steps[j], line = T1(s.say), last = j === steps.length - 1;
+        marks = s.marks; drawCol();
+        say(base.concat([line])); saying(baseHeard.concat(heard([line])));
+        flyTo(s.picture, function () {});
+        if (last) { landNow(); wake([line]); stop('show' + j); return; }
+        if (stop('show' + j)) return;
+        advance = function () { landNow(); hush(); step(j + 1); };
+        timedWait([line], 'step', function () { step(j + 1); });
+      };
+      step(0);
+    }
+    /* 'tap': the zone to spread glows and the keypad is dim; she taps it (or the lending digit), Space, or the hidden
+     * button; a tap elsewhere makes it glow again and says "The rows: up here." once; a digit wiggles it. */
+    function startTap(said) {
+      tapShow = E.takeShow(def, q.plan, q.col, { mode: 'tap', helped: helpedMap(), picture: q.picture });
+      var cur = tapShow.taps[Math.min(q.tapped, tapShow.taps.length - 1)], line = T1(cur.say);
+      phase = 'tap'; tapWant = cur.glow;
+      pad.classList.remove('away'); pad.classList.add('dim');
+      paintStore(cur.picture);
+      say(base.concat([line])); saying(baseHeard.concat(heard([line])));
+      speakItems((said || []).concat([line]));
+      spreadBtn.textContent = takeSpreadLabel(cur.glow); spreadBtn.hidden = false;
+      drawCol();
+    }
+    function tapZone(zone) {
+      if (phase !== 'tap') return;
+      if (zone !== tapWant) {
+        var r0 = T.tap(st, true);
+        if (r0 && r0.say && tapShow.here[r0.glow]) { var hl = T1(tapShow.here[r0.glow]); say(base.concat([hl])); saying(baseHeard.concat(heard([hl]))); speakItems([hl]); keepSlot(); }
+        // (drawn again, so its glow pulses from the start)
+        paintStore(E.takePicture(def, qAt(), { col: q.col, spreads: st.tapped, glow: tapWant }));
+        return;
+      }
+      var r = T.tap(st);
+      if (!r) return;
+      keepSlot();
+      phase = 'busy'; spreadBtn.hidden = true;
+      marks = r.marks; drawCol();
+      advance = landNow;
+      flyTo(E.takePicture(def, qAt(), { col: q.col, spreads: r.tapped, flight: 'end' }), function () {
+        advance = null;
+        q = T.question(st);
+        if (r.left) {
+          var nx = tapShow.taps[r.tapped], nl = T1(nx.say);
+          phase = 'tap'; tapWant = nx.glow;
+          paintStore(nx.picture);
+          say(base.concat([nl])); saying(baseHeard.concat(heard([nl]))); speakItems([nl]);
+          spreadBtn.textContent = takeSpreadLabel(nx.glow); spreadBtn.hidden = false;
+          return;
+        }
+        var al = T1(E.takeLine(def, q.plan, q.col, 'after', 'tap', q.full));
+        say(base.concat([al])); saying(baseHeard.concat(heard([al])));
+        wake([al]);
+      });
+    }
+    function press(k) {
+      if (phase === 'tap') { if (k !== 'del') wiggle(); return; }   // a digit before the spread types nothing
+      if (phase !== 'type' || now() < padLockedUntil) return;
+      if (k === 'ok') return submit();
+      typed = takePress(typed, k);
+      boxes[q.col] = { v: typed, cls: '' };
+      drawCol();
+    }
+    /* One column's OK (E.takes.digit): right, the ones-first pointer, or a miss and its help. */
+    function submit() {
+      if (typed === '' && !q.okEmpty) return;
+      var res = T.digit(st, def, typed, Math.max(0, perfNow() - t0), now());
+      if (!res) return;
+      if (res.ignored) { if (res.ignored === 'tap') wiggle(); return; }
+      // keys are ignored for 400 ms after every OK: the second tap of a double tap never reaches the next box
+      padLockedUntil = now() + TAKE_MS.ok;
+      if (res.pointer) {
+        // her first digit typed left to right: not checked, not logged; the box clears, the ones box pulses
+        typed = ''; boxes[0] = { v: '', cls: 'pulse' };
+        var F = takeFirst(def, q, { intro: firstIntro, fill: fill, line: res.line });
+        base = F.lines; baseHeard = F.heard; say(base); saying(F.heard);
+        drawCol(); keepSlot();
+        return startClock([T1(res.line)]);
+      }
+      phase = 'busy';
+      if (keep) {
+        if (res.entry) E.logTake(cat, res.entry);
+        // the last answer finishes the lesson: recorded now, not after its line
+        if (res.done) { o.recorded = E.recordLesson(cat, st); persist(); }
+        else keepSlot();
+      }
+      var col = res.col;
+      on = -1;
+      if (res.right) {
+        boxes[col] = res.blank ? { v: '', cls: 'blank' } : { v: String(res.digit), cls: 'right' };
+        if (res.spread && res.spread.length) { drawCol(); return playSpread(res); }
+        marks = res.marks; drawCol();
+        store({ col: col, spreads: 9, taken: true });
+        return afterRight(res, false, false);
+      }
+      boxes[col] = { v: res.given === '' ? '' : String(res.given), cls: 'miss' };
+      drawCol();
+      wait(function () { help(res); }, TAKE_MS.miss);
+    }
+    /* 'hers': a right digit tells the page she spread in her head; the store catches up (a spread at a time), the
+     * lenders are struck and this column lettered, then what is taken goes pale. A tap draws the end at once. */
+    function playSpread(res) {
+      var col = res.col, n = res.spread.length, k = 0, helped = helpedMap(), qa = qAt(col), hurry = false;
+      var landed = function () {
+        k++;
+        if (k < n && hurry) k = n;
+        marks = k < n ? E.takeMarks(q.plan, q.mode, helped, col, k) : res.marks;
+        drawCol();
+        if (k < n) return fly();
+        store({ col: col, spreads: 9, taken: true });
+        afterRight(res, true, hurry);
+      };
+      var fly = function () { flyTo(E.takePicture(def, qa, { col: col, spreads: k + 1, flight: 'end' }), landed); };
+      advance = function () { hurry = true; landNow(); };
+      if (reduceMotion || quick) { k = n - 1; return landed(); }
+      fly();
+    }
+    /* After a right column: Chispapaw's echo (chapter 12 on) over the next column's line, which is outlined 0.9 s
+     * after the last spread lands, or at once with no spread (after the echo's reading time when she echoes). */
+    function afterRight(res, spread, hurry) {
+      advance = null;
+      if (res.problemDone) return problemEnd(res);
+      if (stop('landed')) return;
+      var e = echoOf(echoInfo(res.col)), d = spread && !hurry ? TAKE_MS.outline : 0;
+      echoLines = e ? [e] : [];
+      var next = function () { advance = null; q = T.question(st); outline(false); };
+      if (!d && !e) return next();
+      advance = function () { hush(); next(); };
+      // (the echo lettered and said at once; the next column once it can be read, or has been said, and the 0.9 s)
+      if (e) { say(echoLines); saying(heard(echoLines)); return timedWait(heard(echoLines), 'step', d ? function () { wait(next, d); } : next); }
+      wait(next, d);
+    }
+    /* A miss: the help in the sand (section 2), a step a line; the slip's line stays above the steps; the digit is
+     * written into the box at the end, and "Got it!" outlines the next column. A tap on the sand moves on one step. */
+    function help(res) {
+      var H = res.help, steps = H.steps, col = res.col, at = 0, startedAt = now();
+      // (a phone held sideways with Aa on: the counter joins the step's line, section 6's named fallback)
+      var join = !!(root.matchMedia && root.matchMedia(TAKE_PHONE).matches && save.settings.bigText);
+      phase = 'help'; on = -1;
+      pad.classList.add('away'); nextWrap.hidden = true;
+      var show = function (i) {
+        at = i;
+        var s = steps[i];
+        paintSand(s);
+        marks = s.marks; glowCol = steps[0].glow ? col : -1;
+        if (s.write) boxes[col] = H.blank ? { v: '', cls: 'blank' } : { v: String(H.digit), cls: 'right' };
+        drawCol();
+        var L = takeHelpStack(H, i, teacher, join).map(function (l) { return l.text ? Object.assign({}, l, { text: fill(l.text) }) : l; });
+        say(L); saying(heard(L));
+      };
+      var end = function (said) {
+        advance = null;
+        speakItems(said);
+        gotBtn.textContent = 'Got it!'; nextWrap.hidden = false;
+        gotAct = function () {
+          padLockedUntil = now() + TAKE_MS.ok;   // the double-tap guard after "Got it!"
+          marks = res.marks; glowCol = -1;
+          if (res.problemDone) return problemEnd(res);
+          q = T.question(st); outline(false);
+        };
+        bringGot();
+        try { gotBtn.focus({ preventScroll: true }); } catch (x) {}
+        stop('help');
+      };
+      var step = function (i) {
+        show(i);
+        var s = steps[i], line = T1(s.say);
+        if (s.write) return end([line]);
+        advance = function () { if (now() - startedAt < TAKE_MS.tapGuard || at >= steps.length - 1) return; hush(); step(at + 1); };
+        timedWait([line], s.hop ? 'hop' : 'step', function () { step(i + 1); });
+      };
+      // (PC.debug.takes: the help at a step, for a picture: its last, "Got it!", by default)
+      if (dbg && dbg.stop === 'help') {
+        var k = Math.max(0, Math.min(steps.length - 1, dbg.at < 0 ? steps.length + dbg.at : dbg.at));
+        if (steps[k].write) return step(k);
+        show(k); frozen = true; return;
+      }
+      step(0);
+    }
+    /* The problem's end: the answer row complete, the store showing what is left, its one line (or its own `right`
+     * lines, which wait for Next); then the next problem, or the lesson's end. The stack's height is released. */
+    function problemEnd(res) {
+      phase = 'end'; echoLines = []; on = -1; glowCol = -1;
+      stack.style.minHeight = '';
+      marks = res.marks; drawCol();
+      store('done', q.plan.n);
+      pad.classList.add('locked'); okKey.disabled = true;
+      var e = res.entry && res.entry.correct ? echoOf({ problem: true, a: res.entry.a, b: res.entry.b, answer: res.entry.answer }) : null;
+      var Ed = takeEnd(def, res, { fill: fill, echo: e });
+      var lines = (res.blank && res.right && res.blankLine ? [T1(res.blankLine)] : []).concat(Ed.lines);
+      say(lines); saying(heard(lines));
+      var goOn = function () { advance = null; gotAct = null; if (res.done) return finish(); ask(); };
+      if (Ed.next) {
+        speakItems(heard(lines));
+        pad.classList.add('away'); gotBtn.textContent = 'Next'; nextWrap.hidden = false;
+        gotAct = goOn;
+        bringGot();
+        later(function () { try { gotBtn.focus({ preventScroll: true }); } catch (x) {} }, 50);
+        stop('end');
+        return;
+      }
+      advance = function () { hush(); goOn(); };
+      if (stop('end')) return;
+      timedWait(heard(lines), 'end', goOn);
+    }
+    function finish() {
+      if (!frameEl.isConnected) return;   // (the page left: no done page, no reward, over the next screen)
+      keyHandler = null; relayoutFn = null;
+      inLesson = false; phase = 'done';
+      var sum = T.summary(st);
+      // recorded at the last answer; this only catches a lesson that somehow was not
+      if (keep && !o.recorded && cat.lesson && cat.lesson.state === st) { o.recorded = E.recordLesson(cat, st); persist(); }
+      if (o.onDone) o.onDone(sum, o.recorded);
+      updateBar();   // the keypad screen is over: her Case File's button is back
+    }
+    function zoneAt(x) {
+      var rs = art.querySelectorAll('.pc-zone');
+      for (var i = 0; i < rs.length; i++) { var b = rs[i].getBoundingClientRect(); if (x >= b.left && x <= b.right) return rs[i].getAttribute('data-zone'); }
+      return null;
+    }
+    pad.addEventListener('click', function (e) { var b = e.target.closest('.key'); if (b) press(b.getAttribute('data-k')); });
+    gotBtn.addEventListener('click', function () { var f = gotAct; gotAct = null; if (!f) return; nextWrap.hidden = true; f(); });
+    spreadBtn.addEventListener('click', function () { tapZone(tapWant); });
+    // the tap target: the glowing zone, the panel's full height (generous), or the lending digit's column in the column, its
+    // full height (hit by x against its box, 6 px either side: the lending digit alone is under 44 px, and a near miss said
+    // "up here" though she tapped the right column; only one thing can be tapped in this phase)
+    panel.addEventListener('click', function (e) { if (phase === 'tap') return tapZone(zoneAt(e.clientX) || 'off'); if (advance) advance(); });
+    tcol.addEventListener('click', function (e) {
+      if (phase !== 'tap') { if (advance && phase !== 'help') advance(); return; }
+      var w = TAKE_ZONES.indexOf(tapWant), wb = tcol.querySelector('.tbox[data-col="' + w + '"]'), r = wb && wb.getBoundingClientRect();
+      tapZone(r && e.clientX >= r.left - 6 && e.clientX <= r.right + 6 ? tapWant : 'off');
+    });
+    stack.addEventListener('click', function () { if (phase === 'tap') return tapZone('off'); if (advance && phase !== 'help') advance(); });
+    keyHandler = function (e) {
+      if (isTyping(e)) return;
+      if (/^[0-9]$/.test(e.key)) { e.preventDefault(); press(e.key); }
+      else if (e.key === 'Backspace') { e.preventDefault(); press('del'); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (!nextWrap.hidden) gotBtn.click(); else if (phase === 'type') press('ok'); else if (phase === 'tap') wiggle(); else if (advance) advance(); }
+      else if (e.key === ' ') { if (phase === 'tap') { e.preventDefault(); tapZone(tapWant); } else if (advance && phase !== 'type') { e.preventDefault(); advance(); } }
+    };
+    // (a font that loads late, a turned screen, Aa: the stack's held height measured again)
+    relayoutFn = function () { if (q && phase !== 'end' && phase !== 'help' && phase !== 'done') { reserve(); fit(); } };
+    updateBar();
+    ask();
+    return { press: press, tap: function (z) { tapZone(z || tapWant); } };
+  }
+
+  /* PC.debug.takes(what), for the tools (section 8: tools/shots.mjs's take: targets, dev/webkit/run.mjs's `takes` job):
+   * the take page on the cat on screen (a test cat), built from definitions of its own (no chapter has a take set,
+   * and tests/fixtures/takes-stub.js is not served), never saved and never logged:
+   *   first   chapter 12's worked example (254 − 131, 'show', its prompt), the first column, the prompt joined, the
+   *           Warrior Counts' waiting line over it (wWait)
+   *   q       503 − 278 'hers' at its tens: the ones right, the 3 struck with 13 over it, the 5 and the 0 struck
+   *   show    503 − 278 'show', its second step: a square spread, the zero lettered 10
+   *   tap     43 − 16 'tap': the rows glowing, the keypad dim
+   *   spread  503 − 278: 5 at the ones, the spreads landed, what is taken pale
+   *   echo    the same, with a stub Spanish balloon from `o.echo` over the tens' line
+   *   sand    503 − 278's ones answered 0 (`zero`): the help's last step, three balloons and "Got it!"
+   *   done    503 − 278 right in every column: two squares, two rows and five loose left, and its line
+   *   shelf   the Training Hollow's shelf (Count the store open), through go('hollow') with `opts.stories`
+   *   store   a Count the store round's first problem, its introduction over its first column
+   * `opts.step`: the worked spread's step ('show'), or the help's ('sand'), from 0, from the end below 0; `opts.keys`
+   * false: nothing typed (a tool that types itself). The shelf and the store need a `teach` set finished: an in-memory
+   * stories list, the chapters and a stub chapter 12 with one (never registered in PC.story), passed as `opts.stories`, and
+   * the stub's lesson marked finished on the test cat in memory (never saved by this call).
+   * Returns true or an error string, as PC.debug.warrior does. */
+  var TAKE_DEBUG_PROMPT = 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.';
+  var TAKE_DEBUG_ECHO = '¡Trece menos ocho son cinco! ¡Muy bien, amiga!';   // eight words: an echo's most
+  var TAKE_DEBUG = { first: 1, q: 1, show: 1, tap: 1, spread: 1, echo: 1, sand: 1, done: 1, shelf: 1, store: 1 };
+  // the shelf's and the store's stub: a chapter 12 whose lesson teaches the first step (`teach: 'none'`)
+  var TAKE_DEBUG_CH = { id: 'take-debug-ch12', number: 12, module: 2, title: 'Take-aways (debug)', start: 'f001',
+    frames: { f001: { board: 'DEBUG.', end: true } },
+    counts: { 'take-debug-none': { op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, facts: [[58, 23], [76, 42], [475, 132]] } } };
+  function takesDebug(what, opts) {
+    if (!E || !E.takes || typeof E.takePlan !== 'function') return 'no take-aways kit in this build';
+    if (!TAKE_DEBUG[what]) return 'takes: first, q, show, tap, spread, echo, sand, done, shelf or store';
+    if (!cat) { cat = E.addCat(save, { now: now() }) || save.cats[0]; save.current = cat.id; }
+    if (what === 'shelf' || what === 'store') {
+      var list = E.chapters(stories()).concat([TAKE_DEBUG_CH]);
+      cat.lessons['take-debug-none'] = { set: 'take-debug-none', mode: 'chapter', op: '-', answers: 3, correct: 3, fast: 0, facts: 3, firstTry: 3, helped: 0, noHelp: true, finished: true };
+      if (!E.storeOpen(cat, list)) return 'takes: the store did not open for the test cat';
+      if (what === 'shelf') { go('hollow', { from: 'hub', stories: list }); return $('storeBtn') ? true : 'takes: no shelf drawn (a round in the slot?)'; }
+      var r = E.takeRoundStart(cat, stories(), now(), { stories: list });
+      clearTimers(); stopSpeech();
+      if (fileState) closeFile(true);
+      relayoutFn = null; keyHandler = null; currentSpeech = [];
+      view = { name: 'hollow', opts: { from: 'hub' } };
+      $('screen').classList.remove('enter', 'enter-back');
+      storeLesson(r.state, false, null, true);
+      renderedAt = now(); renderedPerf = perfNow();
+      updateBar();
+      root.scrollTo(0, 0);
+      return true;
+    }
+    var def = { id: 'take-debug', op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' },
+      praise: ['Yes!', '', 'That’s it.', '', 'Every column.', ''], done: '' };
+    var t = now(), o = { mode: 'debug', debug: { quick: true }, frameId: 'take-' + what, onDone: function () {} }, keys = null;
+    def.facts = what === 'first' ? [{ a: 254, b: 131, regroup: 'show', prompt: TAKE_DEBUG_PROMPT, right: ['One square, two rows, three loose left.'] }, [58, 23], [76, 42]] :
+      what === 'show' ? [{ a: 503, b: 278, regroup: 'show' }] : what === 'tap' ? [{ a: 43, b: 16, regroup: 'tap' }] : [[503, 278]];
+    var st = E.takes.start(def, { set: def.id, mode: 'chapter', now: t, logged: 5 });
+    if (what === 'first') { o.intro = [{ who: 'tallyheart', text: E.WARRIOR_WAITING }]; o.waitLine = E.WARRIOR_WAITING; }
+    // (`opts.step`: a step of the worked spread or of the help, from 0, from the end below 0)
+    var at = opts && typeof opts.step === 'number' && isFinite(opts.step) ? Math.round(opts.step) : null;
+    if (what === 'show') { var ns = E.takeShow(def, E.takePlan(503, 278), 0).steps.length; o.debug.stop = 'show' + Math.max(0, Math.min(ns - 1, at == null ? 1 : at < 0 ? ns + at : at)); }
+    if (what === 'q' || what === 'done') E.takes.digit(st, def, 5, 3000, t - 60000);
+    if (what === 'done') { E.takes.digit(st, def, 2, 3000, t - 50000); keys = ['2', 'ok']; o.debug.stop = 'end'; }
+    if (what === 'spread') { keys = ['5', 'ok']; o.debug.stop = 'landed'; }
+    if (what === 'echo') { keys = ['5', 'ok']; o.echo = function (x) { return x && !x.problem ? { who: 'chispapaw', text: TAKE_DEBUG_ECHO } : null; }; }
+    if (what === 'sand') { keys = ['0', 'ok']; o.debug.stop = 'help'; o.debug.at = at == null ? -1 : at; }
+    clearTimers(); stopSpeech();
+    if (fileState) closeFile(true);
+    relayoutFn = null; keyHandler = null; currentSpeech = [];
+    view = { name: 'frame', opts: {} };
+    $('screen').classList.remove('enter', 'enter-back');
+    var h = runTakes(Object.assign({ def: def, state: st }, o));
+    // (`opts.keys === false`: nothing typed, for a tool that types itself)
+    if (keys && !(opts && opts.keys === false)) keys.forEach(function (k) { h.press(k); });
+    renderedAt = now(); renderedPerf = perfNow();
+    updateBar();
+    root.scrollTo(0, 0);
+    return true;
+  }
+
   /* ================================================================ hub (after any finished chapter) */
   function renderHub() {
     if (!cat) return go('who');
@@ -3850,7 +4690,12 @@
    * chapter's teaser. Printing puts each chapter on its own page. */
   function renderBook(opts) {
     if (!cat) return go('who');
-    var b = E.buildFullBook(cat, stories());
+    // book two (docs/take-aways.md, section 7): the volume on screen, one a module (bookVol); the first is the book as it
+    // always was, and the only one until she finishes a module 2 chapter
+    // (the Warrior Counts' teaser lines below never touch the second volume: module 2 comes after the Ceremony, which is
+    // built, and no module 2 teaser leads to it)
+    var vols = E.books(cat, stories()), vol = bookVol(opts, vols);
+    var b = vol > 1 ? E.buildFullBook(cat, stories(), vol) : E.buildFullBook(cat, stories());
     var t = b.teaser;
     // the Warrior Counts passed, the Ceremony not built yet: "Your ceremony is coming soon." in place of
     // chapter 10's teaser lines (a UI choice: E.teaser is unchanged)
@@ -3863,18 +4708,22 @@
     // passed; Glintstar's pass line, which she has read, stands in its place till she reads the chapter)
     var wsNext = t && t.built && warriorBuilt() && (E.chapter(t.next, stories()) || {}).opensWhen === 'warrior' ? warriorNow() : null;
     if (wsNext && wPassShown(wsNext)) t = Object.assign({}, t, { lines: [CEREMONY_NEXT] });
+    var volBtns = bookVolButtons(vols, vol);
     $('screen').innerHTML =
-      '<article class="book" aria-label="' + esc(b.title) + '">' +
+      '<article class="book' + (vol > 1 ? ' vol' + vol : '') + '" aria-label="' + esc(b.title) + '">' +
       // a long Clan name ("Thunderwhiskerpaw’s") gets a smaller title, so the word never breaks (the name the title
-      // shows: {name}paw, her warrior name or not, chapter 11)
-      '<h1' + ((E.clanName(cat) || E.displayName(cat)).length > 12 ? ' class="long"' : '') + '>' + esc(b.title) + '</h1>' +
+      // shows: {name}paw, her warrior name or not, chapter 11; the second volume's shows her warrior name: bookTitleTwo)
+      (vol > 1 ? bookTitleTwo(b.title) + volBtns : '<h1' + ((E.clanName(cat) || E.displayName(cat)).length > 12 ? ' class="long"' : '') + '>' + esc(b.title) + '</h1>' + volBtns) +
       '<div class="portrait" aria-hidden="true">' + catPortrait(cat.look, 'happy') + '</div>' +
       (b.pages.length ? b.pages.map(function (pg) {
         return '<section class="bookpage" id="book-' + esc(pg.id) + '"><h2 class="chap">' + esc(pg.heading) + '</h2>' +
           pg.recap.map(function (p) { return '<p>' + richN(p) + '</p>'; }).join('') +
+          // book two: the store as the chapter left it, under its recap
+          (pg.store != null ? storePic(pg.store) : '') +
           (pg.dream ? '<p class="dream">' + richN(pg.dream) + '</p>' : '') + '</section>';
       }).join('') : '<p class="chap">Finish a chapter, and it goes in your book.</p>') +
       dragonetPages(b.dragonets) +
+      (vol > 1 ? sleeperPages(b.sleepers) + badgerPage(b.badger) + keepsakePage(b.keepsake) : '') +
       '<div class="sig">' + nameHtml(cat) + ' of CrystalClan</div>' +
       '</article>' +
       '<div class="links no-print"><button class="btn" id="printBtn" type="button">Print my book</button></div>' +
@@ -3886,7 +4735,15 @@
       '<div class="links">' + (E.learnedCounts(cat, stories()).length ? hubBtn('hollow', 'The Training Hollow', ICON.tree) : '') + hubBtn('nest', 'My nest', ICON.nest) + hubBtn('hub', 'Camp', ICON.moon) + '</div>';
     $('printBtn').addEventListener('click', function () { try { root.print(); } catch (e) {} });
     Array.prototype.forEach.call(doc.querySelectorAll('[data-go]'), function (bt) {
-      bt.addEventListener('click', function () { var w = bt.getAttribute('data-go'); go(w, { from: 'book' }); });
+      // (book two: the Hollow and My nest come back to the volume she left)
+      bt.addEventListener('click', function () { var w = bt.getAttribute('data-go'); go(w, vols.length > 1 ? { from: 'book', vol: vol } : { from: 'book' }); });
+    });
+    // book two: the other volume, from its top; Back still goes where it went (a chapter's end, or camp)
+    Array.prototype.forEach.call(doc.querySelectorAll('[data-vol]'), function (bt) {
+      bt.addEventListener('click', function () {
+        var m = +bt.getAttribute('data-vol');
+        if (m !== vol) go('book', { from: view.opts.from, vol: m });
+      });
     });
     // from a chapter's end: open the book at that chapter's page (when it isn't the first)
     if (opts && opts.scrollTo && b.pages.length > 1) {
@@ -3897,6 +4754,7 @@
     b.pages.forEach(function (pg) {
       currentSpeech.push({ text: pg.heading + '.' });
       pg.recap.forEach(function (p) { currentSpeech.push({ text: p }); });
+      if (pg.store != null) currentSpeech.push({ text: storeSays(pg.store) });
       if (pg.dream) currentSpeech.push({ text: pg.dream });
     });
     if (b.dragonets) {
@@ -3904,6 +4762,120 @@
       b.dragonets.found.forEach(function (d) { currentSpeech.push({ text: d.name + '.' }); d.lines.forEach(function (l) { currentSpeech.push({ text: l }); }); });
       if (b.dragonets.toFind) currentSpeech.push({ text: cap1(numWord(b.dragonets.toFind)) + ' more, still to find.' });
     }
+    if (vol > 1) bookTwoSays(b).forEach(function (it) { currentSpeech.push(it); });
+  }
+  /* ---------------------------------------------------------------- book two (docs/take-aways.md, section 7)
+   * Read my book in volumes, one a module: "{name}paw’s First Moon" as it always was, and "{name}{ending}’s First
+   * Frost-Time" once she finishes chapter 12. The volume: `opts.vol` when she has it (its button, or back from the Hollow
+   * or My nest); from a chapter's end, that chapter's; else her latest finished chapter's. */
+  function bookVol(opts, vols) {
+    var has = function (m) { return vols.some(function (v) { return v.module === m; }); };
+    if (opts && typeof opts.vol === 'number' && has(opts.vol)) return opts.vol;
+    var end = opts && opts.scrollTo ? E.chapter(opts.scrollTo, stories()) : null;
+    if (end && has(E.moduleOf(end))) return E.moduleOf(end);
+    var done = E.chapters(stories()).filter(function (s) { return E.isFinished(cat, s.id); });
+    return done.length ? E.moduleOf(done[done.length - 1]) : 1;
+  }
+  /* Two volumes: a button for each under the title ("First Moon", "First Frost-Time"), the open one pressed, each at least
+   * 44px tall for a child's finger; never printed. One volume: nothing, as before. */
+  function bookVolButtons(vols, vol) {
+    if (vols.length < 2) return '';
+    return '<div class="vols no-print" role="group" aria-label="Your books">' + vols.map(function (v) {
+      var short = (/[’']s\s+(.+)$/.exec(v.title) || [])[1] || v.title;
+      return '<button class="btn vol" type="button" data-vol="' + v.module + '" aria-pressed="' + (v.module === vol ? 'true' : 'false') + '">' + esc(short) + '</button>';
+    }).join('') + '</div>';
+  }
+  /* The second volume's title shows her warrior name, up to 26 letters: it may break at the join (richN, as her name does
+   * in the story's lettering), and a long one is set smaller, as the first volume's is. A word with a hyphen in it stays
+   * whole ("Frost-Time": at 1080 x 720 it broke after "Frost-"). */
+  function bookTitleTwo(title) {
+    var n = E.displayName(cat).length;
+    return '<h1' + (n > 17 ? ' class="long longer"' : n > 12 ? ' class="long"' : '') + '>' +
+      richN(title).replace(/[A-Za-z\u00C0-\u024F]+(?:-[A-Za-z\u00C0-\u024F]+)+/g, '<span class="nw">$&</span>') + '</h1>';
+  }
+  /* The store as a chapter left it (`book.store`), small under its recap: the kit's place-value picture (PC.art.placeValue,
+   * `small`), "In the store:" in Comic Neue and the number in Andika, as everywhere words and numbers are set. */
+  function storePic(n) {
+    var po = { hundreds: Math.floor(n / 100), tens: Math.floor(n / 10) % 10, ones: n % 10, kind: 'store', small: true };
+    return '<figure class="storepic">' + (n > 0 ? '<div class="sp-pic" aria-hidden="true">' + (artCall('placeValue', po) || takeStoreFallback(po)) + '</div>' : '') +
+      '<figcaption><span class="sp-words">In the store:</span> <span class="sp-num">' + n + '</span></figcaption></figure>';
+  }
+  function storeSays(n) { return 'In the store: ' + E.numberWords(n) + '.'; }
+  /* The winter sleepers, as the dragonets' pages (their classes reused): a page for each she has found, with room for her
+   * own drawing, and the rest as silhouettes, still sleeping. */
+  function sleeperPages(sp) {
+    if (!sp || !sp.found.length) return '';
+    var found = sp.found.map(function (d) {
+      return '<div class="dragonet sleeper"><div class="dn-pic" aria-hidden="true">' + sleeperArt(d.id, false, 0, d.pose) + '</div>' +
+        '<div class="dn-text"><h3>' + esc(cap1(d.name)) + '</h3>' + d.lines.map(function (l) { return '<p>' + richN(l) + '</p>'; }).join('') +
+        '<div class="dn-draw" aria-hidden="true">Draw ' + esc(d.name.replace(/^The /, 'the ')) + ' here</div></div></div>';
+    }).join('');
+    var sil = '';
+    for (var i = 0; i < sp.toFind; i++) sil += '<div class="dragonet sil sleeper"><div class="dn-pic">' + sleeperArt(null, true, i) + '</div></div>';
+    return '<section class="bookpage dragonets sleepers" id="book-sleepers"><h2 class="chap">The winter sleepers</h2>' + found +
+      (sil ? '<div class="dn-find" aria-hidden="true">' + sil + '</div><p class="dn-more">' + esc(sleepersMore(sp.toFind)) + '</p>' : '') + '</section>';
+  }
+  function sleepersMore(n) { return cap1(numWord(n)) + ' more, still sleeping.'; }
+  /* A sleeper: its chapter's art (PC.art.character, the page's `pose`, else curled up asleep), or, until its chapter
+   * brings it, a plain curled-up shape; every silhouette is the plain shape, so none gives away who is still to find. */
+  function sleeperArt(id, silhouette, i, pose) {
+    try {
+      if (id && PC.art && typeof PC.art.character === 'function' && PC.art.vocab && PC.art.vocab.cast && PC.art.vocab.cast.indexOf(id) >= 0) {
+        var out = wrapChar(PC.art.character(id, { pose: pose || 'sleep', mood: 'neutral', facing: 'right' }), false);
+        if (out) return out;
+      }
+    } catch (e) { if (root.console) console.warn('PC.art.character failed', e); }
+    var flip = i % 2 ? ' transform="translate(200 0) scale(-1 1)"' : '';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g' + flip + ' fill="' + (silhouette ? '#1b1622' : '#a08a6e') + '" stroke="#1b1622" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">' +
+      '<path d="M30 150 C26 112 62 84 106 86 C150 88 176 114 172 146 C170 162 150 170 100 170 C56 170 32 166 30 150 Z"/>' +
+      '<path d="M150 150 C172 150 182 132 176 116 C190 128 192 158 168 168 C150 174 128 168 118 160 Z"/>' +
+      '<path d="M44 140 C40 118 58 104 78 108 C96 112 102 132 90 146 C80 156 50 156 44 140 Z"/>' +
+      (silhouette ? '' : '<path d="M58 128 Q64 134 70 128" fill="none" stroke-width="3.5"/><g fill="none" stroke-width="3"><path d="M110 58 h12 l-12 12 h12"/><path d="M134 40 h9 l-9 9 h9"/></g>') + '</g></svg>';
+  }
+  /* The badger page, "What is a badger LIKE?" (from chapter 13): two columns, They say (an ear, the Case File's mark for
+   * what she was told) and I saw (an eye); a row an answer, its rumours crossed out once she has seen what answers them.
+   * Under 520px wide a row's sighting goes under its rumours (index.html). */
+  function badgerPage(bg) {
+    if (!bg || !bg.rows.length) return '';
+    var ear = '<i class="bg-mark" aria-hidden="true">' + markSvg('ear') + '</i>', eye = '<i class="bg-mark" aria-hidden="true">' + markSvg('eye') + '</i>';
+    return '<section class="bookpage badger" id="book-badger"><h2 class="chap">What is a badger LIKE?</h2>' +
+      '<div class="bg-heads" aria-hidden="true"><span class="bg-h">' + ear + 'They say</span><span class="bg-h">' + eye + 'I saw</span></div>' +
+      bg.rows.map(function (r) {
+        return '<div class="bg-row' + (r.crossed ? ' crossed' : '') + '">' +
+          '<ul class="bg-say" aria-label="They say">' + r.say.map(function (l) {
+            return '<li>' + ear + '<span class="bg-line">' + (r.crossed ? '<span class="sr">crossed out: </span><s>' + richN(l.text) + '</s>' : richN(l.text)) +
+              (l.who ? ' <span class="bg-who">' + esc(l.who) + '</span>' : '') + '</span></li>';
+          }).join('') + '</ul>' +
+          '<ul class="bg-saw" aria-label="I saw">' + r.saw.map(function (l) { return '<li>' + eye + '<span class="bg-line">' + richN(l.text) + '</span></li>'; }).join('') + '</ul></div>';
+      }).join('') + '</section>';
+  }
+  /* The keepsake that closes the volume (chapter 21's stone tooth), drawn as a nest treasure is. */
+  function keepsakePage(k) {
+    if (!k) return '';
+    return '<section class="bookpage keepsake" id="book-keepsake"><div class="ks-pic" aria-hidden="true">' + treasureSvg(k.id) + '</div>' +
+      '<h2 class="chap">' + esc(k.name) + '</h2>' + k.lines.map(function (l) { return '<p>' + richN(l) + '</p>'; }).join('') + '</section>';
+  }
+  /* What Read to me says of the second volume's own pages, after its chapters: the sleepers as the dragonets; each
+   * rumour, "Crossed out:" before a crossed one, then what she saw; the keepsake. */
+  function bookTwoSays(b) {
+    var out = [];
+    if (b.sleepers) {
+      out.push({ text: 'The winter sleepers.' });
+      b.sleepers.found.forEach(function (d) { out.push({ text: cap1(d.name) + '.' }); d.lines.forEach(function (l) { out.push({ text: l }); }); });
+      if (b.sleepers.toFind) out.push({ text: sleepersMore(b.sleepers.toFind) });
+    }
+    if (b.badger) {
+      out.push({ text: 'What is a badger LIKE?' });
+      b.badger.rows.forEach(function (r) {
+        r.say.forEach(function (l) { out.push({ text: (r.crossed ? 'Crossed out: ' : '') + (l.who ? (r.crossed ? l.who : cap1(l.who)) + ' said, ' : '') + l.text }); });
+        r.saw.forEach(function (l) { out.push({ text: 'I saw: ' + l.text }); });
+      });
+    }
+    if (b.keepsake) {
+      out.push({ text: b.keepsake.name + '.' });
+      b.keepsake.lines.forEach(function (l) { out.push({ text: l }); });
+    }
+    return out;
   }
   /* The dragonets in her book (module-1, "Her book"): a page for each one she has found, with room
    * for her own drawing, and the rest of the clutch as silhouettes, still to find. */
@@ -3941,13 +4913,24 @@
   function hollowScene(cam, cast, fx) {
     return { set: 'hollow', cam: cam, opts: { marks: 'auto', glow: 'auto' }, cast: cast, fx: fx };
   }
+  // the take-aways kit: 'counts' while the Counts page under the shelf is on screen (its ‹ goes back to the shelf), else null
+  var hollowSub = null;
   function renderHollow(opts) {
     if (!cat) return go('who');
+    hollowSub = null;
     // the round in progress: in the slot, or back from waiting while a chapter lesson had it
     // (that chapter lesson now waits in its chapter's place)
     var waited = !!cat.hollowWaiting, HL = E.hollowRound(cat);
     if (waited) persist();
-    if (HL) {
+    if (HL && HL.state.op === '-') {
+      // the take-aways kit (docs/take-aways.md, section 5): a Count the store round picked up at its problem and column,
+      // under the Warrior Counts' waiting line while a sitting waits (as a round of Counts is); one whose last answer is
+      // in but which was never recorded counts now, once, and shows its reward
+      if (!E.takes.done(HL.state)) return storeLesson(HL.state, true, cat.warrior ? E.hollowLines(cat, stories(), { now: now() }).waiting : null);
+      var srec = E.settleLesson(cat);
+      persist();
+      if (srec && srec.store && srec.store.awarded) return storeReward(srec.store);
+    } else if (HL) {
       var tbl = HL.state.table || 1;
       if (!E.counts.done(HL.state)) {
         // (the Warrior Counts: a sitting paused at the fountain is said over the round's next question, so
@@ -3960,6 +4943,11 @@
       persist();
       if (rec && rec.hollow) return hollowReward(E.hollowDef(stories(), tbl), rec.hollow);
     }
+    // the take-aways kit (section 5): once Count the store is open (a take set with `teach` finished), the Hollow opens on its
+    // shelf; One Count at a time (`opts.counts`) draws the Counts page below, word for word as it always was. A cat without
+    // the store (every cat before chapter 12) gets that page at once, as before. `opts.stories`: PC.debug.takes' stub chapter
+    var SH = opts && opts.counts ? null : E.hollowShelf(cat, stories(), { reward: !!(opts && opts.reward), now: now(), stories: opts && opts.stories });
+    if (SH) return renderShelf(SH, opts || {});
     // the Counts she can practise and Tallyheart's lines about them (E.hollowLines: each Count's own
     // word there, "tens" for the 10s, so the 5s and the 10s never read the same)
     // (the Warrior Counts: with `now`, a paused sitting that has gone stale is not "waiting")
@@ -3984,7 +4972,10 @@
     var ctx = { panel: panel, frame: f, heads: heads, caps: captionsOf(f), balloons: balloonsOf(f) };
     relayoutFn = function () { layoutText(ctx); };
     layoutText(ctx);
+    // (One Count at a time, under the shelf: its ‹ goes back to the shelf, not to camp, until a round starts)
+    if (opts && opts.counts) hollowSub = 'counts';
     var start = function (table) {
+      hollowSub = null;
       var r = E.hollowStart(cat, stories(), now(), table);
       E.holdLesson(cat);   // a chapter lesson in progress waits in its chapter's place, never lost to the round
       cat.lesson = { mode: 'hollow', state: r.state }; persist();
@@ -4004,6 +4995,94 @@
       b.addEventListener('click', function () { start(+b.getAttribute('data-t')); });
     });
     currentSpeech = (ctx.reading || []).concat(one ? [] : defs.map(function (d) { return { text: d.name.replace(' · ', ', ') }; }));
+  }
+  /* The take-aways kit's shelf (docs/take-aways.md, section 5; E.hollowShelf): the Hollow's opening page once Count the
+   * store is open, as the Counts page is drawn (the wide sand, Tallyheart and her, the caption), with Tallyheart's greeting
+   * (after a round, "Another round?"; while a Warrior Counts sitting waits, its waiting line in that place) and its buttons:
+   * Count the store (big, its icon the quick picture's three marks), One Count at a time (big: today's Counts page) and My
+   * nest. Chapter 14 adds Tricky Counts between the two big ones. `opts.stories` (PC.debug.takes) reaches the round. */
+  function renderShelf(SH, opts) {
+    var scr = $('screen');
+    scr.innerHTML = frameShell('hollow', 'hollow');
+    // (`data-mode="shelf"`: on a phone held sideways its stack stands over the panel, as the take page's does, so the
+    // greeting with Aa on never pushes the buttons under the screen; every other size is the Hollow's own layout)
+    scr.querySelector('.frame').setAttribute('data-mode', 'shelf');
+    var panel = $('panel');
+    var f = {
+      scene: hollowScene('wide', [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'sunpatch', facing: 'left' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'sand-left', facing: 'right' }], ['sunset']),
+      caption: ['The Training Hollow. The old tree leans over the sand like it’s listening.'],
+      say: [{ who: 'tallyheart', text: SH.line }]
+    };
+    var heads = drawArt(panel, shownFrame(f), cat.look);
+    var ctx = { panel: panel, frame: f, heads: heads, caps: captionsOf(f), balloons: balloonsOf(f) };
+    // (a phone held sideways: a greeting that went to the stack made the panel shorter, so the text is laid out again for it)
+    var lay = function () { layoutText(ctx); if ($('stack').innerHTML && root.matchMedia && root.matchMedia(TAKE_PHONE).matches) layoutText(ctx); };
+    relayoutFn = lay;
+    lay();
+    var label = function (id) { var b = SH.buttons.filter(function (x) { return x.id === id; })[0]; return b ? b.label : id; };
+    $('interact').innerHTML = '<div class="counts-pick tshelf" role="group" aria-label="What to practise">' +
+      '<button class="btn go big" type="button" id="storeBtn"><i class="storeicon" aria-hidden="true">' + storeIcon() + '</i>' + esc(label('store')) + '</button>' +
+      '<button class="btn go big" type="button" id="countsBtn">' + esc(label('counts')) + '</button></div>' +
+      '<div class="row end"><button class="btn" type="button" id="shelfNest">' + esc(label('nest')) + '</button></div>';
+    $('storeBtn').addEventListener('click', function () {
+      var r = E.takeRoundStart(cat, stories(), now(), { stories: opts.stories });
+      E.holdLesson(cat);   // a chapter lesson in progress waits in its chapter's place, never lost to the round
+      cat.lesson = { mode: 'hollow', state: r.state }; persist();
+      storeLesson(r.state, false, null);
+    });
+    $('countsBtn').addEventListener('click', function () { go('hollow', { counts: true, from: view.opts.from, vol: view.opts.vol, stories: opts.stories }); });
+    $('shelfNest').addEventListener('click', function () { go('nest', { from: 'hollow' }); });
+    currentSpeech = (ctx.reading || []).concat([{ text: label('store') + '.' }, { text: label('counts') + '.' }]);
+  }
+  /* The store icon: the quick picture's three marks (a square, a line, a dot) on a sand chip, as the column's heads are. */
+  function storeIcon() {
+    var g = '';
+    try { g = PC.art && typeof PC.art.quickMarks === 'function' ? PC.art.quickMarks(0, 0, 0.92, { hundreds: 1, tens: 1, ones: 1, ground: 'sand' }) : ''; } catch (e) { g = ''; }
+    if (!g) g = '<rect x="-80" y="-26" width="52" height="52" fill="none" stroke="#9c7440" stroke-width="7"/><path d="M14 -28 L8 28" stroke="#9c7440" stroke-width="7" stroke-linecap="round"/><circle cx="62" cy="0" r="10" fill="#9c7440"/>';
+    return '<svg viewBox="-100 -44 200 88" focusable="false"><rect x="-96" y="-40" width="192" height="80" rx="18" fill="#e8cf98" stroke="#1b1622" stroke-width="5"/>' + g + '</svg>';
+  }
+  /* A Count the store round on the take page (runTakes, `mode: 'hollow'`: the slot kept after every column, the round
+   * recorded at its last answer by E.recordLesson, which sends it to E.takeRoundFinish): introduced "Five from the store.
+   * Ready? Here we go."; picked up, nothing first but the Warrior Counts' waiting line while a sitting waits. `debug`:
+   * PC.debug.takes('store'), nothing saved. */
+  function storeLesson(st, resume, waiting, debug) {
+    var def = E.takeRoundDef();
+    return runTakes({
+      def: def, state: st, mode: debug ? 'debug' : 'hollow', frameId: 'store', waitLine: waiting || null,
+      intro: resume ? (waiting ? [{ who: 'tallyheart', text: waiting }] : []) : [{ who: 'tallyheart', text: def.intro }],
+      debug: debug ? { quick: true } : null,
+      onDone: function (sum, rec) {
+        // the round was counted (E.takeRoundFinish, once) when its last answer went in
+        storeReward(rec && rec.store ? rec.store : { awarded: null });
+      }
+    });
+  }
+  /* A store round's reward (hollowReward's shape): the tree insert (no claw mark and no glow: the tree is full), Tallyheart's
+   * closing line, the frost-time treasure, My nest and "Another round", which goes back to the shelf. */
+  function storeReward(res) {
+    renderedAt = now();   // a new screen: the double-tap guard in bindChrome applies
+    var t = res && res.awarded, def = E.takeRoundDef();
+    var scr = $('screen');
+    scr.innerHTML = frameShell('reward', 'reward');
+    // (`data-mode="store-reward"`: on a phone held sideways its stack stands over the panel and the treasure's card lies
+    // flat, as the shelf's page does, so "Another round" is on the screen, Aa on or off; every other size as hollowReward)
+    scr.querySelector('.frame').setAttribute('data-mode', 'store-reward');
+    var panel = $('panel');
+    var f = { scene: hollowScene('tree', [], ['sparkle']) };
+    var heads = drawArt(panel, shownFrame(f), cat.look);
+    var line = fill(def.done);
+    var ctx = { panel: panel, frame: f, heads: heads, caps: [], balloons: [{ who: 'tallyheart', text: line, kind: 'say' }] };
+    // (a phone held sideways: a line that went to the stack made the panel shorter, so the text is laid out again for it)
+    var lay = function () { layoutText(ctx); if ($('stack').innerHTML && root.matchMedia && root.matchMedia(TAKE_PHONE).matches) layoutText(ctx); };
+    relayoutFn = lay;
+    lay();
+    $('interact').innerHTML =
+      (t ? '<div class="reward' + (reduceMotion ? '' : ' pop') + '" role="status">' + treasureSvg(t.id) + '<b>' + esc(t.name) + '</b><span>for your nest</span></div>' : '') +
+      '<div class="row end"><button class="btn" type="button" id="storeNest">My nest</button><button class="btn go big" type="button" id="againBtn">Another round</button></div>';
+    $('storeNest').addEventListener('click', function () { go('nest', { from: 'hub' }); });
+    $('againBtn').addEventListener('click', function () { go('hollow', { from: 'hub', reward: true }); });
+    currentSpeech = [{ text: line, who: 'tallyheart' }].concat(t ? [{ text: t.name + ', for your nest.' }] : []);
+    speakItems(currentSpeech);
   }
   function hollowLesson(def, st, resume, waiting) {
     runLesson({
@@ -4453,6 +5532,10 @@
         var r = E.hollowTable(c, k.table);
         return 'the ' + k.table + 's ' + r.rounds + ' (' + r.cleanRounds + ' without help' + (r.glow ? ', claw mark glowing' : '') + ')';
       }).join('; ') : '');
+      // the take-aways kit (docs/take-aways.md, section 8): only for a cat with `takes` data
+      var TC = c.takes ? takeCorner(c.takes, E.takeTable(c), fmtMs) : null;
+      if (TC) hollowTxt += '; ' + TC.line;
+      if (TC) hollowTxt = 'One Count at a time ' + hollowTxt;
       html += '<h3>' + nameHtml(c) + '</h3>' +
         '<dl><dt>Clan name</dt><dd>' + esc(c.name ? c.name + 'paw' : '(not yet)') + '</dd>' +
         '<dt>Pet name</dt><dd>' + esc(c.petname || '(not yet)') + '</dd>' +
@@ -4473,6 +5556,7 @@
             t.rows.map(function (r) { return '<tr><td>' + r.a + ' × ' + r.b + '</td><td>' + r.attempts + '</td><td>' + r.rightFirst + ' of ' + r.firstAsks + '</td><td>' + r.helped + '</td><td>' + fmtMs(r.medianMs) + '</td></tr>'; }).join('') +
             '</tbody></table></div>';
         }).join('') : '<p class="muted">No answers yet.</p>') +
+        (TC ? TC.html : '') +
         '<p><button class="gbtn warn" type="button" data-reset="' + esc(c.id) + '">Start this cat over</button>' +
         '<button class="gbtn warn" type="button" data-remove="' + esc(c.id) + '">Remove this cat from this device</button></p>';
     });
@@ -4543,6 +5627,19 @@
         '<path d="M20 50 Q50 60 80 50 L81 58 Q50 68 19 58 Z" fill="#4f9fd6" stroke="none"/><path d="M19 58 Q50 68 81 58 L80 66 Q50 76 20 66 Z" fill="#58b878" stroke="none"/>' +
         '<path d="M50 16 C70 16 81 40 81 58 C81 76 67 88 50 88 C33 88 19 76 19 58 C19 40 30 16 50 16 Z" fill="none"/>' +
         '<ellipse cx="39" cy="34" rx="7" ry="4" fill="#fff" stroke="none" opacity=".45"/>' + c;
+      // the take-aways kit's frost-time treasures (docs/take-aways.md, section 5), a full Count the store round's: a leaf
+      // rimmed with frost (not leaf-drop's bright red one), a white feather (not the blue jay's), the cap alone with no acorn
+      // in it (not the acorn in its little hat), a plain smooth river pebble (neither speckled nor striped)
+      case 'frost-leaf': return o + '<path d="M50 90 L50 70 C30 72 16 58 18 40 C28 44 32 40 30 30 C40 34 44 26 50 12 C56 26 60 34 70 30 C68 40 72 44 82 40 C84 58 70 72 50 70z" fill="#cfe6ee"/>' +
+        '<path d="M50 88 L50 24 M50 56 L32 44 M50 56 L68 44 M50 42 L38 32 M50 42 L62 32" fill="none" stroke="#6e9bb0" stroke-width="2.5"/>' +
+        '<g stroke="#fff" stroke-width="2.4"><path d="M24 34l6 6M30 34l-6 6M27 32v10M74 52l6 6M80 52l-6 6M77 50v10M58 16l5 5M63 16l-5 5"/></g>' + c;
+      case 'snow-feather': return o + '<path d="M22 86 C30 60 46 30 78 14 C80 40 64 66 30 80z" fill="#fbfbff"/><path d="M40 62l12 6M48 48l12 6M58 34l11 5" stroke="#b9c3d6" stroke-width="3"/>' +
+        '<path d="M16 92 L66 28" fill="none" stroke="#8a93a8" stroke-width="2.5"/>' + c;
+      case 'acorn-cap': return o + '<path d="M18 58 C18 34 82 34 82 58 C70 66 30 66 18 58z" fill="#8a5d34"/><path d="M50 38 C52 30 56 24 62 20" fill="none" stroke-width="5"/>' +
+        '<path d="M28 50l8 6M38 46l8 8M50 44l8 9M62 46l8 8M72 50l4 4M32 56l6-6M44 58l8-10M58 58l8-10M70 56l4-5" fill="none" stroke="#5a3a1e" stroke-width="2"/>' +
+        '<path d="M26 62 C40 68 60 68 74 62" fill="none" stroke="#d9b07a" stroke-width="2.5"/>' + c;
+      case 'river-pebble': return o + '<path d="M16 62 C14 44 34 34 54 34 C76 34 88 46 86 60 C84 74 66 80 48 80 C30 80 18 74 16 62z" fill="#a8927c"/>' +
+        '<path d="M28 50 C36 42 50 40 60 42" fill="none" stroke="#fff" stroke-width="4" opacity=".5"/>' + c;
       case 'riffle-stone': return o + '<ellipse cx="50" cy="58" rx="36" ry="26" fill="#2f2b33"/>' +
         '<path d="M16 52 C30 66 70 66 84 50" fill="none" stroke="#f6f1e6" stroke-width="7" stroke-linecap="butt"/>' +
         '<ellipse cx="38" cy="46" rx="9" ry="4.5" fill="#fff" stroke="none" opacity=".35"/>' + c;

@@ -938,6 +938,153 @@ html.big .frame .next-row > .btn.back + .tapline{flex:1 1 0;min-width:0;line-hei
 @media screen and (orientation: portrait){
   html.big .frame[data-kind="hollow"] .counts-pick:not(:has(> .btn:nth-child(10))) .btn.big{padding:.12em .6em}
 }
+/* ---------- the take-aways kit: the take page (docs/take-aways.md v0.3, sections 1, 6 and 8; app/ui.js runTakes) ----------
+   The lesson page (.frame[data-kind="lesson"]) with data-mode="take": the column in the question line's place, answered one
+   box at a time, ones first. Every rule here is the take page's own (.frame[data-mode="take"], .tcol and its cells), so no
+   other page changes, and nothing reaches it before chapter 12 (no chapter 1 to 11 has a take set). The column's digits are
+   Andika bold at clamp(24px, min(8cqi, 4.6vh), 44px), cqi of the lesson column (.counts): every row is reserved from the
+   start in em of that size (the heads, the gold marks, the top, the bottom, the rule, her boxes), so a spread never grows
+   the column and the keypad under it never moves within a problem (ui.js holds the stack's min-height too). */
+.frame[data-mode="take"] .panel{aspect-ratio:2/1}
+.frame[data-mode="take"] .gotit{align-items:flex-start}
+.frame[data-mode="take"] .keypad.dim .key{opacity:.45}
+.frame[data-mode="take"] .counts{gap:8px}
+.tcol{--tn:3;--th:.6em;display:grid;grid-template-columns:auto repeat(var(--tn), 1.42em);grid-template-rows:var(--th) max(.54em,17px) 1em 1em 10px auto;column-gap:.14em;justify-content:center;align-items:center;
+  font-family:var(--digits);font-weight:700;font-size:clamp(24px, min(8cqi, 4.6vh), 44px);line-height:1;color:var(--cream);text-shadow:3px 3px 0 var(--ink);font-variant-numeric:tabular-nums;margin:0}
+.thead{grid-row:1;justify-self:center;display:grid;place-items:center;width:1em;height:calc(var(--th) - .06em);border-radius:.14em;background:#e8cf98;border:2px solid var(--ink);box-shadow:2px 2px 0 rgba(0,0,0,.35)}
+.thead svg{width:.4em;height:.4em;display:block}
+.thead svg path[stroke="#9c7440"]{stroke-width:9px}
+.thead svg path[stroke="#fbecc8"]{display:none}
+.tmark{grid-row:2;justify-self:center;align-self:end;font-size:max(.5em,16px);color:var(--gold);text-shadow:2px 2px 0 var(--ink)}
+.tdig{justify-self:center;position:relative}
+.ttop{grid-row:3}
+.tbot{grid-row:4}
+.tsign{grid-row:4;grid-column:1;justify-self:end;color:var(--gold);padding-right:.04em}
+.trule{grid-row:5;grid-column:1 / -1;align-self:center;height:4px;border-radius:2px;background:var(--cream);box-shadow:2px 2px 0 var(--ink)}
+.tbox{grid-row:6;justify-self:stretch;text-align:center;padding:.06em 0 .02em;border-radius:12px;border:4px solid var(--ink);background:var(--cream);color:var(--ink);text-shadow:none;box-shadow:var(--lift)}
+.tbox.on{box-shadow:0 0 0 3px var(--gold), 5px 5px 0 2px rgba(0,0,0,.5)}
+.tbox.right{background:#c9f2c0}
+.tbox.miss{background:var(--caption)}
+.tbox.blank{background:transparent;border-style:dotted;border-color:var(--cream);box-shadow:none}
+.tbox.pulse{animation:tpulse .45s ease-in-out 4 alternate}
+@keyframes tpulse{to{transform:scale(1.12);box-shadow:0 0 0 6px var(--gold), 5px 5px 0 2px rgba(0,0,0,.5)}}
+/* a top digit struck through once it has spread: a slash, never a line through (which would read as a minus), centred on
+   the digit's ink (its top end clear of the gold mark over it), and longer than the digit, so a struck 0 never reads as a
+   slashed zero */
+.tstruck::after{content:"";position:absolute;left:50%;top:.02em;height:1.08em;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 1.5px var(--cream);transform:rotate(32deg)}
+.tmark.tglow,.ttop.tglow{text-shadow:0 0 .3em var(--gold), 0 0 .12em var(--gold), 2px 2px 0 var(--ink)}
+.frame[data-mode="take"] .panel.twiggle .pc-pv-glow{animation:twiggle .5s ease-in-out;transform-box:fill-box;transform-origin:50% 50%}
+@keyframes twiggle{20%{transform:rotate(-2deg)}40%{transform:rotate(2deg)}60%{transform:rotate(-1.5deg)}80%{transform:rotate(1deg)}}
+@media (prefers-reduced-motion: reduce){
+  .tbox.pulse{animation:none!important;box-shadow:0 0 0 6px var(--gold), 5px 5px 0 2px rgba(0,0,0,.5)}
+  .frame[data-mode="take"] .panel.twiggle .pc-pv-glow{animation:none!important;opacity:1;stroke-width:10}
+}
+/* a page the keypad was scrolled into view on keeps its scroll when the stack's lines change (WebKit's scroll anchoring
+   moved it 8px between two columns) */
+html:has(.frame[data-mode="take"]){overflow-anchor:none}
+/* the fallbacks (section 6), set by ui.js only when a problem's held stack leaves the keypad under the screen: first the
+   heads row goes (their words stay in the aria-labels); then sideways the keys drop to 56px (the Hollow's own), never the
+   panel, which stands beside the column; upright the panel is set shorter (ui.js gives its height) */
+.frame[data-mode="take"].tnohead .tcol{--th:0px}
+.frame[data-mode="take"].tnohead .thead{display:none}
+/* sideways, the column top-aligned: the lesson's centred column would move the keypad by half of any change */
+@media (orientation: landscape) and (min-width: 700px){
+  .frame[data-mode="take"] .col{align-self:start}
+}
+@media (orientation: landscape) and (min-width: 700px) and (min-height: 501px){
+  .frame[data-mode="take"].tkeys .keypad{gap:8px}
+  .frame[data-mode="take"].tkeys .key{min-height:56px}
+}
+/* a phone held sideways (call 36): the column and the keypad leave no room for a balloon under the bar, so the stack stands
+   over the panel, in the panel's column, and the panel takes the height that is left; the left holds the column and the
+   keypad and nothing else */
+@media (orientation: landscape) and (max-height: 500px){
+  .frame[data-mode="take"]{grid-template-areas:"int stack" "int panel";grid-template-rows:auto minmax(96px, 1fr);align-items:stretch;row-gap:8px;min-height:0;height:calc(100dvh - var(--bar) - var(--st) - 18px)}
+  .frame[data-mode="take"] .col{display:contents}
+  .frame[data-mode="take"] .stack{grid-area:stack;min-width:0}
+  .frame[data-mode="take"] .interact{grid-area:int;align-self:start;min-width:0}
+  .frame[data-mode="take"] .panel-side{grid-area:panel;position:static;min-height:0;height:100%}
+  .frame[data-mode="take"] .panel{width:100%;height:100%;aspect-ratio:auto}
+}
+/* the Training Hollow's shelf (section 5; ui.js renderShelf), once Count the store is open: the Counts page's own buttons
+   (.counts-pick and its size rules), two big ones, Count the store with its icon, the quick picture's three marks on a sand
+   chip (their strokes thickened at this size, as the column's heads are); a cat without the store never sees it */
+.tshelf .storeicon{display:inline-grid;place-items:center;width:2.3em;height:1em;flex:none}
+.tshelf .storeicon svg{width:100%;height:100%;display:block}
+.tshelf .storeicon path[stroke="#9c7440"]{stroke-width:9px}
+.tshelf .storeicon path[stroke="#fbecc8"]{display:none}
+.tshelf .btn.big{padding-left:.6em;padding-right:.6em}
+/* on a phone held sideways the shelf's stack stands over the panel, as the take page's does (call 36): with Aa on, the
+   greeting in the column pushed the buttons under the screen. A caption that leaves the panel goes over the buttons, the
+   greeting over the panel, which keeps the height that is left; the buttons a little shorter (46px, never under 44) */
+@media (orientation: landscape) and (max-height: 500px){
+  .frame[data-mode="shelf"]{grid-template-areas:"top stack" "int stack" "int panel";grid-template-rows:auto auto minmax(96px, 1fr);align-items:stretch;row-gap:8px;min-height:0;height:calc(100dvh - var(--bar) - var(--st) - 18px)}
+  .frame[data-mode="shelf"] .col{display:contents}
+  .frame[data-mode="shelf"] .col-top{grid-area:top;min-width:0}
+  .frame[data-mode="shelf"] .stack{grid-area:stack;min-width:0}
+  .frame[data-mode="shelf"] .panel-side{grid-area:panel;position:static;min-height:0;height:100%}
+  .frame[data-mode="shelf"] .panel{width:100%;height:100%;aspect-ratio:auto}
+  .frame[data-mode="shelf"] .interact{grid-area:int;min-width:0;gap:6px;align-self:center}
+  html.big .frame[data-mode="shelf"] .interact{align-self:start}
+  .frame[data-mode="shelf"] .tshelf{gap:6px}
+  .frame[data-mode="shelf"] .tshelf .btn.big{min-height:46px;padding:.04em .3em;gap:.3em;line-height:1.05}
+  .frame[data-mode="shelf"] .tshelf .storeicon{width:1.8em;height:.8em}
+  .frame[data-mode="shelf"] #shelfNest{min-height:46px;padding-top:.04em;padding-bottom:.04em}
+}
+/* Count the store's reward (ui.js storeReward), on a phone held sideways: the stack over the panel, as the shelf's, and the
+   treasure's card laid flat (its drawing 64px beside its name and "for your nest"), so "Another round" is on the screen,
+   Aa on or off (it was 386 to 450 under a 390 screen). Module 1's reward page (hollowReward) is left as it is */
+@media (orientation: landscape) and (max-height: 500px){
+  .frame[data-mode="store-reward"]{grid-template-areas:"int stack" "int panel";grid-template-rows:auto minmax(96px,1fr);align-items:stretch;row-gap:8px;min-height:0;height:calc(100dvh - var(--bar) - var(--st) - 18px)}
+  .frame[data-mode="store-reward"] .col{display:contents}
+  .frame[data-mode="store-reward"] .stack{grid-area:stack;min-width:0}
+  .frame[data-mode="store-reward"] .interact{grid-area:int;align-self:center;min-width:0;gap:6px}
+  .frame[data-mode="store-reward"] .panel-side{grid-area:panel;position:static;min-height:0;height:100%}
+  .frame[data-mode="store-reward"] .panel{width:100%;height:100%;aspect-ratio:auto}
+  .frame[data-mode="store-reward"] .reward{display:grid;grid-template-columns:64px auto;column-gap:12px;row-gap:2px;align-items:center;justify-content:center;text-align:left;padding:8px 14px}
+  .frame[data-mode="store-reward"] .reward svg{grid-row:1 / span 2;width:64px;height:64px}
+  .frame[data-mode="store-reward"] .reward b{align-self:end}
+  .frame[data-mode="store-reward"] .reward span{align-self:start}
+}
+/* ---------- book two (docs/take-aways.md v0.3, section 7; app/ui.js renderBook): Read my book's two volumes, the store under a
+   chapter's page, the winter sleepers (the dragonets' classes), the badger page and the keepsake. Nothing here is drawn for a
+   cat with no module 2 chapter finished: her book is v23's ---------- */
+.book .vols{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:14px 0 4px}
+.book .vols .btn{min-height:44px;padding:.15em 1em;font-size:.95em;box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.book .vols .btn[aria-pressed="true"]{background:var(--ember);box-shadow:inset 2px 2px 0 rgba(0,0,0,.28);transform:translate(2px,2px)}
+.book h1.longer{font-size:clamp(24px, 4vw, 44px)}
+.book h1 .nw{white-space:nowrap}
+.book .storepic{margin:12px 0 10px;text-align:center}
+.book .storepic .sp-pic svg{display:block;width:100%;height:auto;max-height:240px}
+.book .storepic figcaption{font-family:var(--comic);font-weight:700;color:var(--ink-2);margin-top:4px}
+.book .storepic .sp-num{font-family:var(--digits);font-weight:700;font-size:1.15em;color:var(--ink)}
+.book .badger .bg-heads,.book .badger .bg-row{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px}
+.book .badger .bg-heads{font-family:var(--shout);font-size:1.2em;letter-spacing:.04em;padding-bottom:4px;border-bottom:3px solid rgba(27,22,34,.3)}
+.book .badger .bg-h{display:flex;align-items:center;gap:.35em}
+.book .badger .bg-row{padding:8px 0 4px;border-bottom:2px dotted rgba(27,22,34,.28)}
+.book .badger ul{list-style:none;margin:0;padding:0}
+.book .badger li{display:flex;align-items:flex-start;gap:.4em;margin:0 0 .45em}
+.book .badger .bg-mark{flex:none;display:inline-grid;place-items:center;width:1.45em;height:1.1em;margin-top:.12em;color:var(--ink)}
+.book .badger .bg-mark svg{width:100%;height:100%;display:block}
+.book .badger .bg-line{flex:1;min-width:0}
+.book .badger .bg-who{display:block;font-size:.8em;font-style:italic;color:var(--ink-2)}
+.book .badger s{text-decoration-line:line-through;text-decoration-color:#c2412d;text-decoration-thickness:3px;color:var(--ink-2)}
+.book .keepsake{text-align:center}
+.book .keepsake .ks-pic{width:clamp(96px, 24%, 150px);margin:8px auto 2px}
+.book .keepsake .ks-pic svg{display:block;width:100%;height:auto}
+/* a phone: a row's sighting under its rumours, the two heads side by side as a key */
+@media (max-width: 520px){
+  .book .badger .bg-row{grid-template-columns:1fr}
+  .book .badger .bg-heads{grid-template-columns:auto auto;justify-content:start;column-gap:22px}
+}
+@media print{
+  .book .storepic,.book .keepsake .ks-pic,.book .badger .bg-mark{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .book .storepic .sp-pic svg{max-height:45mm}
+  .book .badger .bg-heads,.book .badger .bg-row{grid-template-columns:1fr 1fr}
+  /* the badger page may run on to a second sheet, between two of its rows */
+  .book .bookpage.badger{break-inside:auto}
+  .book .badger .bg-row{break-inside:avoid}
+}
 </style>
 </head>
 <body>

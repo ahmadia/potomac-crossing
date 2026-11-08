@@ -696,6 +696,15 @@ const ifWords = w => { const t = whenWords(w); return t.indexOf('unless ') === 0
 const onlyIf = w => (w ? ' *(' + ifWords(w) + ')*' : '');
 const NUMW = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 const numWord = n => NUMW[n] || String(n);
+// a number as the store holds it: "one square, three rows and three loose"
+const storeWords = n => { const h = Math.floor(n / 100), t = Math.floor(n / 10) % 10, o = n % 10, parts = [];
+  if (h) parts.push(numWord(h) + (h === 1 ? ' square' : ' squares')); if (t) parts.push(numWord(t) + (t === 1 ? ' row' : ' rows')); if (o) parts.push(numWord(o) + ' loose');
+  return parts.length ? parts.slice(0, -1).join(', ') + (parts.length > 1 ? ' and ' : '') + parts[parts.length - 1] : 'nothing'; };
+// the take-aways kit (docs/take-aways.md): the take page's picture, the engine's kinds (E.takeKind) and steps (E.TAKE_STEPS)
+const TAKE_PICTURE = { store: 'the store’s prey in squares, rows and loose', marks: 'the quick picture on sand: squares, lines and dots' };
+const TAKE_KIND_WORDS = { none: 'no spread', ones: 'a row to spread', tens: 'a square to spread', both: 'a row and a square to spread', zero: 'across a zero', zeros: 'across two zeros' };
+const TAKE_STEP_WORDS = { none: 'the column, two digits then three, nothing to spread', ones2: 'a row to spread, two digits', ones: 'a row to spread, three digits', tens: 'a square to spread',
+  both: 'a row and a square to spread', mixed: 'mixed kinds: deciding whether to spread, and an answer with no hundreds left', zero: 'across a zero', zeros: 'across two zeros' };
 /* The pile in rows (chapter 4): `rows: [10, 10, { n: 10, gap: [3, 4, 5, 6] }]`, front to back. */
 function rowsWords(v) {
   const rows = asList(v).map(r => (typeof r === 'number' ? { n: r, gap: [] } : { n: (r && r.n) || 0, gap: asList(r && r.gap) }));
@@ -1340,6 +1349,71 @@ function board(storyPath, outPath) {
     return withVariants(f || {}, asList(list)).map(b => b.kind === 'caption' ? '  - *Caption*: ' + q(b.text)
       : '  - **' + speaker(b) + '**' + kindWord(b.kind) + ': “' + q(b.text) + '”');
   }
+  /* The take-aways kit (docs/take-aways.md, sections 1 to 3 and 8): a Counts frame whose set is a take set
+   * (`op: '-'`) is boarded in the Counts frame's place, its problems as she sees them written ("254 − 131"),
+   * never as a Count. Only a take set reaches this, so chapters 1 to 11 board as they always have. */
+  function takeSetOf(f) {
+    if (!f || !f.counts) return null;
+    const own = (story.counts || {})[f.counts.set], found = own || E.countsSet(f.counts.set, story, siblings());
+    return found && found.op === '-' ? { set: found, own: !!own } : null;
+  }
+  function takesWords(f) {
+    const { set, own } = takeSetOf(f), teacher = set.teacher || 'tallyheart';
+    const kit = k => (set.lines && set.lines[k] != null ? set.lines[k] : E.TAKE_LINES[k]);
+    const fill = (t, nums) => q(E.takeFill(String(t == null ? '' : t), nums || {}));
+    const first = v => (Array.isArray(v) ? v.find(x => typeof x === 'string' && x.trim()) || '' : typeof v === 'string' ? v : '');
+    const says = t => (teacher === 'caption' ? '  - *Caption*: ' + t : '  - **' + (SPEAKER[teacher] || 'Tallyheart') + '**: “' + t + '”');
+    const lines = list => asList(list).map(b => (typeof b === 'string' ? says(q(b)) : balloonLines([b], f)[0]));
+    const facts = asList(set.facts).map(x => (Array.isArray(x) ? { a: x[0], b: x[1] } : x || {}));
+    const reg = x => (E.TAKE_REGROUP.includes(x.regroup) ? x.regroup : E.TAKE_REGROUP.includes(set.regroup) ? set.regroup : 'hers');
+    const sum = x => x.a + ' − ' + x.b;
+    const label = x => {
+      const notes = [];
+      if (x.picture && x.picture.kind !== (set.picture || {}).kind) notes.push('drawn as ' + TAKE_PICTURE[x.picture.kind === 'marks' ? 'marks' : 'store']);
+      if (Array.isArray(x.prompt) && !x.prompt.length) notes.push('no words of its own');
+      else if (x.prompt != null) notes.push('its own question');
+      if (x.right != null) notes.push('its own lines once it is right in every column');
+      const how = reg(x) === 'show' ? ', worked' : reg(x) === 'tap' ? ', tapped' : '';
+      return { text: sum(x) + how + (notes.length ? ' (' + notes.join('; ') + ')' : ''), more: !!(how || notes.length) };
+    };
+    const labels = facts.map(label);
+    const list = labels.map((l, i) => l.text + (i < labels.length - 1 ? (l.more ? '; ' : ', ') : '')).join('');
+    if (!own) return '**Then the take-aways** `' + f.counts.set + '`, another chapter’s, run here as it is there (see that chapter’s storyboard): ' + list + '. On to ' + f.counts.next + '.';
+    const out = ['**Then the take-aways** `' + f.counts.set + '` (' + TAKE_PICTURE[(set.picture || {}).kind === 'marks' ? 'marks' : 'store'] + '): ' + list + '.'];
+    // what each problem needs, by the engine's own kinds (and the two flags the chapters' rules read)
+    const kinds = [];
+    facts.forEach(x => {
+      const p = E.takePlan(x.a, x.b);
+      if (!p) { kinds.push({ k: 'not one the kit asks (the guards refuse it)', list: [sum(x)] }); return; }
+      const k = E.takeKind(p), fl = E.takeFlags(p), flags = [fl.noHundreds ? 'no hundreds left' : '', fl.leavesZero ? 'leaves a zero' : ''].filter(Boolean);
+      const g = kinds.find(o => o.k === TAKE_KIND_WORDS[k]) || kinds[kinds.push({ k: TAKE_KIND_WORDS[k], list: [] }) - 1];
+      g.list.push(sum(x) + (flags.length ? ' [' + flags.join(', ') + ']' : ''));
+    });
+    if (kinds.length) out[0] += ' Each needs: ' + kinds.map(o => o.k + ' (' + o.list.join(', ') + ')').join('; ') + '.';
+    if (set.teach) out[0] += ' Its step: `' + set.teach + '` (' + (TAKE_STEP_WORDS[set.teach] || set.teach) + '); once it is finished, Count the store may ask that step.';
+    if (set.warm === true) out[0] += ' First a made warm-up, new each time: a two-digit take-away with a row to spread (a twin of 43 − 16), never one of this chapter’s answers, introduced “' + fill(first(kit('warmIntro'))) + '”';
+    const modes = facts.map(reg);
+    if (modes.includes('show')) out[0] += ' A worked one is ' + (SPEAKER[teacher] || 'Tallyheart') + '’s: before she types a column that needs a spread, the picture spreads as the lines say why; in a column that needs none, its line in full.';
+    if (modes.includes('tap')) out[0] += ' In a tapped one, the zone to spread from glows and the keypad waits until she taps it.';
+    out[0] += ' She writes each answer under the column a digit at a time, ones first, with OK after each; a slip gets that column scratched out in the sand (the help writes its digit, and the rest is hers), ' +
+      (set.twins === false ? 'and a helped one does not come back (`twins: false`).' : 'and a helped one comes back as a twin (new numbers, the same shape) ' + numWord(E.REQUEUE_GAP || 2) + ' problems later.') + ' On to ' + f.counts.next + '.';
+    const more = [];
+    const bare = facts.find(x => x.prompt == null);
+    if (bare) more.push('- Asking a problem with no words of its own: its column alone, and Read to me says it in words (“' + fill(first(kit('ask')), { a: bare.a, b: bare.b }) + '”).');
+    facts.forEach(x => {
+      if (x.prompt != null && !(Array.isArray(x.prompt) && !x.prompt.length)) more.push('- Asking ' + sum(x) + ':', ...lines(x.prompt));
+      if (x.right != null) more.push('- After ' + sum(x) + ', right in every column the first time:', ...lines(x.right));
+    });
+    if (Array.isArray(set.praise)) more.push('- Praise for a problem right in every column the first time, in turn (a blank one says nothing): ' + set.praise.filter(p => typeof p === 'string' && p.trim()).map(p => '“' + q(p) + '”').join(', '));
+    if (set.lines && typeof set.lines === 'object') Object.keys(set.lines).forEach(k => {
+      const v = set.lines[k], forms = v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).map(fk => fk + ': “' + q(v[fk]) + '”').join(', ') : asList(v).map(x => '“' + q(x) + '”').join(', ');
+      more.push('- In place of the kit’s `' + k + '`: ' + forms + '.');
+    });
+    if (set.done) more.push('- At the end: “' + q(set.done) + '”');
+    else if (set.done === '' || set.done === null) more.push('- No closing line: the next frame goes straight on.');
+    if (more.length) out.push('', more.join('\n'));
+    return out.join('\n');
+  }
   function countsWords(f) {
     // chapter 5: a Counts frame may run another chapter's set (the roof, found later: chapter 4's riddle)
     const own = (story.counts || {})[f.counts.set], found = own || E.countsSet(f.counts.set, story, siblings()), set = found || {};
@@ -1699,7 +1773,7 @@ function board(storyPath, outPath) {
       return '**Then she types** (' + k + '). On to ' + f.input.next + '.';
     }
     if (f.look) return '**Then she chooses her look in the reflection**: she-cat or tom, fur, marking, eyes; the reflection redraws as she picks. On to ' + f.look.next + '.';
-    if (f.counts) return countsWords(f);
+    if (f.counts) return takeSetOf(f) ? takesWords(f) : countsWords(f);
     if (f.skip) return skipWords(f);
     if (f.scratch) return scratchWords(f);
     if (f.file) return fileWords(f);
@@ -1805,14 +1879,14 @@ function board(storyPath, outPath) {
   const ids = Object.keys(F);
   const reachable = new Set(reach(story.start));
   const setCount = {};
-  let choices = 0, inputs = 0, looks = 0, counts = 0, skips = 0, gifts = 0, sfx = 0, words = 0, balloons = 0, captions = 0, conditional = 0, taps = 0;
+  let choices = 0, inputs = 0, looks = 0, counts = 0, takes = 0, skips = 0, gifts = 0, sfx = 0, words = 0, balloons = 0, captions = 0, conditional = 0, taps = 0;
   for (const id of ids) {
     const f = F[id];
     if (f.scene && f.scene.set) setCount[f.scene.set] = (setCount[f.scene.set] || 0) + 1;
     if (f.choice) { choices++; f.choice.options.forEach(o => { if (o.when) conditional++; }); }
     if (f.input) inputs++;
     if (f.look) looks++;
-    if (f.counts) counts++;
+    if (f.counts) { if (takeSetOf(f)) takes++; else counts++; }
     if (f.skip) skips++;
     if (f.scratch || f.file || f.ask) taps++;
     if (f.gift) gifts++;
@@ -2006,7 +2080,7 @@ function board(storyPath, outPath) {
   md.push('- **Shot**: the storyboard, written for an illustrator (camera, who is where, what the moment feels like, where the lettering goes).');
   md.push('- **Scene**: what the game draws today, in plain words: the set, the camera, who is in shot and how, and any effects.');
   md.push('- **Captions**: the narration boxes, read first. **Balloons**: who speaks, in order. **Sound effect**: the big lettering. A line marked *(only if …)* shows only to a reader whose choices match.');
-  md.push('- **Then**: what the reader does next (tap Next, choose, type, pick a look, count by twos, or do a Counts lesson).');
+  md.push('- **Then**: what the reader does next (tap Next, choose, type, pick a look, count by twos, or do a Counts lesson' + (takes ? ' or a take-away lesson' : '') + ').');
   md.push('');
   md.push('Where the reader makes a choice, each option’s frames are grouped under a **Branch** heading, and the branches meet again at the frame named after them. `{name}` is the first part of her Clan name (Moon makes Moonpaw), `{petname}` is what her Tall One calls her, and `{they}`/`{them}`/`{their}` become she/her/her or he/him/his.' +
     (/\{(Murmur|murmur|MURMUR)\}/.test(JSON.stringify(story)) ? ' `{Murmur}`/`{murmur}` is the tortoiseshell’s name word: Murmur (Murmurpaw, Murmurchime, murmuring), or Mutter for a reader whose own Clan name is Murmur.' : '') +
@@ -2022,7 +2096,9 @@ function board(storyPath, outPath) {
   md.push('| Choices | ' + choices + ' |');
   md.push('| Things she types | ' + inputs + ' (' + ids.filter(id => F[id].input).map(id => F[id].input.kind).join(', ') + ') |');
   md.push('| Look chooser | ' + looks + ' |');
-  md.push('| Counts lessons | ' + counts + ' (' + Object.keys(story.counts || {}).map(k => k + ': ' + ((story.counts[k].facts || []).length) + ' facts').join('; ') + ') |');
+  md.push('| Counts lessons | ' + counts + ' (' + Object.keys(story.counts || {}).filter(k => !(story.counts[k] && story.counts[k].op === '-')).map(k => k + ': ' + ((story.counts[k].facts || []).length) + ' facts').join('; ') + ') |');
+  // (the take-aways kit: a take set's frames, a row of their own, never a Count)
+  if (takes) md.push('| Take-aways | ' + takes + ' (' + Object.keys(story.counts || {}).filter(k => story.counts[k] && story.counts[k].op === '-').map(k => { const n = asList(story.counts[k].facts).length; return k + ': ' + n + (n === 1 ? ' problem' : ' problems') + (story.counts[k].warm === true ? ', a made warm-up first' : ''); }).join('; ') + ') |');
   // (chapter 5: a count as long as the cats it is for has no number of taps of its own; the tuck counts back)
   const skipTaps = sk => (sk.groups == null ? (asList(sk.who).filter(c => !c.when).length || 1) + ' to ' + asList(sk.who).length + ' taps, by ' : sk.groups + (sk.groups === 1 ? ' tap, by ' : ' taps, by ')) + (sk.tuck ? 'ones, back from ' + sk.groups * 10 : sk.table + 's');
   if (skips) md.push('| Skip-counts | ' + skips + ' (' + ids.filter(id => F[id].skip).map(id => skipTaps(F[id].skip)).join('; ') + ') |');
@@ -2080,6 +2156,8 @@ function board(storyPath, outPath) {
       md.push('- (' + (r.when ? 'if ' + whenWords(r.when) : 'always') + ') ' + q(r.text));
     });
     if (story.book.noDream) md.push('- (no dream typed) ' + q(story.book.noDream));
+    // (book two: the store under the recap, drawn small by the take-aways kit's picture)
+    if (typeof story.book.store === 'number') md.push('', '**In the store:** under the recap, small, the store picture of ' + story.book.store + ' (' + storeWords(story.book.store) + '), with “In the store:” in Comic Neue and ' + story.book.store + ' in Andika; it prints with the page.');
     md.push('');
     asList(story.book.dragonet).forEach(dn => {
       md.push('**A dragonet page:** ' + q(dn.name) + ' (`' + dn.id + '`), found in this chapter' + (dn.when ? ' by a reader whose ' + whenWords(dn.when) + ' (the page is there only then)' : '') +

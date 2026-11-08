@@ -47,8 +47,8 @@
  * Tallyheart at `tree` facing left, our cat at HOL_YOU and Chispapaw behind her at `sunpatch-3`, the store's plan and
  * the quick marks in the hollow's fixed box between them. At the store the six at its spots, listed back to front as
  * the sets owner reports their depth. The art draws a layer's cast in the order it is listed, never by depth, so every
- * cast is listed back to front (the fountain top, raised, anywhere; the bounce's and the twitch's first member, for
- * their motion lines, excepted), and the story test checks it on every frame. No two cats touch (the mentor's moment is
+ * cast is listed back to front (the fountain top, raised, anywhere; the bounce's first member, for its motion lines,
+ * excepted), and the story test checks it on every frame. No two cats touch (the mentor's moment is
  * a dip of the head); no grown cat laughs; Chispapaw's collar and bell are on throughout (`collar: false` is chapter
  * 13's). No Clan cat in coat 3 stands beside her (her cream body is near it: the spec's cast note).
  *
@@ -134,7 +134,8 @@
   var TOWER_TALLY = { x: 1230, y: 1000 };
   // the Hollow: our cat on the sand facing Tallyheart, the store's plan between them (the sets owner's HOL_YOU)
   var HOL_YOU = { x: 690, y: 892 };
-  // the riverbank path: Chispapaw at our cat's heels, copying; Tallyheart up ahead
+  // the riverbank path: Chispapaw at our cat's heels, copying; Tallyheart up ahead the whole way (f050 to f053: the
+  // story's “Up ahead, Tallyheart's ear twitches”; only on f052c, she popped in and out, the review's round)
   var PATH_CHISPA = { x: 560, y: 762 };
   var PATH_TALLY = { x: 1260, y: 764 };
   // the Old Bridge: on the bank, Chispapaw and Tallyheart; under it, Riffle at chapter 6's three-shot spot and the
@@ -163,15 +164,17 @@
     return [chispa('sit', chispaMood, 'sunpatch-3', 'right'), tally('sit', tallyMood, 'tree', 'left'), you('sit', youMood, HOL_YOU, 'right', extra)];
   }
   // the store, back to front (the sets owner's depth order): {Murmur}chime, Tallyheart, Glintstar, the old tom at the way
-  // in, then our cat and Chispapaw at the store's front corners
+  // in, then our cat and Chispapaw at the store's front corners; every cat in the back faces our cat at store-left, who
+  // Glintstar speaks to (the review's round: facing right, the spot's way, she turned her back on her)
   function store(o) {
     o = o || {};
     return [c('murmurchime', 'sit', o.chime || 'happy', 'store-back-3', 'left'), tally('sit', o.tally || 'kind', 'store-back-2', 'left'),
-      c('glintstar', 'sit', o.glint || 'kind', 'store-back-1', 'right'), c('grizzled', 'sit', o.old || 'neutral', 'way-in', 'left'),
+      c('glintstar', 'sit', o.glint || 'kind', 'store-back-1', 'left'), c('grizzled', 'sit', o.old || 'neutral', 'way-in', 'left'),
       you('sit', o.you || 'wonder', 'store-left', 'right', o.youExtra), chispa('sit', o.chispa || 'wonder', 'store-right', 'left')];
   }
   // the naming in camp, back to front: Glintstar at the fountain's foot, Tallyheart, our cat, the little cat (the old tom
-  // at the camp's left for the purr)
+  // at the camp's left for the purr); the little cat faces Glintstar, or (her fourth entry, 'right') our cat, her mentor,
+  // from the moment she is given to her (f036 on: the review's round)
   function naming(o) {
     o = o || {};
     var g = o.glint || ['sit', 'kind'], ch = o.chispa || ['sit', 'wonder'], me = o.me || ['sit', 'happy'], ta = o.tally || ['sit', 'kind'];
@@ -180,16 +183,19 @@
     out.push(c('glintstar', g[0], g[1], 'fountain-foot', 'right', g[2]));
     out.push(tally(ta[0], ta[1], NAME_TALLY, 'left', ta[2]));
     out.push(you(me[0], me[1], NAME_YOU, 'left', me[2]));
-    out.push(chispa(ch[0], ch[1], 'center', 'left', ch[2]));
+    out.push(chispa(ch[0], ch[1], 'center', ch[3] || 'left', ch[2]));
     return out;
   }
-  // the vouching, back to front: two Clan cats behind, Tallyheart, our cat beside the little cat, the old tom in front of
-  // the crowd, facing them, and the little cat
+  // the vouching, back to front: Glintstar on the fountain top (where f022 has her, till f027 brings her down; raised, so
+  // anywhere in the order), two Clan cats behind, Tallyheart, our cat beside the little cat, the old tom in front of the
+  // crowd, facing them, and the little cat, facing the old tom, or (`chispaFacing: 'left'`) our cat, to thank her
   function vouch(o) {
     o = o || {};
-    return [c('clancat', 'sit', 'neutral', VOUCH_CLAN, 'left', { variant: 4 }), c('clancat', 'sit', 'neutral', VOUCH_CLAN2, 'left', { variant: 1 }),
+    var clan = o.clan || 'neutral';
+    return [c('glintstar', 'sit', 'solemn', 'fountain-top', 'left'),
+      c('clancat', 'sit', clan, VOUCH_CLAN, 'left', { variant: 4 }), c('clancat', 'sit', clan, VOUCH_CLAN2, 'left', { variant: 1 }),
       tally('sit', o.tally || 'kind', RING_TALLY, 'right'), you('sit', o.you || 'proud', VOUCH_YOU, 'right'), c('grizzled', 'sit', o.old || 'stern', VOUCH_OLD, 'left'),
-      chispa('sit', o.chispa || 'sad', 'center', 'right', o.chispaExtra)];
+      chispa('sit', o.chispa || 'sad', 'center', o.chispaFacing || 'right', o.chispaExtra)];
   }
   // under the Old Bridge with Riffle: Tallyheart further in, Chispapaw, our cat on the mud, Riffle at the front
   function underRiffle(rPose, rMood, o) {
@@ -260,7 +266,7 @@
     f006: {
       // Glintstar's two paragraphs, two balloons
       scene: S('camp', 'fountain', {}, [c('glintstar', 'stand', 'solemn', 'fountain-top', 'left')], ['day']),
-      board: 'LOW ANGLE, UP AT THE FOUNTAIN, MIDDAY. Glintstar has leapt up onto the top of the old stone fountain and stands tall against the blue sky, and a small inset shows an old oatmeal cat sniffing the wind with his whiskers spread, and snowflakes. Caption top left; two balloons, both hers, grave.',
+      board: 'LOW ANGLE, UP AT THE FOUNTAIN, MIDDAY. Glintstar has leapt up onto the top of the old stone fountain and stands tall against the blue sky, and a small inset shows a sky heavy with snowflakes. Caption top left; two balloons, both hers, grave.',
       caption: ['Glintstar leaps up onto the fountain.'],
       say: [
         { who: 'glintstar', text: 'Thymeleaf’s whiskers say snow by the full moon.' },
@@ -450,7 +456,7 @@
     f024: {
       // the vouching: three lines, nothing set, each its own reply
       scene: S('camp', 'crowd', CAMP_DAY, vouch({ you: 'proud' }), ['day']),
-      board: 'MEDIUM, THE CROWD, THE CHOICE. Our cat steps up right beside the little cream cat, shoulders square, and faces the old grizzled tom and the muttering crowd; Tallyheart watches from the front row, and two Clan cats lean in behind the old tom. One caption at the top; the choices sit below the panel.',
+      board: 'MEDIUM, THE CROWD, THE CHOICE. Our cat steps up right beside the little cream cat, shoulders square, and faces the old grizzled tom and the muttering crowd; Tallyheart watches from the front row, two Clan cats lean in behind the old tom, and Glintstar watches from the fountain top. One caption at the top; the choices sit below the panel.',
       caption: ['You step up beside her.'],
       choice: {
         options: [
@@ -463,7 +469,7 @@
 
     f025a: {
       // Tallyheart's own words: her ears up (proud, never laughing), the muttering stops, the thanks
-      scene: S('camp', 'crowd', CAMP_DAY, vouch({ tally: 'proud', chispa: 'shy', old: 'neutral' }), ['day']),
+      scene: S('camp', 'crowd', CAMP_DAY, vouch({ tally: 'proud', chispa: 'shy', old: 'neutral', chispaFacing: 'left' }), ['day']),
       board: 'MEDIUM, THE CROWD, ONLY FOR A CAT WHO SAYS TALLYHEART’S OWN WORDS. In the front row Tallyheart’s ears shoot straight up, proud, and a small inset shows her on the first night saying the very same words for a little pillow cat; the crowd falls silent and the little cat looks up at our cat. Three captions top left; her balloon a whisper.',
       caption: ['Tallyheart’s ears go up, proud.', 'You said it just the way she once said it for you.', 'The muttering stops.'],
       say: [{ who: 'chispapaw', name: LITTLE, text: 'Thank you.', kind: 'whisper' }],
@@ -478,14 +484,14 @@
     },
 
     f025c: {
-      scene: S('camp', 'crowd', CAMP_DAY, vouch({ old: 'solemn', chispa: 'wonder' }), ['day']),
+      scene: S('camp', 'crowd', CAMP_DAY, vouch({ old: 'solemn', chispa: 'wonder', clan: 'happy' }), ['day']),
       board: 'MEDIUM, THE CROWD, ONLY FOR A CAT WHO ASKS THE OLD TOM, COMEDY BEAT. The old grizzled tom opens his mouth, shuts it again, and answers with enormous dignity and no smile at all; behind him the two Clan cats hide grins. The little cream cat looks from one to the other. His balloon stiff.',
       say: [{ who: 'grizzled', text: '…' + WJ + 'I can count in ONE very well.' }],
       next: 'f026'
     },
 
     f026: {
-      scene: S('camp', 'crowd', CAMP_DAY, vouch({ chispa: 'shy', old: 'neutral' }), ['day']),
+      scene: S('camp', 'crowd', CAMP_DAY, vouch({ chispa: 'shy', old: 'neutral', chispaFacing: 'left' }), ['day']),
       board: 'MEDIUM, THE CROWD, AFTER THE OLD TOM’S ANSWER. The muttering dies away all round the crowd, and the little cream cat turns to our cat with her ears coming slowly back up and whispers her thanks. One caption at the top; her balloon a whisper.',
       caption: ['The muttering stops.'],
       say: [{ who: 'chispapaw', name: LITTLE, text: 'Thank you.', kind: 'whisper' }],
@@ -533,7 +539,7 @@
 
     f031: {
       // the whole camp wide on the `purr` camera; our cat purrs first, the old tom joins in
-      scene: S('camp', 'purr', CAMP_DAY, naming({ old: ['sit', 'happy', { purr: true }], glint: ['sit', 'happy'], chispa: ['sit', 'wonder'], me: ['sit', 'happy', { purr: true }], tally: ['sit', 'happy'] }), ['day', 'purr']),
+      scene: S('camp', 'purr', CAMP_DAY, naming({ old: ['sit', 'stern', { purr: true }], glint: ['sit', 'happy'], chispa: ['sit', 'wonder'], me: ['sit', 'happy', { purr: true }], tally: ['sit', 'happy'] }), ['day', 'purr']),
       board: 'WIDE, THE WHOLE CAMP BY DAY. Our cat purrs first, the purr drawn as warm rings, and then one by one every cat round the fountain joins in, till the whole camp hums; the little cream cat stands in the middle of it, astonished, and the old grizzled tom purrs too, frowning at the new word. Two captions top left; his balloon puzzled.',
       caption: ['You purr it first.', 'Then, one by one, the cats join in, till the whole camp is humming her new name.'],
       say: [{ who: 'grizzled', text: 'Chips-paw?' }],
@@ -579,9 +585,9 @@
     },
 
     f036: {
-      // the dip's answer: she dipped hers back (not drawn), and looks up
-      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'kind'], chispa: ['lookup', 'wonder'], me: ['sit', 'kind'], tally: ['sit', 'happy'] }), ['day']),
-      board: 'MEDIUM, THE CAMP, THE CHOICE. Chispapaw looks up at her new mentor with her eyes shining like two blue stones, her bell still swinging from her bow; Glintstar and Tallyheart wait to hear what our cat will say first. One caption at the top; the choices sit below the panel.',
+      // the dip's answer: she dipped hers back (not drawn), and looks up at our cat (facing her mentor from here to f038c)
+      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'kind'], chispa: ['lookup', 'wonder', null, 'right'], me: ['sit', 'kind'], tally: ['sit', 'happy'] }), ['day']),
+      board: 'MEDIUM, THE CAMP, THE CHOICE. Chispapaw looks up at her new mentor with her eyes shining like two blue stones, her bell still swinging from the dip of her head; Glintstar and Tallyheart wait to hear what our cat will say first. One caption at the top; the choices sit below the panel.',
       caption: ['Chispapaw looks up at you, eyes shining.'],
       choice: {
         options: [
@@ -593,7 +599,7 @@
     },
 
     f037a: {
-      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'happy'], chispa: ['sit', 'happy', { purr: true, tailUp: true }], me: ['sit', 'happy', { tailUp: true }], tally: ['sit', 'kind'] }), ['day', 'purr']),
+      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'happy'], chispa: ['sit', 'happy', { purr: true, tailUp: true }, 'right'], me: ['sit', 'happy', { tailUp: true }], tally: ['sit', 'kind'] }), ['day', 'purr']),
       board: 'MEDIUM, THE CAMP, ONLY FOR A CAT WHO SAYS WELCOME. Chispapaw purrs so hard her whiskers shake, the purr drawn round her, and her tail goes straight up just like our cat’s; Tallyheart leans close to our cat and whispers. Two captions top left; her balloon a whisper.',
       caption: ['Chispapaw purrs so hard her whiskers shake.', 'Chispapaw’s tail goes up too, just like yours.'],
       say: [{ who: 'tallyheart', text: 'Now you know how I felt, the day you came.', kind: 'whisper' }],
@@ -602,21 +608,21 @@
 
     f037b: {
       // (a word joiner after the ellipsis, so it never stands alone at a line's end)
-      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'kind'], chispa: ['stand', 'happy'], me: ['sit', 'happy'], tally: ['sit', 'kind'] }), ['day']),
+      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'kind'], chispa: ['stand', 'wonder', null, 'right'], me: ['sit', 'happy'], tally: ['sit', 'kind'] }), ['day']),
       board: 'MEDIUM, THE CAMP, ONLY FOR A CAT WHO ASKS IF SHE IS READY, COMEDY BEAT. Chispapaw jumps to her feet, ready for anything, then stops with one paw in the air and tips her head, puzzled; our cat tries not to laugh. Her balloon a squeak, then a question.',
       say: [{ who: 'chispapaw', text: 'Ready! …' + WJ + 'What’s work?' }],
       next: 'f038'
     },
 
     f037c: {
-      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'kind'], chispa: ['sit', 'wonder'], me: ['sit', 'happy'], tally: ['sit', 'proud'] }), ['day']),
+      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'kind'], chispa: ['sit', 'wonder', null, 'right'], me: ['sit', 'happy'], tally: ['sit', 'proud'] }), ['day']),
       board: 'MEDIUM, THE CAMP, ONLY FOR A CAT WHO SAYS LET’S COUNT SOMETHING, COMEDY BEAT. Tallyheart’s head comes round at her own favourite words coming out of our cat, and she huffs, pretending to be cross, her chest puffed out with pride. Her balloon a mock grumble.',
       say: [{ who: 'tallyheart', text: 'That’s MY line. Hmph.' }],
       next: 'f038c'
     },
 
     f038: {
-      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'happy'], chispa: ['sit', 'happy', { tailUp: true }], me: ['sit', 'happy', { tailUp: true }], tally: ['sit', 'kind'] }), ['day']),
+      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'happy'], chispa: ['sit', 'happy', { tailUp: true }, 'right'], me: ['sit', 'happy', { tailUp: true }], tally: ['sit', 'kind'] }), ['day']),
       board: 'MEDIUM, THE CAMP, AFTER HER QUESTION. Chispapaw’s tail goes straight up just like our cat’s, the two tails side by side, and Tallyheart leans close to our cat and whispers, her torn ear soft. One caption at the top; her balloon a whisper.',
       caption: ['Chispapaw’s tail goes up too, just like yours.'],
       say: [{ who: 'tallyheart', text: 'Now you know how I felt, the day you came.', kind: 'whisper' }],
@@ -624,7 +630,7 @@
     },
 
     f038c: {
-      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'happy'], chispa: ['sit', 'happy', { tailUp: true }], me: ['sit', 'happy', { tailUp: true }], tally: ['sit', 'proud'] }), ['day']),
+      scene: S('camp', 'crowd', CAMP_DAY, naming({ glint: ['sit', 'happy'], chispa: ['sit', 'happy', { tailUp: true }, 'right'], me: ['sit', 'happy', { tailUp: true }], tally: ['sit', 'proud'] }), ['day']),
       board: 'MEDIUM, THE CAMP, AFTER TALLYHEART’S HMPH. Tallyheart looks enormously proud of her own line, and Chispapaw’s tail goes straight up just like our cat’s; Tallyheart leans close to our cat and whispers. Two captions top left; her balloon a whisper.',
       caption: ['She looks very proud.', 'Chispapaw’s tail goes up too, just like yours.'],
       say: [{ who: 'tallyheart', text: 'Now you know how I felt, the day you came.', kind: 'whisper' }],
@@ -648,8 +654,8 @@
 
     f040a: {
       scene: S('camp', 'reveal', CAMP_DAY,
-        [chispa('stand', 'wonder', WALK_CHISPA, 'right'), you('walk', 'happy', WALK_YOU, 'right'), tally('walk', 'kind', WALK_TALLY, 'left')], ['day']),
-      board: 'WIDE, ACROSS THE CAMP, ONLY FOR A CAT WHO SAYS YES, COMEDY BEAT. Chispapaw stops dead with her eyes huge and her mouth wide open, and up ahead Tallyheart looks back over her shoulder, brisk. Caption top left; the little cat’s balloon a squeal, Tallyheart’s brisk.',
+        [chispa('stand', 'wonder', WALK_CHISPA, 'right'), you('walk', 'happy', WALK_YOU, 'right'), tally('stand', 'kind', WALK_TALLY, 'left')], ['day']),
+      board: 'WIDE, ACROSS THE CAMP, ONLY FOR A CAT WHO SAYS YES, COMEDY BEAT. Chispapaw stops dead with her eyes huge and her mouth wide open, and up ahead Tallyheart has stopped and turned back to them, brisk. Caption top left; the little cat’s balloon a squeal, Tallyheart’s brisk.',
       caption: ['Chispapaw’s eyes go huge.'],
       say: [
         { who: 'chispapaw', text: 'A DRAGON?!', kind: 'shout' },
@@ -660,8 +666,8 @@
 
     f040b: {
       scene: S('camp', 'reveal', CAMP_DAY,
-        [chispa('walk', 'happy', WALK_CHISPA, 'right'), you('walk', 'happy', WALK_YOU, 'right'), tally('walk', 'kind', WALK_TALLY, 'left')], ['day']),
-      board: 'WIDE, ACROSS THE CAMP, ONLY FOR A CAT WHO SAYS ONE AT A TIME, COMEDY BEAT. Chispapaw nods very seriously as she trots and asks for the most important question first, and up ahead Tallyheart looks back over her shoulder, brisk. Two balloons, the little cat’s firm, Tallyheart’s brisk.',
+        [chispa('walk', 'happy', WALK_CHISPA, 'right'), you('walk', 'happy', WALK_YOU, 'right'), tally('stand', 'kind', WALK_TALLY, 'left')], ['day']),
+      board: 'WIDE, ACROSS THE CAMP, ONLY FOR A CAT WHO SAYS ONE AT A TIME, COMEDY BEAT. Chispapaw nods very seriously as she trots and asks for the most important question first, and up ahead Tallyheart has stopped and turned back to them, brisk. Two balloons, the little cat’s firm, Tallyheart’s brisk.',
       say: [
         { who: 'chispapaw', text: 'Okay. DRAGON first.' },
         { who: 'tallyheart', text: 'The dragon story at the store. Lessons now.' }
@@ -672,22 +678,28 @@
     /* ------------------------------------------------------------------ The Training Hollow (`H12` under every frame) */
 
     f041: {
+      // the screen's last two balloons (Chispapaw's socks and Tallyheart's “Yes!”, the pair the story joins with “/”)
+      // open f042: four balloons here ran Back and Next under a sideways iPad's screen with Aa on (the review's round)
       scene: S('hollow', 'lesson', H12, hollow('wonder', 'kind', 'wonder'), ['day']),
-      board: 'MEDIUM, THE TRAINING HOLLOW, MIDDAY. In the sandy hollow under the old leaning tree, its ten claw marks glowing, Tallyheart sits facing her two pupils side by side, our cat in front and Chispapaw just behind it; our cat looks surprised to be having a lesson at all. Four balloons in turn.',
+      board: 'MEDIUM, THE TRAINING HOLLOW, MIDDAY. In the sandy hollow under the old leaning tree, its ten claw marks glowing, Tallyheart sits facing her two pupils, our cat in front and Chispapaw just behind it; our cat looks surprised to be having a lesson at all. Two balloons, our cat’s surprised, Tallyheart’s brisk.',
       say: [
         { who: 'player', text: 'Warriors have LESSONS?' },
-        { who: 'tallyheart', text: 'Even warriors learn new tricks. You know every Count a warrior needs. Now, what to DO with them: take-aways.' },
-        { who: 'chispapaw', text: 'Take-aways? Like when I take away my Tall One’s socks?' },
-        { who: 'tallyheart', text: 'Yes! Then we count what’s left.' }
+        { who: 'tallyheart', text: 'Even warriors learn new tricks. You know every Count a warrior needs. Now, what to DO with them: take-' + WJ + 'aways.' }
       ],
       next: 'f042'
     },
 
     f042: {
-      // the warm-up: her two hardest Counts of all 54 pairs, then one more; Chispapaw's echo on her first right answer
+      // Chispapaw's socks and Tallyheart's “Yes!” (the last of f041's screen), then the warm-up: her two hardest Counts of
+      // all 54 pairs, then one more; Chispapaw's echo on her first right answer (`intro: false`: none of these balloons
+      // follows into the Counts)
       scene: S('hollow', 'lesson', H12, hollow('happy', 'happy', 'happy'), ['day']),
-      board: 'MEDIUM, THE TRAINING HOLLOW, THEN THE COUNTS. Tallyheart settles in the sand with her tail curled round her paws and announces three Counts, and our cat stretches its claws, ready; Chispapaw leans in to watch. In the Counts picture each question’s own picture lies on the sand; Chispapaw says the first right answer in Spanish. Her balloon brisk; the keypad sits below the panel.',
-      say: [{ who: 'tallyheart', text: 'First, three Counts, to wake up your whiskers.' }],
+      board: 'MEDIUM, THE TRAINING HOLLOW, THEN THE COUNTS. Chispapaw pipes up about taking away her Tall One’s socks, and Tallyheart, delighted, settles in the sand with her tail curled round her paws and announces three Counts; our cat stretches its claws, ready, and Chispapaw leans in to watch. In the Counts picture each question’s own picture lies on the sand; Chispapaw says the first right answer in Spanish. Three balloons: the little cat’s a question, then Tallyheart’s two, brisk; the keypad sits below the panel.',
+      say: [
+        { who: 'chispapaw', text: 'Take-' + WJ + 'aways? Like when I take away my Tall One’s socks?' },
+        { who: 'tallyheart', text: 'Yes! Then we count what’s left.' },
+        { who: 'tallyheart', text: 'First, three Counts, to wake up your whiskers.' }
+      ],
       counts: { set: 'ch12-warm', intro: false, next: 'f043' }
     },
 
@@ -753,7 +765,7 @@
       scene: S('hollow', 'lesson', merge(H12, { quick: 3 }), hollow('happy', 'proud', 'happy'), ['day']),
       board: 'MEDIUM, THE TRAINING HOLLOW. Tallyheart sits back, satisfied, with the three quick counts in the sand before her, and Chispapaw bounces on her toes beside our cat, thrilled for it. Two balloons, Tallyheart’s firm, the little cat’s a squeak.',
       say: [
-        { who: 'tallyheart', text: 'Ones first, every time. That’s take-aways.' },
+        { who: 'tallyheart', text: 'Ones first, every time. That’s take-' + WJ + 'aways.' },
         { who: 'chispapaw', text: 'You didn’t sigh ONCE!' }
       ],
       next: 'f050'
@@ -762,8 +774,8 @@
     /* ------------------------------------------------------------------ The walk: the riverbank path, by day */
 
     f050: {
-      scene: S('riverbank', 'path', {}, [chispa('walk', 'wonder', PATH_CHISPA, 'right'), you('walk', 'kind', 'path-left', 'right')], ['day']),
-      board: 'WIDE, THE RIVERBANK PATH, AFTERNOON, THE CHOICE. Our cat walks down the path toward the Old Bridge, and right behind it Chispapaw copies its every step, putting her small brown paws exactly where its paws went; she looks up and asks quietly. Caption top left; her balloon shy; the choices sit below the panel.',
+      scene: S('riverbank', 'path', {}, [chispa('walk', 'wonder', PATH_CHISPA, 'right'), you('walk', 'kind', 'path-left', 'right'), tally('walk', 'kind', PATH_TALLY, 'right')], ['day']),
+      board: 'WIDE, THE RIVERBANK PATH, AFTERNOON, THE CHOICE. Our cat walks down the path toward the Old Bridge, and right behind it Chispapaw copies its every step, putting her small brown paws exactly where its paws went, while Tallyheart pads on far ahead; she looks up and asks quietly. Caption top left; her balloon shy; the choices sit below the panel.',
       caption: ['Down to the Old Bridge, Chispapaw copies your every step.'],
       say: [{ who: 'chispapaw', text: 'Were the cats grumpy at you, too? At first?' }],
       choice: {
@@ -776,30 +788,30 @@
     },
 
     f051a: {
-      scene: S('riverbank', 'path', {}, [chispa('walk', 'shy', PATH_CHISPA, 'right'), you('walk', 'kind', 'path-left', 'right')], ['day']),
-      board: 'WIDE, THE RIVERBANK PATH, ONLY FOR A CAT WHO SAYS NOT FOR LONG. Chispapaw thinks about it as she walks behind our cat, her big ears turning this way and that, and decides she can manage not-for-long, very quietly to herself. Her balloon a whisper.',
+      scene: S('riverbank', 'path', {}, [chispa('walk', 'shy', PATH_CHISPA, 'right'), you('walk', 'kind', 'path-left', 'right'), tally('walk', 'kind', PATH_TALLY, 'right')], ['day']),
+      board: 'WIDE, THE RIVERBANK PATH, ONLY FOR A CAT WHO SAYS NOT FOR LONG. Chispapaw thinks about it as she walks behind our cat, her big ears turning this way and that, and decides she can manage not-for-long, very quietly to herself; Tallyheart pads on far ahead. Her balloon a whisper.',
       say: [{ who: 'chispapaw', text: 'Not for long. I can do not-for-long.', kind: 'whisper' }],
       next: 'f052'
     },
 
     f051b: {
       // her old-tom voice: `stern`
-      scene: S('riverbank', 'path', {}, [chispa('walk', 'stern', PATH_CHISPA, 'right'), you('walk', 'happy', 'path-left', 'right')], ['day']),
-      board: 'WIDE, THE RIVERBANK PATH, ONLY FOR A CAT WHO SAYS THE OLD TOM STILL IS, COMEDY BEAT. Chispapaw scrunches her face into the old grizzled tom’s frown, puffs out her chest and does his voice as deep and grumpy as she can; our cat snorts with laughter. Her balloon gruff.',
+      scene: S('riverbank', 'path', {}, [chispa('walk', 'stern', PATH_CHISPA, 'right'), you('walk', 'happy', 'path-left', 'right'), tally('walk', 'kind', PATH_TALLY, 'right')], ['day']),
+      board: 'WIDE, THE RIVERBANK PATH, ONLY FOR A CAT WHO SAYS THE OLD TOM STILL IS, COMEDY BEAT. Chispapaw scrunches her face into the old grizzled tom’s frown, puffs out her chest and does his voice as deep and grumpy as she can; our cat grins, and Tallyheart pads on far ahead. Her balloon gruff.',
       say: [{ who: 'chispapaw', text: 'Chips-paw?' }],
       next: 'f052'
     },
 
     f052: {
-      scene: S('riverbank', 'path', {}, [chispa('walk', 'proud', PATH_CHISPA, 'right'), you('walk', 'happy', 'path-left', 'right')], ['day']),
-      board: 'WIDE, THE RIVERBANK PATH. Chispapaw’s whiskers lift and her chin comes up, and she walks a little taller behind our cat on the sunny path down to the river, very determined. One caption at the top; her balloon brave.',
+      scene: S('riverbank', 'path', {}, [chispa('walk', 'proud', PATH_CHISPA, 'right'), you('walk', 'happy', 'path-left', 'right'), tally('walk', 'kind', PATH_TALLY, 'right')], ['day']),
+      board: 'WIDE, THE RIVERBANK PATH. Chispapaw’s whiskers lift and her chin comes up, and she walks a little taller behind our cat on the sunny path down to the river, very determined; Tallyheart pads on far ahead. One caption at the top; her balloon brave.',
       caption: ['Chispapaw’s whiskers lift.'],
       say: [{ who: 'chispapaw', text: 'I’ll show them. Like you did.' }],
       next: 'f053'
     },
 
     f052c: {
-      // Tallyheart up ahead in the picture: she heard
+      // Tallyheart up ahead, as on every frame of the walk: she heard
       scene: S('riverbank', 'path', {}, [chispa('walk', 'proud', PATH_CHISPA, 'right'), you('walk', 'happy', 'path-left', 'right'), tally('walk', 'kind', PATH_TALLY, 'right')], ['day']),
       board: 'WIDE, THE RIVERBANK PATH, ONLY FOR A CAT WHO SAYS TALLYHEART WASN’T. Up ahead on the path Tallyheart walks on without turning round, but one torn ear has swivelled back to listen; behind our cat Chispapaw’s whiskers lift. Two captions top left; her balloon brave.',
       caption: ['Up ahead, Tallyheart’s ear twitches. She heard.', 'Chispapaw’s whiskers lift.'],
@@ -808,8 +820,8 @@
     },
 
     f053: {
-      scene: S('riverbank', 'path', {}, [chispa('walk', 'proud', PATH_CHISPA, 'right'), you('walk', 'proud', 'path-left', 'right')], ['day']),
-      board: 'WIDE, THE RIVERBANK PATH. Our cat walks the rest of the way down the path with its head held high and its tail up, and behind it Chispapaw does exactly the same, the river glinting below them. One caption at the top.',
+      scene: S('riverbank', 'path', {}, [chispa('walk', 'proud', PATH_CHISPA, 'right'), you('walk', 'proud', 'path-left', 'right'), tally('walk', 'kind', PATH_TALLY, 'right')], ['day']),
+      board: 'WIDE, THE RIVERBANK PATH. Our cat walks the rest of the way down the path with its head held high and its tail up, and behind it Chispapaw does exactly the same, the river glinting below them and Tallyheart far ahead. One caption at the top.',
       caption: ['You walk the rest of the way with your head held high.'],
       next: 'f054'
     },
@@ -925,9 +937,10 @@
     },
 
     f064: {
-      // (Riffle first in the cast, so the motion lines are his paws')
-      scene: S('bridge', 'under', UNDER, [c('riffle', 'stand', 'solemn', RIFFLE_UNDER, 'right', { holds: 'pebbles' })].concat(underRiffle('stand', 'solemn').slice(0, 3)), ['sunset', 'motion']),
-      board: 'WIDE, UNDER THE OLD BRIDGE, SUNSET, COMEDY BEAT. The otter stands rigidly still with his pebbles clutched to his chest, but his paws are twitching, little motion lines all round them, desperate to toss; the cats watch him try. One caption at the top.',
+      // no `motion`: it draws speed streaks behind the first cast member (a run, a bounce), so Riffle read as rushing off;
+      // no effect draws a twitch, so the rigid stand and the caption carry it (the review's round)
+      scene: S('bridge', 'under', UNDER, underRiffle('stand', 'solemn'), ['sunset']),
+      board: 'WIDE, UNDER THE OLD BRIDGE, SUNSET, COMEDY BEAT. The otter stands rigidly still with his pebbles clutched to his chest, every whisker straining, desperate to toss them; the cats watch him try. One caption at the top.',
       caption: ['His paws twitch. They really want to juggle. He holds very, very still.'],
       next: 'f065'
     },
@@ -947,7 +960,7 @@
     f066: {
       // the hook: Riffle's news; the track's place unsaid, no badger anywhere
       scene: S('bridge', 'under', UNDER, underRiffle('stand', 'shout', { tally: 'wonder', chispa: 'wonder', you: 'wonder' }), ['sunset']),
-      board: 'WIDE, UNDER THE OLD BRIDGE, SUNSET, THE CHOICE. The otter bursts with news, pebbles clutched tight and eyes huge, and a small inset shows a big wide paw print pressed fresh in river mud; the cats all lean in. Caption top left; his balloon a shout; the choices sit below the panel.',
+      board: 'WIDE, UNDER THE OLD BRIDGE, SUNSET, THE CHOICE. The otter bursts with news, pebbles clutched tight and eyes huge, and the cats all lean in. Caption top left; his balloon a shout; the choices sit below the panel.',
       caption: ['Riffle can’t hold still a heartbeat longer.'],
       say: [{ who: 'riffle', text: 'NEWS! Granny’s found ANOTHER badger track. A FRESH one! Come to the Crossing at first light!', kind: 'shout' }],
       choice: {
@@ -990,7 +1003,7 @@
 
     f070: {
       scene: S('camp', 'reveal', CAMP_NIGHT,
-        [c('clancat', 'curl', 'sleepy', 'crowd-left', 'right', { variant: 2, asleep: true }), c('clancat', 'curl', 'sleepy', 'crowd-right', 'left', { variant: 1, asleep: true })], ['night']),
+        [c('clancat', 'curl', 'sleepy', 'crowd-left', 'right', { variant: 3, asleep: true }), c('clancat', 'curl', 'sleepy', 'crowd-right', 'left', { variant: 1, asleep: true })], ['night']),
       board: 'WIDE, THE CAMP BY MOONLIGHT. The moon has come up over the wild garden, a little past full and lit on its left, and the dens, the ferns and the old stone fountain all shine silver; two Clan cats are curled asleep by their dens. Quiet and calm. One caption at the top.',
       caption: ['The moon comes up over camp, and everything turns silver.'],
       next: 'f071'
@@ -1135,9 +1148,11 @@
           { a: 254, b: 131, regroup: 'show',
             prompt: 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.',
             right: [T('One square, two rows, three loose left.')] },
-          { a: 58, b: 23, prompt: [T('Now you try, all by yourself. Little take-aways first, then big.'),
-            { who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
-          [76, 42], [475, 132], [368, 145]
+          // (Chispapaw's whisper is 76 − 42's prompt, not 58 − 23's second balloon: three balloons over her first column of her
+          // own put Tallyheart's “Now you try” under the bar on a sideways iPad, the review's round)
+          { a: 58, b: 23, prompt: [T('Now you try, all by yourself. Little take-aways first, then big.')] },
+          { a: 76, b: 42, prompt: [{ who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
+          [475, 132], [368, 145]
         ],
         echo: { on: [[475, 132]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] }
       },

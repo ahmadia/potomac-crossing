@@ -609,7 +609,7 @@ test('the dream, the three Counts frames, the paw thing and the twelve pages she
 /* ------------------------------------------------------------------ speakers, tokens, words */
 
 // a speaker given two paragraphs in a row: two balloons (and Riffle's swimmer's line after his shout)
-const CHAINED = ['f006:glintstar', 'f010:waffles', 'f012:waffles', 'f017:chispapaw', 'f044:tallyheart', 'f048:tallyheart', 'f062:riffle'];
+const CHAINED = ['f006:glintstar', 'f010:waffles', 'f012:waffles', 'f017:chispapaw', 'f042:tallyheart', 'f044:tallyheart', 'f048:tallyheart', 'f062:riffle'];
 const LITTLE_IDS = ['f014', 'f017', 'f018', 'f020', 'f023', 'f025a', 'f026', 'f027', 'f028'];
 
 test('every balloon speaker is in that frame’s cast but the two off the panel (each named, so no face); a speaker’s lines on a panel are one balloon but the spec’s two-paragraph ones; balloons and captions are well formed', () => {
@@ -661,8 +661,8 @@ test('balloon kinds as the spec has them: the whispers, the shouts, every other 
   // the “Thank you.” twice (f025a, f026) and “Now you know how I felt” three times (f037a, f038, f038c)
   assert.equal(kinds.whisper.length, WHISPER.length + 3);
   assert.equal(kinds.shout.length, SHOUT.length);
-  // the take lesson's sigh is a whisper too (58 − 23's prompt)
-  assert.equal(story.counts['ch12-take'].facts[1].prompt[1].kind, 'whisper');
+  // the take lesson's sigh is a whisper too (76 − 42's prompt: the review's round moved it off 58 − 23)
+  assert.equal(story.counts['ch12-take'].facts[2].prompt[0].kind, 'whisper');
 });
 
 test('her name tag: “The little cat” on each of her balloons from the hedge to her naming (the friends’ “Hello.” “A small voice”), “Chispapaw” after (her goodnight from across the camp named so); never «Galleta»; our cat’s balloons by her warrior name; the grey tom unnamed', () => {
@@ -730,8 +730,9 @@ test('the Spanish (the spec’s section 6): the three whole Spanish lines (f014,
   const cat = Object.assign(E.blankCat({}), { name: 'Fern', ending: 'heart' });
   assert.deepEqual(lines.map(([, b]) => E.esLine(b.text, cat)), ['«…' + WJ + 'once, doce. Doce gatos.»\n(…' + WJ + 'eleven, twelve. Twelve cats.)',
     '«¡Ciento treinta y tres!»\n(One hundred thirty-three!)', '«¡A contar!»\n(Let’s count!)']);
-  // as the page letters them: the Spanish in italics, its English upright under it
-  assert.equal(UI.letter.rich(E.esLine(frames.f061.say[1].text, cat)), '<i class="es" lang="es">¡Ciento treinta y tres!</i><br><span class="gloss">(One hundred thirty-three!)</span>');
+  // as the page letters them: the Spanish in italics, its English upright under it (a word joiner after the gloss's hyphen,
+  // so “thirty-three” never breaks at it: chapter 12's review; Read to me reads the text, never this HTML)
+  assert.equal(UI.letter.rich(E.esLine(frames.f061.say[1].text, cat)), '<i class="es" lang="es">¡Ciento treinta y tres!</i><br><span class="gloss">(One hundred thirty-\u2060three!)</span>');
   // a word in an English line: the token between the marks, filled for every cat
   assert.equal(E.fill(T('f018'), cat), 'My Tall Ones call me «Galleta». It means cookie.');
   assert.equal(E.fill(frames.f027.say[1].text, cat), '«Galleta».');
@@ -1036,7 +1037,8 @@ test('scenes use only the art vocabulary (PC.art.vocab), camera by camera: every
   assert.deepEqual(where('grizzled', 'PURR_OLD'), ['f031']);
   assert.deepEqual(where('tallyheart', 'TOWER_TALLY'), ['f010', 'f011']);
   assert.deepEqual(where('chispapaw', 'PATH_CHISPA'), seq('f050', 'f053'));
-  assert.deepEqual(where('tallyheart', 'PATH_TALLY'), ['f052c']);
+  // (Tallyheart up ahead the whole way down the path, not only where her ear twitches: the review's round)
+  assert.deepEqual(where('tallyheart', 'PATH_TALLY'), ['f050', 'f051a', 'f051b', 'f052', 'f052c', 'f053']);
   assert.deepEqual(where('riffle', 'RIFFLE_UNDER'), ['f063', 'f064', 'f065', 'f066']);
   assert.deepEqual(where('chispapaw', 'RIFFLE_UNDER'), ['f056'], 'Chispapaw carries her leaf in at Riffle’s place, before he comes');
   assert.deepEqual(where('tallyheart', 'PAST'), ['f077']);
@@ -1093,15 +1095,31 @@ test('staging, the people: Glintstar at the fountain’s foot for the count and 
   assert.deepEqual(castOf('f021', 'player').map(c => [c.pose, c.tap]), [['walk', 'paw']]);
   // no crowd to count on the doce frame: the hedge is a wall
   assert.ok(!frames.f014.scene.cast.some(c => c.who === 'clancat') && frames.f014.scene.set === 'garden');
-  // the vouching: the little cat beside our cat, the old tom facing them
+  // the vouching: the little cat beside our cat, the old tom facing them; she faces him, but turns to our cat to whisper
+  // her thanks (f025a, f026); Glintstar on the fountain top throughout, as on f022, till f027 brings her down (the
+  // review's round)
   ['f024', 'f025a', 'f025b', 'f025c', 'f026'].forEach(id => {
     assert.deepEqual(castOf(id, 'grizzled').map(c => c.facing), ['left'], id);
-    assert.deepEqual(castOf(id, 'chispapaw').map(c => c.facing), ['right'], id);
+    assert.deepEqual(castOf(id, 'chispapaw').map(c => c.facing), [['f025a', 'f026'].includes(id) ? 'left' : 'right'], id);
     assert.ok(castOf(id, 'tallyheart').length && castOf(id, 'clancat').length === 2, id);
+    assert.deepEqual(castOf(id, 'glintstar').map(c => [c.at, c.pose, c.facing]), [['fountain-top', 'sit', 'left']], id + ': Glintstar on the fountain top');
   });
+  ['f022', 'f024', 'f025a', 'f025b', 'f025c', 'f026'].forEach(id => assert.equal(castOf(id, 'glintstar')[0].at, 'fountain-top', id));
+  assert.equal(castOf('f027', 'glintstar')[0].at, 'fountain-foot', 'f027: she comes down');
+  ['f025a', 'f026'].forEach(id => assert.match(frames[id].say[0].text, /^Thank you\.$/, id + ': the thanks, to our cat'));
+  assert.deepEqual(castOf('f025c', 'clancat').map(c => c.mood), ['happy', 'happy'], 'f025c: the two Clan cats hide grins');
+  assert.deepEqual(castOf('f031', 'grizzled').map(c => [c.mood, c.purr]), [['stern', true]], 'f031: the old tom purrs, frowning at the new word');
+  // given to our cat, Chispapaw looks up at her mentor and stays turned to her (f036 to f038c: the review's round)
+  seq('f036', 'f038c').forEach(id => assert.deepEqual(castOf(id, 'chispapaw').map(c => c.facing), ['right'], id + ': facing our cat'));
+  assert.deepEqual(castOf('f036', 'chispapaw').map(c => c.pose), ['lookup']);
+  assert.deepEqual(castOf('f037b', 'chispapaw').map(c => [c.pose, c.mood]), [['stand', 'wonder']], 'f037b: puzzled');
+  seq('f036', 'f038c').forEach(id => assert.ok(castOf(id, 'player')[0].at.x > A.sceneInfo('camp').anchors.main.center.x, id + ': our cat on her right'));
   assert.deepEqual(castOf('f032', 'chispapaw').map(c => [c.pose, c.mood]), [['stand', 'happy']]);
   assert.deepEqual([frames.f032.scene.cast[0].who, frames.f032.scene.fx], ['chispapaw', ['day', 'motion']], 'her bounce: the motion lines hers');
-  assert.deepEqual([frames.f064.scene.cast[0].who, frames.f064.scene.fx], ['riffle', ['sunset', 'motion']], 'his paws twitch: the lines his');
+  // f064: no `motion` (it draws speed streaks behind the first cast member: Riffle read as rushing off, against “He holds very,
+  // very still”); the cast back to front, as under the bridge (the review's round)
+  assert.deepEqual([frames.f064.scene.cast.map(c => c.who), frames.f064.scene.fx], [['tallyheart', 'chispapaw', 'player', 'riffle'], ['sunset']], 'his paws twitch: the caption carries it');
+  assert.deepEqual(ids.filter(id => frames[id].scene.fx.includes('motion')), ['f032'], 'the bounce alone');
   assert.deepEqual(castOf('f035', 'player').map(c => [c.tailUp, c.tap]), [[true, 'nose']]);
   ['f037a', 'f038', 'f038c'].forEach(id => assert.equal(castOf(id, 'chispapaw')[0].tailUp, true, id + ': her tail up too'));
   assert.equal(castOf('f037a', 'chispapaw')[0].purr, true);
@@ -1165,7 +1183,7 @@ test('no two cats touch: every pair on the same row of every frame a step apart,
 
 /* The depth check: on every frame, where the farther of two cast members has a body that meets the nearer one's head, the
  * farther is drawn first (listed first); and every cast is listed back to front. */
-test('staging, depth: a cast member further back is never drawn over a nearer one’s head; every cast listed back to front (the fountain top, raised, anywhere; the bounce’s and the twitch’s first member excepted; the den’s nests as the close-up lays them)', { skip: !A.character && 'no cats.js' }, () => {
+test('staging, depth: a cast member further back is never drawn over a nearer one’s head; every cast listed back to front (the fountain top, raised, anywhere; the bounce’s first member excepted; the den’s nests as the close-up lays them)', { skip: !A.character && 'no cats.js' }, () => {
   const bad = [];
   ids.forEach(id => {
     const sc = frames[id].scene, b = boxesOn(id);
@@ -1176,10 +1194,32 @@ test('staging, depth: a cast member further back is never drawn over a nearer on
       if (fi > ni) bad.push(id + ': ' + far.m.who + ' drawn over ' + near.m.who + '’s head');
     }));
     const info = A.sceneInfo(sc.set), anchors = info.anchors[info.cams[sc.cam].comp] || {};
-    const ys = sc.cast.filter((c, i) => !(['f032', 'f064'].includes(id) && i === 0)).filter(c => typeof c.at === 'object' || (anchors[c.at] && !anchors[c.at].elev)).map(c => (typeof c.at === 'object' ? c.at : anchors[c.at]).y);
+    const ys = sc.cast.filter((c, i) => !(id === 'f032' && i === 0)).filter(c => typeof c.at === 'object' || (anchors[c.at] && !anchors[c.at].elev)).map(c => (typeof c.at === 'object' ? c.at : anchors[c.at]).y);
     for (let i = 1; i < ys.length; i++) assert.ok(ys[i] >= ys[i - 1] || sc.set === 'den', id + ': cast ' + i + ' further back than the one before it (' + ys.join(' ') + ')');
   });
   assert.deepEqual(bad, []);
+});
+
+// the purr words (scenes.js fxPurr): a marked purrer's word beside her back was checked only against the panel's edge; on
+// f037a it was lettered across our cat's face and on f031 across Tallyheart's chin (the review's round). Now it is left out
+// where it meets any other cast member's head, and the word over her own head stays
+test('the purr words keep off every friend’s face: on the naming’s purrs (f031, f037a) no ‘purrr’ lies over another cast member’s head, and every purrer still has one', { skip: !A.character && 'no cats.js' }, () => {
+  for (const id of ['f031', 'f037a']) {
+    const cat = Object.assign(E.blankCat({}), { flags: { ch2Stone: 'nose' } });
+    const sc = E.resolveScene(frames[id].scene, cat, STORIES), svg = A.render(sc, { look: LOOKD }).svg, b = boxesOn(id);
+    const words = [...svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)"[^>]*font-size="([\d.]+)"[^>]*>purrr<\/text>/g)].map((m) => { const x = +m[1], y = +m[2], ws = +m[3] / 46; return [x - 60 * ws, y - 40 * ws, x + 60 * ws, y + 8 * ws]; });
+    // (the fx are drawn in panel units, 1600 x 1000 over the camera's box, the viewBox: the heads mapped into them)
+    const vb = /viewBox="([^"]+)"/.exec(svg)[1].split(' ').map(Number), P = (h) => [(h[0] - vb[0]) / vb[2] * 1600, (h[1] - vb[1]) / vb[3] * 1000, (h[2] - vb[0]) / vb[2] * 1600, (h[3] - vb[1]) / vb[3] * 1000];
+    b.forEach((x) => { if (x) x.head = P(x.head); });
+    const purrers = sc.cast.filter((m) => m.purr).length;
+    assert.ok(purrers && words.length >= purrers, id + ': a word for each purrer (' + words.length + ' for ' + purrers + ')');
+    words.forEach((w) => b.forEach((x) => {
+      if (!x) return;
+      // her own word over her own head leans back from it; another cat's head is never under a word
+      const own = x.m.purr && Math.abs((w[0] + w[2]) / 2 - (x.head[0] + x.head[2]) / 2) < 140 && w[3] <= x.head[1] + 20;
+      if (!own) assert.ok(!meets(w, x.head), id + ': a purrr over ' + x.m.who + '’s face (' + w.map(Math.round) + ' on ' + x.head.map(Math.round) + ')');
+    }));
+  }
 });
 
 // the time of day: her nest at noon by the morning light, the midday run by day, the Old Bridge at sunset, bedtime by night
@@ -1281,7 +1321,7 @@ test('the chapter’s beats are all there, in order, on every path: every reader
     /^The little cat’s eyes go round\./, /^The Clan mutters/, /^You step up beside her\./, /The muttering stops\./, /^Glintstar comes down from the fountain\./, /^The little cat sits up very straight\./,
     /^Glintstar’s whiskers twitch\./, /^Chispapaw\.$/, /^You purr it first\./, /^Chispapaw can’t help it\./, /^Every apprentice needs a mentor\./, /^Glintstar looks right at you\./,
     /^Your very own apprentice!/, /^Chispapaw looks up at you, eyes shining\./, /Now you know how I felt|That’s MY line|Ready!/, /^On the way to the Training Hollow/, /The dragon story at the store\./,
-    /^Warriors have LESSONS\?/, /^First, three Counts/, /^Here’s what the Counts are FOR\./, /^We’ll lay the store out like the pile\./, /^Five hundred is five squares\./,
+    /^Warriors have LESSONS\?/, /Like when I take away my Tall One’s socks\? Yes! Then we count what’s left\. First, three Counts/, /^Here’s what the Counts are FOR\./, /^We’ll lay the store out like the pile\./, /^Five hundred is five squares\./,
     /^In the sand, there’s a quick way/, /^Chispapaw scratches one too\./, /^Here’s the trick\./, /^Ones first, every time\./, /^Down to the Old Bridge/, /I’ll show them\. Like you did\./,
     /^You walk the rest of the way/, /^The sun sinks behind the Old Bridge\./, /carries in four mice at once/, /^Chispapaw carries in a leaf\./, /^You tell Chispapaw the dragon story/,
     /^The catch lies on the dry den’s floor\./, /^One hundred seventy-five pieces today\./, /^Now read me the store\./, /^One square, three rows, three loose\./, /^A wet head pops up over the bank\./,
@@ -1339,8 +1379,9 @@ const TAKE = {
   op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '',
   facts: [
     { a: 254, b: 131, regroup: 'show', prompt: 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.', right: [TH('One square, two rows, three loose left.')] },
-    { a: 58, b: 23, prompt: [TH('Now you try, all by yourself. Little take-aways first, then big.'), { who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
-    [76, 42], [475, 132], [368, 145]
+    { a: 58, b: 23, prompt: [TH('Now you try, all by yourself. Little take-aways first, then big.')] },
+    { a: 76, b: 42, prompt: [{ who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
+    [475, 132], [368, 145]
   ],
   echo: { on: [[475, 132]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] }
 };
@@ -1477,8 +1518,11 @@ test('the take lesson as the spec plays it: the worked example’s three full li
   assert.deepEqual(w.cols.map(c => c.line), ['Ones first. Four take away one.', 'A row is a ten. A square is a hundred. Now the tens. Five take away three.', 'Now the hundreds. Two take away one.']);
   assert.deepEqual([w.lineKind, w.balloons], ['right', [TH('One square, two rows, three loose left.')]]);
   const t = ok.rows[1];
-  assert.deepEqual(t.ask.balloons, [TH('Now you try, all by yourself. Little take-aways first, then big.'), { who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }]);
+  // (Chispapaw's whisper opens 76 − 42, not 58 − 23: three balloons over her first column of her own put Tallyheart's
+  // “Now you try” under the bar on a sideways iPad, the review's round)
+  assert.deepEqual(t.ask.balloons, [TH('Now you try, all by yourself. Little take-aways first, then big.')]);
   assert.deepEqual(t.cols.map(c => c.line), ['Ones first. Eight take away three.', 'Now the tens. Take away two.']);
+  assert.deepEqual(ok.rows[2].ask.balloons, [{ who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }], '76 − 42: her whisper');
   assert.deepEqual(ok.rows.map(r => r.echo && r.echo.text), [null, null, null, TRES, null], 'the echo after 475 − 132 only');
   ok.rows.forEach(r => assert.ok(!/A row is a ten/.test(r.cols.slice(1).map(c => c.line).join(' ')) || r.key === '254-131', r.key + ': the school words once'));
   assert.equal(ok.rows.filter(r => r.cols.some(c => /A row is a ten/.test(c.line))).length, 1);

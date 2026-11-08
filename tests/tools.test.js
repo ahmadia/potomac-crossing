@@ -609,4 +609,16 @@ test('shots.mjs, chapter 12: ES_TARGETS (eight Spanish screens through PC.debug.
   assert.ok(jobs.every((j) => j.name === 'spanish'));
   assert.ok(jobs[0].steps.some((st) => st.js.includes("PC.debug.spanish(what)") && st.js.includes('["echo"]')));
   assert.ok(jobs[8].steps.some((st) => st.js.includes('PC.debug.takes') && st.js.includes('"shelf"')), 'the shelf through the kit\'s TAKES');
+  // (chapter 12's review: a SHEET pane of book#ch12 opens the book at that page, as a single shot does, or says there is none)
+  const SH = fs.readFileSync(path.join(ROOT, 'tools/shots.mjs'), 'utf8');
+  assert.ok(SH.includes("else if (/^(hub|book|hollow|nest|who|title)(#|$)/.test(target)) {\n          PC.debug.go(target.split('#')[0], { from: 'hub' });"));
+  assert.ok(SH.includes("if (an) { var ap = w.document.getElementById('book-' + an); if (!ap) { out.push(targets[i] + ': no page ' + an); continue; } ap.scrollIntoView({ block: 'start' }); }"));
+  // (chapter 12's review: the shared sweep runs them, in --pages' screens group and in --takes, so a Next under the screen
+  // on the echo page is in pages/summary.md)
+  const SW = fs.readFileSync(path.join(ROOT, 'tools/sweep.mjs'), 'utf8');
+  assert.ok(SW.includes("['screens', ['screens', 'warrior', 'takes', 'spanish']]") && SW.includes("groups: [['takes', ['takes', 'spanish']]]"));
+  // the grown-ups corner's row: the leaf focused before its Enter (with the body focused, the hub's own handler took it and
+  // pressed the big button, so the row measured whatever page that opened)
+  const scr = run.measureJobs(S, 'http://localhost:1/', ['screens'], { aas: [false] });
+  assert.ok(scr[0].steps.some((st) => st.js.includes('l.focus(); l.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); return document.activeElement === l ? true : "leaf not focused";')));
 });

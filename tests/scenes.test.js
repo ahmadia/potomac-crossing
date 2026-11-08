@@ -1502,6 +1502,10 @@ function ch13Fingerprint(art, crypto) {
   return out;
 }
 // </ch13-fingerprint>
+// (chapter 12's review: a marked purrer's 'purrr' beside her back is left out where it would cover another cast member's
+// head, the whole-camp purr's test. No frame of chapters 1 to 11 has such a word (every frame's art compared, before and
+// after: none moved), but this test's placeholder cats stand at every one of the hollow's twelve spots, every seventh
+// marked purr, and on `wide` and `lesson` one word met a neighbour's head: those two fingerprints are new, nothing else)
 const CH13_FINGERPRINT = {
   'room/wide': '1c060c96692a8094', 'room/cushion': '7bd537b108b3312d', 'room/glass': '4652bc4f27c59950', 'room/outside': 'a5fec3c0419d252a',
   'tower/up': '3e305d8a72779fd1', 'tower/balcony': '79a707cac5a1d77e', 'tower/balcony-close': '3e86a8936d1adede',
@@ -1509,7 +1513,7 @@ const CH13_FINGERPRINT = {
   'garden/meet': '55807ec6b2f15f08', 'garden/hedge': 'e8e7020ce5b0f14a', 'garden/hedge-close': 'b1555508971c43b9',
   'camp/reveal': '82d2b71e8ae0209e', 'camp/crowd': '96218e76d85441e4', 'camp/fountain': '68ff733bb524a469', 'camp/entrance': '7411b4ff9e385650', 'camp/fountain-close': 'f23e1c54970d3492',
   'camp/ferns': '8a8cbfa4c44c4cd3', 'camp/purr': '54b99ac976dd6911',
-  'hollow/wide': '9cc363695139e221', 'hollow/lesson': '27178ecdcaa607b7', 'hollow/sand': '22575ad532bb51b1', 'hollow/tree': '1a75e6bdf7879c08',
+  'hollow/wide': '07d7cd0b6831ad32', 'hollow/lesson': '335166c9e0bbc01f', 'hollow/sand': '22575ad532bb51b1', 'hollow/tree': '1a75e6bdf7879c08',
   'den/outside': '2835ed7eb7615b45', 'den/inside': '9add5e42e49787df', 'den/nest': 'd036e0b1ac61ab7d', 'den/doorway': '30c9140ff0a4ea45',
   'sky/up': 'fcf06935598addc6', 'sky/cats': 'de9e7845a2de172a', 'river/crash': '36031dec6afdee48', 'title/wide': 'c3078ad2d62c5efb'
 };
@@ -5945,6 +5949,9 @@ const holStore = (svg) => { const m = /<g data-art="store" data-store="(\d+)" da
 const holQuick = (svg) => { const out = [], re = /<g data-quick="(\w+)" data-box="([^"]+)">/g; let m; while ((m = re.exec(svg))) out.push({ who: m[1], box: m[2].split(' ').map(Number), at: m.index }); return out; };
 // the box every chapter 12 option keeps to (HOLLOW_STORE): between our cat's nose and Tallyheart's paws
 const HOL_BOX = [770, 820, 966, 876];
+// the store's plan at a whole number of hundreds (500), its squares alone, in a taller box of its own (HOLLOW_PLAN: the
+// review's round, where the whole picture's fit made each square about 6 CSS px on a phone)
+const HOL_PLAN = [800, 790, 955, 905];
 
 test('chapter 12: the hollow\'s four options (`store`, `storeGlow`, `tap`, `quick`) are declared and off by default; left out, false, 0 or none draw nothing; they belong to `lesson` and `sand`', () => {
   const v = art.vocab.sets.hollow, info = art.sceneInfo('hollow');
@@ -5963,7 +5970,7 @@ test('chapter 12: the hollow\'s four options (`store`, `storeGlow`, `tap`, `quic
   }
 });
 
-test('chapter 12: `store: 500` on the hollow is the store\'s plan: the kit\'s own picture, small, every piece taken (five pale pressed squares, never prey), fitted to the fixed box between the two cats, in keep', { skip: !art.character && 'no cats.js' }, () => {
+test('chapter 12: `store: 500` on the hollow is the store\'s plan: the kit\'s own picture, small, every piece taken (five pale pressed squares, never prey), its squares alone fitted to the plan\'s box between the two cats (no empty mat or place shown), each square a size a child can count on a phone, in keep', { skip: !art.character && 'no cats.js' }, () => {
   if (typeof art.placeValue !== 'function') return;
   for (const cam of ['lesson', 'sand']) {
     const sc = holScene({ store: 500 }, cam), r = art.render(sc, { look: LOOK }), s = holStore(r.svg);
@@ -5974,13 +5981,22 @@ test('chapter 12: `store: 500` on the hollow is the store\'s plan: the kit\'s ow
     assert.equal(pieces.length, 5, cam + ': five pieces');
     assert.ok(pieces.every((c) => c === 'class="pc-pv-square pc-pv-taken"'), cam + ': each a square, taken: ' + pieces.join(' '));
     assert.ok(/aria-label="The store: 5 squares, 0 rows, 0 loose; taken: 5 squares"/.test(r.svg), cam + ': the kit\'s own label');
-    // inside the box, and the box between the cats; in keep (the lettering keeps off it)
-    assert.ok(s.box[0] >= HOL_BOX[0] - 0.1 && s.box[1] >= HOL_BOX[1] - 0.1 && s.box[2] <= HOL_BOX[2] + 0.1 && s.box[3] <= HOL_BOX[3] + 0.1, cam + ': in the box: ' + s.box);
-    assert.ok(s.box[2] - s.box[0] > HOL_BOX[2] - HOL_BOX[0] - 1, cam + ': as wide as the box');
+    // inside the plan's box, and the box between the cats; in keep (the lettering keeps off it)
+    assert.ok(s.box[0] >= HOL_PLAN[0] - 0.1 && s.box[1] >= HOL_PLAN[1] - 0.1 && s.box[2] <= HOL_PLAN[2] + 0.1 && s.box[3] <= HOL_PLAN[3] + 0.1, cam + ': in the plan\'s box: ' + s.box);
+    assert.ok(s.box[3] - s.box[1] > HOL_PLAN[3] - HOL_PLAN[1] - 1, cam + ': as tall as the plan\'s box (its height binds)');
+    // the squares alone: the placed picture clipped to them, one rect a square (the empty mats and the empty sixth place cut)
+    const cm = /<clipPath id="[^"]+-c-plan500">([\s\S]*?)<\/clipPath>/.exec(r.svg);
+    assert.ok(cm && (cm[1].match(/<rect /g) || []).length === 5, cam + ': clipped to the five squares');
+    assert.ok(r.svg.slice(r.svg.lastIndexOf('<g', g0 - 1), g0).includes('clip-path="url(#'), cam + ': the store\'s group inside the clip');
     const vb = viewBox(r.svg), pct = (b) => ({ x: Math.round((b[0] - vb[0]) / vb[2] * 1000) / 10, y: Math.round((b[1] - vb[1]) / vb[3] * 1000) / 10 });
     assert.ok(r.keep.some((k) => Math.abs(k.x - pct(s.box).x) <= 0.15 && Math.abs(k.y - pct(s.box).y) <= 0.15), cam + ': in keep');
     // each pressed square's edge drawn again at a weight the panel shows: five dashed rects of the world, over the kit's
-    assert.equal((r.svg.slice(g0).match(/<rect [^>]*fill="none" rx="[\d.]+" stroke="[^"]+" stroke-width="2" stroke-dasharray="4.2 2.6"/g) || []).length, 5, cam + ': five edges');
+    const edges = [...r.svg.slice(g0).matchAll(/<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" fill="none" rx="[\d.]+" stroke="[^"]+" stroke-width="2" stroke-dasharray="4.2 2.6"/g)].map((m) => m.slice(1).map(Number));
+    assert.equal(edges.length, 5, cam + ': five edges');
+    // a square about two and a half times the whole picture's fit in HOLLOW_STORE (196 x 56: 0.12 world units a picture unit),
+    // at least 15 CSS px across in a phone's 358 px panel (`lesson` is 760 wide), the five apart
+    edges.forEach((e) => assert.ok(e[2] > 30 && e[2] * 358 / 760 > 15, cam + ': a square ' + e[2].toFixed(1) + ' across'));
+    edges.forEach((e, i) => edges.forEach((f, j) => assert.ok(i === j || e[0] + e[2] < f[0] || f[0] + f[2] < e[0] || e[1] + e[3] < f[1] || f[1] + f[3] < e[1], cam + ': squares ' + i + ' and ' + j + ' apart')));
   }
   // the kit's picture as it draws it, inside the group
   const r = art.render(holScene({ store: 500 }), { look: LOOK }), g0 = r.svg.indexOf('<g data-art="store"'), a = r.svg.indexOf('>', g0) + 1;
@@ -5994,6 +6010,10 @@ test('chapter 12: `storeGlow` lights the kit\'s zone and the scene\'s glow on ea
   assert.ok(/class="pc-pv-glow pcs-pulse"/.test(glow), 'the kit\'s glowing zone');
   assert.ok(/data-glow="hundreds"/.test(glow), 'the scene\'s glow');
   assert.equal((glow.match(/stroke="#E39A12"/g) || []).length, 5, 'a gold edge on each of the five squares');
+  // and each its dark pressed edge over the glow and the gold, so the five never run together into one patch (the review's round)
+  const gEdges = glow.match(/<rect [^>]*fill="none" rx="[\d.]+" stroke="[^"]+" stroke-width="2" stroke-dasharray="4.2 2.6" opacity="0.9"/g) || [];
+  assert.equal(gEdges.length, 5, 'five dark edges over the glow');
+  assert.ok(glow.lastIndexOf('stroke="#E39A12"') < glow.indexOf(gEdges[0]), 'drawn after the gold');
   const plain = art.render(holScene({ store: 500 }), { look: LOOK }).svg;
   assert.ok(!/pc-pv-glow|data-glow/.test(plain), 'no glow unless asked');
   // a zone with nothing in it glows as a whole
@@ -6002,10 +6022,14 @@ test('chapter 12: `storeGlow` lights the kit\'s zone and the scene\'s glow on ea
   const r = art.render(holScene({ store: 500, tap: 'squares' }), { look: LOOK }), s = holStore(r.svg);
   const m = /<g class="pc-tap pc-tap-squares" data-tap="squares"><rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" fill="none"[^>]*\/><\/g>/.exec(r.svg);
   assert.ok(m, 'the Tap\'s target');
-  assert.deepEqual(m.slice(1).map(Number).map(Math.round), [s.box[0], s.box[1], s.box[2] - s.box[0], s.box[3] - s.box[1]].map(Math.round), 'over the whole placed picture');
+  // over the whole placed plan, and at least HOLLOW_STORE's width round it: the squares alone are about 36 CSS px wide on a
+  // phone, under a finger's 44 (a 358 px panel, `lesson` 760 wide)
+  const tb = m.slice(1).map(Number), tx1 = tb[0] + tb[2], ty1 = tb[1] + tb[3];
+  assert.ok(tb[0] <= s.box[0] && tb[1] <= s.box[1] && tx1 >= s.box[2] && ty1 >= s.box[3], 'over the whole placed plan: ' + tb);
+  assert.deepEqual([tb[0], tx1].map(Math.round), [HOL_BOX[0], HOL_BOX[2]], 'HOLLOW_STORE\'s width');
   assert.ok(!/pc-tap/.test(plain), 'no Tap unless asked');
-  // under 44 px at 390 x 844 the squares alone would be: the whole picture is the target (a 358 px panel, `lesson` 760 wide)
-  assert.ok((s.box[2] - s.box[0]) * 358 / 760 > 44, 'the target, ' + Math.round((s.box[2] - s.box[0]) * 358 / 760) + ' px wide at 390 x 844');
+  assert.ok(tb[2] * 358 / 760 > 44 && tb[3] * 358 / 760 > 44, 'the target, ' + Math.round(tb[2] * 358 / 760) + ' x ' + Math.round(tb[3] * 358 / 760) + ' px at 390 x 844');
+  assert.ok((s.box[2] - s.box[0]) * 358 / 760 < 44, 'the squares alone would be under a finger\'s width');
 });
 
 test('chapter 12: `quick` scratches 1 to 3 sets of the quick marks, right to left (Tallyheart\'s, Chispapaw\'s, ours), each a square, a line and a dot by the kit\'s marks, Chispapaw\'s square round, apart from each other, in the box and in keep', { skip: !art.character && 'no cats.js' }, () => {

@@ -1,10 +1,11 @@
 # Chapter 12 spec: A Spark at the Hedge
 
-*v0.2 · 2026-11-07 · v0.2 applies the spec critics' findings (continuity, Counts, kit, Spanish; their runs in
-`~/potomac-crossing-work/ch12/critic-*/`, the editor's list in `ch12/spec-editor/notes.md`). No word of the story changes.
-After the kit's review (2026-11-07), still v0.2: the kit now does two things this spec asked of chapter 12, so the
-`NO_SPREAD` override and its store-round copy are gone (no line names a spread before its step is taught: the kit's
-rule, `taught`) and a twin never takes one of the chapter's answers (`avoid`); section 7's items 15 and 16 say so.*
+*v0.3 · 2026-11-08 (v0.2 2026-11-07 applies the spec critics' findings: continuity, Counts, kit, Spanish; their runs in
+`~/potomac-crossing-work/ch12/critic-*/`, the editor's list in `ch12/spec-editor/notes.md`; after the kit's review, still
+v0.2: the kit now does two things this spec asked of chapter 12, so the `NO_SPREAD` override and its store-round copy are
+gone and a twin never takes one of the chapter's answers, section 7's items 15 and 16. v0.3 records the build as made and
+the review's round, 2026-11-08: section 7, items 18 to 22, and the lines of sections 2, 4, 5, 8 and 10 they change). No
+word of the story changes.*
 
 *The build's contract for chapter 12, beside `docs/build.md` and the take-aways kit's design (`docs/take-aways.md` v0.3).
 The story, [`12-a-spark-at-the-hedge.md`](12-a-spark-at-the-hedge.md) (Draft v0.4, final), is the source of every word she
@@ -145,11 +146,14 @@ function T(text) { return { who: 'tallyheart', text: text }; }
   column's line. The kit's "A row is a ten. A square is a hundred." is said once, before the tens column's line (section 6,
   "The kit's school words"). Right in every column: "One square, two rows, three loose left." (Tallyheart), waiting for
   Next. Helped: the kit's "And you finished it. We'll do one like it soon." and its twin comes back as `'tap'`.
-- **58 − 23**: the prompt is two balloons, Tallyheart's (eleven words) and Chispapaw's whispered sigh; the column's line
-  follows in a balloon of its own (the last prompt balloon is not the teacher's), full, the set's second problem. Its twin,
-  if helped, is asked plainly: no prompt, no sigh, only the kit's "One like it." **No twin in chapter 12 carries a prompt or
+- **58 − 23**: the prompt is Tallyheart's balloon (eleven words); the column's line joins it (the last prompt balloon is
+  the teacher's), full, the set's second problem. **76 − 42**: the prompt is Chispapaw's whispered sigh; the column's line
+  follows in a balloon of its own, full. (v0.2 gave 58 − 23 both balloons; with the column's line, three over her first
+  column of her own put Tallyheart's "Now you try" under the bar on a sideways iPad: section 7, item 19.) Their twins, if
+  helped, are asked plainly: no prompt, no sigh, only the kit's "One like it." **No twin in chapter 12 carries a prompt or
   a right line** (the kit's queue copies neither, run; pinned by the story test).
-- **The rest**: the kit's lines, praise and help (no `praise` key: the kit's own). 76 − 42 on has the column's name alone.
+- **The rest**: the kit's lines, praise and help (no `praise` key: the kit's own). 475 − 132 on has the column's name alone
+  (58 − 23 and 76 − 42, her first two of her own, carry the full lines: the kit's call 18).
 - **The echo** (section 6): after 475 − 132, right or helped, its twin never (a twin never has its top), Chispapaw's
   "¡Trescientos cuarenta y tres!" with "(Three hundred forty-three!)" under it, after the kit's end line. No column is ever
   echoed, and never «menos» (call 6 of the story).
@@ -251,17 +255,23 @@ light); `day` from the midday count to the walk; `sunset` at the Old Bridge; `ni
   store, a step back each, side-on, facing either way) and **`way-in`** (at the right by the way in, walking in, facing
   left). **Chapter 12's places** (f058 to f061): our cat at `store-left` (she reads the store and carries f060's Tap),
   Chispapaw at `store-right`, Glintstar at `store-back-1`, Tallyheart at `store-back-2`, {Murmur}chime at `store-back-3`,
-  the old tom at `way-in`. **Acceptance** (the sets owner, with `tools/frames.mjs`, a `clancat` stand-in at 0.78 until
+  the old tom at `way-in` (v0.3: every cat in the back faces our cat, Glintstar too, facing left, as she speaks to her). **Acceptance** (the sets owner, with `tools/frames.mjs`, a `clancat` stand-in at 0.78 until
   `chispapaw` lands): those six at once, listed back to front by their spots' depth (the sets owner reports the order for
   the story builder), with no two touching and no cat's box over the store's; the store whole at 175 and at 133, its
-  squares, rows and loose each countable at 1080 × 720 and 390 × 844, and 133's pieces where 175's were.
+  squares, rows and loose each countable at 1080 × 720 and 820 × 1180, and 133's pieces where 175's were. (v0.3: on a
+  390 × 844 phone the rows are about 2.7 CSS px at a 4.3 px pitch and cannot be counted, and no art can make them so: the
+  store spans about 855 of the 1600 units between the front cats, so its scale cannot grow, and a camera for phones alone
+  is a new engine key. On a phone the store is counted in f059's take-page picture, rows about 4.8 px at a 7.6 pitch, and
+  f061 says it in words: section 7, item 21.)
 
 #### The Training Hollow (`scenes.js`, the `hollow` set)
 
 All on `lesson` and `sand`, in **one fixed box** of the sand, a constant as `HOLLOW_COMPARE` is (chapter 7's `compare`
 is the precedent: a fixed place, not a rule), its box in `keep`: about **x 770 to 955, y 850 to 900** on `lesson`, the
 sand between our cat's nose and Tallyheart's paws, clear of the claw marks' keep (x 93–100%, y 11–47% of the camera); the
-sets owner settles it with `tools/frames.mjs`. **Chapter 12's staging** (f041 to f049): Tallyheart at `tree` (facing
+sets owner settles it with `tools/frames.mjs`. (As built: `HOLLOW_STORE`, x 770, y 820, 196 × 56, a step back so neither
+cat's shadow lies on it. v0.3: the store's plan at a whole number of hundreds, 500, has a taller box of its own,
+`HOLLOW_PLAN`, x 800 to 955, y 790 to 905, its squares alone fitted to it: section 7, item 20.) **Chapter 12's staging** (f041 to f049): Tallyheart at `tree` (facing
 left); our cat at a raw spot about **`{ x: 690, y: 892 }`** (facing right: at `sand-left` her tail would meet Chispapaw's
 nose, 19 units of overlap sitting, 58 crouching; at 690 she sits at x 590–766, 31 clear: critic-continuity's
 `measure.js`), named `HOL_YOU` in the story file as chapter 11's `RING_YOU` is; Chispapaw at `sunpatch-3` (facing right,
@@ -270,12 +280,15 @@ behind our cat). The sets owner settles the point and writes it in its notes for
   store, never prey** (at noon the store is empty: "The store’s empty till sunset, so let’s pretend", and 500 is the
   full-moon target): `PC.art.placeValue({ hundreds, tens, ones, taken: { hundreds, tens, ones }, kind: 'store', small:
   true, glow })`, every piece `taken`, so each is the kit's pale, dashed pressed place (a ghost, never eaten): five empty
-  squares to fill. Chapter 12: 500, five squares.
+  squares to fill. Chapter 12: 500, five squares. (v0.3: at a whole number of hundreds, the squares alone, the picture
+  clipped to them, in `HOLLOW_PLAN`, each square about two and a half times the whole picture's fit; a glowing square keeps
+  its dark pressed edge over the glow, so the five never run together.)
 - **`storeGlow`** (`'hundreds'` or `'tens'`; off by default): passed to it as `glow`, the kit's glowing zone. Chapter 12:
   `'hundreds'`, the five squares glowing ("Tap the squares": the glow is the Tap's answer, on the next frame).
 - **`tap: 'squares'`** (with `store`; the hollow's first `tap`, `['none', 'squares']`): **the whole placed picture** as
   the Tap target, an unpainted `<g class="pc-tap pc-tap-squares">` over its box, as the bridge's `tap: 'store'` is (the
   squares zone alone is 313 of the picture's 1600, under 44 px at 390 × 844; the response, f045, glows only the squares).
+  (v0.3: the plan's box and at least `HOLLOW_STORE`'s width round it, about 92 × 54 CSS px at 390 × 844.)
 - **`quick`** (`0`, `1`, `2` or `3`; off by default): the quick way to scratch a count, scratched in the sand, one set of
   marks each, **right to left**, a little apart, so Tallyheart's set lies at her paws and yours at yours: 1, Tallyheart's
   (nearest `tree`); 2, and Chispapaw's beside it; 3, and yours beside hers (nearest our cat). Each set is a square, a line
@@ -379,7 +392,7 @@ cat `holds: 'mouse'`: checked), so every existing fingerprint stands; a `tests/c
 - **Princess Waffles**: `peer` and `shout` at `railing` (`up`, `balcony`, `balcony-close`).
 - **Riffle**: `swim` at `water` (`bank`, a wet head over the bank), `stand` with `holds: 'pebbles'` under the bridge (never
   `juggle` under the Old Bridge: Otter's honor; never `hug` there), `dive` (off home), `shout`. The `motion` effect for
-  "His paws twitch."
+  "His paws twitch." (v0.3: none; `motion` draws speed streaks, not a twitch: section 7, item 22.)
 - **Clan cats** (`clancat`): the midday count and the mutter (`crowd: true` and two or three in the cast), carrying mice
   at sunset.
 
@@ -417,7 +430,7 @@ General rules, then the chapter frame by frame. Chapter 11's file (`app/story/ch
   shows no face and the tail points out of the panel (`faceHidden`): the friends' "Hello." on f013 (`name: 'A small
   voice'`, Chispapaw not yet seen) and Chispapaw's goodnight from across the camp on f072 (`name: 'Chispapaw'`).
 - **Balloon kinds**: `whisper` for Chispapaw's counting (f014), "I watched your ceremony…" (f017), the sock line (f023),
-  "Galleta." (f027), "Thank you." (f025a, f026), the sigh (58 − 23's prompt), "Not for long…" (f051a), "¡Ciento treinta y
+  "Galleta." (f027), "Thank you." (f025a, f026), the sigh (76 − 42's prompt, v0.3), "Not for long…" (f051a), "¡Ciento treinta y
   tres!" (f061); Tallyheart's "Remember when that was you?" (f015) and "Now you know how I felt…" (f037a, f038, f038c);
   {Murmur}chime's "Mice… «cincuenta» mice…" (f076) and the grey tom's sleep-talk (f075); our cat's "Goodnight, Sprinkle."
   (f071). `shout` for Waffles' "Yoo-hoo! Down there!", "A COOKIE!…", our cat's "{name}{ending}!" (f011), Riffle's "I SAID
@@ -547,14 +560,15 @@ screen, named by its first words; every line below is the story's.
   Clan once stared at her): Chispapaw alone at `entrance`, `sit`, `sad`, `flatEars: true`. Caption "The Clan mutters, the way
   it once muttered about you. Her ears droop."; her whisper "I’ve never MET a mouse. I caught a sock once. It was a very BIG
   sock."
-- **f024** `camp`/`crowd`: our cat beside Chispapaw, Tallyheart, the old tom, two Clan cats. Caption "You step up beside
-  her."; **Choose** "“Judge her by what she does, not by where she sleeps.”" (f025a) / "“I was a pillow cat too.”" (f025b) /
+- **f024** `camp`/`crowd`: our cat beside Chispapaw, Tallyheart, the old tom, two Clan cats, Glintstar on the fountain top
+  (where f022 has her, through f026, till f027 brings her down: v0.3). Caption "You step up beside her."; **Choose** "“Judge her by what she does, not by where she sleeps.”" (f025a) / "“I was a pillow cat too.”" (f025b) /
   "To the old tom: “She can count in TWO languages. Can you?”" (f025c).
 - **f025a** the same, Tallyheart `proud`, ears up: captions "Tallyheart’s ears go up, proud." / "You said it just the way she
-  once said it for you." / "The muttering stops."; Chispapaw's whisper "Thank you." → f027.
+  once said it for you." / "The muttering stops."; Chispapaw's whisper "Thank you.", turned to our cat (facing left: v0.3)
+  → f027.
 - **f025b** the old tom (`sniff`): "Well. YOU turned out all right." → f026. **f025c** the old tom: "…⁠I can count in ONE
-  very well." → f026.
-- **f026** (after b and c) the same: caption "The muttering stops."; her whisper "Thank you."
+  very well." → f026 (the two Clan cats `happy`, hiding grins: v0.3).
+- **f026** (after b and c) the same: caption "The muttering stops."; her whisper "Thank you.", turned to our cat (v0.3).
 
 **Chispapaw**
 - **f027** `camp`/`reveal`, `CAMP_DAY`: Glintstar `walk` down at `fountain-foot`, our cat, Chispapaw, Tallyheart. Caption
@@ -578,7 +592,8 @@ screen, named by its first words; every line below is the story's.
 - **f034** `camp`/`crowd`: caption "Glintstar looks right at you."; her "{name}{ending}. She’s yours."
 - **f035** the same, our cat `sit`, `happy`, `tailUp: true`: caption "Your very own apprentice! Your tail shoots up before you
   can stop it." (the story's split); the dip Tap.
-- **f036** the same: Chispapaw `lookup` (`wonder`), having dipped her head back (the Tap's response is the next picture: the
+- **f036** the same: Chispapaw `lookup` (`wonder`), facing right, up at our cat, her mentor (v0.3; she stays turned to her
+  through f038c, and on f037b stands puzzled, `wonder`), having dipped her head back (the Tap's response is the next picture: the
   story's "she dips hers back, so low her bell goes ting" is not drawn). Caption "Chispapaw looks up at you, eyes
   shining."; **Choose** "“Welcome, Chispapaw.”" (f037a) / "“Ready to work?”" (f037b) / "“Let’s count something.”" (f037c).
 - **f037a** the same, Chispapaw `purr: true`, `tailUp: true`: captions "Chispapaw purrs so hard her whiskers shake." /
@@ -593,15 +608,18 @@ screen, named by its first words; every line below is the story's.
   Do you eat bugs? Have you ever met a DRAGON?"; **Choose** "“No, no, and YES!”" (f040a) / "“One at a time!”" (f040b).
 - **f040a** caption "Chispapaw’s eyes go huge."; her "A DRAGON?!" (shout); Tallyheart's "The dragon story at the store.
   Lessons now." **f040b** her "Okay. DRAGON first."; Tallyheart's "The dragon story at the store. Lessons now." Both → f041.
+  (v0.3: on both, Tallyheart has stopped and turned back to them, `stand` facing left; walking left she walked back into
+  them.)
 
 **The Training Hollow** (`hollow`/`lesson`, `day`, `H12` under every frame's opts: Tallyheart at `tree` facing left, our cat
 at `HOL_YOU` and Chispapaw at `sunpatch-3`, both facing right, our cat `sit`; the picture and the marks in the hollow's
 fixed box between our cat and Tallyheart: section 4)
 - **f041**: our cat's "Warriors have LESSONS?"; Tallyheart's "Even warriors learn new tricks. You know every Count a warrior
-  needs. Now, what to DO with them: take-aways."; Chispapaw's "Take-aways? Like when I take away my Tall One’s socks?";
-  Tallyheart's "Yes! Then we count what’s left."
-- **f042**: Tallyheart's "First, three Counts, to wake up your whiskers."; `counts: { set: 'ch12-warm', intro: false, next:
-  'f043' }` (the warm-up and its echo: section 2).
+  needs. Now, what to DO with them: take-aways."
+- **f042**: Chispapaw's "Take-aways? Like when I take away my Tall One’s socks?"; Tallyheart's "Yes! Then we count what’s
+  left." (v0.3: the screen's last two balloons, which the story joins with "/", moved here from f041: section 7, item 18);
+  Tallyheart's "First, three Counts, to wake up your whiskers."; `counts: { set: 'ch12-warm', intro: false, next: 'f043' }`
+  (the warm-up and its echo: section 2; `intro: false`, so none of the three balloons follows into the Counts).
 - **f043**: Tallyheart's "Here’s what the Counts are FOR. A cat who knows them can always tell when something’s missing.
   Take-aways tell you HOW MANY."
 - **f044** `merge(H12, { store: 500, tap: 'squares' })` (the store's plan: five empty pressed squares, section 4): Tallyheart's "We’ll lay the store out like the pile. Ten loose ones make a row.
@@ -619,7 +637,8 @@ fixed box between our cat and Tallyheart: section 4)
 - **f049** `merge(H12, { quick: 3 })`: Tallyheart's "Ones first, every time. That’s take-aways."; Chispapaw's "You didn’t sigh ONCE!" (the
   story's *Done* lines: `done: ''` on the set, so they are this frame's).
 
-**The walk** (`riverbank`/`path`, `day`: our cat `walk`, Chispapaw `walk` behind her, copying)
+**The walk** (`riverbank`/`path`, `day`: our cat `walk`, Chispapaw `walk` behind her, copying; Tallyheart `walk` up ahead at
+`PATH_TALLY` on every frame of it, v0.3, so she does not pop in for f052c alone)
 - **f050**: caption "Down to the Old Bridge, Chispapaw copies your every step."; her "Were the cats grumpy at you, too? At
   first?"; **Choose** "“Some of them. Not for long.”" (f051a) / "“The old tom STILL is.”" (f051b) / "“Tallyheart wasn’t. Not
   once.”" (f052c).
@@ -659,8 +678,9 @@ fixed box between our cat and Tallyheart: section 4)
   'swimming'`, his "Too cold for a swim today. Even for you."; the wave Tap.
 - **f063** `bridge`/`under`, `UNDER`: Riffle `stand` with `holds: 'pebbles'` at chapter 6's spot, our cat, Chispapaw,
   Tallyheart. Caption "Under the bridge, he has his pebbles in his paws."; his "Not juggling. HOLDING. Otter’s honor."
-- **f064** the same, the `motion` effect at Riffle: caption "His paws twitch. They really want to juggle. He holds very, very
-  still." (the story's split).
+- **f064** the same, no effect (v0.3: `motion` draws speed streaks behind the first cast member, so Riffle read as rushing
+  off; no effect draws a twitch, and the rigid stand and the caption carry it): caption "His paws twitch. They really want
+  to juggle. He holds very, very still." (the story's split).
 - **f065** the same: caption "He spots Chispapaw."; Riffle's "A NEW one! Do you juggle?"; Chispapaw's "I… count?"; Riffle's
   "Close enough!"
 - **f066** the same, Riffle `shout`: caption "Riffle can’t hold still a heartbeat longer."; his "NEWS! Granny’s found ANOTHER
@@ -673,7 +693,8 @@ fixed box between our cat and Tallyheart: section 4)
   FRESH." (the story's split). No badger, no track drawn.
 
 **Bedtime** (night, the moon at 16)
-- **f070** `camp`/`reveal`, `CAMP_NIGHT`, `night`: the camp asleep, two Clan cats curled at their dens. Caption "The moon comes
+- **f070** `camp`/`reveal`, `CAMP_NIGHT`, `night`: the camp asleep, two Clan cats curled at their dens (coats 3 at
+  `crowd-left` and 1 at `crowd-right`, chapter 11's sleepers: v0.3). Caption "The moon comes
   up over camp, and everything turns silver."
 - **f071** `den`/`nest`, `DENW_NIGHT`: our cat `loaf` at `nest`, {Murmur}chime `lie` at `next-nest`. Captions "Your warrior’s
   nest is soft and deep." / "Out of the moonlight, your mist stone is grey on the moss." / one by `ch2Stone`: (`nose`)
@@ -1000,8 +1021,9 @@ restore the loaded table, never delete it (`takes-ui.test.js`' `withWords`, `tak
   builds its own), using `PC.story.ch12`'s own sets when they are there: in step 2 the chapter is the stub. `'echo'` (the
   warm-up's echo page after 7 × 8 right), `'take'` (the end of 475 − 132 with its echo), `'skip'` (the paw thing after its
   fifth tap), and the chapter's own take pages, each with its set's `echo`: `'worked'` (254 − 131 at its first column, and
-  `'worked:tens'` at its tens column, the school words in), `'try'` (58 − 23 at its first column, three balloons, and
-  `'try:pointer'` with the ones-first pointer), `'store'` (175 − 42 at its first column); returns true or an error
+  `'worked:tens'` at its tens column, the school words in), `'try'` (58 − 23 at its first column: three balloons in
+  v0.2, one since v0.3, built from `PC.story.ch12`'s own set, section 7, item 19; and `'try:pointer'` with the ones-first
+  pointer), `'store'` (175 − 42 at its first column); returns true or an error
   string, as `PC.debug.takes` does.
 
 ### The storyboard and the tools
@@ -1150,7 +1172,13 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
 10. **A re-sit waiting over the take lesson**: the warm-up's first answer sets a waiting Warrior Counts sitting aside, so the
     take lesson opens without the waiting line, except for a cat who starts a re-sit between the warm-up and f048 and comes
     back within two hours (the kit's UI owner's warning: `take:first` with the waiting line does not fit at 1080 × 720).
-    Every take frame has `intro: false`, so nothing of the frame's is added; the rest is the kit's.
+    Every take frame has `intro: false`, so nothing of the frame's is added; the rest is the kit's. (v0.3: the line has a page
+    of its own, with Next, before the first column, in a chapter's take lesson: over the column, with the keypad brought in,
+    it lay under the bar at 1080 × 720 on f048 and on f059, and it is her only warning before her first take answer sets the
+    re-sit aside. The page comes up at f048 for a re-sit started between the warm-up and f048, at f059 for one started
+    between f048 and f059, on Count them again at f048 or f059 while one waits, and when a take lesson is picked up with one
+    waiting; a store round picked up with one waiting the same. `PC.debug.takes('first')` presses that Next, so the tools'
+    `take:first` is the worked example's first column as a lesson shows it.)
 11. **Decision 54's alternative** (Tallyheart takes Chispapaw; Glintstar asks her to show her the ropes): the screens that
     change are f033 to f038c (the mentor, "She's yours", the dip, her first words and their replies, "Now you know how I
     felt"), **bedtime's "A store to count and an apprentice. Show-off."** (f072, the fidelity critic's low), **"Will you teach
@@ -1176,6 +1204,33 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
     (section 9, call 29): a token like `{Murmur}` would change the story's words for her, which is the text phase's, not
     the build's.
 
+18. **f041 ran Back and Next under a sideways iPad's screen with Aa on** (the review's round: 43px under 1080 × 720, 39 under
+    1180 × 820, 48 under 1080 × 700, 26 under 1024 × 768; the shared sweep's only two problems in 14,288 pages): its four
+    balloons. Chispapaw's socks and Tallyheart's "Yes!", the pair the story joins with "/", open f042, before Tallyheart's
+    "First, three Counts…"; no word changes, no frame is added (a lettered id is a choice's branch), f042 is `intro: false`.
+19. **58 − 23's first column put Tallyheart's "Now you try" under the bar** on a sideways iPad (three balloons with the
+    column's line: fit() dropped the heads, shrank the keys and still scrolled; at 1080 × 700 with Aa on the balloon was
+    wholly hidden). Chispapaw's sigh is 76 − 42's prompt; 58 − 23 is Tallyheart's prompt with its line. The sweep's
+    `col-off` now checks the stack's first balloon too (it checked only the last).
+20. **The Hollow's five squares did not read as five** (f044, f045: the whole kit picture in the 196 × 56 box, the five a
+    small 2 + 2 + 1 block beside two empty mats that read as two big squares, about 15 CSS px a square at 1080 × 720 and 6
+    at 390 × 844, and "Five BIG ones." said over the smallest thing in the picture). The plan at a whole number of hundreds
+    is its squares alone, clipped to them, in `HOLLOW_PLAN` (x 800 to 955, y 790 to 905), about two and a half times the
+    size; a glowing square keeps its dark pressed edge over the glow; the Tap's target the plan's box and `HOLLOW_STORE`'s
+    width round it. The quick marks keep `HOLLOW_STORE`.
+21. **The store's rows on a phone** (section 4's acceptance): not countable at 390 × 844 and no art can make them so;
+    accepted, counted on the take page's picture and said on f061.
+22. **The review's staging**: Chispapaw faces our cat on f036 to f038c (she looked up at Glintstar on "Chispapaw looks up
+    at you") and on f025a and f026 (she whispered "Thank you." to the old tom); Glintstar stays on the fountain top through
+    the vouching (f024 to f026); at the store she faces our cat (f058 to f061); f064 has no `motion`; on f025c the two
+    Clan cats hide grins, on f031 the old tom purrs frowning at the new word; Tallyheart walks ahead on every frame of the
+    walk and has stopped and turned back on f040a and f040b; f070's sleepers are chapter 11's. The page: the warm-up's echo
+    page keeps Next at the top of the keypad's place (it was 29px under 1080 × 720 with Aa off, wholly under it with Aa
+    on), a gloss's hyphened number never breaks at its hyphen, a Spanish count's wait brings Next in on a phone held
+    sideways, and with no Spanish voice a line's English parts are one utterance. The art: a marked purrer's 'purrr' keeps
+    off every other cast member's head (f037a, f031; no frame of chapters 1 to 11 moves). Not changed: "You hop up onto the
+    hedge-top" (f013, item 4: a climber's line over the one picture) and f077's Tallyheart (settled by look).
+
 ## 8. What chapter 13 inherits
 
 - **When.** Chapter 12 is day 1 of module 2, the day after the ceremony: she wakes at noon, the midday count, the afternoon
@@ -1190,7 +1245,7 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
   false` ready for the morning she leaves the bell in her nest). "Galleta" to her Tall Ones (lettered in Spanish, never her
   label); Chispa means spark. Her own apprentice ({name}{ending}'s, decision 54), Tallyheart her Counts teacher. In the
   apprentices' den with the grey tom, in the player's old nest (the picture's; no line says so); visits her little Tall
-  One at homework time, and her little Tall One "always sighs at homework" (58 − 23's whisper: chapter 13's «la resta»
+  One at homework time, and her little Tall One "always sighs at homework" (76 − 42's whisper, v0.3: chapter 13's «la resta»
   starts there); never met a mouse ("I caught a sock once"), promised a mouse lesson "Tomorrow"; shy of Spanish
   before the Clan by day (she whispered at the hedge and before the Clan), out loud at night; new to take-aways too, never
   corrects her. Her label is "Chispapaw"; her voice pitch 1.42, rate 1.02.
@@ -1388,10 +1443,18 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
   ship; `CACHE` as at the stub, checked again at the ship.
 - **The page review** (Node, `DRY=1`, the WebKit tool): `es:echo`, `es:take`, `es:skip` (the gloss in, the counter in Comic
   Neue), **the chapter's own take pages, `es:worked` and `es:worked:tens` (the school words), `es:try` and
-  `es:try:pointer` (58 − 23's three balloons, about 7.8 line-units, the lesson's tallest) and `es:store`**, and
-  **`hollow:shelf` with Chispapaw** (her two-line balloon), at the four sizes and the four extra ones, Aa off and on.
-  Acceptance for the take pages: no `col-off`, and the heads row (the quick marks this lesson has just taught) kept at
-  1080 × 720 and 1180 × 820; if 58 − 23 still overflows, the review names which of `fit()`'s fallbacks is accepted. A later
+  `es:try:pointer` (58 − 23's three balloons, about 7.8 line-units, the lesson's tallest; one since v0.3) and
+  `es:store`**, and **`hollow:shelf` with Chispapaw** (her two-line balloon), at the four sizes and the four extra ones, Aa
+  off and on (v0.3: the shared sweep measures them, `--pages` at its four sizes and `--takes` at the four more).
+  Acceptance for the take pages: no `col-off` (since v0.3 the stack's first balloon too), and the heads row (the quick
+  marks this lesson has just taught) kept at 1080 × 720 and 1180 × 820; if 58 − 23 still overflows, the review names which
+  of `fit()`'s fallbacks is accepted. (v0.3, measured in WebKit: 58 − 23 keeps its heads at 1080 × 720 and 1180 × 820,
+  Aa off and on, and at 1024 × 768; with Aa on at 1080 × 720 the worked example, 254 − 131, takes `tnohead` and `tkeys`
+  and the store's 175 − 42 `tnohead`, accepted (the worked example is Tallyheart's to work, the store's a story problem).
+  Named: `tnohead`, then `tkeys` sideways, is the accepted fallback at 1080 × 700, the heads' words staying in the
+  aria-labels; on a phone held
+  sideways with Aa on, 58 − 23's first column may push the store picture under the screen, the column and the keypad
+  whole: the column needs no picture to type it.) A later
   column of 76 − 42 (no echo band, item 8). `DRY=1` with `VOICES=es` and `VOICES=none` on f014, f018, f027, f061, f074,
   f075, f076 and the `es:` targets (the plan's rows: each part, its voice, its lang; never aloud on the mini).
 - **The ship's look** (at most 25 pictures, silent, the screen locked: `tools/shots.mjs`): her warrior's nest at noon (f002);

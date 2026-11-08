@@ -2018,6 +2018,12 @@
   // nearer), each a square, a line and a dot at `k` (a square 18 across), the room between two sets half as much again as
   // between a set's own marks and a step apart in depth, each on its own smoothed patch of sand, so the three read apart
   var HOLLOW_STORE = { x: 770, y: 820, w: 196, h: 56 };
+  // The store's plan at a whole number of hundreds (500: five squares, no rows, no loose) has a box of its own, taller:
+  // the squares alone, fitted to it, every square about two and a half times what the whole picture's fit in HOLLOW_STORE
+  // gave (there the five were a small 2 + 2 + 1 block beside two empty mats that read as two big squares, about 6 CSS px
+  // a square on a phone: the review's round). The sand is clear from y 790; our cat's body ends at x 766, Tallyheart's
+  // starts at x 971, and the claw marks' keep is far above.
+  var HOLLOW_PLAN = { x: 800, y: 790, w: 155, h: 115 }, PLAN_PAD = 8;
   var HOLLOW_QUICK = { k: 0.32, dy: 11 }, QUICK3 = ['tallyheart', 'chispapaw', 'you'];
   // The row on the sand (`bark: 'row'`), oldest first; null is a blank piece. With `cards` (a list:
   // each a picture's key, { picture, mark }, or a story's own entry { id } before the page has
@@ -2126,8 +2132,9 @@
     return g(rect(b.x, b.y, b.w, b.h, 'none', { 'pointer-events': 'none' }), { 'class': 'pc-tap pc-tap-' + name, 'data-tap': name });
   }
   // Chapter 12, on the hollow's `lesson` and `sand` (HOLLOW_STORE): `store`, the store's plan (every piece taken, so five
-  // empty pressed squares for 500), fitted to the box and set in its middle, `storeGlow` its glowing zone, and with `tap:
-  // 'squares'` the whole placed picture as the Tap's target; else `quick` (1 to 3), the quick way to scratch a count, set by
+  // empty pressed squares for 500), fitted to the box and set in its middle (a whole number of hundreds: its squares
+  // alone, in HOLLOW_PLAN), `storeGlow` its glowing zone, and with `tap: 'squares'` the whole placed plan as the Tap's
+  // target (HOLLOW_STORE's width at least); else `quick` (1 to 3), the quick way to scratch a count, set by
   // set from the right (QUICK3), Chispapaw's square drawn round, like a cookie (the marks' `round`). Both in keep.
   // The kit's picture is drawn for a panel of its own; laid in a scene it is some seven times smaller, where its pressed
   // edges and its glow (a few picture units wide) vanish. So the scene draws each piece's edge again at a weight the panel
@@ -2137,27 +2144,53 @@
     var edges = '', lit = '', halo = '', sw = 2;
     pic.pieces.forEach(function (q) {
       var b = storeBox(pic, x, y, k, q), rr = Math.min(b.w, b.h) * 0.14;
+      // (a glowing piece keeps its dark pressed edge over the glow, the gold edge just inside it, so five glowing squares
+      // stay five and never run together into one patch: the review's round)
       if (glow && q.zone === glow) {
+        var gi = sw * 1.5;
         halo += rect(b.x - 2.5, b.y - 2.5, b.w + 5, b.h + 5, '#FFD86E', { rx: rr + 2, opacity: 0.95 });
-        lit += rect(b.x, b.y, b.w, b.h, 'none', { rx: rr, stroke: '#E39A12', 'stroke-width': n(sw * 1.15), 'stroke-dasharray': '4.2 2.6' });
-      } else edges += rect(b.x, b.y, b.w, b.h, 'none', { rx: rr, stroke: groove, 'stroke-width': n(sw), 'stroke-dasharray': '4.2 2.6', opacity: 0.8 });
+        lit += rect(b.x + gi, b.y + gi, b.w - 2 * gi, b.h - 2 * gi, 'none', { rx: Math.max(0, rr - gi), stroke: '#E39A12', 'stroke-width': n(sw * 1.15), 'stroke-dasharray': '4.2 2.6' });
+      }
+      edges += rect(b.x, b.y, b.w, b.h, 'none', { rx: rr, stroke: groove, 'stroke-width': n(sw), 'stroke-dasharray': '4.2 2.6', opacity: glow && q.zone === glow ? 0.9 : 0.8 });
     });
     if (glow && !halo && pic.zones[glow]) {
       // a zone with nothing in it glows as a whole
       var z = storeBox(pic, x, y, k, pic.zones[glow]);
       halo += rect(z.x, z.y, z.w, z.h, '#FFD86E', { rx: 4, opacity: 0.8 });
     }
-    return (halo ? g(g(halo, { filter: S.blur('storeglow', 3.2) }), { 'class': 'pcs-pulse', 'data-glow': glow }) : '') + edges + (lit ? g(lit, { 'class': 'pcs-pulse' }) : '');
+    return (halo ? g(g(halo, { filter: S.blur('storeglow', 3.2) }), { 'class': 'pcs-pulse', 'data-glow': glow }) : '') + (lit ? g(lit, { 'class': 'pcs-pulse' }) : '') + edges;
   }
   function hollowPlan(S, o) {
     var B = HOLLOW_STORE, p = S.pal, s = '', num = storeNum(o.store);
     if (num) {
       var glow = o.storeGlow === 'hundreds' || o.storeGlow === 'tens' ? o.storeGlow : null, pic = storePic(num, { taken: true, glow: glow });
       if (!pic) return '';
-      var k = Math.min(B.w / pic.w, B.h / pic.h), x = B.x + (B.w - pic.w * k) / 2, y = B.y + (B.h - pic.h * k) / 2, at = storeAt(pic, x, y, k, { 'data-plan': 'taken' });
-      s += at.svg + storeEdges(S, pic, x, y, k, glow, mix(p.sandDark, p.woodDark, 0.55));
-      if (o.tap === 'squares') s += tapBox('squares', at.box);
-      (S.keep = S.keep || []).push({ x: at.box.x, y: at.box.y, w: at.box.w, h: at.box.h });
+      var sq = num % 100 ? [] : pic.pieces.filter(function (q) { return q.kind === 'square'; }), k, x, y, at, box;
+      if (sq.length) {
+        // a whole number of hundreds: its squares alone in HOLLOW_PLAN (the picture clipped to them, each with room for its
+        // edge and glow, so no empty mat or empty place shows), the plan's box the squares' with PLAN_PAD round them
+        var P = HOLLOW_PLAN, bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+        sq.forEach(function (q) { bx0 = Math.min(bx0, q.x); by0 = Math.min(by0, q.y); bx1 = Math.max(bx1, q.x + q.w); by1 = Math.max(by1, q.y + q.h); });
+        bx0 -= PLAN_PAD; by0 -= PLAN_PAD; bx1 += PLAN_PAD; by1 += PLAN_PAD;
+        k = Math.min(P.w / (bx1 - bx0), P.h / (by1 - by0));
+        x = P.x + (P.w - (bx1 - bx0) * k) / 2 - bx0 * k;
+        y = P.y + (P.h - (by1 - by0) * k) / 2 - (by0 - pic.top) * k;
+        box = storeBox(pic, x, y, k, { x: bx0, y: by0, w: bx1 - bx0, h: by1 - by0 });
+        var clip = '';
+        sq.forEach(function (q) { var b = storeBox(pic, x, y, k, q); clip += rect(b.x - 4, b.y - 4, b.w + 8, b.h + 8, '#fff'); });
+        at = storeAt(pic, x, y, k, { 'data-plan': 'taken', 'data-box': [box.x, box.y, box.x + box.w, box.y + box.h].map(function (v) { return n(v); }).join(' ') });
+        s += g(at.svg, { 'clip-path': S.clip('plan' + num, clip) });
+      } else {
+        k = Math.min(B.w / pic.w, B.h / pic.h); x = B.x + (B.w - pic.w * k) / 2; y = B.y + (B.h - pic.h * k) / 2;
+        at = storeAt(pic, x, y, k, { 'data-plan': 'taken' }); box = at.box;
+        s += at.svg;
+      }
+      s += storeEdges(S, pic, x, y, k, glow, mix(p.sandDark, p.woodDark, 0.55));
+      // (the Tap's target: the plan's box, and at least HOLLOW_STORE's width round it, a finger's on a phone: the squares
+      // alone are about 36 CSS px wide at 390 x 844)
+      var tb = sq.length ? { x: Math.min(box.x, B.x), y: Math.min(box.y, B.y), w: Math.max(box.x + box.w, B.x + B.w) - Math.min(box.x, B.x), h: Math.max(box.y + box.h, B.y + B.h) - Math.min(box.y, B.y) } : box;
+      if (o.tap === 'squares') s += tapBox('squares', tb);
+      (S.keep = S.keep || []).push({ x: box.x, y: box.y, w: box.w, h: box.h });
       return g(s, { 'data-prop': 'store' });
     }
     var sets = clamp(Math.round(+o.quick || 0), 0, 3);
@@ -4149,7 +4182,8 @@
         compare: [false, [24, 60]],
         // chapter 12, on `lesson` and `sand`, in one fixed box of the sand between our cat and Tallyheart (HOLLOW_STORE, in
         // keep): store, a number 1 to 999, the store's plan laid flat (the kit's PC.art.placeValue, small, every piece taken:
-        // pale, dashed pressed places, never prey; 500 is five empty squares); storeGlow ('hundreds' or 'tens') its glowing
+        // pale, dashed pressed places, never prey; 500 is five empty squares, a whole number of hundreds its squares alone in
+        // a taller box of its own, HOLLOW_PLAN, x 800 to 955, y 790 to 905); storeGlow ('hundreds' or 'tens') its glowing
         // zone; tap: 'squares' (with store) the whole placed picture as the Tap's target, an unpainted <g class="pc-tap
         // pc-tap-squares">; quick, 1 to 3, the quick way to scratch a count (a square, a line, a dot, by PC.art.kit.quick),
         // right to left: Tallyheart's at her paws, then Chispapaw's (her square round, like a cookie: the marks' `round`),
@@ -4705,12 +4739,20 @@
         var c = marked[i], b = c.bb || [c.footX - c.wp / 2, c.footY - c.hp, c.footX + c.wp / 2, c.footY];
         var cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2, rx = Math.max(90, Math.max(b[2] - b[0], b[3] - b[1]) * 0.62), back = c.face === 'left' ? 1 : -1;
         for (var q = 0; q < 3; q++) s += ell(cx, cy, rx, rx * 0.6, 'none', { stroke: col, 'stroke-width': 4, opacity: 0.45, 'class': 'pcs-ring', style: 'animation-delay:-' + (q * 1.2).toFixed(1) + 's' });
-        // a 'purrr' is about 110 wide at size 1: one beside its back when there is room there, and
-        // one over its head, leaning back, so neither covers its face or a friend's
+        // a 'purrr' is about 110 wide at size 1: one beside its back when there is room there and no
+        // friend's head is in the way (the whole-camp purr's test, every other cast member's head box:
+        // chapter 12's f037a lettered it across our cat's face, f031 across Tallyheart's chin), and one
+        // over its head, leaning back, so neither covers its face or a friend's
         var ws = clamp(c.hp / 260, 0.6, 1.5), half = 60 * ws, room = back < 0 ? b[0] : 1600 - b[2];
         var h = c.hb || b, hx = (h[0] + h[2]) / 2;
-        if (room >= half * 2 + 10) words.push([(back < 0 ? b[0] : b[2]) + back * (half + 8), clamp(cy, 60, 960), back * 8, ws]);
-        words.push([clamp(hx + back * half, half + 4, 1596 - half), Math.max(50 * ws, h[1] - 14 * ws), -back * 6, ws * 0.9]);
+        var bwx = (back < 0 ? b[0] : b[2]) + back * (half + 8), bwy = clamp(cy, 60, 960), bwb = [bwx - 60 * ws, bwy - 40 * ws, bwx + 60 * ws, bwy + 8 * ws];
+        var onHead = function (bx) { return info.some(function (o) { var hb = o && o !== c && o.hb; return hb && bx[0] < hb[2] && bx[2] > hb[0] && bx[1] < hb[3] && bx[3] > hb[1]; }); };
+        if (room >= half * 2 + 10 && !onHead(bwb)) words.push([bwx, bwy, back * 8, ws]);
+        // (the word over her head leans back; where that meets a friend's head, it leans the other way, still over her own)
+        var hy = Math.max(50 * ws, h[1] - 14 * ws), hw = ws * 0.9, lean = back;
+        var hbx = function (sd) { var x = clamp(hx + sd * half, half + 4, 1596 - half); return [x - 60 * hw, hy - 40 * hw, x + 60 * hw, hy + 8 * hw]; };
+        if (onHead(hbx(back)) && !onHead(hbx(-back))) lean = -back;
+        words.push([clamp(hx + lean * half, half + 4, 1596 - half), hy, -lean * 6, hw]);
       }
     } else {
       var fixed = [[300, 660, 90, 120], [1280, 670, 90, 120], [800, 600, 80, 110]];

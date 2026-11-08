@@ -712,7 +712,8 @@ joins the step's line on this size first (about 55 px back).
 `dev/webkit/run.mjs`; more would change every cache key and double every sweep), with a `takes` job in its screens group
 (`PC.debug.takes`). The page review runs the other four once, Aa off and on: `SIZE=1080x700` (and `1024x768`,
 `768x1024`, `844x390`) `AA=0,1 node dev/webkit/run.mjs OUT.json takes`. The screens: `take:first` (chapter 12's worked
-example, its first column with the prompt joined and a Warrior Counts waiting line over it, `wWait`), `take:q` (a
+example, its first column with the prompt joined, past a Warrior Counts waiting line's page of its own, `wWait`: since
+chapter 12's review the line is never over the column, where it lay under the bar), `take:q` (a
 three-digit problem with marks), `take:show` (a `'show'` step), `take:tap`, `take:echo` (a stub Spanish balloon from
 `o.echo`), `take:sand` (a help's last step with "Got it!", three balloons), `take:done`, `hollow:shelf` and `store:q`.
 None may show `off-screen`, `off-screen-keypad`, `spill`, `broken-word`, `sideways` or the new `col-off`:

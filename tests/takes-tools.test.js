@@ -269,10 +269,11 @@ test('dev/webkit/measure.js: on a take page (its frame’s data-mode, or a colum
   assert.match(MEASURE, /m\.tbar = bar && shown\(bar\) \? Math\.round\(bar\.getBoundingClientRect\(\)\.bottom\) : 0;/, 'the sticky bar’s bottom, scrolled or not');
   assert.match(MEASURE, /m\.tcol = tcol && shown\(tcol\) \? box\(tcol\) : null;/);
   assert.match(MEASURE, /\.tbox\.on'\); m\.tbox = tbx && shown\(tbx\) \? box\(tbx\) : null;/);
-  assert.match(MEASURE, /querySelectorAll\('#screen #stack \.sb, #screen \.stack \.sb'\), shown\); m\.tsb = sbs\.length \? box\(sbs\[sbs\.length - 1\]\) : null;/);
+  // (and the stack's first balloon, `tsf`: chapter 12's review, 58 − 23 opened with it under the bar and its last in view)
+  assert.match(MEASURE, /querySelectorAll\('#screen #stack \.sb, #screen \.stack \.sb'\), shown\); m\.tsb = sbs\.length \? box\(sbs\[sbs\.length - 1\]\) : null; m\.tsf = sbs\.length \? box\(sbs\[0\]\) : null;/);
   // the take keys sit outside both fingerprints, so every existing page's fp and pfp are what they were
   const keys = MEASURE.indexOf('var tcol = document.querySelector'), fp = MEASURE.indexOf('// fingerprints');
-  assert.ok(keys > 0 && keys < fp && !/m\.t(col|box|sb|bar)/.test(MEASURE.slice(fp)), 'not read by the fingerprints');
+  assert.ok(keys > 0 && keys < fp && !/m\.t(col|box|sb|sf|bar)/.test(MEASURE.slice(fp)), 'not read by the fingerprints');
 });
 
 /* ------------------------------------------------------------------ the sweep */
@@ -291,6 +292,11 @@ test('sweep.mjs col-off: a take page’s column, outlined box and stack’s last
   assert.deepEqual(colOff(TAKE('take:q', { tcol: null, tbox: null })), ['no column (.tcol) shown on the take page']);
   assert.deepEqual(colOff(TAKE('take:done', { tbox: null, tsb: null })), [], 'no box outlined at a problem’s end, and no balloon: fine');
   assert.deepEqual(colOff(TAKE('take:q', { tbar: 0, tcol: [40, 0, 300, 160] })), [], 'no bar: the viewport’s top');
+  // the stack's first balloon too (chapter 12's review: 58 − 23's “Now you try” under the bar, its last balloon on the screen);
+  // a one-balloon stack, its first its last, said once
+  assert.deepEqual(colOff(TAKE('take:first', { sy: 117, tsf: [40, -47, 500, 75], tsb: [40, 80, 500, 200] })), ['the stack’s first balloon -47-75: 95px under the bar']);
+  assert.deepEqual(colOff(TAKE('take:q', { tsf: [40, 240, 500, 300] })), [], 'one balloon, on the screen');
+  assert.deepEqual(colOff(TAKE('take:q', { tsf: [-20, 240, 500, 300], tsb: [-20, 240, 500, 300] })), ['the stack’s last balloon 240-300: off the screen sideways'], 'one balloon off: said once');
 });
 
 test('sweep.mjs: a take page’s problems in the summary (col-off, keypad-moved at a column and the next); the screens group measures the take screens; --takes their own folder at the four more sizes', async () => {
@@ -314,8 +320,10 @@ test('sweep.mjs: a take page’s problems in the summary (col-off, keypad-moved 
     assert.deepEqual(s.problems.filter((p) => p.kind === 'page-error').map((p) => p.detail), ['step 14: no take-aways in this build (PC.debug.takes)']);
     assert.equal(s.skipped, undefined, 'nothing skipped: every take screen is built');
   } finally { fs.rmSync(d, { recursive: true, force: true }); }
-  assert.match(SWEEP, /\['screens', \['screens', 'warrior', 'takes'\]\]/, 'the take screens in --pages’ screens group, at its four sizes');
-  assert.match(SWEEP, /const TAKES_RUN = \{ sub: 'takes', sizes: TAKE_SIZES, groups: \[\['takes', \['takes'\]\]\]/);
+  // (and chapter 12's Spanish screens, run.mjs's `spanish` job, in both: chapter 12's review, the echo page's Next under the
+  // screen seen by no sweep)
+  assert.match(SWEEP, /\['screens', \['screens', 'warrior', 'takes', 'spanish'\]\]/, 'the take and Spanish screens in --pages’ screens group, at its four sizes');
+  assert.match(SWEEP, /const TAKES_RUN = \{ sub: 'takes', sizes: TAKE_SIZES, groups: \[\['takes', \['takes', 'spanish'\]\]\]/);
   assert.match(SWEEP, /const odir = await ensure\(o, Object\.assign\(\{\}, want, \{ takes: false \}\)/, 'a compare never measures take screens on the other tree');
 });
 
@@ -329,11 +337,12 @@ test('sweep.mjs --path names the take screens’ summary once it is there; --tak
     const r = node([T('tools/sweep.mjs'), '--path'], { PC_CACHE_DIR: cache });
     assert.equal(r.status, 0, r.stderr);
     assert.equal(r.stdout.trim().split('\n')[1], 'art: not built; pages: not built; takes: ready (' + path.join(dir, 'takes/summary.md') + ')');
-    // a tree whose shots.mjs has no take screens: the run is empty, its summary says none were measured, no WebKit ran
+    // a tree whose shots.mjs has no take screens (nor chapter 12's Spanish ones, which --takes measures too since chapter
+    // 12's review): the run is empty, its summary says none were measured, no WebKit ran
     const tree = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-takes-tools-tree-'));
     for (const f of ['index.html', 'app/engine.js']) { fs.mkdirSync(path.dirname(path.join(tree, f)), { recursive: true }); fs.copyFileSync(T(f), path.join(tree, f)); }
     fs.mkdirSync(path.join(tree, 'tools'));
-    fs.writeFileSync(path.join(tree, 'tools/shots.mjs'), SHOTS.replace('const TAKES = `', 'const TAKES_NOT = `'));
+    fs.writeFileSync(path.join(tree, 'tools/shots.mjs'), SHOTS.replace('const TAKES = `', 'const TAKES_NOT = `').replace('const SPANISH = `', 'const SPANISH_NOT = `'));
     const locks = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-takes-tools-lock-'));
     const t = node([T('tools/sweep.mjs'), '--takes', '--root', tree], { PC_CACHE_DIR: cache, PC_LOCK_DIR: locks });
     fs.rmSync(locks, { recursive: true, force: true });

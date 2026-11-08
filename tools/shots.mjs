@@ -37,7 +37,8 @@
  *                                                         each opened on the test cat through the page's own
  *                                                         PC.debug.takes (its definitions inline: no chapter has a take
  *                                                         set yet): chapter 12's worked example on its first column, the
- *                                                         prompt joined and a waiting Warrior Counts re-sit's line over it
+ *                                                         prompt joined, past a waiting Warrior Counts re-sit's line on a
+ *                                                         page of its own (chapter 12's review: Next pressed for you)
  *                                                         (take:first sets that re-sit up through WARRIOR: a pass, then a
  *                                                         sitting again with ten answers in it; CAT's `warrior` wins); a
  *                                                         three-digit problem with marks; a worked spread; a tapped one;
@@ -666,7 +667,13 @@ async function sheet(S, run, four) {
           var td = tm === true ? new w.Function(takesJs).apply(null, [takes[i].what, takes[i].step]) : tm;
           if (td !== true) { out.push(targets[i] + ': ' + td); continue; }
         }
-        else if (/^(hub|book|hollow|nest|who|title)$/.test(target)) PC.debug.go(target, { from: 'hub' });
+        else if (/^(hub|book|hollow|nest|who|title)(#|$)/.test(target)) {
+          PC.debug.go(target.split('#')[0], { from: 'hub' });
+          // (book#ch12: the book scrolled to that page, as a single shot does; chapter 12's review found a pane of it showing
+          // the frame the cat was on, and saying nothing)
+          var an = target.split('#')[1];
+          if (an) { var ap = w.document.getElementById('book-' + an); if (!ap) { out.push(targets[i] + ': no page ' + an); continue; } ap.scrollIntoView({ block: 'start' }); }
+        }
         else if (/^file(#|$)/.test(target)) { var fr = PC.debug.file(target.split('#')[1] || null); if (fr !== true) { out.push(targets[i] + ': ' + fr); continue; } }
         else if (warriors[i]) {
           // the Warrior Counts: the pane's own test cat's Counts, then the screen

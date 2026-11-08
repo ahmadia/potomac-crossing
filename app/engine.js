@@ -4894,7 +4894,16 @@
       facts.push(f);
     });
     var def = E.takeRoundDef();
-    return { def: def, state: T.start(def, { facts: facts, set: def.id, mode: 'hollow', now: now, round: n, logged: takeLog(cat).length, taught: learned }) };
+    // (chapter 12's review: a round played while a chapter with a take set is begun and not finished, between its lesson and
+    // its store, never queues a twin on one of that chapter's answers, as its lesson's twins never do: the store's 133 is
+    // asked at sunset. No such chapter, no `avoid`: the round's state as before)
+    var avoid = [];
+    asList(opts.stories || stories).forEach(function (s) {
+      if (s && s.id && E.place(cat, s.id) && !E.isFinished(cat, s.id)) chapterAnswers(s).forEach(function (x) { if (avoid.indexOf(x) < 0) avoid.push(x); });
+    });
+    var so = { facts: facts, set: def.id, mode: 'hollow', now: now, round: n, logged: takeLog(cat).length, taught: learned };
+    if (avoid.length) so.avoid = avoid;
+    return { def: def, state: T.start(def, so) };
   };
   /* A finished store round, once (its state is marked `recorded`): `takes.rounds` and, with no help, `takes.cleanRounds`
    * counted, and the next frost treasure in her nest. No claw mark, no glow, nothing of module 1's touched. Returns

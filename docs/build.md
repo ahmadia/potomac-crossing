@@ -30,6 +30,7 @@ app/art/scenes.js        PC.art.render (sets, cameras, cast placement, effects) 
 app/art/sets/*.js        one set per file (chapter 2 on): pile, bridge, field, crossing, riverbank
 app/story/chNN.js        one chapter each: frames, Counts sets, book recap, teaser
 app/story/warrior.js     the Warrior Counts (PC.warrior, not a chapter): its frames and lines
+app/story/words.js       PC.words: module 2's table of words (the kit's English, the Spanish, sayAs); never a chapter
 sw.js, manifest.webmanifest, icons/icon-{180,192,512}.png, .nojekyll
 tests/*.test.js          node --test (engine logic; story ↔ art vocabulary; graph checks)
 tools/storyboard.mjs     writes docs/storyboard/chNN.md from app/story/chNN.js, and warrior.md from app/story/warrior.js (no arguments: all of them)
@@ -1988,7 +1989,7 @@ in `tests/fixtures/takes-stub.js` (never served); `takes-exhaustive.test.js` is 
 goldens, the fingerprints and the Warrior Counts' three files pass untouched; the version pin is in
 `tests/engine.test.js`.
 
-## Chapter 12 (v0.2)
+## Chapter 12 (v0.3)
 
 Chapter 12, "A Spark at the Hedge", is told with the engine as it is, plus **one engine feature, Spanish**
 ([its spec](chapters/12-a-spark-at-the-hedge.spec.md), section 6; decisions 53, 54 and 55; Claude's calls under
@@ -2017,7 +2018,8 @@ lines may also name the answer's numbers: `{es:fact}` (a Counts set: "siete por 
   token is lettered between the marks, «…»; a ¡ or ¿ just before it with its ! or ? just after go inside with it. An
   unknown key stays as written. `E.esMarks(text, extra)` fills the Spanish tokens alone (the cat's left for the page).
 - `E.esGloss(text, cat, extra)` (each token's English; `{Es:}` capitalised; ¡ ¿ dropped), `E.esLine(text, cat, extra)`
-  ("«…once, doce. Doce gatos.»\n(…eleven, twelve. Twelve cats.)": every whole Spanish line on every page is made by it),
+  ("«…once, doce. Doce gatos.»\n(…eleven, twelve. Twelve cats.)": every whole Spanish line on a balloon, an echo, a prompt
+  and the shelf is made by it; the Spanish count's counter by `E.skipView`, below),
   `E.esEnglish(s)` (a word's `say`, else its `en`; a number's words; else ''), `E.sayAs(text, cat)` (whole words, in
   order; never the cat's own name, Clan name, warrior name or pet name, so a cat named Chispa sounds as she always did),
   `E.speechParts(text, lang, cat)` (`[{ text, lang, en?, line?, gloss? }]`: a Spanish part is a `line` only when a new
@@ -2052,10 +2054,14 @@ lines may also name the answer's numbers: `{es:fact}` (a Counts set: "siete por 
   `{es:…}` lettered in lower case that opens a line or follows . ! ? (after any ¡ ¿, never after "…"), and a number ending
   in "uno" straight before a word token ("veintiuno gatos": write it otherwise).
 - `E.VERSION` and its pin are the orchestrator's, at the ship.
+- **A store round's twins** (the review's round): `E.takeRoundStart` gives the round's state an `avoid`, the answers of
+  every chapter with a take set that the cat has begun and not finished, so a round played between chapter 12's lesson
+  and its store never queues a twin on 133; with no such chapter there is no `avoid` and the state is as before.
 
 **The page** (`app/ui.js`, `index.html`):
 - `rich()` letters «…» as `<i class="es" lang="es">…</i>` and a parenthesised line straight after it as `<br><span
-  class="gloss">(…)</span>`; `plain()` drops « and ». `balloonsOf` letters a `lang: 'es'` balloon through `E.esLine`.
+  class="gloss">(…)</span>`, a word joiner after a hyphen between letters inside it, so "(One hundred thirty-three!)"
+  never breaks at its hyphen (the review's round); `plain()` drops « and ». `balloonsOf` letters a `lang: 'es'` balloon through `E.esLine`.
   Every other path passes text and the marks travel in it (the Counts page's balloons, the take page's echo, the skip's
   counter, the shelf, `currentSpeech`). `UI.letter` is `{ rich, plain }`, for the tests.
 - **index.html**, the block "chapter 12: Spanish" before the take-aways block: `.es{font-style:italic}`,
@@ -2066,18 +2072,27 @@ lines may also name the answer's numbers: `{es:fact}` (a Counts set: "siete por 
   English exactly as `pickVoice()` always picked), `pickVoice('es')` (kept once found; `onvoiceschanged` clears both), and
   `UI.voices.plan(items, voices, { cat })`, what Read to me says row by row (`[{ text, lang, voice, rate, pitch }]`): an
   item with Spanish in it is said in parts, a Spanish part in the Spanish voice (the speaker's pitch, 0.9 of the speaker's
-  rate), with none a whole line not said (its gloss follows) and a word said as its English; no row of punctuation alone;
+  rate), with none a whole line not said (its gloss follows) and a word said as its English, an item's English parts in a
+  row joined into one row, its punctuation closed up (the review's round: three utterances in one voice paused between
+  them, the third starting at a full stop); no row of punctuation alone;
   never Spanish in an English voice; every other item exactly as before, respelled by `E.sayAs`. `speakItems` keeps its
   line word for word and turns the plan's rows into utterances; `PC.debug.speech` keeps its shape and prints a Spanish
-  item's rows with "[es] " before what the Spanish voice says; `PC.debug.plan(list)` gives the rows for a made-up list.
+  item's rows with "[es] " before what the Spanish voice says; `PC.debug.plan(list)` gives this screen's rows with a
+  made-up voice list (`DRY=1` with `VOICES=es` and `VOICES=none`). `UI.voices` also exports `saysSpanish(item)` and the
+  lists `NOVELTY` and `SHE`.
 - **The echoes on the page**: `runLesson`'s one guarded statement after `E.counts.answer` (`res.balloons` becomes the
-  echo's balloons, waiting for Next); `runTakes`' problem end reads the set's `echo` through `setEcho` for every finished
+  echo's balloons, waiting for Next; on that page Next sits at the top of the keypad's place, `#lessonNext`'s
+  `align-items: flex-start` set while the echo shows and cleared by the next `ask()`, as the Warrior Counts' help and the
+  take page do, so the three balloons stay on the screen, and a scroll brings Next in only if it is still under the
+  screen: the review's round, where it ran 29px under 1080 × 720 with Aa off and wholly under with Aa on); `runTakes`'
+  problem end reads the set's `echo` through `setEcho` for every finished
   problem, right or helped. **This supersedes the kit's design row for `o.echo`** ("each right problem"): a set's `echo`
   is read at the problem's end and never made into the `o.echo` hook, so `reserve()` holds no echo room above any column
   (a hook would hold Chispapaw's two lines empty above every later column of the lesson and of every Count the store
   round); `o.echo` stays the column hook, for a later chapter that echoes columns (it would bring the echo room with it).
 - **The Spanish count** (`renderSkip`, four guarded branches): the counter lettered by `rich()` in `counter words`; at the
-  end Next shown and focused (the page never turns itself); Read to me says each number (its English with no Spanish
+  end Next shown, brought into view if it is under the screen (a phone held sideways: the review's round) and focused
+  (the page never turns itself); Read to me says each number (its English with no Spanish
   voice) and at the end its gloss after it, or the gloss alone; Enter, Space and → turn the page at the end.
 - **The shelf**: with `SH.friend`, Chispapaw sits at `sand-right` facing left (measured: x 861–1019 against our cat's
   540–716 on `wide`) and her balloon follows Tallyheart's (`.concat`). **The speaker**: `NAMES.chispapaw`,
@@ -2086,6 +2101,12 @@ lines may also name the answer's numbers: `{es:fact}` (a Counts set: "siete por 
 - `PC.debug.spanish(what)` (`echo`, `take`, `skip`, `worked`, `worked:tens`, `try`, `try:pointer`, `store`), beside
   `PC.debug.takes`: the screens on the cat on screen from inline copies of the spec's section 2 sets (or `PC.story.ch12`'s
   own), nothing saved.
+- **A take page while a re-sit waits** (the review's round): `runTakes`, whenever its intro holds the Warrior Counts'
+  waiting line (a chapter's lesson, a store round picked up), says that line on a page of its own, with Next, the store
+  drawn as the first column will show it and no answer taken, then asks the first problem (over the column, with the
+  keypad brought in, it lay under the bar at 1080 × 720). `PC.debug.takes('first')` presses that Next, so `take:first` is
+  the worked example's first column with its prompt joined, the worst case a lesson shows. `PC.debug.spanish('echo')` and
+  `('skip')` keep the scroll the page made after the answer or the last tap, from a question page at the top.
 
 **The tools**: `tools/storyboard.mjs` requires `app/story/words.js`; it prints a `lang: 'es'` balloon "*[es]*" with its
 Spanish and its English, a `{es:key}` as «its Spanish», the paw thing "in Chispapaw's Spanish", a set's echo under its
@@ -2094,17 +2115,36 @@ set, and words for every new art name (chapters 1 to 11 and `warrior.md` byte fo
 untouched), in single shots and sheets; the silent stand-in notes each utterance's text, lang and voice
 (`window.__shotsHeard`) and takes a made-up list with `VOICES=es` (Paulina, Samantha and the eight novelty voices;
 `VOICES=none` the default); `DRY=1` prints `UI.voices.plan`'s rows for both lists wherever a screen has Spanish.
-`dev/webkit/run.mjs`: a `spanish` job (`ES_SCREENS`: the eight and `hollow:shelf`).
+`dev/webkit/run.mjs`: a `spanish` job (`ES_SCREENS`: the eight and `hollow:shelf`). **The shared sweep runs it** (the
+review's round: the warm-up's echo page had Next under the screen at 1080 × 720 and `pages/summary.md` did not see it, its
+f042 row being the keypad before any answer): `node tools/sweep.mjs --pages` in its `screens` group at the four sizes,
+`--takes` at the review's four more, Aa off and on. The take pages' `col-off` checks the stack's first balloon as well as
+its last (`tsf`, measure.js; 58 − 23 opened with its first under the bar, its last on the screen). The `screens` job
+focuses the leaf before its Enter, so `screen:corner` measures the grown-ups corner (with the body focused, the hub's own
+handler took the Enter and pressed the big button). A `SHEET=1` pane of `book#ch12` opens the book at that page.
 
 **The art, a line each** (the cats and sets owners'; their tests): Chispapaw (`chispapaw`, a pointed cream coat, dark brown
 points, big ears, blue eyes, a red collar with a gold bell; `collar: false` for chapter 13; cats may carry a mouse,
 `holds: 'mouse'`); the bridge's `store` camera (the dry den's floor, `store: n` the kit's picture `small` at one fixed
-scale and top, `tap: 'store'`, spots `store-left`, `store-right`, `store-back-1` to `-3`, `way-in`); the hollow's options
-`store` (the store's plan, empty pressed places), `storeGlow`, `quick` (1 to 3, right to left, her square `round`) and
-`tap: 'squares'`; the den's `moon: 16`; the garden's spot `hedge-right`.
+scale and top, `tap: 'store'`, spots `store-left`, `store-right`, `store-back-1` to `-3`, `way-in`); the hollow's options on `lesson`
+and `sand` only (never both on one frame: `store` wins): `store` (a number, the store's
+plan, every piece an empty pressed place; at a whole number of hundreds, 500, its squares alone, clipped to them, in a
+taller box of its own, `HOLLOW_PLAN`, x 800 to 955, y 790 to 905, a glowing square keeping its dark pressed edge: the
+review's round, where the whole picture in the 196 × 56 box made a square 6 CSS px on a phone), `storeGlow` (`'hundreds'`
+or `'tens'`), `tap: 'squares'` (the whole plan, and at least `HOLLOW_STORE`'s width round it) and `quick` (1 to 3 sets of
+the quick marks in `HOLLOW_STORE`, x 770, y 820, 196 × 56, in keep, right to left, her square `round`: `PC.art.quickMarks`'
+`round: true`, a wobbly ring, passed through `PC.art.kit.quick`); the den's `moon: 16`; the garden's spot `hedge-right`.
+The store camera is lit `day`, `sunset` or `dusk` (night is chapter 14's: `storeLight` has no night look), and at its scale,
+0.54, every store of module 2's story fits the panel (500's foot at y 897; 999 would be cropped). A marked purrer's 'purrr'
+beside her back is left out where it would cover another cast member's head (the whole-camp purr's test), and the word
+over her head leans the other way where leaning back would (the review's round: f037a, f031; no frame of chapters 1 to 11
+moved; two of the scenes test's synthetic fingerprints did).
 
 **Tests**: `tests/spanish.test.js` (the engine, the guards and the page in Node, inline fixtures), the kit's pins moved as
 the spec names them (`tests/takes-ui.test.js`: runLesson's hash, `plain()`'s line, the Spanish block cut beside the take
 block and its selectors listed, the reserve with and without a set's echo; `tests/takes-engine.test.js`: the shelf's and
 a round def's deep-equals, and the school words' case), `tests/storyboard.test.js` (a fixture chapter's Spanish and art
-words), `tests/tools.test.js` (chapter 12's `--check-words` list; shots' and the WebKit tool's Spanish).
+words), `tests/tools.test.js` (chapter 12's `--check-words` list; shots' and the WebKit tool's Spanish), and the chapter's
+own: `tests/story-ch12.test.js` (the graph, 540 readings, the Spanish, the echoes, the take lesson, the book, the teaser,
+staging, the purr words), `tests/cats.test.js` (Chispapaw, `holds: 'mouse'`, `round`), `tests/scenes.test.js` (the
+`<ch12-fingerprint>`, the hollow's plan and marks, den and garden) and `tests/set-bridge.test.js` (the store camera).

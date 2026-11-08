@@ -1249,7 +1249,7 @@
   var TAKE_SLIP_WORDS = { zero: 'across the zero', flip: 'smaller from bigger', nospread: 'did not regroup', kept: 'kept the ten it gave',
     extra: 'regrouped when not needed', fact: 'a fact slipped' };
   // (what the columns count: E.takeTable's own-ask rule and its typical time, docs/take-aways.md section 4)
-  var TAKE_CORNER_NOTE = '<p class="muted">“Right first time” is her own first try at a problem with every column right; worked problems, ones where she was told to regroup, and second goes are left out. “Problems” and “Helped” count them all (“helped”: a column slipped and Tallyheart helped). Typical time is of her right answers she regrouped herself.</p>';
+  var TAKE_CORNER_NOTE = '<p class="muted">“Right first time” is her own first try at a problem with every column right; worked problems, ones where she was told to regroup, and second goes are left out. “Problems” and “Helped” count them all (“helped”: a column slipped and Tallyheart helped). Typical time is of her right answers to problems she worked herself (not worked examples or ones she was told to regroup).</p>';
   function takeCorner(takes, table, secs) {
     if (!takes || typeof takes !== 'object') return null;
     secs = secs || function (ms) { return ms == null ? '–' : (ms / 1000).toFixed(1) + ' s'; };
@@ -1322,9 +1322,15 @@
     (items || []).forEach(function (it) {
       if (!it) return;
       if (!saysSpanish(it)) { var txt = E0.sayAs(clean(it.text || ''), cat0); if (txt) row(txt, 'en', it); return; }
+      // (a line's English parts in a row, the Spanish fallen back to its English with no Spanish voice, are one utterance:
+      // three in the same voice paused between them, the third starting at a full stop, the review's round)
+      var from = rows.length;
       E0.speechParts(String(it.text || '').replace(/<[^>]+>/g, ' '), it.lang, cat0).forEach(function (p) {
         var t = clean(p.lang === 'es' && !es ? (p.line ? '' : p.en) : p.text);
-        if (some(t)) row(t, p.lang === 'es' && es ? 'es' : 'en', it);
+        if (!some(t)) return;
+        var lang = p.lang === 'es' && es ? 'es' : 'en', last = rows.length > from ? rows[rows.length - 1] : null;
+        if (last && lang === 'en' && last.lang === 'en') last.text = (last.text + ' ' + t).replace(/ ([.,!?;:…])/g, '$1');
+        else row(t, lang, it);
       });
     });
     return rows;
@@ -1365,9 +1371,12 @@
   /* Lettering: **bold**, *italic*, line breaks, and a dash kept with the word it follows (a word joiner, U+2060, between
    * them: ch05 f051a's "…Thirty. FORTY—" put the dash on a line alone at every iPad size, the polish release v23).
    * Chapter 12: Spanish between the engine's marks, «…», in italics with lang="es" (the marks dropped), and the gloss in
-   * parentheses on the line straight after it upright, on a line of its own; no line of chapters 1 to 11 has a «. */
+   * parentheses on the line straight after it upright, on a line of its own, a hyphened number in it kept whole (a word
+   * joiner after the hyphen: “(One hundred thirty-” / “three!)” at 1080 x 720, the review's round); no line of chapters 1
+   * to 11 has a «. */
   function rich(s) {
-    return esc(s).replace(/«([^«»]*)»\n(\([^\n]*\))/g, '<i class="es" lang="es">$1</i><br><span class="gloss">$2</span>').replace(/«([^«»]*)»/g, '<i class="es" lang="es">$1</i>')
+    return esc(s).replace(/«([^«»]*)»\n(\([^\n]*\))/g, function (m, es, gl) { return '<i class="es" lang="es">' + es + '</i><br><span class="gloss">' + gl.replace(/([A-Za-z])-([A-Za-z])/g, '$1-\u2060$2') + '</span>'; })
+      .replace(/«([^«»]*)»/g, '<i class="es" lang="es">$1</i>')
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\n/g, '<br>')
       .replace(/([A-Za-z0-9À-ɏ])—/g, '$1⁠—');
   }
@@ -2623,7 +2632,13 @@
       // (chapter 12: a Spanish count's newest number in the Spanish voice, or its English; at the end its gloss after it,
       // or with no Spanish voice the gloss alone: UI.voices.plan)
       speakItems([{ text: sk.lang === 'es' && v.gloss ? v.say + '\n(' + v.gloss + ')' : v.say || String(v.total), who: teacher }].concat(v.done && sk.done ? [{ text: fill(sk.done), who: teacher }] : []));
-      if (v.done && (sk.done || v.wait)) { var nb = $('nextBtn'); if (nb) nb.focus({ preventScroll: true }); }
+      if (v.done && (sk.done || v.wait)) {
+        var nb = $('nextBtn');
+        // (chapter 12: the Spanish count waits for Next, the only way on; a phone held sideways left it under the screen:
+        // brought in, as chapter 9's f118 does; the paw counts of chapters 1 to 11 have no wait)
+        if (nb && v.wait) { var nbb = nb.getBoundingClientRect().bottom, nvh = root.innerHeight || 0; if (nvh && nbb > nvh) root.scrollBy(0, nbb - nvh + 8); }
+        if (nb) nb.focus({ preventScroll: true });
+      }
       else if (v.done) {
         // the last hop turns the page: the next frame shows the number she just reached
         turning = true;
@@ -3853,7 +3868,7 @@
       if (!q) return finish();
       asSet(warrior ? E.warriorAsk(def, st, q, stories()) : E.questionDef(def, q, story, stories()));
       typed = ''; locked = false;
-      pad.classList.remove('locked', 'away'); $('lessonNext').hidden = true;
+      pad.classList.remove('locked', 'away'); $('lessonNext').hidden = true; $('lessonNext').style.alignItems = '';
       $('gotIt').textContent = 'Got it!';
       // `lit`: what glows as it is asked (2 × 6: the first five cats' ears, ten, to hop on from)
       // (chapter 5's nines open on the hop: all ten claws lit on every cat; then playTuck)
@@ -3943,6 +3958,14 @@
           pad.classList.add('away');
           $('gotIt').textContent = 'Next';
           $('lessonNext').hidden = false;
+          // (chapter 12: the warm-up's echo page, the line she earned, Chispapaw's Spanish with its English and her line, keeps
+          // Next at the top of the keypad's place, as the Warrior Counts' help and the take page do (ask() puts it back), and
+          // brings it in if a long fact or a zoomed page still leaves it under the screen; no chapter 1 to 11 has an echo)
+          if (echoed) {
+            $('lessonNext').style.alignItems = 'flex-start';
+            var eb = $('gotIt').getBoundingClientRect().bottom, evh = root.innerHeight || 0;
+            if (evh && eb > evh) root.scrollBy(0, eb - evh + 8);
+          }
           later(function () { $('gotIt').focus({ preventScroll: true }); }, 50);
           return;
         }
@@ -4627,7 +4650,21 @@
     // (a font that loads late, a turned screen, Aa: the stack's held height measured again)
     relayoutFn = function () { if (q && phase !== 'end' && phase !== 'help' && phase !== 'done') { reserve(); fit(); } };
     updateBar();
-    ask();
+    // (chapter 12's review: a take page opened while a Warrior Counts re-sit waits, a chapter's lesson or a store round picked
+    // up, says Tallyheart's waiting line on a page of its own, with Next, before the first column: over the column, with the
+    // keypad brought in, it lay under the bar on a sideways iPad, and it is her only warning before her first take answer
+    // sets the re-sit aside. PC.debug.takes('first') passes it with Next, as she would)
+    var wAlone = o.waitLine && asList(o.intro).some(function (l) { return l.text === o.waitLine; }) ? o.waitLine : null;
+    if (wAlone) {
+      o.intro = asList(o.intro).filter(function (l) { return l.text !== wAlone; });
+      var q0 = T.question(st), wl = [T1(wAlone)];
+      if (q0) paintStore(E.takePicture(def, { plan: q0.plan, col: q0.col, picture: q0.picture }, { col: q0.col, spreads: 0 }));
+      phase = 'wait';
+      say(wl); saying(heard(wl)); speakItems(heard(wl));
+      pad.classList.add('away'); gotBtn.textContent = 'Next'; nextWrap.hidden = false;
+      gotAct = function () { hush(); pad.classList.remove('away'); ask(); };
+      later(function () { gotBtn.focus({ preventScroll: true }); }, 50);
+    } else ask();
     return { press: press, tap: function (z) { tapZone(z || tapWant); } };
   }
 
@@ -4650,8 +4687,8 @@
       echo: { on: 'first', lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:fact}!' }, { who: 'chispapaw', text: 'My little Tall One says these every night! I never knew what they MEANT.' }] } },
     'ch12-take': { op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '',
       facts: [{ a: 254, b: 131, regroup: 'show', prompt: 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.', right: [esT('One square, two rows, three loose left.')] },
-        { a: 58, b: 23, prompt: [esT('Now you try, all by yourself. Little take-aways first, then big.'), { who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
-        [76, 42], [475, 132], [368, 145]],
+        { a: 58, b: 23, prompt: [esT('Now you try, all by yourself. Little take-aways first, then big.')] },
+        { a: 76, b: 42, prompt: [{ who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] }, [475, 132], [368, 145]],
       echo: { on: [[475, 132]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] } },
     'ch12-store': { op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, twins: false, done: '',
       facts: [{ a: 175, b: 42, prompt: [{ who: 'glintstar', text: 'How many stay in the store, {name}{ending}?' }], right: [{ who: 'glintstar', text: 'One hundred thirty-three in the store.' }] }] }
@@ -4670,7 +4707,9 @@
     relayoutFn = null; keyHandler = null; currentSpeech = [];
     view = { name: 'frame', opts: {} };
     $('screen').classList.remove('enter', 'enter-back');
-    var t = now(), done = function () { renderedAt = now(); renderedPerf = perfNow(); updateBar(); root.scrollTo(0, 0); return true; };
+    // (`own`: the echo page and the Spanish count keep the scroll the page itself made after the answer or the last tap, from
+    // a question page at the top, as in play: chapter 12's review brings Next in there on a phone held sideways)
+    var t = now(), done = function (own) { renderedAt = now(); renderedPerf = perfNow(); updateBar(); if (!own) root.scrollTo(0, 0); return true; };
     if (what === 'echo') {
       // her hard pick first, answered right and quick on the page's own keypad; the cat put back as it was after it
       var wd = setOf('ch12-warm'), kept = E.util.clone(cat);
@@ -4678,21 +4717,23 @@
       var wst = E.counts.start(wd, { facts: [{ a: 7, b: 8, table: tb, hard: true }].concat(wd.facts.slice(2)), set: wd.id, mode: 'chapter', now: t });
       runLesson({ def: wd, state: wst, intro: [], mode: 'debug', frameId: 'es-echo', onDone: function () {} });
       renderedAt = now() - UI_GUARD_MS - 1; renderedPerf = perfNow() - UI_GUARD_MS - 1;   // (past the double-tap guard: these taps are the tool's)
+      root.scrollTo(0, 0);
       ['5', '6', 'ok'].forEach(function (k) { var b = doc.querySelector('#screen .key[data-k="' + k + '"]'); if (b) b.click(); });
       Object.keys(cat).forEach(function (k) { delete cat[k]; });
       Object.assign(cat, kept);
       persist();
-      return $('lessonNext') && !$('lessonNext').hidden ? done() : 'spanish: no echo after 7 × 8';
+      return $('lessonNext') && !$('lessonNext').hidden ? done(true) : 'spanish: no echo after 7 × 8';
     }
     if (what === 'skip') {
       // the paw thing's frame (the chapter's own when it has it), its five taps past the double-tap guard (a clock of
       // this call's own, as dev/webkit/run.mjs's shott: does)
       var f = ch && ch.frames && ch.frames.f074 && ch.frames.f074.skip && ch.frames.f074.skip.lang === 'es' ? ch.frames.f074 : ES_DEBUG_SKIP;
       renderSkip(f, 'f074');
+      root.scrollTo(0, 0);
       var realNow = Date.now, clock = realNow.call(Date);
       Date.now = function () { clock += 1000; return clock; };
       try { for (var i = 0; i < 5; i++) if (typeof frameTap === 'function') frameTap(); } finally { Date.now = realNow; }
-      return $('nextBtn') ? done() : 'spanish: the count did not wait for Next';
+      return $('nextBtn') ? done(true) : 'spanish: the count did not wait for Next';
     }
     // the take pages: chapter 12's own sets, on the take page in debug mode (nothing saved)
     var def = setOf(what === 'store' ? 'ch12-store' : 'ch12-take');
@@ -4773,6 +4814,12 @@
     view = { name: 'frame', opts: {} };
     $('screen').classList.remove('enter', 'enter-back');
     var h = runTakes(Object.assign({ def: def, state: st }, o));
+    // (take:first: the re-sit's waiting line has a page of its own, chapter 12's review; Next, as she would, so the screen is
+    // the worked example's first column, the prompt joined, the worst case a lesson shows)
+    if (what === 'first' && $('lessonNext') && !$('lessonNext').hidden) {
+      renderedAt = now() - UI_GUARD_MS - 1; renderedPerf = perfNow() - UI_GUARD_MS - 1;   // (past the double-tap guard: this tap is the tool's)
+      $('gotIt').click();
+    }
     // (`opts.keys === false`: nothing typed, for a tool that types itself)
     if (keys && !(opts && opts.keys === false)) keys.forEach(function (k) { h.press(k); });
     renderedAt = now(); renderedPerf = perfNow();

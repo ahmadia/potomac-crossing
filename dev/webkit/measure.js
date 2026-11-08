@@ -8,7 +8,7 @@
 // choices, the keypad, the question line, the column's type size, the panel's box, and two fingerprints (every shown
 // box in #app; the panel and everything in it, relative to the panel) for the "Aa off: nothing changes" check.
 // On a take page (the take-aways kit), also the column, the outlined box and the stack's last balloon, and the bar's
-// bottom (`take`, `tcol`, `tbox`, `tsb`, `tbar`): tools/sweep.mjs's `col-off`.
+// bottom (`take`, `tcol`, `tbox`, `tsf`, `tsb`, `tbar`): tools/sweep.mjs's `col-off`.
 // `spill`: lettering outside its own box, or cut off by a box that clips it (name:side px); `broken`: a word broken
 // across two lines inside itself (`Wo|rd in .caption`; a break after a hyphen, a dash or a soft hyphen is fine).
 // A box that scrolls (the book, her Case File) clips nothing; a box with overflow hidden or clip (the panel) does.
@@ -64,7 +64,8 @@
     // the take-aways kit's page (docs/take-aways.md, section 6): `bad` above sees only controls, so a take page that
     // pushed its column or its line under the bar would pass. On a take page (its frame's data-mode, or a .tcol in the
     // screen): `take`, the bar's bottom at any scroll (`tbar`: the bar is sticky), and the viewport boxes of the column
-    // (`tcol`), the outlined box (`tbox`, .tbox.on) and the stack's last balloon (`tsb`), each null when not shown, and
+    // (`tcol`), the outlined box (`tbox`, .tbox.on) and the stack's first and last balloons (`tsf`, `tsb`: chapter 12's
+    // review, 58 − 23 opened with its first balloon under the bar and its last on the screen), each null when not shown, and
     // the column's type size (`tfs`). tools/sweep.mjs reports `col-off` when one is not wholly between `tbar` and `vh`.
     var tcol = document.querySelector('#screen .tcol');
     if ((fr && fr.getAttribute('data-mode') === 'take') || tcol) {
@@ -72,7 +73,7 @@
       m.tbar = bar && shown(bar) ? Math.round(bar.getBoundingClientRect().bottom) : 0;
       m.tcol = tcol && shown(tcol) ? box(tcol) : null;
       var tbx = document.querySelector('#screen .tcol .tbox.on, #screen .tbox.on'); m.tbox = tbx && shown(tbx) ? box(tbx) : null;
-      var sbs = Array.prototype.filter.call(document.querySelectorAll('#screen #stack .sb, #screen .stack .sb'), shown); m.tsb = sbs.length ? box(sbs[sbs.length - 1]) : null;
+      var sbs = Array.prototype.filter.call(document.querySelectorAll('#screen #stack .sb, #screen .stack .sb'), shown); m.tsb = sbs.length ? box(sbs[sbs.length - 1]) : null; m.tsf = sbs.length ? box(sbs[0]) : null;
       if (m.tcol) m.tfs = parseFloat(getComputedStyle(tcol).fontSize);
     }
     // lettering: spilling its box (or cut by one that clips it), and words broken inside themselves. A text's box is

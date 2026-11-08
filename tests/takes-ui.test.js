@@ -503,8 +503,14 @@ test('17. "Got it!" at the top of the keypad\'s place; the keypad and "Got it!" 
 
 test('nothing a player can reach changes: runLesson, the keypad and go() as in v23; index.html without its take block is v23\'s byte for byte, and every rule of the block is the take page\'s own', () => {
   // (chapter 12: runLesson's one guarded statement after E.counts.answer, the Counts page's echo, and the page's promptLines
-  // keeping a Spanish ask's lang: its new hash; the spanish owner's, spec section 6's kit pins, item 1)
-  assert.equal(sha(fnSrc(UI_SRC, 'runLesson')), '8b3c86cdd643e873c79799d533b9496e09c80440295a74ec2307e4f301cf1e7e');
+  // keeping a Spanish ask's lang: its new hash; the spanish owner's, spec section 6's kit pins, item 1. Then chapter 12's
+  // review: the echo page's Next at the top of the keypad's place, brought in if still under the screen, only when the
+  // echo shows; ask() clears the inline style, a no-op on every page that never set it)
+  assert.equal(sha(fnSrc(UI_SRC, 'runLesson')), '92093b13af18b14fa4aef5c8f187527d99673368c6472595b711c51a32826257');
+  const rl = fnSrc(UI_SRC, 'runLesson');
+  assert.ok(rl.includes("          if (echoed) {\n            $('lessonNext').style.alignItems = 'flex-start';\n            var eb = $('gotIt').getBoundingClientRect().bottom, evh = root.innerHeight || 0;\n            if (evh && eb > evh) root.scrollBy(0, eb - evh + 8);\n          }"), 'the echo page: Next up, then the backstop scroll, only with an echo');
+  assert.ok(rl.includes("$('lessonNext').hidden = true; $('lessonNext').style.alignItems = '';"), 'ask() puts Next back for the next question');
+  assert.equal((rl.match(/alignItems/g) || []).length, 2, 'nowhere else');
   assert.ok(fnSrc(UI_SRC, 'runLesson').includes("      var res = E.counts.answer(st, D, typed, ms, now());\n      // (chapter 12: a set's `echo`, Chispapaw's Spanish after the line this answer earned, waiting for Next as a fact's own lines)\n      var echoed = res.correct ? E.countsEcho(def, st, res, teacher) : null; if (echoed) res.balloons = echoed;\n      E.logAnswer(cat, res.entry);"));
   assert.equal(sha(fnSrc(UI_SRC, 'keypadPress')), 'b688cdd8019dd93755828b17f11ccfcf37afecb3cd9069b4ab4232bc450c2350');
   assert.equal(sha(fnSrc(UI_SRC, 'go')), '4ea06e5f48bfda23d68d1a0c5726b3038fdcbc13b3c5549fb8494e38ac6d9254');
@@ -753,7 +759,7 @@ test('the grown-ups corner: with `takes` data, a "Take-aways" table by kind afte
   const K = U.corner(c.takes, E.takeTable(c));
   assert.equal(K.line, 'Count the store 3 (2 without help)');
   // (corner-numbers CN3) a note on what its columns count, between the heading and the table
-  assert.ok(K.html.startsWith('<h4>Take-aways</h4><p class="muted">“Right first time” is her own first try at a problem with every column right; worked problems, ones where she was told to regroup, and second goes are left out. “Problems” and “Helped” count them all (“helped”: a column slipped and Tallyheart helped). Typical time is of her right answers she regrouped herself.</p>' +
+  assert.ok(K.html.startsWith('<h4>Take-aways</h4><p class="muted">“Right first time” is her own first try at a problem with every column right; worked problems, ones where she was told to regroup, and second goes are left out. “Problems” and “Helped” count them all (“helped”: a column slipped and Tallyheart helped). Typical time is of her right answers to problems she worked herself (not worked examples or ones she was told to regroup).</p>' +
     '<div class="scroll"><table><thead><tr><th>Kind</th><th>Problems</th><th>Right first time</th><th>Helped</th><th>Typical time</th><th>Commonest slip</th></tr></thead>'), K.html);
   assert.match(K.html, /<td>\d+&nbsp;of&nbsp;\d+<\/td>/, 'a ratio never breaks inside (a phone wrapped "36 of" from its "40")');
   assert.ok(K.html.includes('<td>Regroup a ten</td>') && K.html.includes('<td>a fact slipped</td>'), K.html);
@@ -790,8 +796,8 @@ test('chapter 12: a set\'s echo holds no room: takeReserve\'s candidates for eve
   const T12 = (t) => ({ who: 'tallyheart', text: t });
   const take = { id: 'ch12-take', op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '',
     facts: [{ a: 254, b: 131, regroup: 'show', prompt: PROMPT, right: [T12('One square, two rows, three loose left.')] },
-      { a: 58, b: 23, prompt: [T12('Now you try, all by yourself. Little take-aways first, then big.'), { who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
-      [76, 42], [475, 132], [368, 145]],
+      { a: 58, b: 23, prompt: [T12('Now you try, all by yourself. Little take-aways first, then big.')] },
+      { a: 76, b: 42, prompt: [{ who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] }, [475, 132], [368, 145]],
     echo: { on: [[475, 132]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] } };
   const bare = (d) => { const o = Object.assign({}, d); delete o.echo; return o; };
   const fill = (s) => E.fill(s, { name: 'Moon' });
@@ -832,4 +838,27 @@ test('chapter 12: a set\'s echo holds no room: takeReserve\'s candidates for eve
   assert.deepEqual(end(true, 475, 132), ['«¡Trescientos cuarenta y tres!»\n(Three hundred forty-three!)']);
   assert.deepEqual(end(false, 475, 132), [E.TAKE_LINES.miss, '«¡Trescientos cuarenta y tres!»\n(Three hundred forty-three!)']);
   assert.deepEqual(end(false, 565, 411), [E.TAKE_LINES.miss], 'its twin: no echo');
+});
+
+test('chapter 12\'s review: a take page opened while a Warrior Counts re-sit waits (a chapter\'s lesson, a store round picked up) says Tallyheart\'s waiting line on a page of its own, with Next, before the first column (over the column it lay under the bar on a sideways iPad); PC.debug.takes(\'first\') passes it with Next, so take:first is the worked example\'s first column as a lesson shows it', () => {
+  const page = fnSrc(UI_SRC, 'runTakes');
+  const at = page.indexOf('    var wAlone = '), blk = page.slice(at, page.indexOf('    } else ask();', at) + 18);
+  assert.ok(at > 0, 'the waiting page, before the first ask');
+  assert.ok(blk.includes("var wAlone = o.waitLine && asList(o.intro).some(function (l) { return l.text === o.waitLine; }) ? o.waitLine : null;"), 'whenever the line is in the intro, in any mode');
+  assert.ok(blk.includes("o.intro = asList(o.intro).filter(function (l) { return l.text !== wAlone; });"), 'the line taken out of the first column\'s intro, so it is said once');
+  assert.ok(blk.includes('say(wl); saying(heard(wl)); speakItems(heard(wl));'), 'lettered, on Read to me\'s button and said');
+  assert.ok(blk.includes("pad.classList.add('away'); gotBtn.textContent = 'Next'; nextWrap.hidden = false;"), 'the keypad away and Next on (the take page puts it at the top of the keypad\'s place)');
+  assert.ok(blk.includes("gotAct = function () { hush(); pad.classList.remove('away'); ask(); };"), 'Next asks the first problem');
+  assert.ok(blk.includes('if (q0) paintStore(E.takePicture(def, { plan: q0.plan, col: q0.col, picture: q0.picture }, { col: q0.col, spreads: 0 }));'), 'the store as the first column will show it');
+  assert.ok(page.includes("    } else ask();\n    return { press: press, tap: function (z) { tapZone(z || tapWant); } };\n  }"), 'every other take page asks at once, as before');
+  // no answer can be typed on it: press() takes digits only in 'type' (or 'tap') and the phase is 'wait'
+  assert.ok(blk.includes("phase = 'wait';") && page.includes("if (phase !== 'type' || now() < padLockedUntil) return;"));
+  // who reaches it: startChapterLesson's take branch and a store round picked up pass their waiting line; a new round, and
+  // PC.debug.takes('store'), pass none
+  assert.ok(fnSrc(UI_SRC, 'startChapterLesson').includes("if (wWait) intro = (intro || []).concat([{ who: 'tallyheart', text: wWait }]);"));
+  assert.ok(fnSrc(UI_SRC, 'storeLesson').includes("intro: resume ? (waiting ? [{ who: 'tallyheart', text: waiting }] : []) : [{ who: 'tallyheart', text: def.intro }],"));
+  const dbg = fnSrc(UI_SRC, 'takesDebug');
+  assert.ok(dbg.includes("if (what === 'first') { o.intro = [{ who: 'tallyheart', text: E.WARRIOR_WAITING }]; o.waitLine = E.WARRIOR_WAITING; }"));
+  assert.ok(dbg.includes("    if (what === 'first' && $('lessonNext') && !$('lessonNext').hidden) {\n      renderedAt = now() - UI_GUARD_MS - 1; renderedPerf = perfNow() - UI_GUARD_MS - 1;") && dbg.includes("      $('gotIt').click();\n    }"), 'take:first passes the waiting page with Next, past the double-tap guard (the tap is the tool\'s)');
+  assert.ok(dbg.indexOf("$('gotIt').click();") > dbg.indexOf('var h = runTakes('), 'after the page is built');
 });

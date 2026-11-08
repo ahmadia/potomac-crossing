@@ -225,7 +225,9 @@ export function measureJobs(S, site, what, { aas = [false, true], cat = sweepCat
       const click = (sel) => ({ js: call('var b = document.querySelector(arguments[0]); if (!b) return "no " + arguments[0]; var n = Date.now, c = n.call(Date) + 5000; Date.now = function () { return c; }; b.click(); Date.now = n; window.scrollTo(0, 0); return true;', [sel]), wait: 0.6 });
       job('screens', big, [].concat(...['title', 'who', 'hub', 'book', 'nest', 'hollow'].map((t) => [go(t), M('screen:' + t)]),
         [{ js: call('return PC.debug.file(null);'), wait: 0.6 }, M('screen:file'), { js: call('return PC.debug.closeFile();'), wait: 0.3 },
-          go('hub'), { js: call('document.getElementById("leaf").dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); return true;'), wait: 1.9 }, M('screen:corner')]));
+          // (the leaf focused first, as a grown-up's keyboard has it: an Enter with the body focused went to the hub's own
+          // handler, which pressed the big button, and the corner's row measured whatever page that opened: chapter 12's review)
+          go('hub'), { js: call('var l = document.getElementById("leaf"); if (!l) return "no leaf"; l.focus(); l.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); return document.activeElement === l ? true : "leaf not focused";'), wait: 1.9 }, M('screen:corner')]));
       job('screens', big, [go('hollow'), click('#startBtn, .counts-pick [data-t]'), M('screen:hollow-round')]);
     }
     if (what.includes('warrior') && S.WARRIOR) {

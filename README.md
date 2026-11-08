@@ -10,7 +10,7 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-11-01):** chapters 1 to 11, the whole of module 1 and its Warrior Ceremony, are built as a static web app (`index.html`, `app/`; the
+**Status (2026-11-08):** chapters 1 to 12, the whole of module 1 and its Warrior Ceremony and module 2's first chapter, are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04). Chapter 6, *The Snake in the Stones*,
@@ -18,7 +18,10 @@ shipped 2026-10-18, the first chapter made with `dev/workflows/chapter.js`; chap
 Don’t Lie*, 2026-10-20; chapter 8, *The Night Trail*, 2026-10-24; chapter 9, *Featherlight*, 2026-10-26;
 chapter 10, *The Gathering*, the finale, 2026-10-31, with the Warrior Counts (decisions 48 and 49),
 which open once chapter 10 is finished; chapter 11, *The Warrior Ceremony*, 2026-11-01, which opens once
-she passes them and gives her warrior name (decision 52). Module 2 (the badger's track) is next.
+she passes them and gives her warrior name (decision 52), the end of module 1. Module 2, *The Badger Under the Bridge*
+(`docs/module-2.md`, decisions 53 to 56), began with the take-aways kit and book two (2026-11-07) and chapter 12, *A
+Spark at the Hedge*, 2026-11-08: her first day as a warrior, Chispapaw, the store, and Spanish. Chapter 13, *The
+Hunter's Crouch*, is next.
 
 ## Docs
 
@@ -31,7 +34,7 @@ she passes them and gives her warrior name (decision 52). Module 2 (the badger's
   drafted as the actual game text.
 - [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
   the Old Bridge, 04 The Glittering Scale, 05 Riffle's River, 06 The Snake in the Stones, 07 The Counts Don’t
-  Lie, 08 The Night Trail, 09 Featherlight, 10 The Gathering, 11 The Warrior Ceremony), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
+  Lie, 08 The Night Trail, 09 Featherlight, 10 The Gathering, 11 The Warrior Ceremony, 12 A Spark at the Hedge), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
   steering calls, the budget and the names, written before drafting), its **story** (what she
   reads), and its **spec** (flags, Counts sets, cards, art needs and build notes, written once the
   story is final).
@@ -41,6 +44,10 @@ she passes them and gives her warrior name (decision 52). Module 2 (the badger's
 - [`docs/warrior-counts.md`](docs/warrior-counts.md): the Warrior Counts (decisions 48 and 49), every
   pair up to 10 × 10 in one sitting, offered on the hub once chapter 10 is finished; built and merged
   onto chapter 9 (2026-10-31), so they ship with chapter 10.
+- [`docs/module-2.md`](docs/module-2.md): the second module, *The Badger Under the Bridge* (decisions 53 to 56):
+  chapters 12 to 21, the cast, Chispapaw and the Spanish rules, the maths (long subtraction, the Counts kept fresh).
+- [`docs/take-aways.md`](docs/take-aways.md): the take-aways kit's design (v0.3), the take page, the store's picture,
+  the Hollow's shelf and Count the store, and book two; built 2026-11-07, before chapter 12.
 - [`docs/continuity.md`](docs/continuity.md): where the story stands after the last shipped
   chapter (what happened, the flags, the cards, the names), for whoever writes the next one.
 - [`docs/production.md`](docs/production.md): how a chapter gets made, what the first five cost,
@@ -1239,6 +1246,168 @@ Each is Aron's to reverse.
   draws no bar for); chapter 12's spec keeps the waiting line off its take lesson but for a rare re-sit. Rejected: the
   fresh rows' spacing (the block is read as a square opened into ten rows, and two stacks of five do not fit a phone's
   115 px zone) and the small answers (each a valid twin of its shape). The suite: 46 files, 1,903 tests, all pass.
+- **Chapter 12 as built** (2026-11-08, CACHE v25, `E.VERSION` 0.12.0 at the ship; `app/story/ch12.js`'s header has each
+  call, the spec's section 7, items 18 to 22, the review's round; the builders' notes in `~/potomac-crossing-work/ch12/`
+  `build-cats/`, `build-sets/`, `build-spanish/` and `story/`). *A Spark at the Hedge*, module 2's first chapter: 88 frames,
+  77 to 80 a reading (the cap is 125); twelve Taps, one count by taps, seven choices (none sets a flag), three Counts and
+  six take-aways, the dream. **Decisions 53 to 55 bind it**: 53 (the maths, a Spanish-speaking friend, the words easy to
+  change) is why it has a Counts warm-up, a take-aways lesson, `PC.words` and Spanish; 54 (her own apprentice) is why
+  Glintstar gives Chispapaw to her; 55 (her word for a spread, «¡Desagrupo!», at chapter 13's first spread) is why no line
+  here names a spread. **Spanish is the chapter's one engine feature**, as the spec's section 6 designs it, chapter 10's
+  and 11's precedent: no new interaction (a Spanish line is a balloon, a Spanish count is a skip, an echo is a set key),
+  **the save unchanged** (version 2, no new field, no new flag), and nothing of it reached by any line of chapters 1 to
+  11, `PC.warrior` or the kit's own lines. Built in three owners (cats, sets, Spanish), then the story builder, on main
+  after the take-aways kit and book two; then a review in six lenses and its skeptics.
+  - *The brief's fifteen calls* (`docs/chapters/12-a-spark-at-the-hedge.brief.md`, each with its reason; call 9 is decision
+    54): (1) day 1, the day after the ceremony, waking at noon, the moon at dusk 16 and never named, frost coming and
+    chapter 13's; (2) module 1's last thread paid in one screen, "Yesterday, after your Counts, both Clans carried their
+    prey home from the stash." ("after", not "while you sat": her Warrior Counts may have been another day, decision 49),
+    Sloshbank's word, the weasels' tunnel filled; (3) Glintstar's frost-time store in the dry den under the Old Bridge,
+    five hundred by the full moon, its count hers, "five squares" Tallyheart's; (4) Waffles learns the name in two
+    screens and keeps {petname}; (5) Chispa at the hedge, a pointed cream coat, blue eyes, a collar and bell, counting the
+    Clan in Spanish as our cat once watched through the glass, «Galleta» to her Tall Ones; (6) the vouching, three lines,
+    no flag; (7) she names herself, "Chispa. It means spark.", Glintstar says "Chispapaw.", no typed name; (8) toms and
+    she-cats read alike, no two cats touch; (9) the mentor, decision 54, written so the alternative changes only those
+    screens; (10) the lesson side by side, Chispa never correcting her; (11) sunset at the store, 175 − 42 = 133, and
+    Riffle's fresh badger track as the hook; (12) bedtime, the paw thing in Chispa's Spanish, the grey tom unnamed; (13)
+    Spanish, eight words a line, its English on the same screen, Latin American, never aloud on the mini; (14) no optional
+    scene, no new flag, `specialty`, `petname`, `ch2Stone` and `ch10Best` a line each; (15) her book's page in book two,
+    "{name}{ending}'s First Frost-Time", the store drawn at 133.
+  - *The story and spec* (2026-11-07; the story's *For us* and the spec's section 9 have every call with its reason): the
+    story in two critique rounds, a verify round and a third editor's round (Draft v0.4), the spec one critic round in
+    four lenses (v0.2), the kit's review taking two of its asks into the kit (no `NO_SPREAD`; a twin never takes one of
+    the chapter's answers), v0.3 recording the build. **Module 2's chapter 12 entry** says "yesterday, after her Counts"
+    (the verify's skips 0 and 13, decision 49). Section 9's 33 calls in short: Spanish travels as marks in the text («…»,
+    the gloss on the next line), so one change in the lettering and one in the speech reach every page; a whole Spanish
+    line is tokens only, its English made by the engine, so no story information is in Spanish only; `PC.words` is a file
+    of its own, module 2's one table; Read to me says the Spanish in the Spanish voice, then its English, and with no
+    Spanish voice the English alone; the voice by locale (es-US, es-MX, other Latin American, es-ES last) and name, never
+    a novelty voice; Chispa and Chispapaw in the English voice, respelled for speech only; the gloss upright, a whispered
+    balloon's English upright; the warm-up's echo follows whatever line the answer earned and waits for Next; the take
+    echo is a set key, never the kit's `o.echo` hook (no empty echo room); the paw thing a skip with `lang: 'es'`; Count
+    the store with Chispapaw's «¡A contar!» and one echo a round; the store a new camera on the bridge, the kit's picture
+    at one fixed scale and top, so 133 lies where 175 lay; the Hollow's plan, glow and quick marks hollow options in one
+    fixed box, her square round like a cookie; the hedge the garden's side with a third spot; a memory panel for "You
+    watched this Clan through the glass" and the mutter as chapter 1's own shot; the choices' replies on option frames
+    that meet again; Chispapaw's look a preset of her own, `collar: false` ready for chapter 13; the camp, the hedge and
+    the balcony by `day`; her labels "The little cat" until named; the teaser "Chapter 13: The Hunter's Crouch"; the book
+    page English only; the kit's school words before the worked example's tens line; three build owners; the store never
+    drawn while carried; every take frame `intro: false`; the grown-ups corner names the Spanish voice; Chispapaw in the
+    player's old nest (the picture only); a cat named Chispa accepted, her own name never respelled; no spreading talk
+    before chapter 13; the store's problem `teach: 'none'` for the pointer only; cats carry mice; `E.VERSION` at the ship.
+  - *The sets owner's* (`build-sets/notes.md`): the Hollow's box a step back (x 770, y 820, 196 × 56, not the spec's y 850 to
+    900), so neither cat's shadow lies on the plan or the marks; the plan draws its own edges and glow over the kit's
+    picture (the kit's strokes vanish at that scale); `hedge-right` at x 1562 (at 1548 a crouching Chispapaw touched
+    Tallyheart); the store at k 0.54, the largest that clears both front cats (every store of module 2's story fits; 999
+    would be cropped at its foot); each set of quick marks on its own patch of smoothed sand (no pebble read as a dot);
+    the day looks read right, so no `morning` fallback. Chapters 1 to 11 draw as they did (the `<ch12-fingerprint>`).
+  - *The Spanish owner's* (`build-spanish/notes.md`): `E.sayAs` skips the cat's Clan name and warrior name as well as her
+    name and pet name (a cat named Chispa stays herself); a ¡ or ¿ goes inside the marks only with its ! or ? after the same
+    token; the Spanish voice kept once found, a missing one looked up again, its rate 0.9 of the speaker's; a Counts prompt
+    may be a Spanish line (designed for chapter 21's ferry and the Spanish-asked Tricky Counts, unused here);
+    `PC.debug.spanish` builds each screen on the test cat and saves nothing.
+  - *The story builder's* (`story/notes.md`): the lineups of the midday count, the vouching and the naming settled by probe;
+    the bank with `drag: false`, as every chapter after the second; f077's Tallyheart a step nearer than the nests, at the
+    close-up's edge (behind them her head ran out of the picture); {Murmur}chime lying on f004; Chispapaw facing right on
+    her bounce (f032), so its motion lines trail clear of our cat; {Murmur}chime sitting to admire the leaf on f056. The
+    spec's "76 − 42 on has the column's name alone" was not what the kit does (a set's first two problems of her own keep
+    full lines, the kit's call 18), so 475 − 132 is the first with the name alone; the test pins the engine.
+  - *The review's round* (2026-11-08; `~/potomac-crossing-work/ch12/review.json`, 23 confirmed findings, several the same
+    fault seen by more than one reviewer, each fixed once at its root; notes and probes in `ch12/integrate-r1/`):
+    1. **f041's last two balloons open f042** (five findings): with Aa on its four balloons ran Back and Next 43px under a
+       1080 x 720 screen and 39px under 1180 x 820 (and 48 and 26 under the review's 1080 x 700 and 1024 x 768), the
+       shared sweep's only two problems in 14,288 pages. Chispapaw's “Take-aways? Like when I take away my Tall One’s
+       socks?” and Tallyheart's “Yes! Then we count what’s left.”, the pair the story joins with “/”, now come before
+       “First, three Counts, to wake up your whiskers.”; no word changes and no frame is added (a lettered id is a
+       choice's branch, and every reading keeps its length). Measured after, in WebKit: f041 with 129px to spare at 1080 x 720
+       and 124 at 1080 x 700 with Aa on, f042 (three balloons now) 72 and 66; nothing off the screen at the six sizes, Aa off
+       or on; the shared sweep (14,360 pages) lists neither of f041's problems.
+    2. **The warm-up's echo page keeps Next on the screen** (three findings): the line she earned, Chispapaw's Spanish fact
+       with its English and her line put Next 29px under 1080 x 720 with Aa off and wholly under it with Aa on (and under
+       1180 x 820, 390 x 844 and every one of the review's four more sizes), and nothing brought it in. Next now sits at
+       the top of the keypad's place while the echo shows, as the Warrior Counts' help and the take page do, cleared at
+       the next question, with a scroll kept as a backstop; `runLesson`'s echoed branch only, which no chapter 1 to 11
+       reaches. Measured after: Next clear of the foot at every one of the eight sizes, Aa off and on (38px at 1080 x 720 with
+       Aa on, 30 at 1080 x 700); on a phone held sideways the backstop scrolls it in (72 and 157px), Tallyheart's line then
+       under the bar: the phone-sideways fallback, as the Counts keypads already scroll there. The shared sweep did not see it because `--pages` never ran the `spanish` job: **it runs it now**,
+       at its four sizes and in `--takes` at the four more, and a take page's `col-off` checks the stack's first balloon
+       as well as its last.
+    3. **The Hollow's five squares read as five** (three findings): the whole kit picture in the 196 × 56 box made the
+       five a small 2 + 2 + 1 block beside two empty mats that read as two big squares, a square about 15 CSS px at 1080 x
+       720 and 6 at 390 x 844, so "Five BIG ones." was said over the smallest thing in the picture. At a whole number of
+       hundreds the plan is its squares alone, clipped to them, in a taller box of its own (x 800 to 955, y 790 to 905),
+       each square about two and a half times the size (34 units: about 39 CSS px at 1080 x 720 and 16 at 390 x 844); a
+       glowing square keeps its dark pressed edge over the glow, so the five never run together; the Tap's target the
+       plan and at least the old box's width round it (about 92 × 54 CSS px on a phone). The quick marks keep the old box.
+    4. **58 − 23 opens with every balloon on the screen** (two findings): its prompt, Chispapaw's sigh and the column's
+       line put Tallyheart's “Now you try, all by yourself.” under the bar on a sideways iPad (wholly at 1080 x 700 with
+       Aa on). Chispapaw's “My little Tall One always sighs at homework.” is 76 − 42's prompt now; the payoff, “You didn’t
+       sigh ONCE!”, stands. (A CSS fallback that stood the stack over the panel was measured and rejected: the store's
+       picture ran off the foot at 1080 x 700.) Measured after: 58 − 23 opens unscrolled with its one balloon whole at all
+       eight sizes, Aa off and on, and no take page of the chapter shows `col-off` but the one named under *Left*.
+    5. **A take page opened while a re-sit waits says the waiting line on a page of its own**, with Next, before the
+       first column (a chapter's lesson, a store round picked up): over the column, with the keypad brought in, it lay
+       under the bar at 1080 x 720 on f048 and f059, and it is her only warning before her first take answer sets the
+       re-sit aside. The tools' `take:first` presses that Next, so it measures the worked example's first column as a
+       lesson shows it (the old joined page, which no player now sees, failed the first-balloon check). Measured after (a
+       six-answer re-sit begun, then f048's and f059's own button): the line whole from 70px down, Next between 356 and 490px, nothing
+       scrolled, at 1080 x 720, 1180 x 820, 1080 x 700 and 1024 x 768, Aa off and on.
+    6. **Chispapaw faces who she speaks to**: on f036 ("Chispapaw looks up at you, eyes shining.") she looked up at
+       Glintstar, away from our cat, at the moment she becomes her apprentice; she faces right now, up at her mentor, and
+       stays turned to her to f038c (on f037b, puzzled); on f025a and f026 she whispered "Thank you." to the old tom, her
+       back to our cat; she faces left now.
+    7. **Glintstar stays on the fountain top through the vouching** (f024 to f026): f022 has her there and f027 says
+       "Glintstar comes down from the fountain.", but the bowl stood empty for four panels.
+    8. **Glintstar faces our cat at the store** (f058 to f061): she spoke to her with her back turned (the spot faces right).
+    9. **f064 has no motion lines**: `motion` draws speed streaks behind the first cast member, so Riffle read as rushing
+       off, against "He holds very, very still."; no effect draws a twitch (a new one is a new engine key), and the rigid
+       stand and the caption carry it (the spec named the effect for "His paws twitch.": its v0.3 says so).
+    10. **The purr word keeps off every face**: a marked purrer's 'purrr' beside her back was checked only against the
+        panel's edge, so on f037a it was lettered across our cat's face and on f031 across Tallyheart's chin. It is left
+        out where it would meet another cast member's head (the whole-camp purr's own test), and the word over her head
+        leans the other way where leaning back would. **No frame of chapters 1 to 11 moved** (every frame's art compared,
+        before and after); two of the scenes test's synthetic fingerprints did (placeholder purrers at every one of the
+        hollow's twelve spots), named in the test.
+    11. **The store's rows on a phone** (one finding): at 390 x 844 they are about 2.7 CSS px at a 4.3 px pitch and cannot
+        be counted, and no art can make them so (the store already spans about 855 of the 1600 units between the front
+        cats; a camera for phones alone is a new engine key). Accepted: on a phone the store is counted in f059's take-page
+        picture (rows about 4.8 px at a 7.6 pitch) and f061 says it in words; the spec's acceptance reads 1080 x 720 and
+        820 x 1180.
+    12. **This entry and the ship docs** (two findings): `docs/build.md`'s chapter 12 section (v0.3: the sweep's Spanish
+        screens, the words file in the Files table, the hollow's options and box, the store camera's lights and scale,
+        `UI.voices`' exports, the two statements that were wrong, the tests line), `docs/continuity.md` through chapter 12
+        (the store's running count's first entry, 133 on day 1; the places table; Chispapaw; the Counts table's row 12;
+        "What chapter 13 inherits"), the spec's v0.3.
+  - *The review's lows taken*: the two Clan cats hide grins on f025c and the old tom purrs frowning on f031; Tallyheart has
+    stopped and turned back on f040a and f040b, walks ahead on every frame of the walk (f050 to f053, not only f052c), and
+    f070's sleepers are chapter 11's; "take-aways" never breaks at its hyphen in the chapter's own lines (f041, f042, f049),
+    nor a gloss's "thirty-three"; with no Spanish voice a line's English parts are one utterance ("My Tall Ones call me
+    gah-YEH-tah. It means cookie.", not three with pauses); a Spanish count's Next is brought in on a phone held
+    sideways; a store round played between chapter 12's lesson and its store never queues a twin on 133; the grown-ups
+    corner's take-aways note says what its time counts; the boards say what is drawn (f006 and f066 drop insets of
+    Thymeleaf and the badger's track, f036's bell, f041, f051b's grin); the gallery's sample puts Chispapaw in the old
+    nest; the WebKit tool's corner row focuses the leaf first (with the body focused, the hub's own handler took the
+    Enter), and a `SHEET=1` pane of `book#ch12` opens the book at that page.
+  - *Left, with reasons*: "You hop up onto the hedge-top for a better look." over our cat on the lawn (f013, a climber's
+    one line over the one picture: the spec's "built nearly"; eye-glints in the gap would be art for one path's line);
+    f077's Tallyheart at the nests' size (settled by look in the build: nearer and bigger, her head ran out of the
+    close-up); the end of 475 − 132 with Chispapaw's echo at 1080 x 720 with Aa on and at 1080 x 700 scrolls Next in and
+    lays the kit's end line 27px (14 and 42) under the bar, the echo and Next whole (spec item 9's "the keypad may sit
+    lower for that end screen only"; holding the line would put Next under the screen); on a phone held sideways with Aa
+    on, the Spanish count's Back sits under the screen once Next is scrolled in (phones are outside the rule, and Next is
+    the way on). 58 − 23 keeps its heads row at 1080 x 720 and 1180 x 820, Aa off and on; with Aa on at 1080 x 720 the
+    worked example (254 − 131) and the store's 175 − 42 drop it (and the worked example's keys go to 56px), and at 1080 x
+    700 the pages drop it: accepted and named in the spec's v0.3 (the heads' words stay in the aria-labels). The status line and the Docs list are brought up to chapter 12 and the kit.
+  - *The echo list* (Open questions, "Names and words that may still echo the books", added): a newcomer at the camp's
+    edge, watched by the Clan and vouched for (the books' shape, our words: chapter 1's own scene mirrored, "The Clan
+    mutters, the way it once muttered about you.", and Tallyheart's "Judge her by what she does, not by where she
+    sleeps."); a mentor given an apprentice at her naming (Glintstar's "Every apprentice needs a mentor." and
+    "{name}{ending}. She's yours."; decision 54, our words, none of the books' ceremony).
+  Checked against the tree before the round (the shared sweep's caches, e43a358d699fe069 and 210ab8a734dbf9b1): 1,554
+  pictures, only these 27 of chapter 12's differ (f024 to f026, f031, f036 to f038c, f040a, f040b, f044, f045, f050 to f053, f058 to
+  f061, f064, f070); of 14,360 pages no box of chapters 1 to 11 moved (the grown-ups corner's row apart, now measured on
+  the corner); the take and Spanish screens measured again after the last two changes at all eight sizes. The suite: 48
+  files, 2,002 tests, all pass.
 
 ## Open questions, waiting on Aron
 
@@ -1264,7 +1433,11 @@ Nothing here blocks the chapter being built; each chapter's own questions are in
   carve-out; whole book names are guarded from the offers, Honeymoon too); "Welcome, warrior" (two words of the books'
   ceremony, Glintstar's "Welcome, warrior. A warrior named by moonlight keeps watch…"); a night's watch after the
   naming (the books' vigil: "the watch" here, never vigil, and she may talk); and the Clan calling the new name (the
-  books' shape, our words: "{name}{ending}! {name}{ending}!"). From chapter 5's names check
+  books' shape, our words: "{name}{ending}! {name}{ending}!"). From chapter 12's story and spec (all kept): a newcomer
+  at the camp's edge, watched by the Clan and vouched for (the books' shape, our words: chapter 1's own scene mirrored,
+  "The Clan mutters, the way it once muttered about you.", and Tallyheart's "Judge her by what she does, not by where
+  she sleeps."); and a mentor given an apprentice at her naming (Glintstar's "Every apprentice needs a mentor." and
+  "{name}{ending}. She's yours."; decision 54, our words, none of the books' ceremony). From chapter 5's names check
   (`docs/chapters/05-riffles-river.md`, "New names"): "skymonster," chapter 5's loudest Clan word
   (it follows Warriors' monster and water-monster pattern); "the Needle," world.md's word for the
   white monument, drawn in chapter 5 and still never on screen (Needle is a Wings of Fire dragon);

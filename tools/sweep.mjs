@@ -6,12 +6,16 @@
  *   node tools/sweep.mjs              the art: every frame of every chapter and every Warrior Counts scene, drawn once
  *                                     at 800 x 500 (JPEG), and contact sheets of six (labelled with each frame's id and board)
  *   node tools/sweep.mjs --pages      the real page measured: every frame as it opens, every Taps page tapped through,
- *                                     every Counts keypad after the game's own scroll, the other screens and the Warrior
- *                                     Counts' screens, at 1080x720, 1180x820, 820x1180 and 390x844, Aa off and on;
+ *                                     every Counts keypad after the game's own scroll, the other screens, the Warrior
+ *                                     Counts' screens, the take-aways kit's and chapter 12's Spanish screens (run.mjs's
+ *                                     `spanish` job, since chapter 12's review: the warm-up's echo page had Next under
+ *                                     the screen and no sweep saw it), at 1080x720, 1180x820, 820x1180 and 390x844, Aa
+ *                                     off and on;
  *                                     pages/summary.json lists the problems (below)
  *   node tools/sweep.mjs --all        both
- *   node tools/sweep.mjs --takes      the take-aways kit's screens (docs/take-aways.md, section 6) at the page review's
- *                                     four more sizes, 1080x700, 1024x768, 768x1024 and 844x390, Aa off and on
+ *   node tools/sweep.mjs --takes      the take-aways kit's screens (docs/take-aways.md, section 6) and chapter 12's
+ *                                     Spanish screens at the page review's four more sizes, 1080x700, 1024x768,
+ *                                     768x1024 and 844x390, Aa off and on
  *                                     (takes/summary.json, the same problems; --pages has them at its own four sizes,
  *                                     in its screens group); with --pages or --all, both
  *   node tools/sweep.mjs --only ch12  the art of these chapters only (a comma list; `warrior` for its scenes): about
@@ -42,9 +46,10 @@
  *   sideways            the page scrolls sideways
  *   page-error          an error in the page, or a step of the run that failed
  *   said-aloud          anything said, Read to me on, or a page that was not silenced before the game booted
- *   col-off             on a take page, the column, the outlined box or the stack's last balloon not wholly between
- *                       the bar's bottom and the viewport's (measure.js's `tcol`, `tbox`, `tsb`): the controls alone
- *                       would let a page that pushed its column or its line under the bar pass
+ *   col-off             on a take page, the column, the outlined box or the stack's first or last balloon not wholly
+ *                       between the bar's bottom and the viewport's (measure.js's `tcol`, `tbox`, `tsf`, `tsb`): the
+ *                       controls alone would let a page that pushed its column or its line under the bar pass (the
+ *                       first balloon since chapter 12's review: 58 − 23 opened with it under the bar, its last in view)
  *   keypad-moved        on a take page, the keypad's box not the same at a column and the next (`@next`: the right
  *                       digit typed on the page's own keypad), so a finger could land on the wrong key
  * The screens that scroll by design (the hub, the book, My nest, her Case File, the grown-ups corner; chapter 1's
@@ -211,9 +216,12 @@ async function buildArt(root, dir, S, tree, log, only) {
 
 /* ------------------------------------------------------------------ the pages */
 const SCROLLS = { 'ch01:f011': 'the look chooser scrolls by design', 'screen:hub': 'the hub scrolls', 'screen:book': 'the book scrolls', 'screen:nest': 'My nest scrolls', 'screen:file': 'her Case File scrolls', 'screen:corner': 'the grown-ups corner scrolls' };
-const GROUPS = [['plain', ['plain']], ['taps', ['taps', 'lessons']], ['screens', ['screens', 'warrior', 'takes']]];
-// the take-aways kit's screens at the page review's four more sizes (--takes): their own folder, `takes/`
-const TAKES_RUN = { sub: 'takes', sizes: TAKE_SIZES, groups: [['takes', ['takes']]], title: 'The take-aways kit’s screens at the page review’s four more sizes' };
+// (the screens group runs chapter 12's Spanish screens too, run.mjs's `spanish` job, since chapter 12's review: the warm-up's
+// echo page had Next under the screen and only a separate run found it)
+const GROUPS = [['plain', ['plain']], ['taps', ['taps', 'lessons']], ['screens', ['screens', 'warrior', 'takes', 'spanish']]];
+// the take-aways kit's screens and chapter 12's Spanish screens at the page review's four more sizes (--takes): their own
+// folder, `takes/`
+const TAKES_RUN = { sub: 'takes', sizes: TAKE_SIZES, groups: [['takes', ['takes', 'spanish']]], title: 'The take-aways kit’s and chapter 12’s Spanish screens at the page review’s four more sizes' };
 const VARIES = /^warrior:(q|sand|notyet|afterpass)\b/;
 
 /* The pages measured (`pages/`, the four SIZES, every group), or the take screens at the review's four more sizes
@@ -256,16 +264,18 @@ function rowsOf(pages) {
   }
   return out;
 }
-/* A take page's column, outlined box and stack's last balloon (measure.js's `tcol`, `tbox`, `tsb`) not wholly between
+/* A take page's column, outlined box and stack's first and last balloons (measure.js's `tcol`, `tbox`, `tsf`, `tsb`; a
+ * one-balloon stack's first is its last, said once) not wholly between
  * the bar's bottom (`tbar`) and the viewport's: each as a line ("the column 30-180: 18px under the bar"). A take page
  * with no column shown says so. Nothing for a row that is not a take page. */
 export function colOff(r) {
   if (!r || !(r.take || r.tcol)) return [];
   const out = [], top = Math.max(0, r.tbar || 0);
   if (r.take && !r.tcol) out.push('no column (.tcol) shown on the take page');
-  for (const [k, what] of [['tcol', 'the column'], ['tbox', 'the outlined box'], ['tsb', 'the stack’s last balloon']]) {
+  for (const [k, what] of [['tcol', 'the column'], ['tbox', 'the outlined box'], ['tsf', 'the stack’s first balloon'], ['tsb', 'the stack’s last balloon']]) {
     const b = r[k];
     if (!Array.isArray(b)) continue;
+    if (k === 'tsf' && Array.isArray(r.tsb) && b.every((v, i) => v === r.tsb[i])) continue;
     const f = [];
     if (b[1] < top - 0.5) f.push((top - b[1]) + 'px under the bar');
     if (b[3] > r.vh + 0.5) f.push((b[3] - r.vh) + 'px below the fold');

@@ -183,8 +183,8 @@ const WARM = { id: 'ch12-warm', teacher: 'tallyheart', warmHard: { table: 'all',
 const T12 = (t) => ({ who: 'tallyheart', text: t });
 const TAKE = { id: 'ch12-take', op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '',
   facts: [{ a: 254, b: 131, regroup: 'show', prompt: 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.', right: [T12('One square, two rows, three loose left.')] },
-    { a: 58, b: 23, prompt: [T12('Now you try, all by yourself. Little take-aways first, then big.'), { who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
-    [76, 42], [475, 132], [368, 145]],
+    { a: 58, b: 23, prompt: [T12('Now you try, all by yourself. Little take-aways first, then big.')] },
+    { a: 76, b: 42, prompt: [{ who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] }, [475, 132], [368, 145]],
   echo: { on: [[475, 132]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] } };
 const SIETE = '«¡Siete por ocho, cincuenta y seis!»\n(Seven times eight, fifty-six!)', MEANT = 'My little Tall One says these every night! I never knew what they MEANT.';
 const TRES = '«¡Trescientos cuarenta y tres!»\n(Three hundred forty-three!)';
@@ -496,13 +496,18 @@ test('UI.voices.plan on three lists (an es-MX Paulina; novelty-only Spanish; non
   assert.deepEqual(plan([doce], 'none'), [['en', '…' + WJ + 'eleven, twelve. Twelve cats.', null, 1.02, 1.42]]);
   const f018 = C(E.fill('My Tall Ones call me {es:galleta}. It means cookie.'));
   assert.deepEqual(plan([f018], 'paulina').map((r) => r.slice(0, 3)), [['en', 'My Tall Ones call me', 'Samantha'], ['es', 'Galleta', 'Paulina'], ['en', '. It means cookie.', 'Samantha']]);
-  assert.deepEqual(plan([f018], 'novelty').map((r) => r.slice(0, 2)), [['en', 'My Tall Ones call me'], ['en', 'gah-YEH-tah'], ['en', '. It means cookie.']], 'a name: its respelling');
+  // (with no Spanish voice a line's English parts in a row are one utterance, its punctuation closed up: three in one voice
+  // paused between them, the third starting at a full stop; chapter 12's review)
+  assert.deepEqual(plan([f018], 'novelty').map((r) => r.slice(0, 2)), [['en', 'My Tall Ones call me gah-YEH-tah. It means cookie.']], 'a name: its respelling');
   const f027 = C(E.fill('{es:galleta}.'));
   assert.deepEqual(plan([f027], 'paulina').map((r) => r.slice(0, 2)), [['es', 'Galleta']], 'no utterance of "." alone');
   assert.deepEqual(plan([f027], 'none').map((r) => r.slice(0, 2)), [['en', 'gah-YEH-tah']]);
   const f075 = { text: E.fill('By {es:50}, the grey tom is snoring.') };
   assert.deepEqual(plan([f075], 'paulina'), [['en', 'By', 'Samantha', 0.95, 1], ['es', 'cincuenta', 'Paulina', 0.855, 1], ['en', ', the grey tom is snoring.', 'Samantha', 0.95, 1]], 'a caption: the narrator\'s pitch and rate');
-  assert.deepEqual(plan([f075], 'novelty').map((r) => r[1]), ['By', 'fifty', ', the grey tom is snoring.']);
+  assert.deepEqual(plan([f075], 'novelty').map((r) => r[1]), ['By fifty, the grey tom is snoring.']);
+  assert.deepEqual(plan([f075], 'none'), [['en', 'By fifty, the grey tom is snoring.', null, 0.95, 1]], 'one row, the narrator\'s');
+  // two speakers' items are never joined, nor an English row to a Spanish one
+  assert.deepEqual(V.plan([f075, C(E.fill('{es:galleta}.'))], lists.none).map((r) => r.text), ['By fifty, the grey tom is snoring.', 'gah-YEH-tah']);
   // the paw thing: each tap's number, and at the last its gloss after it, or the gloss alone
   const sk = { table: 10, groups: 5, paws: 'both', teacher: 'chispapaw', lang: 'es' };
   const tapItem = (t) => { const v = E.skipView(sk, t); return C(v.gloss ? v.say + '\n(' + v.gloss + ')' : v.say); };
@@ -550,7 +555,8 @@ test('the page\'s wiring as designed: speakItems keeps its line and hands UI.voi
   assert.ok(fnSrc(UI_SRC, 'runLesson').includes("      var echoed = res.correct ? E.countsEcho(def, st, res, teacher) : null; if (echoed) res.balloons = echoed;"));
   const sk = fnSrc(UI_SRC, 'renderSkip');
   assert.ok(sk.includes("        if (sk.lang === 'es') counter.html = '<span class=\"counter words\">' + rich(v.count) + '</span>';"), '(1) the lettering');
-  assert.ok(sk.includes('      var showNext = v.done && (!!sk.done || !!v.wait);') && sk.includes("      if (v.done && (sk.done || v.wait)) { var nb = $('nextBtn'); if (nb) nb.focus({ preventScroll: true }); }"), '(2) Next and its focus');
+  assert.ok(sk.includes('      var showNext = v.done && (!!sk.done || !!v.wait);') && sk.includes("      if (v.done && (sk.done || v.wait)) {\n        var nb = $('nextBtn');") &&
+    sk.includes("        if (nb && v.wait) { var nbb = nb.getBoundingClientRect().bottom, nvh = root.innerHeight || 0; if (nvh && nbb > nvh) root.scrollBy(0, nbb - nvh + 8); }\n        if (nb) nb.focus({ preventScroll: true });"), '(2) Next and its focus (the Spanish wait brings Next in, chapter 12\'s review: a phone held sideways left it under the screen)');
   assert.ok(sk.includes("      speakItems([{ text: sk.lang === 'es' && v.gloss ? v.say + '\\n(' + v.gloss + ')' : v.say || String(v.total), who: teacher }]"), '(3) the speech');
   assert.ok(sk.includes('        if (E.skipView(sk, taps).done) { if (sk.done || E.skipView(sk, taps).wait) advance(); } else tap();'), '(4) the key handler');
   const sh = fnSrc(UI_SRC, 'renderShelf');
@@ -564,6 +570,11 @@ test('the page\'s wiring as designed: speakItems keeps its line and hands UI.voi
   assert.ok(UI_SRC.includes("  var ES_DEBUG = { echo: 1, take: 1, skip: 1, worked: 1, 'worked:tens': 1, 'try': 1, 'try:pointer': 1, store: 1 };"));
   const dbg = fnSrc(UI_SRC, 'spanishDebug');
   assert.ok(dbg.includes('var ch = PC.story && PC.story.ch12;') && !dbg.includes('persist();\n    var t'), 'the chapter\'s own sets when there; nothing saved (a Counts page\'s answer put back)');
+  // the echo page and the Spanish count keep the scroll the page made after the answer or the last tap, from a question page
+  // at the top (chapter 12's review: what a phone held sideways shows, its Next brought in); every other screen as before
+  assert.ok(dbg.includes("var t = now(), done = function (own) { renderedAt = now(); renderedPerf = perfNow(); updateBar(); if (!own) root.scrollTo(0, 0); return true; };"));
+  assert.equal((dbg.match(/done\(true\)/g) || []).length, 2, 'the echo and the count only');
+  assert.equal((dbg.match(/      root\.scrollTo\(0, 0\);\n/g) || []).length, 2, 'each from the top');
   // its inline sets are section 2's, and pass the guards
   const sets = new Function('return ' + /var ES_DEBUG_SETS = (\{[\s\S]*?\n {2}\});/.exec(UI_SRC)[1].replace(/esT\(([^)]*)\)/g, "{ who: 'tallyheart', text: $1 }"))();
   assert.deepEqual(sets['ch12-warm'].echo, WARM.echo); assert.deepEqual(sets['ch12-take'].echo, TAKE.echo);

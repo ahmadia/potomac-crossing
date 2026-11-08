@@ -1424,3 +1424,28 @@ test('15. every fixture save migrates as before, with no `takes` key; a take les
   const text = JSON.stringify(REAL) + JSON.stringify(PC.warrior || {});
   assert.ok(!text.includes('−'));
 });
+
+test('chapter 12\'s review: a store round played while a chapter with a take set is begun and not finished (between chapter 12\'s lesson and its store) queues no twin on that chapter\'s answers, its state\'s `avoid` as its lesson\'s; with none begun, or once it is finished, no `avoid` and the round as before', () => {
+  const ans = [123, 35, 34, 343, 223, 133], WITH12 = E.chapters(PC.story);
+  assert.ok(WITH12.some((s) => s.id === 'ch12'));
+  const wrongFirst = (q, c) => (q.col === 0 ? (c.digit + 1) % 10 : c.blank ? '' : c.digit);
+  let twins = 0;
+  for (let n = 0; n < 120; n++) {
+    const c = E.blankCat({ now: 1 });
+    c.takes = { log: [], rounds: n, cleanRounds: 0 };
+    const plain = E.takeRoundStart(clone(c), WITH12, 1000 + n);
+    assert.equal(plain.state.avoid, undefined, 'no chapter begun: no avoid');
+    c.chapter = 'ch12'; c.frame = 'f050';
+    const R = E.takeRoundStart(c, WITH12, 1000 + n);
+    assert.deepEqual(R.state.avoid, ans, 'chapter 12 begun: its answers');
+    assert.deepEqual(R.state.queue, plain.state.queue, 'the same problems');
+    const done = Object.assign(clone(c), { finished: Object.assign({}, c.finished, { ch12: 12 }) });
+    assert.equal(E.takeRoundStart(done, WITH12, 1000 + n).state.avoid, undefined, 'chapter 12 finished: no avoid');
+    const clock = { t: 5000 };
+    while (!T.done(R.state)) {
+      const r = answerProblem(R.state, R.def, wrongFirst, clock);
+      if (r.twin) { twins++; assert.ok(!ans.includes(r.twin.a - r.twin.b), 'round ' + (n + 1) + ': the twin ' + r.twin.a + ' − ' + r.twin.b + ' lands on one of chapter 12\'s answers'); }
+    }
+  }
+  assert.ok(twins > 300, twins + ' twins');
+});

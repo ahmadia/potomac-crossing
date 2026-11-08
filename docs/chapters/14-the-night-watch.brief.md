@@ -138,7 +138,7 @@ and the Counts kept fresh twice: the warm-up in the Hollow in the morning, the f
   picture (chapter 6's patrols of three), its right line counting guards.
 - **The run (Tricky Counts run 1), at night by the store** (call 8): **five Counts** (decision 56; the Moon Ferry's eight), Tallyheart asking, **her three hardest
   over the 54 pairs first** (the kit's cross-table keys on a story set, `warmHard: { table: 'all', at: [0, 1, 2],
-  avoid: [[3, 7], [5, 7], [10, 8]] }`: data only; the run's two echoed pairs are never her picks, so they always end the run), then the set's own. Its own five, the first three standing in for hard facts she lacks:
+  avoid: [[3, 7], [5, 7], [10, 8]] }`: data only; the run's two echoed pairs are never her picks, so they end her first asks; a missed pick's comeback may follow them), then the set's own. Its own five, the first three standing in for hard facts she lacks:
   **6 × 6, 3 × 9, 4 × 8**, then **5 × 7, 10 × 8** (two Counts' pictures to end on, so the run ends on two she knows, the
   Moon Ferry's cheer; no neighbours sharing a number, every answer new to the chapter: a subset of v1's eight, `check.txt`,
   section 4; the spec adds `alt`s). Each in its anchor

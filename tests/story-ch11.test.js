@@ -1581,6 +1581,17 @@ test('the teaser is module 2’s: “A new adventure”, the badger’s old trac
   assert.doesNotMatch(story.teaser.lines.join(' '), /\d/);
   const cat = E.blankCat({}); cat.name = 'Moon';
   assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'A new adventure', lines: story.teaser.lines, built: true, next: 'ch12' }, 'chapter 12 is built: the teaser leads to it');
+  // the real chapter 12 (A Spark at the Hedge) is what it leads to: module 2's first, the badger's track its hook too
+  assert.deepEqual([PC.story.ch12.number, PC.story.ch12.module, E.chapterHeading(PC.story.ch12)], [12, 2, 'Chapter 12: A Spark at the Hedge']);
+  assert.match(PC.story.ch12.teaser.lines[0], /a fresh badger track/, 'the old track’s answer: a fresh one, chapter 13’s');
+  // her book's first volume keeps the teaser after the Ceremony's page until she has read chapter 12, then drops it (it
+  // never promises what she has read)
+  const S = E.chapters(PC.story).filter(s => (s.number || 1) <= 12);
+  const reader = E.blankCat({ now: 1 }); reader.name = 'Moon'; reader.ending = 'heart';
+  S.filter(s => s.number <= 11).forEach((s, i) => { reader.finished[s.id] = i + 1; });
+  assert.equal(E.buildFullBook(reader, S).teaser.title, 'A new adventure');
+  reader.finished.ch12 = 12;
+  assert.equal(E.buildFullBook(reader, S).teaser, null, 'read: book one no longer promises it');
   // chapter 10's teaser stays as it is, and now has its chapter (the spec's section 10)
   assert.deepEqual(ch10.teaser, { title: 'The Warrior Ceremony', lines: ['Pass your Warrior Counts, and the Clan will gather for your name.'] });
   assert.deepEqual(E.teaser(ch10, cat, PC.story), { title: 'The Warrior Ceremony', lines: ch10.teaser.lines, built: true, next: 'ch11' });

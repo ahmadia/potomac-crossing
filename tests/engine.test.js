@@ -2721,7 +2721,8 @@ test('teasers: every chapter in app/story has one (a title and at least one line
     const cat = E.blankCat({ now: 1 });
     cat.name = 'Fern';
     all.forEach(s => { if (s.number <= story.number) cat.finished[s.id] = 1; });
-    const b = E.buildFullBook(cat, all);
+    // (chapter 12: a module 2 chapter's page and teaser are in book two, its own volume)
+    const b = E.buildFullBook(cat, all, E.moduleOf(story));
     assert.equal(b.pages[b.pages.length - 1].id, story.id);
     assert.equal(b.teaser.title, E.fill(t.title, cat));
     assert.deepEqual(b.teaser.lines, lines.map(l => E.fill(l, cat)));

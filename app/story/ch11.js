@@ -916,7 +916,8 @@
       ]
     },
 
-    // module 2's hook, on the hub once the chapter is finished (“A new adventure is coming soon”)
+    // module 2's hook, on the hub once the chapter is finished; with chapter 12 built it leads there (E.teaser's `next`),
+    // and her book's first volume drops it once she has read chapter 12
     teaser: {
       title: 'A new adventure',
       lines: ['Out on Gathering Island, an old badger track lies in the mud. Who made it? Another day.']

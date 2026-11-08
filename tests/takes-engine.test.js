@@ -17,7 +17,9 @@ const V1SAVES = require('./fixtures/v1-saves.json');
 const stub = require('./fixtures/takes-stub.js');
 
 const clone = (o) => JSON.parse(JSON.stringify(o));
-const REAL = E.chapters(PC.story);
+// chapters 1 to 11 (chapter 12, 2026-11-07: the real chapter 12 is built now; the stand-ins of tests/fixtures/takes-stub.js
+// play chapters 12 to 21 here, as they did before it, so these pins stay module 1's and the stand-ins' own)
+const REAL = E.chapters(PC.story).filter((s) => (s.number || 1) < 12);
 const STUB = stub();
 const ALLCH = REAL.concat(STUB.list);
 const CH = stub.CH;

@@ -24,6 +24,8 @@
   var art = PC.art || (PC.art = {});
 
   var WORLD_W = 1600, WORLD_H = 1000, TENTHS = 0.625;
+  // (chapter 13: the first frost's rime, silver-white: the camp's `frost`)
+  var RIME = '#F6FBFF';
   var serial = 0;
 
   // ------------------------------------------------------------------ numbers and colours
@@ -795,7 +797,7 @@
     var P0 = [x, y], P1 = [x + Math.cos(ang) * len * 0.55, y + Math.sin(ang) * len * 0.55];
     var P2 = [P1[0] + Math.cos(ang + bend) * len * 0.5, P1[1] + Math.sin(ang + bend) * len * 0.5];
     var stem = 'M' + n(P0[0]) + ' ' + n(P0[1]) + 'Q' + n(P1[0]) + ' ' + n(P1[1]) + ' ' + n(P2[0]) + ' ' + n(P2[1]);
-    var leaves = '', pairs = Math.max(6, Math.round(len / 25));
+    var leaves = '', tips = '', pairs = Math.max(6, Math.round(len / 25));
     for (var i = 1; i <= pairs; i++) {
       var t = 0.1 + 0.88 * i / pairs, q = bez2(P0, P1, P2, t);
       var tx = 2 * (1 - t) * (P1[0] - P0[0]) + 2 * t * (P2[0] - P1[0]), ty = 2 * (1 - t) * (P1[1] - P0[1]) + 2 * t * (P2[1] - P1[1]);
@@ -803,10 +805,13 @@
       var l = len * (lw || 0.2) * Math.pow(1 - t * 0.85, 0.85) * (0.85 + r() * 0.3);
       for (var side = -1; side <= 1; side += 2) {
         var nx = -ty * side, ny = tx * side, dx = nx * 0.8 + tx * 0.55, dy = ny * 0.8 + ty * 0.55;
-        leaves += leafD(q[0], q[1], l, Math.atan2(dy, dx), l * 0.22);
+        var lf = leafD(q[0], q[1], l, Math.atan2(dy, dx), l * 0.22);
+        leaves += lf;
+        // (chapter 13: the outer leaflets, for the rime on a frond's tip: fernClump's `rime`)
+        if (t > 0.68) tips += lf;
       }
     }
-    return { stem: stem, leaves: leaves };
+    return { stem: stem, leaves: leaves, tips: tips };
   }
 
   // Would a frond (as frond() draws it) reach into any of the boxes [x0, y0, x1, y1]?
@@ -825,9 +830,11 @@
 
   // o.avoid: boxes no frond may cross (a cast member's head and body); a frond that would is
   // shortened, or left out when too little of it is left.
+  // (chapter 13: o.rime, the first frost: every leaflet edged silver-white and the tips of the fronds white with rime,
+  // the green still under it; left out, the clump as it always was)
   function fernClump(S, x, y, size, o) {
     o = o || {};
-    var p = S.pal, seed = o.seed || seedOf('fern' + x + ':' + y), r = rng(seed), cnt = o.count || 7, st = '', lv = '';
+    var p = S.pal, seed = o.seed || seedOf('fern' + x + ':' + y), r = rng(seed), cnt = o.count || 7, st = '', lv = '', tp = '';
     var spread = o.spread || 2.3, lean = o.lean || 0, avoid = o.avoid && o.avoid.length ? o.avoid : null;
     for (var i = 0; i < cnt; i++) {
       var a = -Math.PI / 2 + lean + (cnt === 1 ? 0 : (i / (cnt - 1) - 0.5) * spread) + (r() - 0.5) * 0.2;
@@ -841,11 +848,14 @@
       } else {
         f = frond(x + (r() - 0.5) * size * 0.08, y, size * (0.68 + r() * 0.38), a, bend, r, o.lw || 0.2);
       }
-      st += f.stem; lv += f.leaves;
+      st += f.stem; lv += f.leaves; tp += f.tips;
     }
     var col = o.color || p.leafMid, off = Math.max(1.5, size * 0.012);
-    return path(lv, o.rim || p.rim, { transform: 'translate(' + n(-off * 0.4) + ' ' + n(-off) + ')', opacity: o.rimOp == null ? 0.9 : o.rimOp }) +
+    var out = path(lv, o.rim || p.rim, { transform: 'translate(' + n(-off * 0.4) + ' ' + n(-off) + ')', opacity: o.rimOp == null ? 0.9 : o.rimOp }) +
       path(lv, col) + stroke(st, mix(col, '#1A140E', 0.35), Math.max(1.2, size * 0.011));
+    if (o.rime) out += g(stroke(lv, RIME, Math.max(1.6, size * 0.014), { 'stroke-linejoin': 'round', opacity: 0.95 }) + path(tp, RIME, { opacity: 0.82 }) +
+      stroke(st, RIME, Math.max(0.8, size * 0.005), { opacity: 0.7 }), { 'data-rime': 'fern' });
+    return out;
   }
 
   function bramble(S, x0, x1, base, top, o) {
@@ -898,9 +908,10 @@
       path(berries, o.berry || '#4A2A4E') + path(blossoms, o.blossom || '#FFF6EA', { opacity: 0.92 });
   }
 
+  // (chapter 13: o.rime returns only the first frost on the same stones: their tops and their moss pale with rime)
   function stonePath(S, P, o) {
     o = o || {};
-    var p = S.pal, r = rng(o.seed || 3), s = '', moss = '', hi = '', y0 = o.y0 || 560, y1 = o.y1 || 1000;
+    var p = S.pal, r = rng(o.seed || 3), s = '', moss = '', hi = '', y0 = o.y0 || 560, y1 = o.y1 || 1000, rime = '';
     var total = 0, seg = [];
     for (var i = 1; i < P.length; i++) { var L = Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]); seg.push(L); total += L; }
     var at = 0;
@@ -911,10 +922,12 @@
       var dep = clamp((y - y0) / (y1 - y0), 0, 1), rx = (o.size || 30) * lerp(0.45, 1.25, dep) * (0.8 + r() * 0.4);
       var sx = x + (r() - 0.5) * rx * 1.2, sy = y + (r() - 0.5) * rx * 0.3;
       s += ell(sx, sy + rx * 0.1, rx, rx * 0.4, p.stoneDark) + ell(sx, sy, rx * 0.96, rx * 0.36, mix(p.stone, p.stoneLight, r() * 0.5));
+      if (o.rime) rime += ell(sx, sy - rx * 0.04, rx * 0.86, rx * 0.28, RIME, { opacity: 0.62 });
       hi += 'M' + n(sx - rx * 0.6) + ' ' + n(sy - rx * 0.12) + 'Q' + n(sx) + ' ' + n(sy - rx * 0.38) + ' ' + n(sx + rx * 0.55) + ' ' + n(sy - rx * 0.16);
       if (r() < 0.55) moss += blob(sx + (r() - 0.5) * rx * 0.8, sy + rx * 0.05, rx * (0.3 + r() * 0.3), rx * 0.14, 7, r, 0.3, 0.3);
       at += rx * 1.75;
     }
+    if (o.rime) return g(rime + path(moss, RIME, { opacity: 0.7 }) + stroke(hi, '#FFFFFF', 2.6, { opacity: 0.85 }), { 'data-rime': 'stones' });
     return s + stroke(hi, p.rim, 2, { opacity: 0.55 }) + path(moss, p.moss, { opacity: 0.9 });
   }
 
@@ -1590,7 +1603,7 @@
   // ------------------------------------------------------------------ CAMP
 
   function drawCampWide(S) {
-    var p = S.pal, back = '', front = '', r = rng(101), moonAge = campMoonAge(S);
+    var p = S.pal, back = '', front = '', r = rng(101), moonAge = campMoonAge(S), frost = campFrostOn(S);
     back += sky(S, 0, 0, 1600, 660, { sun: [1000, 540], sunR: 560 });
     // chapter 11: the moon, at night or dusk with `moon`, in the gap the tower at x 1050 leaves when it stands lower
     if (moonAge) back += campMoon(S, CAMP_MOON.main, moonAge);
@@ -1618,6 +1631,8 @@
     back += ell(1000, 760, 420, 90, p.rim, { opacity: 0.16 }) + ell(560, 900, 300, 60, p.rim, { opacity: 0.1 });
     back += tufts(S, 0, 1600, 640, 1000, 130, 106, p.grassNear, p.grassLight, 1);
     back += flowers(S, 0, 1600, 660, 990, 30, 107, '#FFF6EA') + flowers(S, 0, 1600, 700, 990, 14, 108, '#F2C46D');
+    // chapter 13: the first frost on the ground: the grass silvered, the ground pale with rime (campFrost)
+    if (frost) back += frostGround(S);
     // seven rain puddles, the morning after the storm (Tallyheart counted them)
     if (S.opts.puddles) back += puddles(S, [[640, 905, 64, 11], [1030, 870, 78, 12], [1170, 958, 120, 17], [410, 868, 54, 9], [870, 975, 104, 15], [530, 970, 70, 12], [1330, 846, 52, 8]], 106);
     // the back bramble arch behind the fountain
@@ -1631,29 +1646,95 @@
     back += stonePath(S, [[830, 1000], [815, 860], [800, 770]], { size: 34, seed: 111, y0: 600 }) +
       stonePath(S, [[260, 830], [450, 790], [600, 760]], { size: 26, seed: 112, y0: 600 }) +
       stonePath(S, [[1360, 840], [1180, 800], [1010, 765]], { size: 26, seed: 113, y0: 600 });
+    // (chapter 13: and the rime on the same stones and their moss)
+    if (frost) back += stonePath(S, [[830, 1000], [815, 860], [800, 770]], { size: 34, seed: 111, y0: 600, rime: true }) +
+      stonePath(S, [[260, 830], [450, 790], [600, 760]], { size: 26, seed: 112, y0: 600, rime: true }) +
+      stonePath(S, [[1360, 840], [1180, 800], [1010, 765]], { size: 26, seed: 113, y0: 600, rime: true });
     // dens under arching brambles
     back += g(denMound(S, 20, 620, 770, 410, [[190, 150, 132], [452, 128, 112]], 121), { filter: S.shadow('l') });
     back += g(denMound(S, 980, 1600, 778, 400, [[1150, 140, 122], [1436, 156, 134]], 122), { filter: S.shadow('l') });
+    // (chapter 13: a white rim of rime along the dens' tops)
+    if (frost) back += denRime(S, 20, 620, 770, 410, 121) + denRime(S, 980, 1600, 778, 400, 122);
     // the fountain
     back += g(fountain(S), { filter: S.shadow('l') });
+    // (chapter 13: a white rim on the dry fountain's edges, and the three cats' trails in the frost: `frost: 'prints'`)
+    if (frost) back += fountainRime(S);
+    if (frost === 'prints') back += frostPrints(S);
     // the crowd in front of the dens, on either side of the fountain
     if (crowd) back += crowdCats(S, CROWD.sides, CROWD.back.length);
     // ferns: middle ground
-    back += fernClump(S, 640, 790, 130, { seed: 131, count: 6 }) + fernClump(S, 960, 795, 120, { seed: 132, count: 6 }) +
-      fernClump(S, 300, 812, 120, { seed: 133, count: 6 });
+    back += fernClump(S, 640, 790, 130, { seed: 131, count: 6, rime: frost }) + fernClump(S, 960, 795, 120, { seed: 132, count: 6, rime: frost }) +
+      fernClump(S, 300, 812, 120, { seed: 133, count: 6, rime: frost });
     // and the nearer cats at the edges, among the ferns
     if (crowd) back += crowdCats(S, CROWD.near, CROWD.back.length + CROWD.sides.length);
     // fern bed where an apprentice can fall over: the bed is behind him; the fronds in front of
     // him (and the framing ferns) keep clear of his head and body
     var avoid = spotBoxes(S, 'ferns');
-    back += fernClump(S, 1440, 905, 330, { seed: 134, count: 9, spread: 2.6 });
-    S.covers.ferns = fernClump(S, 1360, 940, 200, { seed: 135, count: 5, spread: 1.6, lean: -0.15, avoid: avoid });
+    back += fernClump(S, 1440, 905, 330, { seed: 134, count: 9, spread: 2.6, rime: frost });
+    S.covers.ferns = fernClump(S, 1360, 940, 200, { seed: 135, count: 5, spread: 1.6, lean: -0.15, avoid: avoid, rime: frost });
+    // (chapter 13: a few soft glints of the frost, low on the ground and the ferns: never stars)
+    if (frost) back += frostGlints(S);
     // chapter 11: the moonlight, silver over the whole camp from the moon's side (under the cast)
     if (moonAge) back += campSilver(S, CAMP_MOON.main);
     // foreground ferns framing the corners
-    front += fernClump(S, -70, 1010, 300, { seed: 136, count: 6, spread: 1.6, lean: 0.45, avoid: avoid }) +
-      fernClump(S, 1690, 1015, 300, { seed: 137, count: 6, spread: 1.6, lean: -0.45, avoid: avoid });
+    front += fernClump(S, -70, 1010, 300, { seed: 136, count: 6, spread: 1.6, lean: 0.45, avoid: avoid, rime: frost }) +
+      fernClump(S, 1690, 1015, 300, { seed: 137, count: 6, spread: 1.6, lean: -0.45, avoid: avoid, rime: frost });
     return { back: back, over: '', front: g(front, { filter: S.shadow('m') }) };
+  }
+
+  /* Chapter 13, the camp's first frost (docs/chapters/13-the-hunters-crouch.spec.md, section 4): `frost: true` on the main
+   * composition (reveal, crowd, ferns, purr): every fern edged and tipped silver-white with rime, the green still under it
+   * (fernClump's `rime`); the grass silvered and the ground pale with it; the mossy path stones and their moss pale
+   * (stonePath's `rime`); a white rim along the bramble dens' tops and the dry fountain's edges; a few soft glints low on
+   * the ground. Cold and bright: white over the light, never grey or dark, whatever the light. `frost: 'prints'` adds the
+   * dawn patrol's three trails of small pawprints, pressed green through the white, side by side from the dens on the right
+   * across the camp toward the entrance at the left, many prints a trail (never a number to count), in keep as one box.
+   * Off (left out or false) nothing of it is drawn and every camp picture is as it was. <g data-rime="…"> round each part;
+   * the trails <g data-prop="frost-prints" data-trails="3" data-box>. */
+  function campFrostOn(S) { var f = S.opts && S.opts.frost; return f === true ? true : f === 'prints' ? 'prints' : false; }
+  function frostGround(S) {
+    var p = S.pal, silver = mix(p.grassLight, '#FFFFFF', 0.72);
+    return g(rect(0, 610, 1600, 390, S.linU([[0, RIME, 0.42], [0.45, RIME, 0.3], [1, RIME, 0.38]], 0, 610, 0, 1000)) +
+      tufts(S, 0, 1600, 640, 1000, 130, 106, silver, '#FFFFFF', 1), { 'data-rime': 'ground' });
+  }
+  function denRime(S, x0, x1, base, top, seed) {
+    // the den mound's own outline (denMound's first shape, from the same seed), white at its top and clear by a third down
+    var d = mound(x0, x1, base, top, 11, rng(seed), 0.32, 0.22, 0.3);
+    return g(path(d, S.linU([[0, RIME, 0.92], [0.16, RIME, 0.62], [0.36, RIME, 0]], 0, top, 0, base)), { 'data-rime': 'den' });
+  }
+  function fountainRime(S) {
+    return g(ell(800, 697, 236, 50, 'none', { stroke: RIME, 'stroke-width': 9, opacity: 0.95 }) + ell(800, 701, 210, 40, 'none', { stroke: RIME, 'stroke-width': 4, opacity: 0.7 }) +
+      ell(800, 486, 105, 21, 'none', { stroke: RIME, 'stroke-width': 7, opacity: 0.95 }) + ell(790, 487, 74, 10, RIME, { opacity: 0.55 }) +
+      rect(762, 688, 76, 6, RIME, { rx: 3, opacity: 0.9 }) + rect(772, 602, 56, 5, RIME, { rx: 2.5, opacity: 0.9 }) + rect(774, 528, 52, 5, RIME, { rx: 2.5, opacity: 0.9 }), { 'data-rime': 'fountain' });
+  }
+  var FROST_GLINTS = [[180, 905, 7], [455, 842, 5], [612, 968, 8], [705, 806, 5], [905, 948, 7], [1068, 866, 6], [1245, 975, 8], [1290, 838, 5], [1475, 900, 7], [1385, 760, 6], [330, 790, 5], [995, 742, 5]];
+  function frostGlints(S) {
+    var s = '';
+    FROST_GLINTS.forEach(function (q, i) {
+      s += g(path(sparkleD(0, 0, q[2]), '#FFFFFF', { opacity: 0.85, 'class': 'pcs-tw', style: 'animation-delay:-' + (i * 0.55).toFixed(2) + 's' }), { transform: tr(q[0], q[1]) });
+    });
+    return g(s, { 'data-rime': 'glints' });
+  }
+  // The three trails (FROST_TRAILS): each a curve from the dens on the right to the entrance side, a print every step
+  // along it, left and right of the line by turns (a cat's walk), smaller further back; pressed through the white, so the
+  // grass's own green shows in each print.
+  var FROST_TRAILS = [[[1330, 812], [1010, 846], [612, 904]], [[1352, 840], [1020, 876], [634, 932]], [[1374, 868], [1030, 906], [656, 960]]];
+  function frostPrints(S) {
+    var p = S.pal, green = mix(p.grass, p.grassNear, 0.5), d = '', x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    FROST_TRAILS.forEach(function (T, ti) {
+      for (var t = 0.015, i = 0; t < 1; i++) {
+        var q = bez2(T[0], T[1], T[2], t), q2 = bez2(T[0], T[1], T[2], Math.min(1, t + 0.01));
+        var tx = q2[0] - q[0], ty = q2[1] - q[1], tl = Math.sqrt(tx * tx + ty * ty) || 1, side = i % 2 ? 1 : -1;
+        var k = lerp(0.72, 1.12, clamp((q[1] - 800) / 170, 0, 1)), pr = 4.6 * k, px = q[0] - ty / tl * side * 6.5 * k, py = q[1] + tx / tl * side * 4.5 * k;
+        d += pawPrint(px, py, pr);
+        x0 = Math.min(x0, px - pr * 2); y0 = Math.min(y0, py - pr * 2.4); x1 = Math.max(x1, px + pr * 2); y1 = Math.max(y1, py + pr * 1.4);
+        // a step a little under a body length, shorter further back (the trail's length is about 780 world units)
+        t += 21 * k / 780 + (ti * 0.0007);
+      }
+    });
+    (S.keep = S.keep || []).push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+    return g(path(d, '#FFFFFF', { opacity: 0.5, transform: 'translate(0 1.4)' }) + path(d, green, { opacity: 0.92 }),
+      { 'data-prop': 'frost-prints', 'data-trails': '3', 'data-box': [x0, y0, x1, y1].map(function (v) { return n(v); }).join(' ') });
   }
 
   /* Chapter 11, the camp by moonlight (docs/chapters/11-the-warrior-ceremony.spec.md, section 4): `moon: n`, the moon n
@@ -2210,6 +2291,61 @@
     return g(s, { 'data-prop': 'quick', 'data-sets': sets });
   }
 
+  /* Chapter 13, the spread in the sand (docs/chapters/13-the-hunters-crouch.spec.md, section 4): `spreadMarks` on `lesson` and
+   * `sand`, in a keep box of its own on the sand between our cat's nose and Tallyheart's paws (HOLLOW_SPREAD: with chapter
+   * 12's staging, Tallyheart sitting at `tree` facing left from x 971, our cat sitting at HOL_YOU facing right to x 766; the
+   * sand from y 786, `lesson`'s foot at y 915), clear of the claw marks and of all three cats. It is the sand chapter 12's
+   * HOLLOW_STORE and HOLLOW_PLAN lie on (there is no other sand between the two cats), so it never shares a picture with
+   * them: with `store` or `quick` asked, the spread is not drawn (chapter 13 never asks for both). The kit's quick marks
+   * (PC.art.kit.quick, ground 'sand'), each set on its own patch of smoothed sand, scaled to its share of the box by
+   * PC.art.quickMarks.size(o), which counts the struck line and the frame of ten:
+   *   'standing'  Tallyheart's forty-three, four lines and three dots;
+   *   'spread'    the same forty-three spread: one line crossed out and ten new dots in a scratched frame under the three
+   *               old ones, five and five ({ tens: 3, ones: 13, crossed: { lines: 1 }, fresh: { dots: 10 } });
+   *   'two'       her spread forty-three and ours beside it, right to left as chapter 12's quick: hers a step further back
+   *               at the right (nearest the tree), ours a step nearer at the left (nearest our cat), so each is as big as
+   *               the box allows (side by side they would come to about a third of a single one's size).
+   * 'standing' and 'spread' are drawn at one scale (the spread's fit) with their lines in one place, so the lines stand
+   * still from f034 to f035 while one is struck and the new dots come. Left out or false: nothing, and every hollow picture
+   * is as it was. <g data-prop="spread-marks" data-marks data-box> round <g data-spread="tallyheart|you" data-box> sets. */
+  var HOLLOW_SPREAD = { x: 772, y: 786, w: 194, h: 128, padX: 8, padY: 4, gap: 10, kMax: 1 };
+  var SPREAD_43 = { tens: 4, ones: 3, ground: 'sand' }, SPREAD_43X = { tens: 3, ones: 13, crossed: { lines: 1 }, fresh: { dots: 10 }, ground: 'sand' };
+  function spreadSets(v) {
+    if (v === 'standing') return [{ who: 'tallyheart', mo: SPREAD_43 }];
+    if (v === 'spread') return [{ who: 'tallyheart', mo: SPREAD_43X }];
+    if (v === 'two') return [{ who: 'tallyheart', mo: SPREAD_43X }, { who: 'you', mo: SPREAD_43X }];
+    return [];
+  }
+  // where each set lies: its middle (cx, cy), its scale k and its size (w, h) in world units
+  function spreadLayout(v) {
+    var B = HOLLOW_SPREAD, sets = spreadSets(v);
+    if (!sets.length || typeof art.quickMarks !== 'function' || typeof art.quickMarks.size !== 'function') return [];
+    var bw = B.w - 2 * B.padX, bh = B.h - 2 * B.padY, xs = art.quickMarks.size(SPREAD_43X), x0 = B.x + B.padX, y0 = B.y + B.padY;
+    if (!(xs.w > 0 && xs.h > 0)) return [];
+    if (sets.length === 1) {
+      // the spread's fit, at her paws (the box's right), its lines where the standing set's lines are
+      var k = Math.min(bw / xs.w, bh / xs.h, B.kMax), sz = art.quickMarks.size(sets[0].mo), left = x0 + bw - xs.w * k;
+      return [{ who: sets[0].who, mo: sets[0].mo, k: k, w: sz.w * k, h: sz.h * k, cx: left + sz.w * k / 2, cy: B.y + B.h / 2 }];
+    }
+    // two: hers at the box's top right, ours at its bottom left, apart in depth
+    var k2 = Math.min(bw / xs.w, (bh - B.gap) / (2 * xs.h), B.kMax), w = xs.w * k2, h = xs.h * k2;
+    return [{ who: 'tallyheart', mo: sets[0].mo, k: k2, w: w, h: h, cx: x0 + bw - w / 2, cy: y0 + h / 2 },
+      { who: 'you', mo: sets[1].mo, k: k2, w: w, h: h, cx: x0 + w / 2, cy: y0 + bh - h / 2 }];
+  }
+  function hollowSpread(S, o) {
+    var L = spreadLayout(o.spreadMarks), p = S.pal, s = '', x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    if (!L.length) return '';
+    var patch = mix(p.sandLight, '#FFFFFF', 0.3), grad = S.radB('spreadpatch', [[0, patch, 0.9], [0.72, patch, 0.85], [1, patch, 0]]);
+    L.forEach(function (q) {
+      var mb = [q.cx - q.w / 2 - 2, q.cy - q.h / 2 - 3, q.cx + q.w / 2 + 2, q.cy + q.h / 2 + 3];
+      s += g(ell(q.cx, q.cy + 1, q.w / 2 + 8, q.h / 2 + 7, grad) + art.kit.quick(q.cx, q.cy, q.k, q.mo),
+        { 'data-spread': q.who, 'data-box': mb.map(function (v) { return n(v); }).join(' ') });
+      x0 = Math.min(x0, mb[0]); y0 = Math.min(y0, mb[1]); x1 = Math.max(x1, mb[2]); y1 = Math.max(y1, mb[3]);
+    });
+    (S.keep = S.keep || []).push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+    return g(s, { 'data-prop': 'spread-marks', 'data-marks': o.spreadMarks, 'data-box': [x0, y0, x1, y1].map(function (v) { return n(v); }).join(' ') });
+  }
+
   function drawHollow(S) {
     var p = S.pal, o = S.opts, back = '', front = '', r = rng(151);
     if (o.heap) { S.spots = HEAP; S.anchorMap = anchorsFor(S); }
@@ -2310,6 +2446,8 @@
     }
     // chapter 12: the store's plan laid flat on the sand, or the quick marks scratched there, in one fixed box (`lesson`, `sand`)
     if (S.cam === 'lesson' || S.cam === 'sand') back += hollowPlan(S, o);
+    // chapter 13: the spread in the sand, in its own box (`lesson`, `sand`), never on a picture with the store or the quick marks
+    if ((S.cam === 'lesson' || S.cam === 'sand') && o.spreadMarks && !storeNum(o.store) && !(Math.round(+o.quick || 0) > 0)) back += hollowSpread(S, o);
     if (o.heap) back += ell(800, 796, 226, 20, p.shade, { opacity: 0.2, 'data-prop': 'heap' });
     // front: grass lip of the hollow
     front += g(tufts(S, 0, 1600, 960, 1010, 40, 160, p.grassNear, p.grassLight, 2.2), { filter: S.shadow('s') });
@@ -3068,7 +3206,37 @@
       back += dr;
     }
     if (S.opts.drips) back += denDripsInside(S);
+    // chapter 13: Chispapaw's collar and bell in a hollow in the moss beside the nest at `nest` (denCollar)
+    if (S.opts.collar === true) for (i = 0; i < N.length; i++) if (N[i][0] === 'nest') back += denCollar(S, N[i][1], N[i][2], N[i][3]);
     return { back: back, over: '', front: front };
+  }
+
+  /* Chapter 13, the collar (docs/chapters/13-the-hunters-crouch.spec.md, section 4): `collar: true` on the `inside`
+   * composition: Chispapaw's collar, narrow and red with its tiny round gold bell (cats.js's colours for it on her),
+   * lying curled in a little hollow pressed in the moss just in front of the nest at `nest`, at its right (the side away
+   * from the grey tom at `sleeper-1`, toward the doorway's light), below the nest's front rim, so whoever lies in the nest
+   * is clear of it; drawn a little larger than on her, so it is plainly a collar and a bell on a phone. In keep.
+   * <g data-prop="collar" data-box>. Left out or false: nothing, and every den picture is as it was. */
+  var COLLAR13 = { band: '#d8363a', edge: '#8c1f24', bell: '#f2c230', bellLine: '#9c6b12', shine: '#fff3c4', rx: 40, ry: 14, bellR: 12 };
+  function denCollar(S, x, y, k) {
+    var p = S.pal, C = COLLAR13, cx = x + 140 * k * 0.72, cy = y + 62 * k, s = '';
+    var at = function (deg) { var a = deg * Math.PI / 180; return [cx + Math.cos(a) * C.rx, cy + Math.sin(a) * C.ry]; };
+    // the hollow pressed in the moss, and the collar's soft shadow in it
+    s += ell(cx, cy + 3, C.rx + 17, C.ry + 8, mix(p.moss, '#000000', 0.38), { opacity: 0.75 }) + ell(cx, cy + 1, C.rx + 12, C.ry + 5, mix(p.moss, '#000000', 0.22));
+    s += stroke('M' + n(cx - C.rx - 14) + ' ' + n(cy + 8) + 'Q' + n(cx) + ' ' + n(cy + C.ry + 20) + ' ' + n(cx + C.rx + 14) + ' ' + n(cy + 8), mix(p.moss, '#FFFFFF', 0.18), 3, { opacity: 0.7 });
+    s += ell(cx + 2, cy + 5, C.rx + 2, C.ry + 1, p.shade, { opacity: 0.35 });
+    // the band, curled round with its two ends a little apart at the back left: dark edge, then the red
+    var a0 = at(200), a1 = at(510), band = 'M' + n(a0[0]) + ' ' + n(a0[1]) + 'A' + n(C.rx) + ' ' + n(C.ry) + ' 0 1 1 ' + n(a1[0]) + ' ' + n(a1[1]);
+    s += stroke(band, C.edge, 11, { 'stroke-linecap': 'round' }) + stroke(band, C.band, 6.6, { 'stroke-linecap': 'round' });
+    var hl0 = at(225), hl1 = at(300);
+    s += stroke('M' + n(hl0[0]) + ' ' + n(hl0[1] - 1) + 'A' + n(C.rx) + ' ' + n(C.ry) + ' 0 0 1 ' + n(hl1[0]) + ' ' + n(hl1[1] - 1), '#FFFFFF', 1.6, { opacity: 0.55, 'stroke-linecap': 'round' });
+    // the bell at the front, resting on the moss
+    var bx = cx + 4, by = cy + C.ry + 4, br = C.bellR;
+    s += ell(bx + 1.5, by + br * 0.8, br * 0.95, br * 0.32, p.shade, { opacity: 0.4 }) + circ(bx, by, br, C.bell, { stroke: C.bellLine, 'stroke-width': 2 }) +
+      stroke('M' + n(bx - br * 0.62) + ' ' + n(by + br * 0.28) + 'H' + n(bx + br * 0.62), C.bellLine, 1.6, { 'stroke-linecap': 'round' }) + circ(bx - br * 0.36, by - br * 0.38, br * 0.3, C.shine);
+    var box = [cx - C.rx - 17, cy - C.ry - 8, cx + C.rx + 17, by + br + 4];
+    (S.keep = S.keep || []).push({ x: box[0], y: box[1], w: box[2] - box[0], h: box[3] - box[1] });
+    return g(s, { 'data-prop': 'collar', 'data-box': box.map(function (v) { return n(v); }).join(' ') });
   }
 
   // A water drop with its point up; (x, y) is the bottom of the drop.
@@ -4128,7 +4296,13 @@
       anchors: {
         main: {
           entrance: A(270, 935, 300), 'fountain-top': A(800, 492, 190, 'left', { elev: true }), 'fountain-foot': A(520, 836, 240),
-          'crowd-left': A(390, 784, 225), 'crowd-right': A(1215, 790, 225, 'left'), ferns: A(1400, 915, 280, 'left'), center: A(830, 912, 285)
+          'crowd-left': A(390, 784, 225), 'crowd-right': A(1215, 790, 225, 'left'), ferns: A(1400, 915, 280, 'left'), center: A(830, 912, 285),
+          // chapter 13, the hunter's crouch: ferns-1 our cat, teaching, and ferns-2 Chispapaw in her crouch, front left and front
+          // middle, both facing right toward the ferns at the right, with room before her nose for the pounce; Tallyheart at
+          // crowd-right, behind and off to the side. On `crowd` (on `ferns` three cannot sit clear of one another: crowd-right
+          // is behind the front of that close camera). Placed (`placed`: never a ground anchor for the depth scale, nor a spot
+          // given to a cast member who names none), so every camp picture without them is as it was
+          'ferns-1': A(760, 935, 270, 'right', { placed: true }), 'ferns-2': A(1000, 935, 270, 'right', { placed: true })
         },
         fountain: { 'fountain-top': A(800, 598, 440, 'left', { elev: true }) },
         entrance: { entrance: A(800, 820, 500) },
@@ -4145,7 +4319,9 @@
       // chapter 11: moon, a number, the moon that many evenings old in the camp's sky at night or dusk (15: one evening past
       // full), with its silver light, and in the main composition the tower at x 1050 lower while it shows; left out, no moon
       // (CAMP_MOON)
-      opts: { puddles: [true, false], rainFountain: [true, false], crowd: [true, false], remedy: ['none', 'four', 'mixed'], moon: 'number' }, defaults: {}
+      // chapter 13: frost, the first frost on the main composition (reveal, crowd, ferns, purr): true, or 'prints' with the dawn
+      // patrol's three trails of pawprints toward the entrance (campFrost); left out or false, none
+      opts: { puddles: [true, false], rainFountain: [true, false], crowd: [true, false], remedy: ['none', 'four', 'mixed'], moon: 'number', frost: [false, true, 'prints'] }, defaults: {}
     },
     hollow: {
       label: 'the Training Hollow', tod: 'golden', todMap: { sunset: 'golden' }, draw: drawHollow,
@@ -4188,7 +4364,11 @@
         // pc-tap-squares">; quick, 1 to 3, the quick way to scratch a count (a square, a line, a dot, by PC.art.kit.quick),
         // right to left: Tallyheart's at her paws, then Chispapaw's (her square round, like a cookie: the marks' `round`),
         // then ours. Every one off (left out) by default; never store and quick on one frame (store wins)
-        store: 'number', storeGlow: [false, 'hundreds', 'tens'], tap: ['none', 'squares'], quick: [0, 1, 2, 3] }, defaults: { marks: 0, compare: false }
+        store: 'number', storeGlow: [false, 'hundreds', 'tens'], tap: ['none', 'squares'], quick: [0, 1, 2, 3],
+        // chapter 13, on `lesson` and `sand`, in a keep box of its own (HOLLOW_SPREAD): spreadMarks, Tallyheart's forty-three
+        // ('standing'), spread ('spread'), and hers and ours side by side ('two'), by PC.art.kit.quick; left out or false,
+        // none; never with store or quick on one frame
+        spreadMarks: [false, 'standing', 'spread', 'two'] }, defaults: { marks: 0, compare: false }
     },
     den: {
       label: "the apprentices' den", tod: 'night', draw: drawDen,
@@ -4248,7 +4428,9 @@
       // (denMoonAged takes any age from 8; the kit's moon draws 15 to 27 waning, lit on the left): nothing new is drawn
       opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8, 13, 14, 15, 16], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
         bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true], glass: [false, true], read: 'number',
-        miststone: [false, true, 'flash'], nextNest: [false, true] }, defaults: { weather: 'clear' }
+        miststone: [false, true, 'flash'], nextNest: [false, true],
+        // chapter 13: collar, Chispapaw's collar and bell in a hollow in the moss beside the nest at `nest` (`inside`; denCollar)
+        collar: [false, true] }, defaults: { weather: 'clear' }
     },
     sky: {
       label: 'the Sky River', tod: 'night', draw: drawSky,
@@ -4423,7 +4605,10 @@
     // Chapter 8's weasels, Snip and Snatch, "half your size": sitting up tall on their hind legs (`up`, a weasel's
     // look-out, and what an unknown pose draws), half to two thirds as tall as our cat sits, measured against her
     snip: { ref: 'player', pose: 'up', by: 'tall', min: 0.5, max: 0.65 },
-    snatch: { ref: 'player', pose: 'up', by: 'tall', min: 0.5, max: 0.65 }
+    snatch: { ref: 'player', pose: 'up', by: 'tall', min: 0.5, max: 0.65 },
+    // Chapter 13's groundhog, "something BIG": sitting up, our cat's sitting height to a little more (bigger than
+    // Chispapaw, never a giant); a drawing already inside the band is left as drawn
+    groundhog: { ref: 'player', pose: 'sit', by: 'tall', min: 1.0, max: 1.15 }
   };
   // Chapter 10: a grown Mistscale (`mistscale`, Mama and the eldest) is no cat and no dragonet: huge, her face out of the
   // mist (about two cats tall at the island's `mama` and `eldest`) and the rest of her in it. Her spot's height is her
@@ -4530,9 +4715,11 @@
   // red light's pole (only his tail tip shows: a shadow would give him away, as Sleet's would), and none for Sprinkle in
   // the air or the water (`glide` low over the sand, `fly` at the bank's `air`, `splash` in the shallows): this branch
   // reads no anchor's `air`, so the bank draws the sand's shadows itself, and nothing dark lies in the water under her.
-  var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1, coil: 1, sleet: 1, hail: 1, snip: 1, snatch: 1, mizzle: 1 },
+  // Chapter 13: the groundhog (its shadow under its round body), and none when it lies in its doorway (`doze`, `wake`,
+  // `sleep`: the grove's `doorway`, its lower half under the leaves).
+  var OWN_SHADOW = { sprinkle: 1, reynard: 1, squall: 1, coil: 1, sleet: 1, hail: 1, snip: 1, snatch: 1, mizzle: 1, groundhog: 1 },
     NO_SHADOW = { coil: { stone: 1 }, sleet: { hidden: 1, tail: 1 }, hail: { peek: 1 }, snip: { peek: 1, swim: 1 }, snatch: { peek: 1, swim: 1 }, squall: { hidden: 1 },
-      sprinkle: { glide: 1, fly: 1, splash: 1 }, reynard: { swim: 1 } };
+      sprinkle: { glide: 1, fly: 1, splash: 1 }, reynard: { swim: 1 }, groundhog: { doze: 1, wake: 1, sleep: 1 } };
   // Chapter 10: none for Reynard, Snip or Snatch swimming off the island (`swim`: in the water, chapter 5's rule), none for
   // Sprinkle leaning down from above (`lookdown` at an `elev` spot: the island's `paws` `above`, her claws holding the
   // pebble over our cat's paws, nothing under her but air; chapter 5's `lookdown` on the mud keeps its shadow), and none

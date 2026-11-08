@@ -1207,3 +1207,76 @@ test('chapter 12: a Spanish balloon *[es]* with its Spanish and its gloss, a {es
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+/* Chapter 13: the art's new names in words (docs/chapters/13-the-hunters-crouch.spec.md, section 8, "Drawn now"): the camp's
+ * first frost and the dawn patrol's trails, the two spots by the ferns, the spread forty-three in the Hollow's sand, Chispapaw's
+ * collar in the den, GroveClan's big dig by the old oak (its close-up and the marks' close-up, its spots, the marks and the two
+ * Taps), the groundhog in its poses and a curled cat's tail straight up; and the --check-words list of chapter 13's names,
+ * checked before the art lands. The grove's `marks` are worded before the Hollow's claw marks: always one long line and eight
+ * little pokes, never a claw mark, a dot, a count or a number. */
+const WORDS13 = { sets: {
+  camp: { anchors: ['ferns-1', 'ferns-2'], opts: { frost: [false, true, 'prints'] } },
+  hollow: { opts: { spreadMarks: [false, 'standing', 'spread', 'two'] } },
+  den: { opts: { collar: [false, true] } },
+  grove: { cams: ['dig', 'marks'], anchors: ['oak-near', 'door-1', 'door-2', 'doorway', 'dig-front', 'marks-1', 'marks-2', 'dig-elder', 'dig-fern'],
+    opts: { dig: [false, true], marks: [false, 'leaves', 'bare'], tap: ['none', 'leaves', 'marks'] } } },
+  cast: ['groundhog'], otherPoses: { groundhog: ['doze', 'wake', 'sit', 'yawn', 'sleep'] } };
+test('chapter 13: the camp’s frost and its trails, the spots by the ferns, the spread forty-three, the collar in the den, the dig by the old oak and its close-ups, spots, marks and Taps, the groundhog, a curled tail straight up; the grove’s marks never claw marks or a number; its names checked; chapters 1 to 12 and warrior.md unchanged', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-storyboard-'));
+  try {
+    const more = path.join(tmp, 'words13.json');
+    fs.writeFileSync(more, JSON.stringify(WORDS13));
+    const run = spawnSync(process.execPath, [TOOL, '--check-words', more], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr);
+    const c = (who, pose, at, x) => Object.assign({ who, pose, at }, x || {});
+    const fx13 = { id: 'fx13', number: 13, title: 'The Hunter’s Crouch (fixture)', module: 2, start: 'f001', names: { player: '{name}{ending}' }, cards: {}, counts: {},
+      frames: {
+        f001: { board: 'B', scene: { set: 'camp', cam: 'reveal', fx: ['morning'], opts: { frost: 'prints' } }, caption: ['Behind you, three cats’ pawprints march across the white.'], next: 'f002' },
+        f002: { board: 'B', scene: { set: 'camp', cam: 'ferns', fx: ['morning'], opts: { frost: true }, cast: [c('player', 'sit', 'ferns-1'), c('chispapaw', 'crouch', 'ferns-2', { tailUp: true, collar: false })] }, next: 'f003' },
+        f003: { board: 'B', scene: { set: 'hollow', cam: 'lesson', fx: ['morning'], opts: { marks: 10, glow: 'auto', spreadMarks: 'spread' } }, next: 'f004' },
+        f004: { board: 'B', scene: { set: 'hollow', cam: 'lesson', fx: ['morning'], opts: { marks: 10, glow: 'auto', spreadMarks: 'two' } }, next: 'f005' },
+        f005: { board: 'B', scene: { set: 'den', cam: 'inside', fx: ['night'], opts: { weather: 'clear', collar: true }, cast: [c('chispapaw', 'curl', 'nest', { asleep: true, collar: false, tailUp: true })] }, next: 'f006' },
+        f006: { board: 'B', scene: { set: 'grove', cam: 'oak', opts: { dig: true }, cast: [c('groveclan', 'sit', 'oak-near', { variant: 1 })] }, next: 'f007' },
+        f007: { board: 'B', scene: { set: 'grove', cam: 'dig', opts: { marks: 'leaves' }, cast: [c('groundhog', 'doze', 'doorway', { mood: 'sleepy' }), c('player', 'crouch', 'door-1'), c('chispapaw', 'crouch', 'door-2', { collar: false })] }, next: 'f008' },
+        f008: { board: 'B', scene: { set: 'grove', cam: 'dig', opts: { marks: 'leaves' }, cast: [c('groundhog', 'yawn', 'doorway')] }, say: [{ who: 'groundhog', name: 'The round brown thing', text: 'What do I LOOK like? A BADGER?' }], next: 'f009' },
+        f009: { board: 'B', scene: { set: 'grove', cam: 'dig', opts: { marks: 'leaves', tap: 'leaves' }, cast: [c('player', 'crouch', 'marks-1'), c('chispapaw', 'crouch', 'marks-2', { collar: false })] },
+          scratch: { tap: 'leaves', prompt: '**Tap** to brush the leaves away.', label: 'Brush the leaves away.', next: 'f010' } },
+        f010: { board: 'B', scene: { set: 'grove', cam: 'marks', opts: { marks: 'bare', tap: 'marks' } }, scratch: { tap: 'marks', prompt: '**Tap** to look one more time.', label: 'Look one more time.', next: 'f011' } },
+        f011: { board: 'B', scene: { set: 'grove', cam: 'dig', opts: { marks: 'bare' }, cast: [c('groundhog', 'sleep', 'doorway', { mood: 'happy' }), c('groveclan', 'sit', 'dig-elder', { variant: 1 }), c('groveclan', 'sit', 'dig-fern', { variant: 2 }), c('player', 'crouch', 'dig-front')] }, end: true }
+      } };
+    const file = path.join(tmp, 'fx13.js');
+    fs.writeFileSync(file, 'globalThis.PC = globalThis.PC || {}; PC.story = PC.story || {}; PC.story.fx13 = ' + JSON.stringify(fx13) + ';\nmodule.exports = PC;\n');
+    const md = generate(file, tmp);
+    const scene = (id) => (md.split('\n### ').find((b) => b.startsWith(id)) || '').split('\n').find((l) => l.startsWith('**Scene.**')) || '';
+    [['f001', 'the first frost, at first light: every fern edged and tipped silver-white with rime'], ['f001', 'three trails of small pawprints pressed green through the white'],
+      ['f002', 'at the front left, near the ferns'], ['f002', 'at the front middle, toward the ferns, with room before the nose for a pounce'],
+      ['f003', 'the same forty-three, spread: one line crossed out, and ten new dots in a scratched frame under the three old ones, five and five'],
+      ['f004', 'Tallyheart’s spread forty-three at her paws and yours beside it, nearest you'],
+      ['f005', 'Chispapaw’s collar, narrow and red with its tiny round gold bell, lying curled in a little hollow pressed in the moss beside the nest'], ['f005', 'the tail rising straight up out of the curl, its tip soft'],
+      ['f006', 'the big dig at the old oak’s roots, on the trunk’s sunny right side'], ['f006', 'on the ground in front of the old oak’s trunk, clear of the dig and the doorway'],
+      ['f007', 'Grove: the big dig at the old oak’s roots in GroveClan’s woods'], ['f007', 'Camera: the dig close, at cat height'], ['f007', 'the groundhog (round and brown'],
+      ['f007', 'curled up round in its doorway, its back and bottom toward us, the face tucked down out of sight'], ['f007', 'in the small doorway itself, its lower half under the drift of fallen leaves'],
+      ['f007', 'in front of the small doorway, crouched facing it'], ['f007', 'beside the first at the doorway, a step back, facing it'],
+      ['f008', 'sitting up, an enormous round yawn, eyes squeezed shut (no teeth)'], ['f009', 'the fallen leaves over the marks are what she taps'], ['f009', 'at the front right by the flat earth, facing the marks'],
+      ['f010', 'Camera: close on the flat bare earth beside the dig'], ['f010', 'the marks on the flat earth are what she taps'],
+      ['f011', 'curled round, side on, its face showing, eyes shut, a little smile: asleep'], ['f011', 'at the back right, facing the dig'], ['f011', 'at the back left, half hidden by a fern'], ['f011', 'at the front middle, before the dig, facing it']
+    ].forEach(([id, w]) => assert.ok(scene(id).includes(w), id + ': ' + w + '\n' + scene(id)));
+    assert.ok(md.includes('- **The round brown thing (The groundhog)**: “What do I LOOK like? A BADGER?”'), 'its balloon, labelled as the story labels it');
+    // the grove's marks: one long line and eight little pokes, half under the leaves or plain; never claw marks, dots, a count or a number
+    for (const [id, v] of [['f007', 'half under fallen leaves'], ['f011', 'all of them plain']]) {
+      const s = scene(id), m = s.slice(s.indexOf('beyond the dig'));
+      assert.ok(m.startsWith('beyond the dig, on the flat bare earth') && m.includes('one long line and eight little pokes scratched in the earth') && m.includes(v), id + ': ' + m);
+      assert.doesNotMatch(s, /claw mark|\bdots?\b|count|\d|eighteen|thirty/i, id + ': never a claw mark, a dot, a count or a number');
+    }
+    // the spread's words never say "rows" (a row is a ten: module 2's amendment 1)
+    for (const id of ['f003', 'f004']) { const s = scene(id); assert.doesNotMatch(s.slice(s.search(/the same forty-three|Tallyheart’s spread/)), /\brows?\b/, id); }
+    for (const id of ['f007', 'f008', 'f009', 'f010', 'f011']) assert.ok(!scene(id).includes('claw marks on the trunk'), id + ': not the Hollow’s words');
+    // chapters 1 to 12 and the Warrior Counts: none of chapter 13's words (every storyboard regenerates byte for byte: the first test)
+    fs.readdirSync(path.join(ROOT, 'docs/storyboard')).filter((f) => /^(ch(0\d|1[012])|warrior)\.md$/.test(f)).forEach((f) => {
+      const s = fs.readFileSync(path.join(ROOT, 'docs/storyboard', f), 'utf8');
+      assert.ok(!/the first frost|eight little pokes|the big dig|the groundhog|out of the curl, its tip soft|forty-three, spread/.test(s), f);
+    });
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});

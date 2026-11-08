@@ -6919,7 +6919,7 @@ test('chapter 10’s data beside the engine: the mist stone (a gift), the speake
   assert.deepEqual([Sp.pitch('otter', 1), Sp.pitch('otter', 2), Sp.pitch('otter')], [0.68, 1.05, 0.68], 'chapter 2 and 5’s otters as they were');
   assert.deepEqual([1, 2, 3, 4].map(v => Sp.pitch('reedclan', v)), [1, 1.12, 1, 1]);
   assert.deepEqual([1, 2].map(v => Sp.pitch('groveclan', v)), [0.78, 1]);
-  assert.deepEqual(Object.keys(Sp.NAMES).slice(Object.keys(Sp.NAMES).indexOf('groveclan') + 1), ['mistscale', 'chispapaw'], 'one new name, the last (chapter 12 appends chispapaw after it)');
+  assert.deepEqual(Object.keys(Sp.NAMES).slice(Object.keys(Sp.NAMES).indexOf('groveclan') + 1), ['mistscale', 'chispapaw', 'groundhog'], 'one new name, the last (chapter 12 appends chispapaw after it, chapter 13 groundhog)');
 });
 
 /* The page's side of the pick, pinned as text where the suite has no DOM (as tests/sw.test.js pins the other screens). */

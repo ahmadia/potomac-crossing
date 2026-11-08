@@ -61,7 +61,8 @@ test('PC.words: the kit\'s fourteen English words (E.TAKE_WORDS unchanged), the 
   const W = PC.words;
   assert.deepEqual(E.TAKE_WORDS, { loose: 'loose', row: 'row', rows: 'rows', Row: 'Row', square: 'square', squares: 'squares', ones: 'ones', tens: 'tens', hundreds: 'hundreds',
     takeAway: 'take away', TakeAway: 'Take away', spread: 'spread', Spread: 'Spread', OnesFirst: 'Ones first' });
-  assert.deepEqual(W.es, { gatos: { es: 'gatos', en: 'cats' }, por: { es: 'por', en: 'times' }, aContar: { es: '¡A contar!', en: 'Let’s count!' }, galleta: { es: 'Galleta', en: 'cookie', say: 'gah-YEH-tah' } });
+  assert.deepEqual(W.es, { gatos: { es: 'gatos', en: 'cats' }, por: { es: 'por', en: 'times' }, aContar: { es: '¡A contar!', en: 'Let’s count!' }, galleta: { es: 'Galleta', en: 'cookie', say: 'gah-YEH-tah' },
+    resta: { es: '¡La resta!', en: 'Take-aways!' }, noAlcanza: { es: '¡No alcanza!', en: 'Not enough!' }, desagrupo: { es: '¡Desagrupo!', en: 'Breaking it into groups!' } });
   assert.deepEqual(W.sayAs, [['Chispapaw', 'Cheespa-paw'], ['Chispa', 'Cheespa']]);
   assert.deepEqual(E.esWords(), W.es);
   assert.ok(!E.chapters(PC.story).some((s) => s.id === 'words'));
@@ -624,6 +625,38 @@ test('UI.voices.plan on three lists (an es-MX Paulina; novelty-only Spanish; non
     { text: '7  times  8', lang: 'en', voice: 'Samantha', rate: 0.95, pitch: 0.85 }]);
   OLD_LINES.slice(0, 4000).forEach((s) => { const t = E.fill(s, CATS[0]), r = V.plan([{ text: t }], [SAMANTHA]); assert.deepEqual(r.map((x) => x.text), oldPlain(t.replace(/<[^>]+>/g, ' ')).trim() ? [oldPlain(t.replace(/<[^>]+>/g, ' ')).trim()] : []); });
   assert.deepEqual([U.speakers.pitch('chispapaw'), U.speakers.rate('chispapaw'), U.speakers.NAMES.chispapaw], [1.42, 1.02, 'Chispapaw']);
+});
+
+test('chapter 13’s three words (stored as lettered): «¡No alcanza!» and «¡Desagrupo!» as whole lines with their English, «¡La resta!» in an English line said "Take-aways!" with no Spanish voice; E.esEnglish finds all three; {Es:…} on them a no-op; never Spanish in an English voice', () => {
+  // f033 and f035: a whole Spanish line, its English under it
+  assert.equal(E.esLine('{Es:noAlcanza}'), '«¡No alcanza!»\n(Not enough!)');
+  assert.equal(E.esLine('{Es:desagrupo}'), '«¡Desagrupo!»\n(Breaking it into groups!)');
+  // f030: a token opening an English line, lettered between the marks
+  const f030 = 'THAT’S what take-aways are! My little Tall One’s homework this frost-time!';
+  assert.equal(E.fill('{Es:resta} ' + f030), '«¡La resta!» ' + f030);
+  // E.esEnglish (case kept, on the table's `es`): what Read to me says for each with no Spanish voice
+  assert.equal(E.esEnglish('¡La resta!'), 'Take-aways!');
+  assert.equal(E.esEnglish('¡Desagrupo!'), 'Breaking it into groups!');
+  assert.equal(E.esEnglish('¡No alcanza!'), 'Not enough!');
+  // each opens "¡L", "¡N" or "¡D": {Es:…} changes nothing, {es:…} the same
+  for (const k of ['resta', 'noAlcanza', 'desagrupo']) {
+    assert.equal(E.fill('{Es:' + k + '}'), E.fill('{es:' + k + '}'), k);
+    assert.equal(E.esLine('{Es:' + k + '}'), E.esLine('{es:' + k + '}'), k);
+  }
+  assert.deepEqual(E.speechParts(E.fill('{Es:resta} ' + f030)), [{ text: '¡La resta!', lang: 'es', en: 'Take-aways!' }, { text: ' ' + f030, lang: 'en' }]);
+  // the voices: with no Spanish voice f030 is one English row, "Take-aways! THAT’S …"; with one, the Spanish in it
+  const lists = { paulina: NOVELTY.concat([PAULINA, SAMANTHA]), novelty: NOVELTY.concat([SAMANTHA]), none: [] };
+  const C = (text) => ({ text, who: 'chispapaw' }), items = [C(E.fill('{Es:resta} ' + f030)), C(E.esLine('{Es:noAlcanza}')), C(E.esLine('{Es:desagrupo}'))];
+  assert.deepEqual(V.plan([items[0]], lists.none).map((r) => [r.lang, r.text]), [['en', 'Take-aways! ' + f030]]);
+  assert.deepEqual(V.plan([items[0]], lists.paulina).map((r) => [r.lang, r.text, r.voice]), [['es', '¡La resta!', 'Paulina'], ['en', f030, 'Samantha']]);
+  assert.deepEqual(V.plan([items[1]], lists.none).map((r) => r.text), ['Not enough!']);
+  assert.deepEqual(V.plan([items[2]], lists.novelty).map((r) => r.text), ['Breaking it into groups!']);
+  const spanish = new Set();
+  items.forEach((it) => E.speechParts(it.text).filter((p) => p.lang === 'es').forEach((p) => spanish.add(p.text)));
+  Object.keys(lists).forEach((k) => V.plan(items, lists[k]).forEach((r) => {
+    if (r.lang === 'en') assert.ok(![...spanish].some((w) => r.text.includes(w)), k + ': Spanish in an English voice: ' + r.text);
+    else assert.equal(r.voice, 'Paulina', k);
+  }));
 });
 
 /* ------------------------------------------------------------------ the page's wiring, pinned as text */

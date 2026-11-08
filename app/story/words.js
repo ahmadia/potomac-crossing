@@ -13,7 +13,12 @@
       gatos: { es: 'gatos', en: 'cats' },
       por: { es: 'por', en: 'times' },
       aContar: { es: '¡A contar!', en: 'Let’s count!' },
-      galleta: { es: 'Galleta', en: 'cookie', say: 'gah-YEH-tah' }
+      galleta: { es: 'Galleta', en: 'cookie', say: 'gah-YEH-tah' },
+      // chapter 13: each stored as lettered (E.esEnglish matches an entry's `es` with case kept), so «¡La resta!» in an
+      // English line is said "Take-aways!" with no Spanish voice; «¡Desagrupo!» is Lissa's word for a spread (decision 55)
+      resta: { es: '¡La resta!', en: 'Take-aways!' },
+      noAlcanza: { es: '¡No alcanza!', en: 'Not enough!' },
+      desagrupo: { es: '¡Desagrupo!', en: 'Breaking it into groups!' }
     },
     // English speech only, never lettered: whole words, the longer first
     sayAs: [['Chispapaw', 'Cheespa-paw'], ['Chispa', 'Cheespa']]

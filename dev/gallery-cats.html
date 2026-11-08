@@ -1181,6 +1181,49 @@
         '<div class="wide"><svg viewBox="0 0 900 260" style="background:#efd6a2;border-radius:12px">' + q(225, 130, 2, {}) + q(675, 130, 2, { round: true }) + '</svg></div>';
       return h;
     }],
+    // chapter 13: the groundhog (every pose, every mood, at one scale beside our cat and Chispapaw), the quick marks' spread
+    // (`crossed` and `fresh`: the hollow's forty-three), and a curled cat's raised tail (`tailUp` with `curl`)
+    groundhog: ['The groundhog (chapter 13): the first of the winter sleepers, round and brown, never a tooth; the spread forty-three; Chispapaw curled with her tail up', function (S) {
+      var GH_MOOD = { doze: 'sleepy', wake: 'stern', sit: 'neutral', yawn: 'neutral', sleep: 'happy' };
+      var h = '<h3>every pose (its mood in the story), facing right; sleep is what an unknown pose draws (and its page in the book)</h3><div class="row">';
+      V.otherPoses.groundhog.forEach(function (p) { h += cell(A.character('groundhog', { pose: p, mood: GH_MOOD[p] }), p + ' · ' + GH_MOOD[p], S * 1.5); });
+      h += '</div><div class="row">';
+      V.otherPoses.groundhog.forEach(function (p) { h += cell(A.character('groundhog', { pose: p, mood: GH_MOOD[p], facing: 'left' }), p + ' ← · ' + GH_MOOD[p], S * 1.5); });
+      h += '</div><h3>its six moods in the story: neutral, sleepy, stern (its grumpy look), shout, sniff, happy (sit, then wake)</h3><div class="row">';
+      ['neutral', 'sleepy', 'stern', 'shout', 'sniff', 'happy'].forEach(function (m) { h += cell(A.character('groundhog', { pose: 'sit', mood: m }), 'sit · ' + m, S * 1.2); });
+      h += '</div><div class="row">';
+      ['neutral', 'sleepy', 'stern', 'shout', 'sniff', 'happy'].forEach(function (m) { h += cell(A.character('groundhog', { pose: 'wake', mood: m, facing: 'left' }), 'wake ← · ' + m, S * 1.2); });
+      h += '</div><h3>every mood (sit)</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('groundhog', { pose: 'sit', mood: m }), m, S); });
+      h += '</div><h3>asleep: true and asleep: ’half’ (sit, wake); sleep stern and sniff (a grumpy mouth asleep)</h3><div class="row">';
+      [[{ pose: 'sit', asleep: true }, 'sit · asleep'], [{ pose: 'sit', asleep: 'half', mood: 'happy' }, 'sit · half asleep'], [{ pose: 'wake', asleep: true, mood: 'stern' }, 'wake · asleep'],
+        [{ pose: 'sleep', mood: 'stern' }, 'sleep · stern'], [{ pose: 'sleep', mood: 'sniff', facing: 'left' }, 'sleep ← · sniff'], [{ pose: 'yawn', mood: 'sleepy', facing: 'left' }, 'yawn ← · sleepy']].forEach(function (it) {
+        h += cell(A.character('groundhog', it[0]), it[1], S * 1.2);
+      });
+      // one scale: our cat sitting and Chispapaw beside it sitting up, then our cat lying beside it curled
+      var k = 0.62, stage = '<svg viewBox="0 0 1100 230" width="100%" style="max-width:1100px">';
+      function put(r, x) { stage += '<g transform="translate(' + (x - r.w * k / 2) + ',' + (220 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; }
+      var LOOK = { fur: 'grey', marking: 'none', eyes: 'green', sex: 'she' };
+      put(A.character('player', { pose: 'sit', mood: 'wonder', look: LOOK }), 80); put(A.character('chispapaw', { pose: 'sit', mood: 'wonder' }), 190);
+      put(A.character('groundhog', { pose: 'sit', mood: 'stern', facing: 'left' }), 330); put(A.character('groundhog', { pose: 'yawn', facing: 'left' }), 480);
+      put(A.character('player', { pose: 'lie', mood: 'kind', look: LOOK }), 640); put(A.character('groundhog', { pose: 'sleep', mood: 'happy', facing: 'left' }), 800);
+      put(A.character('groundhog', { pose: 'doze', mood: 'sleepy' }), 980);
+      h += '</div><h3>one scale: our cat and Chispapaw sitting, the groundhog sitting up and yawning (our cat’s sitting height, a little more: scenes.js’s SIZE_BAND), our cat lying and the groundhog curled, dozing</h3><div class="stage">' + stage + '</svg></div>';
+      // the hollow's spread: Tallyheart's forty-three standing, the same spread (a line crossed, ten new dots in a frame,
+      // five and five), and hers and ours side by side; then one big
+      var sq = function (cx, cy, sc, o) { return A.quickMarks(cx, cy, sc, Object.assign({ ground: 'sand' }, o)); };
+      var STAND = { tens: 4, ones: 3 }, SPREAD = { tens: 3, ones: 13, crossed: { lines: 1 }, fresh: { dots: 10 } };
+      h += '<h3>the quick marks’ crossed and fresh: forty-three standing, the same spread (a line struck through and dim, ten new dots in a scratched frame, five and five), two side by side</h3>' +
+        '<div class="wide"><svg viewBox="0 0 1100 200" style="background:#efd6a2;border-radius:12px">' + sq(170, 100, 1, STAND) + sq(520, 100, 1, SPREAD) + sq(850, 100, 0.55, SPREAD) + sq(1010, 100, 0.55, SPREAD) + '</svg></div>' +
+        '<div class="wide"><svg viewBox="0 0 900 300" style="background:#efd6a2;border-radius:12px">' + sq(450, 150, 2, SPREAD) + '</svg></div>';
+      h += '<h3>tailUp with curl: the tail straight up out of the curl, its tip soft (Chispapaw asleep, her collar off and on; our cat; Tallyheart); then curl as it was</h3><div class="row">';
+      [['chispapaw', { pose: 'curl', mood: 'sleepy', asleep: true, tailUp: true, collar: false }, 'chispapaw · curl · tailUp · collar: false'], ['chispapaw', { pose: 'curl', mood: 'sleepy', asleep: true, tailUp: true, facing: 'left' }, 'chispapaw · curl · tailUp ←'],
+        ['player', { pose: 'curl', mood: 'sleepy', asleep: true, tailUp: true, tap: 'tail', look: LOOK }, 'our cat · curl · tailUp · tap: tail'], ['tallyheart', { pose: 'curl', mood: 'sleepy', tailUp: true }, 'tallyheart · curl · tailUp'],
+        ['chispapaw', { pose: 'curl', mood: 'sleepy', asleep: true, collar: false }, 'chispapaw · curl']].forEach(function (it) {
+        h += cell(A.character(it[0], it[1]), it[2], S * 1.5);
+      });
+      return h + '</div>';
+    }],
     sand: ['Sand tallies', function (S) {
       var h = '';
       [[3, 1, 2], [1, 5, 3], [6, 1, 6], [9, 1, 4], [1, 10, 7], [4, 2, 5]].forEach(function (g) {

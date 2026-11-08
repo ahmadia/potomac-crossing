@@ -511,11 +511,12 @@
   // variant), and Sleet, the eldest dragonet; chapter 8 Hail, the speckled dragonet, and Snip and
   // Snatch, the weasels; chapter 9 Thymeleaf, CrystalClan's medicine cat, Mizzle, the last dragonet,
   // GroveClan's cats (by variant) and the little garden spider in Thymeleaf's den; chapter 10 the grown
-  // Mistscales (by variant: 1 Mama, 2 the eldest); chapter 12 Chispapaw, our cat's apprentice (a cat)
+  // Mistscales (by variant: 1 Mama, 2 the eldest); chapter 12 Chispapaw, our cat's apprentice (a cat); chapter 13 the
+  // groundhog, the first of the winter sleepers (not a cat)
   var CAST_IDS = ['player', 'tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth',
     'riffle', 'otter', 'dog', 'sprinkle', 'murmurchime', 'reynard', 'squall', 'patience', 'puddle', 'wisp',
     'coil', 'sloshbank', 'reedclan', 'sleet', 'hail', 'snip', 'snatch', 'thymeleaf', 'mizzle', 'groveclan', 'spider', 'mistscale',
-    'chispapaw'];
+    'chispapaw', 'groundhog'];
   var OTHER_POSES = { sparrow: ['perch', 'fluffed'], moth: ['fly'], tallone: ['stand', 'water', 'set-dish'] };
 
   var PRESETS = {
@@ -788,7 +789,10 @@
     sit: [[50, 176], [36, 138], [30, 70], [54, 60]],
     stand: [[46, 124], [36, 90], [32, 44], [56, 36]],
     walk: [[46, 126], [36, 92], [32, 46], [56, 38]],
-    crouch: [[54, 154], [42, 112], [38, 58], [62, 48]]
+    crouch: [[54, 154], [42, 112], [38, 58], [62, 48]],
+    // chapter 13: a curled sleeper's tail rising straight up out of the curl from behind her haunch, its tip soft (a gentle
+    // lean at the top, never curled over: "Chispapaw’s tail twitches in her sleep. Straight up."). Off unless asked
+    curl: [[70, 166], [62, 126], [60, 78], [67, 58]]
   };
 
   // chapter 5, `reach: true` on a crouching cat (her paw held over a tiny print in the marsh mud,
@@ -6853,6 +6857,277 @@
     };
   }
 
+  // ------------------------------------------------------------------ the groundhog (chapter 13)
+  // The first of module 2's seven sleepers, asleep in its doorway by the big dig in GroveClan's woods
+  // (docs/chapters/13-the-hunters-crouch.spec.md, section 4, "Cast"): ROUND AND BROWN, plump and soft, a grizzled warm
+  // brown coat (darker on the back, paler and gingery on the belly), a short furry tail, small round ears close to the
+  // head, a blunt dark nose with whiskers, small dark sleepy eyes under heavy lids, short legs and little dark paws.
+  // Something BIG: sitting up about our cat's sitting height, a little more, and twice as round (scenes.js holds it in
+  // SIZE_BAND.groundhog; drawn inside it, its ratio measured in tests/cats.test.js); curled, about as long as our cat
+  // lying. NEVER A TOOTH (a yawn or a shout is a dark round mouth with a tongue in it), never a claw raised, nothing
+  // fierce: grumpy in the brows and the mouth. Nothing like a badger (no stripe, no black-and-white face: one warm
+  // brown all over, its muzzle a little paler) and nothing like a cat (round ears, a blunt nose, no cat's face).
+  // Its box is 240 x 200 in the cats' units, its feet (curled: its lowest point) on the bottom edge, the middle of its
+  // body on the box's centre line. Not a cat (its own poses, as Mizzle's), and not scenes.js's cat either.
+  //   doze   curled in a doorway, seen from behind: its round back and bottom toward us, the short tail and the soles of
+  //          its hind feet at the bottom, the face tucked down out of sight (only the back of its head and its ears show
+  //          over its shoulder). No mood shows: its face is tucked away
+  //   wake   the same, its head up and turned to us over its shoulder, both eyes open, its whole grumpy face
+  //   sit    sitting up on its haunches, its forepaws folded on its belly, talking
+  //   yawn   sitting up, an enormous round yawn, eyes squeezed shut, no teeth
+  //   sleep  curled round, side on, its face showing, eyes shut, a little smile (what an unknown pose draws, and its
+  //          page in the book: the winter sleepers' `sleep`)
+  // Every mood, drawn its way (its resting face is heavy-lidded and a little grumpy: `neutral`; `stern` its grumpy
+  // look; `shout` brows down and a round open mouth; `sniff` its nose up, twitching; `happy` a squint and a smile).
+  // `asleep: true` shuts its eyes, `asleep: 'half'` half shuts them. No shadow of its own is drawn here (scenes.js's
+  // OWN_SHADOW and NO_SHADOW: none in doze, wake or sleep, which lie in the hole).
+  var GROUNDHOG_POSES = ['doze', 'wake', 'sit', 'yawn', 'sleep'];
+  OTHER_POSES.groundhog = GROUNDHOG_POSES;
+  var GH_BOX = [240, 200];
+  var GH = { base: '#9a6c46', back: '#6c482e', light: '#b48660', belly: '#d9ab79', bellyEdge: '#c49260', line: '#45291a',
+    grizzle: '#ead3ad', muzzle: '#cfa47b', nose: '#3a2820', paw: '#3e2b20', pawLine: '#22170f', pad: '#6a4d3c', earIn: '#8a5a40',
+    eye: '#1e1510', brow: '#4a2d1b', mouth: '#5b3434', tongue: '#e2878d', whisk: '#2c1e15', blush: '#e39a86' };
+  GH.tail = mix(GH.base, GH.back, 0.4); GH.muzzleDark = mix(GH.muzzle, GH.line, 0.2); GH.muzzleLine = mix(GH.line, GH.muzzle, 0.3);
+  // its face by mood: the eyes ('lid' heavy-lidded, its resting face; 'half'; 'open'; 'arc' a happy squint; 'down' shy),
+  // the brows [inner end, outer end] (lower is larger: grumpy when the inner end is low), the mouth, and extras
+  var GH_FACE = {
+    neutral: { eyes: 'lid', brows: [2.4, -1.4], mouth: 'grump' },
+    happy: { eyes: 'arc', brows: [-1.2, 0.4], mouth: 'smile', blush: true },
+    dreamy: { eyes: 'half', brows: [-0.8, 0.8], mouth: 'soft', blush: true },
+    wonder: { eyes: 'open', brows: [-4.6, -3], mouth: 'o' },
+    worried: { eyes: 'lid', brows: [-3.6, 1.6], mouth: 'wavy' },
+    scared: { eyes: 'open', brows: [-4.2, 1.2], mouth: 'o' },
+    sleepy: { eyes: 'half', brows: [2, 2.6], mouth: 'flat' },
+    laugh: { eyes: 'arc', brows: [-1.6, 0], mouth: 'open', blush: true },
+    stern: { eyes: 'lid', brows: [4.8, -2.8], mouth: 'frown' },
+    kind: { eyes: 'lid', brows: [-0.8, 0.6], mouth: 'smile' },
+    proud: { eyes: 'half', brows: [0.6, -1.6], mouth: 'smirk' },
+    sniff: { eyes: 'half', brows: [1.2, -0.8], mouth: 'purse', sniff: true },
+    shout: { eyes: 'open', brows: [5.4, -3.4], mouth: 'shout' },
+    solemn: { eyes: 'lid', brows: [0.4, 0.4], mouth: 'flat' },
+    sad: { eyes: 'half', brows: [-4, 2.2], mouth: 'frown' },
+    shy: { eyes: 'down', brows: [-2, 1], mouth: 'small', blush: true }
+  };
+  // short pale and dark hairs over a part (its grizzled coat): `n` ticks in the box [x0, y0, x1, y1], combed down and back
+  function ghTicks(b, n, seed) {
+    var pale = '', dark = '';
+    for (var i = 0; i < n; i++) {
+      var x = lerp(b[0], b[2], rand(seed + i * 3.1)), y = lerp(b[1], b[3], rand(seed + i * 5.7)), l = 3 + rand(seed + i * 1.3) * 2.4;
+      var d = 'M' + N(x) + ',' + N(y) + 'l' + N(-l * 0.45) + ',' + N(l * 0.9);
+      if (i % 3 === 2) dark += d; else pale += d;
+    }
+    return '<path class="pc-grizzle" d="' + pale + '" stroke="' + GH.grizzle + '" stroke-width="1.5" stroke-linecap="round" fill="none" opacity=".55"/>' +
+      '<path d="' + dark + '" stroke="' + GH.back + '" stroke-width="1.5" stroke-linecap="round" fill="none" opacity=".45"/>';
+  }
+  // a little dark paw: a hind foot flat on the ground (toes toward +x, `dir` -1 turns it), or a sole seen from behind
+  function ghFoot(cx, cy, len, ht, dir, sole) {
+    var s = '<ellipse cx="' + N(cx) + '" cy="' + N(cy) + '" rx="' + N(len / 2) + '" ry="' + N(ht / 2) + '" fill="' + GH.paw + '" stroke="' + GH.pawLine + '" stroke-width="1.6"/>';
+    if (sole) {
+      s += '<g fill="' + GH.pad + '"><ellipse cx="' + N(cx) + '" cy="' + N(cy + ht * 0.08) + '" rx="' + N(len * 0.2) + '" ry="' + N(ht * 0.2) + '"/>' +
+        [-0.3, -0.1, 0.1, 0.3].map(function (k) { return '<circle cx="' + N(cx + k * len) + '" cy="' + N(cy - ht * 0.26) + '" r="' + N(ht * 0.11) + '"/>'; }).join('') + '</g>';
+    } else {
+      var fx = cx + dir * len * 0.36;
+      s += '<path d="M' + N(fx) + ',' + N(cy - ht * 0.36) + 'l' + N(dir * 2.4) + ',' + N(ht * 0.14) + 'M' + N(fx) + ',' + N(cy + ht * 0.04) + 'l' + N(dir * 2.6) + ',0" stroke="' + GH.pad + '" stroke-width="1.3" stroke-linecap="round" fill="none"/>';
+    }
+    return s;
+  }
+  // a forepaw: small, dark, its fingers folded (no claw)
+  function ghHand(cx, cy, rot) {
+    return '<g transform="translate(' + N(cx) + ',' + N(cy) + ') rotate(' + N(rot) + ')"><ellipse rx="6.8" ry="4.6" fill="' + GH.paw + '" stroke="' + GH.pawLine + '" stroke-width="1.5"/>' +
+      '<path d="M2.2,-3.4v3.2M4.8,-2.6v2.8" stroke="' + GH.pad + '" stroke-width="1.2" stroke-linecap="round"/></g>';
+  }
+  // The head, in its own units (its middle at 0,0, facing +x): `turn` 0 straight at us to 1 three-quarters toward +x;
+  // ctx.eyes and ctx.mouth override the mood's ('closed', 'squeeze'; 'yawn'). Returns { svg, pts (its box), far (whisker tips) }.
+  function ghHead(R, face, ctx) {
+    var t = clamp(ctx.turn == null ? 0.85 : ctx.turn, 0, 1), s = '', pts = [], ink = GH.eye;
+    var mx = 24 * t, my = 8 - t, nx = mx + 11 * t, ny = my - 6.5, cx = mx + 7 * t, cy = my + 6.5;
+    var eyesK = ctx.eyes || face.eyes, mouthK = ctx.mouth || face.mouth;
+    // the head: round, a little wider than tall, its cheeks full, the forward cheek fuller in three-quarters
+    var hp = [];
+    for (var i = 0; i < 18; i++) {
+      var a = Math.PI * 2 * i / 18, c = Math.cos(a), sn = Math.sin(a), x = c * 31, y = sn * 27;
+      if (sn > 0) x *= 1 + 0.08 * sn; else y *= 0.95;
+      x += t * 4 * Math.max(0, c) - t * 2 * Math.max(0, -c);
+      hp.push([x, y]);
+    }
+    pts = pts.concat(hp);
+    // the ears, small and round, close to the head (behind it)
+    var ears = [[-19 + 4 * t, -22 - 2 * t], [19 - 4 * t + 6 * t, -22 - 2 * t]];
+    ears.forEach(function (e, k) {
+      var r = k === 0 ? 1 - 0.1 * t : 1;
+      s += R.part(ellipseG(e[0], e[1], 7.6 * r, 6.8 * r, 0, 4).d, { fill: GH.base, dark: GH.back, line: GH.line, sx: ctx.sx * 0.4, sy: -1.2, lw: 2.2 }) +
+        '<ellipse cx="' + N(e[0]) + '" cy="' + N(e[1] + 0.8) + '" rx="' + N(4 * r) + '" ry="' + N(3.4 * r) + '" fill="' + GH.earIn + '"/>';
+      pts.push([e[0] - 7.6 * r, e[1] - 6.8 * r], [e[0] + 7.6 * r, e[1] - 6.8 * r]);
+    });
+    var hin = '<ellipse cx="' + N(-6 - 4 * t) + '" cy="-22" rx="30" ry="14" fill="' + GH.back + '" opacity=".38"/>' + ghTicks([-28, -24, 14, -8], 9, 3.3) +
+      '<path d="M-31,6l-5,2l4,2M-29,14l-4,3l5,1" stroke="' + GH.line + '" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>';
+    s += '<g class="pc-gh-skull">' + R.part(crClosed(hp), { fill: GH.base, dark: GH.back, line: GH.line, sx: ctx.sx, sy: -3, lw: 2.6, inner: hin }) + '</g>';
+    // the muzzle: paler, round and soft
+    var mrx = 15.5 - 0.5 * t, mry = 12;
+    s += R.part(ellipseG(mx, my, mrx, mry, 0, 4).d, { fill: GH.muzzle, dark: GH.muzzleDark, line: GH.muzzleLine, sx: ctx.sx * 0.5, sy: -1.6, lw: 1.6 });
+    pts.push([mx - mrx, my + mry], [mx + mrx, my + mry]);
+    // the brows: short and heavy, over each eye (the inner end toward the middle of the face)
+    var eyesAt = [[lerp(-12, -6, t), lerp(-6, -7, t), lerp(1, 0.84, t), -1], [lerp(12, 14, t), -6, 1, 1]];
+    var shut = eyesK === 'closed' || eyesK === 'squeeze' || eyesK === 'arc', br = face.brows, bro = '';
+    eyesAt.forEach(function (E) {
+      var k = E[2], inner = E[3] === -1 ? 1 : -1, by = E[1] - 9.6 + (shut ? 0.8 : 0);
+      var pi = [E[0] + inner * 6.4 * k, by + br[0]], po = [E[0] - inner * 6.4 * k, by + br[1]], pm = [E[0], Math.min(pi[1], po[1]) - 1.8];
+      bro += 'M' + pt(po) + 'Q' + pt(pm) + ' ' + pt(pi);
+      pts.push([E[0], Math.min(pi[1], po[1]) - 2]);
+    });
+    s += '<path class="pc-brows" d="' + bro + '" stroke="' + GH.brow + '" stroke-width="3.4" stroke-linecap="round" fill="none"/>';
+    // the eyes: small, dark and sleepy
+    eyesAt.forEach(function (E) {
+      var k = E[2], tr = 'translate(' + N(E[0]) + ',' + N(E[1]) + ') scale(' + N3(k) + ')', e = '';
+      if (eyesK === 'open') e = '<ellipse rx="4.2" ry="5" fill="' + ink + '"/><circle cx="1.4" cy="-1.6" r="1.3" fill="#ffffff"/><circle cx="-1.2" cy="1.8" r=".6" fill="#ffffff" opacity=".8"/>';
+      else if (eyesK === 'lid' || eyesK === 'down') {
+        var dy = eyesK === 'down' ? 1 : 0;
+        e = '<path d="M-4.8,' + N(-0.6 + dy) + 'Q0,' + N(-2 + dy) + ' 4.8,' + N(-0.6 + dy) + 'Q4.6,' + N(4.4 + dy) + ' 0,' + N(4.8 + dy) + 'Q-4.6,' + N(4.4 + dy) + ' -4.8,' + N(-0.6 + dy) + 'Z" fill="' + ink + '"/>' +
+          '<circle cx="' + (eyesK === 'down' ? '-1.2' : '1.4') + '" cy="' + N(1.4 + dy) + '" r=".95" fill="#ffffff"/>' +
+          '<path d="M-6,' + N(-1 + dy) + 'Q0,' + N(-3.6 + dy) + ' 6,' + N(-1 + dy) + '" stroke="' + GH.line + '" stroke-width="2.2" stroke-linecap="round" fill="none"/>';
+      } else if (eyesK === 'half') e = '<path d="M-4.8,1.2Q0,.2 4.8,1.2Q4.4,4.2 0,4.4Q-4.4,4.2 -4.8,1.2Z" fill="' + ink + '"/><path d="M-6,1Q0,-1.2 6,1" stroke="' + GH.line + '" stroke-width="2.2" stroke-linecap="round" fill="none"/>';
+      else if (eyesK === 'arc') e = '<path d="M-5,2.6Q0,-2.4 5,2.6" stroke="' + ink + '" stroke-width="2.4" stroke-linecap="round" fill="none"/>';
+      else if (eyesK === 'squeeze') e = '<path d="' + (E[3] === -1 ? 'M-4.4,-3.6L3.6,.6L-4.4,4' : 'M4.4,-3.6L-3.6,.6L4.4,4') + '" stroke="' + ink + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+      else e = '<path d="M-5,.6Q0,4.6 5,.6" stroke="' + ink + '" stroke-width="2.4" stroke-linecap="round" fill="none"/>';
+      s += '<g class="pc-eye" data-eye="' + eyesK + '" transform="' + tr + '">' + e + '</g>';
+    });
+    if (face.blush) s += '<g fill="' + GH.blush + '" opacity=".32"><ellipse cx="' + N(eyesAt[0][0] - 3) + '" cy="5" rx="6" ry="3.6"/><ellipse cx="' + N(eyesAt[1][0] + 4) + '" cy="5" rx="6.4" ry="3.8"/></g>';
+    // the mouth, under the nose: never a tooth
+    var st = ' stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"', mo = '', open = { o: 1, open: 1, shout: 1, yawn: 1 }[mouthK] === 1;
+    if (!open) mo += '<path d="M' + N(nx) + ',' + N(ny + 5) + 'L' + N(cx) + ',' + N(cy - 0.8) + '" fill="none"' + st + '/>';
+    var lineD = {
+      grump: 'M' + N(cx - 7) + ',' + N(cy + 2.4) + 'Q' + N(cx) + ',' + N(cy - 2.4) + ' ' + N(cx + 7) + ',' + N(cy + 2.4),
+      frown: 'M' + N(cx - 8) + ',' + N(cy + 3.8) + 'Q' + N(cx) + ',' + N(cy - 3.6) + ' ' + N(cx + 8) + ',' + N(cy + 3.8),
+      smile: 'M' + N(cx - 8) + ',' + N(cy - 1.6) + 'Q' + N(cx) + ',' + N(cy + 6) + ' ' + N(cx + 8) + ',' + N(cy - 1.6),
+      soft: 'M' + N(cx - 5.4) + ',' + N(cy) + 'Q' + N(cx) + ',' + N(cy + 2.8) + ' ' + N(cx + 5.4) + ',' + N(cy),
+      flat: 'M' + N(cx - 6) + ',' + N(cy + 0.8) + 'Q' + N(cx) + ',' + N(cy + 0.2) + ' ' + N(cx + 6) + ',' + N(cy + 0.8),
+      wavy: 'M' + N(cx - 7) + ',' + N(cy + 1.6) + 'Q' + N(cx - 3.5) + ',' + N(cy - 1.4) + ' ' + N(cx) + ',' + N(cy + 1) + 'Q' + N(cx + 3.5) + ',' + N(cy + 3.4) + ' ' + N(cx + 7) + ',' + N(cy + 0.4),
+      smirk: 'M' + N(cx - 6) + ',' + N(cy + 0.6) + 'Q' + N(cx + 1) + ',' + N(cy + 3) + ' ' + N(cx + 7) + ',' + N(cy - 1.6),
+      purse: 'M' + N(cx - 3.4) + ',' + N(cy + 0.6) + 'Q' + N(cx) + ',' + N(cy + 2.4) + ' ' + N(cx + 3.4) + ',' + N(cy + 0.6),
+      small: 'M' + N(cx - 4) + ',' + N(cy) + 'Q' + N(cx) + ',' + N(cy + 2.4) + ' ' + N(cx + 4) + ',' + N(cy)
+    }[mouthK];
+    if (lineD) mo += '<path d="' + lineD + '" fill="none"' + st + '/>';
+    else if (mouthK === 'o') { mo += '<ellipse cx="' + N(cx) + '" cy="' + N(cy + 2.4) + '" rx="3.4" ry="4" fill="' + GH.mouth + '"' + st + '/>'; pts.push([cx, cy + 7]); }
+    else if (mouthK === 'open') {
+      mo += '<path d="M' + N(cx - 8) + ',' + N(cy - 1) + 'Q' + N(cx) + ',' + N(cy + 1) + ' ' + N(cx + 8) + ',' + N(cy - 1) + 'Q' + N(cx + 6) + ',' + N(cy + 9) + ' ' + N(cx) + ',' + N(cy + 9.6) + 'Q' + N(cx - 6) + ',' + N(cy + 9) + ' ' + N(cx - 8) + ',' + N(cy - 1) + 'Z" fill="' + GH.mouth + '"' + st + '/>' +
+        '<ellipse cx="' + N(cx) + '" cy="' + N(cy + 6.6) + '" rx="4.4" ry="2.6" fill="' + GH.tongue + '"/>';
+      pts.push([cx, cy + 11]);
+    } else if (mouthK === 'shout') {
+      mo += '<path d="M' + N(cx - 8) + ',' + N(cy) + 'Q' + N(cx) + ',' + N(cy - 2.4) + ' ' + N(cx + 8) + ',' + N(cy) + 'Q' + N(cx + 7.4) + ',' + N(cy + 11) + ' ' + N(cx) + ',' + N(cy + 11.6) + 'Q' + N(cx - 7.4) + ',' + N(cy + 11) + ' ' + N(cx - 8) + ',' + N(cy) + 'Z" fill="' + GH.mouth + '"' + st + '/>' +
+        '<ellipse cx="' + N(cx) + '" cy="' + N(cy + 8.4) + '" rx="4.6" ry="2.8" fill="' + GH.tongue + '"/>';
+      pts.push([cx, cy + 13]);
+    } else if (mouthK === 'yawn') {
+      // the jaw dropped: a round rim of muzzle round a big dark O, its tongue in it
+      mo += '<ellipse class="pc-yawn" cx="' + N(cx) + '" cy="' + N(cy + 6) + '" rx="11.4" ry="14" fill="' + GH.muzzle + '" stroke="' + GH.muzzleLine + '" stroke-width="1.6"/>' +
+        '<ellipse cx="' + N(cx) + '" cy="' + N(cy + 6.6) + '" rx="8" ry="10.6" fill="' + GH.mouth + '"' + st + '/>' +
+        '<ellipse cx="' + N(cx) + '" cy="' + N(cy + 12.6) + '" rx="5.4" ry="3.8" fill="' + GH.tongue + '"/>';
+      pts.push([cx - 11.4, cy + 20], [cx + 11.4, cy + 20]);
+    }
+    // the nose: blunt and dark, a little shine on it (lifted a little to sniff)
+    var nyy = ny - (face.sniff ? 1.4 : 0);
+    var nose = '<path d="M' + N(nx - 6) + ',' + N(nyy) + 'Q' + N(nx) + ',' + N(nyy - 4.6) + ' ' + N(nx + 6) + ',' + N(nyy) + 'Q' + N(nx + 5.4) + ',' + N(nyy + 5) + ' ' + N(nx) + ',' + N(nyy + 5.4) + 'Q' + N(nx - 5.4) + ',' + N(nyy + 5) + ' ' + N(nx - 6) + ',' + N(nyy) + 'Z" fill="' + GH.nose + '" stroke="' + GH.line + '" stroke-width="1.2"/>' +
+      '<ellipse cx="' + N(nx - 1.6) + '" cy="' + N(nyy - 0.6) + '" rx="1.9" ry="1" fill="#ffffff" opacity=".45"/>';
+    s += '<g class="pc-mouth" data-mouth="' + mouthK + '">' + mo + '</g>' + '<g class="pc-gh-nose">' + nose + '</g>';
+    pts.push([nx + 6, nyy]);
+    if (face.sniff) {
+      s += '<path class="pc-sniff" d="M' + N(nx + 9) + ',' + N(nyy - 5) + 'q2.6,-2.4 5.2,0t5.2,0M' + N(nx + 10) + ',' + N(nyy + 1) + 'q2.6,-2.4 5.2,0t5.2,0" stroke="' + ink + '" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".55"/>';
+    }
+    // whiskers: the near cheek's long, the far cheek's shortened by the turn
+    var wk = '', far = [], wl = 1 - 0.7 * t;
+    [[-2.4, -3], [1.4, 0], [4.8, 3.6]].forEach(function (w) {
+      var a0 = [mx + mrx * 0.62, my + w[0]], a1 = [a0[0] + 21, a0[1] + w[1] * 1.6];
+      var b0 = [mx - mrx * 0.62, my + w[0]], b1 = [b0[0] - 19 * wl, b0[1] + w[1] * 1.6];
+      wk += 'M' + pt(a0) + 'L' + pt(a1) + 'M' + pt(b0) + 'L' + pt(b1);
+      far.push(a1, b1);
+    });
+    s += '<path class="pc-whiskers" d="' + wk + '" stroke="' + GH.whisk + '" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>';
+    return { svg: s, pts: pts, far: far };
+  }
+  // the body parts in its own units (the ground at y = 0, facing +x)
+  var GH_SIT = [[0, 0], [30, -1], [50, -9], [60, -28], [61, -50], [55, -74], [44, -94], [28, -108], [8, -114], [-14, -112], [-34, -104], [-49, -88], [-59, -64],
+    [-63, -40], [-59, -18], [-45, -4], [-22, 0]];
+  var GH_BACK = [[-74, -12], [-79, -44], [-66, -78], [-38, -98], [-2, -104], [34, -99], [62, -80], [77, -48], [74, -14], [52, -2], [0, 0], [-52, -2]];
+  var GH_CURL = [[-68, -10], [-73, -40], [-60, -70], [-32, -88], [2, -92], [34, -84], [56, -64], [66, -38], [62, -12], [40, -1], [-36, -1]];
+  function ghTail(R, P, w0, w1, sx) {
+    var tl = tube(P, function (u) { return lerp(w0, w1, u); }, 9);
+    return { svg: '<g class="pc-gh-tail">' + R.part(scallop(tl.pts, 0.66), { fill: GH.tail, dark: GH.back, line: GH.line, sx: sx * 0.5, sy: -1.6, lw: 2.2, inner: ghTicks([P[0][0] - 20, P[0][1] - 14, P[3][0] + 14, P[3][1] + 8], 4, 9.1) }) + '</g>', pts: tl.pts };
+  }
+  function buildGroundhog(o) {
+    o = o || {};
+    var pose = GROUNDHOG_POSES.indexOf(o.pose) >= 0 ? o.pose : 'sleep';
+    var mood = MOODS.indexOf(o.mood) >= 0 ? o.mood : 'neutral', face = GH_FACE[mood];
+    var F = o.facing === 'left' ? -1 : 1, R = new Ren(), sx = -3 * F, body = '', pts = [], hb = null, hc = null, extra = '';
+    var shutBy = o.asleep === true ? 'closed' : o.asleep === 'half' ? 'half' : null;
+    function head(c, rot, sc, ctx) {
+      var m = mul(mT(c[0], c[1]), mul(mR(rot), mS(sc)));
+      ctx.sx = sx;
+      var h = ghHead(R, face, ctx);
+      var hp = h.pts.map(function (q) { return apply(m, q); });
+      pts = pts.concat(hp, h.far.map(function (q) { return apply(m, q); }));
+      hb = hp; hc = apply(m, [0, 0]);
+      return '<g class="pc-gh-head" transform="' + mStr(m) + '">' + h.svg + '</g>';
+    }
+    if (pose === 'sit' || pose === 'yawn') {
+      var tl = ghTail(R, [[-46, -16], [-64, -16], [-80, -14], [-90, -8]], 10, 7, sx);
+      pts = pts.concat(GH_SIT, tl.pts);
+      var bin = '<ellipse cx="-56" cy="-66" rx="30" ry="54" fill="' + GH.back + '" opacity=".4"/>' +
+        '<ellipse class="pc-gh-belly" cx="26" cy="-50" rx="32" ry="46" fill="' + GH.belly + '"/><ellipse cx="26" cy="-50" rx="32" ry="46" fill="none" stroke="' + GH.bellyEdge + '" stroke-width="3" opacity=".55"/>' +
+        ghTicks([-60, -108, 0, -12], 26, 1.7) + ghTicks([10, -96, 50, -14], 6, 4.4).replace(GH.grizzle, '#f3e2c4');
+      body += tl.svg + '<g class="pc-gh-body">' + R.part(crClosed(GH_SIT), { fill: GH.base, dark: GH.back, line: GH.line, sx: sx * 1.3, sy: -3.4, lw: 2.8, inner: bin }) + '</g>';
+      body += ghFoot(8, -4, 26, 10, 1) + ghFoot(36, -4, 28, 11, 1);
+      // the forepaws folded on its belly, the far arm behind the near
+      var fa = tube([[12, -92], [12, -80], [18, -70], [28, -66]], function (u) { return lerp(7.6, 6, u); }, 7);
+      var na = tube([[40, -90], [48, -80], [46, -68], [34, -62]], function (u) { return lerp(8.6, 6.4, u); }, 7);
+      body += R.part(fa.d, { fill: mix(GH.base, GH.back, 0.15), dark: GH.back, line: GH.line, sx: sx * 0.5, sy: -1.6, lw: 2.2 }) + ghHand(31, -66, -10) +
+        R.part(na.d, { fill: GH.base, dark: GH.back, line: GH.line, sx: sx * 0.5, sy: -1.6, lw: 2.2 }) + ghHand(30, -61, 8);
+      body += pose === 'yawn' ? head([18, -120], -12, 1, { turn: 0.8, eyes: 'squeeze', mouth: 'yawn' }) : head([20, -118], 0, 1, { turn: 0.85, eyes: shutBy || undefined });
+    } else if (pose === 'doze' || pose === 'wake') {
+      pts = pts.concat(GH_BACK);
+      var din = '<path d="M38,-104Q10,-72 -4,-22" stroke="' + GH.back + '" stroke-width="28" stroke-linecap="round" fill="none" opacity=".3"/>' +
+        '<ellipse cx="-64" cy="-12" rx="18" ry="12" fill="' + GH.belly + '" opacity=".5"/><ellipse cx="64" cy="-12" rx="18" ry="12" fill="' + GH.belly + '" opacity=".5"/>' +
+        ghTicks([-74, -100, 74, -10], 40, 2.9) +
+        '<path d="M-44,-14Q-24,-44 -6,-28M40,-16Q22,-42 4,-28" stroke="' + GH.line + '" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".35"/>';
+      if (pose === 'doze') {
+        // the back of its head, tucked down over its shoulder, and its two ears: no face
+        var bh = '<ellipse cx="34" cy="-102" rx="24" ry="12" fill="' + GH.back + '" opacity=".35"/>' + ghTicks([24, -112, 60, -96], 6, 6.6);
+        body += '<g class="pc-gh-head">' + [[30, -109], [53, -110]].map(function (e) {
+          return R.part(ellipseG(e[0], e[1], 7.4, 6.6, 0, 4).d, { fill: GH.base, dark: GH.back, line: GH.line, sx: sx * 0.4, sy: -1.2, lw: 2.2 }) +
+            '<ellipse cx="' + e[0] + '" cy="' + N(e[1] + 0.8) + '" rx="3.8" ry="3.2" fill="' + GH.earIn + '"/>';
+        }).join('') + R.part(ellipseG(42, -92, 27, 23, 0, 4).d, { fill: GH.base, dark: GH.back, line: GH.line, sx: sx, sy: -3, lw: 2.6, inner: bh }) + '</g>';
+        hb = [[14, -117], [70, -117], [14, -78], [70, -78]]; hc = [42, -94];
+        pts = pts.concat(hb);
+      }
+      body += '<g class="pc-gh-body">' + R.part(crClosed(GH_BACK), { fill: GH.base, dark: GH.back, line: GH.line, sx: sx * 1.3, sy: -3.4, lw: 2.8, inner: din }) + '</g>';
+      // its short furry tail at the bottom of its back, and the soles of its hind feet under it
+      var tuft = ellipseG(-4, -22, 12.5, 11.5, 0, 6).pts;
+      body += ghFoot(-30, -4, 22, 10, 1, true) + ghFoot(22, -4, 22, 10, 1, true) +
+        '<g class="pc-gh-tail">' + R.part(scallop(tuft, 0.7), { fill: GH.tail, dark: GH.back, line: GH.line, sx: sx * 0.5, sy: -1.6, lw: 2.2, inner: ghTicks([-16, -34, 8, -12], 5, 9.1) }) + '</g>';
+      if (pose === 'wake') body += head([36, -106], 0, 1, { turn: 0.25, eyes: shutBy || (face.eyes === 'half' || face.eyes === 'down' ? 'lid' : undefined) });
+    } else {
+      var st2 = ghTail(R, [[-62, -20], [-78, -22], [-88, -16], [-88, -9]], 9, 6.5, sx);
+      pts = pts.concat(GH_CURL, st2.pts);
+      var cin = '<ellipse cx="-34" cy="-72" rx="46" ry="30" fill="' + GH.back + '" opacity=".4"/>' +
+        '<ellipse class="pc-gh-belly" cx="40" cy="-18" rx="30" ry="20" fill="' + GH.belly + '" opacity=".75"/>' + ghTicks([-70, -90, 40, -20], 30, 5.2) +
+        '<path d="M-50,-12Q-38,-40 -10,-36" stroke="' + GH.line + '" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".35"/>';
+      body += st2.svg + '<g class="pc-gh-body">' + R.part(crClosed(GH_CURL), { fill: GH.base, dark: GH.back, line: GH.line, sx: sx * 1.3, sy: -3.4, lw: 2.8, inner: cin }) + '</g>';
+      body += ghFoot(-34, -4, 24, 9, 1);
+      // asleep, its face showing, a little smile (a grumpy mood keeps its grumpy mouth)
+      var sm = { neutral: 'soft', sleepy: 'soft', dreamy: 'soft', kind: 'smile', solemn: 'soft' }[mood];
+      body += head([44, -40], 10, 0.96, { turn: 0.7, eyes: 'closed', mouth: sm });
+      body += ghHand(46, -9, -6) + ghHand(60, -7, 4);
+      pts.push([39, -13], [67, -3]);
+    }
+    var Wb = GH_BOX[0], Hb = GH_BOX[1];
+    var M = mul(F === 1 ? [1, 0, 0, 1, 0, 0] : [-1, 0, 0, 1, Wb, 0], mT(Wb / 2, Hb - 3));
+    var hcc = apply(M, hc);
+    return {
+      svg: '<g class="pc-groundhog" data-pose="' + pose + '" transform="' + mStr(M) + '"><defs>' + R.defs + '</defs>' + body + extra + '</g>', w: Wb, h: Hb,
+      head: { x: Math.round(hcc[0] * 10) / 10, y: Math.round(hcc[1] * 10) / 10 },
+      headBox: boxOf(hb.map(function (q) { return apply(M, q); })),
+      bounds: boxOf(pts.map(function (q) { return apply(M, q); })), _marks: { M: M, scale: 1 }
+    };
+  }
+
   // ------------------------------------------------------------------ public: characters
 
   // A Clan cat never wears her coat. An 8-year-old must find herself at a glance, and two brown
@@ -6923,6 +7198,8 @@
     else if (who === 'spider') r = buildSpider(o);
     // chapter 10: the grown Mistscales, by variant (Mama, the eldest)
     else if (who === 'mistscale') r = buildMistscale(o);
+    // chapter 13: the groundhog, the first of the winter sleepers
+    else if (who === 'groundhog') r = buildGroundhog(o);
     else r = buildCat(catSpec(PRESETS[who] || who === 'player' || who === 'clancat' || who === 'reedclan' || who === 'groveclan' ? who : 'clancat', o), o);
     // chapter 6: Sloshbank is bigger than Tallyheart, who already fills a cat's box, so his drawing
     // comes in a bigger box (BIG_BOX times a cat's: the scenes scale every box alike, by a cat's)
@@ -9487,34 +9764,57 @@
   }
 
   // ----- the quick marks as one group, for a set to place (the badger's counts by her holes)
+  // (chapter 13: `crossed: { lines }` and `fresh: { dots }`, the help's sand's meaning (quickSand) on the group: the lines
+  // drawn are `tens` + `crossed.lines`, the last of them struck through and dim (spent by a spread); `fresh.dots` of the
+  // `ones` (at most ten) sit in a scratched frame, the sand's groove colour, under the old dots, five and five, the frame
+  // always the ten places. The struck lines and the frame are in the layout, so quickMarks.size counts them. Absent or
+  // naught, every mark, the group and its size as they were)
   function quickMarksLayout(o) {
     o = o || {};
     var L = 56, h = pvNum(o.hundreds, 0, 9), t = pvNum(o.tens, 0, 19), u = pvNum(o.ones, 0, 19), lp = L * 0.34, g5 = L * 0.26, dp = L * 0.5, gap = L * 0.6;
+    var cr = o.crossed && typeof o.crossed === 'object' ? o.crossed : {}, fr = o.fresh && typeof o.fresh === 'object' ? o.fresh : {};
+    var cl = pvNum(cr.lines, 0, 19 - t), fd = pvNum(fr.dots, 0, Math.min(10, u)), pad = L * 0.13, bg = L * 0.3, frame = null;
     var groups = [], x = 0, H = 0;
     if (h) {
       var sq = [];
       for (var i = 0; i < h; i++) sq.push({ x: x + (i % 5) * L * 1.28, y: Math.floor(i / 5) * L * 1.28, w: L, h: L, what: 'square' });
       groups.push(sq); x += Math.min(5, h) * L * 1.28 - L * 0.28 + gap; H = Math.max(H, Math.ceil(h / 5) * L * 1.28 - L * 0.28);
     }
-    if (t) {
-      var ln = [];
-      for (var j = 0; j < t; j++) { var r = Math.floor(j / 10), c = j % 10; ln.push({ x: x + c * lp + (c >= 5 ? g5 : 0), y: r * L * 1.3, w: lp, h: L, what: 'line' }); }
-      groups.push(ln); x += (Math.min(10, t) - 1) * lp + (t > 5 ? g5 : 0) + lp + gap; H = Math.max(H, Math.ceil(t / 10) * L * 1.3 - L * 0.3);
+    if (t + cl) {
+      var ln = [], tl = t + cl;
+      for (var j = 0; j < tl; j++) { var r = Math.floor(j / 10), c = j % 10; ln.push({ x: x + c * lp + (c >= 5 ? g5 : 0), y: r * L * 1.3, w: lp, h: L, what: 'line', crossed: j >= t }); }
+      groups.push(ln); x += (Math.min(10, tl) - 1) * lp + (tl > 5 ? g5 : 0) + lp + gap; H = Math.max(H, Math.ceil(tl / 10) * L * 1.3 - L * 0.3);
     }
     if (u) {
-      var dt = [];
-      for (var m = 0; m < u; m++) dt.push({ x: x + (m % 5) * dp, y: Math.floor(m / 5) * dp, w: dp, h: dp, what: 'dot' });
-      groups.push(dt); x += Math.min(5, u) * dp + gap; H = Math.max(H, Math.ceil(u / 5) * dp);
+      var dt = [], od = u - fd, ox = x + (fd ? pad : 0), oh = Math.ceil(od / 5) * dp;
+      for (var m = 0; m < od; m++) dt.push({ x: ox + (m % 5) * dp, y: Math.floor(m / 5) * dp, w: dp, h: dp, what: 'dot' });
+      if (fd) {
+        // the frame: the ten places of a spread's ten, under the old dots (at the top when none are left)
+        frame = { x: x, y: od ? oh + bg : 0, w: 5 * dp + 2 * pad, h: 2 * dp + 2 * pad, what: 'frame' };
+        for (var f = 0; f < fd; f++) dt.push({ x: ox + (f % 5) * dp, y: frame.y + pad + Math.floor(f / 5) * dp, w: dp, h: dp, what: 'dot', fresh: true });
+        dt.push(frame);
+        x += frame.w + gap; H = Math.max(H, frame.y + frame.h);
+      } else { x += Math.min(5, u) * dp + gap; H = Math.max(H, Math.ceil(u / 5) * dp); }
+      groups.push(dt);
     }
     var W = Math.max(0, x - gap);
     // each group in the middle of the tallest
     groups.forEach(function (g) { var gh = Math.max.apply(null, g.map(function (b) { return b.y + b.h; })); g.forEach(function (b) { b.y += (H - gh) / 2; }); });
-    return { W: W, H: H, L: L, marks: [].concat.apply([], groups) };
+    return { W: W, H: H, L: L, marks: [].concat.apply([], groups).filter(function (b) { return b.what !== 'frame'; }), frame: frame };
   }
   // (chapter 12: `round: true` scratches each square round, like a cookie: qkRingD; off, every mark as it was)
+  // (chapter 13: a struck line in <g class="pc-quick-crossed">, the frame <rect class="pc-quick-frame"> drawn before the
+  // dots it holds, each fresh dot in <g class="pc-quick-fresh">, each with its data-box; only when asked)
   art.quickMarks = function (x, y, scale, o) {
     var lay = quickMarksLayout(o), G = GROUNDS[(o || {}).ground] || GROUNDS.sand, k = +scale > 0 ? +scale : 1, s = '', round = !!o && o.round === true;
-    lay.marks.forEach(function (b) { s += qkMark(G, round && b.what === 'square' ? 'ring' : b.what, b, lay.L, '', false); });
+    if (lay.frame) {
+      var fb = lay.frame;
+      s += '<rect class="pc-quick-frame"' + pvBox(fb) + ' x="' + N(fb.x) + '" y="' + N(fb.y) + '" width="' + N(fb.w) + '" height="' + N(fb.h) + '" rx="' + N(lay.L * 0.16) + '" fill="none" stroke="' + G.groove + '" stroke-width="2.4" opacity=".45"/>';
+    }
+    lay.marks.forEach(function (b) {
+      var m = qkMark(G, round && b.what === 'square' ? 'ring' : b.what, b, lay.L, '', !!b.crossed);
+      s += b.crossed ? '<g class="pc-quick-crossed"' + pvBox(b) + '>' + m + '</g>' : b.fresh ? '<g class="pc-quick-fresh"' + pvBox(b) + '>' + m + '</g>' : m;
+    });
     return '<g class="pc-quick" data-art="quick" transform="translate(' + N((+x || 0) - lay.W * k / 2) + ' ' + N((+y || 0) - lay.H * k / 2) + ') scale(' + N3(k) + ')">' + s + '</g>';
   };
   art.quickMarks.size = function (o) { var lay = quickMarksLayout(o); return { w: lay.W, h: lay.H }; };
@@ -9536,7 +9836,7 @@
     patience: HERON_POSES.slice(), puddle: PUDDLE_POSES.slice(), wisp: WISP_POSES.slice(),
     coil: COIL_POSES.slice(), sleet: SLEET_POSES.slice(),
     hail: HAIL_POSES.slice(), snip: WEASEL_POSES.slice(), snatch: WEASEL_POSES.slice(),
-    mizzle: MIZZLE_POSES.slice(), spider: SPIDER_POSES.slice(), mistscale: MISTSCALE_POSES.slice() };
+    mizzle: MIZZLE_POSES.slice(), spider: SPIDER_POSES.slice(), mistscale: MISTSCALE_POSES.slice(), groundhog: GROUNDHOG_POSES.slice() };
   // chapter 5: the cast extras by name (a cast entry's own keys; `scenes.js` passes them through),
   // with the values each takes, for the gallery and the tools
   // (chapter 6: holds pinecone, pebbles and string; taps paw, ears, pinecone, pebbles, cheeks, stone

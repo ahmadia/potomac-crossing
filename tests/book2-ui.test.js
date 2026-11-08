@@ -196,10 +196,30 @@ test('the winter sleepers, as the dragonets\' pages (their classes): her picture
   assert.equal(count(h, /<div class="dragonet sil sleeper">/g), 6);
   assert.ok(h.endsWith('</div><p class="dn-more">Six more, still sleeping.</p></section>'));
   const sil = P.sleeperArt(null, true, 0);
-  assert.equal(P.sleeperArt('groundhog', true, 0), sil, 'until its chapter brings the art, the plain shape');
+  // (chapter 13 brings the groundhog's art: its found page draws it; a silhouette is always called with null, so it stays plain)
+  assert.notEqual(P.sleeperArt('groundhog', false, 0), P.sleeperArt(null, false, 0), 'the found page draws the real groundhog, not the plain shape');
+  assert.ok(P.sleeperArt('groundhog', false, 0).includes('class="pc-groundhog"'));
+  assert.ok(!sil.includes('pc-groundhog') && !h.slice(h.indexOf('<div class="dn-find"')).includes('pc-groundhog'), 'the silhouettes, called with null, stay the plain shape');
   assert.ok(!sil.includes('#a08a6e') && sil.includes('#1b1622'));
   assert.notEqual(P.sleeperArt(null, true, 1), sil, 'every other one facing the other way');
   assert.deepEqual(P.bookTwoSays({ sleepers: sp }).map((x) => x.text), ['The winter sleepers.', 'The groundhog.', 'Round, brown and grumpy: “I was ASLEEP.”', 'Six more, still sleeping.']);
+});
+
+test('the groundhog’s sleeper page (chapter 13): drawn by PC.art.character in its `sleep` pose (curled round, eyes shut, a little smile), facing right, or in the page’s own `pose`; an unknown id the plain shape', () => {
+  const list = two(), cat = catAt(13, list), P = page(cat, list);
+  const art = PC.art.character('groundhog', { pose: 'sleep', mood: 'neutral', facing: 'right' });
+  const want = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + art.w + ' ' + art.h + '" preserveAspectRatio="xMidYMid meet">';
+  const strip = (x) => x.replace(/pcs?[0-9a-z]+-/g, '');
+  const found = P.sleeperArt('groundhog', false, 0);
+  assert.ok(found.startsWith(want), 'its own box');
+  assert.equal(strip(found), strip(want + art.svg + '</svg>'), 'the groundhog asleep, as cats.js draws it');
+  assert.ok(found.includes('data-pose="sleep"'));
+  assert.equal(strip(P.sleeperArt('groundhog', false, 0, 'doze')), strip(want + PC.art.character('groundhog', { pose: 'doze', mood: 'neutral', facing: 'right' }).svg + '</svg>'), 'the page’s own pose');
+  // on the found page itself (book.sleeper with no pose: its default, `sleep`)
+  const h = P.sleeperPages(E.buildFullBook(cat, list, 2).sleepers);
+  const pic = h.slice(h.indexOf('<div class="dn-pic" aria-hidden="true">'), h.indexOf('<div class="dn-text">'));
+  assert.ok(pic.includes('class="pc-groundhog" data-pose="sleep"'), 'its page draws it asleep');
+  assert.equal(P.sleeperArt('nobody', false, 0), P.sleeperArt(null, false, 0), 'an id the art does not know: the plain shape');
 });
 
 test('the badger page: "What is a badger LIKE?", They say (an ear) and I saw (an eye), the Case File\'s marks; a crossed rumour struck through; Read to me says each rumour, "Crossed out:" before a crossed one, then the sighting', () => {

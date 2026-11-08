@@ -415,7 +415,9 @@
     // leaders are their Clans' variants 5 and 3 (below), Granny chapter 5's otter variant 3, by the chapter's `names`
     mistscale: 'A Mistscale',
     // chapter 12: "The little cat" (each balloon's `name`) until Glintstar names her, then Chispapaw
-    chispapaw: 'Chispapaw'
+    chispapaw: 'Chispapaw',
+    // chapter 13: the first of the seven sleepers; "The round brown thing" (each balloon's `name`) until it says GROUNDHOG
+    groundhog: 'The groundhog'
   };
   // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
   var VARIANT_NAMES = {
@@ -436,7 +438,8 @@
     hail: 1.5, snip: 1.65, snatch: 1.35,
     thymeleaf: 0.82, mizzle: 1.35,
     mistscale: 0.7,
-    chispapaw: 1.42 };
+    chispapaw: 1.42,
+    groundhog: 0.78 };
   var VARIANT_PITCH = { otter: { 1: 0.68, 3: 0.92 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 }, reedclan: { 2: 1.12, 5: 0.8 }, groveclan: { 1: 0.78, 3: 0.88 },
     mistscale: { 2: 0.6 } };
   // Sprinkle is shy: a little slower than everyone else's 0.95. Reynard is slow and smooth; Squall
@@ -450,12 +453,13 @@
   // Chapter 10: Mama low, soft and slow (the eldest lower still, and never speaks); ReedClan's and GroveClan's
   // leaders a little low, at their Clans' rates; Granny, chapter 5's otter variant 3, a little low (no rate:
   // RATE.otter would change chapter 5's otters). Chapter 12: Chispapaw high and quick, in English and in Spanish (the
-  // Spanish voice takes her pitch and 0.9 of her rate: UI.voices.plan)
+  // Spanish voice takes her pitch and 0.9 of her rate: UI.voices.plan). Chapter 13: the groundhog low, grumpy and slow
   var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02, patience: 0.8, puddle: 1.05, coil: 0.7, sloshbank: 0.88, sleet: 1.04,
     hail: 1.08, snip: 1.12, snatch: 1.0,
     thymeleaf: 0.85, mizzle: 0.82, groveclan: 0.86,
     mistscale: 0.8,
-    chispapaw: 1.02 };
+    chispapaw: 1.02,
+    groundhog: 0.84 };
   function pitchOf(who, variant) {
     var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
     return v || PITCH[who] || 1;
@@ -538,7 +542,11 @@
     ch10Puddle: { 'true': 'found Puddle under the Moon Ferry (chapter 10; {their} book says so on chapter 10’s page)' },
     ch10Best: { sprinkle: 'will remember Sprinkle most', friends: 'will remember {their} friends most', truth: 'will remember finding the truth most', counts: 'will remember the Counts most' },
     // chapter 11: how she was named (her name itself is the corner's heading, E.displayName)
-    ch11Named: { offer: 'took one of the three names Glintstar saw in {them}', self: 'named {them}self' }
+    ch11Named: { offer: 'took one of the three names Glintstar saw in {them}', self: 'named {them}self' },
+    // chapter 13: how she taught Chispapaw the crouch (replaced on a reread), and the groundhog found (never unset)
+    teach: { show: 'taught Chispapaw the hunter’s crouch by showing her (chapter 21 remembers)', try: 'let Chispapaw try the hunter’s crouch first, and watched (chapter 21 remembers)',
+      words: 'taught Chispapaw the hunter’s crouch with Tallyheart’s own words (chapter 21 remembers)' },
+    foundGroundhog: { 'true': 'found the groundhog asleep beside the big dig in GroveClan’s woods (later chapters remember)' }
   };
   UI.flagWords = FLAG_WORDS;
   // flags the engine keeps for itself: never listed among "what the choices say"

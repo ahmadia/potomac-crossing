@@ -630,7 +630,10 @@
     back += g(fur, { 'clip-path': clip, 'data-art': 'oak-moss' });
     back += oakHollow(S) + silverMoss(S);
     // roots in front of the trunk's foot
-    back += rootArm(S, 730, 862, 590, 956, 104, 22, 1071) + rootArm(S, 960, 864, 1120, 958, 98, 20, 1072);
+    // (chapter 13, `dig`: the dig at the foot's sunny right, its doorway beside it on its left, and the right front root
+    // turning down to the left, so the root, the doorway and the dig lie side by side: OAK_DIG)
+    if (S.opts.dig === true) back += rootArm(S, 730, 862, 590, 956, 104, 22, 1071) + rootArm(S, OAK_DIG.root[0], OAK_DIG.root[1], OAK_DIG.root[2], OAK_DIG.root[3], 98, 16, 1072) + oakDig(S);
+    else back += rootArm(S, 730, 862, 590, 956, 104, 22, 1071) + rootArm(S, 960, 864, 1120, 958, 98, 20, 1072);
     back += fern(S, 1500, 980, 150, 1081, { lean: -0.2 }) + fern(S, 90, 960, 140, 1082, { lean: 0.3 });
     back += canopy(S, -40, 1640, 170, 1091, { clusters: 12, leaves: 50, clear: [HOLLOW.cx - HOLLOW.rx * 1.4, HOLLOW.cx + HOLLOW.rx * 1.4, HOLLOW.cy - HOLLOW.ry * 1.5] });
     back += shafts(S, [[1300, 140, 1150, 280, 1000, 0.22], [500, 80, 330, 200, 1000, 0.14]]);
@@ -737,11 +740,219 @@
 
   // ------------------------------------------------------------------ the set
 
+  // ------------------------------------------------------------------ chapter 13: the dig by the old oak, and the marks
+
+  // Earth turned over in the afternoon sun: warm browns, never dark (the woods' rule: the darkest a soft warm brown).
+  var EARTH = { lip: '#C9A274', lipLt: '#DDBA8C', wall: '#B88C60', wallLt: '#CFA676', floor: '#A57D55', floorLt: '#BC9268', rake: '#8A6646', rakeLt: '#E2C49A',
+    heap: '#B98F63', heapLt: '#D2AA7C', heapDk: '#A47C55', crumb: '#9C7550', door: '#A88058', doorIn: '#B7905F', doorDeep: '#9A744E', flat: '#BE9A70', flatLt: '#D0AF84' };
+  var LEAF_COLS = ['#D9B45C', '#E2C26E', '#C99A4E', '#D88E52', '#B9C266', '#E6CF86'];
+
+  // The dig on `oak` (OAK_DIG): small in the wide picture, the same dig as the close one. The hole, under the back root,
+  // its far wall with the five rakes, the two heaps thrown back either side of it, and the doorway beside it on its left,
+  // half under leaves. No marks on `oak` (they are found on `dig`).
+  var OAK_DIG = { hole: { cx: 1130, cy: 905, rx: 84, ry: 24 }, heaps: [[1064, 884, 38, 20], [1192, 880, 30, 18]], door: { cx: 1000, cy: 890, rx: 32, ry: 25 },
+    rakes: [1082, 1106, 1130, 1154, 1178], root: [930, 866, 790, 962] };
+  // The close composition (DIG): the oak's foot at the left with a root like an arm over the smaller doorway; the big dig in
+  // the middle, its two heaps thrown back either side and its five long rakes down its far wall; on its far side at the
+  // right, a patch of flat bare earth among the leaf litter, where the marks lie (`marks`); ferns behind.
+  var DIG = {
+    ground: [[-40, 616], [400, 610], [800, 606], [1200, 610], [1640, 616]],
+    trunk: { cx: 30, top: -20, base: 778, wt: 196, wb: 214, fl: 76, seed: 1301, moss: 9 },
+    root: [150, 722, 600, 905],
+    door: { cx: 200, cy: 845, rx: 110, ry: 92 },
+    hole: { cx: 960, cy: 770, rx: 200, ry: 58 },
+    heaps: [[812, 712, 88, 44], [1110, 704, 86, 46]],
+    rakes: [868, 926, 984, 1042, 1100],
+    flat: { cx: 1335, cy: 716, rx: 170, ry: 48 },
+    marks: { x: 1335, y: 712, k: 1.3 }
+  };
+  var MARKS_O = { tens: 1, ones: 8, ground: 'earth' };
+
+  // a heap of loose earth: a lumpy mound, lit on its top, crumbs round its foot
+  function earthHeap(S, cx, cy, rx, ry, seed) {
+    var r = rng(seed), d = blob(cx, cy, rx, ry, 11, r, 0.32, 0.4), lt = blob(cx - rx * 0.12, cy - ry * 0.32, rx * 0.62, ry * 0.42, 9, r, 0.3, 0.3), cr = '';
+    for (var i = 0; i < 9; i++) cr += blob(cx + (r() - 0.5) * rx * 2.3, cy + ry * (0.55 + r() * 0.5), 3 + r() * 5, 2 + r() * 3, 6, r, 0.3, 0.3);
+    return path(d, S.linU([[0, EARTH.heapLt], [0.55, EARTH.heap], [1, EARTH.heapDk]], 0, cy - ry, 0, cy + ry)) + path(lt, EARTH.heapLt, { opacity: 0.7 }) + path(cr, EARTH.crumb, { opacity: 0.8 });
+  }
+  // the five rakes: wide curved gouges down the dig's sloping far wall, each a dark groove with a light ridge beside it
+  // (never a straight stroke like a quick line on flat earth). xs: where each starts on the rim; top: the rim there; len.
+  function rakes(S, H, xs, len, w) {
+    var gr = '', rd = '', boxes = [];
+    xs.forEach(function (x, i) {
+      var top = H.cy - H.ry * Math.sqrt(Math.max(0, 1 - Math.pow((x - H.cx) / H.rx, 2))) + w * 0.5, lean = (x - H.cx) / H.rx * w * 0.9;
+      var A0 = [x, top], B = [x + lean * 0.4 + w * 0.35, top + len * 0.36], C2 = [x + lean + w * 0.1, top + len * 0.72], D = [x + lean * 1.2 - w * 0.25, top + len];
+      gr += K.taper(A0, B, C2, D, w, w * 0.22, 12);
+      rd += K.taper([A0[0] + w * 0.62, A0[1] + 1], [B[0] + w * 0.6, B[1]], [C2[0] + w * 0.5, C2[1]], [D[0] + w * 0.4, D[1] - 2], w * 0.42, w * 0.1, 12);
+      boxes.push([Math.min(A0[0], D[0]) - w * 0.6, top - 2, Math.max(A0[0], D[0]) + w * 1.1, top + len + 2]);
+    });
+    return { svg: path(rd, EARTH.rakeLt, { opacity: 0.85 }) + path(gr, EARTH.rake), boxes: boxes };
+  }
+  // the hole itself: the rim's lip, the far wall (lit, the rakes in it) down to the floor, the near lip over it
+  function digHole(S, H, rakeXs, rakeLen, rakeW, seed) {
+    var r = rng(seed), s = '', fy = H.cy + H.ry * 0.5, frx = H.rx * 0.78, fry = H.ry * 0.42;
+    s += ell(H.cx, H.cy + 4, H.rx * 1.08, H.ry * 1.2, EARTH.lip);
+    // inside: the floor's colour, a soft warm brown (never dark), deepest under the near rim
+    s += ell(H.cx, H.cy, H.rx, H.ry, S.linU([[0, EARTH.floor], [1, EARTH.floorLt]], 0, H.cy - H.ry, 0, H.cy + H.ry));
+    // the far wall, sloping down from the rim's back edge to the floor: lit by the afternoon sun from the right
+    var wall = 'M' + n(H.cx - H.rx) + ' ' + n(H.cy) + 'A' + n(H.rx) + ' ' + n(H.ry) + ' 0 0 1 ' + n(H.cx + H.rx) + ' ' + n(H.cy) +
+      'L' + n(H.cx + frx) + ' ' + n(fy) + 'A' + n(frx) + ' ' + n(fry) + ' 0 0 0 ' + n(H.cx - frx) + ' ' + n(fy) + 'Z';
+    s += path(wall, S.linU([[0, EARTH.wall], [0.6, EARTH.wallLt], [1, EARTH.lipLt]], H.cx - H.rx, 0, H.cx + H.rx, 0));
+    s += path(wall, S.linU([[0, EARTH.floor, 0.0], [1, EARTH.floor, 0.45]], 0, H.cy - H.ry, 0, fy));
+    // the floor, and a patch of sun on it
+    s += ell(H.cx + H.rx * 0.18, fy + fry * 0.3, frx * 0.5, fry * 0.55, EARTH.floorLt, { opacity: 0.7 });
+    var rk = rakes(S, H, rakeXs, rakeLen, rakeW);
+    s += g(rk.svg, { 'data-art': 'scratches', 'data-count': String(rakeXs.length) });
+    // the near lip, crumbly, over the hole's front
+    var near = 'M' + n(H.cx - H.rx * 1.02) + ' ' + n(H.cy + 2) + 'Q' + n(H.cx) + ' ' + n(H.cy + H.ry * 1.55) + ' ' + n(H.cx + H.rx * 1.02) + ' ' + n(H.cy + 2) +
+      'Q' + n(H.cx) + ' ' + n(H.cy + H.ry * 1.18) + ' ' + n(H.cx - H.rx * 1.02) + ' ' + n(H.cy + 2) + 'Z';
+    s += path(near, EARTH.lipLt, { opacity: 0.9 });
+    var cr = '';
+    for (var i = 0; i < 14; i++) { var t = r(); cr += blob(H.cx + (t - 0.5) * H.rx * 1.9, H.cy + H.ry * (1.1 + r() * 0.35) * Math.sqrt(Math.max(0.05, 1 - Math.pow((t - 0.5) * 1.9, 2))), 3 + r() * 6, 2 + r() * 3, 6, r, 0.3, 0.3); }
+    s += path(cr, EARTH.crumb, { opacity: 0.75 });
+    return { svg: s, rakes: rk.boxes };
+  }
+  // a doorway: a round burrow mouth, its inside a soft brown (never black), a lip of earth along its foot
+  function doorMouth(S, D) {
+    var s = '', top = D.cy - D.ry, bot = D.cy + D.ry;
+    var arch = 'M' + n(D.cx - D.rx) + ' ' + n(bot - D.ry * 0.12) + 'C' + n(D.cx - D.rx) + ' ' + n(top - D.ry * 0.05) + ' ' + n(D.cx + D.rx) + ' ' + n(top - D.ry * 0.05) + ' ' + n(D.cx + D.rx) + ' ' + n(bot - D.ry * 0.12) +
+      'Q' + n(D.cx) + ' ' + n(bot + D.ry * 0.08) + ' ' + n(D.cx - D.rx) + ' ' + n(bot - D.ry * 0.12) + 'Z';
+    s += path(arch, EARTH.lip, { transform: 'translate(0 ' + n(-D.ry * 0.06) + ') scale(1)' });
+    s += path(arch, S.radU([[0, EARTH.doorIn], [0.65, EARTH.door], [1, EARTH.doorDeep]], D.cx, D.cy + D.ry * 0.3, D.rx * 1.1), { transform: 'translate(' + n(D.cx * 0.12) + ' ' + n(D.cy * 0.1 + D.ry * 0.06) + ') scale(0.88 0.9)' });
+    s += path('M' + n(D.cx - D.rx * 0.95) + ' ' + n(bot - D.ry * 0.08) + 'Q' + n(D.cx) + ' ' + n(bot + D.ry * 0.16) + ' ' + n(D.cx + D.rx * 0.95) + ' ' + n(bot - D.ry * 0.08) +
+      'Q' + n(D.cx) + ' ' + n(bot + D.ry * 0.02) + ' ' + n(D.cx - D.rx * 0.95) + ' ' + n(bot - D.ry * 0.08) + 'Z', EARTH.lipLt, { opacity: 0.9 });
+    return s;
+  }
+  // fallen leaves over a region: a soft drift of litter and leaves, overlapping, gold, tan and a little rust
+  function leafDrift(S, x0, x1, top, base, seed, count) {
+    var r = rng(seed), s = '', cx = (x0 + x1) / 2, rx = (x1 - x0) / 2, byCol = {};
+    s += path(blob(cx, (top + base) / 2 + (base - top) * 0.12, rx, (base - top) * 0.42, 12, r, 0.3, 0.4), C.litter, { opacity: 0.92 });
+    for (var i = 0; i < (count || 40); i++) {
+      var u = r() * 2 - 1, lx = cx + u * rx * 0.95, h = (base - top) * (1 - 0.65 * u * u), ly = base - r() * h * 0.92;
+      var col = LEAF_COLS[Math.floor(r() * LEAF_COLS.length)], len = 14 + r() * 12;
+      byCol[col] = (byCol[col] || '') + leafD(lx, ly, len, r() * 6.28, len * 0.42);
+    }
+    LEAF_COLS.forEach(function (c) { if (byCol[c]) s += path(byCol[c], C.litterDk, { opacity: 0.7, transform: 'translate(1 1.5)' }) + path(byCol[c], c); });
+    return s;
+  }
+  function oakDig(S) {
+    var H = OAK_DIG.hole, D = OAK_DIG.door, s = '';
+    OAK_DIG.heaps.forEach(function (q, i) { s += earthHeap(S, q[0], q[1], q[2], q[3], 1311 + i); });
+    var hole = digHole(S, H, OAK_DIG.rakes, 15, 7, 1313);
+    s += hole.svg;
+    s += doorMouth(S, D) + leafDrift(S, D.cx - D.rx * 1.15, D.cx + D.rx * 1.15, D.cy - D.ry * 0.05, D.cy + D.ry + 6, 1314, 16);
+    var b = digBox(H, OAK_DIG.heaps), db = doorBox(D);
+    (S.keep = S.keep || []).push({ x: Math.min(b[0], db[0]), y: Math.min(b[1], db[1]), w: Math.max(b[2], db[2]) - Math.min(b[0], db[0]), h: Math.max(b[3], db[3]) - Math.min(b[1], db[1]) });
+    return g(s, { 'data-art': 'dig', 'data-box': boxAttr(b), 'data-door': boxAttr(db) });
+  }
+  function digBox(H, heaps) {
+    var b = [H.cx - H.rx * 1.08, H.cy - H.ry * 1.2, H.cx + H.rx * 1.08, H.cy + H.ry * 1.45];
+    heaps.forEach(function (q) { b = [Math.min(b[0], q[0] - q[2]), Math.min(b[1], q[1] - q[3]), Math.max(b[2], q[0] + q[2]), Math.max(b[3], q[1] + q[3])]; });
+    return b;
+  }
+  function doorBox(D) { return [D.cx - D.rx, D.cy - D.ry * 1.05, D.cx + D.rx, D.cy + D.ry * 1.05]; }
+  // the marks' box at their place (the kit's quick picture: one line and eight pokes, five and three)
+  function marksBox() {
+    var M = DIG.marks, sz = typeof art.quickMarks === 'function' && art.quickMarks.size ? art.quickMarks.size(MARKS_O) : { w: 192.6, h: 56 };
+    return [M.x - sz.w * M.k / 2, M.y - sz.h * M.k / 2, M.x + sz.w * M.k / 2, M.y + sz.h * M.k / 2];
+  }
+  // the leaves over half of the marks (`marks: 'leaves'`): over the line's lower part, the three pokes of the lower row and
+  // the first of the upper (two boxes: the lower row's and the upper left's), so the line's top end and four pokes show;
+  // marksLeavesBox is both together (the Tap's target)
+  function marksLeavesParts(mb) {
+    var w = mb[2] - mb[0], h = mb[3] - mb[1];
+    return [[mb[0] - w * 0.08, mb[1] + h * 0.5, mb[0] + w * 0.76, mb[3] + h * 0.22], [mb[0] - w * 0.08, mb[1] + h * 0.3, mb[0] + w * 0.41, mb[1] + h * 0.62]];
+  }
+  function marksLeavesBox(mb) {
+    var P = marksLeavesParts(mb);
+    return [Math.min(P[0][0], P[1][0]), Math.min(P[0][1], P[1][1]), Math.max(P[0][2], P[1][2]), Math.max(P[0][3], P[1][3])];
+  }
+  function digMarks(S, v) {
+    var M = DIG.marks, mb = marksBox(), s = '';
+    s += K.quick(M.x, M.y, M.k, MARKS_O);
+    if (v === 'leaves') {
+      var r = rng(1341), byCol = {}, under = '';
+      // a few fallen leaves over that half, on a soft drift of litter so no poke peeks out between two leaves; the line's
+      // top end and the upper row's last four pokes left in the open
+      marksLeavesParts(mb).forEach(function (b, j) {
+        var cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2, rx = (b[2] - b[0]) / 2, ry = (b[3] - b[1]) / 2;
+        under += blob(cx, cy, rx * 0.98, ry * 0.92, 10, r, 0.18, 0.3);
+        for (var i = 0; i < (j ? 10 : 22); i++) {
+          var lx = cx + (r() - 0.5) * rx * 1.8, ly = cy + (r() - 0.5) * ry * 1.6, col = LEAF_COLS[Math.floor(r() * LEAF_COLS.length)], len = 20 + r() * 12;
+          byCol[col] = (byCol[col] || '') + leafD(lx, ly, len, r() * 6.28, len * 0.44);
+        }
+      });
+      s += path(under, C.litter);
+      LEAF_COLS.forEach(function (c) { if (byCol[c]) s += path(byCol[c], C.litterDk, { opacity: 0.7, transform: 'translate(1 1.5)' }) + path(byCol[c], c); });
+    } else {
+      // brushed aside: the leaves at the patch's two ends
+      var F = DIG.flat;
+      s += leafDrift(S, F.cx - F.rx * 1.05, F.cx - F.rx * 0.62, F.cy - F.ry * 0.3, F.cy + F.ry * 0.85, 1342, 12) + leafDrift(S, F.cx + F.rx * 0.66, F.cx + F.rx * 1.05, F.cy - F.ry * 0.4, F.cy + F.ry * 0.8, 1343, 12);
+    }
+    return g(s, { 'data-art': 'marks', 'data-marks': v, 'data-box': boxAttr(mb) });
+  }
+  // the leaves over whoever is in the doorway (S.covers.doorway): a drift over their lower half, never over the face; with
+  // nobody there, over the empty doorway's lower half
+  function leavesCover(S, est) {
+    var D = DIG.door, base = D.cy + D.ry + 10, top = D.cy + D.ry * 0.12, x0 = D.cx - D.rx * 1.12, x1 = D.cx + D.rx * 1.12;
+    if (est) {
+      // (its face, up in `wake`, `sit` and `yawn`, is never under them; dozing, its face is tucked down in the leaves)
+      var b = est.body, hb = est.head;
+      top = b[1] + (b[3] - b[1]) * 0.5;
+      if (est.pose !== 'doze') top = Math.max(top, hb[3] + 6);
+      x0 = Math.min(x0, b[0] - 10); x1 = Math.max(x1, b[2] + 10); base = Math.max(base, b[3] + 8);
+    }
+    return g(leafDrift(S, x0, x1, top, base, 1351, 46), { 'data-part': 'cover-leaves', 'data-box': boxAttr([x0, top, x1, base]) });
+  }
+  function drawDig(S) {
+    var back = '', over = '', front = '', c, o = S.opts, H = DIG.hole, D = DIG.door, F = DIG.flat;
+    back += skyBack(S, 660);
+    [[520, 640, 30, 0.5], [880, 632, 38, 0.48], [1260, 636, 26, 0.55], [1520, 640, 34, 0.5]].forEach(function (q, i) {
+      back += trunk(S, { cx: q[0], top: -20, base: q[1], wt: q[2], wb: q[2] * 1.08, fl: q[2] * 0.4, seed: 1320 + i, moss: 2, far: q[3] });
+    });
+    back += farWoods(S, 640, 1325);
+    back += groundLayer(S, DIG.ground, 1326, { litter: 140, tufts: 40, flowers: 10, tuftSize: 2 });
+    // ferns at the back (the apprentice's fern among them, at the back left)
+    back += fern(S, 610, 700, 190, 1327, { lean: 0.15 }) + fern(S, 1560, 700, 200, 1328, { lean: -0.25 }) + fern(S, 1210, 640, 130, 1329, { lean: -0.1, count: 6 }) + fern(S, 420, 650, 140, 1330, { lean: 0.2, count: 6 });
+    back += dapples(S, [[640, 960, 150, 24], [1180, 950, 140, 22], [1420, 820, 90, 14], [420, 700, 70, 11], [1000, 640, 80, 10]]);
+    // the oak's foot at the left, furry with moss, and its root like an arm over the doorway
+    back += trunk(S, DIG.trunk);
+    back += g(doorMouth(S, D), { 'data-art': 'doorway', 'data-box': boxAttr(doorBox(D)) });
+    back += rootArm(S, DIG.root[0], DIG.root[1], DIG.root[2], DIG.root[3], 92, 70, 1331);
+    // the big dig: its heaps thrown back either side, the hole with its five long rakes
+    var hs = '';
+    DIG.heaps.forEach(function (q, i) { hs += earthHeap(S, q[0], q[1], q[2], q[3], 1332 + i); });
+    var hole = digHole(S, H, DIG.rakes, 50, 22, 1334);
+    var db = digBox(H, DIG.heaps);
+    back += g(hs + hole.svg, { 'data-art': 'dig', 'data-box': boxAttr(db) });
+    // the flat bare earth on its far side, and the marks on it (`marks`)
+    var fl = ell(F.cx, F.cy + 3, F.rx * 1.04, F.ry * 1.12, C.litterDk, { opacity: 0.35 }) + path(blob(F.cx, F.cy, F.rx, F.ry, 12, rng(1335), 0.2, 0.3), S.linU([[0, EARTH.flatLt], [1, EARTH.flat]], 0, F.cy - F.ry, 0, F.cy + F.ry));
+    back += g(fl, { 'data-art': 'flat-earth', 'data-box': boxAttr([F.cx - F.rx, F.cy - F.ry, F.cx + F.rx, F.cy + F.ry]) });
+    var mk = o.marks === 'leaves' || o.marks === 'bare' ? o.marks : null, mb = marksBox();
+    if (mk) back += digMarks(S, mk);
+    back += canopy(S, -40, 1640, 180, 1336, { clusters: 12, leaves: 50 });
+    back += shafts(S, [[1250, 150, 1050, 300, 1000, 0.22], [700, 80, 520, 200, 1000, 0.14]]);
+    // the Taps' targets: the leaves on the marks, or the marks (generous on a phone)
+    if (o.tap === 'leaves' && mk) { var lb = marksLeavesBox(mb); back += K.tapBox('leaves', { x: lb[0] - 50, y: lb[1] - 60, w: lb[2] - lb[0] + 100, h: lb[3] - lb[1] + 120 }); }
+    if (o.tap === 'marks' && mk) back += K.tapBox('marks', { x: mb[0] - 40, y: mb[1] - 40, w: mb[2] - mb[0] + 80, h: mb[3] - mb[1] + 80 });
+    // in keep: the marks first (what the close-up is about), then the dig and the doorway
+    if (mk) (S.keep = S.keep || []).push({ x: mb[0] - 8, y: mb[1] - 8, w: mb[2] - mb[0] + 16, h: mb[3] - mb[1] + 16 });
+    (S.keep = S.keep || []).push({ x: db[0], y: db[1], w: db[2] - db[0], h: db[3] - db[1] });
+    var dbx = doorBox(D);
+    (S.keep = S.keep || []).push({ x: dbx[0], y: dbx[1], w: dbx[2] - dbx[0], h: dbx[3] - dbx[1] });
+    // the covers, by spot: the leaves over whoever is in the doorway (or the empty doorway), the fern over the apprentice
+    c = who(S, 'doorway');
+    S.covers.doorway = leavesCover(S, c ? Object.assign(castEst(S, c.m, c.a), { pose: c.m.pose }) : null);
+    if ((c = who(S, 'dig-fern'))) S.covers['dig-fern'] = fernCover(S, castEst(S, c.m, c.a), c.a, 1337);
+    return { back: back, over: over, front: front };
+  }
+
   function draw(S) {
     if (S.comp === 'bridge') return drawBridge(S);
     if (S.comp === 'meet') return drawMeet(S);
     if (S.comp === 'oak') return drawOak(S);
     if (S.comp === 'hollow') return drawHollow(S);
+    // chapter 13: the dig by the old oak, close (`dig`, `marks`)
+    if (S.comp === 'dig') return drawDig(S);
     return drawWide(S);
   }
 
@@ -752,7 +963,11 @@
       wide: { box: [0, 0, 1600] },
       meet: { box: [0, 0, 1600], comp: 'meet' },
       oak: { box: [0, 0, 1600], comp: 'oak' },
-      hollow: { box: [0, 0, 1600], comp: 'hollow' }
+      hollow: { box: [0, 0, 1600], comp: 'hollow' },
+      // chapter 13: the dig close, at cat height (`dig`, the whole composition), and the marks close (`marks`: on the flat
+      // earth, the marks about half the panel, the dig's near rim with two of its five rakes at its left edge; no spots)
+      dig: { box: [0, 0, 1600], comp: 'dig' },
+      marks: { box: [1000, 520, 520], comp: 'dig' }
     },
     anchors: {
       // the near bank at the bridge's foot (the river path's side), facing the bridge; the two on the span stand
@@ -775,12 +990,29 @@
       // bark: `elev`, `air`); a cat crouched at the silver moss, low on the shaded side, facing it
       oak: {
         'root-1': A(230, 936, 226), 'root-2': A(700, 952, 232), 'root-3': A(1010, 946, 230),
-        elder: A(1340, 922, 224, 'left'), trunk: A(800, 660, 210, 'right', { elev: true, air: true }), moss: A(498, 884, 214, 'right')
+        elder: A(1340, 922, 224, 'left'), trunk: A(800, 660, 210, 'right', { elev: true, air: true }), moss: A(498, 884, 214, 'right'),
+        // chapter 13: with the dig drawn, root-3 stands on its doorway; oak-near, on the ground before the trunk's left foot,
+        // facing right, is the fourth clear spot (with root-1, root-2 and elder). Placed (never a ground anchor for the depth
+        // scale, nor a spot given to a cast member who names none), so every oak picture without it is as it was
+        'oak-near': A(470, 950, 232, 'right', { placed: true })
       },
       // Mizzle on the moss; our cat at the opening, her forepaws on the sill (above the nook's floor)
-      hollow: { nook: A(1090, 936, 420, 'left'), lip: A(368, NOOK.sill, 520, 'right', { elev: true }) }
+      hollow: { nook: A(1090, 936, 420, 'left'), lip: A(368, NOOK.sill, 520, 'right', { elev: true }) },
+      // chapter 13, the dig close: door-1 in front of the doorway, a cat crouched facing it; door-2 beside her, a step back;
+      // doorway in it (the groundhog, its lower half under the leaves: behind its cover, no ground shadow); dig-front before
+      // the dig, facing it; marks-1 and marks-2 by the marks, facing them; dig-elder at the back right; dig-fern at the back
+      // left, half hidden by a fern (behind everyone)
+      dig: {
+        'door-1': A(440, 968, 270, 'left'), 'door-2': A(650, 930, 250, 'left'), doorway: A(200, 920, 250, 'right', { z: 'behind', air: true }),
+        'dig-front': A(1290, 968, 270, 'left'), 'marks-1': A(1290, 968, 270, 'right'), 'marks-2': A(1500, 940, 250, 'right'),
+        'dig-elder': A(1500, 650, 200, 'left'), 'dig-fern': A(600, 690, 190, 'right', { z: 'behind' })
+      }
     },
-    opts: {}, defaults: {}
+    // chapter 13, the grove's first options (all off by default): dig, on `oak`, the big dig at the old oak's roots with its
+    // doorway (OAK_DIG); on `dig` and `marks`, marks: one long line and eight little pokes in the flat earth, the kit's quick
+    // picture, half under the leaves ('leaves') or bare ('bare'); tap: the Tap's target, an unpainted <g class="pc-tap
+    // pc-tap-leaves"> over the leaves on the marks ('leaves') or <g class="pc-tap pc-tap-marks"> over the marks ('marks')
+    opts: { dig: [false, true], marks: [false, 'leaves', 'bare'], tap: ['none', 'leaves', 'marks'] }, defaults: {}
   });
 
   // For the tests: the channel and the bridge's deck (bridge), the oak, its hollow and its silver moss, the nook's
@@ -791,7 +1023,13 @@
       oak: { cx: OAK.cx, base: OAK.base, wb: OAK.wb, fl: OAK.fl }, hollow: { cx: HOLLOW.cx, cy: HOLLOW.cy, rx: HOLLOW.rx, ry: HOLLOW.ry },
       silver: { cx: SILVER.cx, cy: SILVER.cy, rx: SILVER.rx, ry: SILVER.ry }, nook: { open: NOOK.open.map(function (q) { return q.slice(); }), jamb: NOOK.jamb, sill: NOOK.sill },
       inChannel: function (x, y) { return inPoly(CHANNEL, x, y); }, wideWater: WIDE_WATER.map(function (q) { return q.slice(); }),
-      inWideWater: function (x, y) { return inPoly(WIDE_WATER, x, y); }
+      inWideWater: function (x, y) { return inPoly(WIDE_WATER, x, y); },
+      // chapter 13: the dig (hole and heaps), its doorway and the marks, as world boxes [x0, y0, x1, y1]: on `oak` with `dig`,
+      // and on the close composition (`dig`, `marks`); the leaves' box over half the marks; the five rakes' x on each
+      dig: { oak: digBox(OAK_DIG.hole, OAK_DIG.heaps), dig: digBox(DIG.hole, DIG.heaps) },
+      doorway: { oak: doorBox(OAK_DIG.door), dig: doorBox(DIG.door) },
+      marks: marksBox(), marksLeaves: marksLeavesBox(marksBox()), flat: [DIG.flat.cx - DIG.flat.rx, DIG.flat.cy - DIG.flat.ry, DIG.flat.cx + DIG.flat.rx, DIG.flat.cy + DIG.flat.ry],
+      rakes: { oak: OAK_DIG.rakes.slice(), dig: DIG.rakes.slice() }
     };
   };
 

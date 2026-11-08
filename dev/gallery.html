@@ -285,6 +285,8 @@
   var HOL12 = [c('tallyheart', 'tree', 'sit', 'kind', { facing: 'left' }), c('player', { x: 690, y: 892 }, 'sit', 'happy'), c('chispapaw', 'sunpatch-3', 'sit', 'shy', { facing: 'right' })];
   var STORE12 = [c('murmurchime', 'store-back-3', 'sit', 'happy'), c('tallyheart', 'store-back-2', 'sit', 'proud'), c('glintstar', 'store-back-1', 'sit', 'kind'),
     c('grizzled', 'way-in', 'walk', 'stern'), c('player', 'store-left', 'sit', 'happy'), c('chispapaw', 'store-right', 'sit', 'wonder')];
+  // chapter 13: the Hollow's staging, Chispapaw without her collar
+  var HOL13 = [c('tallyheart', 'tree', 'sit', 'kind', { facing: 'left' }), c('player', { x: 690, y: 892 }, 'sit', 'happy'), c('chispapaw', 'sunpatch-3', 'sit', 'wonder', { facing: 'right', collar: false })];
   var EXTRA = [
     ['room', 'glass', { opts: { door: 'closed', reflection: true }, cast: [], fx: ['dusk'] }, 'the look chooser: reflection only'],
     ['den', 'outside', { opts: { weather: 'storm' }, cast: [c('tallyheart', 'doorway', 'lie', 'kind')], fx: ['night', 'lightning'] }, 'storm outside'],
@@ -627,7 +629,32 @@
       c('chispapaw', { x: 470, y: 930 }, 'sit', 'wonder')], fx: ['day'] }, 'chapter 12: the camp by day, crowd: true (drawn by no frame before)'],
     ['bridge', 'store', { opts: { store: 175 }, cast: STORE12, fx: ['sunset'] }, 'chapter 12: the store at 175 at sunset, the six at its spots (back to front)'],
     ['bridge', 'store', { opts: { store: 133, tap: 'store' }, cast: STORE12, fx: ['sunset'] }, 'chapter 12: store: 133, tap: store; 133 lies where 175 lay'],
-    ['bridge', 'store', { cast: [], fx: ['dusk'] }, 'chapter 12: the dry den at dusk, the bare floor']
+    ['bridge', 'store', { cast: [], fx: ['dusk'] }, 'chapter 12: the dry den at dusk, the bare floor'],
+    // chapter 13: the camp's first frost and the dawn patrol's trails, the hunter's crouch on `crowd` (ferns-1, ferns-2), the
+    // camp under the stars with no moon, the spread in the sand (HOL12's staging, Chispapaw without her collar), the collar
+    // in the den, and GroveClan's dig: on `oak` with the four at its clear spots, close, with the groundhog, and the marks
+    ['camp', 'reveal', { opts: { frost: 'prints' }, cast: [c('player', 'entrance', 'walk', 'wonder', { facing: 'left' }), c('murmurchime', { x: 420, y: 905 }, 'walk', 'happy', { facing: 'left' }),
+      c('tallyheart', { x: 560, y: 890 }, 'sit', 'kind', { facing: 'right' })], fx: ['morning'] }, 'chapter 13: frost: prints, the first frost and the three cats\u2019 trails toward the entrance'],
+    ['camp', 'crowd', { opts: { frost: true }, cast: [c('tallyheart', 'crowd-right', 'sit', 'proud'), c('player', 'ferns-1', 'sit', 'kind'), c('chispapaw', 'ferns-2', 'crouch', 'proud', { tailUp: true })], fx: ['morning'] },
+      'chapter 13: the hunter\u2019s crouch on crowd: ferns-1, ferns-2 (her tail up like a flag), Tallyheart at crowd-right'],
+    ['camp', 'ferns', { opts: { frost: true }, cast: [], fx: ['morning'] }, 'chapter 13: frost on the fern bed, every fern edged and tipped white'],
+    ['camp', 'reveal', { opts: {}, cast: [c('clancat', 'crowd-left', 'curl', 'sleepy', { asleep: true }), c('clancat', 'crowd-right', 'curl', 'sleepy', { variant: 4, asleep: true })], fx: ['night', 'stars'] },
+      'chapter 13: the camp asleep under the stars, no moon (f075)'],
+    ['hollow', 'lesson', { opts: { marks: 10, glow: G10, spreadMarks: 'standing' }, cast: HOL13, fx: ['morning'] }, 'chapter 13: spreadMarks: standing, Tallyheart\u2019s forty-three'],
+    ['hollow', 'lesson', { opts: { marks: 10, glow: G10, spreadMarks: 'spread' }, cast: HOL13, fx: ['morning'] }, 'chapter 13: spreadMarks: spread, one line struck, ten new dots in a frame, five and five'],
+    ['hollow', 'lesson', { opts: { marks: 10, glow: G10, spreadMarks: 'two' }, cast: HOL13, fx: ['morning'] }, 'chapter 13: spreadMarks: two, hers and yours, right to left'],
+    ['den', 'inside', { opts: { weather: 'clear', collar: true }, cast: [c('chispapaw', 'nest', 'sit', 'happy', { collar: false }), c('player', 'sleeper-2', 'sit', 'kind', { facing: 'right' })], fx: ['morning'] },
+      'chapter 13: collar, by her nest in its hollow in the moss (f027)'],
+    ['den', 'inside', { opts: { weather: 'clear', collar: true }, cast: [c('snorer', 'sleeper-1', 'curl', 'sleepy', { asleep: true }), c('chispapaw', 'nest', 'crouch', 'sleepy', { collar: false })], fx: ['night', 'stars'] },
+      'chapter 13: collar at night: not one ting (f078)'],
+    ['grove', 'oak', { opts: { dig: true }, cast: [c('groveclan', 'elder', 'sit', 'kind'), c('player', 'root-2', 'sit', 'wonder'), c('chispapaw', 'oak-near', 'sit', 'wonder'), c('tallyheart', 'root-1', 'sit', 'kind')], fx: ['day'] },
+      'chapter 13: dig on oak, its doorway beside it; the four at root-1, oak-near, root-2 and elder'],
+    ['grove', 'dig', { opts: { marks: 'leaves' }, cast: [c('player', 'dig-front', 'crouch', 'sniff', { tap: 'nose' }), c('chispapaw', 'marks-2', 'sit', 'wonder'), c('groveclan', 'dig-elder', 'sit', 'kind')], fx: ['day'] },
+      'chapter 13: the dig close, five long rakes; the marks half under the leaves (f054)'],
+    ['grove', 'dig', { opts: { marks: 'leaves' }, cast: [c('groundhog', 'doorway', 'sit', 'shout'), c('player', 'door-1', 'crouch', 'wonder'), c('chispapaw', 'door-2', 'sit', 'wonder')], fx: ['day'] },
+      'chapter 13: the groundhog in its doorway, under the leaves (f061)'],
+    ['grove', 'dig', { opts: { marks: 'bare' }, cast: [c('player', 'marks-1', 'crouch', 'wonder'), c('chispapaw', 'marks-2', 'crouch', 'wonder')], fx: ['day'] }, 'chapter 13: the marks bare: one long line, eight little pokes (f066)'],
+    ['grove', 'marks', { opts: { marks: 'bare', tap: 'marks' }, cast: [], fx: ['day'] }, 'chapter 13: the marks close, the dig\u2019s two rakes at the left edge (f068)']
   ];
 
   // ---- panels, rendered when they scroll into view

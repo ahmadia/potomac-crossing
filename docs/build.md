@@ -2148,3 +2148,99 @@ words), `tests/tools.test.js` (chapter 12's `--check-words` list; shots' and the
 own: `tests/story-ch12.test.js` (the graph, 540 readings, the Spanish, the echoes, the take lesson, the book, the teaser,
 staging, the purr words), `tests/cats.test.js` (Chispapaw, `holds: 'mouse'`, `round`), `tests/scenes.test.js` (the
 `<ch12-fingerprint>`, the hollow's plan and marks, den and garden) and `tests/set-bridge.test.js` (the store camera).
+
+## Chapter 13 (v0.1)
+
+Chapter 13, "The Hunter's Crouch", is told with the engine as it is: **data and art only**
+([its spec](chapters/13-the-hunters-crouch.spec.md) v0.2, section 6; decisions 53, 54 and 55; Claude's calls under decision
+46). No new interaction, no new engine key, no save change (version 2). Two flags (`teach`, replaced; `foundGroundhog`,
+sticky), six Counts sets, three words-table lines, the groundhog, and the places' new options; every new option off by
+default and every new camera, composition and spot additional, so chapters 1 to 12, the Warrior Counts and the kit's pages
+draw byte for byte.
+
+**The engine's three checks** (the spec's section 6), run on main after chapter 12 (v25, `E.VERSION` 0.12.0) with the
+spec's `ch13-take` in memory, all passed, so `app/engine.js` is unchanged and `ch13-take` carries no `lines`:
+1. Rule (a) is in: typing 1 at 486 − 253's hundreds in `E.takeLesson` is the slip `'fact'` and the help opens "Let’s
+   scratch it out."; `E.takeSlip(E.takePlan(486, 253), 2, 1, false, ['none', 'ones2']) === 'fact'`; a cat that has finished
+   chapter 13 gets `E.takeRoundStart(cat).state.taught` equal to `E.takeSteps(cat)`, `['none', 'ones2']`. Rule (b) is in:
+   85 − 39 hears "Ones first. Five take away nine." and "Now the tens. Take away three.". The lesson's `state.avoid` is the
+   chapter's take answers (27, 36, 46, 45, 233, 25).
+2. Chapter 12's Spanish on the three new words: `E.fill('{Es:resta} THAT’S …')` letters "«¡La resta!» THAT’S …";
+   `E.esEnglish` gives "Take-aways!", "Not enough!" and "Breaking it into groups!"; `E.esLine('{Es:desagrupo}')` is
+   "«¡Desagrupo!»\n(Breaking it into groups!)". With no Spanish voice f030 is said "Take-aways! THAT’S …".
+3. The school words: `E.takeLine` for 43 − 16's tens in `'show'` on a `teach: 'ones2'` set begins "A row is a ten. A
+   square is a hundred.".
+
+**The words** (`app/story/words.js`, `PC.words.es`), each stored as lettered (chapter 12's `E.esEnglish` matches an entry's
+`es` with case kept; `{Es:…}` on a value that opens "¡L", "¡N" or "¡D" changes nothing): `resta` ('¡La resta!',
+'Take-aways!'), `noAlcanza` ('¡No alcanza!', 'Not enough!'), `desagrupo` ('¡Desagrupo!', 'Breaking it into groups!':
+decision 55, Lissa's word for a spread). A later chapter that letters «la resta» mid-sentence adds its own entry.
+
+**The page** (`app/ui.js`): `NAMES.groundhog` 'The groundhog' (appended last; its balloons on f060 to f062 carry `name:
+'The round brown thing'`), `PITCH.groundhog` 0.78 and `RATE.groundhog` 0.84 (low, grumpy and slow), and the grown-ups
+corner's `FLAG_WORDS.teach` (`show`, `try`, `words`: "… (chapter 21 remembers)") and `FLAG_WORDS.foundGroundhog`
+(`'true'`: "found the groundhog asleep beside the big dig in GroveClan’s woods (later chapters remember)").
+
+**The art, the cats owner's** (`app/art/cats.js`; `tests/cats.test.js`; `dev/gallery-cats.html`, its `groundhog` section):
+- **The groundhog** (`groundhog`, in `CAST_IDS` after `chispapaw` and in `PC.art.vocab.otherPoses`; not a cat, and not
+  scenes.js's `CAT_IDS`): round and brown, a grizzled warm brown coat (darker on the back, a paler gingery belly, a paler
+  muzzle), a short furry tail, small round ears, a blunt dark nose with whiskers, small dark eyes under heavy lids, little
+  dark paws; never a tooth (a yawn or a shout is a dark round mouth with a tongue), never a claw, no stripe and no
+  black-and-white face. Its box is 240 × 200 in the cats' units, its lowest point at y 197, the middle of its body on the
+  box's centre line. Poses: `doze` (in a doorway seen from behind: its round back and bottom, the tail and the soles of its
+  hind feet at the bottom, only the back of its head and its ears over its shoulder; no face, so every mood dozes alike),
+  `wake` (the same body, its head up and turned to us, both eyes open), `sit` (on its haunches, forepaws folded on its
+  belly), `yawn` (eyes squeezed shut, a big round O), `sleep` (curled round side on, eyes shut, a little smile: what an
+  unknown pose draws, and the book's sleeper page). Every mood its own face (`neutral` heavy-lidded and a little grumpy,
+  `stern` brows down hard and a frown, `shout` a round open mouth, `sniff` its nose up and twitching, `happy` a squint and a
+  smile; the rest as everyone's); `asleep: true` and `'half'` as for every creature. Its parts carry classes for the tests
+  and the tools: `pc-groundhog` (with `data-pose`), `pc-gh-body`, `pc-gh-head`, `pc-gh-tail`, `pc-eye` (with `data-eye`),
+  `pc-mouth` (with `data-mouth`), `pc-sniff`, `pc-yawn`.
+- **Its size**: sitting, the top of its head box to the bottom of its box is 1.068 times our cat's sitting (scenes.js's
+  `SIZE_BAND.groundhog = { ref: 'player', pose: 'sit', by: 'tall', min: 1.0, max: 1.15 }`, so the scenes leave it as
+  drawn); its body (no tail) 124 wide, about twice our cat's sitting body; curled (`sleep`, `doze`) about as long as our cat
+  lying. Its shadow is scenes.js's (`OWN_SHADOW.groundhog`, none in `doze`, `wake` or `sleep`: `NO_SHADOW` is read by
+  pose).
+- **The quick marks' `crossed` and `fresh`** (`PC.art.quickMarks(x, y, k, o)`, the help's sand's meaning): `crossed: {
+  lines }` draws `tens` + `lines` lines, the last `lines` struck through and dim (`<g class="pc-quick-crossed">`, a slash
+  from lower left to upper right, never a level line); `fresh: { dots }` (at most ten, at most `ones`) puts that many of
+  the `ones` in a scratched frame under the old dots, five and five (`<rect class="pc-quick-frame">`, the ground's groove
+  colour, a rounded rectangle always the ten places; each fresh dot in `<g class="pc-quick-fresh">`), the old dots above it
+  in its columns. `PC.art.quickMarks.size(o)` counts the struck lines and the frame (the spread forty-three, `{ tens: 3,
+  ones: 13, crossed: { lines: 1 }, fresh: { dots: 10 } }`, is 264.3 × 115.4 at scale 1). Absent, naught or not an object,
+  every mark, group and size exactly as before (a sweep pinned against the tree before). `PC.art.kit.quick` passes `o`
+  whole, unchanged.
+- **`tailUp: true` with `curl`** for cats (`TAIL_UP.curl`): the tail rising straight up out of the curl from behind the
+  haunch, its tip soft (a gentle lean, never curled over); placed as with the tail down, so her head and body never move;
+  `tap: 'tail'` marks its tip. Off unless asked. No frame of chapters 1 to 12 gives `curl` a `tailUp`, so every frame's
+  fingerprint stands; four of `tests/cats.test.js`' synthetic sweeps (chapters 8's, 9's and 12's two) drew `curl` with
+  `tailUp: true`, which drew nothing before, and were retaken (48, 4, 32 and 6 records changed, every one a cat in `curl`
+  with `tailUp: true`; with `tailUp` taken out of those calls each gives its old hash, a test).
+
+**The art, the sets owner's** (`app/art/scenes.js`, `app/art/sets/grove.js`; the spec's section 4 and the sets owner's
+notes for the final spots and boxes): the camp's `frost` (`true`, `'prints'`: the dawn patrol's three trails) and the
+spots `ferns-1`, `ferns-2`; the hollow's `spreadMarks` (`'standing'`, `'spread'`, `'two'`, drawn by `kit.quick` with the
+two keys above, in a keep box of its own); the den's `collar`; the grove's `dig` on `oak` (and `oak-near` only if needed),
+the `dig` composition with cameras `dig` and `marks`, its spots (`door-1`, `door-2`, `doorway`, `dig-front`, `marks-1`,
+`marks-2`, `dig-elder`, `dig-fern`), covers keyed `doorway` (`cover-leaves`) and `dig-fern` (`cover-fern`), options `marks`
+(`'leaves'`, `'bare'`: one long line and eight little pokes, the kit's quick picture on earth) and `tap` (`'leaves'`,
+`'marks'`); `PC.art.groveInfo()`'s dig, doorway and marks boxes; the groundhog's `SIZE_BAND`, `OWN_SHADOW` and `NO_SHADOW`.
+
+**The book**: `sleeperArt` (`app/ui.js`, book two) draws an id in `PC.art.vocab.cast` with `PC.art.character`, so the
+groundhog's found page (`book.sleeper` id `groundhog`, its default pose `sleep`) draws the groundhog asleep from chapter 13
+on; a silhouette is always called with `null` and stays the plain curled shape, so none gives away who is still to find.
+
+**The tools**: `tools/storyboard.mjs` has words for every new name (section 8, "Drawn now"): the groundhog (its look, its
+five poses, its speaker), the camp's `frost` and its trails, `ferns-1` and `ferns-2`, the hollow's `spreadMarks` (never
+"rows" of five: "ten new dots in a scratched frame, five and five"), the den's `collar`, the grove's `dig`, `oak-near`, the
+`dig` and `marks` cameras and their spots, `marks` and `tap`, and a curled cat's tail straight up. The grove's `dig`,
+`marks` and `tap` are worded before everything else in `optWords` (which keys on the option's name: the grove's `marks:
+'leaves'` would otherwise print the Hollow's claw marks on the trunk), and the marks are always "one long line and eight
+little pokes", never a dot, a count, a number or a claw mark. Chapters 1 to 12 and `warrior.md` regenerate byte for byte.
+
+**Tests**: `tests/cats.test.js` (the groundhog's poses, moods, look, size and box; the quick marks' new keys, their counts,
+frame and size, and every existing call against the tree before; `curl` with `tailUp`; the four retaken sweeps with their
+old hashes; chapter 13's own fingerprint; the gallery's section), `tests/spanish.test.js` (the three words: `E.esLine`,
+`E.fill`, `E.esEnglish`, the voices with and without Spanish), `tests/storyboard.test.js` (a fixture chapter's new words;
+the grove's marks never a claw mark or a number; chapter 13's `--check-words` list), `tests/book2-ui.test.js` (the found
+page draws the groundhog, asleep; the silhouettes stay plain), `tests/engine.test.js` (the NAMES pin: `groundhog` last).

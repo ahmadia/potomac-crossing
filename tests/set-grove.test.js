@@ -22,6 +22,13 @@ const ANCHORS = {
   hollow: ['nook', 'lip']
 };
 const hasCats = typeof art.character === 'function' && !art.character.placeholder;
+// chapter 13 (docs/chapters/13-the-hunters-crouch.spec.md, section 4): the grove's first options, the dig close and the marks
+// close (one new composition, `dig`, with its spots), and one more spot on `oak`
+const CH13 = {
+  cams: ['dig', 'marks'], comp: 'dig', oak: ['oak-near'],
+  dig: ['door-1', 'door-2', 'doorway', 'dig-front', 'marks-1', 'marks-2', 'dig-elder', 'dig-fern'],
+  opts: { dig: [false, true], marks: [false, 'leaves', 'bare'], tap: ['none', 'leaves', 'marks'] }
+};
 
 // ---------------------------------------------------------------- helpers
 
@@ -101,24 +108,25 @@ const meets = (p, q) => p[0] < q[2] && p[2] > q[0] && p[1] < q[3] && p[3] > q[1]
 
 // ---------------------------------------------------------------- the vocabulary
 
-test('grove: the spec names the set, its five cameras and their anchors; the set has exactly them, no options', () => {
+test('grove: the spec names the set, its five cameras and their anchors; the set has exactly them, no options (chapter 13: and its own, after them)', () => {
   const md = fs.readFileSync(path.join(ROOT, 'docs/chapters/09-featherlight.spec.md'), 'utf8').replace(/\s+/g, ' ');
   for (const want of ['#### The new set, `grove` (`app/art/sets/grove.js`)', 'Declared: `opts: {}`, `defaults: {}`', '`{ elev: true, air: true }`, so no ground shadow is laid on the bark'])
     assert.ok(md.includes(want), 'the spec says: ' + want);
   for (const cam of CAMS) assert.ok(md.includes('| `' + cam + '` |'), 'the spec\'s table has `' + cam + '`');
   const v = art.vocab.sets.grove, info = art.sceneInfo('grove');
   assert.ok(v, 'vocab.sets.grove');
-  assert.deepEqual(v.cams, CAMS, 'exactly the five cameras, in the spec\'s order');
-  assert.deepEqual(v.opts, {});
+  // (chapter 13: and its two cameras after them, and the grove's first options, all off by default)
+  assert.deepEqual(v.cams, CAMS.concat(CH13.cams), 'exactly the five cameras, in the spec\'s order');
+  assert.deepEqual(v.opts, CH13.opts);
   assert.deepEqual(info.defaults, {});
   assert.equal(info.label, 'GroveClan’s woods: the little bridge, the old trees and the old oak');
   for (const cam of CAMS) {
     assert.equal(info.cams[cam].comp, COMP[cam], cam + ': a composition of its own');
     assert.deepEqual([info.cams[cam].x, info.cams[cam].y, info.cams[cam].w], [0, 0, 1600], cam + ' looks at all of it');
-    assert.deepEqual(Object.keys(info.anchors[COMP[cam]]), ANCHORS[cam], cam + ': exactly the spec\'s anchors');
+    assert.deepEqual(Object.keys(info.anchors[COMP[cam]]), ANCHORS[cam].concat(cam === 'oak' ? CH13.oak : []), cam + ': exactly the spec\'s anchors');
   }
-  assert.deepEqual(Object.keys(info.anchors).sort(), Object.values(COMP).sort(), 'no composition beyond the five');
-  const all = [...new Set([].concat(...Object.values(ANCHORS)))];
+  assert.deepEqual(Object.keys(info.anchors).sort(), Object.values(COMP).concat([CH13.comp]).sort(), 'no composition beyond the five (and chapter 13\'s)');
+  const all = [...new Set([].concat(...Object.values(ANCHORS), CH13.oak, CH13.dig))];
   assert.deepEqual(v.anchors.slice().sort(), all.sort());
 });
 
@@ -130,7 +138,8 @@ test('grove: `trunk` is on the bark (elev and air: no ground shadow there); `lip
   assert.equal(A('main').fern.z, 'behind');
   assert.equal(A('meet').fern.z, 'behind');
   for (const c of Object.keys(art.sceneInfo('grove').anchors)) for (const [k, a] of Object.entries(A(c))) {
-    if (!(c === 'oak' && k === 'trunk') && !(c === 'hollow' && k === 'lip')) assert.ok(!a.elev && !a.air, c + ' ' + k + ': on the ground');
+    // (chapter 13: the groundhog's doorway is on the ground, but no shadow is laid there: `air`, its lower half under the leaves)
+    if (!(c === 'oak' && k === 'trunk') && !(c === 'hollow' && k === 'lip')) assert.ok(!a.elev && (!a.air || (c === 'dig' && k === 'doorway')), c + ' ' + k + ': on the ground');
     assert.ok(a.h > 0, c + ' ' + k + ': a height');
   }
   // facing: the visitors right, the elder and the apprentice left
@@ -367,4 +376,253 @@ test('grove: odd input never throws: unknown cameras and spots, custom spots, no
       checkRender(render(cam, cast), cast, cam + ' without cats.js');
     }
   } finally { art.character = keep; }
+});
+
+// ================================================================ chapter 13: the dig by the old oak, and the marks
+// (docs/chapters/13-the-hunters-crouch.spec.md, section 4, "GroveClan's woods: the dig and the marks")
+
+const G13 = () => art.groveInfo();
+const dspots = () => art.sceneInfo('grove').anchors.dig;
+const ellBox = (e, k) => [e.cx - e.rx * (k || 1), e.cy - e.ry * (k || 1), e.cx + e.rx * (k || 1), e.cy + e.ry * (k || 1)];
+// does a box reach into an ellipse (cx, cy, rx, ry)? (its nearest point to the middle inside it)
+const inEll = (b, cx, cy, rx, ry) => { const x = Math.max(b[0], Math.min(cx, b[2])), y = Math.max(b[1], Math.min(cy, b[3])); return Math.pow((x - cx) / rx, 2) + Math.pow((y - cy) / ry, 2) < 1; };
+const CHIS = (hasCats && art.vocab.cast.includes('chispapaw')) ? 'chispapaw' : 'clancat';
+// the groundhog, or a stand-in until cats.js draws it (the spec's: a curled sleeper)
+const HOG = () => (hasCats && art.vocab.cast.includes('groundhog') ? 'groundhog' : 'mizzle');
+const hogPose = (p) => (HOG() === 'groundhog' ? p : { doze: 'curl', wake: 'curl', sleep: 'curl', sit: 'sit', yawn: 'sit' }[p]);
+// checkRender, for chapter 13's cameras: `marks` looks at a part of its composition, not the whole
+function checkRender13(r, cast, label, cam) {
+  if (cam !== 'marks') return checkRender(r, cast, label);
+  const C = art.sceneInfo('grove').cams.marks, vb = /^<svg[^>]*\sviewBox="([^"]+)"/.exec(r.svg)[1].split(/\s+/).map(Number);
+  assert.deepEqual(vb.map((v) => Math.round(v * 10) / 10), [C.x, C.y, C.w, C.h].map((v) => Math.round(v * 10) / 10), label + ': the close-up\'s box');
+  checkRender({ svg: r.svg.replace(/viewBox="[^"]+"/, 'viewBox="0 0 1600 1000"'), heads: r.heads, keep: r.keep }, cast, label);
+}
+
+test('chapter 13: the grove\'s new names: `dig` on `oak`, the close composition `dig` (cameras `dig` and `marks`) with its eight spots facing as the spec says, `oak-near` placed; every option off by default', () => {
+  const info = art.sceneInfo('grove'), D = info.anchors.dig;
+  assert.deepEqual(Object.keys(D), CH13.dig, 'the spots, in the spec\'s order');
+  assert.equal(info.cams.dig.comp, 'dig');
+  assert.deepEqual([info.cams.dig.x, info.cams.dig.y, info.cams.dig.w], [0, 0, 1600], '`dig` is the whole composition');
+  assert.equal(info.cams.marks.comp, 'dig', '`marks` is a crop of the same composition');
+  const M = info.cams.marks;
+  assert.ok(M.x >= 0 && M.y >= 0 && M.x + M.w <= 1600 && M.y + M.h <= 1000 && M.w < 800, '`marks` a close crop inside the world');
+  for (const k of ['door-1', 'door-2', 'dig-front', 'dig-elder']) assert.equal(D[k].face, 'left', k + ' faces left');
+  for (const k of ['marks-1', 'marks-2', 'dig-fern']) assert.equal(D[k].face, 'right', k + ' faces right');
+  assert.ok(D.doorway.z === 'behind' && D.doorway.air === true, 'doorway: behind its cover, no ground shadow');
+  assert.equal(D['dig-fern'].z, 'behind', 'dig-fern: behind everyone, as the grove\'s fern');
+  assert.ok(D['door-2'].x > D['door-1'].x && D['door-2'].y < D['door-1'].y, 'door-2 beside door-1, a step back');
+  assert.ok(D['dig-elder'].y < D['dig-front'].y - 200 && D['dig-fern'].y < D['door-1'].y - 200, 'the elder and the apprentice at the back');
+  const on = info.anchors.oak['oak-near'];
+  assert.ok(on.placed === true && on.face === 'right' && !on.elev && on.h > 200, 'oak-near: on the ground, facing right, placed (never a depth anchor or a spot given unasked)');
+  for (const k of Object.keys(CH13.opts)) assert.ok(!(k in info.defaults), k + ': off by default');
+});
+
+test('chapter 13: off, the grove draws byte for byte: `dig` left out or false on `oak`; no option on any of chapter 9\'s cameras but `dig` on `oak`; the close composition\'s options only there', () => {
+  for (const cam of CAMS) {
+    const plain = strip(render(cam, []).svg);
+    for (const o of [{ dig: false }, { marks: 'leaves' }, { marks: 'bare', tap: 'marks' }, { tap: 'leaves' }, { dig: 'yes' }].concat(cam === 'oak' ? [] : [{ dig: true }]))
+      assert.equal(strip(render(cam, [], ['day'], o).svg), plain, cam + ' ' + JSON.stringify(o) + ': nothing');
+  }
+  assert.notEqual(strip(render('oak', [], ['day'], { dig: true }).svg), strip(render('oak', []).svg), '`dig: true` on oak draws the dig');
+  for (const cam of CH13.cams) {
+    const plain = strip(render(cam, []).svg);
+    assert.equal(strip(render(cam, [], ['day'], { dig: true }).svg), plain, cam + ': `dig` is `oak`\'s');
+    assert.equal(strip(render(cam, [], ['day'], { marks: 'nope', tap: 'marks' }).svg), plain, cam + ': an unknown `marks`, and no Tap without the marks');
+    for (const fx of [[], ['morning'], ['sunset'], ['night']]) assert.equal(strip(render(cam, [], fx, { marks: 'bare' }).svg), strip(render(cam, [], ['day'], { marks: 'bare' }).svg), cam + ' ' + fx + ': the afternoon');
+  }
+});
+
+test('chapter 13: the dig on `oak`: at the foot\'s sunny right among the roots, its doorway beside it on its left, in keep; root-1, root-2, elder and oak-near clear of both (root-3 stands on the doorway), and four cats at those four touch nobody', { skip: !hasCats && 'no cats.js' }, () => {
+  const G = G13(), A = spots('oak'), dig = G.dig.oak, door = G.doorway.oak;
+  assert.ok(dig[0] > G.oak.cx && door[2] <= dig[0] + 12 && door[0] < dig[0], 'the dig right of the trunk\'s middle, the doorway on its left: ' + dig.map(Math.round) + ' / ' + door.map(Math.round));
+  assert.ok(dig[3] > G.oak.base && dig[1] < G.oak.base + 10, 'at the roots, on the ground at the trunk\'s foot');
+  assert.ok((door[2] - door[0]) >= (dig[2] - dig[0]) * 0.22 && (door[2] - door[0]) <= (dig[2] - dig[0]) * 0.6, 'the doorway smaller (about half the hole\'s width)');
+  const r = render('oak', [], ['day'], { dig: true });
+  checkRender(r, [], 'oak dig');
+  assert.ok(/<g data-art="dig" data-box="[^"]+" data-door="[^"]+">/.test(r.svg), 'the dig and its doorway');
+  assert.ok(/data-art="scratches" data-count="5"/.test(r.svg), 'five scratches');
+  assert.ok(!/data-art="marks"|class="pc-quick"/.test(r.svg), 'never the marks on `oak`');
+  const k0 = r.keep[0], kb = [k0.x * 16, k0.y * 10, (k0.x + k0.w) * 16, (k0.y + k0.h) * 10];
+  assert.ok(kb[0] <= Math.min(dig[0], door[0]) + 2 && kb[2] >= dig[2] - 2 && kb[1] <= Math.min(dig[1], door[1]) + 2, 'in keep: ' + kb.map(Math.round));
+  const clear = ['root-1', 'root-2', 'elder', 'oak-near'];
+  for (const at of clear.concat(['root-3'])) for (const pose of ['sit', 'stand', 'walk', 'crouch']) {
+    const B = boxesAt({ who: 'clancat', pose }, A[at]);
+    const hit = meets(B.body, dig) || meets(B.body, door);
+    if (at === 'root-3') { if (pose === 'sit') assert.ok(hit, 'root-3 is on the doorway'); } else assert.ok(!hit, at + ' ' + pose + ': clear of the dig and the doorway');
+  }
+  // f053 and f056: the elder and our three at the four clear spots, none touching
+  for (const pose of ['sit', 'stand']) {
+    const cast = [{ who: 'groveclan', variant: 1, at: 'elder', pose, mood: 'kind' }, { who: 'player', at: 'root-2', pose: 'sit', mood: 'wonder' }, { who: CHIS, at: 'oak-near', pose: 'sit', mood: 'wonder', collar: false }, { who: 'tallyheart', at: 'root-1', pose, mood: 'kind' }];
+    const rr = render('oak', cast, ['day'], { dig: true });
+    checkRender(rr, cast, 'f053 ' + pose);
+    const bx = cast.map((m) => boxesAt(m, A[m.at]).body);
+    for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) assert.ok(!meets(bx[i], bx[j]), pose + ': ' + cast[i].at + ' and ' + cast[j].at + ' apart');
+    rr.heads.forEach((h, i) => assert.ok(h, cast[i].at + ': in shot'));
+  }
+});
+
+test('chapter 13: the dig close (`dig`): the oak\'s foot and its doorway at the left, the big dig in the middle with its heaps and five long rakes down its far wall, the flat earth on its far side at the right; soft warm browns, never dark; nothing over the dig, the doorway or the marks in keep', () => {
+  const G = G13(), r = render('dig', [], ['day'], { marks: 'bare' });
+  checkRender(r, [], 'dig');
+  const door = G.doorway.dig, dig = G.dig.dig, marks = G.marks, flat = G.flat;
+  assert.ok(door[2] < dig[0] && dig[2] < marks[2] && marks[0] > dig[2] - 40 && flat[0] > dig[0], 'left to right: the doorway, the dig, the marks: ' + [door, dig, marks].map((b) => b.map(Math.round).join(' ')).join(' / '));
+  assert.ok((door[2] - door[0]) > (dig[2] - dig[0]) * 0.35 && (door[2] - door[0]) < (dig[2] - dig[0]) * 0.6, 'the doorway about half the dig\'s width');
+  assert.ok(marks[3] < dig[3] + 5 && marks[1] < dig[1] + 60, 'the marks on the far side of the dig');
+  assert.ok(/data-art="doorway"/.test(r.svg) && /data-art="dig"/.test(r.svg) && /data-art="flat-earth"/.test(r.svg), 'the three drawn');
+  const rk = /<g data-art="scratches" data-count="5">([\s\S]*?)<\/g>/.exec(r.svg);
+  assert.ok(rk, 'five long rakes');
+  // each rake a wide curved gouge (a tapered shape, curved: its path bends), never a straight stroke; the five apart, in a row
+  const xs = G.rakes.dig;
+  assert.equal(xs.length, 5);
+  xs.forEach((x, i) => { if (i) assert.ok(x - xs[i - 1] >= 40, 'rakes apart: ' + (x - xs[i - 1])); });
+  assert.ok(xs[0] > dig[0] && xs[4] < dig[2], 'down the dig\'s wall');
+  // at 390 x 844 (the 1600-wide picture in 358 px): five rakes apart and the marks' pokes a size to count
+  assert.ok((xs[1] - xs[0]) * 358 / 1600 >= 9, 'rakes ' + ((xs[1] - xs[0]) * 358 / 1600).toFixed(1) + ' px apart on a phone');
+  assert.ok((marks[2] - marks[0]) / 192.6 * 28 * 358 / 1600 >= 7.5, 'each poke\'s room ' + ((marks[2] - marks[0]) / 192.6 * 28 * 358 / 1600).toFixed(1) + ' px on a phone');
+  // in keep: the marks first, then the dig, then the doorway
+  const kb = (k) => [k.x * 16, k.y * 10, (k.x + k.w) * 16, (k.y + k.h) * 10];
+  const K = r.keep.map(kb);
+  assert.ok(K[0][0] <= marks[0] && K[0][2] >= marks[2] && K[0][1] <= marks[1] && K[0][3] >= marks[3], 'the marks in keep first');
+  assert.ok(K.some((b) => b[0] <= dig[0] + 1 && b[2] >= dig[2] - 1), 'the dig in keep');
+  assert.ok(K.some((b) => b[0] <= door[0] + 1 && b[2] >= door[2] - 1), 'the doorway in keep');
+  // never dark: every colour this set paints with is light (the kit's own marks, and its earth groove, are the kit's)
+  for (const cam of CH13.cams) for (const o of [{}, { marks: 'leaves' }, { marks: 'bare' }]) {
+    const svg = render(cam, [], ['day'], o).svg.replace(/<g class="pc-quick"[\s\S]*?<\/g>(?=<|$)/g, '');
+    const ps = paints(svg).filter((p) => p.op >= 0.3), darkest = ps.reduce((m, p) => (lum(p.c) < lum(m.c) ? p : m), ps[0]);
+    assert.ok(lum(darkest.c) >= 85, cam + ' ' + JSON.stringify(o) + ': the darkest colour is ' + darkest.c);
+    assert.ok(ps.reduce((s, p) => s + lum(p.c), 0) / ps.length > 150, cam + ': bright on the whole');
+    assert.ok(!/#000000|#111111|black/i.test(svg), cam + ': no black');
+  }
+});
+
+test('chapter 13: `marks` on `dig` and `marks`: one long line and eight little pokes, the kit\'s quick picture on earth; \'leaves\' half under fallen leaves (the line\'s top end and four pokes showing), \'bare\' the leaves brushed aside to the edges; in keep', () => {
+  if (typeof art.quickMarks !== 'function') return;
+  const G = G13(), mb = G.marks, MO = { tens: 1, ones: 8, ground: 'earth' }, sz = art.quickMarks.size(MO);
+  const kit = art.kit.quick((mb[0] + mb[2]) / 2, (mb[1] + mb[3]) / 2, (mb[2] - mb[0]) / sz.w, MO);
+  for (const cam of CH13.cams) for (const v of ['leaves', 'bare']) {
+    const r = render(cam, [], ['day'], { marks: v }), grp = group(r.svg, 'data-art="marks"');
+    checkRender13(r, [], cam + ' ' + v, cam);
+    assert.ok(grp.includes('data-marks="' + v + '"') && grp.includes(kit), cam + ' ' + v + ': the kit\'s own picture at the marks\' place');
+    const after = grp.slice(grp.indexOf(kit) + kit.length);
+    if (v === 'leaves') {
+      // leaves over the line's lower part and the lower row, and the first poke of the upper row; the rest in the open
+      const P = G.marksLeaves;
+      assert.ok(/fill="#[0-9A-Fa-f]{6}"/.test(after) && after.length > 2000, cam + ': leaves drawn over the marks');
+      const w = mb[2] - mb[0], h = mb[3] - mb[1];
+      assert.ok(P[0] <= mb[0] && P[3] >= mb[3] && P[2] < mb[0] + w * 0.8 && P[1] > mb[1] + h * 0.2, cam + ': over half of them, not all: ' + P.map(Math.round));
+    } else {
+      assert.ok(!/<path d="[^"]+" fill="#D9BE6E"/.test(after.slice(0, 200)), cam + ': no drift over them');
+    }
+  }
+  assert.ok(G.marksLeaves[2] - G.marksLeaves[0] < (mb[2] - mb[0]) * 0.95, 'the leaves\' box over part of the marks');
+});
+
+test('chapter 13: `marks`, the close-up: the marks about half the panel, the dig\'s near rim with two of its five rakes at the panel\'s left edge, its rakes curved gouges in the wall, never two more lines', () => {
+  const G = G13(), M = art.sceneInfo('grove').cams.marks, mb = G.marks;
+  const frac = (mb[2] - mb[0]) / M.w;
+  assert.ok(frac > 0.4 && frac < 0.6, 'the marks fill about half the panel: ' + frac.toFixed(2));
+  assert.ok(mb[0] > M.x + M.w * 0.2 && mb[2] < M.x + M.w - 20 && mb[1] > M.y && mb[3] < M.y + M.h, 'the marks wholly in the panel, right of its left fifth');
+  const inLeft = G.rakes.dig.filter((x) => x > M.x - 10 && x < M.x + M.w * 0.22);
+  assert.equal(inLeft.length, 2, 'two of the five rakes at its left edge: ' + G.rakes.dig.join(' ') + ' in ' + M.x);
+  assert.ok(G.dig.dig[2] > M.x + 40 && G.dig.dig[2] < mb[0], 'the dig\'s rim at the left, apart from the marks');
+  // the marks' line is the kit's one straight groove; the rakes are filled tapered shapes (no stroke), curved
+  const r = render('marks', [], ['day'], { marks: 'bare' });
+  const rk = /<g data-art="scratches" data-count="5">([\s\S]*?)<\/g>/.exec(r.svg)[1];
+  assert.ok(!/stroke=/.test(rk) && (rk.match(/Z/g) || []).length >= 10, 'each rake a filled, tapered gouge (and its light ridge), never a stroke');
+});
+
+test('chapter 13: `tap` on the close composition: an unpainted <g class="pc-tap pc-tap-leaves"> over the leaves on the marks, or pc-tap-marks over the marks, each its target\'s box and generous on a phone; nothing without the marks', () => {
+  const G = G13();
+  for (const [cam, v, t, box] of [['dig', 'leaves', 'leaves', G.marksLeaves], ['marks', 'bare', 'marks', G.marks], ['dig', 'bare', 'marks', G.marks]]) {
+    const r = render(cam, [], ['day'], { marks: v, tap: t });
+    const m = new RegExp('<g class="pc-tap pc-tap-' + t + '" data-tap="' + t + '"><rect x="([\\d.]+)" y="([\\d.]+)" width="([\\d.]+)" height="([\\d.]+)" fill="none" pointer-events="none"\\/></g>').exec(r.svg);
+    assert.ok(m, cam + ' ' + t + ': the target');
+    const b = m.slice(1).map(Number), tb = [b[0], b[1], b[0] + b[2], b[1] + b[3]];
+    assert.ok(tb[0] < box[0] && tb[1] < box[1] && tb[2] > box[2] && tb[3] > box[3], cam + ' ' + t + ': round its target, with room');
+    const C = art.sceneInfo('grove').cams[cam], wpx = b[2] * 358 / C.w, hpx = b[3] * 358 / C.w;
+    assert.ok(wpx >= 60 && hpx >= 30, cam + ' ' + t + ': a finger\'s target at 390 x 844: ' + wpx.toFixed(0) + ' x ' + hpx.toFixed(0) + ' px');
+  }
+  assert.ok(!/pc-tap/.test(render('dig', [], ['day'], { tap: 'leaves' }).svg), 'no marks, no target');
+  assert.ok(!/pc-tap/.test(render('dig', [], ['day'], { marks: 'leaves', tap: 'none' }).svg), '`none`: no target');
+});
+
+test('chapter 13: the covers, by spot: the leaves over whoever is in the doorway (their lower half, never the face when it is up; over the empty doorway\'s lower half without them), drawn just after them; the fern over the apprentice at dig-fern to her eyes, only when she is there', { skip: !hasCats && 'no cats.js' }, () => {
+  const D = dspots(), G = G13();
+  // the empty doorway, half under leaves
+  const e = render('dig', []), c0 = /<g data-part="cover-leaves" data-box="([^"]+)">/.exec(e.svg);
+  assert.ok(c0, 'the leaves over the empty doorway');
+  const b0 = c0[1].split(' ').map(Number), door = G.doorway.dig;
+  assert.ok(b0[1] > (door[1] + door[3]) / 2 - 10 && b0[3] >= door[3] - 4 && b0[0] <= door[0] && b0[2] >= door[2], 'its lower half: ' + b0.map(Math.round));
+  for (const pose of ['doze', 'wake', 'sit', 'yawn', 'sleep']) {
+    const m = { who: HOG(), at: 'doorway', pose: hogPose(pose), mood: 'sleepy' }, cast = [m, { who: 'player', at: 'door-1', pose: 'crouch', mood: 'wonder' }];
+    const r = render('dig', cast);
+    checkRender(r, cast, 'doorway ' + pose);
+    const at = r.svg.indexOf('data-part="cover-leaves"'), cb = /<g data-part="cover-leaves" data-box="([^"]+)">/.exec(r.svg)[1].split(' ').map(Number);
+    const B = boxesAt(m, D.doorway);
+    assert.ok(cb[1] > B.body[1] + (B.body[3] - B.body[1]) * 0.4, pose + ': the leaves over the lower part only');
+    assert.ok(cb[3] >= B.body[3], pose + ': down to the ground');
+    if (pose !== 'doze') assert.ok(cb[1] >= B.head[3] - 1, pose + ': the face clear of the leaves');
+    // drawn after the one in the doorway, before the cat at door-1 (who stands in front)
+    const her = r.svg.indexOf('<g transform="translate(' + D.doorway.x + ' ' + D.doorway.y + ')'), you = r.svg.indexOf('<g transform="translate(' + D['door-1'].x + ' ' + D['door-1'].y + ')');
+    assert.ok(her > 0 && at > her && you > at, pose + ': just after the one in the doorway');
+  }
+  // the fern over the apprentice
+  assert.ok(!/cover-fern/.test(render('dig', [{ who: 'player', at: 'door-1' }]).svg), 'no fern cover without her');
+  for (const pose of ['sit', 'crouch']) {
+    const m = { who: 'groveclan', variant: 2, at: 'dig-fern', pose, mood: 'shy' }, r = render('dig', [m, { who: 'player', at: 'door-1', pose: 'sit' }]);
+    const c = /<g data-part="cover-fern" data-box="([^"]+)" data-face="([^"]+)">/.exec(r.svg);
+    assert.ok(c, pose + ': the fern over her');
+    const cb = c[1].split(' ').map(Number), B = boxesAt(m, D['dig-fern']);
+    assert.ok(cb[1] >= B.head[1] + (B.head[3] - B.head[1]) * 0.6 && cb[3] >= D['dig-fern'].y, pose + ': to her chin, from the ground');
+    assert.ok(r.heads[0], pose + ': her eyes and ears over it, in shot');
+  }
+});
+
+test('chapter 13: the close composition\'s casts, frame by frame: none touching, nobody over the dig, the doorway or the marks; every face in shot (f054, f055, f058, f059 to f064, f065 to f067)', { skip: !hasCats && 'no cats.js' }, () => {
+  const D = dspots(), G = G13(), C = art.sceneInfo('grove').cams.dig;
+  const hole = { cx: 960, cy: 770, rx: 200 * 1.08, ry: 58 * 1.2 };   // the hole's lip (grove.js DIG.hole, digHole)
+  const heaps = [[812, 712, 88, 44], [1110, 704, 86, 46]];
+  const chis = (pose, mood) => ({ who: CHIS, at: null, pose, mood, collar: false });
+  const at = (m, a) => Object.assign({}, m, { at: a });
+  const frames = {
+    f054: [at({ who: 'player', pose: 'crouch', mood: 'sniff' }, 'dig-front'), at(chis('sit', 'wonder'), 'marks-2'), at({ who: 'groveclan', variant: 1, pose: 'sit', mood: 'kind' }, 'dig-elder')],
+    f055: [at({ who: 'player', pose: 'sit', mood: 'kind' }, 'dig-front'), at(chis('crouch', 'wonder'), 'marks-2'), at({ who: 'groveclan', variant: 1, pose: 'stand', mood: 'kind' }, 'dig-elder')],
+    f058: [at({ who: 'groveclan', variant: 2, pose: 'sit', mood: 'shy' }, 'dig-fern'), at({ who: 'player', pose: 'sit', mood: 'wonder' }, 'door-1'), at(chis('sit', 'wonder'), 'door-2')],
+    f059: [at({ who: HOG(), pose: hogPose('doze'), mood: 'sleepy' }, 'doorway'), at({ who: 'player', pose: 'crouch', mood: 'wonder' }, 'door-1'), at(chis('crouch', 'worried'), 'door-2')],
+    f061: [at({ who: HOG(), pose: hogPose('sit'), mood: 'shout' }, 'doorway'), at({ who: 'player', pose: 'sit', mood: 'wonder' }, 'door-1'), at(chis('sit', 'wonder'), 'door-2')],
+    f063: [at({ who: HOG(), pose: hogPose('yawn'), mood: 'sleepy' }, 'doorway'), at({ who: 'player', pose: 'crouch', mood: 'kind' }, 'door-1'), at(chis('sit', 'kind'), 'door-2')],
+    f066: [at({ who: 'player', pose: 'crouch', mood: 'wonder' }, 'marks-1'), at(chis('crouch', 'wonder'), 'marks-2')],
+    f067: [at({ who: 'player', pose: 'sit', mood: 'wonder' }, 'marks-1'), at(chis('sit', 'worried'), 'marks-2')]
+  };
+  for (const [id, cast] of Object.entries(frames)) for (const marks of ['leaves', 'bare']) {
+    const r = render('dig', cast, ['day'], { marks });
+    checkRender(r, cast, id);
+    const bx = cast.map((m) => boxesAt(m, D[m.at]).body);
+    for (let i = 0; i < bx.length; i++) for (let j = i + 1; j < bx.length; j++) assert.ok(!meets(bx[i], bx[j]), id + ': ' + cast[i].at + ' and ' + cast[j].at + ' apart: ' + bx[i].map(Math.round) + ' / ' + bx[j].map(Math.round));
+    cast.forEach((m, i) => {
+      const b = bx[i];
+      if (m.at === 'doorway') return;
+      assert.ok(!inEll(b, hole.cx, hole.cy, hole.rx, hole.ry), id + ' ' + m.at + ': not over the dig');
+      heaps.forEach((q) => assert.ok(!inEll(b, q[0], q[1], q[2], q[3]), id + ' ' + m.at + ': not over a heap'));
+      assert.ok(!meets(b, G.doorway.dig), id + ' ' + m.at + ': not over the doorway');
+      assert.ok(!meets(b, G.marks), id + ' ' + m.at + ': not over the marks');
+      assert.ok(r.heads[i] && r.heads[i].x > 2 && r.heads[i].x < 98, id + ' ' + m.at + ': in shot');
+    });
+    assert.ok(C.w === 1600, 'the whole composition');
+  }
+});
+
+test('chapter 13: odd input never throws on the new names: the close composition without cats.js, unknown options, a cast at every spot', () => {
+  const cast = CH13.dig.map((at) => ({ who: 'player', at }));
+  for (const cam of CH13.cams) for (const o of [{}, { marks: 'leaves', tap: 'leaves' }, { marks: 'bare', tap: 'marks', dig: true }, { marks: 3, tap: 'x' }]) checkRender13(render(cam, cast, ['day'], o), cast, cam + ' ' + JSON.stringify(o), cam);
+  checkRender(render('oak', [{ who: 'player', at: 'oak-near' }], ['day'], { dig: true }), [{}], 'oak-near');
+  const keep = art.character;
+  try {
+    art.character = undefined;
+    for (const cam of CH13.cams) checkRender13(render(cam, cast, ['day'], { marks: 'leaves', tap: 'leaves' }), cast, cam + ' without cats.js', cam);
+    checkRender(render('oak', [{ who: 'player', at: 'root-1' }], ['day'], { dig: true }), [{}], 'oak dig without cats.js');
+  } finally { art.character = keep; }
+  const G = G13();
+  for (const k of ['dig', 'doorway']) for (const c of ['oak', 'dig']) assert.ok(G[k][c].length === 4 && G[k][c].every(Number.isFinite), k + ' ' + c);
+  assert.ok(G.marks.length === 4 && G.marks.every(Number.isFinite) && G.marks[2] > G.marks[0], 'the marks\' box');
 });

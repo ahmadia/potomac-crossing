@@ -79,7 +79,11 @@
  * counted in her Spanish, a set's `echo`), Chispapaw herself and her collar off, a cat carrying a mouse, the store on the
  * dry den's floor under the Old Bridge (its camera, spots and Tap), its plan in the Training Hollow's sand with its glow
  * and Tap, the quick marks (her square round like a cookie), the third spot at the hedge and the den's moon at 16; every
- * earlier storyboard exactly as it was. Written for an illustrator, a
+ * earlier storyboard exactly as it was. Chapter 13 on: the camp's first frost (and the dawn patrol's trails through it) and
+ * the two spots by the ferns, the spread forty-three in the Hollow's sand, Chispapaw's collar left in the den, the big dig
+ * by GroveClan's old oak (its close-up, the marks' close-up, its spots, the marks beside it and its two Taps: the grove's
+ * `marks` and `tap` worded before the Hollow's claw marks), the groundhog in its poses, a curled cat's tail straight up;
+ * every earlier storyboard exactly as it was. Written for an illustrator, a
  * grown-up reading along, or anyone checking the chapter without playing it. No dependencies.
  */
 import { createRequire } from 'node:module';
@@ -164,9 +168,11 @@ const TRACKS_STASH = ['inside the biggest hole in the bank: the weasels’ stash
 // chapter 9: the old oak and the hollow high in it (GroveClan's woods), and Thymeleaf's den, a nook of the camp of its own
 const GROVE_OAK = ['the old oak in GroveClan’s woods', 'an enormous trunk furry with moss, green, gold and grey; low on its shaded north side a patch of soft silver moss; roots like arms at its foot; high in the trunk the hollow, a round opening, its inside a soft dusk-green, never black; bright afternoon light through the leaves'];
 const GROVE_HOLLOW = ['inside the hollow, high in the old oak', 'a snug round nook of old wood lined with soft moss, warm green-gold light through the opening at the left; a cosy nook, never a dark hole'];
+// chapter 13: the big dig at the old oak's roots, close (the `dig` composition: its cameras `dig` and `marks`)
+const GROVE_DIG = ['the big dig at the old oak’s roots in GroveClan’s woods', 'the oak’s mossy foot and a root like an arm across the ground at the left, and under that root a smaller round doorway, half under fallen leaves; in the middle the big dig, a wide, shallow hole, its inside soft warm earth-brown (never black), earth thrown back in two loose heaps either side, five long scratches raking down its near side; at the right a patch of flat bare earth among the leaf litter; ferns at the back; dappled afternoon light; nothing frightening, nothing dark in the holes'];
 const HERBS = ['Thymeleaf’s den, a nook of the bramble dens at the camp’s edge', 'a curtain of drying leaves across the top (bunches of leaves and stems hung upside down from the brambles), more bunches along the walls, a ledge of stones with leaves laid out to dry, a flat mixing stone on the floor, and in the top corner a small web where a tiny spider lives; green, warm light through the leaves'];
 const SET_COMP = { title: { end: WALL_END, meet: WALL_END }, sky: { walk: DREAM, below: DREAM }, pile: { rear: PILE_REAR, hole: PILE_HOLE },
-  grove: { oak: GROVE_OAK, hollow: GROVE_HOLLOW }, camp: { herbs: HERBS },
+  grove: { oak: GROVE_OAK, hollow: GROVE_HOLLOW, dig: GROVE_DIG, marks: GROVE_DIG }, camp: { herbs: HERBS },
   bridge: { wall: ['the Old Bridge’s stone leg, under the bridge beside Sprinkle’s nook', 'a wall of big old fitted stones, its foot on the dry floor, one dark gap low in it'],
     // chapter 12: the store, in the dry den
     store: ['the dry den, the very back of the dark under the Old Bridge where Sprinkle slept', 'the old stone leg’s big fitted stones at the left, the nook’s heap of old stones at the back, the dry floor wide and flat across the lower half, the way in at the right'] },
@@ -278,7 +284,10 @@ const SET_CAMS = {
     wide: 'wide, over the bridge: the bridge’s end small at the left, the woods rising across the panel, huge trunks, green-gold light, ferns; the visitors small under the trees',
     meet: 'at cat height under the trees: the elder at the right, the visitors at the left',
     oak: 'the old oak from its foot: the mossy trunk filling the panel, roots like arms at the bottom, the silver moss low on its shaded side, the round hollow high up',
-    hollow: 'inside the hollow, close: the mossy nook, the round opening at the left with the green-gold light coming in' }
+    hollow: 'inside the hollow, close: the mossy nook, the round opening at the left with the green-gold light coming in',
+    // chapter 13: the dig close, and the flat earth beside it close
+    dig: 'the dig close, at cat height: the oak’s foot and the smaller doorway at the left, the big dig in the middle, the flat bare earth at the right',
+    marks: 'close on the flat bare earth beside the dig: the dig’s near rim with two of its long curved scratches at the panel’s left edge, the rest the flat earth; no face in it (its balloons come from off the panel)' }
 };
 const WHO = {
   player: 'you (the reader’s cat)', tallyheart: 'Tallyheart', glintstar: 'Glintstar', waffles: 'Princess Waffles',
@@ -311,7 +320,9 @@ const WHO = {
   // chapter 10
   mistscale: 'a grown Mistscale (huge, gentle and misty, never frightening: a great head and neck leaning out of the mist, the body never drawn; mist-grey scales like Sprinkle’s but larger and softer, ridges like rounded hills, big kind eyes, the mouth shut, two soft horns; no teeth, no claws shown)',
   // chapter 12
-  chispapaw: 'Chispapaw, a small cream pillow cat with a dark brown face, ears, paws and tail, big ears, blue eyes and a collar with a tiny bell'
+  chispapaw: 'Chispapaw, a small cream pillow cat with a dark brown face, ears, paws and tail, big ears, blue eyes and a collar with a tiny bell',
+  // chapter 13
+  groundhog: 'the groundhog (round and brown, plump and soft: a grizzled warm brown coat, darker on the back, a paler gingery belly, a short furry tail, small round ears close to the head, a blunt dark nose with whiskers, small dark sleepy eyes under heavy lids, short legs and little dark paws; something BIG: sitting up, about your sitting height and twice as round; grumpy in the brows and the mouth, never a tooth, never frightening; nothing like a badger: no stripes, no black-and-white face)'
 };
 // otters and dogs by variant, as the game names them
 const VARIANT_WHO = {
@@ -342,7 +353,8 @@ const SPEAKER = {
   hail: 'Hail', snip: 'Snip', snatch: 'Snatch',
   thymeleaf: 'Thymeleaf', mizzle: 'Mizzle', groveclan: 'A GroveClan cat', spider: 'The spider',
   mistscale: 'A Mistscale',
-  chispapaw: 'Chispapaw'
+  chispapaw: 'Chispapaw',
+  groundhog: 'The groundhog'
 };
 const VARIANT_SPEAKER = {
   otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
@@ -390,7 +402,9 @@ const POSES = {
   spin: 'spinning a thread', wave: 'one leg raised, waving', yawn: 'yawning', wake: 'wide awake',
   glide: 'gliding, wings spread wide', splash: 'splashing in the water',
   // chapter 10: the grown Mistscales', Reynard's bow, the weasels' hidden paws, plainly (each character's own words are below)
-  nuzzle: 'nuzzling, the head lowered', lift: 'the head lifted high, calling', bow: 'bowing low', hidepaws: 'standing up, the forepaws hidden behind the back'
+  nuzzle: 'nuzzling, the head lowered', lift: 'the head lifted high, calling', bow: 'bowing low', hidepaws: 'standing up, the forepaws hidden behind the back',
+  // chapter 13: the groundhog's, plainly (its own words are below)
+  doze: 'dozing, curled up', sleep: 'asleep, curled up'
 };
 const OTTER_STAND = 'standing up on his hind legs';
 const SPRINKLE_POSE = { curl: 'curled up, her tail wrapped round whoever is beside her', flat: 'squeezed flat',
@@ -447,6 +461,11 @@ const SPIDER_POSE = { spin: 'in her corner on a few threads, spinning', wave: 'o
 // chapter 10: the grown Mistscales, a great head and neck out of the mist (her moods are drawn her way: kind is her resting face)
 const MISTSCALE_POSE = { lean: 'her great face leaning out of the mist', nuzzle: 'her great head lowered, nose down to a small dragonet’s height, eyes half shut',
   lift: 'her great head lifted high, the mouth a little open in a call (no teeth)', bow: 'the head bowed all the way down to the grass, eyes closed, the neck a long curve' };
+// chapter 13: the groundhog's poses (grumpy, never a tooth; its face tucked away while it dozes)
+const GROUNDHOG_POSE = { doze: 'curled up round in its doorway, its back and bottom toward us, the face tucked down out of sight (only the back of its head and its small round ears over its shoulder), its short furry tail and the soles of its hind feet at the bottom: its bottom sticking out in the cold',
+  wake: 'still curled in its doorway, its head up and turned to us over its shoulder, both eyes open: its whole grumpy face',
+  sit: 'sitting up on its haunches, its forepaws folded on its belly, talking', yawn: 'sitting up, an enormous round yawn, eyes squeezed shut (no teeth)',
+  sleep: 'curled round, side on, its face showing, eyes shut, a little smile: asleep' };
 const MOODS = {
   neutral: '', happy: 'happy', dreamy: 'dreamy', wonder: 'full of wonder', worried: 'worried', scared: 'scared', sleepy: 'sleepy',
   laugh: 'laughing', stern: 'stern', kind: 'kind', proud: 'proud', sniff: 'sniffing', shout: 'shouting', solemn: 'solemn',
@@ -552,9 +571,17 @@ const SET_ANCH = { bridge: { beside: 'pressed against Sprinkle’s side',
     'meet-1': 'under the trees at the left, nearest the elder', 'meet-2': 'under the trees at the left, beside the first', 'meet-3': 'under the trees at the left, furthest from the elder',
     'root-1': 'at the old oak’s foot among the roots, first', 'root-2': 'at the old oak’s foot among the roots, second', 'root-3': 'at the old oak’s foot among the roots, third',
     trunk: 'on the oak’s trunk partway up toward the hollow, climbing', moss: 'crouched low at the soft silver moss on the oak’s shaded north side',
-    nook: 'on the moss in the hollow', lip: 'at the hollow’s opening: head, shoulders and forepaws in, the rest cut off by the opening’s rim (below the forepaws)' },
+    nook: 'on the moss in the hollow', lip: 'at the hollow’s opening: head, shoulders and forepaws in, the rest cut off by the opening’s rim (below the forepaws)',
+    // chapter 13: in front of the old oak, clear of the dig; and the dig close (the doorway, the dig, the flat earth)
+    'oak-near': 'on the ground in front of the old oak’s trunk, clear of the dig and the doorway',
+    'door-1': 'in front of the small doorway, crouched facing it', 'door-2': 'beside the first at the doorway, a step back, facing it',
+    doorway: 'in the small doorway itself, its lower half under the drift of fallen leaves (no ground shadow)', 'dig-front': 'at the front middle, before the dig, facing it',
+    'marks-1': 'at the front right by the flat earth, facing the marks', 'marks-2': 'at the front right by the flat earth, beside the first, facing the marks',
+    'dig-elder': 'at the back right, facing the dig', 'dig-fern': 'at the back left, half hidden by a fern: a face and ears showing' },
   // chapter 9: Thymeleaf's den in the camp (`herbs`), and the case laid out on the den floor (`case`)
-  camp: { 'herbs-1': 'among the drying leaves at the left', 'herbs-2': 'at the right of the den', 'herbs-3': 'at the right of the den, further right still', web: 'high in the den’s top corner, on the little web (a spot about the size of a cat’s forepaw)' },
+  camp: { 'herbs-1': 'among the drying leaves at the left', 'herbs-2': 'at the right of the den', 'herbs-3': 'at the right of the den, further right still', web: 'high in the den’s top corner, on the little web (a spot about the size of a cat’s forepaw)',
+    // chapter 13: by the ferns, for the crouch
+    'ferns-1': 'at the front left, near the ferns', 'ferns-2': 'at the front middle, toward the ferns, with room before the nose for a pounce' },
   den: { 'case-1': 'at the near left of the rows of bark', 'case-2': 'across the rows at the right', 'case-3': 'at the far side, standing by the doorway’s light',
     // chapter 10: on the stone close-up, her sleeping tail
     tail: 'curled at the panel’s bottom edge: only her tail’s tip',
@@ -821,7 +848,8 @@ function castExtraWords(c, set) {
   if (c.tap === 'fish') out.push('the string of fish is what she taps');
   if (c.tap === 'mist') out.push('the little cloud of mist is what she taps');
   // chapter 8: the raised tail, the leaf with the glass folded in it (or open on the ground), Snatch's mouse
-  if (c.tailUp === true) out.push(c.who === 'riffle' ? 'his thick rudder tail stuck straight up' : 'the tail held straight up, its tip curled over');
+  // (chapter 13: a curled cat's tail rising straight up out of the curl)
+  if (c.tailUp === true) out.push(c.who === 'riffle' ? 'his thick rudder tail stuck straight up' : c.pose === 'curl' ? 'the tail rising straight up out of the curl, its tip soft' : 'the tail held straight up, its tip curled over');
   if (c.tap === 'tail') out.push('the raised tail’s tip is what she taps');
   // (chapter 9: Thymeleaf's leaf holds the remedy)
   if (c.holds === 'leaf' && c.who === 'thymeleaf') out.push((c.holdAt || (['stand', 'walk', 'run'].includes(c.pose) ? 'mouth' : 'paws')) === 'mouth' ? 'the remedy, pale green, curled in a leaf carried in the mouth' : 'the remedy, pale green, curled in a leaf at the front paws');
@@ -929,8 +957,36 @@ function quickWords(v) {
   if (![1, 2, 3].includes(v)) return 'quick: ' + JSON.stringify(v);
   return 'the quick way to scratch a count, scratched in the sand: ' + (v === 1 ? 'one set' : numWord(v) + ' sets') + ' of a square, a line and a dot (a hundred, a ten, a loose), right to left, a little apart: ' + sets.slice(0, v).join(', ');
 }
+// chapter 13: the camp's first frost (and the dawn patrol's three trails through it), the spread forty-three in the
+// Hollow's sand (never "rows" of five: a row is a ten), and GroveClan's big dig with the marks beside it (always one long
+// line and eight little pokes: never dots, a count, a number or claw marks; nobody has read them)
+function frostWords(v) {
+  const frost = 'the first frost, at first light: every fern edged and tipped silver-white with rime (still green under it), the moss and the mossy path stones pale with rime, the grass silvered, a white rim on the dry fountain’s edge and on the tops of the bramble dens, a few soft glints; the sky clear and pale, cold and bright';
+  return v === true ? frost : v === 'prints' ? frost + ', and three trails of small pawprints pressed green through the white, side by side, from the dens across the camp toward the entrance at the left (many prints a trail, never a number to count)' :
+    v === false ? '' : 'frost: ' + JSON.stringify(v);
+}
+function spreadWords(v) {
+  return v === 'standing' ? 'Tallyheart’s forty-three scratched in the sand at her paws, the quick way: four lines and three dots' :
+    v === 'spread' ? 'the same forty-three, spread: one line crossed out, and ten new dots in a scratched frame under the three old ones, five and five' :
+    v === 'two' ? 'Tallyheart’s spread forty-three at her paws and yours beside it, nearest you: the same marks twice, a little apart (each with one line crossed out and ten new dots in a scratched frame, five and five)' :
+    v === false ? '' : 'spreadMarks: ' + JSON.stringify(v);
+}
+function digWords(k, v) {
+  if (k === 'dig') return v === true ? 'the big dig at the old oak’s roots, on the trunk’s sunny right side: a wide, shallow hole under a root, its inside soft warm earth-brown (never black), earth thrown back in two loose heaps either side, five long scratches raking down its near side; just left of it, between it and a root, a smaller round doorway, half under fallen leaves; no fur, no feathers' :
+    v === false ? '' : 'dig: ' + JSON.stringify(v);
+  if (k === 'marks') return v === 'leaves' ? 'beyond the dig, on the flat bare earth, by themselves: one long line and eight little pokes scratched in the earth, half under fallen leaves (the line’s top end and a few of the pokes showing)' :
+    v === 'bare' ? 'beyond the dig, on the flat bare earth, the leaves brushed aside to the edges: one long line and eight little pokes scratched in the earth, all of them plain' :
+    v === false ? '' : 'marks: ' + JSON.stringify(v);
+  return v === 'leaves' ? 'the fallen leaves over the marks are what she taps' : v === 'marks' ? 'the marks on the flat earth are what she taps' : v === 'none' || !v ? '' : 'tap: ' + JSON.stringify(v);
+}
 function optWords(set, k, v, all, cam) {
   if (set === 'ferry' || set === 'island') { const w = ferryIslandWords(set, k, v); if (w != null) return w; }
+  // chapter 13: GroveClan's dig and the marks beside it, before the Hollow's claw marks and the global taps (optWords keys on
+  // the option's name, and the grove's `marks: 'leaves'` would otherwise print the Hollow's claw marks on the trunk)
+  if (set === 'grove' && (k === 'dig' || k === 'marks' || k === 'tap')) return digWords(k, v);
+  if (k === 'frost' && set === 'camp') return frostWords(v);
+  if (k === 'spreadMarks' && set === 'hollow') return spreadWords(v);
+  if (k === 'collar' && set === 'den') return v === true ? 'Chispapaw’s collar, narrow and red with its tiny round gold bell, lying curled in a little hollow pressed in the moss beside the nest, on the side away from the grey tom' : v === false ? '' : k + ': ' + JSON.stringify(v);
   // chapter 12: the store under the bridge and its plan in the Hollow, the plan's glow, the quick marks, their two Taps
   if (k === 'store' && (set === 'bridge' || set === 'hollow')) return storeOptWords(set, v);
   if (k === 'storeGlow' && set === 'hollow') return v === 'hundreds' ? 'the squares of the store’s plan glowing' : v === 'tens' ? 'the rows of the store’s plan glowing' : v === false ? '' : k + ': ' + JSON.stringify(v);
@@ -1295,6 +1351,8 @@ function board(storyPath, outPath) {
     if (c.who === 'spider' && SPIDER_POSE[c.pose]) return SPIDER_POSE[c.pose];
     // chapter 10 (a pose a Mistscale was never given draws `lean`); Sprinkle leaning down with the pebble over her paws
     if (c.who === 'mistscale') return MISTSCALE_POSE[c.pose] || MISTSCALE_POSE.lean;
+    // chapter 13 (a pose the groundhog was never given draws `sleep`)
+    if (c.who === 'groundhog') return GROUNDHOG_POSE[c.pose] || GROUNDHOG_POSE.sleep;
     if (c.who === 'sprinkle' && c.pose === 'lookdown' && c.holds === 'pebble') return 'leaning down from above, looking down';
     return POSES[c.pose] || c.pose;
   }

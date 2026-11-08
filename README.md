@@ -188,6 +188,10 @@ she passes them and gives her warrior name (decision 52). Module 2 (the badger's
     method stands (a spread, the US decomposition method; "me llevo una" is not hers), and *desagrupar* is her class's
     word, said as she says it: «desagrupo». Claude's calls on it are under "Claude's calls" (her word at chapter 13's
     first spread).
+56. **Module 2's maths: about a quarter of a chapter** (Aron, 2026-11-07, amending decision 10 for module 2): the maths
+    takes about a quarter of a chapter as played, never past a third. The new step's three take-aways always stay. A
+    chapter's Tricky Counts run is five Counts, her hardest first, not eight; chapter 14 loses its fifth lesson problem
+    (586 − 231); chapters 12 and 13 stay as written. The Hollow's own rounds are hers to choose and are not chapter time.
 
 ## Claude's calls under decision 46
 

@@ -1,6 +1,6 @@
 # Chapter 14 brief: The Night Watch
 
-*v1 · 2026-11-07 · decisions 53, 54 and 55 are Aron's (the maths; her own apprentice, the badger, Reynard, the shark
+*v1.1 · 2026-11-07 · v1 cut to decision 56 (the maths about a quarter of a chapter: the run five, 586 − 231 and the made warm-up cut, the words back to about 1,550) · decisions 53 to 56 are Aron's (the maths; her own apprentice, the badger, Reynard, the shark
 tooth; her word «desagrupo»); the rest are Claude's calls under decision 46*
 
 *The orchestrator's brief for the text workflow, once chapter 13's story (Draft v0.5) and spec (v0.2) are final. Every
@@ -38,11 +38,11 @@ never told. The badger is a sneeze, a voice and some prints: heard, never seen, 
 - **Three checks before the build** (the orchestrator's, on main once chapters 12 and 13 are in): (1) the Spanish ask on
   chapter 12's feature as built (call 12): the salamander's Counts page opens on «¿Seis por nueve?» with "(Six times
   nine?)", checked with `VOICES=none` and `VOICES=es` under `DRY=1`, never aloud; if not, the fix is chapter 12's; (2) the
-  kit's cross-table keys on a story set of eight with four places (`warmHard: { table: 'all', at: [0, 1, 2, 3] }`), run
+  kit's cross-table keys on a story set of five with three places (`warmHard: { table: 'all', at: [0, 1, 2] }`), run
   over made-up logs as chapter 13's spec ran its warm-up: no pair twice, never 3 × 7, every question with a numeric
   `table`; (3) the moon at 19 drawn on the bridge by night, the `moonAge` clamps raised only there.
 - **Nothing waits on Aron.** Still open and not blocking (decision 55's note): how her class marks a spread on paper,
-  and the C D U heads. The maths share is the one thing he may want to see (the budget).
+  and the C D U heads. The maths share is settled by decision 56 (about a quarter, never past a third; the budget).
 
 ## Read this, and only this
 
@@ -63,13 +63,17 @@ never told. The badger is a sneeze, a voice and some prints: heard, never seen, 
 
 ## The budget
 
-- **About 20 to 22 minutes to play, and the minutes bind before the words.** The plain path is about **1,250 words**
-  (1,150 to 1,350) on one reading, measured as chapters 12 and 13 were (123 words a minute, 2 s a screen, 3 a Tap, 6 a
-  choice, 10 the dream): at about 46 screens, 10 Taps and 3 choices, about 21 minutes at the middle maths, 19½ to 22
-  across it (`check.txt`, section 9). Decision 47's cap of about 2,000 words stands, but would play 25½ to 28½;
+- **About 21 to 23 minutes to play, and decision 56 binds the maths** (Aron, 2026-11-07: the maths about a quarter of a
+  chapter as played, never past a third; this brief's v1 had it at 32 to 46%). The plain path is about **1,550 words**
+  (1,450 to 1,650), chapter 13's length, on one reading, measured as chapters 12 and 13 were (123 words a minute, 2 s a
+  screen, 3 a Tap, 6 a choice, 10 the dream). The draft measures the maths' share on every path: about a quarter at the
+  middle maths, never past a third at the top; past it, the warm-up's third Count goes, and the words never go down to
+  make room. Decision 47's cap of about 2,000 words stands, but would play 25½ to 28½;
   module-2's row (1,900 words, 21 minutes) predates the kit's timing, as chapter 13's did.
-- **Why so few words: the maths is the heaviest yet.** Twelve Counts (three in the warm-up, 3 × 7, the run's eight) and
-  seven take-aways (the made warm-up, five lesson problems, the wall's) run **6.8 to 9.6 minutes** at the kit's figures,
+- **The maths, cut to decision 56.** Nine Counts (three in the warm-up, 3 × 7, the run's five) and five take-aways (four
+  lesson problems and the wall's): the run is five, not eight, 586 − 231 is cut (decision 56) and the made warm-up with it
+  (the kit's second cut, in a chapter with a run), about 5 to 7½ minutes, about a quarter to a third of the chapter at
+  1,550 words. v1's figures, kept for the record: twelve Counts and seven take-aways ran 6.8 to 9.6 minutes,
   32 to 46% of the chapter (28 to 39% after the kit's first two cuts). The kit's "a chapter with a Tricky Counts run
   about a minute more" counts one minute for eight Counts that take 1.6 to 2. That is past decision 10's 10–20% and the
   kit's own 22–35%: the plan keeps the kit's design and cuts as played, in its order, and the first real plays of
@@ -94,9 +98,9 @@ never told. The badger is a sneeze, a voice and some prints: heard, never seen, 
   new kind of frame (call 12).
 - **Flags: one new**, `foundSalamander` (sticky, on the scene's last screen, as `foundGroundhog`). Lines read
   `specialty`, `teach`, `foundGroundhog` and `ch2Stone`, at most a line each.
-- **About 19 typed answers**, 20 with the salamander. If it drags as played, the kit's order cuts 586 − 231, then the
-  made warm-up (a chapter with a run), then the warm-up's third Count; never the three spreads, 473 − 245, 3 × 7 or the
-  run.
+- **About 14 typed answers**, 15 with the salamander (decision 56: 586 − 231 and the made warm-up are cut already). If it
+  still drags as played, the kit's order cuts the warm-up's third Count; never the three spreads, 768 − 315, 473 − 245,
+  3 × 7 or the run.
 
 ## The lesson kit
 
@@ -108,8 +112,8 @@ and the Counts kept fresh twice: the warm-up in the Hollow in the morning, the f
   the chapter has elsewhere: `check.txt`, section 4). Chispapaw sings the first right answer in Spanish, out loud (`echo: {
   on: 'first' }`). Tallyheart's line before it names no number ("First, wake up your whiskers."), so the kit's third cut
   needs no story edit (chapter 13's "three Counts" blocked it: its spec, call 28).
-- **The made warm-up** (`warm: true`, the kit's from this chapter): one two-digit spread, a twin of 43 − 16, "One to warm
-  up your whiskers." Its answer has two digits, so it never meets the chapter's.
+- **The made warm-up: cut** (decision 56, the kit's second cut in a chapter with a run). The run warms her Counts; the
+  why's sand and the worked example warm the spread.
 - **The class word:** none new (module-2's row). «¡Desagrupo!» again, now Chispapaw's own word at a spread.
 - **Why:** "Last time, two digits. Today, three. Same trick." Three squares, five lines, two dots in the sand: "Two loose.
   Take away seven?" Chispa says it before anyone says "spread": *[es]* "¡Desagrupo!" (Breaking it into groups!), out
@@ -120,10 +124,10 @@ and the Counts kept fresh twice: the warm-up in the Hollow in the morning, the f
   fifty-two in the store." / "The Clan eats one hundred twenty-seven." (six words each; the kit allows twelve a balloon),
   its right line "Two squares, two rows, five loose left."; no school words (chapter 12 says them only on `none` and
   `ones2` sets, and she has heard them twice); **640 − 218 = 422** (`'tap'`: no loose at all, so she taps the row);
-  **462 − 135 = 327** (Chispa echoes «¡Trescientos veintisiete!», out loud, right or helped, never its twin); then two
-  older, no spread: **768 − 315 = 453**, **586 − 231 = 355**. No line says which need a spread (chapter 17's question);
+  **462 − 135 = 327** (Chispa echoes «¡Trescientos veintisiete!», out loud, right or helped, never its twin); then one
+  older, no spread: **768 − 315 = 453** (586 − 231 is cut by decision 56). No line says which need a spread (chapter 17's question);
   the kit's `extra` slip catches an unneeded one, and at the hundreds, till chapter 15, its help opens "Let's scratch it
-  out." (the kit's rule (a)). Three of the new step, two older, every answer different; 352 − 127's flip lands at the
+  out." (the kit's rule (a)). Three of the new step, one older, every answer different; 352 − 127's flip lands at the
   ones, harmless in `'show'`, and no `'hers'` problem's does (`check.txt`, sections 1 to 3).
 - **The story's own, at the wall's end:** ReedClan's store, four hundred seventy-three, against CrystalClan's, two
   hundred forty-five (her morning count): **473 − 245 = 228** (`twins: false`, as chapters 12 and 13's story sets), its
@@ -131,13 +135,14 @@ and the Counts kept fresh twice: the warm-up in the Hollow in the morning, the f
   twenty-eight MORE." *Drip.* No flip lands; no Spanish in front of ReedClan.
 - **Kept fresh, at sunset:** Glintstar's watches of three for seven nights, **3 × 7 = 21**, a story Count in the 3s' own
   picture (chapter 6's patrols of three), its right line counting guards.
-- **The run (Tricky Counts run 1), at night by the store** (call 8): eight Counts, Tallyheart asking, **her four hardest
-  over the 54 pairs first** (the kit's cross-table keys on a story set, `warmHard: { table: 'all', at: [0, 1, 2, 3],
-  avoid: [[3, 7]] }`: data only), then the set's own. Its own eight, the first four standing in for hard facts she lacks:
-  **6 × 6, 3 × 9, 4 × 8, 3 × 6**, then **5 × 7, 2 × 6, 4 × 4, 10 × 8** (four Counts' pictures to end on, no neighbours
-  sharing a number, every answer new to the chapter: `check.txt`, section 4; the spec adds `alt`s). Each in its anchor
+- **The run (Tricky Counts run 1), at night by the store** (call 8): **five Counts** (decision 56; the Moon Ferry's eight), Tallyheart asking, **her three hardest
+  over the 54 pairs first** (the kit's cross-table keys on a story set, `warmHard: { table: 'all', at: [0, 1, 2],
+  avoid: [[3, 7]] }`: data only), then the set's own. Its own five, the first three standing in for hard facts she lacks:
+  **6 × 6, 3 × 9, 4 × 8**, then **5 × 7, 10 × 8** (two Counts' pictures to end on, so the run ends on two she knows, the
+  Moon Ferry's cheer; no neighbours sharing a number, every answer new to the chapter: a subset of v1's eight, `check.txt`,
+  section 4; the spec adds `alt`s). Each in its anchor
   Count's words and picture (`E.questionDef`), helped on the den's floor (the spec picks `ground`), can't fail, `intro:
-  false` so her hardest is timed on itself. Chispa whispers the last four in Spanish (an `echo` on their pairs: "¡Diez
+  false` so her hardest is timed on itself. Chispa whispers the last two in Spanish (an `echo` on their pairs: "¡Diez
   por ocho, ochenta!"), never one of her picks, which earn Tallyheart's `remembered` line. A morning pick still hard at
   night comes back: spaced practice, as chapter 13's lullaby was.
 - **Optional:** the salamander's lullaby, **6 × 9 = 54**, asked by Chispa in Spanish (call 12), its help in
@@ -175,7 +180,8 @@ reader without a chapter set.
   wall: the fill always has room, `check.txt`, section 8); no pair twice; each `{ a, b, table: E.warriorAnchor(a, b) }`,
   `hard: true` on hers. The def carries the marker `E.questionDef` reads (`warmHard.table === 'all'`), so no new picture,
   help or interaction; the runner as it is (a miss gets the sand and comes back later; a round always finishes). About a
-  minute and a half.
+  minute and a half. The Hollow's round stays eight (she chooses it; decision 56 counts chapter time, and a chapter's
+  story run is five, as data on a story set, not this round).
 - **Who asks, as chapter data.** The asker and every line the round says (the shelf's greeting once the button shows,
   his opening, praise, `remembered`, `again`, `miss`, `done`) are chapter 14's `tricky` key, `{ who, greet, lines }`,
   read from the latest finished chapter that has one: **the grey tom** (`snorer`, labelled as always), practising for his

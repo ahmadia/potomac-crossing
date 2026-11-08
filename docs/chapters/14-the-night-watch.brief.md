@@ -289,8 +289,8 @@ reader without a chapter set.
       the spec may move the salamander's ask into its prompt with no story change. Never a second feature in chapter 14.
     - **The rest:** «¡Desagrupo!» (the lesson, out loud) and «¡Salud!» (the sneeze, whispered) are frame balloons;
       `PC.words.es` gains `salud` ('¡Salud!', Bless you!). The echoes are sets' `echo` keys (the warm-up's first right
-      answer, 462 − 135, the run's last four): six of nineteen answers on the plain path, seven of twenty with the
-      salamander's. No column echoed, never «menos». Chapter 12's rules hold: eight words or fewer, the English on the
+      answer, 462 − 135, the run's last two): four of fourteen answers on the plain path, five of fifteen with the
+      salamander's (decision 56's five-Count run). No column echoed, never «menos». Chapter 12's rules hold: eight words or fewer, the English on the
       same screen, Latin American, never in an English voice, never aloud on the mini. Out loud in the Hollow, none in
       front of ReedClan, whispered at night (a watch is quiet).
 13. **Paths.** One optional scene, one flag. At most one line each by `specialty` (call 4), `teach` (call 2),

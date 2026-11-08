@@ -14,6 +14,9 @@ const LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
 // (chapter 6 adds `wall`, Coil's close beats, a composition of its own; chapters 2 to 5 had the first five)
 const CAMS5 = ['bank', 'mouth', 'under', 'back', 'paws'];
 const CAMS = [...CAMS5, 'wall', 'print'];   // (chapter 7 adds `print`, close on one of her prints, a composition of its own)
+// (chapter 12 adds `store` after them, the dry den with the store laid out, a composition of its own: CAMS stays chapters 2 to
+// 9's, which every older test below walks; the vocabulary is CAMS12)
+const CAMS12 = [...CAMS, 'store'];
 const DRAG_CAMS = ['bank', 'mouth', 'under', 'back'];   // the cameras with drag marks, drips and the train
 // (chapter 6: `gap` in `back`, the mouth of Coil's gap in the stone leg; `wall` shares `back`'s names)
 const ANCHORS = { bank: ['bank-left', 'bank-right', 'reeds'], mouth: ['rock', 'edge', 'sun', 'sun-edge'], under: ['mud', 'inside'],
@@ -74,7 +77,7 @@ const strip = (s) => s.replace(/\bpcs?[0-9a-z]+-/g, '');
 test('bridge: the vocabulary lists the cameras, anchors and options of docs/build.md', () => {
   const v = art.vocab.sets.bridge;
   assert.ok(v, 'PC.art.vocab.sets.bridge exists');
-  assert.deepEqual(v.cams, CAMS);
+  assert.deepEqual(v.cams, CAMS12);
   for (const list of Object.values(ANCHORS)) for (const a of list) assert.ok(v.anchors.includes(a), 'anchor ' + a);
   for (const [k, vals] of Object.entries(OPTS)) {
     assert.ok(Array.isArray(v.opts[k]), 'option ' + k + ' lists its values');
@@ -1076,7 +1079,7 @@ test('bridge (chapter 6): the spec names `stones`, `gap` and the camera `wall`, 
   for (const want of ['**`stones: true`** on `back`', '**Anchor `gap`** in `back`', "**Camera `wall`, its own composition** (`cams.wall = { box: [0, 0, 1600], comp: 'wall' }`",
     '**`gap`** (default facing right', '**`back-left`**', '**`back-right`**', '**`dragon`**', 'No `near` or `beside`', '`train: true` works here']) assert.ok(md.includes(want), 'the spec says: ' + want);
   const v = art.vocab.sets.bridge, info = art.sceneInfo('bridge');
-  assert.deepEqual(v.cams, CAMS, 'chapter 2 to 5\'s five cameras, then `wall` (and chapter 7\'s `print`)');
+  assert.deepEqual(v.cams, CAMS12, 'chapter 2 to 5\'s five cameras, then `wall` (and chapter 7\'s `print`, and chapter 12\'s `store`)');
   assert.deepEqual(v.opts.stones, [false, true]);
   assert.equal(info.defaults.stones, false, 'off unless a frame asks: chapters 3 to 5\'s back has no leg');
   assert.equal(info.cams.wall.comp, 'wall');
@@ -1335,7 +1338,8 @@ test('bridge, chapter 7: the spec names the print\'s Tap, `compare` and the came
   assert.deepEqual(Object.keys(info.anchors.print), ['over'], 'only `over`: no spot of Tallyheart\'s');
   const o = info.anchors.print.over;
   assert.ok(o.air && o.elev && o.face === 'right', '`over` is where her paw hangs (air, elev), facing right, as the marsh\'s raft-edge');
-  assert.deepEqual(v.opts.tap, ['none', 'print']);
+  // (chapter 12 adds 'store', the store's Tap on its own camera, after them)
+  assert.deepEqual(v.opts.tap, ['none', 'print', 'store']);
   assert.deepEqual(v.opts.compare, [false, [24, 60]], 'a list of two numbers, compared by value');
   assert.deepEqual([info.defaults.tap, info.defaults.compare], ['none', false]);
   // off is nothing at all, on every camera
@@ -1512,7 +1516,8 @@ const BRIDGE_OPTS9 = [{}, { drag: false }, { prints: true }, { prints: true, bra
   { prints: true, tap: 'print', compare: [24, 60] }];
 function bridgeSweep9() {
   const info = art.sceneInfo('bridge'), out = {}, WHO = ['player', 'tallyheart', 'riffle', 'clancat'];
-  for (const cam of Object.keys(info.cams)) {
+  // (chapter 12: and never its new camera, `store`, which the snapshot did not have; its spots are that camera's own)
+  for (const cam of Object.keys(info.cams).filter((c) => c !== 'store')) {
     const spots = Object.keys(info.anchors[info.cams[cam].comp] || {}).filter((k) => NEW9.indexOf(k) < 0);
     const cast = spots.map((at, i) => ({ who: WHO[i % WHO.length], variant: 1 + (i % 3), pose: 'sit', at }));
     const h = crypto.createHash('sha1');
@@ -1761,4 +1766,150 @@ test('bridge, chapter 9 (the polish release): at `air` she is in the air: her pa
   const r = render('bank', { shallows: true, drag: false }, [{ who: 'sprinkle', at: 'air', pose: 'fly', facing: 'left' }]);
   assert.ok(r.heads[0] && r.heads[0].y > 10, 'her head well inside the panel: ' + JSON.stringify(r.heads[0]));
   assert.ok(bb[1] > 0, 'her wing tips inside the panel: ' + Math.round(bb[1]));
+});
+
+// ================================================================ chapter 12: the store
+// docs/chapters/12-a-spark-at-the-hedge.spec.md, section 4, "The store (`sets/bridge.js`, camera `store`)": a camera of its own,
+// its six spots, the option `store` (the take-aways kit's own picture, small, at one fixed scale with its top edge fixed; its
+// keep sized for 999) and `tap: 'store'`. Every older camera draws as it did (the <ch12-fingerprint> in tests/scenes.test.js,
+// and chapter 9's sweep above, which leaves the new camera out).
+
+const SPEC12 = path.join(ROOT, 'docs/chapters/12-a-spark-at-the-hedge.spec.md');
+const STORE_SPOTS = ['store-left', 'store-right', 'store-back-1', 'store-back-2', 'store-back-3', 'way-in'];
+// chapter 12's places (f058 to f061), listed back to front as the story builder lists them
+const STORE_CAST = [
+  { who: 'murmurchime', at: 'store-back-3', pose: 'sit', mood: 'happy' }, { who: 'tallyheart', at: 'store-back-2', pose: 'sit', mood: 'proud' },
+  { who: 'glintstar', at: 'store-back-1', pose: 'sit', mood: 'kind' }, { who: 'grizzled', at: 'way-in', pose: 'walk', mood: 'stern' },
+  { who: 'player', at: 'store-left', pose: 'sit', mood: 'happy' }, { who: 'chispapaw', at: 'store-right', pose: 'sit', mood: 'wonder' }];
+const storeOf = (svg) => {
+  const m = /<g data-art="store" data-store="(\d+)" data-box="([^"]+)"[^>]*>/.exec(svg);
+  return m ? { num: +m[1], box: m[2].split(' ').map(Number), at: m.index } : null;
+};
+const piecesOf = (svg) => {
+  const g0 = svg.indexOf('data-art="store"'), out = { square: [], row: [], loose: [] };
+  if (g0 < 0) return out;
+  const re = /class="pc-pv-(square|row|loose)([^"]*)" data-box="([^"]+)"/g;
+  re.lastIndex = g0;
+  let m;
+  while ((m = re.exec(svg))) out[m[1]].push({ cls: m[2], box: m[3].split(' ').map(Number) });
+  return out;
+};
+const hasChispa = () => art.vocab.cast && art.vocab.cast.includes('chispapaw');
+// she stands in for herself where cats.js draws her, else a clan cat at her size (the spec's stand-in)
+const asChispa = (m) => m.who === 'chispapaw' && !hasChispa() ? Object.assign({}, m, { who: 'clancat', variant: 3, size: 0.78 }) : m;
+
+test('bridge, chapter 12: the spec names the store camera, its spots and its options; the set has them, every one off by default', () => {
+  const md = fs.readFileSync(SPEC12, 'utf8').replace(/\s+/g, ' ');
+  for (const want of ['**`store`**, a composition of its own', '**Option `store`** (a number 0 to 999, off by default; 0 or off draws the bare floor)',
+    '**at one fixed scale with its top edge fixed**', '**`tap: \'store\'`** (with `store`)', '**`store-left`**', '**`store-right`**', '**`store-back-1`**', '**`way-in`**'])
+    assert.ok(md.includes(want), 'the spec says: ' + want);
+  const v = art.vocab.sets.bridge, info = art.sceneInfo('bridge');
+  assert.deepEqual(v.cams, CAMS12, 'one new camera, after the others');
+  assert.equal(info.cams.store.comp, 'store', 'a composition of its own');
+  assert.deepEqual([info.cams.store.x, info.cams.store.y, info.cams.store.w], [0, 0, 1600], 'the whole world, as `back` and `wall`');
+  assert.deepEqual(Object.keys(info.anchors.store).sort(), STORE_SPOTS.slice().sort(), 'its six spots, its own');
+  for (const k of STORE_SPOTS) assert.ok(v.anchors.includes(k), k);
+  assert.equal(v.opts.store, 'number');
+  assert.ok(v.opts.tap.includes('store'));
+  assert.ok(!('store' in info.defaults) && info.defaults.tap === 'none', 'off unless a frame asks');
+  // the faces: front left facing right, front right facing left, the way in walking in, facing left
+  const A = info.anchors.store;
+  assert.deepEqual([A['store-left'].face, A['store-right'].face, A['way-in'].face], ['right', 'left', 'left']);
+  // off (or 0, or nonsense) is the bare floor, and no keep
+  const bare = render('store', {}, [], ['sunset']);
+  assert.equal(storeOf(bare.svg), null);
+  assert.deepEqual(bare.keep, []);
+  for (const v0 of [0, false, 1000, -3, 'many', 12.6e9]) assert.ok(same5(render('store', { store: v0 }, [], ['sunset']).svg, bare.svg), 'store: ' + v0 + ' is the bare floor');
+  assert.ok(same5(render('store', { tap: 'store' }, [], ['sunset']).svg, bare.svg), 'no store, no Tap');
+  // and the store belongs to its own camera
+  for (const cam of CAMS) assert.ok(same5(render(cam, { store: 175, tap: 'none' }).svg, render(cam, {}).svg), cam + ': no store');
+});
+
+test('bridge, chapter 12: the store composition: the stone leg (no gap), the nook\'s heap, the dry floor in the lower half, the way in at the right; day, sunset and dusk each light it, never dark', () => {
+  const day = render('store', {}, [], ['day']), sun = render('store', {}, [], ['sunset']), dusk = render('store', {}, [], ['dusk']);
+  for (const [r, lab] of [[day, 'day'], [sun, 'sunset'], [dusk, 'dusk']]) {
+    checkXml(r.svg, lab);
+    assert.ok(r.svg.includes('data-art="leg"'), lab + ': the stone leg');
+    assert.ok(!r.svg.includes('data-art="gap"'), lab + ': no gap: Coil is not here');
+    assert.ok(!/NaN|undefined/.test(r.svg), lab);
+  }
+  assert.ok(!same5(day.svg, sun.svg) && !same5(sun.svg, dusk.svg) && !same5(day.svg, dusk.svg), 'each light its own');
+  assert.ok(same5(render('store', {}).svg, day.svg), 'day is the default');
+});
+
+test('bridge, chapter 12: `store: n` lays the kit\'s own picture on the floor (small), at one fixed scale with its top edge fixed: 175 is one square, seven rows and five loose; 133 one, three and three, where 175\'s lay', () => {
+  if (typeof art.placeValue !== 'function') return;
+  const r175 = render('store', { store: 175 }, [], ['sunset']), r133 = render('store', { store: 133 }, [], ['sunset']);
+  const s175 = storeOf(r175.svg), s133 = storeOf(r133.svg), p175 = piecesOf(r175.svg), p133 = piecesOf(r133.svg);
+  assert.ok(s175 && s133, 'drawn');
+  assert.equal(s175.num, 175);
+  assert.deepEqual([p175.square.length, p175.row.length, p175.loose.length], [1, 7, 5], '175');
+  assert.deepEqual([p133.square.length, p133.row.length, p133.loose.length], [1, 3, 3], '133');
+  for (const p of [p175, p133]) for (const k of ['square', 'row', 'loose']) assert.ok(p[k].every((q) => !/taken|fresh|empty|moving/.test(q.cls)), k + ': prey, as it is: nothing taken, nothing fresh');
+  // the kit's own picture, exactly (small, no spread, no glow): the same markup inside the group
+  const inner = (svg) => { const g0 = svg.indexOf('<g data-art="store"'), a = svg.indexOf('>', g0) + 1; let depth = 1, i = a; const re = /<(\/?)g[\s>]/g; re.lastIndex = a; let m; while ((m = re.exec(svg))) { depth += m[1] ? -1 : 1; if (!depth) { i = m.index; break; } } return svg.slice(a, i); };
+  const kit = art.placeValue({ hundreds: 1, tens: 7, ones: 5, kind: 'store', small: true });
+  assert.equal(inner(r175.svg), kit.slice(kit.indexOf('>') + 1, kit.lastIndexOf('</svg>')), 'the kit\'s picture as it draws it');
+  // one scale, one top edge: the same left, top and width; 133 shorter
+  assert.deepEqual(s133.box.slice(0, 3).map(Math.round), s175.box.slice(0, 3).map(Math.round), 'the same left, top and right');
+  assert.ok(s133.box[3] < s175.box[3] - 50, 'and 133 shorter (fewer rows)');
+  const scaleOf = (svg) => +/data-art="store"[^>]*transform="translate\([^)]*\) scale\(([\d.]+)\)/.exec(svg)[1];
+  assert.equal(scaleOf(r133.svg), scaleOf(r175.svg), 'one scale');
+  // 133's pieces lie where 175's lay: its square, its first three rows and its first three loose
+  for (const k of ['square', 'row', 'loose']) p133[k].forEach((q, i) => assert.deepEqual(q.box, p175[k][i].box, k + ' ' + i + ' where 175\'s lay'));
+  // low in the picture, in the middle, on the floor (its top below the floor's far edge)
+  assert.ok(s175.box[1] >= 600 && s175.box[1] < 700 && s175.box[3] <= 1000, 'low, on the floor: ' + s175.box.map(Math.round));
+  assert.ok(Math.abs((s175.box[0] + s175.box[2]) / 2 - 800) < 2, 'in the middle');
+  // big enough to count: a row's piece at least 5 world units tall, a loose one 45 wide (at 390 x 844, a 358 px panel, a
+  // row stands about three CSS pixels tall, nine device pixels on the phone)
+  const k = scaleOf(r175.svg);
+  assert.ok(23.4 * k >= 12 && 130 * k >= 65 && 110 * k >= 55, 'a row ' + (23.4 * k).toFixed(1) + ', a loose ' + (130 * k).toFixed(1) + ', a square ' + (110 * k).toFixed(1));
+});
+
+test('bridge, chapter 12: the store\'s keep is the store at 999 at that scale, whatever the number; `tap: \'store\'` is an unpainted g.pc-tap.pc-tap-store over the placed picture', () => {
+  if (typeof art.placeValue !== 'function') return;
+  const r175 = render('store', { store: 175 }, [], ['sunset']), r133 = render('store', { store: 133, tap: 'store' }, [], ['sunset']), r999 = render('store', { store: 999 }, [], ['sunset']);
+  const s999 = storeOf(r999.svg), k = s999.box[2] - s999.box[0];
+  assert.ok(Math.abs(k / 1600 - (storeOf(r175.svg).box[2] - storeOf(r175.svg).box[0]) / 1600) < 1e-6, 'one scale for 999 too');
+  const want = { x: s999.box[0], y: s999.box[1], w: k, h: 710 * k / 1600 };
+  for (const r of [r175, r133, r999]) {
+    assert.equal(r.keep.length, 1, 'one keep');
+    const kp = r.keep[0], pct = (v, d) => Math.round(v / d * 1000) / 10;
+    assert.deepEqual([kp.x, kp.y, kp.w], [pct(want.x, 1600), pct(want.y, 1000), pct(want.w, 1600)], 'its left, top and width');
+    assert.ok(Math.abs(kp.y + kp.h - Math.min(100, pct(want.y + want.h, 1000))) <= 0.11, 'down to 999\'s foot (or the panel\'s): ' + JSON.stringify(kp));
+  }
+  // the Tap
+  const m = /<g class="pc-tap pc-tap-store" data-tap="store"><rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" fill="none"[^>]*\/><\/g>/.exec(r133.svg);
+  assert.ok(m, 'the Tap\'s target');
+  const b = storeOf(r133.svg).box;
+  assert.deepEqual(m.slice(1).map(Number).map(Math.round), [b[0], b[1], b[2] - b[0], b[3] - b[1]].map(Math.round), 'over the placed picture');
+  assert.ok(m.index > storeOf(r133.svg).at, 'after the picture');
+  assert.equal((r175.svg.match(/pc-tap/g) || []).length, 0, 'no Tap unless asked');
+  assert.ok(same5(render('store', { store: 133, tap: 'print' }, [], ['sunset']).svg, render('store', { store: 133 }, [], ['sunset']).svg), 'the print\'s Tap is not the store\'s');
+});
+
+test('bridge, chapter 12: the six at the store\'s spots (sitting, and crouched or standing where they might), none touching, none over the store\'s keep, back to front by depth', () => {
+  const info = art.sceneInfo('bridge'), A = info.anchors.store;
+  // the order the story builder lists them in, back to front: by depth (y), the two at the front side by side
+  const order = STORE_SPOTS.slice().sort((a, b) => A[a].y - A[b].y);
+  assert.deepEqual(order.slice(0, 4), ['store-back-3', 'store-back-2', 'store-back-1', 'way-in'], 'back to front: ' + order.join(', '));
+  assert.equal(A['store-left'].y, A['store-right'].y, 'the front two level, at the store\'s front corners');
+  assert.ok(A['store-back-3'].y < A['store-back-2'].y && A['store-back-2'].y < A['store-back-1'].y, 'a step back each');
+  // its keep at 999
+  const k = 0.54, keep = [800 - 800 * k, 650, 800 + 800 * k, 650 + 710 * k];
+  const pr = render('store', { store: 999 }, [], ['sunset']);
+  if (storeOf(pr.svg)) assert.deepEqual(storeOf(pr.svg).box.slice(0, 3).map(Math.round), keep.slice(0, 3).map(Math.round), 'the keep this test reads');
+  const variants = [{}, { glintstar: { pose: 'stand', mood: 'solemn' } }, { player: { pose: 'crouch' }, chispapaw: { pose: 'crouch', mood: 'sniff' } },
+    { tallyheart: { pose: 'stand' }, murmurchime: { pose: 'lie' }, grizzled: { pose: 'sit' } }, { player: { pose: 'walk' }, chispapaw: { pose: 'lookup' } }];
+  for (const more of variants) {
+    const cast = STORE_CAST.map((m) => asChispa(Object.assign({}, m, more[m.who] || {})));
+    const boxes = cast.map((m) => ({ who: m.who, b: boxesAt(m, A[m.at]).body }));
+    const lab = JSON.stringify(more);
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++)
+      assert.ok(!meets(boxes[i].b, boxes[j].b), lab + ': ' + boxes[i].who + ' and ' + boxes[j].who + ' apart');
+    for (const x of boxes) assert.ok(!meets(x.b, keep), lab + ': ' + x.who + ' clear of the store: ' + x.b.map(Math.round));
+    // and each where the panel shows her face
+    const r = render('store', { store: 175 }, cast, ['sunset']);
+    r.heads.forEach((h, i) => assert.ok(h && h.x > 2 && h.x < 98 && h.y > 5 && h.y < 95, lab + ': ' + cast[i].who + '\'s face on the panel: ' + JSON.stringify(h)));
+  }
 });

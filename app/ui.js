@@ -20,6 +20,10 @@
  * `foundMizzle` and `ch9Roof`; nothing else on the page changes. Chapter 11 adds the Type screen (her own warrior
  * ending, typed after her first part, refused in place by a balloon: renderEnding, UI.ending) and her warrior name
  * wherever E.displayName shows (nameHtml lets it break between its halves); nothing changes for a cat not yet named.
+ * Chapter 12 adds Chispapaw's Spanish: rich() letters the engine's «…» marks in italics (lang="es") with the English
+ * gloss upright under them, Read to me says them in the Spanish voice by locale and name (UI.voices: never a novelty
+ * voice, never Spanish in an English voice), the echoes on the Counts page and the take page, the Spanish count on a
+ * skip, Chispapaw on the Hollow's shelf and the grown-ups corner's voice line; no line of chapters 1 to 11 has a mark.
  *
  * Loads in Node without a DOM (it only exports the pure layout helpers there).
  */
@@ -409,7 +413,9 @@
     thymeleaf: 'Thymeleaf', mizzle: 'Mizzle', groveclan: 'A GroveClan cat',
     // chapter 10: the Mistscales by variant (Mama; the eldest, who never speaks); ReedClan's and GroveClan's
     // leaders are their Clans' variants 5 and 3 (below), Granny chapter 5's otter variant 3, by the chapter's `names`
-    mistscale: 'A Mistscale'
+    mistscale: 'A Mistscale',
+    // chapter 12: "The little cat" (each balloon's `name`) until Glintstar names her, then Chispapaw
+    chispapaw: 'Chispapaw'
   };
   // otters and dogs are told apart by their variant (docs/build.md, cast, chapter 2)
   var VARIANT_NAMES = {
@@ -429,7 +435,8 @@
     coil: 0.72, sloshbank: 0.62, sleet: 1.45, reedclan: 1.0,
     hail: 1.5, snip: 1.65, snatch: 1.35,
     thymeleaf: 0.82, mizzle: 1.35,
-    mistscale: 0.7 };
+    mistscale: 0.7,
+    chispapaw: 1.42 };
   var VARIANT_PITCH = { otter: { 1: 0.68, 3: 0.92 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 }, reedclan: { 2: 1.12, 5: 0.8 }, groveclan: { 1: 0.78, 3: 0.88 },
     mistscale: { 2: 0.6 } };
   // Sprinkle is shy: a little slower than everyone else's 0.95. Reynard is slow and smooth; Squall
@@ -442,11 +449,13 @@
   // (VARIANT_PITCH; the rate takes no variant, so it is every GroveClan cat's: the apprentice never speaks).
   // Chapter 10: Mama low, soft and slow (the eldest lower still, and never speaks); ReedClan's and GroveClan's
   // leaders a little low, at their Clans' rates; Granny, chapter 5's otter variant 3, a little low (no rate:
-  // RATE.otter would change chapter 5's otters)
+  // RATE.otter would change chapter 5's otters). Chapter 12: Chispapaw high and quick, in English and in Spanish (the
+  // Spanish voice takes her pitch and 0.9 of her rate: UI.voices.plan)
   var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02, patience: 0.8, puddle: 1.05, coil: 0.7, sloshbank: 0.88, sleet: 1.04,
     hail: 1.08, snip: 1.12, snatch: 1.0,
     thymeleaf: 0.85, mizzle: 0.82, groveclan: 0.86,
-    mistscale: 0.8 };
+    mistscale: 0.8,
+    chispapaw: 1.02 };
   function pitchOf(who, variant) {
     var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
     return v || PITCH[who] || 1;
@@ -1260,6 +1269,70 @@
     reserve: takeReserve, helpStack: takeHelpStack, end: takeEnd, storeLabel: takeStoreLabel, spreadLabel: takeSpreadLabel,
     minus: takeMinus, words: takeWordsNow, corner: takeCorner, MS: TAKE_MS, ZONES: TAKE_ZONES };
 
+  /* ---------------------------------------------------------------- chapter 12: Spanish, the voice (pure: tested in Node)
+   * docs/chapters/12-a-spark-at-the-hedge.spec.md, section 6. The Spanish voice is picked by locale and by name, never a
+   * novelty voice (iPads carry eight in every Spanish locale): es-US, es-MX, every other Latin American es-*, plain es,
+   * es-ES last; in each a she-voice by name first (names NFC-normalised), then any other of that locale; null when there is
+   * none. The English rule is pickVoice's, as before. UI.voices.plan is what Read to me says, row by row, and speakItems
+   * only turns its rows into utterances: an item with Spanish in it (the engine's « marks, or `lang: 'es'`) is said in
+   * parts (E.speechParts), a Spanish part in the Spanish voice (the speaker's pitch, 0.9 of the speaker's rate), with none a
+   * whole line not said (its gloss follows) and a word said as its English (a name its respelling, a number its words) in
+   * the English voice; never Spanish in an English voice, and no part with no letter or digit (iOS may never end an
+   * utterance of punctuation alone). Every other item exactly as before, respelled by E.sayAs ("Cheespa-paw"). */
+  var EN_VOICES = ['Samantha', 'Karen', 'Moira', 'Tessa', 'Google US English'];
+  var ES_NOVELTY = ['Eddy', 'Flo', 'Grandma', 'Grandpa', 'Reed', 'Rocko', 'Sandy', 'Shelley'];
+  var ES_SHE = ['Google español de Estados Unidos', 'Paulina', 'Mónica', 'Angélica', 'Isabela', 'Francisca', 'Soledad', 'Marisol'];
+  function vNfc(s) { s = String(s == null ? '' : s); return typeof s.normalize === 'function' ? s.normalize('NFC') : s; }
+  function vLang(v) { return String((v && v.lang) || '').replace('_', '-').toLowerCase(); }
+  // a novelty voice: its name's first word (before any " (") is exactly one of them; "Reedy" or "Florencia" is kept
+  function vNovelty(v) { return ES_NOVELTY.indexOf(vNfc(v && v.name).split(' (')[0].trim().split(/\s+/)[0]) >= 0; }
+  function vTier(l) { return l === 'es-us' ? 0 : l === 'es-mx' ? 1 : l === 'es-es' ? 4 : l === 'es' ? 3 : 2; }
+  function voicePick(list, lang) {
+    list = Array.isArray(list) ? list : list ? Array.prototype.slice.call(list) : [];
+    if (lang !== 'es') {
+      var en = list.filter(function (v) { return v && /^en(-|_|$)/i.test(v.lang); }), got = null;
+      for (var i = 0; i < EN_VOICES.length && !got; i++) got = en.filter(function (v) { return String(v.name).indexOf(EN_VOICES[i]) === 0; })[0] || null;
+      return got || en.filter(function (v) { return /en-US/i.test(v.lang); })[0] || en[0] || null;
+    }
+    var es = list.filter(function (v) { var l = vLang(v); return !!v && (l === 'es' || l.indexOf('es-') === 0) && !vNovelty(v); });
+    for (var t = 0; t <= 4; t++) {
+      var here = es.filter(function (v) { return vTier(vLang(v)) === t; });
+      if (!here.length) continue;
+      for (var k = 0; k < ES_SHE.length; k++) {
+        var she = here.filter(function (v) { return vNfc(v.name).indexOf(vNfc(ES_SHE[k])) === 0; })[0];
+        if (she) return she;
+      }
+      return here[0];
+    }
+    return null;
+  }
+  // an item said in parts: Spanish in it, as the engine's marks or a whole line's `lang`
+  function saysSpanish(it) { return !!it && (String(it.text || '').indexOf('«') >= 0 || it.lang === 'es'); }
+  // `voices`: a voice list (each language picked from it) or { en, es } as picked; `opts.cat`: for E.sayAs
+  function voicePlan(items, voices, opts) {
+    var E0 = PC.engine, cat0 = (opts && opts.cat) || null;
+    var vs = Array.isArray(voices) ? { en: voicePick(voices, 'en'), es: voicePick(voices, 'es') } : voices || {};
+    var en = vs.en || null, es = vs.es || null, rows = [];
+    var clean = function (t) { return plain(String(t == null ? '' : t).replace(/<[^>]+>/g, ' ')).trim(); };
+    var some = function (t) { return /[\p{L}\p{N}]/u.test(t); };
+    var row = function (text, lang, it) {
+      var v = lang === 'es' ? es : en, r = rateOf(it.who);
+      rows.push({ text: text, lang: lang, voice: v ? v.name : null, rate: lang === 'es' ? Math.round(r * 900) / 1000 : r, pitch: pitchOf(it.who, it.variant) });
+    };
+    (items || []).forEach(function (it) {
+      if (!it) return;
+      if (!saysSpanish(it)) { var txt = E0.sayAs(clean(it.text || ''), cat0); if (txt) row(txt, 'en', it); return; }
+      E0.speechParts(String(it.text || '').replace(/<[^>]+>/g, ' '), it.lang, cat0).forEach(function (p) {
+        var t = clean(p.lang === 'es' && !es ? (p.line ? '' : p.en) : p.text);
+        if (some(t)) row(t, p.lang === 'es' && es ? 'es' : 'en', it);
+      });
+    });
+    return rows;
+  }
+  UI.voices = { pick: voicePick, plan: voicePlan, saysSpanish: saysSpanish, NOVELTY: ES_NOVELTY, SHE: ES_SHE };
+  // (the lettering, for the tests in Node: rich() and plain() are declared further down, in the browser part, and hoisted)
+  UI.letter = { rich: rich, plain: plain };
+
   if (typeof module !== 'undefined' && module.exports) module.exports = PC;
   var doc = root.document;
   if (!doc || typeof doc.createElement !== 'function') return;
@@ -1290,14 +1363,18 @@
     });
   }
   /* Lettering: **bold**, *italic*, line breaks, and a dash kept with the word it follows (a word joiner, U+2060, between
-   * them: ch05 f051a's "…Thirty. FORTY—" put the dash on a line alone at every iPad size, the polish release v23). */
+   * them: ch05 f051a's "…Thirty. FORTY—" put the dash on a line alone at every iPad size, the polish release v23).
+   * Chapter 12: Spanish between the engine's marks, «…», in italics with lang="es" (the marks dropped), and the gloss in
+   * parentheses on the line straight after it upright, on a line of its own; no line of chapters 1 to 11 has a «. */
   function rich(s) {
-    return esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\n/g, '<br>')
+    return esc(s).replace(/«([^«»]*)»\n(\([^\n]*\))/g, '<i class="es" lang="es">$1</i><br><span class="gloss">$2</span>').replace(/«([^«»]*)»/g, '<i class="es" lang="es">$1</i>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\n/g, '<br>')
       .replace(/([A-Za-z0-9À-ɏ])—/g, '$1⁠—');
   }
   // (the take-aways kit: a minus sign, U+2212, is read as the words table's "take away", read at call time, so a changed
   // word reaches the reading too; no line of chapters 1 to 11 or the Warrior Counts has one: UI.takes.minus)
-  function plain(s) { return takeMinus(String(s == null ? '' : s).replace(/\*+/g, '').replace(/×/g, ' times ')); }
+  // (chapter 12: the engine's marks for Spanish, « and », are never read)
+  function plain(s) { return takeMinus(String(s == null ? '' : s).replace(/\*+/g, '').replace(/×/g, ' times ').replace(/[«»]/g, '')); }
   /* Her name as lettered on the page (chapter 11): a warrior name may break between its two halves, Thunderwhisker and
    * butterscotch, where a 26-letter word would otherwise break anywhere; every other name exactly as before. */
   function nameHtml(c) { return E.warriorName(c) ? esc(c.name) + '<wbr>' + esc(c.ending) : esc(E.displayName(c)); }
@@ -1470,13 +1547,14 @@
   function speakerName(s) { return speakerLabel(s, { cat: cat, story: view.name === 'warrior' ? warriorLabels(story, cat) : story, fill: fill }); }
   /* A frame's balloons as she sees them (E.balloons: `when` applied). The nth balloon from a who
    * belongs to the nth of them in the cast (hidden balloons still count), for its coat and voice.
-   * `digits` (the Warrior Counts: "7 × 8") are lettered small in Andika beside the balloon. */
+   * `digits` (the Warrior Counts: "7 × 8") are lettered small in Andika beside the balloon. Chapter 12: a balloon with
+   * `lang: 'es'` is a whole Spanish line, lettered by E.esLine (the Spanish between its marks, its English under it). */
   function balloonsOf(frame) {
     var cast = (frame.scene && frame.scene.cast) || [];
     return E.balloons(frame, cat).map(function (s) {
       var mine = cast.filter(function (c) { return c && c.who === s.who; });
       var member = mine[s.nth] || mine[0];
-      var b = { who: s.who || '', text: fill(s.text || ''), kind: s.kind || 'say', name: s.name, nth: s.nth, variant: member && member.variant, raw: s };
+      var b = { who: s.who || '', text: s.lang === 'es' ? E.esLine(s.text || '', cat) : fill(s.text || ''), kind: s.kind || 'say', name: s.name, nth: s.nth, variant: member && member.variant, raw: s };
       if (typeof s.digits === 'string' && s.digits) b.digits = s.digits;
       if (faceHidden(s, member)) b.noFace = true;
       return b;
@@ -1532,7 +1610,7 @@
       if (!keyFresh(e, renderedAt, now())) { if (PAGE_KEYS[e.key] && !isTyping(e)) e.preventDefault(); return; }
       keyHandler(e);
     });
-    if ('speechSynthesis' in root) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = function () { voice = null; }; } catch (e) {} }
+    if ('speechSynthesis' in root) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = function () { voice = null; voiceEs = null; }; } catch (e) {} }
     // the Warrior Counts: a hub left open (an iPad asleep overnight) reads E.warriorState again when it
     // is seen, so it never offers "Keep going" for a sitting gone stale (only with the Counts open)
     doc.addEventListener('visibilitychange', function () {
@@ -1571,7 +1649,10 @@
       /* What Read to me would say on this screen, line by line, as it would be handed to the
        * synthesizer. Nothing is said, and the setting is not read: tools/shots.mjs prints it
        * (DRY=1) on a Mac that makes no sound. */
-      speech: function () { return (currentSpeech || []).map(function (it) { return plain(String((it && it.text) || '').replace(/<[^>]+>/g, ' ')).trim(); }).filter(Boolean); },
+      speech: function () { return (currentSpeech || []).map(function (it) { return saysSpanish(it) ? speechRows(it) : [E.sayAs(plain(String((it && it.text) || '').replace(/<[^>]+>/g, ' ')).trim(), cat)]; }).reduce(function (a, b) { return a.concat(b); }, []).filter(Boolean); },
+      /* Chapter 12: UI.voices.plan's rows for this screen, with a made-up voice list (tools/shots.mjs's DRY=1 with
+       * VOICES=es and VOICES=none): each part, its voice, its lang. Nothing is said. */
+      plan: function (list) { return voicePlan(currentSpeech || [], Array.isArray(list) ? list : [], { cat: cat }); },
       go: go,
       /* Chapter 4, for tools/shots.mjs: her Case File open over the page (a card's id: that card
        * shown large), closed again, and one tap on the page's tap picture (a skip-count, the row of
@@ -1595,6 +1676,10 @@
         (ids || []).forEach(function (id) { pickTapCard(id, true); });
         return true;
       },
+      /* Chapter 12, for the tools (tools/shots.mjs's es: targets, dev/webkit/run.mjs's `spanish` job): Chispapaw's Spanish
+       * on the pages that carry it, on the cat on screen, never saved (spanishDebug: echo, take, skip, worked, worked:tens,
+       * try, try:pointer, store). */
+      spanish: function (what) { return spanishDebug(what); },
       /* The take-aways kit, for the tools (tools/shots.mjs's take: targets, dev/webkit/run.mjs's `takes` job): the take page
        * on the cat on screen, from definitions of its own, never saved (takesDebug: first, q, show, tap, spread, echo, sand,
        * done; the Hollow's shelf and a Count the store round, from a stub chapter of its own; `opts.keys === false`: nothing
@@ -2471,12 +2556,15 @@
       if (v.taps) {
         var counter = { who: teacher, name: tname, html: '<span class="counter' + (words.words ? ' words' : '') + '">' + esc(v.count) + '</span>' };
         if (own) counter.kind = 'whisper'; else if (words.think) counter.kind = 'think';
+        // (chapter 12: a Spanish count is lettered as Spanish, its gloss under it at the end, in the `counter words` class)
+        if (sk.lang === 'es') counter.html = '<span class="counter words">' + rich(v.count) + '</span>';
         lines.push(counter);
       }
       if (v.done && sk.done) lines.push({ who: teacher, name: tname, text: fill(sk.done) });
       $('stack').innerHTML = lines.map(function (b) { return stackBalloon(b); }).join('');
-      // the bottom row: Back (and Next, only after a done line); counting is done on the cats
-      var showNext = v.done && !!sk.done;
+      // the bottom row: Back (and Next, only after a done line, or at the end of a Spanish count, which waits for it:
+      // chapter 12's `wait`); counting is done on the cats
+      var showNext = v.done && (!!sk.done || !!v.wait);
       $('interact').innerHTML = (hint && !v.done ? '<p class="prompt tapline">' + rich(hint) + '</p>' : '') + '<div class="next-row">' + backBottom() +
         (showNext ? '<button class="btn go big" id="nextBtn" type="button">Next <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
           : (v.done ? '' : '<button class="sr" id="countBtn" type="button">' + esc(words.label) + '</button>')) + '</div>';
@@ -2532,8 +2620,10 @@
       taps++;
       lastTap = now();
       var v = draw(true);
-      speakItems([{ text: v.say || String(v.total), who: teacher }].concat(v.done && sk.done ? [{ text: fill(sk.done), who: teacher }] : []));
-      if (v.done && sk.done) { var nb = $('nextBtn'); if (nb) nb.focus({ preventScroll: true }); }
+      // (chapter 12: a Spanish count's newest number in the Spanish voice, or its English; at the end its gloss after it,
+      // or with no Spanish voice the gloss alone: UI.voices.plan)
+      speakItems([{ text: sk.lang === 'es' && v.gloss ? v.say + '\n(' + v.gloss + ')' : v.say || String(v.total), who: teacher }].concat(v.done && sk.done ? [{ text: fill(sk.done), who: teacher }] : []));
+      if (v.done && (sk.done || v.wait)) { var nb = $('nextBtn'); if (nb) nb.focus({ preventScroll: true }); }
       else if (v.done) {
         // the last hop turns the page: the next frame shows the number she just reached
         turning = true;
@@ -2557,7 +2647,7 @@
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
         if (e.target && e.target.id === 'countBtn') return;   // the button counts on its own click
         e.preventDefault();
-        if (E.skipView(sk, taps).done) { if (sk.done) advance(); } else tap();
+        if (E.skipView(sk, taps).done) { if (sk.done || E.skipView(sk, taps).wait) advance(); } else tap();
       } else if (e.key === 'ArrowLeft') { e.preventDefault(); onBack(); }
     };
     currentSpeech = caps.map(function (c) { return { text: c }; }).concat(intro.map(function (b) { return { text: b.text, who: b.who, variant: b.variant }; }))
@@ -3717,7 +3807,9 @@
      * the cat's tokens filled. */
     function promptLines() {
       return E.promptLines(def, D, q).map(function (l) {
-        return l.kind === 'caption' ? { text: fill(l.text), kind: 'caption' } : { who: l.who, text: fill(l.text), kind: l.kind, variant: l.variant };
+        var x = l.kind === 'caption' ? { text: fill(l.text), kind: 'caption' } : { who: l.who, text: fill(l.text), kind: l.kind, variant: l.variant };
+        if (l.lang) x.lang = l.lang;   // (chapter 12's design: a Spanish ask keeps its lang)
+        return x;
       });
     }
     /* The clock is for the fact, not the reading: it starts again when the question has been read
@@ -3822,6 +3914,8 @@
       var ms = performance.now() - t0;
       // a borrowed question earns its own lesson's praise and fast lines
       var res = E.counts.answer(st, D, typed, ms, now());
+      // (chapter 12: a set's `echo`, Chispapaw's Spanish after the line this answer earned, waiting for Next as a fact's own lines)
+      var echoed = res.correct ? E.countsEcho(def, st, res, teacher) : null; if (echoed) res.balloons = echoed;
       E.logAnswer(cat, res.entry);
       // the last answer finishes the lesson: record it now, not after the praise pause
       if (res.done) o.recorded = E.recordLesson(cat, st);
@@ -4219,6 +4313,9 @@
       if (e.variant) b.variant = e.variant;
       return b;
     }
+    // chapter 12: a set's own `echo`, read at every finished problem's end, right or helped (E.takeEcho); never made into the
+    // `o.echo` hook, so reserve() holds no echo room above any column
+    function setEcho(info) { var x = E.takeEcho(def, info, st); return x ? { who: x.who || 'chispapaw', text: fill(x.text), lang: 'es' } : null; }
     function wiggle() {
       panel.classList.remove('twiggle'); void panel.offsetWidth; panel.classList.add('twiggle');
       later(function () { panel.classList.remove('twiggle'); }, 700);
@@ -4474,7 +4571,7 @@
       marks = res.marks; drawCol();
       store('done', q.plan.n);
       pad.classList.add('locked'); okKey.disabled = true;
-      var e = res.entry && res.entry.correct ? echoOf({ problem: true, a: res.entry.a, b: res.entry.b, answer: res.entry.answer }) : null;
+      var e = res.entry ? (def.echo ? setEcho({ problem: true, a: res.entry.a, b: res.entry.b, answer: res.entry.answer, correct: res.entry.correct, helped: res.entry.helped }) : (res.entry.correct ? echoOf({ problem: true, a: res.entry.a, b: res.entry.b, answer: res.entry.answer }) : null)) : null;
       var Ed = takeEnd(def, res, { fill: fill, echo: e });
       var lines = (res.blank && res.right && res.blankLine ? [T1(res.blankLine)] : []).concat(Ed.lines);
       say(lines); saying(heard(lines));
@@ -4534,6 +4631,80 @@
     return { press: press, tap: function (z) { tapZone(z || tapWant); } };
   }
 
+  /* PC.debug.spanish(what), for the tools (chapter 12's spec, section 6: tools/shots.mjs's es: targets, dev/webkit/run.mjs's
+   * `spanish` job): the pages that carry Chispapaw's Spanish, on the cat on screen (a test cat), built from inline copies of
+   * the spec's section 2 sets and the paw thing's frame, or from PC.story.ch12's own when it has them, never saved (a Counts
+   * page's answer is put back: the cat as it was):
+   *   echo          the warm-up's echo page after 7 × 8 right (her hard pick, quick: the remembered line, then the echo)
+   *   take          the end of 475 − 132 with its echo
+   *   skip          the paw thing after its fifth tap (the gloss in, Next waiting)
+   *   worked        254 − 131 at its first column (the prompt joined); worked:tens at its tens, the school words in
+   *   try           58 − 23 at its first column (three balloons); try:pointer after a leading 3 typed first (the pointer)
+   *   store         175 − 42 at its first column (Glintstar's question)
+   * Returns true or an error string, as PC.debug.takes does. */
+  var ES_DEBUG = { echo: 1, take: 1, skip: 1, worked: 1, 'worked:tens': 1, 'try': 1, 'try:pointer': 1, store: 1 };
+  function esT(text) { return { who: 'tallyheart', text: text }; }
+  var ES_DEBUG_SETS = {
+    'ch12-warm': { teacher: 'tallyheart', warmHard: { table: 'all', at: [0, 1], alt: [{ a: 3, b: 8, table: 3 }, { a: 4, b: 7, table: 4 }, { a: 9, b: 6, table: 9 }] },
+      facts: [{ a: 6, b: 7, table: 6 }, { a: 8, b: 4, table: 4 }, { a: 3, b: 9, table: 3 }], praise: [], fast: [], done: '',
+      echo: { on: 'first', lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:fact}!' }, { who: 'chispapaw', text: 'My little Tall One says these every night! I never knew what they MEANT.' }] } },
+    'ch12-take': { op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '',
+      facts: [{ a: 254, b: 131, regroup: 'show', prompt: 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.', right: [esT('One square, two rows, three loose left.')] },
+        { a: 58, b: 23, prompt: [esT('Now you try, all by yourself. Little take-aways first, then big.'), { who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
+        [76, 42], [475, 132], [368, 145]],
+      echo: { on: [[475, 132]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] } },
+    'ch12-store': { op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, twins: false, done: '',
+      facts: [{ a: 175, b: 42, prompt: [{ who: 'glintstar', text: 'How many stay in the store, {name}{ending}?' }], right: [{ who: 'glintstar', text: 'One hundred thirty-three in the store.' }] }] }
+  };
+  var ES_DEBUG_SKIP = { board: 'DEBUG.', scene: { set: 'den', cam: 'inside', opts: { weather: 'clear' }, cast: [{ who: 'snorer', pose: 'sit', at: 'sleeper-1' }, { who: 'chispapaw', pose: 'loaf', at: 'nest' }] },
+    caption: ['You do the paws. She does the words.'], say: [{ who: 'chispapaw', lang: 'es', text: '{es:aContar}' }],
+    skip: { table: 10, groups: 5, paws: 'both', teacher: 'chispapaw', lang: 'es', carry: false, prompt: '**Tap** your forepaws.', next: 'f075' } };
+  function spanishDebug(what) {
+    if (!E || typeof E.esLine !== 'function' || typeof E.takePlan !== 'function') return 'no Spanish in this build';
+    if (!ES_DEBUG[what]) return 'spanish: echo, take, skip, worked, worked:tens, try, try:pointer or store';
+    if (!cat) { cat = E.addCat(save, { now: now() }) || save.cats[0]; save.current = cat.id; }
+    var ch = PC.story && PC.story.ch12;
+    var setOf = function (id) { var d = ch && ch.counts && ch.counts[id]; return Object.assign({ id: id }, E.util.clone(d && typeof d === 'object' ? d : ES_DEBUG_SETS[id])); };
+    clearTimers(); stopSpeech();
+    if (fileState) closeFile(true);
+    relayoutFn = null; keyHandler = null; currentSpeech = [];
+    view = { name: 'frame', opts: {} };
+    $('screen').classList.remove('enter', 'enter-back');
+    var t = now(), done = function () { renderedAt = now(); renderedPerf = perfNow(); updateBar(); root.scrollTo(0, 0); return true; };
+    if (what === 'echo') {
+      // her hard pick first, answered right and quick on the page's own keypad; the cat put back as it was after it
+      var wd = setOf('ch12-warm'), kept = E.util.clone(cat);
+      var tb = typeof E.warriorAnchor === 'function' ? E.warriorAnchor(7, 8, stories()) : 8;
+      var wst = E.counts.start(wd, { facts: [{ a: 7, b: 8, table: tb, hard: true }].concat(wd.facts.slice(2)), set: wd.id, mode: 'chapter', now: t });
+      runLesson({ def: wd, state: wst, intro: [], mode: 'debug', frameId: 'es-echo', onDone: function () {} });
+      renderedAt = now() - UI_GUARD_MS - 1; renderedPerf = perfNow() - UI_GUARD_MS - 1;   // (past the double-tap guard: these taps are the tool's)
+      ['5', '6', 'ok'].forEach(function (k) { var b = doc.querySelector('#screen .key[data-k="' + k + '"]'); if (b) b.click(); });
+      Object.keys(cat).forEach(function (k) { delete cat[k]; });
+      Object.assign(cat, kept);
+      persist();
+      return $('lessonNext') && !$('lessonNext').hidden ? done() : 'spanish: no echo after 7 × 8';
+    }
+    if (what === 'skip') {
+      // the paw thing's frame (the chapter's own when it has it), its five taps past the double-tap guard (a clock of
+      // this call's own, as dev/webkit/run.mjs's shott: does)
+      var f = ch && ch.frames && ch.frames.f074 && ch.frames.f074.skip && ch.frames.f074.skip.lang === 'es' ? ch.frames.f074 : ES_DEBUG_SKIP;
+      renderSkip(f, 'f074');
+      var realNow = Date.now, clock = realNow.call(Date);
+      Date.now = function () { clock += 1000; return clock; };
+      try { for (var i = 0; i < 5; i++) if (typeof frameTap === 'function') frameTap(); } finally { Date.now = realNow; }
+      return $('nextBtn') ? done() : 'spanish: the count did not wait for Next';
+    }
+    // the take pages: chapter 12's own sets, on the take page in debug mode (nothing saved)
+    var def = setOf(what === 'store' ? 'ch12-store' : 'ch12-take');
+    var facts = what === 'take' ? [[475, 132]] : what === 'try' || what === 'try:pointer' ? [def.facts[1]] : def.facts;
+    var st = E.takes.start(def, { facts: facts, set: def.id, mode: 'chapter', now: t, logged: 0 }), o = { mode: 'debug', debug: { quick: true }, frameId: 'es-' + what, onDone: function () {} }, keys = null;
+    if (what === 'take') { E.takes.digit(st, def, 3, 3000, t - 60000); E.takes.digit(st, def, 4, 3000, t - 50000); keys = ['3', 'ok']; o.debug.stop = 'end'; }
+    if (what === 'worked:tens') E.takes.digit(st, def, 3, 3000, t - 60000);
+    if (what === 'try:pointer') keys = ['3', 'ok'];
+    var h = runTakes(Object.assign({ def: def, state: st, intro: [] }, o));
+    if (keys) keys.forEach(function (k) { h.press(k); });
+    return done();
+  }
   /* PC.debug.takes(what), for the tools (section 8: tools/shots.mjs's take: targets, dev/webkit/run.mjs's `takes` job):
    * the take page on the cat on screen (a test cat), built from definitions of its own (no chapter has a take set,
    * and tests/fixtures/takes-stub.js is not served), never saved and never logged:
@@ -5011,8 +5182,10 @@
     var f = {
       scene: hollowScene('wide', [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'sunpatch', facing: 'left' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'sand-left', facing: 'right' }], ['sunset']),
       caption: ['The Training Hollow. The old tree leans over the sand like it’s listening.'],
-      say: [{ who: 'tallyheart', text: SH.line }]
+      say: [{ who: 'tallyheart', text: SH.line }].concat(SH.friend ? [SH.friend] : [])
     };
+    // chapter 12: Chispapaw on the shelf with her "¡A contar!" (E.hollowShelf's `friend`), on the sand at the right, facing left
+    if (SH.friend) f.scene.cast.push({ who: 'chispapaw', pose: 'sit', mood: 'happy', at: 'sand-right', facing: 'left' });
     var heads = drawArt(panel, shownFrame(f), cat.look);
     var ctx = { panel: panel, frame: f, heads: heads, caps: captionsOf(f), balloons: balloonsOf(f) };
     // (a phone held sideways: a greeting that went to the stack made the panel shorter, so the text is laid out again for it)
@@ -5412,39 +5585,62 @@
 
   /* ================================================================ read to me */
   var currentSpeech = [];
-  var voice = null;
-  function pickVoice() {
+  // the English voice and (chapter 12) the Spanish one, each kept once found; onvoiceschanged clears both
+  var voice = null, voiceEs = null;
+  /* The voice for English (pickVoice() and pickVoice('en'), as before) or for Spanish (pickVoice('es')): UI.voices.pick. */
+  function pickVoice(lang) {
+    if (lang === 'es') {
+      if (voiceEs) return voiceEs;
+      try { voiceEs = voicePick(speechSynthesis.getVoices() || [], 'es'); } catch (e) { voiceEs = null; }
+      return voiceEs;
+    }
     if (voice) return voice;
-    try {
-      var vs = speechSynthesis.getVoices() || [];
-      var en = vs.filter(function (v) { return /^en(-|_|$)/i.test(v.lang); });
-      var pref = ['Samantha', 'Karen', 'Moira', 'Tessa', 'Google US English'];
-      for (var i = 0; i < pref.length && !voice; i++) voice = en.filter(function (v) { return v.name.indexOf(pref[i]) === 0; })[0] || null;
-      if (!voice) voice = en.filter(function (v) { return /en-US/i.test(v.lang); })[0] || en[0] || null;
-    } catch (e) { voice = null; }
+    try { voice = voicePick(speechSynthesis.getVoices() || [], 'en'); } catch (e) { voice = null; }
     return voice;
   }
   /* Read to me: say these, in order. `onDone` runs when the last one has been said (a lesson's
-   * clock starts again then: the time it took to read the question aloud is not hers). */
+   * clock starts again then: the time it took to read the question aloud is not hers).
+   * Chapter 12: each item's words as before, respelled for English speech (E.sayAs); an item with Spanish in it is said
+   * in parts, each in its own voice: the rows are UI.voices.plan's, and onDone hangs on the last one actually said. */
   function speakItems(items, onDone) {
     if (!save || !save.settings.readAloud || !('speechSynthesis' in root)) return;
     if (!items || !items.length) return;   // nothing new to say: let what is speaking finish
     try {
       speechSynthesis.cancel();
-      var last = null;
+      var last = null, vs = { en: pickVoice(), es: pickVoice('es') };
       (items || []).forEach(function (it) {
-        var txt = plain(String(it.text || '').replace(/<[^>]+>/g, ' ')).trim();
-        if (!txt) return;
-        var u = new SpeechSynthesisUtterance(txt);
-        var v = pickVoice(); if (v) u.voice = v;
-        u.lang = (v && v.lang) || 'en-US';
-        u.rate = rateOf(it.who);
-        u.pitch = pitchOf(it.who, it.variant);
-        speechSynthesis.speak(u);
-        last = u;
+        var said = it;
+        if (!saysSpanish(it)) {
+          var txt = plain(String(it.text || '').replace(/<[^>]+>/g, ' ')).trim();
+          if (!txt) return;
+          said = { text: E.sayAs(txt, cat), who: it.who, variant: it.variant };
+        }
+        voicePlan([said], vs, { cat: cat }).forEach(function (r) {
+          var u = new SpeechSynthesisUtterance(r.text);
+          var v = r.lang === 'es' ? vs.es : vs.en; if (v) u.voice = v;
+          u.lang = (v && v.lang) || 'en-US';
+          u.rate = r.rate;
+          u.pitch = pitchOf(it.who, it.variant);
+          speechSynthesis.speak(u);
+          last = u;
+        });
       });
       if (last && onDone) last.onend = function () { onDone(); };
     } catch (e) {}
+  }
+  /* What speakItems would hand the synthesizer for one item with Spanish in it, a line a row, "[es] " before what the
+   * Spanish voice says (PC.debug.speech: DRY=1 shows which voice says what, and nothing is said). */
+  function speechRows(it) {
+    return voicePlan([it], { en: pickVoice(), es: pickVoice('es') }, { cat: cat }).map(function (r) { return (r.lang === 'es' ? '[es] ' : '') + r.text; });
+  }
+  /* The grown-ups corner's line for chapter 12: which voice reads Chispapaw's Spanish, or how to add one. Built by
+   * concatenation (E.fill's {name} is a cat's); the voices read afresh when the corner opens (they may load late). */
+  function esVoiceLine() {
+    try { if ('speechSynthesis' in root) speechSynthesis.getVoices(); } catch (e) {}
+    voiceEs = null;
+    var v = pickVoice('es');
+    return '<p class="muted">' + (v ? 'Chispapaw’s Spanish is read by this iPad’s Spanish voice: ' + esc(v.name) + ' (' + esc(v.lang) + ').'
+      : 'No Spanish voice on this iPad, so Read to me says her Spanish in English. To add one: Settings › Accessibility › Spoken Content › Voices › Spanish.') + '</p>';
   }
   function stopSpeech() { try { if ('speechSynthesis' in root) speechSynthesis.cancel(); } catch (e) {} }
 
@@ -5502,6 +5698,9 @@
       ' · saves on this device only, under one key (' + esc(E.STORAGE_KEY) + ', save version ' + E.SAVE_VERSION + ')' +
       (store && !store.ok ? ' · <b>this browser is not letting it save</b>' : '') + '</p>' +
       '<p class="muted">Counts times are for you, not her: the game never shows a clock. “Right first time” counts the first ask of a fact in each lesson; “helped” is how often the sand count came out.</p>';
+    // chapter 12: the Spanish voice, once a cat on this device has chapter 12 open
+    var ch12 = E.chapter('ch12', stories());
+    if (ch12 && cats.some(function (c) { return E.isOpen(c, ch12, stories()); })) html += esVoiceLine();
     if (!cats.length) html += '<p>No cats on this device yet.</p>';
     cats.forEach(function (c) {
       var lookTxt = [lookDef('sex', c.look.sex).label, lookDef('fur', c.look.fur).label, lookDef('marking', c.look.marking).label, lookDef('eyes', c.look.eyes).label + ' eyes'].join(' · ');

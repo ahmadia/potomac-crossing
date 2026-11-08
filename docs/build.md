@@ -1987,3 +1987,124 @@ frame's place ("**Then the take-aways**").
 in `tests/fixtures/takes-stub.js` (never served); `takes-exhaustive.test.js` is in `SLOW`. The chapter-7, -8 and -9
 goldens, the fingerprints and the Warrior Counts' three files pass untouched; the version pin is in
 `tests/engine.test.js`.
+
+## Chapter 12 (v0.2)
+
+Chapter 12, "A Spark at the Hedge", is told with the engine as it is, plus **one engine feature, Spanish**
+([its spec](chapters/12-a-spark-at-the-hedge.spec.md), section 6; decisions 53, 54 and 55; Claude's calls under
+decision 46). No new interaction, no new flag, and the save is untouched (version 2). Every piece is reached only by a
+`lang`, a `{es:…}` token, a set's `echo`, a skip's `lang`, the engine's own « » marks or the new cast id: no line of
+chapters 1 to 11, `PC.warrior`, `E.TAKE_LINES` or `E.STORE_LINES` has one, and the tests hold every old line's fill,
+lettering, speech and check to what it was.
+
+**The words** (`app/story/words.js`, after `ch11.js` and before `ch12.js`; never taken for a chapter: every tool that
+globs `app/story/` filters on `ch\d+\.js`). `PC.words`: the kit's fourteen English words (`E.TAKE_WORDS`, unchanged), `es`
+(each word `{ es, en, say? }`: `gatos`, `por`, `aContar` "¡A contar!", `galleta` with `say: 'gah-YEH-tah'`) and `sayAs`
+(English speech only: `[['Chispapaw', 'Cheespa-paw'], ['Chispa', 'Cheespa']]`). A new Spanish word is one line in `es`.
+
+**Writing Spanish in a story.** A Spanish word inside an English line or caption is a token: `{es:key}` (a whole number 0
+to 1,000, or a key of `PC.words.es`), `{Es:key}` with its first letter capitalised. A whole Spanish line is a balloon with
+`lang: 'es'` whose text is tokens and punctuation only ("¡{Es:133}!", '…⁠{es:11}, {es:12}. {Es:12} {es:gatos}.'); its
+English is made by the engine and lettered under it. Never « or » in a story file (the engine's marks). A set's echo
+lines may also name the answer's numbers: `{es:fact}` (a Counts set: "siete por ocho, cincuenta y seis"), `{es:a}`,
+`{es:b}`, `{es:answer}`.
+
+**The engine** (`app/engine.js`, its section "chapter 12: Spanish", after the kit's):
+- `E.esNumber(n)` (0 to 1,000, Latin American: "cien", "ciento uno", never "ciento y"; the digits outside), `E.esFact(a,
+  b)`, `E.esWords()` (`PC.words.es`, read at call time).
+- `E.fill` fills both kinds of token in **one pass** (`/\{(?:([A-Za-z]+)|([Ee]s):([^}]+))\}/g`, the first group exactly
+  the old token, filled as before), so a value it inserts (a typed dream, a name) is never scanned again. A Spanish
+  token is lettered between the marks, «…»; a ¡ or ¿ just before it with its ! or ? just after go inside with it. An
+  unknown key stays as written. `E.esMarks(text, extra)` fills the Spanish tokens alone (the cat's left for the page).
+- `E.esGloss(text, cat, extra)` (each token's English; `{Es:}` capitalised; ¡ ¿ dropped), `E.esLine(text, cat, extra)`
+  ("«…once, doce. Doce gatos.»\n(…eleven, twelve. Twelve cats.)": every whole Spanish line on every page is made by it),
+  `E.esEnglish(s)` (a word's `say`, else its `en`; a number's words; else ''), `E.sayAs(text, cat)` (whole words, in
+  order; never the cat's own name, Clan name, warrior name or pet name, so a cat named Chispa sounds as she always did),
+  `E.speechParts(text, lang, cat)` (`[{ text, lang, en?, line?, gloss? }]`: a Spanish part is a `line` only when a new
+  line and its gloss in parentheses close the text).
+- **The echoes**, a set's `echo: { on: 'first' | [[a, b], …], lines: [{ who, text, lang?, kind? }] }`: `E.countsEcho(def,
+  st, res, teacher)` (a Counts set: its first right answer, a retry or a filler counting, or a listed pair either way; the
+  line the answer earned first, then each echo line; waits for Next) and `E.takeEcho(def, info, st)` (a take set: a listed
+  problem right or helped, a twin never, a column never; `'first'`: the first problem right in every column; one balloon).
+- **The Spanish count**, a skip with `lang: 'es'`: `E.skipView` gives `count` in Spanish words between the marks ("«Diez,
+  veinte…»", done "«Diez, …, ¡cincuenta!»\n(Ten, …, fifty!)"), `say` ("«veinte»"), `gloss` when done and `wait: true` (the
+  page waits for Next); `E.skipWords` gives it `whisper: false` and `words: true` (Comic Neue: Spanish is never in Andika).
+- **Count the store's friend**: `E.hollowShelf` gains `friend: { who: 'chispapaw', text: E.esLine('{es:aContar}') }`
+  (absent while a Warrior Counts sitting waits); `E.takeRoundDef()` gains `echo: { on: 'first', lines: [{ who:
+  'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] }` (one echo a round).
+- **The kit's school words**: `E.takeLine` says `E.TAKE_LINES.schoolWords` ("A row is a ten. A square is a hundred.")
+  before the tens line of a `'show'` problem in a set with `teach: 'none'` or `'ones2'` (chapters 12 and 13's worked
+  examples); never on the first column, never on its `'tap'` twin.
+- **The typed dream**: `E.dreamOf` and `E.tidyDream` read a typed « as “ and » as ” (on read; nothing stored changes).
+- **A Counts prompt asked in Spanish** (designed here for chapter 21's ferry, the Spanish-asked warm-up picks and the
+  Hollow's Tricky Counts once Chispapaw asks them; chapter 12 does not use it): a fact's `prompt` or `retryPrompt`
+  balloon, or a set's `prompt` given as balloons, with `lang: 'es'`, is lettered by `E.promptLines` through `E.esLine`
+  with the question's own `{ a, b }` (so '¿{Es:a} {es:por} {es:b}?' asks any pair) and keeps its `lang`; the page's
+  `promptLines` keeps it too. No answer in it.
+- **The guards**, `E.checkSpanish(story)`, added to `E.checkStory`'s errors (chapters 1 to 11 and `PC.warrior` raise
+  none): `lang` is `'es'`, only on a frame's `say` balloon, a set's `echo.lines` or a Counts set's prompt balloon (never a
+  caption, an option, a take set's prompt or a `right` line); a Spanish line has a token, no letter outside its tokens,
+  no cat token, and at most `E.ES_MAX_WORDS` (8) words with its largest numbers; every `{es:key}` resolves where it stands
+  (`fact`, `a`, `b`, `answer` only in an echo line, `fact` only on a Counts set, `a` and `b` in a Counts prompt's Spanish
+  line); no words-table key is a number or one of those four, and each is `{ es, en }`; no « or » in a story; a skip's
+  `lang` is `'es'` with groups × table at most 1,000; a set's `echo` is `{ on, lines }`, `on` `'first'` or the set's own
+  facts, one to three lines on a Counts set and exactly one on a take set. For the chapters after this one: a lowercase
+  `{es:…}` lettered in lower case that opens a line or follows . ! ? (after any ¡ ¿, never after "…"), and a number ending
+  in "uno" straight before a word token ("veintiuno gatos": write it otherwise).
+- `E.VERSION` and its pin are the orchestrator's, at the ship.
+
+**The page** (`app/ui.js`, `index.html`):
+- `rich()` letters «…» as `<i class="es" lang="es">…</i>` and a parenthesised line straight after it as `<br><span
+  class="gloss">(…)</span>`; `plain()` drops « and ». `balloonsOf` letters a `lang: 'es'` balloon through `E.esLine`.
+  Every other path passes text and the marks travel in it (the Counts page's balloons, the take page's echo, the skip's
+  counter, the shelf, `currentSpeech`). `UI.letter` is `{ rich, plain }`, for the tests.
+- **index.html**, the block "chapter 12: Spanish" before the take-aways block: `.es{font-style:italic}`,
+  `.gloss{font-style:normal}`, `.sb.whisper:has(.es),.ov .btext.whisper:has(.es){font-style:normal}` (a whispered balloon
+  with Spanish keeps its English upright; the dashed border still says it is whispered). No Aa rule.
+- **The voice**: `UI.voices.pick(list, lang)` (Spanish by locale, es-US, es-MX, other Latin American, plain es, es-ES last,
+  in each a she-voice by NFC name first; never a novelty voice, Eddy … Shelley by exact first word; null with none;
+  English exactly as `pickVoice()` always picked), `pickVoice('es')` (kept once found; `onvoiceschanged` clears both), and
+  `UI.voices.plan(items, voices, { cat })`, what Read to me says row by row (`[{ text, lang, voice, rate, pitch }]`): an
+  item with Spanish in it is said in parts, a Spanish part in the Spanish voice (the speaker's pitch, 0.9 of the speaker's
+  rate), with none a whole line not said (its gloss follows) and a word said as its English; no row of punctuation alone;
+  never Spanish in an English voice; every other item exactly as before, respelled by `E.sayAs`. `speakItems` keeps its
+  line word for word and turns the plan's rows into utterances; `PC.debug.speech` keeps its shape and prints a Spanish
+  item's rows with "[es] " before what the Spanish voice says; `PC.debug.plan(list)` gives the rows for a made-up list.
+- **The echoes on the page**: `runLesson`'s one guarded statement after `E.counts.answer` (`res.balloons` becomes the
+  echo's balloons, waiting for Next); `runTakes`' problem end reads the set's `echo` through `setEcho` for every finished
+  problem, right or helped. **This supersedes the kit's design row for `o.echo`** ("each right problem"): a set's `echo`
+  is read at the problem's end and never made into the `o.echo` hook, so `reserve()` holds no echo room above any column
+  (a hook would hold Chispapaw's two lines empty above every later column of the lesson and of every Count the store
+  round); `o.echo` stays the column hook, for a later chapter that echoes columns (it would bring the echo room with it).
+- **The Spanish count** (`renderSkip`, four guarded branches): the counter lettered by `rich()` in `counter words`; at the
+  end Next shown and focused (the page never turns itself); Read to me says each number (its English with no Spanish
+  voice) and at the end its gloss after it, or the gloss alone; Enter, Space and → turn the page at the end.
+- **The shelf**: with `SH.friend`, Chispapaw sits at `sand-right` facing left (measured: x 861–1019 against our cat's
+  540–716 on `wide`) and her balloon follows Tallyheart's (`.concat`). **The speaker**: `NAMES.chispapaw`,
+  `PITCH.chispapaw` 1.42, `RATE.chispapaw` 1.02. **The grown-ups corner**: once a cat has chapter 12 open, one line names
+  the Spanish voice or says how to add one, built by concatenation, the voices read afresh when the corner opens.
+- `PC.debug.spanish(what)` (`echo`, `take`, `skip`, `worked`, `worked:tens`, `try`, `try:pointer`, `store`), beside
+  `PC.debug.takes`: the screens on the cat on screen from inline copies of the spec's section 2 sets (or `PC.story.ch12`'s
+  own), nothing saved.
+
+**The tools**: `tools/storyboard.mjs` requires `app/story/words.js`; it prints a `lang: 'es'` balloon "*[es]*" with its
+Spanish and its English, a `{es:key}` as «its Spanish», the paw thing "in Chispapaw's Spanish", a set's echo under its
+set, and words for every new art name (chapters 1 to 11 and `warrior.md` byte for byte). `tools/shots.mjs`: `es:echo`,
+`es:take`, `es:skip`, `es:worked`, `es:worked:tens`, `es:try`, `es:try:pointer`, `es:store` in `ES_TARGETS` (TAKE_TARGETS
+untouched), in single shots and sheets; the silent stand-in notes each utterance's text, lang and voice
+(`window.__shotsHeard`) and takes a made-up list with `VOICES=es` (Paulina, Samantha and the eight novelty voices;
+`VOICES=none` the default); `DRY=1` prints `UI.voices.plan`'s rows for both lists wherever a screen has Spanish.
+`dev/webkit/run.mjs`: a `spanish` job (`ES_SCREENS`: the eight and `hollow:shelf`).
+
+**The art, a line each** (the cats and sets owners'; their tests): Chispapaw (`chispapaw`, a pointed cream coat, dark brown
+points, big ears, blue eyes, a red collar with a gold bell; `collar: false` for chapter 13; cats may carry a mouse,
+`holds: 'mouse'`); the bridge's `store` camera (the dry den's floor, `store: n` the kit's picture `small` at one fixed
+scale and top, `tap: 'store'`, spots `store-left`, `store-right`, `store-back-1` to `-3`, `way-in`); the hollow's options
+`store` (the store's plan, empty pressed places), `storeGlow`, `quick` (1 to 3, right to left, her square `round`) and
+`tap: 'squares'`; the den's `moon: 16`; the garden's spot `hedge-right`.
+
+**Tests**: `tests/spanish.test.js` (the engine, the guards and the page in Node, inline fixtures), the kit's pins moved as
+the spec names them (`tests/takes-ui.test.js`: runLesson's hash, `plain()`'s line, the Spanish block cut beside the take
+block and its selectors listed, the reserve with and without a set's echo; `tests/takes-engine.test.js`: the shelf's and
+a round def's deep-equals, and the school words' case), `tests/storyboard.test.js` (a fixture chapter's Spanish and art
+words), `tests/tools.test.js` (chapter 12's `--check-words` list; shots' and the WebKit tool's Spanish).

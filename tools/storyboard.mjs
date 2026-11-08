@@ -74,7 +74,12 @@
  * and tapped, the dragonets' snouts tapped; the clutches of seven and the sand at the 7s four and three, the
  * mixed Moon Ferry Counts on a log, the roll call's forepaws with the clutch's shapes; the two weasels' ask;
  * and the card pick (`pick`: the claim, the right cards, the nudges, her pick remembered, and a `when` that
- * reads it in the card's own line), which the tool's own graph follows. Written for an illustrator, a
+ * reads it in the card's own line), which the tool's own graph follows. Chapter 12 on: Chispapaw's Spanish (a
+ * `lang: 'es'` balloon printed *[es]* with its Spanish and its English, a {es:key} token as «its Spanish», the paw thing
+ * counted in her Spanish, a set's `echo`), Chispapaw herself and her collar off, a cat carrying a mouse, the store on the
+ * dry den's floor under the Old Bridge (its camera, spots and Tap), its plan in the Training Hollow's sand with its glow
+ * and Tap, the quick marks (her square round like a cookie), the third spot at the hedge and the den's moon at 16; every
+ * earlier storyboard exactly as it was. Written for an illustrator, a
  * grown-up reading along, or anyone checking the chapter without playing it. No dependencies.
  */
 import { createRequire } from 'node:module';
@@ -85,6 +90,8 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const E = require(join(ROOT, 'app/engine.js')).engine;   // for the gifts' names
+// chapter 12: module 2's words (PC.words: the kit's English and Chispapaw's Spanish), beside the engine
+require(join(ROOT, 'app/story/words.js'));
 
 /* ------------------------------------------------------------------ plain words (docs/build.md) */
 // Each set: [where, what is in it], and the time of day it is drawn in when the frame's fx names
@@ -160,7 +167,9 @@ const GROVE_HOLLOW = ['inside the hollow, high in the old oak', 'a snug round no
 const HERBS = ['Thymeleaf’s den, a nook of the bramble dens at the camp’s edge', 'a curtain of drying leaves across the top (bunches of leaves and stems hung upside down from the brambles), more bunches along the walls, a ledge of stones with leaves laid out to dry, a flat mixing stone on the floor, and in the top corner a small web where a tiny spider lives; green, warm light through the leaves'];
 const SET_COMP = { title: { end: WALL_END, meet: WALL_END }, sky: { walk: DREAM, below: DREAM }, pile: { rear: PILE_REAR, hole: PILE_HOLE },
   grove: { oak: GROVE_OAK, hollow: GROVE_HOLLOW }, camp: { herbs: HERBS },
-  bridge: { wall: ['the Old Bridge’s stone leg, under the bridge beside Sprinkle’s nook', 'a wall of big old fitted stones, its foot on the dry floor, one dark gap low in it'] },
+  bridge: { wall: ['the Old Bridge’s stone leg, under the bridge beside Sprinkle’s nook', 'a wall of big old fitted stones, its foot on the dry floor, one dark gap low in it'],
+    // chapter 12: the store, in the dry den
+    store: ['the dry den, the very back of the dark under the Old Bridge where Sprinkle slept', 'the old stone leg’s big fitted stones at the left, the nook’s heap of old stones at the back, the dry floor wide and flat across the lower half, the way in at the right'] },
   tracks: { crawl: TRACKS_TUNNEL, fork: TRACKS_TUNNEL, stash: TRACKS_STASH, 'stash-close': TRACKS_STASH },
   // chapter 10: the island's shore, and the sky over it
   island: { shore: ['Gathering Island’s shore', 'pebbles and soft mud at the water’s edge, the river silver behind; up the slope, the great tree’s crown and the clearing’s edge'],
@@ -215,7 +224,9 @@ const SET_CAMS = {
     // chapter 6: Coil's wall, a picture of its own
     wall: 'at cat height, close on the stone leg across the middle distance: its dark gap low in it, about a quarter to a third of the way across, the dry floor in front',
     // chapter 7: her paw over Sprinkle's print
-    print: 'at cat height, close on the mud: one of Sprinkle’s big prints in front (five long claw marks, as big as a heron’s foot), the drag marks’ edge at one side' },
+    print: 'at cat height, close on the mud: one of Sprinkle’s big prints in front (five long claw marks, as big as a heron’s foot), the drag marks’ edge at one side',
+    // chapter 12: the store on the dry den's floor
+    store: 'at cat height in the dry den: the floor wide and flat in front, low in the picture, the way in at the right (long gold shafts reaching in at sunset, a soft rose light at dusk)' },
   field: { wide: 'wide shot of the field and its fence', fence: 'close on the wire, a nose squashed through, cats on the path', dogs: 'the dogs bouncing at the fence, seen from the path',
     // chapter 4: the border, at the fence's far corner
     border: 'wide, both sides of the fence’s last post: the path in front, the long golden grass beyond', 'border-two': 'at cat height: Tallyheart’s shoulder between the fox and our cat',
@@ -298,7 +309,9 @@ const WHO = {
   groveclan: 'a GroveClan cat (a woodland coat, dappled like sun through leaves)',
   spider: 'a tiny garden spider (a small round smooth body, no hair, no fangs, two dot eyes and a little smile, four legs on each side, soft brown with a pale pattern on her back; friendly, never creepy, never crawling toward anyone)',
   // chapter 10
-  mistscale: 'a grown Mistscale (huge, gentle and misty, never frightening: a great head and neck leaning out of the mist, the body never drawn; mist-grey scales like Sprinkle’s but larger and softer, ridges like rounded hills, big kind eyes, the mouth shut, two soft horns; no teeth, no claws shown)'
+  mistscale: 'a grown Mistscale (huge, gentle and misty, never frightening: a great head and neck leaning out of the mist, the body never drawn; mist-grey scales like Sprinkle’s but larger and softer, ridges like rounded hills, big kind eyes, the mouth shut, two soft horns; no teeth, no claws shown)',
+  // chapter 12
+  chispapaw: 'Chispapaw, a small cream pillow cat with a dark brown face, ears, paws and tail, big ears, blue eyes and a collar with a tiny bell'
 };
 // otters and dogs by variant, as the game names them
 const VARIANT_WHO = {
@@ -328,7 +341,8 @@ const SPEAKER = {
   coil: 'Coil', sloshbank: 'Sloshbank', reedclan: 'A ReedClan cat', sleet: 'Sleet',
   hail: 'Hail', snip: 'Snip', snatch: 'Snatch',
   thymeleaf: 'Thymeleaf', mizzle: 'Mizzle', groveclan: 'A GroveClan cat', spider: 'The spider',
-  mistscale: 'A Mistscale'
+  mistscale: 'A Mistscale',
+  chispapaw: 'Chispapaw'
 };
 const VARIANT_SPEAKER = {
   otter: { 1: 'The old ferry otter', 2: 'An otter', 3: 'An otter' },
@@ -484,6 +498,10 @@ const ANCH = {
 };
 // anchor names that mean something different in a particular set
 const SET_ANCH = { bridge: { beside: 'pressed against Sprinkle’s side',
+    // chapter 12: round the store on the dry den's floor (the camera `store`)
+    'store-left': 'at the front left of the store', 'store-right': 'at the front right of the store',
+    'store-back-1': 'behind the store, a step back', 'store-back-2': 'behind the store, two steps back', 'store-back-3': 'behind the store, three steps back',
+    'way-in': 'at the right, by the way in',
     // chapter 9: the sunny bank's new spots (the sand strip and the shallows at the bridge's foot)
     run: 'on the strip of soft sand at the water’s edge, mid-right', 'run-2': 'on the sand just left of the first spot', skim: 'low over the sand’s edge by the water, paws just clear of the sand',
     air: 'up in the air above the sand, paws a little more than her own leg’s length off it', paddle: 'in the bright shallows at the sand’s edge, the water over the legs, rings and drops all round',
@@ -542,6 +560,8 @@ const SET_ANCH = { bridge: { beside: 'pressed against Sprinkle’s side',
     tail: 'curled at the panel’s bottom edge: only her tail’s tip',
     // chapter 11: the warriors' next nest (`nextNest`), beside hers on the nest close-up
     'next-nest': 'in the next nest, at the left edge of the close-up' },
+  // chapter 12: a third cat at the hedge, on the lawn just right of the gap
+  garden: { 'hedge-right': 'on the lawn just right of the gap in the hedge, near the panel’s right edge' },
   // chapter 10: the Moon Ferry (the Crossing's stones, the deck, the raft's back, the low logs and the gap, the river) and
   // Gathering Island (the shore, the clearing, the roots, the case, the fox's edge, the mist, the sky, her paws); a spot
   // that reads differently through one camera is in CAM_ANCH below
@@ -655,7 +675,13 @@ const STEP_WORDS = { 1: 'the 1s one by one', 2: 'the 2s by twos', 3: 'the 3s by 
 const mixedSteps = set => [...new Set(asList(set.facts).map(f => (Array.isArray(f) ? set.table : f.table || set.table)))].map(t => STEP_WORDS[t] || 'the ' + t + 's by ' + t + 's').join('; ');
 
 /* ------------------------------------------------------------------ helpers */
-const q = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+// (chapter 12: a {es:key} token printed as «its Spanish», as the page letters it; no line of chapters 1 to 11 has one)
+const q = s => E.esMarks(String(s == null ? '' : s)).replace(/\s+/g, ' ').trim();
+// chapter 12: a whole Spanish line (`lang: 'es'`), printed *[es]* with its Spanish and its English, as E.esLine letters them
+function esSaid(text, x) {
+  const m = /^«([\s\S]*)»\n\(([\s\S]*)\)$/.exec(E.esLine(text, null, x));
+  return m ? '*[es]* “' + q(m[1]) + '” (' + q(m[2]) + ')' : '“' + q(text) + '”';
+}
 // chapter 11: the legend's sentence for her warrior ending (the Warrior Counts' always; a chapter's where it has the token)
 const ENDING_WORDS = '`{ending}` is her warrior ending, `paw` until the Ceremony (Fernpaw, then Fernheart).';
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -750,6 +776,8 @@ function castExtraWords(c, set) {
   if (c.pebbles === 5) out.push('four pebbles in the air and the fifth, plain round brown, in his paw');
   // chapter 4's extras
   if (c.holds === 'bark') out.push('holding a curl of pale bark');
+  // chapter 12: Chispapaw's collar off (chapter 13's morning she leaves the bell in her nest)
+  if (c.collar === false) out.push('without her collar and bell');
   if (c.wink) out.push('one slow wink');
   if (c.flick) out.push('one ear flicks');
   // chapter 5's extras
@@ -881,8 +909,34 @@ function ferryIslandWords(set, k, v) {
   if (k === 'tap') return pickOf({ reeds: 'the heap of reeds over the luggage is what she taps', mist: 'the soft silver bank of mist is what she taps', print: 'the badger’s print is what she taps' });
   return null;
 }
+// chapter 12: the store's pieces in words, as the kit's picture lays them out ("one square, three rows and three loose")
+function storePieces(n, empty) {
+  const h = Math.floor(n / 100), r = Math.floor(n / 10) % 10, l = n % 10, e = empty ? 'empty ' : '';
+  const parts = [h ? numWord(h) + ' ' + e + (h === 1 ? 'square' : 'squares') : '', r ? numWord(r) + ' ' + e + (r === 1 ? 'row' : 'rows') : '', l ? numWord(l) + ' ' + (empty ? (l === 1 ? 'empty place for loose' : 'empty places for loose') : 'loose') : ''].filter(Boolean);
+  return parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0] || '';
+}
+// the store under the Old Bridge (prey, on the floor) and its plan in the Training Hollow (empty pressed places, never prey)
+function storeOptWords(set, v) {
+  const n = typeof v === 'number' && v === Math.floor(v) && v > 0 && v <= 999 ? v : 0;
+  if (!n) return v === false || v === 0 ? '' : 'store: ' + JSON.stringify(v);
+  return set === 'hollow' ? 'the store’s plan in the sand: ' + storePieces(n, true) + ' (the kit’s store picture, every piece a pale dashed pressed place: the store is empty till sunset)'
+    : 'the store laid out on the floor: ' + storePieces(n) + ', ' + n + ' (the kit’s store picture, low on the floor, at one fixed scale with its top edge fixed)';
+}
+// the quick way to scratch a count, in the Hollow's sand: one set of marks each, right to left
+function quickWords(v) {
+  const sets = ['Tallyheart’s at her paws', 'then Chispapaw’s beside it, her square round like a cookie', 'then yours beside hers'];
+  if (v === 0 || v === false) return '';
+  if (![1, 2, 3].includes(v)) return 'quick: ' + JSON.stringify(v);
+  return 'the quick way to scratch a count, scratched in the sand: ' + (v === 1 ? 'one set' : numWord(v) + ' sets') + ' of a square, a line and a dot (a hundred, a ten, a loose), right to left, a little apart: ' + sets.slice(0, v).join(', ');
+}
 function optWords(set, k, v, all, cam) {
   if (set === 'ferry' || set === 'island') { const w = ferryIslandWords(set, k, v); if (w != null) return w; }
+  // chapter 12: the store under the bridge and its plan in the Hollow, the plan's glow, the quick marks, their two Taps
+  if (k === 'store' && (set === 'bridge' || set === 'hollow')) return storeOptWords(set, v);
+  if (k === 'storeGlow' && set === 'hollow') return v === 'hundreds' ? 'the squares of the store’s plan glowing' : v === 'tens' ? 'the rows of the store’s plan glowing' : v === false ? '' : k + ': ' + JSON.stringify(v);
+  if (k === 'quick' && set === 'hollow') return quickWords(v);
+  if (k === 'tap' && set === 'hollow' && v === 'squares') return 'the whole store’s plan in the sand is what she taps (the squares)';
+  if (k === 'tap' && set === 'bridge' && v === 'store') return 'the store on the floor is what she taps';
   // (chapter 10: the mist stone on her moss, grey or flashing; the small shape flying off over the riverbank)
   if (k === 'miststone') return v === true || v === 'flash' ? 'the mist stone on the moss of her nest, beside her glass in its leaf and the corners of her secret bark: a smooth grey pebble, egg-shaped, the size of her paw' +
     (v === 'flash' ? ', flashing blue and green in the moonlight from the doorway (a band of blue and green light across its face, the rest still grey)' : '') : v === false ? '' : k + ': ' + JSON.stringify(v);
@@ -932,7 +986,9 @@ function optWords(set, k, v, all, cam) {
   // chapter 8: the eighth evening's is a half moon, bright, and the night silver, not black; chapter 9: the
   // twelfth evening's more than half, the thirteenth's nearly round, the eve of the full moon)
   // (chapter 10: the fourteenth evening's is the full moon)
+  // (chapter 12: the sixteenth evening's, one past full and waning, high and silver)
   if (k === 'moon') return typeof v === 'number' ? (v === 14 ? MOON14[set] || 'the moon full and round, fourteen evenings old' : v === 8 ? 'a bright half moon, eight evenings old' : v === 13 ? 'the moon nearly round, thirteen evenings old' :
+    v === 16 ? 'the moon one evening past full, waning, sixteen evenings old, high and silver' :
     v > 8 && v < 13 ? 'the moon more than half and growing, ' + numWord(v) + ' evenings old' : v > 8 ? 'the moon, ' + v + ' evenings old' : 'a crescent moon, a little fatter than last night’s') : v ? 'a moon in the sky' : 'no moon';
   if (k === 'drips') return set === 'den' ? (v ? 'sun spots and dripping leaves' : '') : (v ? 'water drips' : 'no drips');
   if (k === 'puddles') return v ? 'puddles everywhere' : '';
@@ -1347,7 +1403,21 @@ function board(storyPath, outPath) {
   // a prompt's lines: balloons with their speakers, and (kind 'caption') narration in a caption box
   function balloonLines(list, f) {
     return withVariants(f || {}, asList(list)).map(b => b.kind === 'caption' ? '  - *Caption*: ' + q(b.text)
-      : '  - **' + speaker(b) + '**' + kindWord(b.kind) + ': “' + q(b.text) + '”');
+      : '  - **' + speaker(b) + '**' + kindWord(b.kind) + ': ' + (b.lang === 'es' ? esSaid(b.text) : '“' + q(b.text) + '”'));
+  }
+  /* Chapter 12: a set's `echo`, in a line under its set: Chispapaw's Spanish after a right answer (a Counts set's first, or
+   * the pairs it lists; a take set's listed problems right or helped, never a twin, or its first right in every column). */
+  function echoWords(set, take) {
+    const ec = set && set.echo, lines = ec && typeof ec === 'object' ? asList(ec.lines).filter(l => l && typeof l.text === 'string') : [];
+    if (!lines.length) return null;
+    const pairs = Array.isArray(ec.on) ? ec.on.map(p => (Array.isArray(p) ? p : [p && p.a, p && p.b])) : [];
+    const x0 = ec.on === 'first' ? (take ? null : [7, 8]) : pairs[0];
+    const x = x0 ? { a: x0[0], b: x0[1], answer: take ? x0[0] - x0[1] : x0[0] * x0[1] } : null;
+    const said = l => (l.lang === 'es' ? (x ? esSaid(l.text, x) : '*[es]* ' + q(l.text)) : '“' + q(E.esMarks(l.text, x)) + '”') + (l.who !== lines[0].who ? ' (' + (SPEAKER[l.who] || l.who) + ')' : '');
+    const who = SPEAKER[lines[0].who] || lines[0].who || 'Chispapaw', sign = take ? ' − ' : ' × ', list = pairs.map(p => p[0] + sign + p[1]).join(', ');
+    if (ec.on === 'first') return '- ' + who + ' echoes ' + (take ? 'the first problem right in every column' : 'her first right answer (a retry counts)') + ' in Spanish, once: ' + lines.map(said).join(', then ') +
+      (x ? ' for ' + x.a + sign + x.b : '') + (take ? '' : ', after the line that answer earned, all waiting for Next') + '.';
+    return '- After ' + list + (take ? ', right or helped (never its twin)' : ', right') + ', ' + who + ' echoes it in Spanish: ' + lines.map(said).join(', then ') + '.';
   }
   /* The take-aways kit (docs/take-aways.md, sections 1 to 3 and 8): a Counts frame whose set is a take set
    * (`op: '-'`) is boarded in the Counts frame's place, its problems as she sees them written ("254 − 131"),
@@ -1404,6 +1474,9 @@ function board(storyPath, outPath) {
       if (x.prompt != null && !(Array.isArray(x.prompt) && !x.prompt.length)) more.push('- Asking ' + sum(x) + ':', ...lines(x.prompt));
       if (x.right != null) more.push('- After ' + sum(x) + ', right in every column the first time:', ...lines(x.right));
     });
+    // (chapter 12: a set's echo, Chispapaw's Spanish at the problem's end, after the kit's end line)
+    const ew = echoWords(set, true);
+    if (ew) more.push(ew);
     if (Array.isArray(set.praise)) more.push('- Praise for a problem right in every column the first time, in turn (a blank one says nothing): ' + set.praise.filter(p => typeof p === 'string' && p.trim()).map(p => '“' + q(p) + '”').join(', '));
     if (set.lines && typeof set.lines === 'object') Object.keys(set.lines).forEach(k => {
       const v = set.lines[k], forms = v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).map(fk => fk + ': “' + q(v[fk]) + '”').join(', ') : asList(v).map(x => '“' + q(x) + '”').join(', ');
@@ -1517,6 +1590,9 @@ function board(storyPath, outPath) {
       if (x.shows) lines.push('- With the lines after ' + x.a + ' × ' + x.b + ', right the first time or missed: her answers scratched in the sand, ' + pairs(x.shows.of).map(pr => pr.split(' × ').reduce((a, b) => a * b)).concat([x.a * x.b]).join(' and ') +
         ' (' + (pairs(x.shows.of).length ? pairs(x.shows.of).join(', ') + ' only once she has answered it right with no ask of it still to come; ' : '') + '`{also}` in those lines is “' + q(x.shows.also || '') + '” when they are all there, and nothing when not).');
     });
+    // (chapter 12: a set's echo, Chispapaw's Spanish after a right answer)
+    const ew = echoWords(set, false);
+    if (ew) lines.push(ew);
     if (set.againIntro) lines.push('- Before a question comes back: “' + q(set.againIntro) + '”');
     if (set.helpIntroNotFive) lines.push('- After a miss that ends in neither a five nor a zero: “' + q(set.helpIntroNotFive) + '”');
     if (set.helpIntroNotTen) lines.push('- After a miss that doesn’t end in a zero: “' + q(set.helpIntroNotTen) + '”');
@@ -1563,6 +1639,14 @@ function board(storyPath, outPath) {
       return '**Then she lights a forepaw for everyone found** (the skip-count, by ' + t + 's): seven little forepaws drawn in the mud (in play they take the panel); a tap for each of ' + each.join(', ') + ', so ' + (most > sure ? 'up to ' + numWord(most) : numWord(sure)) + ' taps (the next forepaw glows; a tap anywhere else makes it wiggle), each lighting its ' + numWord(t) + ' claw marks and putting the next number in ' +
         (SPEAKER[s.teacher] || 'the counter') + '’s balloon: ' + Array.from({ length: most }, (_, i) => (i + 1) * t).join(', ') + '. The other forepaws stay dark. Nothing can be got wrong, and nothing is logged. The last tap turns the page to ' + s.next +
         (s.carry === false ? ', which does not show the number.' : ', which shows the number she reached (' + Array.from({ length: most - sure + 1 }, (_, i) => (sure + i) * t).filter(n => n > t || sure > 1).join(', ').replace(/, ([^,]*)$/, ' or $1') + ').') + more;
+    }
+    // chapter 12: a count in Chispapaw's Spanish words (`lang: 'es'`), out loud, its English with the last tap, then Next
+    if (s.lang === 'es') {
+      const v = E.skipView(s, g), m = /^«([^»]*)»/.exec(v.count || ''), sp = m ? m[1] : '', by = SPEAKER[s.teacher] || 'Chispapaw';
+      return '**Then the paw thing in ' + by + '’s Spanish** (the skip-count, by ' + t + 's): ' + q(sp) + ' (' + q(v.gloss || '') + '). ' + g + ' taps' +
+        (s.paws === 'both' ? ', her own two forepaws patted down together each time (they glow; a tap anywhere else makes them wiggle), each lighting all ' + numWord(t) + ' claws' : '') +
+        ' and putting the next number in ' + by + '’s balloon, out loud, in Spanish words lettered in italics (“' + q(E.skipView(s, 1).count.replace(/[«»]/g, '')) + '”, then “' + q(E.skipView(s, Math.min(2, g)).count.replace(/[«»]/g, '')) + '” …); Read to me says each number in the Spanish voice (with none, in English). With the last tap the English goes under it in parentheses, and the page waits for Next (a Spanish count never turns its own page). Nothing can be got wrong, and nothing is logged. On to ' + s.next +
+        (s.carry === false ? ', which does not show the number' : ', which shows the ' + (g * t)) + '.' + more;
     }
     if (s.paws === 'both') {
       return '**Then she hops by ' + t + 's on both forepaws** (the skip-count): ' + g + ' taps, her own two forepaws patted down together each time (they glow; a tap anywhere else makes them wiggle), each lighting all ' + numWord(t) + ' claws' + (t === 9 ? ' (one claw stays tucked in)' : '') + ' and putting the next number in her own murmur: ' + nums + '. Nothing can be got wrong, and nothing is logged.' +
@@ -1797,7 +1881,7 @@ function board(storyPath, outPath) {
     const say = withVariants(f, asList(f.say));
     if (say.length) {
       out.push(''); out.push('**Balloons**'); out.push('');
-      say.forEach(b => out.push('- **' + speaker(b) + '**' + kindWord(b.kind) + ': “' + q(b.text) + '”' + onlyIf(b.when) +
+      say.forEach(b => out.push('- **' + speaker(b) + '**' + kindWord(b.kind) + ': ' + (b.lang === 'es' ? esSaid(b.text) : '“' + q(b.text) + '”') + onlyIf(b.when) +
         (b.digits ? ' *(lettered small beside it, in Andika: ' + q(b.digits) + ')*' : '') +
         // (the Warrior Counts: her missed pairs written out under this balloon)
         (b.chips ? ' *(under it, her missed pairs written out in Andika, each with its answer (“7 × 8 = 56”), up to six, the tricky Counts’ first, a pair with a 1 last)*' : '') +

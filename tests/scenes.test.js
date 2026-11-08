@@ -1461,6 +1461,12 @@ const CH11_NEW = {
   camp: { cams: [], anchors: [], opts: ['moon'] },
   den: { cams: [], anchors: ['next-nest'], opts: ['nextNest'] }
 };
+// What chapter 12 adds to chapter 1's sets, by name: the garden's third spot at the hedge, and the hollow's store plan, its
+// glow, its Tap and the quick marks (the den's moon at 16 is a value, not a name)
+const CH12_NEW = {
+  garden: { cams: [], anchors: ['hedge-right'], opts: [] },
+  hollow: { cams: [], anchors: [], opts: ['store', 'storeGlow', 'tap', 'quick'] }
+};
 // (chapter 9: and its new cameras, as chapter 6's are) (chapter 10: and chapter 10's)
 const ch1Cams = (set) => art.vocab.sets[set].cams.filter((c) => !((CH6_NEW[set] || {}).cams || []).concat((CH9_NEW[set] || {}).cams || [], (CH10_NEW[set] || {}).cams || []).includes(c));
 function ch13Fingerprint(art, crypto) {
@@ -2403,7 +2409,8 @@ test('vocab, chapter 5: the den\'s moon takes its age in evenings (5: a little f
   for (const set of CH1_SETS) {
     assert.deepEqual(v[set].cams, CH1_CAMS[set].concat((CH6_NEW[set] || {}).cams || [], (CH9_NEW[set] || {}).cams || [], (CH10_NEW[set] || {}).cams || []), set + ': cameras');
     // (chapter 11: and the den's `next-nest`, among the inside composition's spots: tested with chapter 11's vocabulary)
-    assert.deepEqual(v[set].anchors.filter((a) => !((CH11_NEW[set] || {}).anchors || []).includes(a)), CH1_ANCHORS[set].concat((CH6_NEW[set] || {}).anchors || [], (CH9_NEW[set] || {}).anchors || [], (CH10_NEW[set] || {}).anchors || []), set + ': anchors');
+    // (chapter 12: and the garden's `hedge-right`: tested with chapter 12's)
+    assert.deepEqual(v[set].anchors.filter((a) => !((CH11_NEW[set] || {}).anchors || []).concat((CH12_NEW[set] || {}).anchors || []).includes(a)), CH1_ANCHORS[set].concat((CH6_NEW[set] || {}).anchors || [], (CH9_NEW[set] || {}).anchors || [], (CH10_NEW[set] || {}).anchors || []), set + ': anchors');
   }
   // (chapter 10: the tower's `moon` after them: tested with chapter 10's vocabulary)
   assert.deepEqual(Object.keys(v.tower.opts).slice(0, 4), ['chime', 'light', 'roar', 'ding'], 'the tower as chapter 4 left it');
@@ -3679,13 +3686,15 @@ test('chapter 7: chapters 1 to 6 draw byte for byte as they shipped: every frame
   // sets/ferry.js and sets/island.js), whichever of them each has: one while its file is a stub, six and eight built; and
   // the den's stone close, a composition of its own)
   const ch10 = ['ferry', 'island'].flatMap((set) => (art.vocab.sets[set] ? art.vocab.sets[set].cams : []).map((c) => 'gallery/' + set + '/' + c));
-  assert.deepEqual(Object.keys(now).filter((k) => !want.includes(k)).sort(), ['gallery/bridge/print', 'gallery/pile/hole', 'gallery/pile/rear'].concat(tracks, grove, ['gallery/camp/herbs', 'gallery/den/case'], ch10, ['gallery/den/stone']).sort());
+  // (chapter 12: and the bridge's store, a composition of its own: a plain panel, its sample among the extras)
+  assert.deepEqual(Object.keys(now).filter((k) => !want.includes(k)).sort(), ['gallery/bridge/print', 'gallery/pile/hole', 'gallery/pile/rear'].concat(tracks, grove, ['gallery/camp/herbs', 'gallery/den/case'], ch10, ['gallery/den/stone', 'gallery/bridge/store']).sort());
 });
 
 test('vocab, chapter 7: the hollow\'s `compare`, declared as the bridge\'s ([false, [24, 60]], off by default); seven marks as markSpots has always drawn them; the den takes nothing new by name; the kit\'s one painter', () => {
   const v = art.vocab.sets;
   assert.deepEqual(v.hollow.opts.compare, [false, [24, 60]], 'a list of two numbers, compared by value');
-  assert.deepEqual(Object.keys(v.hollow.opts), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap', 'compare']);
+  // (chapter 12: and its store plan, glow, Tap and quick marks after `compare`: tested with chapter 12's)
+  assert.deepEqual(Object.keys(v.hollow.opts).filter((k) => !CH12_NEW.hollow.opts.includes(k)), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap', 'compare']);
   assert.deepEqual(art.sceneInfo('hollow').defaults, { marks: 0, compare: false }, 'no comparison unless a frame asks');
   assert.ok(v.hollow.opts.marks.includes(7), 'marks: 7');
   assert.deepEqual(Object.keys(v.den.opts).slice(0, 6), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden'], 'the den: three more cards under the moss, by their pictures; no new option');
@@ -4003,7 +4012,8 @@ test('vocab, chapter 8: the den\'s moon takes the eighth evening (8) and the den
   // one spot, `tail`, after those)
   assert.deepEqual(v.den.cams, ['outside', 'inside', 'nest', 'doorway', 'case', 'stone']);
   assert.deepEqual(v.den.anchors, ['entrance-left', 'entrance-right', 'doorway', 'nest', 'sleeper-1', 'sleeper-2', 'next-nest', 'case-1', 'case-2', 'case-3', 'tail']);
-  assert.deepEqual(Object.keys(v.hollow.opts), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap', 'compare'], 'the hollow: eight marks as markSpots has laid them since chapter 1');
+  // (chapter 12: and the hollow's four options after `compare`: chapter 12's vocabulary)
+  assert.deepEqual(Object.keys(v.hollow.opts).filter((k) => !CH12_NEW.hollow.opts.includes(k)), ['marks', 'glow', 'depth', 'bark', 'cards', 'blank', 'heap', 'compare'], 'the hollow: eight marks as markSpots has laid them since chapter 1');
   assert.ok(v.hollow.opts.marks.includes(8), 'marks: 8');
   assert.deepEqual({ snip: art.sizeBands.snip, snatch: art.sizeBands.snatch }, {
     snip: { ref: 'player', pose: 'up', by: 'tall', min: 0.5, max: 0.65 },
@@ -5485,7 +5495,8 @@ test('vocab, chapter 11: the camp\'s `moon` (a number, off by default), the den\
   assert.equal(v.camp.opts.moon, 'number', 'moon: a number, the moon\'s age in evenings (as the pile\'s, the field\'s and the tower\'s)');
   assert.deepEqual(ci.defaults, {}, 'no moon unless a frame asks');
   assert.deepEqual(v.camp.cams, ['reveal', 'crowd', 'fountain', 'entrance', 'fountain-close', 'ferns', 'purr', 'herbs'], 'no new camera on the camp');
-  assert.deepEqual(v.den.opts.moon, [false, true, 5, 8, 13, 14, 15], 'and 15, one evening past full');
+  // (chapter 12: and its 16 after them: tested with chapter 12's)
+  assert.deepEqual(v.den.opts.moon.slice(0, 7), [false, true, 5, 8, 13, 14, 15], 'and 15, one evening past full');
   assert.deepEqual(v.den.opts.nextNest, [false, true]);
   assert.deepEqual(Object.keys(v.den.opts), ['weather', 'moon', 'drips', 'stone', 'bark', 'hidden', 'glass', 'read', 'miststone', 'nextNest'], 'the next nest last');
   assert.deepEqual(di.defaults, { weather: 'clear' }, 'no next nest unless a frame asks');
@@ -5731,7 +5742,8 @@ test('the gallery shows chapter 11: the camp by moonlight (reveal with the ring 
   const { EXTRA } = new Function(js.slice(from, to) + '\nreturn { SAMPLES: SAMPLES, EXTRA: EXTRA };')();
   const ch11 = EXTRA.filter((e) => /^chapter 11: /.test(e[3]));
   const at = EXTRA.indexOf(ch11[0]);
-  assert.ok(at > 0 && EXTRA.slice(at).every((e) => /^chapter 11: /.test(e[3])), 'appended after every earlier extra, each labelled');
+  // (chapter 12's appended after them)
+  assert.ok(at > 0 && EXTRA.slice(at).every((e) => /^chapter 1[12]: /.test(e[3])) && EXTRA.slice(at, at + ch11.length).every((e) => /^chapter 11: /.test(e[3])), 'appended after every earlier extra, each labelled');
   const has = (set, cam, test) => ch11.some((e) => e[0] === set && e[1] === cam && test(e[2].opts || {}, e[2].cast || [], e[2].fx || []));
   assert.ok(has('camp', 'reveal', (o, c, f) => o.crowd === true && o.moon === 15 && c.some((m) => m.who === 'glintstar' && m.at === 'fountain-top') && f.includes('night')), 'reveal');
   assert.ok(has('camp', 'crowd', (o, c) => o.moon === 15 && c.some((m) => m.who === 'player' && m.holds === 'miststone' && m.at.x === 760 && m.at.y === 860) && c.some((m) => m.who === 'tallyheart' && m.at.x === 950 && m.at.y === 872)), 'the ring close');
@@ -5741,4 +5753,366 @@ test('the gallery shows chapter 11: the camp by moonlight (reveal with the ring 
   assert.ok(has('den', 'nest', (o, c) => o.nextNest === true && o.miststone === true && c.some((m) => m.who === 'player' && m.at === 'nest') && c.some((m) => m.who === 'murmurchime' && m.at === 'next-nest' && m.asleep)), 'the warriors\' nest');
   if (art.vocab.sets.pile) assert.ok(has('pile', 'wide', (o) => o.moon === 15 && o.dug === 'big' && o.scale === 'behind' && JSON.stringify(o.rows) === '[10,10,10,10]'), 'the pile by moonlight');
   for (const e of ch11) if (art.vocab.sets[e[0]]) checkRender(art.render({ set: e[0], cam: e[1], opts: e[2].opts || {}, cast: e[2].cast || [], fx: e[2].fx || [] }, { look: LOOK }), { cast: e[2].cast || [] }, e[3]);
+});
+
+
+// ================================================================ chapter 12 (docs/chapters/12-a-spark-at-the-hedge.spec.md, sections 4 and 7)
+
+// The proof that chapters 1 to 11 look exactly as they shipped (spec section 7, item 3: the sets owner's fingerprint). The
+// numbers were taken once from the snapshot of the live v24 tree (~/potomac-crossing-work/ch12/shipped: main as the take-aways
+// kit merged it, its scenes.js and sets/bridge.js byte for byte main 4771cf2's), loaded as its page loads them, in a process of
+// its own, before any edit for chapter 12 (~/potomac-crossing-work/ch12/build-sets/record-ch12.js), and are kept here: this
+// test never reads that tree.
+// <ch12-fingerprint>
+// Every frame of chapter 11, on every set it uses (each 'auto' filled as chapter 11's fingerprint fills chapter 10's: a mark a
+// Count, the first glowing, her stone by her nose, her file the thinnest (20), chapter 9's and the fullest (30)). Every camera
+// of the hollow with the options chapters 1 to 11 gave it (and none of chapter 12's), in five lights, with five casts (a
+// two-shot on the sand, chapter 12's three at `tree`, a raw point and `sunpatch-3`, the rim's five and a teacher at
+// `tree-far`, the sun patch, nobody). Every camera of the bridge chapters 2 to 9 drew (not chapter 12's `store`), with the
+// options they gave it, by day, at sunset and at dusk, empty, with someone at every spot of its composition, and with one cat
+// at a raw point. Every camera of the den, with every `moon` of chapter 11's list (false, true, 5, 8, 13, 14, 15) at night,
+// at dusk and under the stars, `nextNest` off and on, a cast facing right and facing left; by morning; and nobody. Every
+// camera of the garden with the options chapters 1 to 11 gave it, in seven lights, with four casts (the kept path at the
+// gap, our cat first at the gap for the close-up's framing, the lawn's spots, two cats at raw points by the hedge) and
+// nobody. One hash a chapter's set, and a set and camera.
+function ch12Fingerprint(PC, crypto) {
+  const art = PC.art, out = {}, LOOK = { fur: 'calico', marking: 'white-paws', eyes: 'odd', sex: 'tom' };
+  const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+  const F28 = ['four-a-night', 'tidy', 'dug-earth', 'scale', 'fox-flew', 'fox-moon', 'squall-shapes', 'sprinkle-scales', 'cant-fly', 'prints-pile', 'otter-fox', 'fur', 'heron-no-moon', 'heron-shapes',
+    'prints-marsh', 'prints-tracks', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'my-count', 'prints-sprinkle', 'tunnel', 'stash', 'glass', 'fox-brag', 'hail-shapes'];
+  const F30 = F28.slice(0, 10).concat(['puddle-paws'], F28.slice(10), ['mizzle-wing']);
+  const F20 = F28.filter((p) => !['my-count', 'hail-shapes', 'dug-earth', 'squall-shapes', 'prints-pile', 'prints-tracks', 'wisp-fox', 'sleet-den'].includes(p));
+  const EAR = ['fox-flew', 'fox-moon', 'squall-shapes', 'otter-fox', 'heron-no-moon', 'heron-shapes', 'wisp-fox', 'reed-pile', 'coil-diggers', 'sleet-den', 'waffles-no-moon', 'fox-brag', 'hail-shapes',
+    'puddle-paws', 'mizzle-wing'];
+  const card = (p) => ({ picture: p, mark: EAR.includes(p) ? 'ear' : 'eye' });
+  const hash = (key) => out[key] || (out[key] = crypto.createHash('sha1'));
+  function add(key, tag, scene) {
+    const r = art.render(scene, { look: LOOK });
+    hash(key).update(tag + ':' + strip(r.svg) + JSON.stringify(r.heads) + JSON.stringify(r.keep));
+  }
+  function fill(sc, n, fl) {
+    const o = Object.assign({}, sc.opts || {}), m = typeof o.marks === 'number' ? o.marks : n;
+    if (o.marks === 'auto') o.marks = n;
+    if (o.glow === 'auto') o.glow = Array.from({ length: m }, (v, i) => i === 0);
+    if (o.stone === 'auto') o.stone = 'nose';
+    if (fl) o.bark = fl.map(card);
+    return Object.assign({}, sc, { opts: o });
+  }
+  // every frame of chapter 11, every set
+  for (const [id, f] of Object.entries(PC.story.ch11.frames)) {
+    const sc = f.scene;
+    if (!sc || !sc.set) continue;
+    const files = sc.opts && sc.opts.bark === 'auto' ? [F28.concat(['mizzle-wing']), F20, F30] : [null];
+    files.forEach((fl, j) => add('frames/ch11/' + sc.set, id + ' ' + j, fill(sc, 10, fl)));
+  }
+  // the hollow: every camera, the options chapters 1 to 11 gave it, five lights, five casts
+  const glow1 = (m) => Array.from({ length: m }, (v, i) => i === 0);
+  const hollowOpts = [{}, { marks: 1, glow: [true] }, { marks: 3, glow: [true, false, true], depth: [2, 1, 0] }, { marks: 4, glow: glow1(4), bark: 'falling' },
+    { marks: 4, glow: glow1(4), bark: 'sand' }, { marks: 4, glow: glow1(4), bark: 'row', cards: ['four-a-night', 'tidy', { id: 'dug-earth' }, 'scale'], blank: 1 },
+    { bark: 'row' }, { marks: 6, bark: 'row', cards: F28.slice(0, 8).map(card), blank: 3 }, { marks: 5, heap: true }, { marks: 7, glow: glow1(7), compare: [24, 60] },
+    { marks: 10, glow: true, depth: 2 }, { marks: 10, glow: glow1(10) }];
+  const hollowCasts = [
+    [{ who: 'tallyheart', at: 'sand-left', pose: 'sit', mood: 'kind' }, { who: 'player', at: 'sand-right', pose: 'sit', mood: 'wonder' }],
+    [{ who: 'tallyheart', at: 'tree', pose: 'sit', mood: 'kind', facing: 'left' }, { who: 'player', at: { x: 690, y: 892 }, pose: 'sit', mood: 'happy' },
+      { who: 'clancat', variant: 2, at: 'sunpatch-3', pose: 'sit', mood: 'shy', facing: 'right', size: 0.78 }],
+    [{ who: 'clancat', variant: 1, at: 'rim-1', pose: 'lie', mood: 'sleepy' }, { who: 'clancat', variant: 4, at: 'rim-2', pose: 'sit', mood: 'happy' }, { who: 'player', at: 'rim-3', pose: 'loaf', mood: 'kind' },
+      { who: 'clancat', variant: 6, at: 'rim-4', pose: 'curl', mood: 'sleepy', asleep: true }, { who: 'murmurchime', at: 'rim-5', pose: 'sit', mood: 'proud' },
+      { who: 'tallyheart', at: 'tree-far', pose: 'sit', mood: 'kind', tuck: true }],
+    [{ who: 'player', at: 'sunpatch', pose: 'crouch', mood: 'happy', facing: 'left' }, { who: 'grizzled', at: 'sunpatch-2', pose: 'walk', mood: 'stern' }, { who: 'tallyheart', at: 'tree', pose: 'stand', mood: 'proud' }],
+    []];
+  const hi = art.sceneInfo('hollow');
+  for (const cam of Object.keys(hi.cams)) {
+    for (const fx of [[], ['morning'], ['day'], ['sunset', 'sparkle'], ['dusk']]) for (const [oi, opts] of hollowOpts.entries()) for (const [ci, cast] of hollowCasts.entries()) {
+      add('hollow/' + cam, fx.join(',') + ' ' + oi + ' ' + ci, { set: 'hollow', cam, opts, cast, fx });
+    }
+  }
+  // the bridge: every camera chapters 2 to 9 drew, the options they gave it, three lights, empty, every spot, a raw point
+  const bridgeOpts = [{}, { drag: false }, { prints: true }, { prints: true, branch: true, eyes: 'sprinkle' }, { train: true, eyes: 'open', drips: false },
+    { eyes: 'blink', pebble: 'out' }, { pebble: 'paws' }, { pebble: 'in', drag: false }, { pawsIn: true, hop: true }, { pawsIn: 'both', hop: 2 }, { mudPaws: 7, prints: true },
+    { stones: true, prints: true, wing: true }, { prints: true, tap: 'print', compare: [24, 60] }, { shallows: true, drag: false }];
+  const bi = art.sceneInfo('bridge'), WHO = ['player', 'tallyheart', 'riffle', 'clancat', 'murmurchime', 'grizzled'];
+  for (const cam of ['bank', 'mouth', 'under', 'back', 'paws', 'wall', 'print']) {
+    const spots = Object.keys(bi.anchors[bi.cams[cam].comp] || {});
+    const every = spots.map((at, i) => ({ who: WHO[i % WHO.length], variant: 1 + (i % 3), pose: i % 2 ? 'walk' : 'sit', mood: 'kind', facing: i % 3 ? 'left' : 'right', at }));
+    const raw = [{ who: 'player', at: { x: 400, y: 940 }, pose: 'sit', mood: 'wonder' }, { who: 'tallyheart', at: { x: 1180, y: 900 }, pose: 'sit', mood: 'kind', facing: 'left' }];
+    for (const fx of [['day'], ['sunset'], ['dusk']]) for (const [oi, opts] of bridgeOpts.entries()) for (const [ci, cast] of [[], every, raw].entries()) {
+      add('bridge/' + cam, fx.join(',') + ' ' + oi + ' ' + ci, { set: 'bridge', cam, opts, cast, fx });
+    }
+  }
+  // the den: every camera, every moon of chapter 11's list at night, at dusk and under the stars, nextNest off and on,
+  // facing right and left; by morning; nobody
+  const di = art.sceneInfo('den');
+  const denOpts = [{ weather: 'clear', stone: 'nose', bark: F20.map(card), hidden: true, glass: true, miststone: true },
+    { weather: 'clear', stone: true, bark: 12, drips: true, read: 3 }, { weather: 'cloudy', stone: 'chin', bark: F30.map(card), miststone: 'flash' }, { weather: 'storm', stone: true },
+    { weather: 'clear', stone: 'nose', bark: F28.concat(['mizzle-wing']).map(card), hidden: true, glass: true, miststone: true, nextNest: true }, { weather: 'clear', nextNest: true }];
+  const denCast = (comp, facing, next) => ({
+    outside: [{ who: 'tallyheart', at: 'doorway', pose: 'peer', mood: 'happy', facing }, { who: 'snorer', at: 'entrance-left', pose: 'sit', mood: 'sleepy' }],
+    inside: [{ who: 'snorer', at: 'sleeper-1', pose: 'curl', mood: 'sleepy', asleep: true }, { who: 'murmurchime', at: next ? 'next-nest' : 'sleeper-2', pose: 'lie', mood: 'sleepy', facing },
+      { who: 'player', at: 'nest', pose: facing === 'left' ? 'curl' : 'loaf', mood: 'kind', facing, asleep: facing === 'left' }, { who: 'tallyheart', at: 'doorway', pose: 'peer', mood: 'happy' }],
+    case: [{ who: 'player', at: 'case-1', pose: 'crouch', mood: 'wonder' }, { who: 'tallyheart', at: 'case-2', pose: 'sit', mood: 'kind' }, { who: 'glintstar', at: 'case-3', pose: 'stand', mood: 'solemn', facing }],
+    stone: [{ who: 'player', at: 'tail', pose: 'curl', mood: 'sleepy', asleep: true, facing }]
+  })[comp];
+  for (const cam of Object.keys(di.cams)) {
+    for (const [o, opts] of denOpts.entries()) for (const facing of ['right', 'left']) {
+      const cast = denCast(di.cams[cam].comp, facing, !!opts.nextNest);
+      for (const fx of [['night'], ['dusk'], ['night', 'stars', 'skyriver', 'zzz']]) for (const moon of [false, true, 5, 8, 13, 14, 15]) {
+        add('den/' + cam, o + ' ' + facing + ' ' + fx.join(',') + ' ' + moon, { set: 'den', cam, opts: Object.assign({}, opts, { moon }), cast, fx });
+      }
+      add('den/' + cam, o + ' ' + facing + ' morning', { set: 'den', cam, opts, cast, fx: ['morning'] });
+      add('den/' + cam, o + ' ' + facing + ' nobody', { set: 'den', cam, opts: Object.assign({}, opts, { moon: 15 }), cast: [], fx: ['night'] });
+    }
+  }
+  // the garden: every camera, the options chapters 1 to 11 gave it, seven lights, four casts and nobody
+  const gardenOpts = [{}, { sparrows: 12, lampSparrow: true }, { dish: true }, { dish: true, towel: true }, { moth: true }, { sparrows: 12, lampSparrow: true, dish: true }];
+  const gardenCasts = [
+    [{ who: 'tallyheart', at: 'hedge-gap', pose: 'sit', mood: 'kind' }, { who: 'player', at: 'hedge-side', pose: 'sit', mood: 'happy', holds: 'vole' }],
+    [{ who: 'player', at: 'hedge-gap', pose: 'crouch', mood: 'wonder', facing: 'left' }, { who: 'grizzled', at: 'hedge-side', pose: 'walk', mood: 'stern' }],
+    [{ who: 'player', at: 'step', pose: 'sit', mood: 'happy' }, { who: 'tallyheart', at: 'lawn', pose: 'walk', mood: 'kind' }, { who: 'clancat', variant: 3, at: 'fence-foot', pose: 'sit', mood: 'shy' },
+      { who: 'waffles', at: 'doorway', pose: 'sit', mood: 'happy' }, { who: 'grizzled', at: 'lamp-top', pose: 'sit', mood: 'stern' }],
+    [{ who: 'player', at: { x: 1300, y: 735 }, pose: 'walk', mood: 'happy' }, { who: 'tallyheart', at: { x: 1490, y: 722 }, pose: 'sit', mood: 'kind', facing: 'left' }],
+    []];
+  const gi = art.sceneInfo('garden');
+  for (const cam of Object.keys(gi.cams)) {
+    for (const fx of [[], ['dusk'], ['morning'], ['day'], ['night'], ['dusk', 'glow'], ['morning', 'sparkle']]) for (const [oi, opts] of gardenOpts.entries()) for (const [ci, cast] of gardenCasts.entries()) {
+      add('garden/' + cam, fx.join(',') + ' ' + oi + ' ' + ci, { set: 'garden', cam, opts, cast, fx });
+    }
+  }
+  for (const k of Object.keys(out)) out[k] = out[k].digest('hex').slice(0, 12);
+  return out;
+}
+// </ch12-fingerprint>
+
+// Recorded 2026-11-07 from the snapshot (~/potomac-crossing-work/ch12/shipped, v24) by
+// ~/potomac-crossing-work/ch12/build-sets/record-ch12.js, which runs ch12Fingerprint above on that tree's own scripts, loaded as
+// its page loads them (its tests/_load.js), in a process of its own, before any edit for chapter 12
+const CH12_FINGERPRINT = {
+  'frames/ch11/camp': '4186e1b6a367', 'frames/ch11/den': '3cb436cbe8dd', 'frames/ch11/tower': '151666145dbc', 'frames/ch11/pile': 'cfe7c887e36b',
+  'hollow/wide': 'e13d1c8f99f7', 'hollow/lesson': 'bf1beaa1fe66', 'hollow/sand': '3f74215240d2', 'hollow/tree': '81d76d160736',
+  'bridge/bank': 'f2ca3655f0b2', 'bridge/mouth': 'a495037d9c65', 'bridge/under': '173051c5249a', 'bridge/back': '1a64d9ee00cf',
+  'bridge/paws': '494a0ad5cbac', 'bridge/wall': '582093154c2a', 'bridge/print': 'aee561c86c51', 'den/outside': '2233dda7aa52',
+  'den/inside': '88844dfc5a40', 'den/nest': '0669f99ba869', 'den/doorway': '28db74f8c395', 'den/case': 'f36d766b6936',
+  'den/stone': '9540825dc77c', 'garden/wide': '807be1cad792', 'garden/paws': 'c641d0ea3760', 'garden/step': 'a60d72a2ea8f',
+  'garden/fence': '7fe5caf48a7d', 'garden/lamp': '6e704d0d3ae1', 'garden/meet': '874c12e59427', 'garden/hedge': 'e50c59a996a1',
+  'garden/hedge-close': '9478d519de77'
+};
+
+test('chapter 12: chapters 1 to 11 draw byte for byte as they shipped: every frame of chapter 11, every hollow camera with the new options off, every bridge camera of chapters 2 to 9, every den camera with each moon of chapter 11\'s list, and every garden camera', { skip: !art.character && 'no cats.js' }, () => {
+  require(path.join(ROOT, 'app/story/ch11.js'));
+  const now = ch12Fingerprint(PC, require('crypto'));
+  assert.deepEqual(Object.keys(now), Object.keys(CH12_FINGERPRINT), 'the same sets and cameras, in the same order');
+  for (const k of Object.keys(CH12_FINGERPRINT)) assert.equal(now[k], CH12_FINGERPRINT[k], k + ' draws something else than it did on the tree chapter 12 is built on');
+  assert.deepEqual(Object.keys(CH12_FINGERPRINT).filter((k) => /^bridge\//.test(k)), ['bank', 'mouth', 'under', 'back', 'paws', 'wall', 'print'].map((c) => 'bridge/' + c), 'every bridge camera chapters 2 to 9 drew, not chapter 12\'s');
+});
+
+// ---------------------------------------------------------------- chapter 12: Chispapaw is a cat to the scenes
+
+const CHISPA = () => art.vocab.cast && art.vocab.cast.includes('chispapaw');
+// she stands in for herself where cats.js draws her, else a clan cat at her size (the spec's stand-in)
+const chispa = (m) => (CHISPA() ? Object.assign({ who: 'chispapaw' }, m) : Object.assign({ who: 'clancat', variant: 3, size: 0.78 }, m));
+
+test('chapter 12: `chispapaw` is a cat to the scenes: the garden\'s hedge close-up is framed on her head (not its fixed box), her face a fifth of her box', { skip: !art.character && 'no cats.js' }, () => {
+  const src = fs.readFileSync(path.join(ROOT, 'app/art/scenes.js'), 'utf8');
+  assert.ok(/var CAT_IDS = \{[^}]*\bchispapaw: 1\b/.test(src), 'CAT_IDS has her');
+  if (!CHISPA()) return;
+  const info = art.sceneInfo('garden'), fixed = info.cams['hedge-close'];
+  const sc = { set: 'garden', cam: 'hedge-close', opts: {}, cast: [{ who: 'chispapaw', at: 'hedge-gap', pose: 'crouch', mood: 'shy', facing: 'right' }, { who: 'player', at: 'hedge-side', pose: 'sit', mood: 'wonder' }], fx: ['day'] };
+  const r = art.render(sc, { look: LOOK }), vb = viewBox(r.svg);
+  checkRender(r, sc, 'hedge-close');
+  assert.notDeepEqual(vb.map(Math.round), [fixed.x, fixed.y, fixed.w, fixed.h].map(Math.round), 'not the fixed box: ' + vb.join(' '));
+  // her head box where the camera puts a head: its middle at 60% across and 42% down, its height 30% of the panel
+  const a = info.anchors.main['hedge-gap'], me = landed(r.svg, sc.cast[0], a);
+  assert.ok(me, 'she is drawn');
+  const hx = ((me.head[0] + me.head[2]) / 2 - vb[0]) / vb[2], hy = ((me.head[1] + me.head[3]) / 2 - vb[1]) / vb[3];
+  // (60% across unless the world's right edge stops the camera: then further right, the camera at the edge)
+  const atEdge = Math.abs(vb[0] + vb[2] - 1600) < 0.5;
+  assert.ok((atEdge ? hx > 0.6 && hx < 0.7 : Math.abs(hx - 0.6) < 0.02) && Math.abs(hy - 0.42) < 0.02, 'framed on her head: ' + hx.toFixed(3) + ', ' + hy.toFixed(3) + (atEdge ? ' (at the world\'s edge)' : ''));
+  assert.ok(Math.abs((me.head[3] - me.head[1]) / vb[3] - 0.3) < 0.01, 'her head a third of the panel high, as the camera asks');
+  // a cat's face: a fifth of her box
+  const ch = art.character('chispapaw', { pose: 'crouch', mood: 'shy', facing: 'right' });
+  assert.ok(Math.abs(r.heads[0].r - Math.round(0.2 * ch.h * me.s / vb[2] * 100 * 100) / 100) < 0.02, 'her face size: ' + r.heads[0].r);
+});
+
+// ---------------------------------------------------------------- chapter 12: the hollow's store plan and quick marks
+
+const H12 = { marks: 10, glow: Array.from({ length: 10 }, (v, i) => i === 0) };
+const HOL_YOU = { x: 690, y: 892 };
+// chapter 12's staging (f041 to f049): Tallyheart at `tree` facing left, our cat at HOL_YOU facing right, Chispapaw at
+// `sunpatch-3` facing right
+const holCast = (you) => [{ who: 'tallyheart', at: 'tree', pose: 'sit', mood: 'kind', facing: 'left' }, Object.assign({ who: 'player', at: HOL_YOU, pose: 'sit', mood: 'happy', facing: 'right' }, you || {}),
+  chispa({ at: 'sunpatch-3', pose: 'sit', mood: 'shy', facing: 'right' })];
+const holScene = (opts, cam, cast) => ({ set: 'hollow', cam: cam || 'lesson', opts: Object.assign({}, H12, opts), cast: cast || holCast(), fx: ['day'] });
+const holStore = (svg) => { const m = /<g data-art="store" data-store="(\d+)" data-box="([^"]+)"[^>]*>/.exec(svg); return m ? { num: +m[1], box: m[2].split(' ').map(Number), at: m.index } : null; };
+const holQuick = (svg) => { const out = [], re = /<g data-quick="(\w+)" data-box="([^"]+)">/g; let m; while ((m = re.exec(svg))) out.push({ who: m[1], box: m[2].split(' ').map(Number), at: m.index }); return out; };
+// the box every chapter 12 option keeps to (HOLLOW_STORE): between our cat's nose and Tallyheart's paws
+const HOL_BOX = [770, 820, 966, 876];
+
+test('chapter 12: the hollow\'s four options (`store`, `storeGlow`, `tap`, `quick`) are declared and off by default; left out, false, 0 or none draw nothing; they belong to `lesson` and `sand`', () => {
+  const v = art.vocab.sets.hollow, info = art.sceneInfo('hollow');
+  assert.equal(v.opts.store, 'number');
+  assert.deepEqual(v.opts.storeGlow, [false, 'hundreds', 'tens']);
+  assert.deepEqual(v.opts.tap, ['none', 'squares']);
+  assert.deepEqual(v.opts.quick, [0, 1, 2, 3]);
+  for (const k of ['store', 'storeGlow', 'tap', 'quick']) assert.ok(!(k in info.defaults), k + ': no default');
+  const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+  for (const cam of ['wide', 'lesson', 'sand', 'tree']) {
+    const plain = strip(art.render(holScene({}, cam), { look: LOOK }).svg);
+    for (const off of [{ store: 0 }, { store: false }, { storeGlow: false }, { tap: 'none' }, { quick: 0 }, { store: 1000 }, { store: -5 }, { storeGlow: 'hundreds' }, { tap: 'squares' }])
+      assert.equal(strip(art.render(holScene(off, cam), { look: LOOK }).svg), plain, cam + ' ' + JSON.stringify(off) + ': nothing');
+    if (cam === 'wide' || cam === 'tree') for (const on of [{ store: 500, tap: 'squares', storeGlow: 'hundreds' }, { quick: 3 }])
+      assert.equal(strip(art.render(holScene(on, cam), { look: LOOK }).svg), plain, cam + ' ' + JSON.stringify(on) + ': only on `lesson` and `sand`');
+  }
+});
+
+test('chapter 12: `store: 500` on the hollow is the store\'s plan: the kit\'s own picture, small, every piece taken (five pale pressed squares, never prey), fitted to the fixed box between the two cats, in keep', { skip: !art.character && 'no cats.js' }, () => {
+  if (typeof art.placeValue !== 'function') return;
+  for (const cam of ['lesson', 'sand']) {
+    const sc = holScene({ store: 500 }, cam), r = art.render(sc, { look: LOOK }), s = holStore(r.svg);
+    checkRender(r, sc, cam + ' store 500');
+    assert.ok(s && s.num === 500, cam + ': drawn');
+    const g0 = r.svg.indexOf('<g data-art="store"');
+    const pieces = (r.svg.slice(g0).match(/class="pc-pv-(square|row|loose)[^"]*"/g) || []);
+    assert.equal(pieces.length, 5, cam + ': five pieces');
+    assert.ok(pieces.every((c) => c === 'class="pc-pv-square pc-pv-taken"'), cam + ': each a square, taken: ' + pieces.join(' '));
+    assert.ok(/aria-label="The store: 5 squares, 0 rows, 0 loose; taken: 5 squares"/.test(r.svg), cam + ': the kit\'s own label');
+    // inside the box, and the box between the cats; in keep (the lettering keeps off it)
+    assert.ok(s.box[0] >= HOL_BOX[0] - 0.1 && s.box[1] >= HOL_BOX[1] - 0.1 && s.box[2] <= HOL_BOX[2] + 0.1 && s.box[3] <= HOL_BOX[3] + 0.1, cam + ': in the box: ' + s.box);
+    assert.ok(s.box[2] - s.box[0] > HOL_BOX[2] - HOL_BOX[0] - 1, cam + ': as wide as the box');
+    const vb = viewBox(r.svg), pct = (b) => ({ x: Math.round((b[0] - vb[0]) / vb[2] * 1000) / 10, y: Math.round((b[1] - vb[1]) / vb[3] * 1000) / 10 });
+    assert.ok(r.keep.some((k) => Math.abs(k.x - pct(s.box).x) <= 0.15 && Math.abs(k.y - pct(s.box).y) <= 0.15), cam + ': in keep');
+    // each pressed square's edge drawn again at a weight the panel shows: five dashed rects of the world, over the kit's
+    assert.equal((r.svg.slice(g0).match(/<rect [^>]*fill="none" rx="[\d.]+" stroke="[^"]+" stroke-width="2" stroke-dasharray="4.2 2.6"/g) || []).length, 5, cam + ': five edges');
+  }
+  // the kit's picture as it draws it, inside the group
+  const r = art.render(holScene({ store: 500 }), { look: LOOK }), g0 = r.svg.indexOf('<g data-art="store"'), a = r.svg.indexOf('>', g0) + 1;
+  const kit = art.placeValue({ hundreds: 5, tens: 0, ones: 0, taken: { hundreds: 5, tens: 0, ones: 0 }, kind: 'store', small: true });
+  assert.ok(r.svg.startsWith(kit.slice(kit.indexOf('>') + 1, kit.lastIndexOf('</svg>')), a), 'the kit\'s own picture');
+});
+
+test('chapter 12: `storeGlow` lights the kit\'s zone and the scene\'s glow on each of its pieces (five glowing squares), pulsing; `tap: \'squares\'` is the whole placed picture, an unpainted g.pc-tap.pc-tap-squares', { skip: !art.character && 'no cats.js' }, () => {
+  if (typeof art.placeValue !== 'function') return;
+  const glow = art.render(holScene({ store: 500, storeGlow: 'hundreds' }), { look: LOOK }).svg;
+  assert.ok(/class="pc-pv-glow pcs-pulse"/.test(glow), 'the kit\'s glowing zone');
+  assert.ok(/data-glow="hundreds"/.test(glow), 'the scene\'s glow');
+  assert.equal((glow.match(/stroke="#E39A12"/g) || []).length, 5, 'a gold edge on each of the five squares');
+  const plain = art.render(holScene({ store: 500 }), { look: LOOK }).svg;
+  assert.ok(!/pc-pv-glow|data-glow/.test(plain), 'no glow unless asked');
+  // a zone with nothing in it glows as a whole
+  assert.ok(/data-glow="tens"/.test(art.render(holScene({ store: 500, storeGlow: 'tens' }), { look: LOOK }).svg), 'the empty rows glow as a zone');
+  // the Tap
+  const r = art.render(holScene({ store: 500, tap: 'squares' }), { look: LOOK }), s = holStore(r.svg);
+  const m = /<g class="pc-tap pc-tap-squares" data-tap="squares"><rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" fill="none"[^>]*\/><\/g>/.exec(r.svg);
+  assert.ok(m, 'the Tap\'s target');
+  assert.deepEqual(m.slice(1).map(Number).map(Math.round), [s.box[0], s.box[1], s.box[2] - s.box[0], s.box[3] - s.box[1]].map(Math.round), 'over the whole placed picture');
+  assert.ok(!/pc-tap/.test(plain), 'no Tap unless asked');
+  // under 44 px at 390 x 844 the squares alone would be: the whole picture is the target (a 358 px panel, `lesson` 760 wide)
+  assert.ok((s.box[2] - s.box[0]) * 358 / 760 > 44, 'the target, ' + Math.round((s.box[2] - s.box[0]) * 358 / 760) + ' px wide at 390 x 844');
+});
+
+test('chapter 12: `quick` scratches 1 to 3 sets of the quick marks, right to left (Tallyheart\'s, Chispapaw\'s, ours), each a square, a line and a dot by the kit\'s marks, Chispapaw\'s square round, apart from each other, in the box and in keep', { skip: !art.character && 'no cats.js' }, () => {
+  if (typeof art.quickMarks !== 'function') return;
+  const real = art.quickMarks, seen = [];
+  art.quickMarks = function (x, y, k, o) { seen.push(Object.assign({}, o)); return real.apply(this, arguments); };
+  art.quickMarks.size = real.size;
+  let rs;
+  try { rs = [1, 2, 3].map((q) => art.render(holScene({ quick: q }), { look: LOOK })); } finally { art.quickMarks = real; }
+  assert.deepEqual(seen.map((o) => !!o.round), [false, false, true, false, true, false], 'the kit\'s marks for each set; round on Chispapaw\'s alone');
+  seen.forEach((o) => assert.deepEqual([o.hundreds, o.tens, o.ones, o.ground], [1, 1, 1, 'sand'], 'a square, a line and a dot, in the sand'));
+  rs.forEach((r, i) => {
+    const q = holQuick(r.svg);
+    assert.deepEqual(q.map((s) => s.who), ['tallyheart', 'chispapaw', 'you'].slice(0, i + 1), (i + 1) + ': in order');
+    q.forEach((s) => assert.ok(s.box[0] >= HOL_BOX[0] - 3 && s.box[2] <= HOL_BOX[2] + 3 && s.box[1] >= HOL_BOX[1] - 4 && s.box[3] <= HOL_BOX[3] + 4, s.who + ' in the box: ' + s.box));
+    assert.ok(r.keep.length === 2, (i + 1) + ': the marks in keep, beside the claw marks');
+  });
+  const q = holQuick(rs[2].svg);
+  // right to left, a step nearer each (Tallyheart's at her paws, ours at ours)
+  assert.ok(q[0].box[0] > q[1].box[2] && q[1].box[0] > q[2].box[2], 'right to left, side by side');
+  assert.ok(q[0].box[1] < q[1].box[1] && q[1].box[1] < q[2].box[1], 'a step nearer each, toward our cat\'s paws');
+  // apart: the room between two sets' marks (their boxes are padded 2 a side) half as much again as the room between a
+  // set's own marks (the kit's gap, 0.6 of a square), and a step apart in depth
+  const k = 0.32, inner = 56 * 0.6 * k, between = [q[0].box[0] - q[1].box[2] + 4, q[1].box[0] - q[2].box[2] + 4];
+  assert.ok(between.every((b) => b > inner * 1.4), 'the sets read apart: ' + between.map(Math.round).join(' and ') + ' between them, ' + inner.toFixed(1) + ' inside one');
+  // never with `store` on one frame: the store wins
+  const both = art.render(holScene({ store: 500, quick: 3 }), { look: LOOK }).svg;
+  assert.ok(holStore(both) && holQuick(both).length === 0, 'store and quick: the store alone');
+});
+
+test('chapter 12: the Hollow\'s staging (f041 to f049): the three cats none touching (our cat sitting, f047 too), nobody over the box, whatever the hollow shows', { skip: !art.character && 'no cats.js' }, () => {
+  const tree = art.sceneInfo('hollow').anchors.main.tree, sun3 = art.sceneInfo('hollow').anchors.main['sunpatch-3'];
+  for (const opts of [{}, { store: 500, tap: 'squares' }, { store: 500, storeGlow: 'hundreds' }, { quick: 1 }, { quick: 2 }, { quick: 3 }]) {
+    const sc = holScene(opts), r = art.render(sc, { look: LOOK }), lab = JSON.stringify(opts);
+    checkRender(r, sc, lab);
+    const t = landed(r.svg, sc.cast[0], tree), me = landed(r.svg, sc.cast[1], Object.assign({ face: 'right' }, HOL_YOU)), ch = landed(r.svg, sc.cast[2], sun3);
+    assert.ok(t && me && ch, lab + ': all three drawn');
+    assert.ok(me.body[0] > ch.body[2] + 10, lab + ': our cat clear of Chispapaw: ' + Math.round(me.body[0] - ch.body[2]));
+    assert.ok(t.body[0] > me.body[2] + 100, lab + ': Tallyheart clear of our cat');
+    for (const [b, who] of [[t.body, 'Tallyheart'], [me.body, 'our cat'], [ch.body, 'Chispapaw']]) assert.ok(!overlap(b, HOL_BOX), lab + ': ' + who + ' clear of the box');
+    // and of what is drawn in it
+    const s = holStore(r.svg);
+    if (s) for (const b of [t.body, me.body, ch.body]) assert.ok(!overlap(b, s.box), lab + ': nobody over the store');
+    for (const qq of holQuick(r.svg)) for (const b of [t.body, me.body, ch.body]) assert.ok(!overlap(b, qq.box), lab + ': nobody over ' + qq.who + '\'s marks');
+  }
+  // a crouch reaches into the marks: f047's Tap is `paw` on `sit` (the spec), and this is why
+  const sc = holScene({ quick: 2 }, 'lesson', holCast({ pose: 'crouch' })), me = landed(art.render(sc, { look: LOOK }).svg, sc.cast[1], Object.assign({ face: 'right' }, HOL_YOU));
+  assert.ok(overlap(me.body, HOL_BOX) > 0, 'crouched, she would reach into the box');
+});
+
+// ---------------------------------------------------------------- chapter 12: the den's moon at 16, the garden's hedge-right
+
+test('chapter 12: the den\'s `moon` list gains 16 (one evening past chapter 11\'s 15): drawn outside and in the doorway\'s sky, waning, not 15\'s', () => {
+  const v = art.vocab.sets.den;
+  assert.deepEqual(v.opts.moon, [false, true, 5, 8, 13, 14, 15, 16]);
+  const strip = (s) => s.replace(/pcs?[0-9a-z]+-/g, '');
+  for (const cam of ['outside', 'inside', 'doorway']) {
+    const at = (moon) => strip(art.render({ set: 'den', cam, opts: { weather: 'clear', moon }, cast: [], fx: ['night'] }, { look: LOOK }).svg);
+    assert.notEqual(at(16), at(15), cam + ': 16 is not 15');
+    assert.notEqual(at(16), at(false), cam + ': a moon');
+  }
+});
+
+test('chapter 12: the garden\'s `hedge-right`: a third spot at the hedge, facing left, in the hedge camera with her tail cropped by its right edge; placed, so no raw spot sizes otherwise and nobody unnamed lands there', { skip: !art.character && 'no cats.js' }, () => {
+  const info = art.sceneInfo('garden'), A = info.anchors.main, cam = info.cams.hedge, hr = A['hedge-right'];
+  assert.ok(art.vocab.sets.garden.anchors.includes('hedge-right'));
+  assert.equal(hr.face, 'left');
+  assert.ok(hr.placed, 'placed (never a ground anchor for the depth scale)');
+  assert.ok(hr.x > cam.x && hr.x < cam.x + cam.w && hr.y > cam.y && hr.y < cam.y + cam.h, 'inside the hedge camera');
+  assert.ok(Math.abs(hr.h - 222) < 1, 'the lawn\'s depth there');
+  // nobody unnamed lands there: seven unnamed cats in the garden
+  const sc = { set: 'garden', cam: 'wide', opts: {}, cast: Array.from({ length: 7 }, (v, i) => ({ who: 'clancat', variant: (i % 6) + 1, pose: 'sit', mood: 'neutral' })), fx: ['day'] };
+  assert.ok(!art.render(sc, { look: LOOK }).svg.includes('translate(' + hr.x + ' ' + hr.y + ')'), 'nobody unnamed at hedge-right');
+  // f013 to f021's casts: our cat sitting, crouched and walking; Chispapaw facing right and left, sitting and crouched;
+  // Tallyheart at hedge-right; none touching, Tallyheart's tail past the frame's edge, her face in it
+  let least = Infinity;
+  for (const you of ['sit', 'walk', 'crouch']) for (const [cp, cf] of [['sit', 'right'], ['sit', 'left'], ['crouch', 'right'], ['crouch', 'left']]) {
+    const cast = [{ who: 'player', at: 'hedge-side', pose: you, mood: 'happy' }, chispa({ at: 'hedge-gap', pose: cp, mood: 'wonder', facing: cf }), { who: 'tallyheart', at: 'hedge-right', pose: 'sit', mood: 'kind', facing: 'left' }];
+    const s = { set: 'garden', cam: 'hedge', opts: {}, cast, fx: ['day'] }, r = art.render(s, { look: LOOK }), lab = you + ' / ' + cp + ' ' + cf;
+    checkRender(r, s, lab);
+    const me = landed(r.svg, cast[0], A['hedge-side']), her = landed(r.svg, cast[1], A['hedge-gap']), t = landed(r.svg, cast[2], hr);
+    assert.ok(me && her && t, lab + ': all three drawn');
+    assert.ok(her.body[0] > me.body[2] + 5, lab + ': our cat and the little cat apart: ' + Math.round(her.body[0] - me.body[2]));
+    assert.ok(t.body[0] > her.body[2] + 5, lab + ': the little cat and Tallyheart apart: ' + Math.round(t.body[0] - her.body[2]));
+    least = Math.min(least, t.body[0] - her.body[2]);
+    assert.ok(t.body[2] > cam.x + cam.w, lab + ': her tail cropped by the frame');
+    assert.ok(t.head[0] > cam.x && r.heads[2] && r.heads[2].x < 96, lab + ': her face in it');
+  }
+  assert.ok(least < 60, 'three in a row at the hedge, the little cat between: the nearest ' + Math.round(least));
+});
+
+// ---------------------------------------------------------------- chapter 12: the gallery
+
+test('the gallery shows chapter 12: the hollow\'s store plan (glowing) and the three sets of quick marks, the den by the moon at 16, the hedge three in a row and its close-up, and the store at 175 and 133', () => {
+  const page = fs.readFileSync(path.join(ROOT, 'dev/gallery.html'), 'utf8');
+  const js = page.slice(page.lastIndexOf('<script>') + 8, page.lastIndexOf('</script>'));
+  const from = js.indexOf('// ---- a sample cast'), to = js.indexOf('// ---- panels');
+  const { EXTRA } = new Function(js.slice(from, to) + '\nreturn { SAMPLES: SAMPLES, EXTRA: EXTRA };')();
+  const ch12 = EXTRA.filter((e) => /^chapter 12: /.test(e[3]));
+  const at = EXTRA.indexOf(ch12[0]);
+  assert.ok(at > 0 && EXTRA.slice(at).every((e) => /^chapter 12: /.test(e[3])), 'appended after every earlier extra, each labelled');
+  const has = (set, cam, t) => ch12.some((e) => e[0] === set && e[1] === cam && t(e[2].opts || {}, e[2].cast || [], e[2].fx || []));
+  assert.ok(has('hollow', 'lesson', (o) => o.store === 500 && o.storeGlow === 'hundreds'), 'the store\'s plan, glowing');
+  assert.ok(has('hollow', 'lesson', (o, c) => o.quick === 3 && c.some((m) => m.who === 'player' && m.at.x === 690 && m.at.y === 892)), 'the three sets of quick marks, our cat at HOL_YOU');
+  assert.ok(has('den', 'inside', (o) => o.moon === 16), 'the den by the moon at 16');
+  assert.ok(has('garden', 'hedge', (o, c) => c.some((m) => m.at === 'hedge-right')), 'three at the hedge');
+  assert.ok(has('garden', 'hedge-close', (o, c) => c[0] && c[0].at === 'hedge-gap'), 'the close-up on the little cat');
+  if (art.vocab.sets.bridge) for (const n of [175, 133]) assert.ok(has('bridge', 'store', (o, c) => o.store === n && c.length === 6), 'the store at ' + n);
+  for (const e of ch12) if (art.vocab.sets[e[0]]) checkRender(art.render({ set: e[0], cam: e[1], opts: e[2].opts || {}, cast: e[2].cast || [], fx: e[2].fx || [] }, { look: LOOK }), { cast: e[2].cast || [] }, e[3]);
 });

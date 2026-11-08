@@ -2126,6 +2126,123 @@
     return { back: back, over: '', front: front };
   }
 
+  // ------------------------------------------------------------------ chapter 12: STORE, the dry den with the store laid out
+
+  // Its own composition, at cat height in the very back of the dark where Sprinkle slept: the old stone leg's big fitted
+  // stones at the left (no gap: Coil is not here), the nook's heap of old stones at the back, the dry floor wide and flat
+  // across the lower half, and the way in at the right, open to the evening. The store lies on the floor, low, in the
+  // middle: the take-aways kit's own picture (PC.art.placeValue, `small`), at one fixed scale (STORE.k) with its top edge
+  // fixed (STORE.top), so 133 lies where 175 lay; its keep is sized for 999. The six spots: `store-left` and `store-right`
+  // at its front corners, `store-back-1` to `-3` behind it, a step back each, and `way-in` by the way in.
+  var STORE = { k: 0.54, top: 650, x: 800 - 800 * 0.54, w999: 1600, h999: 710 };
+  var S_LEG = { face: [[-10, 64], [286, 72], [290, 652], [-10, 662]], side: [[286, 72], [338, 96], [342, 622], [290, 652]], rows: 6, per: 2.6, seed: 1702 };
+  // the dry floor runs out through the way in at the right, where the floor line rises a little to the bank outside
+  var S_FLOOR = 'M-10 600Q300 588 620 594Q940 600 1240 588Q1420 600 1610 620V1010H-10Z';
+  // the way in: an opening in the dark at the right, from under the deck's edge down to the floor
+  var S_WAY = 'M1350 640Q1368 520 1394 330Q1410 210 1440 148L1610 128V640Z';
+  var S_SPOTS = {
+    'store-left': [222, 940, 330, 'right'], 'store-right': [1390, 940, 330, 'left'],
+    'store-back-1': [560, 640, 233, 'right'], 'store-back-2': [800, 625, 228, 'left'], 'store-back-3': [1040, 610, 223, 'left'],
+    'way-in': [1512, 676, 244, 'left']
+  };
+  function storeLight(S) { var ev = evening(S); return ev ? eveCol(S, ev) : mix(S.pal.sun || '#FFF2CC', '#FFE6B0', 0.5); }
+  function drawStore(S) {
+    var p = S.pal, o = S.opts, c = cols(S), back = '', front = '', r = rng(1701), i, x, y, ev = evening(S), lc = storeLight(S);
+    back += rect(-10, -10, 1620, 1020, S.linU([[0, c.dark1], [0.5, c.dark0], [1, mix(c.dark2, c.mudDk, 0.2)]], 0, 0, 0, 1000));
+    // the way in, open at the right: the evening (or the day) outside, the far bank and a few reeds against it
+    var sky = ev === 'gold' ? [mix(p.sky[0], '#FFD9A0', 0.4), mix(p.sun || '#FFE9AE', '#FFC062', 0.4), '#F6A15E'] : ev === 'dusk' ? [mix(p.sky[0], '#B9A3D6', 0.3), mix(p.glow, '#E59AB4', 0.4), '#C98BA8'] :
+      [mix(p.sky[0], '#DCEAF4', 0.4), mix(p.sky[p.sky.length - 1], '#FFF4DA', 0.4), '#E8DCC0'];
+    var way = path(S_WAY, S.linU([[0, sky[0]], [0.55, sky[1]], [1, sky[2]]], 0, 140, 0, 600));
+    way += path('M1350 528Q1480 512 1610 520V560Q1460 552 1350 562Z', mix(c.reedDk, sky[1], 0.45), { opacity: 0.9 }) +
+      path('M1350 560Q1460 550 1610 558V606H1350Z', mix(c.water, sky[2], 0.35), { opacity: 0.9 }) +
+      path('M1350 604Q1460 596 1610 602V640H1350Z', mix(c.mud, sky[2], 0.2));
+    var reeds = '';
+    for (i = 0; i < 9; i++) { x = 1372 + i * 27 + r() * 10; reeds += bladeD(x, 612 + r() * 8, 50 + r() * 40, (r() - 0.6) * 0.5, 6); }
+    way += path(reeds, mix(c.reedDk, c.dark2, 0.35), { opacity: 0.85 });
+    back += g(way, { 'clip-path': S.clip('brsway', path(S_WAY, '#fff')) });
+    // the cross beam further back, and the big beam overhead with warm light along its edge from the way in
+    back += path(quad([[-10, 196], [1340, 176], [1340, 214], [-10, 234]]), c.dark1) + stroke(pts([[-10, 196], [1340, 176]]), c.dark3, 2.5, { opacity: 0.6 });
+    // the heap of old stones at the back, fading up into the dark, with the dry nook in it where Sprinkle slept
+    var NX = 860, NY = 470, rows = [[300, 0.6, 40], [380, 0.7, 50], [460, 0.8, 58], [530, 0.9, 64], [590, 1, 62]];
+    var tones = [mix(c.dark0, c.dark1, 0.6), c.dark1, mix(c.dark1, c.dark2, 0.5), c.dark2, mix(c.dark2, c.dark3, 0.3)];
+    for (var ri = 0; ri < rows.length; ri++) {
+      var ry0 = rows[ri][0], k = rows[ri][1], sz = rows[ri][2], d = '', hi = '', edge = { stroke: c.dark0, 'stroke-width': n(3 + k * 3), 'stroke-linejoin': 'round' };
+      for (x = 250 + r() * 40; x < 1380; x += sz * (1.5 + r() * 0.9)) {
+        y = ry0 + (r() - 0.5) * sz * 0.8;
+        var rx = sz * (0.9 + r() * 0.7), ryy = sz * (0.55 + r() * 0.3);
+        if (Math.pow((x - NX) / 260, 2) + Math.pow((y - NY) / 150, 2) < 0.75) continue;
+        d += path(r() < 0.3 ? blob(x, y, rx, ryy, 6, r, 0.08, 0.12) : blob(x, y, rx, ryy, 9, r, 0.18, 0.3), tones[ri], edge);
+        if (r() < 0.6) hi += 'M' + n(x - rx * 0.6) + ' ' + n(y - ryy * 0.7) + 'Q' + n(x - rx * 0.1) + ' ' + n(y - ryy * 1.02) + ' ' + n(x + rx * 0.45) + ' ' + n(y - ryy * 0.8);
+      }
+      back += d + stroke(hi, c.dark4, 2 + k * 1.2, { opacity: 0.08 + k * 0.22 });
+      if (ri < 2) back += rect(250, ry0 - 70, 1140, 140, S.linU([[0, c.dark0, 0.3 - ri * 0.1], [1, c.dark0, 0]], 0, ry0 - 70, 0, ry0 + 70));
+    }
+    back += ell(NX, NY, 290, 180, S.radU([[0, '#0E1424'], [0.7, c.dark0], [1, c.dark0, 0]], NX, NY, 290));
+    var arch = '', archHi = '';
+    for (i = 0; i < 9; i++) {
+      var a = Math.PI * (1.0 + i * 0.125), ax = NX + Math.cos(a) * 280 + (r() - 0.5) * 20, ay = NY + 40 + Math.sin(a) * 200;
+      arch += path(blob(ax, ay, 50 + r() * 18, 36 + r() * 10, 9, r, 0.15, 0.3), mix(c.dark1, c.dark2, 0.6), { stroke: c.dark0, 'stroke-width': 5, 'stroke-linejoin': 'round' });
+      archHi += 'M' + n(ax - 32) + ' ' + n(ay - 27) + 'Q' + n(ax) + ' ' + n(ay - 43) + ' ' + n(ax + 29) + ' ' + n(ay - 29);
+    }
+    back += arch + stroke(archHi, c.dark4, 2.5, { opacity: 0.3 });
+    // her old bed in the nook's mouth: a few dry leaves and twigs, as she left them
+    back += path(leafD(790, 586, 22, -0.3, 7) + leafD(930, 592, 20, 3.5, 6) + leafD(860, 598, 18, 0.6, 6), mix(c.dark3, '#8A6A3E', 0.3), { opacity: 0.7 }) +
+      stroke('M760 600l60 -8M900 604l52 5', mix(c.dark3, '#6A5038', 0.3), 3.5, { opacity: 0.7 });
+    // the stone leg at the left: big old fitted stones, its far side receding toward the back, its foot on the floor
+    back += path(quad(S_LEG.side), S.linU([[0, c.dark0], [1, mix(c.dark1, c.dark2, 0.3)]], 0, 100, 0, 640));
+    back += oldStones(S, c, S_LEG.side, { rows: S_LEG.rows, per: 1, seed: 1703 }).svg;
+    back += g(oldStones(S, c, S_LEG.face, { rows: S_LEG.rows, per: S_LEG.per, seed: S_LEG.seed }).svg, { 'data-art': 'leg' });
+    // the dry floor, pale and dusty, darker toward the back; nothing lies where the store goes
+    back += path(S_FLOOR, S.linU([[0, mix(c.dark2, '#7E7464', 0.2)], [0.35, mix(c.dark3, '#A09682', 0.2)], [1, mix(c.dark3, '#B0A690', 0.26)]], 0, 590, 0, 1000));
+    var dust = '', leaves = '', st = '', sth = '';
+    var clearOf = function (px, py) { return !(px > STORE.x - 30 && px < STORE.x + STORE.w999 * STORE.k + 30 && py > STORE.top - 20 && py < 1000); };
+    for (i = 0; i < 110; i++) { x = r() * 1600; y = 604 + Math.pow(r(), 1.1) * 400; if (clearOf(x, y)) dust += blob(x, y, 2 + (y - 590) * 0.02 + r() * 4, 1.5 + (y - 590) * 0.01, 6, r, 0.3, 0.3); }
+    for (i = 0; i < 18; i++) { x = r() * 1600; y = 620 + r() * 370; if (clearOf(x, y)) leaves += leafD(x, y, 14 + r() * 14, r() * 6.28, 6); }
+    [[96, 980, 40], [1250, 640, 20], [470, 612, 18], [1560, 960, 30]].forEach(function (q) {
+      st += blob(q[0], q[1], q[2], q[2] * 0.62, 9, r, 0.2, 0.3);
+      sth += 'M' + n(q[0] - q[2] * 0.6) + ' ' + n(q[1] - q[2] * 0.42) + 'q' + n(q[2] * 0.6) + ' ' + n(-q[2] * 0.26) + ' ' + n(q[2] * 1.2) + ' 0';
+    });
+    var fl = path(dust, mix(c.dark3, '#B0A690', 0.2), { opacity: 0.6 }) + path(leaves, mix(c.dark3, '#8A6A3E', 0.3), { opacity: 0.75 }) +
+      path(st, mix(c.dark1, c.dark2, 0.5), { stroke: c.dark0, 'stroke-width': 4, 'stroke-linejoin': 'round' }) + stroke(sth, c.dark4, 2.5, { opacity: 0.4 });
+    fl += path(S_FLOOR, S.linU([[0, c.dark0, 0.55], [0.3, c.dark0, 0.2], [1, c.dark0, 0]], 0, 590, 0, 1000));
+    back += g(fl, { 'clip-path': S.clip('brsfloor', path(S_FLOOR, '#fff')) });
+    // the leg's foot on the floor
+    back += stroke('M-10 660L290 650L342 620', '#070B16', 10, { opacity: 0.5 }) + stroke('M-10 666L290 656', mix(c.dark3, '#A09682', 0.2), 3, { opacity: 0.35 });
+    // the beam overhead
+    back += path(quad([[-10, -10], [1610, -10], [1610, 70], [-10, 104]]), S.linU([[0, c.dark2], [1, c.dark1]], 0, 0, 0, 104));
+    back += path(quad([[-10, 88], [1610, 56], [1610, 74], [-10, 108]]), c.dark2);
+    var riv = '';
+    for (x = 20; x < 1610; x += 44) riv += dot(x, 30 - x * 0.01, 4.5) + dot(x, 82 - x * 0.02, 4);
+    back += path(riv, c.dark3) + stroke(pts([[-10, 108], [1610, 74]]), S.linU([[0, lc, 0], [0.55, lc, 0.2], [1, lc, 0.75]], 0, 0, 1600, 0), 4);
+    // the light from the way in: by day soft over the floor; at sunset long gold shafts reaching right across it, and at
+    // dusk a soft rose light, so the dark still reads (as `under` and `back` take the evening)
+    var eo = ev === 'gold' ? 1 : ev === 'dusk' ? 0.6 : 0.45, wash = ev === 'gold' ? 0.2 : ev === 'dusk' ? 0.08 : 0.07;
+    back += rect(-10, 100, 1620, 920, S.linU([[0, lc, 0], [0.55, lc, wash * 0.3], [1, lc, wash]], 0, 0, 1600, 0), { style: 'mix-blend-mode:screen' });
+    var bands = '';
+    [[612, 650, 646, 716], [700, 760, 786, 892], [826, 900, 950, 1040]].forEach(function (b) { bands += pts([[-10, b[0]], [1610, b[2]], [1610, b[3]], [-10, b[1]]]) + 'Z'; });
+    back += g(path(bands, S.linU([[0, lc, 0.03 * eo], [0.5, lc, 0.18 * eo], [0.85, lc, 0.46 * eo], [1, lc, 0.5 * eo]], 0, 0, 1610, 0)), { 'clip-path': S.clip('brsfloor', path(S_FLOOR, '#fff')), style: 'mix-blend-mode:screen' });
+    back += rect(-10, -10, 1620, 1020, S.radU([[0, lc, 0.34 * eo + 0.06], [0.6, lc, 0.08], [1, lc, 0]], 1500, 760, 720), { style: 'mix-blend-mode:screen' });
+    // the edge of the way in: the last of the dark's rim lit, and its glow spilling on the floor
+    back += stroke('M1350 640Q1368 520 1394 330Q1410 210 1440 148', lc, 5, { opacity: 0.55 });
+    // the store, on the floor in a pool of the light from the way in (option `store`, 1 to 999)
+    var num = K.storeNum ? K.storeNum(o.store) : 0, pic = num ? K.storePic(num) : null;
+    if (pic) {
+      var X = STORE.x, Y = STORE.top, kk = STORE.k, at = K.storeAt(pic, X, Y, kk, { 'data-place': 'floor' });
+      back += ell(800, Y + 150, 600, 600, S.radU([[0, lc, 0.3 * eo + 0.12], [0.65, lc, 0.08], [1, lc, 0]], 800, Y + 150, 600), { style: 'mix-blend-mode:screen', transform: 'translate(0 ' + n(Y + 150) + ') scale(1 0.4) translate(0 ' + n(-(Y + 150)) + ')' });
+      back += ell(800, Y + at.box.h + 6, at.box.w * 0.52, 12, '#070B16', { opacity: 0.25 });
+      back += at.svg;
+      if (o.tap === 'store') back += K.tapBox('store', at.box);
+    }
+    // its keep, whatever the number: the store at 999 at this scale (no lettering on it)
+    if (num) (S.keep = S.keep || []).push({ x: STORE.x, y: STORE.top, w: STORE.w999 * STORE.k, h: STORE.h999 * STORE.k });
+    if (o.drips !== false) back += drip(S, 420, 104, 520, 5, 0.6, c.drop, c.dark4) + drip(S, 1180, 82, 520, 4.6, 1.5, c.drop, c.dark4);
+    if (o.train) back += grit(S, 60, 1320, 100, 500, 20, 1704, mix(c.dark4, '#FFFFFF', 0.2));
+    // dark clods in the near corners, clear of the feet at the front spots
+    front += g(path(blob(-30, 1012, 120, 40, 10, rng(1705), 0.25, 0.3) + blob(1630, 1014, 90, 34, 9, rng(1706), 0.25, 0.3), mix(c.dark1, c.mudDk, 0.3)), { filter: S.shadow('m') });
+    S.weatherClip = S.clip('brsrain', path(S_WAY, '#fff'));
+    return { back: back, over: '', front: front };
+  }
+
   // ------------------------------------------------------------------ the set
 
   function draw(S) {
@@ -2135,6 +2252,7 @@
     if (S.comp === 'paws') return drawPaws(S);
     if (S.comp === 'wall') return drawWall(S);
     if (S.comp === 'print') return drawPrint(S);
+    if (S.comp === 'store') return drawStore(S);
     return drawBank(S);
   }
 
@@ -2149,7 +2267,9 @@
       // chapter 6: Coil's close beats, its own composition (sharing `back`'s anchor names)
       wall: { box: [0, 0, 1600], comp: 'wall' },
       // chapter 7: close on one of Sprinkle's prints in the mud, her paw held over it
-      print: { box: [0, 0, 1600], comp: 'print' }
+      print: { box: [0, 0, 1600], comp: 'print' },
+      // chapter 12: the dry den at the very back of the dark, the store laid out on its floor (drawStore)
+      store: { box: [0, 0, 1600], comp: 'store' }
     },
     anchors: {
       // the riverbank; `rock` and `edge` also show here, small, at the dark's mouth
@@ -2191,7 +2311,12 @@
       // over its heel pad. As the marsh's `raft-edge`, the spot is where the paw hangs (her feet are on the mud
       // above it, the line the cat drawing calls `reach.edge`), so it is `air` and `elev` to scenes.js and the
       // set draws her shadows itself; its height is her size in this close shot. No spot of Tallyheart's.
-      print: { over: A(775, 799, PR.h, 'right', { air: true, elev: true }) }
+      print: { over: A(775, 799, PR.h, 'right', { air: true, elev: true }) },
+      // chapter 12, the store: `store-left` and `store-right` at its front corners (facing it), `store-back-1` to `-3` behind
+      // it, a step back each (side-on, facing either way), and `way-in` by the way in at the right (walking in, facing left).
+      // Back to front: store-back-3, store-back-2, store-back-1, way-in, then store-left and store-right (side by side at the
+      // front, the store between them). Heights are this floor's depth (the store's top edge at y 650, the floor to the frame)
+      store: (function () { var out = {}; Object.keys(S_SPOTS).forEach(function (k) { var q = S_SPOTS[k]; out[k] = A(q[0], q[1], q[2], q[3]); }); return out; })()
     },
     opts: { train: [false, true], eyes: ['none', 'open', 'blink', 'sprinkle'], drag: [true, false], drips: [true, false],
       pebble: ['in', 'out', 'paws'], branch: [true, false], prints: [true, false], pawsIn: [true, false, 'both'], hop: [false, true],
@@ -2201,11 +2326,15 @@
       stones: [false, true],
       // chapter 7: the Tap on the nearest of her prints (`under`, with `prints: true`), and the sum scratched in
       // the mud (`under`: a list of two numbers, compared by value as the pile's rows; the kit's compareLines)
-      tap: ['none', 'print'], compare: [false, [24, 60]],
+      tap: ['none', 'print', 'store'], compare: [false, [24, 60]],
       // chapter 7 (final review): the lettering keeps off Sprinkle's drooping wing (`back`, her `wings` at `dragon`)
       wing: [false, true],
       // chapter 9: the bright shallows and the strip of sand at the bridge's foot (`bank`)
-      shallows: [false, true] },
+      shallows: [false, true],
+      // chapter 12, on `store`: store, a number 1 to 999, the store laid out on the floor (the kit's PC.art.placeValue, `small`,
+      // at one fixed scale with its top edge fixed; 0 or left out: the bare floor), in keep sized for 999; and `tap: 'store'`
+      // (above) the placed picture as the Tap's target, an unpainted <g class="pc-tap pc-tap-store">
+      store: 'number' },
     defaults: { train: false, eyes: 'none', drag: true, drips: true, branch: false, prints: false, pawsIn: false, hop: false, mudPaws: 0, stones: false, tap: 'none', compare: false, wing: false, shallows: false }
   });
 

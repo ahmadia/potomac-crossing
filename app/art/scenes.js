@@ -2009,6 +2009,16 @@
   // sand-right (Tallyheart's body ends at x 739, a cat's facing left at sand-right begins at 855), on
   // the sand at their feet, inside the lesson two-shot (its bottom edge is y 915) and the sand close-up
   var HOLLOW_COMPARE = { x: 742, y: 848, w: 106, size: 18, gap: 9 };
+  // Chapter 12's box on the sand (`store`, `quick`): between our cat's nose and Tallyheart's paws, with Tallyheart at `tree`
+  // facing left (her body from x 971) and our cat sitting at HOL_YOU, { x: 690, y: 892 }, facing right (her body to x 766);
+  // a step behind our cat's feet, where neither cat's shadow lies (hers reaches x 802 at y 878 and below, Tallyheart's x 958
+  // at y 855 and below: the squares, at the picture's left, stay clear of both); clear of the claw marks' keep (x 93 to
+  // 100%, y 11 to 47% of `lesson`) and inside `lesson` (its bottom edge y 915) and `sand`. The store's plan fits it (500, small: 1600 x 458, laid flat: 196 x 56); the quick marks are three sets in it,
+  // right to left (QUICK3: Tallyheart's at her paws, a step further back, then Chispapaw's, then ours at ours, a step
+  // nearer), each a square, a line and a dot at `k` (a square 18 across), the room between two sets half as much again as
+  // between a set's own marks and a step apart in depth, each on its own smoothed patch of sand, so the three read apart
+  var HOLLOW_STORE = { x: 770, y: 820, w: 196, h: 56 };
+  var HOLLOW_QUICK = { k: 0.32, dy: 11 }, QUICK3 = ['tallyheart', 'chispapaw', 'you'];
   // The row on the sand (`bark: 'row'`), oldest first; null is a blank piece. With `cards` (a list:
   // each a picture's key, { picture, mark }, or a story's own entry { id } before the page has
   // resolved it, which is drawn for every cat), those pieces scratched, then `blank` blank pieces
@@ -2078,6 +2088,93 @@
       (S.keep = S.keep || []).push({ x: c[0] - 36, y: c[1] - 24, w: 72, h: 48 });
     }
     return s ? g(s, { 'data-prop': 'bark-' + o.bark }) : '';
+  }
+
+  // Chapter 12: the store as the take-aways kit draws it (PC.art.placeValue, cats.js: squares, rows and loose, `small`,
+  // cropped to its pieces), placed in a scene. storeNum(v): a whole number 1 to 999, else 0 (0, off or anything else: no
+  // store). storePic(n, o): the picture for n, { svg (its inner markup), top, w, h (picture units), label }, or null without
+  // cats.js; o.taken: every piece taken (the kit's pale, dashed pressed places: a plan, never prey); o.glow: a zone lit.
+  // storeAt(pic, x, y, k, more): the picture as one group, its top left at (x, y), k world units a picture unit:
+  // <g data-art="store" data-store data-box aria-label>, and its box in the world.
+  function storeNum(v) { var k = typeof v === 'number' && isFinite(v) ? Math.round(v) : 0; return k >= 1 && k <= 999 ? k : 0; }
+  function storePic(num, o) {
+    if (!num || typeof art.placeValue !== 'function') return null;
+    o = o || {};
+    var h = Math.floor(num / 100), t = Math.floor(num / 10) % 10, u = num % 10;
+    var po = { hundreds: h, tens: t, ones: u, kind: 'store', small: true };
+    if (o.taken) po.taken = { hundreds: h, tens: t, ones: u };
+    if (o.glow === 'hundreds' || o.glow === 'tens') po.glow = o.glow;
+    var svg = String(art.placeValue(po)), vb = /viewBox="([^"]+)"/.exec(svg), lab = /aria-label="([^"]*)"/.exec(svg);
+    if (!vb) return null;
+    var v = vb[1].split(/\s+/).map(Number), pieces = [], zones = {}, m, re = /class="pc-pv-(square|row|loose)[^"]*" data-box="([^"]+)"/g;
+    while ((m = re.exec(svg))) { var b = m[2].split(/\s+/).map(Number); pieces.push({ kind: m[1], zone: m[1] === 'square' ? 'hundreds' : m[1] === 'row' ? 'tens' : 'ones', x: b[0], y: b[1], w: b[2], h: b[3] }); }
+    re = /class="pc-zone" data-zone="(\w+)" x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/g;
+    while ((m = re.exec(svg))) zones[m[1]] = { x: +m[2], y: +m[3], w: +m[4], h: +m[5] };
+    return { svg: svg.slice(svg.indexOf('>') + 1, svg.lastIndexOf('</svg>')), top: v[1], w: v[2], h: v[3], label: lab ? lab[1] : '', num: num, pieces: pieces, zones: zones };
+  }
+  // A picture box (picture units) in the world, for a store placed at (x, y), k a picture unit
+  function storeBox(pic, x, y, k, b) { return { x: x + b.x * k, y: y + (b.y - pic.top) * k, w: b.w * k, h: b.h * k }; }
+  function storeAt(pic, x, y, k, more) {
+    var box = { x: x, y: y, w: pic.w * k, h: pic.h * k }, a = { 'data-art': 'store', 'data-store': pic.num,
+      'data-box': [box.x, box.y, box.x + box.w, box.y + box.h].map(function (v) { return n(v); }).join(' '), 'aria-label': pic.label,
+      transform: 'translate(' + n(x) + ' ' + n(y) + ') scale(' + n4(k) + ')' + (pic.top ? ' translate(0 ' + n(-pic.top) + ')' : '') };
+    if (more) for (var key in more) a[key] = more[key];
+    return { svg: g(pic.svg, a), box: box };
+  }
+  // An unpainted Tap target over a box: <g class="pc-tap pc-tap-NAME" data-tap="NAME"> round an unpainted rect
+  function tapBox(name, b) {
+    return g(rect(b.x, b.y, b.w, b.h, 'none', { 'pointer-events': 'none' }), { 'class': 'pc-tap pc-tap-' + name, 'data-tap': name });
+  }
+  // Chapter 12, on the hollow's `lesson` and `sand` (HOLLOW_STORE): `store`, the store's plan (every piece taken, so five
+  // empty pressed squares for 500), fitted to the box and set in its middle, `storeGlow` its glowing zone, and with `tap:
+  // 'squares'` the whole placed picture as the Tap's target; else `quick` (1 to 3), the quick way to scratch a count, set by
+  // set from the right (QUICK3), Chispapaw's square drawn round, like a cookie (the marks' `round`). Both in keep.
+  // The kit's picture is drawn for a panel of its own; laid in a scene it is some seven times smaller, where its pressed
+  // edges and its glow (a few picture units wide) vanish. So the scene draws each piece's edge again at a weight the panel
+  // shows (in world units), and the glowing zone's pieces each with a soft pulsing glow and a gold edge of their own (the
+  // claw marks' glow), over the kit's own: its shapes, colours and boxes unchanged.
+  function storeEdges(S, pic, x, y, k, glow, groove) {
+    var edges = '', lit = '', halo = '', sw = 2;
+    pic.pieces.forEach(function (q) {
+      var b = storeBox(pic, x, y, k, q), rr = Math.min(b.w, b.h) * 0.14;
+      if (glow && q.zone === glow) {
+        halo += rect(b.x - 2.5, b.y - 2.5, b.w + 5, b.h + 5, '#FFD86E', { rx: rr + 2, opacity: 0.95 });
+        lit += rect(b.x, b.y, b.w, b.h, 'none', { rx: rr, stroke: '#E39A12', 'stroke-width': n(sw * 1.15), 'stroke-dasharray': '4.2 2.6' });
+      } else edges += rect(b.x, b.y, b.w, b.h, 'none', { rx: rr, stroke: groove, 'stroke-width': n(sw), 'stroke-dasharray': '4.2 2.6', opacity: 0.8 });
+    });
+    if (glow && !halo && pic.zones[glow]) {
+      // a zone with nothing in it glows as a whole
+      var z = storeBox(pic, x, y, k, pic.zones[glow]);
+      halo += rect(z.x, z.y, z.w, z.h, '#FFD86E', { rx: 4, opacity: 0.8 });
+    }
+    return (halo ? g(g(halo, { filter: S.blur('storeglow', 3.2) }), { 'class': 'pcs-pulse', 'data-glow': glow }) : '') + edges + (lit ? g(lit, { 'class': 'pcs-pulse' }) : '');
+  }
+  function hollowPlan(S, o) {
+    var B = HOLLOW_STORE, p = S.pal, s = '', num = storeNum(o.store);
+    if (num) {
+      var glow = o.storeGlow === 'hundreds' || o.storeGlow === 'tens' ? o.storeGlow : null, pic = storePic(num, { taken: true, glow: glow });
+      if (!pic) return '';
+      var k = Math.min(B.w / pic.w, B.h / pic.h), x = B.x + (B.w - pic.w * k) / 2, y = B.y + (B.h - pic.h * k) / 2, at = storeAt(pic, x, y, k, { 'data-plan': 'taken' });
+      s += at.svg + storeEdges(S, pic, x, y, k, glow, mix(p.sandDark, p.woodDark, 0.55));
+      if (o.tap === 'squares') s += tapBox('squares', at.box);
+      (S.keep = S.keep || []).push({ x: at.box.x, y: at.box.y, w: at.box.w, h: at.box.h });
+      return g(s, { 'data-prop': 'store' });
+    }
+    var sets = clamp(Math.round(+o.quick || 0), 0, 3);
+    if (!sets || typeof art.quickMarks !== 'function') return '';
+    var Q = HOLLOW_QUICK, one = { hundreds: 1, tens: 1, ones: 1, ground: 'sand' }, sz = art.quickMarks.size(one), w = sz.w * Q.k, h = sz.h * Q.k;
+    // (each set on its own patch of smoothed sand: no pebble beside a mark to be read as another dot)
+    var gap = (B.w - 3 * w) / 2, patch = mix(p.sandLight, '#FFFFFF', 0.3), x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (var i = 0; i < sets; i++) {
+      var cx = B.x + B.w - w / 2 - i * (w + gap), cy = B.y + B.h / 2 + (i - 1) * Q.dy, mo = { hundreds: 1, tens: 1, ones: 1, ground: 'sand' };
+      if (QUICK3[i] === 'chispapaw') mo.round = true;
+      var mb = [cx - w / 2 - 2, cy - h / 2 - 3, cx + w / 2 + 2, cy + h / 2 + 3];
+      s += g(ell(cx, cy + 1, w / 2 + 8, h / 2 + 7, S.radB('quickpatch', [[0, patch, 0.9], [0.72, patch, 0.85], [1, patch, 0]])) + art.kit.quick(cx, cy, Q.k, mo),
+        { 'data-quick': QUICK3[i], 'data-box': mb.map(function (v) { return n(v); }).join(' ') });
+      x0 = Math.min(x0, mb[0]); y0 = Math.min(y0, mb[1]); x1 = Math.max(x1, mb[2]); y1 = Math.max(y1, mb[3]);
+    }
+    (S.keep = S.keep || []).push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+    return g(s, { 'data-prop': 'quick', 'data-sets': sets });
   }
 
   function drawHollow(S) {
@@ -2178,6 +2275,8 @@
         groove: mix(p.sandDark, p.woodDark, 0.55), shine: mix(p.sandLight, '#FFFFFF', 0.4), word: 'sand' });
       if (cmp) { back += cmp.svg; (S.keep = S.keep || []).push(cmp.box); }
     }
+    // chapter 12: the store's plan laid flat on the sand, or the quick marks scratched there, in one fixed box (`lesson`, `sand`)
+    if (S.cam === 'lesson' || S.cam === 'sand') back += hollowPlan(S, o);
     if (o.heap) back += ell(800, 796, 226, 20, p.shade, { opacity: 0.2, 'data-prop': 'heap' });
     // front: grass lip of the hollow
     front += g(tufts(S, 0, 1600, 960, 1010, 40, 160, p.grassNear, p.grassLight, 2.2), { filter: S.shadow('s') });
@@ -3973,7 +4072,12 @@
           // on the lawn just left of the gap, in the hedge close-up too: a second cat at the hedge
           // (chapter 3, the kept path at sunset: Tallyheart in the gap, you with your vole); its height
           // is the lawn's own depth there, so a spot of its own ({ x, y }) sizes exactly as before
-          'hedge-side': A(1205, 726, 222.9)
+          'hedge-side': A(1205, 726, 222.9),
+          // chapter 12: a third cat at the hedge, on the lawn just right of the gap, facing left (Tallyheart, with our cat at
+          // `hedge-side` and the little cat at `hedge-gap` between them: three in a row, none touching), near the hedge
+          // camera's right edge, which crops her tail. Placed (`placed`: never a ground anchor for the depth scale, nor a
+          // spot given to a cast member who names none), so the garden's raw spots size as they always did
+          'hedge-right': A(1562, 724, 222, 'left', { placed: true })
         }
       },
       opts: { sparrows: 'number', lampSparrow: [true, false], dish: [true, false], moth: [true, false], towel: [true, false] }, defaults: { sparrows: 12 }
@@ -4042,7 +4146,15 @@
         bark: [false, 'falling', 'sand', 'row'], cards: 'cards', blank: [0, 1, 2, 3], heap: [false, true],
         // chapter 7: the sum scratched in the sand between the two cats, a short line by 24 and a line two and a
         // half times as long by 60 (`lesson` and `sand`; a list of two numbers, compared by value as the pile's rows)
-        compare: [false, [24, 60]] }, defaults: { marks: 0, compare: false }
+        compare: [false, [24, 60]],
+        // chapter 12, on `lesson` and `sand`, in one fixed box of the sand between our cat and Tallyheart (HOLLOW_STORE, in
+        // keep): store, a number 1 to 999, the store's plan laid flat (the kit's PC.art.placeValue, small, every piece taken:
+        // pale, dashed pressed places, never prey; 500 is five empty squares); storeGlow ('hundreds' or 'tens') its glowing
+        // zone; tap: 'squares' (with store) the whole placed picture as the Tap's target, an unpainted <g class="pc-tap
+        // pc-tap-squares">; quick, 1 to 3, the quick way to scratch a count (a square, a line, a dot, by PC.art.kit.quick),
+        // right to left: Tallyheart's at her paws, then Chispapaw's (her square round, like a cookie: the marks' `round`),
+        // then ours. Every one off (left out) by default; never store and quick on one frame (store wins)
+        store: 'number', storeGlow: [false, 'hundreds', 'tens'], tap: ['none', 'squares'], quick: [0, 1, 2, 3] }, defaults: { marks: 0, compare: false }
     },
     den: {
       label: "the apprentices' den", tod: 'night', draw: drawDen,
@@ -4098,7 +4210,9 @@
       // sky as 14 is; nextNest, the warriors' next nest (the `inside` composition, for the `nest` close-up): a second plain
       // moss ring at the close-up's left edge with its own spot, `next-nest`, and her own nest, its spot and everything on it
       // moved right (NEXT_NEST)
-      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8, 13, 14, 15], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
+      // chapter 12: moon: 16, one evening past chapter 11's 15 (day 1's dusk and night), outside and in the doorway's sky as 15 is
+      // (denMoonAged takes any age from 8; the kit's moon draws 15 to 27 waning, lit on the left): nothing new is drawn
+      opts: { weather: ['clear', 'cloudy', 'storm'], moon: [false, true, 5, 8, 13, 14, 15, 16], drips: [true, false], stone: [false, true, 'nose', 'chin', 'auto'],
         bark: [false, 'auto', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], hidden: [false, true], glass: [false, true], read: 'number',
         miststone: [false, true, 'flash'], nextNest: [false, true] }, defaults: { weather: 'clear' }
     },
@@ -4358,8 +4472,10 @@
   // (`murmurchime`: the tortie named, chapter 3, if cats.js gives her a cast id of her own;
   // chapter 6's ReedClan cats, `sloshbank` and `reedclan`, are cats too: a face from the box, as everyone's)
   // (chapter 9's `thymeleaf`, CrystalClan's medicine cat, and `groveclan`, GroveClan's cats by variant as reedclan's)
+  // (chapter 12's `chispapaw`, the little pillow cat from the garden, her apprentice: a cat, so a `head`-framed close-up is
+  // framed on her head, her face is a fifth of her box, a spot's pose, the lift and her nest's stone take her as a cat)
   var CAT_IDS = { player: 1, tallyheart: 1, glintstar: 1, waffles: 1, grizzled: 1, snorer: 1, mutterer: 1, murmurchime: 1, snorter: 1, clancat: 1, sloshbank: 1, reedclan: 1,
-    thymeleaf: 1, groveclan: 1 };
+    thymeleaf: 1, groveclan: 1, chispapaw: 1 };
   // Bigger than a cat (Sprinkle, heron-sized): drawn in the cats' units like everyone (cats.js gives
   // her a box bigger than a cat's, so a cat's anchor fits her), her face's r from her head box as the
   // otters' and dogs' are, and her shadow under her body rather than her whole box.
@@ -4965,6 +5081,11 @@
     // square, a line, a dot) with their middle at (x, y), for a set to place: the badger's counts by her holes
     // (PC.art.quickMarks in cats.js draws them; '' without it)
     quick: function (x, y, scale, o) { return typeof art.quickMarks === 'function' ? art.quickMarks(x, y, scale, o) : ''; },
+    // chapter 12: the kit's store picture placed in a scene (the hollow's plan, the bridge's store): storeNum(v) (a whole
+    // number 1 to 999, else 0), storePic(n, { taken, glow }) -> { svg, top, w, h, label, pieces, zones } or null without
+    // cats.js, storeAt(pic, x, y, k, attrs) -> { svg, box } (<g data-art="store" data-store data-box aria-label>, its top
+    // left at (x, y), k world units a picture unit), and tapBox(name, box) (an unpainted <g class="pc-tap pc-tap-NAME">)
+    storeNum: storeNum, storePic: storePic, storeAt: storeAt, tapBox: tapBox,
     anchor: A
   };
 

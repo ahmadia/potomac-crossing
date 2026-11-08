@@ -938,6 +938,15 @@ html.big .frame .next-row > .btn.back + .tapline{flex:1 1 0;min-width:0;line-hei
 @media screen and (orientation: portrait){
   html.big .frame[data-kind="hollow"] .counts-pick:not(:has(> .btn:nth-child(10))) .btn.big{padding:.12em .6em}
 }
+/* ---------- chapter 12: Spanish (docs/chapters/12-a-spark-at-the-hedge.spec.md, section 6; app/ui.js rich()) ----------
+   Chispapaw's Spanish, lettered by rich() from the engine's marks: the Spanish in italics (.es, with lang="es"), its
+   English gloss upright on the line under it (.gloss). In a whispered balloon with Spanish the English is upright, the gloss
+   included, and the Spanish stays italic; the dashed border still marks the whisper. Comic Neue has ¡ ¿ á é í ó ú ñ ü; no
+   Spanish is lettered in Andika (a Spanish count's counter is `counter words`). Nothing here reaches a page before chapter
+   12: no line of chapters 1 to 11 has the marks. */
+.es{font-style:italic}
+.gloss{font-style:normal}
+.sb.whisper:has(.es),.ov .btext.whisper:has(.es){font-style:normal}
 /* ---------- the take-aways kit: the take page (docs/take-aways.md v0.3, sections 1, 6 and 8; app/ui.js runTakes) ----------
    The lesson page (.frame[data-kind="lesson"]) with data-mode="take": the column in the question line's place, answered one
    box at a time, ones first. Every rule here is the take page's own (.frame[data-mode="take"], .tcol and its cells), so no

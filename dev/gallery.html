@@ -279,6 +279,11 @@
       paws: { cast: [c('player', 'close', 'sit', 'wonder', { tap: 'paw' }), c('sprinkle', 'above', 'lookdown', 'kind', { holds: 'pebble' })], fx: ['night'] }
     }
   };
+  // chapter 12: the Hollow's staging (f041 to f049) and the store's six (f058 to f061), back to front
+  var G10 = [true, false, false, false, false, false, false, false, false, false];
+  var HOL12 = [c('tallyheart', 'tree', 'sit', 'kind', { facing: 'left' }), c('player', { x: 690, y: 892 }, 'sit', 'happy'), c('chispapaw', 'sunpatch-3', 'sit', 'shy', { facing: 'right' })];
+  var STORE12 = [c('murmurchime', 'store-back-3', 'sit', 'happy'), c('tallyheart', 'store-back-2', 'sit', 'proud'), c('glintstar', 'store-back-1', 'sit', 'kind'),
+    c('grizzled', 'way-in', 'walk', 'stern'), c('player', 'store-left', 'sit', 'happy'), c('chispapaw', 'store-right', 'sit', 'wonder')];
   var EXTRA = [
     ['room', 'glass', { opts: { door: 'closed', reflection: true }, cast: [], fx: ['dusk'] }, 'the look chooser: reflection only'],
     ['den', 'outside', { opts: { weather: 'storm' }, cast: [c('tallyheart', 'doorway', 'lie', 'kind')], fx: ['night', 'lightning'] }, 'storm outside'],
@@ -604,7 +609,24 @@
     ['den', 'doorway', { opts: { weather: 'clear', moon: 15 }, cast: [c('tallyheart', 'doorway', 'peer', 'happy')], fx: ['night', 'stars'] }, 'chapter 11: den doorway, moon: 15'],
     ['den', 'nest', { opts: { weather: 'clear', stone: 'auto', bark: 'auto', hidden: true, glass: true, miststone: true, nextNest: true }, cast: [c('player', 'nest', 'loaf', 'happy'),
       c('murmurchime', 'next-nest', 'curl', 'sleepy', { asleep: true })], fx: ['morning'] }, 'chapter 11: nextNest, the warriors\u2019 nest: the mist stone on her moss, {Murmur}chime asleep at next-nest'],
-    ['pile', 'wide', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 15 }, cast: [], fx: ['night'] }, 'chapter 11: the pile whole by moonlight, moon: 15']
+    ['pile', 'wide', { opts: { rows: [10, 10, 10, 10], scale: 'behind', dug: 'big', moon: 15 }, cast: [], fx: ['night'] }, 'chapter 11: the pile whole by moonlight, moon: 15'],
+    // chapter 12: the hollow's store plan and quick marks (HOL_YOU, our cat's raw spot, { x: 690, y: 892 }), the den by the moon
+    // at 16, three at the hedge and the close-up on the little cat, the camp by day, and the store under the Old Bridge
+    ['hollow', 'lesson', { opts: { marks: 10, glow: G10, store: 500, tap: 'squares' }, cast: HOL12, fx: ['day'] }, 'chapter 12: hollow store: 500, the store\u2019s plan (five empty pressed squares), tap: squares'],
+    ['hollow', 'lesson', { opts: { marks: 10, glow: G10, store: 500, storeGlow: 'hundreds' }, cast: HOL12, fx: ['day'] }, 'chapter 12: storeGlow: hundreds, the five squares glowing'],
+    ['hollow', 'lesson', { opts: { marks: 10, glow: G10, quick: 3 }, cast: HOL12, fx: ['day'] }, 'chapter 12: quick: 3, right to left: Tallyheart\u2019s, Chispapaw\u2019s (round, like a cookie), yours'],
+    ['hollow', 'sand', { opts: { quick: 2 }, cast: [], fx: ['day'] }, 'chapter 12: quick: 2 on the sand close-up'],
+    ['den', 'inside', { opts: { weather: 'clear', moon: 16 }, cast: [c('snorer', 'sleeper-1', 'curl', 'sleepy', { asleep: true }), c('chispapaw', 'sleeper-2', 'loaf', 'sleepy', { facing: 'left' })], fx: ['night'] },
+      'chapter 12: den inside, moon: 16 in the doorway\u2019s sky; Chispapaw in your old nest'],
+    ['den', 'outside', { opts: { weather: 'clear', moon: 16 }, cast: [], fx: ['night', 'stars'] }, 'chapter 12: moon: 16 over the rosebush'],
+    ['garden', 'hedge', { cast: [c('player', 'hedge-side', 'sit', 'happy'), c('chispapaw', 'hedge-gap', 'sit', 'wonder', { facing: 'left' }), c('tallyheart', 'hedge-right', 'sit', 'kind', { facing: 'left' })], fx: ['day'] },
+      'chapter 12: hedge-right: three at the hedge by day, the little cat between, Tallyheart\u2019s tail cropped'],
+    ['garden', 'hedge-close', { cast: [c('chispapaw', 'hedge-gap', 'crouch', 'shy'), c('player', 'hedge-side', 'sit', 'wonder')], fx: ['day'] }, 'chapter 12: hedge-close framed on Chispapaw\u2019s head'],
+    ['camp', 'reveal', { opts: { crowd: true }, cast: [c('glintstar', 'fountain-top', 'stand', 'solemn'), c('tallyheart', 'center', 'sit', 'kind', { facing: 'left' }), c('player', 'entrance', 'sit', 'proud'),
+      c('chispapaw', { x: 470, y: 930 }, 'sit', 'wonder')], fx: ['day'] }, 'chapter 12: the camp by day, crowd: true (drawn by no frame before)'],
+    ['bridge', 'store', { opts: { store: 175 }, cast: STORE12, fx: ['sunset'] }, 'chapter 12: the store at 175 at sunset, the six at its spots (back to front)'],
+    ['bridge', 'store', { opts: { store: 133, tap: 'store' }, cast: STORE12, fx: ['sunset'] }, 'chapter 12: store: 133, tap: store; 133 lies where 175 lay'],
+    ['bridge', 'store', { cast: [], fx: ['dusk'] }, 'chapter 12: the dry den at dusk, the bare floor']
   ];
 
   // ---- panels, rendered when they scroll into view

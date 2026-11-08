@@ -1130,6 +1130,57 @@
       });
       return h;
     }],
+    // chapter 12: Chispapaw (every cat pose and mood, her extras, her collar off), a cat of each id carrying a mouse
+    // (`holds: 'mouse'`), and the quick marks' `round` (her cookie square)
+    chispapaw: ['Chispapaw (chapter 12): our cat’s apprentice, a pointed coat (cream, dark brown points), big ears, blue eyes, a red collar and a gold bell; every cat carrying a mouse; the round marks', function (S) {
+      var h = '<h3>sit and walk, facing right and left; collar: false leaves the collar and the bell off</h3><div class="row">';
+      [[{ pose: 'sit', mood: 'neutral' }, 'sit · neutral'], [{ pose: 'sit', mood: 'neutral', collar: false }, 'sit · collar: false'], [{ pose: 'sit', mood: 'shy', facing: 'left' }, 'sit · shy ←'],
+        [{ pose: 'walk', mood: 'happy' }, 'walk · happy'], [{ pose: 'walk', mood: 'happy', collar: false }, 'walk · collar: false'], [{ pose: 'walk', mood: 'neutral', facing: 'left' }, 'walk · neutral ←']].forEach(function (it) {
+        h += cell(A.character('chispapaw', it[0]), it[1], S * 1.5);
+      });
+      h += '</div><h3>every cat pose (facing right, then left with collar: false)</h3><div class="row">';
+      V.poses.forEach(function (p) { h += cell(A.character('chispapaw', { pose: p, mood: POSE_MOOD[p] || 'neutral' }), p + ' · ' + (POSE_MOOD[p] || 'neutral'), S); });
+      h += '</div><div class="row">';
+      V.poses.forEach(function (p) { h += cell(A.character('chispapaw', { pose: p, mood: POSE_MOOD[p] || 'neutral', facing: 'left', collar: false }), p + ' ← · collar: false', S); });
+      h += '</div><h3>her head on the ground: the collar behind her chin, the bell lying in front of it</h3><div class="row">';
+      [[{ pose: 'crouch', mood: 'sniff' }, 'crouch · sniff'], [{ pose: 'curl', mood: 'sleepy', asleep: true }, 'curl · asleep'], [{ pose: 'flat', mood: 'worried' }, 'flat · worried'],
+        [{ pose: 'tummy', mood: 'happy' }, 'tummy · happy'], [{ pose: 'curl', mood: 'sleepy', asleep: true, facing: 'left' }, 'curl · asleep ←'], [{ pose: 'flat', mood: 'stern', facing: 'left' }, 'flat · stern ←']].forEach(function (it) {
+        h += cell(A.character('chispapaw', it[0]), it[1], S * 1.5);
+      });
+      h += '</div><h3>the extras she takes: tailUp, holds: leaf (in the mouth), flatEars, asleep, loaf (purr: true is the scene’s, drawn by it)</h3><div class="row">';
+      [[{ pose: 'sit', mood: 'happy', tailUp: true }, 'sit · tailUp'], [{ pose: 'stand', mood: 'happy', tailUp: true }, 'stand · tailUp'], [{ pose: 'walk', mood: 'proud', tailUp: true, facing: 'left' }, 'walk · tailUp ←'],
+        [{ pose: 'crouch', mood: 'happy', tailUp: true }, 'crouch · tailUp'], [{ pose: 'walk', mood: 'proud', holds: 'leaf' }, 'walk · holds: leaf'], [{ pose: 'sit', mood: 'sad', flatEars: true }, 'sit · sad · flatEars'],
+        [{ pose: 'loaf', mood: 'sleepy' }, 'loaf · sleepy'], [{ pose: 'loaf', mood: 'sleepy', asleep: true }, 'loaf · asleep'], [{ pose: 'lookup', mood: 'wonder' }, 'lookup · wonder'],
+        [{ pose: 'crouch', mood: 'sniff', facing: 'left' }, 'crouch · sniff ←'], [{ pose: 'stand', mood: 'happy' }, 'stand · happy'], [{ pose: 'lie', mood: 'neutral' }, 'lie']].forEach(function (it) {
+        h += cell(A.character('chispapaw', it[0]), it[1], S);
+      });
+      h += '</div><h3>every mood (sit)</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('chispapaw', { pose: 'sit', mood: m }), m, S); });
+      h += '</div><h3>every mood (walk)</h3><div class="row">';
+      V.moods.forEach(function (m) { h += cell(A.character('chispapaw', { pose: 'walk', mood: m, facing: 'left' }), m, S); });
+      h += '</div><h3>holds: mouse, every cat (walk, sit, stand, crouch; in the mouth, its tail hanging; holdAt: paws, on the ground)</h3>';
+      var MOUSERS = [['player', { look: { fur: 'ginger', marking: 'white-chest', eyes: 'green', sex: 'she' } }, 'our cat'], ['murmurchime', {}, 'murmurchime'], ['grizzled', {}, 'the old tom'], ['clancat', { variant: 2 }, 'clancat 2'], ['chispapaw', {}, 'chispapaw']];
+      ['walk', 'sit', 'stand', 'crouch'].forEach(function (pose) {
+        h += '<div class="row"><div class="rowlabel">' + pose + '</div>';
+        MOUSERS.forEach(function (m, i) { h += cell(A.character(m[0], Object.assign({ pose: pose, mood: 'neutral', holds: 'mouse', facing: i % 2 ? 'left' : 'right' }, m[1])), m[2] + ' · ' + pose + ' · mouse', S); });
+        h += '</div>';
+      });
+      h += '<div class="row"><div class="rowlabel">paws</div>';
+      MOUSERS.forEach(function (m) { h += cell(A.character(m[0], Object.assign({ pose: 'sit', mood: 'proud', holds: 'mouse', holdAt: 'paws' }, m[1])), m[2] + ' · holdAt: paws', S); });
+      var stage = '', k = 0.9, x = 20;
+      function put(r) { stage += '<g transform="translate(' + x + ',' + (230 - r.h * k) + ') scale(' + k + ')">' + r.svg + '</g>'; x += r.w * k * 0.72; }
+      [A.character('player', { pose: 'sit', mood: 'happy', look: { fur: 'cream', marking: 'none', eyes: 'blue', sex: 'she' } }), A.character('chispapaw', { pose: 'sit', mood: 'shy' }),
+        A.character('murmurchime', { pose: 'sit', mood: 'kind', facing: 'left' }), A.character('thymeleaf', { pose: 'sit', mood: 'kind', facing: 'left' }), A.character('waffles', { pose: 'sit', mood: 'happy', facing: 'left' }),
+        A.character('player', { pose: 'sit', mood: 'neutral', facing: 'left', look: { fur: 'white', marking: 'none', eyes: 'blue', sex: 'she' } }),
+        A.character('player', { pose: 'sit', mood: 'neutral', facing: 'left', look: { fur: 'tortie', marking: 'none', eyes: 'blue', sex: 'she' } })].forEach(put);
+      h += '</div><h3>one scale: a cream player’s cat, Chispapaw, Murmurchime, Thymeleaf, Waffles, a white and a tortie player’s cat (her points set her apart)</h3><div class="stage"><svg viewBox="0 0 ' + Math.round(x + 60) + ' 240" width="100%">' + stage + '</svg></div>';
+      // the quick marks: three sets a little apart, right to left (Tallyheart's, Chispapaw's round like a cookie, ours), and one big
+      var q = function (cx, cy, sc, o) { return A.quickMarks(cx, cy, sc, Object.assign({ hundreds: 1, tens: 1, ones: 1, ground: 'sand' }, o)); };
+      h += '<h3>the quick marks: round: true scratches the square round, like a cookie (ours, Chispapaw’s, Tallyheart’s; then hers big beside a square)</h3>' +
+        '<div class="wide"><svg viewBox="0 0 900 200" style="background:#efd6a2;border-radius:12px">' + q(150, 100, 1, {}) + q(450, 100, 1, { round: true }) + q(750, 100, 1, {}) + '</svg></div>' +
+        '<div class="wide"><svg viewBox="0 0 900 260" style="background:#efd6a2;border-radius:12px">' + q(225, 130, 2, {}) + q(675, 130, 2, { round: true }) + '</svg></div>';
+      return h;
+    }],
     sand: ['Sand tallies', function (S) {
       var h = '';
       [[3, 1, 2], [1, 5, 3], [6, 1, 6], [9, 1, 4], [1, 10, 7], [4, 2, 5]].forEach(function (g) {

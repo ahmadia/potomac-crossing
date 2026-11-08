@@ -211,7 +211,9 @@ test('17. plain()\'s minus: U+2212 read as the words table\'s "take away", read 
   assert.equal(U.minus('503 − 278'), '503 take away 278');
   assert.equal(U.minus('7 × 8'), '7 × 8');
   withWords({ takeAway: 'minus' }, () => assert.equal(U.minus('Five − three'), 'Five minus three'));
-  assert.ok(UI_SRC.includes("function plain(s) { return takeMinus(String(s == null ? '' : s).replace(/\\*+/g, '').replace(/×/g, ' times ')); }"));
+  // (chapter 12: plain() also drops the engine's marks for Spanish, « and »; no line of chapters 1 to 11 has one: the spanish
+  // owner's, tests/spanish.test.js)
+  assert.ok(UI_SRC.includes("function plain(s) { return takeMinus(String(s == null ? '' : s).replace(/\\*+/g, '').replace(/×/g, ' times ').replace(/[«»]/g, '')); }"));
   const texts = JSON.stringify(E.chapters(PC.story)) + JSON.stringify(PC.warrior || {});
   assert.equal(texts.indexOf('−'), -1);
 });
@@ -500,15 +502,25 @@ test('17. "Got it!" at the top of the keypad\'s place; the keypad and "Got it!" 
 });
 
 test('nothing a player can reach changes: runLesson, the keypad and go() as in v23; index.html without its take block is v23\'s byte for byte, and every rule of the block is the take page\'s own', () => {
-  assert.equal(sha(fnSrc(UI_SRC, 'runLesson')), 'bb1bc1dcd23ad9e5b34d4d1a0a113faeaef287c9fde99d30ce22f810ed22e3cb');
+  // (chapter 12: runLesson's one guarded statement after E.counts.answer, the Counts page's echo, and the page's promptLines
+  // keeping a Spanish ask's lang: its new hash; the spanish owner's, spec section 6's kit pins, item 1)
+  assert.equal(sha(fnSrc(UI_SRC, 'runLesson')), '8b3c86cdd643e873c79799d533b9496e09c80440295a74ec2307e4f301cf1e7e');
+  assert.ok(fnSrc(UI_SRC, 'runLesson').includes("      var res = E.counts.answer(st, D, typed, ms, now());\n      // (chapter 12: a set's `echo`, Chispapaw's Spanish after the line this answer earned, waiting for Next as a fact's own lines)\n      var echoed = res.correct ? E.countsEcho(def, st, res, teacher) : null; if (echoed) res.balloons = echoed;\n      E.logAnswer(cat, res.entry);"));
   assert.equal(sha(fnSrc(UI_SRC, 'keypadPress')), 'b688cdd8019dd93755828b17f11ccfcf37afecb3cd9069b4ab4232bc450c2350');
   assert.equal(sha(fnSrc(UI_SRC, 'go')), '4ea06e5f48bfda23d68d1a0c5726b3038fdcbc13b3c5549fb8494e38ac6d9254');
   const start = HTML.indexOf('/* ---------- the take-aways kit: the take page'), end = HTML.indexOf('</style>');
   assert.ok(start > 0 && end > start);
   // (book two's block, docs/take-aways.md section 7, follows the take block before </style>: tests/book2-ui.test.js has it)
   const two = HTML.indexOf('/* ---------- book two ('), block = HTML.slice(start, two > start ? two : end);
+  // (chapter 12: its Spanish block stands just before the take block and is cut with it; its selectors are its own list:
+  // the spanish owner's, spec section 6's kit pins, item 1)
+  const es = HTML.indexOf('/* ---------- chapter 12: Spanish (');
+  assert.ok(es > 0 && es < start, 'the Spanish block, before the take block');
+  const esSels = [];
+  HTML.slice(es, start).replace(/\/\*[\s\S]*?\*\//g, '').split('}').forEach((r) => { const sel = r.split('{')[0].trim(); if (sel) sel.split(/,(?![^(]*\))/).forEach((x) => esSels.push(x.trim())); });
+  assert.deepEqual(esSels, ['.es', '.gloss', '.sb.whisper:has(.es)', '.ov .btext.whisper:has(.es)']);
   // module 2's script tags (chapter 12 on: words.js and each chapter's story) are cut before hashing
-  const v23 = (HTML.slice(0, start) + HTML.slice(end)).replace(/<script src="app\/story\/(words|ch(1[2-9]|2\d))\.js"><\/script>\n/g, '');
+  const v23 = (HTML.slice(0, es) + HTML.slice(end)).replace(/<script src="app\/story\/(words|ch(1[2-9]|2\d))\.js"><\/script>\n/g, '');
   assert.equal(sha(v23), 'ed069d652c0b7bea405c26063a7d39cf9459a2a7ac07c01bc22c172fba23a028', 'v23\'s index.html');
   const own = /^(\.frame\[data-mode="take"\]|html:has\(\.frame\[data-mode="take"\]\)|\.tcol|\.thead|\.tmark|\.tdig|\.ttop|\.tbot|\.tsign|\.trule|\.tbox|\.tstruck|\.tshelf|(html\.big )?\.frame\[data-mode="shelf"\]|\.frame\[data-mode="store-reward"\])/;
   const sels = [];
@@ -768,4 +780,56 @@ test('the grown-ups corner: with `takes` data, a "Take-aways" table by kind afte
   assert.ok(og.includes("      if (TC) hollowTxt += '; ' + TC.line;\n      if (TC) hollowTxt = 'One Count at a time ' + hollowTxt;"));
   assert.ok(og.indexOf("var hollowTxt = c.hollow.rounds + ' round'") < og.indexOf("hollowTxt = 'One Count at a time '"));
   assert.ok(og.indexOf("'<p class=\"muted\">No answers yet.</p>') +\n        (TC ? TC.html : '') +") > og.indexOf('E.factTables(c, stories())'));
+});
+
+/* ------------------------------------------------------------------ chapter 12: the take page's echo holds no room */
+
+// (chapter 12's spec, section 6, "The take page's echo", and section 7, item 8: a set's `echo` is read at the problem's end by
+// runTakes' setEcho, never made into the kit's `o.echo` hook, so reserve() hands takeReserve no echo room: the spanish owner's)
+test('chapter 12: a set\'s echo holds no room: takeReserve\'s candidates for every column of chapter 12\'s take lesson and of a Count the store round are the same with and without the set\'s echo; reserve() still passes an echo only for an o.echo hook; the problem\'s end reads the set\'s echo, right or helped', () => {
+  const T12 = (t) => ({ who: 'tallyheart', text: t });
+  const take = { id: 'ch12-take', op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '',
+    facts: [{ a: 254, b: 131, regroup: 'show', prompt: PROMPT, right: [T12('One square, two rows, three loose left.')] },
+      { a: 58, b: 23, prompt: [T12('Now you try, all by yourself. Little take-aways first, then big.'), { who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
+      [76, 42], [475, 132], [368, 145]],
+    echo: { on: [[475, 132]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] } };
+  const bare = (d) => { const o = Object.assign({}, d); delete o.echo; return o; };
+  const fill = (s) => E.fill(s, { name: 'Moon' });
+  const round = E.takeRoundStart(Object.assign(E.blankCat({ now: 1 }), { lessons: {} }), [], 1000, { stories: [] });
+  assert.ok(round.def.echo, 'a store round\'s def has its echo');
+  let n = 0;
+  [[take, take.facts.map((f, i) => i)], [round.def, round.state.queue.map((f, i) => i)]].forEach(([def, list]) => {
+    list.forEach((i) => {
+      const facts = def === take ? [take.facts[i]] : [round.state.queue[i]];
+      const st = T.start(def, { facts, now: 1 }), clock = { t: 1e6 };
+      const p = T.question(st).plan;
+      for (let col = 0; col < p.n; col++) {
+        const q = T.question(st);
+        const a = U.reserve(def, q, { intro: [], fill, echo: false }), b = U.reserve(bare(def), q, { intro: [], fill, echo: false });
+        assert.deepEqual(a, b, def.id + ' ' + q.a + ' − ' + q.b + ' column ' + col);
+        assert.ok(!JSON.stringify(a).includes('"room":true'), 'no echo room');
+        n++;
+        answer(st, def, 1, clock);
+      }
+    });
+  });
+  assert.ok(n >= 13);
+  // the page: reserve() is untouched (an echo room only for a hook), the problem's end reads the set's echo for every finished
+  // problem, right or helped, through setEcho; the kit's stub hook path for a set with no echo exactly as before
+  const page = fnSrc(UI_SRC, 'runTakes');
+  assert.ok(page.includes("      var echoAt = typeof o.echo === 'function' ? function (c) { return echoOf(echoInfo(c)); } : false;\n      takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt }).forEach(function (L) {"));
+  const ri = page.indexOf('    function reserve() {'), rsv = page.slice(ri, page.indexOf('\n    }\n', ri));
+  assert.ok(ri > 0 && !/def\.echo/.test(rsv), 'reserve() never reads a set\'s echo');
+  assert.ok(page.includes("      var e = res.entry ? (def.echo ? setEcho({ problem: true, a: res.entry.a, b: res.entry.b, answer: res.entry.answer, correct: res.entry.correct, helped: res.entry.helped }) : (res.entry.correct ? echoOf({ problem: true, a: res.entry.a, b: res.entry.b, answer: res.entry.answer }) : null)) : null;"));
+  assert.ok(page.includes("    function setEcho(info) { var x = E.takeEcho(def, info, st); return x ? { who: x.who || 'chispapaw', text: fill(x.text), lang: 'es' } : null; }"));
+  assert.ok(page.includes('      var e = echoOf(echoInfo(res.col)), d = spread && !hurry ? TAKE_MS.outline : 0;'), 'the column hook as before');
+  assert.equal((UI_SRC.match(/o\.echo = /g) || []).length, 1, 'o.echo is set only by PC.debug.takes\' stub, never from a set');
+  // and what the end shows: 475 − 132 right, its echo after the kit's end line; helped, the same; its twin, never
+  const end = (correct, a, b) => {
+    const x = E.takeEcho(take, { problem: true, a, b, answer: a - b, correct, helped: !correct }, { log: [] });
+    return U.end(take, { line: correct ? '' : E.TAKE_LINES.miss }, { fill, echo: x ? { who: x.who, text: fill(x.text), lang: 'es' } : null }).lines.map((l) => l.text);
+  };
+  assert.deepEqual(end(true, 475, 132), ['«¡Trescientos cuarenta y tres!»\n(Three hundred forty-three!)']);
+  assert.deepEqual(end(false, 475, 132), [E.TAKE_LINES.miss, '«¡Trescientos cuarenta y tres!»\n(Three hundred forty-three!)']);
+  assert.deepEqual(end(false, 565, 411), [E.TAKE_LINES.miss], 'its twin: no echo');
 });

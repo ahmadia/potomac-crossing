@@ -218,6 +218,22 @@
  * glow, as marks, small), PC.art.sand({ kind: 'quick', … }) (the help's sand drawn the quick way: one new branch, every
  * other call as it was) and PC.art.quickMarks(x, y, scale, o) (the same marks as a group for a set; art.kit.quick).
  *
+ * Chapter 12 (docs/chapters/12-a-spark-at-the-hedge.spec.md, section 4). Appended, every new key off unless asked,
+ * so chapters 1 to 11 draw as they did (tests/cats.test.js: sweep12, and every frame's fingerprint in scenes.test.js):
+ *   - `chispapaw` (the little cat from the garden, our cat's own apprentice; a cat: every cat pose and mood, and the
+ *     cat extras): small and sleek, a pointed coat (a warm pale cream body, dark brown points on the face, the ears,
+ *     the four paws to the wrist and the tail), big ears, sapphire-blue eyes, a narrow red collar with a tiny gold
+ *     bell at the throat. Her coat's keys (`points`, `collar`, `bell`) are hers alone; `collar: false` on her cast
+ *     entry leaves the collar and the bell off. With her head on the ground (curl, flat, tummy) the band and the bell
+ *     are lifted to rest on her lowest point, the band behind her chin and the bell lying in front of it (collarPlace).
+ *     `purr: true` is the scene's, as for every cat.
+ *   - `holds: 'mouse'` on a cat (our cat, Murmurchime, the old tom, the Clan cats, Chispapaw: the Clan's catch carried
+ *     into the store), until now the weasels' only: PC.art.prey's mouse, drawn as preyHeld draws the vole and where
+ *     the vole goes (in the mouth, the mouth full, unless `holdAt` puts it on the ground), its tail hanging below it as
+ *     the weasels' mouse's does (lying along the ground when it is on the ground); reported as `held`.
+ *   - PC.art.quickMarks(x, y, scale, { …, round: true }): each square scratched as a soft wobbly ring in its place
+ *     (Chispapaw's square, "like a cookie"), the same stroke and shine, nothing else; off, every mark as it was.
+ *
  * `svg` is markup for a group (no outer <svg>) drawn in a local box 0..w x 0..h, with the
  * character's feet centred at (w/2, h). Every character is drawn facing right and mirrored for
  * facing left. Ids (clip paths, shapes) carry a module counter, so many characters can share
@@ -495,10 +511,11 @@
   // variant), and Sleet, the eldest dragonet; chapter 8 Hail, the speckled dragonet, and Snip and
   // Snatch, the weasels; chapter 9 Thymeleaf, CrystalClan's medicine cat, Mizzle, the last dragonet,
   // GroveClan's cats (by variant) and the little garden spider in Thymeleaf's den; chapter 10 the grown
-  // Mistscales (by variant: 1 Mama, 2 the eldest)
+  // Mistscales (by variant: 1 Mama, 2 the eldest); chapter 12 Chispapaw, our cat's apprentice (a cat)
   var CAST_IDS = ['player', 'tallyheart', 'glintstar', 'waffles', 'tallone', 'grizzled', 'snorer', 'mutterer', 'snorter', 'clancat', 'sparrow', 'moth',
     'riffle', 'otter', 'dog', 'sprinkle', 'murmurchime', 'reynard', 'squall', 'patience', 'puddle', 'wisp',
-    'coil', 'sloshbank', 'reedclan', 'sleet', 'hail', 'snip', 'snatch', 'thymeleaf', 'mizzle', 'groveclan', 'spider', 'mistscale'];
+    'coil', 'sloshbank', 'reedclan', 'sleet', 'hail', 'snip', 'snatch', 'thymeleaf', 'mizzle', 'groveclan', 'spider', 'mistscale',
+    'chispapaw'];
   var OTHER_POSES = { sparrow: ['perch', 'fluffed'], moth: ['fly'], tallone: ['stand', 'water', 'set-dish'] };
 
   var PRESETS = {
@@ -608,6 +625,19 @@
     { fur: 'grey', coat: 'grove-ginger', over: { base: '#b8703f', line: '#5e3010', light: '#d59464', feat: '#46230b', whisk: '#f7ecdc', nose: '#d28c80', earIn: '#eab0a2' },
       dapple: '#dfa778', eyes: ['green', 'green'], sex: 'she', scale: 0.94, bulk: 0.92 }
   ];
+  // Chapter 12: Chispapaw, our cat's apprentice (a she-cat; a cat: every cat pose and mood). Small and sleek, in a
+  // POINTED coat: a warm pale cream body, lighter on the chest and belly, with dark brown points (`points`, their
+  // colour) on the face (a soft mask, darkest at the nose and muzzle, fading toward the cheeks: pointsMask), the
+  // ears, all four paws to the wrist and the tail; big ears (`earS`); bright sapphire-blue eyes; a little smaller and
+  // slimmer than Murmurchime (her 0.8 and 0.96), slim legs and tail (the slimness and the ears make her young, not
+  // the size alone). A pillow cat's collar (`collar`): narrow and red, a tiny round gold bell at the throat (`bell`),
+  // drawn whenever she is; `collar: false` on her cast entry leaves both off (collarSvg). No look among the nine is
+  // pointed, and her cream body is near the `cream` look and CLAN 3, so the points are what set her apart
+  // (tests/cats.test.js measures them). Each of these keys is new and hers alone, so no other cat draws differently.
+  // Her preset is her size: no frame adds `size` to her.
+  PRESETS.chispapaw = { fur: 'grey', coat: 'chispa', over: { base: '#f4e3c3', line: '#6b4d38', light: '#fdf6e8', feat: '#3b281d', whisk: '#f6ecdc', nose: '#7a5048', earIn: '#a87a6c' },
+    points: '#553a2a', collar: true, bell: true, marks: { chest: '#fcf4e5' }, muzzle: '#553a2a', eyes: ['#3b8df2', '#3b8df2'], sex: 'she',
+    scale: 0.78, bulk: 0.85, legW: 0.84, tailW: 0.8, earS: 1.3 };
 
   function specFromLook(look) {
     look = look || {};
@@ -822,6 +852,8 @@
 
   function earColor(sp, side) {
     var p = sp.pal;
+    // (chapter 12: Chispapaw's ears are points, both of them)
+    if (sp.points) return sp.points;
     if (sp.pattern === 'tortie') return side < 0 ? p.patches[0] : p.base;
     if (sp.pattern === 'calico') return side < 0 ? p.patches[0] : p.patches[1];
     return p.base;
@@ -852,6 +884,56 @@
     });
   }
 
+  // Chapter 12, Chispapaw's points on the face (head coordinates, clipped to the head): a soft mask in three flat
+  // layers, the cheeks a little shaded, round the eyes darker, the nose, muzzle and chin the points' own colour;
+  // her forehead stays cream. The two outer layers are the fade (pc-points-fade), the core is the points.
+  var MASK_OUT = 0.3, MASK_MID = 0.62;
+  function pointsMask(sp, tx) {
+    var p = sp.pal;
+    return '<g class="pc-points-mask">' +
+      '<ellipse class="pc-points-fade" cx="' + N(tx) + '" cy="6" rx="40" ry="26" fill="' + mix(p.base, sp.points, MASK_OUT) + '"/>' +
+      '<ellipse class="pc-points-fade" cx="' + N(tx) + '" cy="4" rx="30" ry="19" fill="' + mix(p.base, sp.points, MASK_MID) + '"/>' +
+      '<ellipse cx="' + N(tx) + '" cy="11" rx="15.5" ry="13.5" fill="' + sp.points + '"/></g>';
+  }
+  // Chapter 12, Chispapaw's collar (head coordinates, drawn before the head, so her chin lies over it): a narrow red
+  // band under the chin, seen from the front as her face is, and a tiny round gold bell at the throat (`bell`).
+  // `place` (collarPlace) lifts either one when her head is on the ground; a lifted bell is drawn after the head
+  // (bellSvg), lying on the ground in front of her chin.
+  var COLLAR_C = { band: '#d8363a', edge: '#8c1f24', bell: '#f2c230', bellLine: '#9c6b12', shine: '#fff3c4' };
+  var COLLAR_Q = [[-27, 21], [4, 41], [33, 20]], COLLAR_D = 'M-27,21Q4,41 33,20', BELL_AT = [5, 36.4], BELL_R = 4.2, COLLAR_HW = 3.5;
+  function collarSvg(sp, place) {
+    var lb = place && place.band, d = COLLAR_D;
+    if (lb) d = 'M' + N(COLLAR_Q[0][0] + lb[0]) + ',' + N(COLLAR_Q[0][1] + lb[1]) + 'Q' + N(COLLAR_Q[1][0] + lb[0]) + ',' + N(COLLAR_Q[1][1] + lb[1]) + ' ' + N(COLLAR_Q[2][0] + lb[0]) + ',' + N(COLLAR_Q[2][1] + lb[1]);
+    var s = '<g class="pc-collar"><path d="' + d + '" stroke="' + COLLAR_C.edge + '" stroke-width="7" fill="none" stroke-linecap="round"/>' +
+      '<path d="' + d + '" stroke="' + COLLAR_C.band + '" stroke-width="4.2" fill="none" stroke-linecap="round"/></g>';
+    if (sp.bell && !(place && place.bell)) s += bellSvg(BELL_AT);
+    return s;
+  }
+  function bellSvg(c) {
+    var x = c[0], y = c[1], r = BELL_R;
+    return '<g class="pc-bell"><circle cx="' + N(x) + '" cy="' + N(y) + '" r="' + N(r) + '" fill="' + COLLAR_C.bell + '" stroke="' + COLLAR_C.bellLine + '" stroke-width="1.3"/>' +
+      '<path d="M' + N(x - r * 0.62) + ',' + N(y + r * 0.28) + 'H' + N(x + r * 0.62) + '" stroke="' + COLLAR_C.bellLine + '" stroke-width="1" stroke-linecap="round"/>' +
+      '<circle cx="' + N(x - r * 0.36) + '" cy="' + N(y - r * 0.38) + '" r="' + N(r * 0.3) + '" fill="' + COLLAR_C.shine + '"/></g>';
+  }
+  // Where they go with her head on the ground (curl, flat, tummy: the chin down, where the band and the bell would
+  // hang below her lowest point, into the ground): each lifted straight up (in the 200 x 200 box) till it rests on
+  // that line, the band behind her chin and the bell lying in front of it. L is the head's whole transform into the
+  // box, `floor` her lowest point there. Returns { band, bell }, each a lift in head coordinates or null (as drawn).
+  function collarPlace(L, floor) {
+    var det = L[0] * L[3] - L[1] * L[2], k = Math.sqrt(Math.abs(det)), low = -1e9;
+    function lift(y) { var d = y - floor; return d > 0.05 ? [L[2] * d / det, -L[0] * d / det] : null; }
+    for (var i = 0; i <= 16; i++) {
+      var t = i / 16, u = 1 - t, q = [u * u * COLLAR_Q[0][0] + 2 * u * t * COLLAR_Q[1][0] + t * t * COLLAR_Q[2][0], u * u * COLLAR_Q[0][1] + 2 * u * t * COLLAR_Q[1][1] + t * t * COLLAR_Q[2][1]];
+      low = Math.max(low, apply(L, q)[1]);
+    }
+    return { band: lift(low + COLLAR_HW * k), bell: lift(apply(L, BELL_AT)[1] + (BELL_R + 0.65) * k) };
+  }
+  // the collar's and the bell's extent in head coordinates (her head box takes them in when they are drawn): the
+  // band's three, then the bell's two
+  var COLLAR_BOX = [[-30, 22], [36, 21], [4, 34.6], [BELL_AT[0] - BELL_R - 1, BELL_AT[1] + BELL_R + 1], [BELL_AT[0] + BELL_R + 1, BELL_AT[1] + BELL_R + 1]];
+  // (stand-ins in the head's markup for the collar and a lifted bell, filled in once she is fitted to her box)
+  var COLLAR_MARK = '\u0001pc-collar\u0001', BELL_MARK = '\u0001pc-bell\u0001';
+
   function headSvg(R, sp, mood, ctx) {
     var p = sp.pal, ff = !!sp.flatFace, tx = ff ? 3 : 4, F = ctx.F;
     var hx = sp.headX || (sp.sex === 'tom' ? 1.06 : 1);
@@ -865,7 +947,7 @@
       // (chapter 9: Thymeleaf's sprig of mint, tucked behind his front ear, drawn first so the ear lies
       // over its stalk; GroveClan's elder's grey hairs at her ear tips; the apprentice's scrap of moss)
       s += '<g transform="translate(' + N(side * ex) + ',' + ey + ') scale(' + side + ',1) rotate(' + N(16 + ea) + ') scale(' + N(es) + ')">' + (sp.mint && vs === 1 ? MINT_BEHIND : '') +
-        '<path d="' + shape + '" fill="' + earColor(sp, side) + '" stroke="' + p.line + '" stroke-width="2.4" stroke-linejoin="round"/>' +
+        '<path' + (sp.points ? ' class="pc-points-ear"' : '') + ' d="' + shape + '" fill="' + earColor(sp, side) + '" stroke="' + p.line + '" stroke-width="2.4" stroke-linejoin="round"/>' +
         '<path d="' + (shape === EAR_NOTCH ? EAR_IN_NOTCH : EAR_IN) + '" fill="' + p.earIn + '"/>' + (sp.earFrost ? earFrostSvg(sp.earFrost) : '') + (sp.mossEar && vs === -1 ? MOSS_SCRAP : '') + '</g>';
     });
     // chapter 3, `puffed: true`: the fur round the face stands on end too
@@ -902,6 +984,8 @@
     if (sp.marks.splash) {
       inner += '<path d="M' + (tx - 3.5) + ',-24Q' + tx + ',-27 ' + (tx + 3.5) + ',-24L' + (tx + 6) + ',2Q' + (tx + 12) + ',10 ' + tx + ',16Q' + (tx - 12) + ',10 ' + (tx - 6) + ',2Z" fill="' + markFill(sp) + '"' + markEdge(sp) + '/>';
     }
+    // chapter 12: Chispapaw's points on the face, over the chin of her pale chest
+    if (sp.points) inner += pointsMask(sp, tx);
     if (sp.fluffy) {
       // a Persian's ruff under the chin
       var rp = [];
@@ -935,6 +1019,8 @@
       var vs = side * F, iris = vs < 0 ? sp.iris[0] : sp.iris[1];
       var cx = tx + side * exd, k = ek * (kind === 'wonder' ? 1.14 : kind === 'scared' ? 1.08 : 1);
       var lid = p.base;
+      // (chapter 12: Chispapaw's lids are her mask's, round the eyes)
+      if (sp.points) lid = mix(p.base, sp.points, MASK_MID);
       if (sp.pattern === 'tortie' || sp.pattern === 'calico') lid = side < 0 ? p.patches[0] : p.base;
       if (sp.pattern === 'calico' && side > 0) lid = p.base;
       // chapter 4, `wink: true`: the front eye shut in a smiling arc, the other open (Tallyheart's
@@ -983,6 +1069,8 @@
     if (ctx.tap) s += tapMark('nose', tx, ny + 10, 10.5);
     s += '<g transform="translate(' + tx + ',' + ny + ')">';
     var ml = p.feat === p.line ? mix(p.line, '#000', 0.1) : p.feat;
+    // (chapter 12: on Chispapaw's dark muzzle her mouth is drawn pale, so it reads)
+    if (sp.points) ml = mix(p.light, sp.points, 0.22);
     if (ctx.mouthFull) {
       // a mouthful (her supper vole): no mouth of the mood's, only the cheeks puffed round it
       s += '<path d="M-13,13Q-15,18 -11,22M13,13Q15,18 11,22" stroke="' + ml + '" stroke-width="1.6" stroke-linecap="round" fill="none" opacity=".55"/>';
@@ -1217,6 +1305,14 @@
     return '<g class="' + (cls || 'pc-held') + '" transform="translate(' + N(cx) + ',' + N(cy) + ') rotate(' + N(rot || 0) + ') translate(' + N(-q.w * k / 2) + ',' + N(-q.h * k / 2) + ') scale(' + N(k) + ')">' + svg + '</g>';
   }
   function voleSvg(c, k, rot, flip) { return preyHeld('vole', c[0], c[1], 46 * k, rot, flip ? 'left' : 'right', 'pc-vole'); }
+  // Chapter 12, `holds: 'mouse'` on a cat (the Clan's frost-time catch, carried into the store): PC.art.prey's mouse,
+  // eyes shut, drawn as preyHeld draws the vole and placed where the vole goes (holdPlace), with its tail hanging
+  // down from it as the weasels' mouse's does (wzMouse); on the ground (holdAt 'paws', 'chin' or 'nose') its tail
+  // lies along the ground behind it.
+  function catMouseSvg(h) {
+    var ground = h.at !== 'mouth' && h.c[1] > STONE_GROUND - 20;
+    return wzMouse(h.c, 46 * h.k, h.rot, ground ? [-1, 0.1] : [-0.2, 1]);
+  }
   // Chapter 4's held thing, `holds: 'bark'`: a curl of pale, papery bark from the Training Tree, about
   // the size of a paw (a blank piece of her Case File; the cards themselves are app/art/cards.js, and
   // these are its colours: the pale face she scratches on, the darker outside where one end still
@@ -1278,8 +1374,11 @@
   var HOLD_RX = { stone: STONE_RX, pebble: 9, vole: 23, bark: 12.5 };
   HOLD_RX.leaf = 16; HOLD_RX.glass = 22;
   HOLD_RX.miststone = 10.5;
-  var HOLD_RY = { leaf: 9, glass: 9 };
+  // (chapter 12: `holds: 'mouse'` on a cat, a mouse carried home: as wide as the vole, its tail hanging below it)
+  HOLD_RX.mouse = 23;
+  var HOLD_RY = { leaf: 9, glass: 9, mouse: 27 };
   function heldSvg(R, h, sx) {
+    if (h.what === 'mouse') return catMouseSvg(h);
     if (h.what === 'miststone') return miststoneSvg(R, h.c, h.k, h.rot, sx, !!h.flash);
     if (h.what === 'leaf') return leafSvg(h.c, h.k, h.rot);
     if (h.what === 'glass') return glassLeafSvg(h.c, h.k, h.rot);
@@ -1300,7 +1399,8 @@
   // pushing her one, `holdAt: 'paws'`); on her back ('tummy') a cat holds nothing either.
   function holdPlace(o, pose, P, hm, sp) {
     if (!HOLD_RX[o.holds] || pose === 'fall' || pose === 'tummy') return null;
-    var what = o.holds, vole = what === 'vole';
+    // (chapter 12: a cat's mouse goes where the vole goes)
+    var what = o.holds, vole = what === 'vole' || what === 'mouse';
     var at = HOLD_AT[o.holdAt] ? o.holdAt : HOLD_MOUTH[pose] || vole ? 'mouth' : 'paws';
     var tx = sp.flatFace ? 3 : 4, k = vole ? 1 : 1.3, rx = HOLD_RX[what];
     // chapter 6: the old tom's pinecone, placed by rules of its own
@@ -1363,6 +1463,8 @@
 
   // Marsh mud on a leg or a paw (ReedClan to the elbows, Sloshbank's paws)
   var MUD_C = { fill: '#5d4431', far: '#523b2a', light: '#8a6b52' };
+  // (chapter 12: Chispapaw's points on a leg start this far down it, top to bottom: the wrist, and the paw)
+  var POINTS_WRIST = 0.6;
   // Several marks to tap under one name (two ears, two eyes, two cheeks): unpainted circles in one
   // group of class pc-tap pc-tap-NAME, whose box the page glows (as tapMark's one)
   function tapMarks(name, list) {
@@ -1524,6 +1626,8 @@
     var P = (o.reach === true && REACH[pose]) || POSES[pose], p = sp.pal, R = new Ren();
     var bulk = sp.bulk || 1, lw = Math.sqrt(bulk) * (sp.legW || 1), scared = mood === 'scared';
     var sx = -2.2 * F, sy = -3.6;
+    // (chapter 12: Chispapaw's points on the far side, a shade darker, as the far legs are)
+    var pointsFar = sp.points ? mix(sp.points, '#000000', 0.16) : null;
     var fl = !!sp.fluffy;
     // chapter 3, `puffed: true`: fur puffed up to twice its size, whatever the face is doing
     var puffed = !!o.puffed;
@@ -1626,14 +1730,19 @@
           '<path d="M' + pt(add(add(mc, ln, mw * 0.3), lax, 7)) + 'l' + N(lax[0] * 6) + ',' + N(lax[1] * 6) + '" stroke="' + MUD_C.light + '" stroke-width="1.6" stroke-linecap="round" opacity=".6"/>';
       }
       if (sp.dapple && !far) { var dc = lerp2(top, bot, 0.3); inn += dappleSvg(sp.dapple, [[dc[0], dc[1], top[2] * 0.62, 16]]); }
+      // chapter 12: Chispapaw's points, the leg from the wrist down (its edge a soft curve), every leg
+      if (sp.points) {
+        var pc0 = lerp2(top, bot, POINTS_WRIST), pw = Math.max(top[2], bot[2]) + 6, pa0 = add(pc0, ln, pw), pa1 = add(pc0, ln, -pw);
+        inn += '<path class="pc-points-leg" d="M' + pt(pa0) + 'Q' + pt(add(pc0, lax, -3)) + ' ' + pt(pa1) + 'L' + pt(add(pa1, lax, 90)) + 'L' + pt(add(pa0, lax, 90)) + 'Z" fill="' + (far ? pointsFar : sp.points) + '"/>';
+      }
       var legFill = sp.darkLegs ? mix(p.base, p.line, far ? 0.34 : 0.24) : far ? p.farFill : p.base;
       return R.part(fl ? scallop(g.pts, 0.6) : g.d, { fill: legFill, dark: far ? p.shade2 : p.shade, line: p.line, sx: sx * 0.6, sy: sy * 0.6, inner: inn });
     }
     function paw(pp, far, up) {
-      var col = sp.mud ? (far ? MUD_C.far : MUD_C.fill) : sp.marks.paws ? (far ? mix(markFill(sp), p.line, 0.12) : markFill(sp)) : (far ? p.farFill : p.base);
+      var col = sp.points ? (far ? pointsFar : sp.points) : sp.mud ? (far ? MUD_C.far : MUD_C.fill) : sp.marks.paws ? (far ? mix(markFill(sp), p.line, 0.12) : markFill(sp)) : (far ? p.farFill : p.base);
       var rx = 9.6 * Math.sqrt(lw) * (sp.pawK || 1), ry = 5.8 * Math.sqrt(lw) * (sp.pawK || 1);
       var e = ellipseG(pp[0] + (up ? 0 : 1), pp[1], up ? ry * 1.15 : rx, up ? rx * 0.82 : ry, 0, 6);
-      var s = '<path d="' + (fl ? scallop(e.pts, 0.6) : e.d) + '" fill="' + col + '" stroke="' + p.line + '" stroke-width="2.2"/>';
+      var s = '<path' + (sp.points ? ' class="pc-points-paw"' : '') + ' d="' + (fl ? scallop(e.pts, 0.6) : e.d) + '" fill="' + col + '" stroke="' + p.line + '" stroke-width="2.2"/>';
       if (up) {
         s += '<g fill="' + p.earIn + '"><ellipse cx="' + N(pp[0]) + '" cy="' + N(pp[1] + 1.4) + '" rx="3.6" ry="2.8"/><circle cx="' + N(pp[0] - 4) + '" cy="' + N(pp[1] - 3.6) + '" r="1.5"/><circle cx="' + N(pp[0]) + '" cy="' + N(pp[1] - 4.6) + '" r="1.5"/><circle cx="' + N(pp[0] + 4) + '" cy="' + N(pp[1] - 3.6) + '" r="1.5"/></g>';
       } else if (!far && !fl) {
@@ -1732,8 +1841,10 @@
       for (var q = 0; q <= 6; q++) cl.push(tl.at(q / 6).p);
       tIn2 += '<path d="M' + pt(cl[0]) + cr(cl) + '" stroke="' + mix(p.base, p.line, 0.6) + '" stroke-width="4" fill="none" stroke-linecap="round"/>';
     }
+    // (chapter 12: Chispapaw's tail is a point, dark from its root: a fade there in flat steps read as a tabby's rings)
     var tailD = (scared || puffed) && !fl ? spiky(tl.pts, puffed ? 6 : 3.6) : (fl ? scallop(tl.pts, 0.66) : tl.d);
-    var tailSvg = R.part(tailD, { fill: p.base, dark: p.shade, line: p.line, sx: sx * 0.6, sy: sy * 0.6, inner: tIn2 });
+    var tailSvg = R.part(tailD, { fill: sp.points || p.base, dark: sp.points ? mix(sp.points, '#000000', 0.28) : p.shade, line: p.line, sx: sx * 0.6, sy: sy * 0.6, inner: tIn2 });
+    if (sp.points) tailSvg = '<g class="pc-points-tail">' + tailSvg + '</g>';
     var tailFront = !!(P.front && P.front[mode]);
 
     // ----- head placement
@@ -1769,11 +1880,13 @@
     if (o.buzz) hctx.buzz = true;
     if (o.dragonfly) hctx.dragonfly = true;
     if (o.tap === 'nose' || o.tap === true || (o.tap == null && o.asleep && o.snail && o.snail !== 'in')) hctx.tap = true;
-    if (hold && (hold.what === 'vole' || hold.what === 'pinecone' || hold.what === 'leaf') && hold.at === 'mouth') hctx.mouthFull = true;
+    if (hold && (hold.what === 'vole' || hold.what === 'pinecone' || hold.what === 'leaf' || hold.what === 'mouse') && hold.at === 'mouth') hctx.mouthFull = true;
     // chapter 6, ReedClan's wet sheen on the head too
     if (sp.sheen) hctx.sheen = true;
     if (P.openEyes) hctx.openEyes = true;
-    var head = '<g transform="' + mStr(hm) + '">' + headSvg(R, sp, mood, hctx) + (hold && hold.at === 'mouth' ? heldSvg(R, hold, sx) : '') + '</g>';
+    // chapter 12: Chispapaw's collar and bell, unless her cast entry says `collar: false`
+    var collar = !!sp.collar && o.collar !== false;
+    var head = '<g transform="' + mStr(hm) + '">' + (collar ? COLLAR_MARK : '') + headSvg(R, sp, mood, hctx) + (collar ? BELL_MARK : '') + (hold && hold.at === 'mouth' ? heldSvg(R, hold, sx) : '') + '</g>';
 
     // ----- chapter 6, Sloshbank's wet belly (`wet`): the fur along it clumped in wet points, a few
     // drops falling off it, and one on the ground under him, whatever the pose
@@ -1887,8 +2000,11 @@
     // bow, and the whole cat. The scenes use them to frame close-ups and keep props off the face.
     var hbAll = hb.slice();
     if (sp.bow) { var bwx = -F * 24; hbAll.push([bwx - 21, -40], [bwx + 21, -40], [bwx - 21, -15], [bwx + 21, -15]); }
-    var headBox = boxOf(hbAll.map(function (q) { return apply(M, apply(hm, q)); }));
     var bounds = boxOf(pts.map(function (q) { return apply(M, q); }));
+    // (chapter 12: her collar and bell, placed now she is fitted: lifted off the ground with her head on it)
+    var cplace = collar ? collarPlace(mul(M, hm), bounds.y1) : null;
+    if (collar) hbAll = hbAll.concat(COLLAR_BOX.map(function (q, i) { var d = i < 3 ? cplace.band : sp.bell ? cplace.bell : null; return d ? [q[0] + d[0], q[1] + d[1]] : q; }));
+    var headBox = boxOf(hbAll.map(function (q) { return apply(M, apply(hm, q)); }));
     // ----- chapter 6, the things to tap, marked for the page (unpainted): the pinecone held, her
     // raised forepaw (else the front paw on the ground: a pat), her two ears
     if (o.tap === 'pinecone' && heldC && hold.what === 'pinecone') body += tapMark('pinecone', heldC[0], heldC[1], heldR + 4);
@@ -1918,6 +2034,7 @@
       body = '<ellipse class="pc-starglow" cx="' + N((x0 + x1) / 2) + '" cy="' + N((y0 + y1) / 2) + '" rx="' + N((x1 - x0) / 2 + 9) + '" ry="' + N((y1 - y0) / 2 + 8) + '" fill="url(#' + gid + ')"/>' +
         '<g class="pc-starry" opacity=".86">' + body + '<g class="pc-stars" fill="#ffffff" stroke="#fff3b8" stroke-width=".8" stroke-linejoin="round">' + stars + '</g></g>';
     }
+    if (collar) body = body.replace(COLLAR_MARK, collarSvg(sp, cplace)).replace(BELL_MARK, sp.bell && cplace.bell ? bellSvg([BELL_AT[0] + cplace.bell[0], BELL_AT[1] + cplace.bell[1]]) : '');
     var svg = '<g transform="' + mStr(M) + '"><defs>' + R.defs + '</defs>' + body + '</g>';
     var paws = [];
     (P.far || []).concat(P.near || []).forEach(function (L) { if (L.paw) paws.push(apply(M, L.paw)); });
@@ -8959,7 +9076,8 @@
   //   first `lit` of them are taken (lit gold and struck), the rest glow softly, waiting. `ground` as GROUNDS.
   // PC.art.quickMarks(x, y, scale, o) -> '<g …>…</g>', o = { hundreds, tens, ones, ground }: the same marks as one
   //   group for a set to place (scenes.js's art.kit.quick delegates here), its middle at (x, y); at scale 1 a
-  //   square is 56 across, as in the sand. PC.art.quickMarks.size(o) -> { w, h } at scale 1.
+  //   square is 56 across, as in the sand. PC.art.quickMarks.size(o) -> { w, h } at scale 1. Chapter 12: `round: true`
+  //   draws each square as a soft wobbly ring in its place (Chispapaw's, "like a cookie"), the same stroke, nothing else.
 
   var PV_W = 1600, PV_ZONES = ['hundreds', 'tens', 'ones'];
   var PV = {
@@ -9060,9 +9178,20 @@
     return 'M' + N(x + w) + ',' + N(y + w * 2) + 'Q' + N(x + L / 2) + ',' + N(y - w) + ' ' + N(x + L - w) + ',' + N(y + w) +
       'Q' + N(x + L + w) + ',' + N(y + L / 2) + ' ' + N(x + L - w * 2) + ',' + N(y + L - w) + 'Q' + N(x + L / 2) + ',' + N(y + L + w) + ' ' + N(x + w) + ',' + N(y + L - w * 1.5) + 'Q' + N(x - w) + ',' + N(y + L / 2) + ' ' + N(x + w) + ',' + N(y + w * 2) + 'Z';
   }
+  // (chapter 12, the quick marks' `round`: Chispapaw's square, scratched round like a cookie: a soft wobbly ring in
+  // the square's own box, its radius wavering gently round it (two slow waves, so it never reads as a polygon), one
+  // closed stroke and nothing else)
+  function qkRingD(b) {
+    var cx = b.x + b.w / 2, cy = b.y + b.h / 2, r = b.w * 0.49, q = [];
+    for (var i = 0; i < 16; i++) {
+      var a = Math.PI * 2 * i / 16, k = 1 + 0.03 * Math.sin(2 * a + 0.7) + 0.018 * Math.sin(3 * a + 2.1);
+      q.push([cx + Math.sin(a) * r * k, cy - Math.cos(a) * r * k]);
+    }
+    return crClosed(q);
+  }
   function qkLineD(b) { var cx = b.x + b.w / 2, L = b.h; return 'M' + N(cx + L * 0.07) + ',' + N(b.y) + 'Q' + N(cx + L * 0.02) + ',' + N(b.y + L / 2) + ' ' + N(cx - L * 0.07) + ',' + N(b.y + L); }
   function qkDotR(b) { return Math.min(b.w, b.h) * 0.3; }
-  // one mark: `what` 'square' | 'line' | 'dot'; `how` '' (scratched), 'lit' (taken: gold), 'pale' (the store's taken:
+  // one mark: `what` 'square' | 'line' | 'dot' (or 'ring', chapter 12's round square); `how` '' (scratched), 'lit' (taken: gold), 'pale' (the store's taken:
   // pale and dashed); `strike` a slash through it (crossed: spent by a spread, or taken)
   function qkMark(G, what, b, L, how, strike) {
     var sw = qkStroke(L), lit = how === 'lit', pale = how === 'pale', s = '', col = lit ? '#e39a12' : G.groove, sh = lit ? '#fff4c2' : G.shine;
@@ -9074,7 +9203,7 @@
       s += pale ? '<circle cx="' + N(c[0]) + '" cy="' + N(c[1]) + '" r="' + N(c[2]) + '" fill="' + G.shine + '" stroke="' + G.groove + '" stroke-width="' + N(sw * 0.32) + '" stroke-dasharray="' + N(Math.PI * c[2] / 4.5) + ' ' + N(Math.PI * c[2] / 9) + '"' + op + '/>' :
         '<circle cx="' + N(c[0]) + '" cy="' + N(c[1]) + '" r="' + N(c[2]) + '" fill="' + col + '"' + op + '/><circle cx="' + N(c[0] - c[2] * 0.3) + '" cy="' + N(c[1] - c[2] * 0.3) + '" r="' + N(c[2] * 0.32) + '" fill="' + sh + '"' + op + '/>';
     } else {
-      var d = what === 'square' ? qkSquareD(b) : qkLineD(b);
+      var d = what === 'square' ? qkSquareD(b) : what === 'ring' ? qkRingD(b) : qkLineD(b);
       if (lit) s += '<path d="' + d + '" stroke="#ffd25e" stroke-width="' + N(sw * 2.8) + '" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".55"/>';
       s += '<path d="' + d + '" stroke="' + col + '" stroke-width="' + N(sw) + '" stroke-linecap="round" stroke-linejoin="round" fill="none"' + dash + op + '/>';
       if (!pale) s += '<path d="' + d + '" transform="translate(' + N(sw * 0.4) + ',0)" stroke="' + sh + '" stroke-width="' + N(sw * 0.3) + '" stroke-linecap="round" fill="none" opacity=".9"/>';
@@ -9382,9 +9511,10 @@
     groups.forEach(function (g) { var gh = Math.max.apply(null, g.map(function (b) { return b.y + b.h; })); g.forEach(function (b) { b.y += (H - gh) / 2; }); });
     return { W: W, H: H, L: L, marks: [].concat.apply([], groups) };
   }
+  // (chapter 12: `round: true` scratches each square round, like a cookie: qkRingD; off, every mark as it was)
   art.quickMarks = function (x, y, scale, o) {
-    var lay = quickMarksLayout(o), G = GROUNDS[(o || {}).ground] || GROUNDS.sand, k = +scale > 0 ? +scale : 1, s = '';
-    lay.marks.forEach(function (b) { s += qkMark(G, b.what, b, lay.L, '', false); });
+    var lay = quickMarksLayout(o), G = GROUNDS[(o || {}).ground] || GROUNDS.sand, k = +scale > 0 ? +scale : 1, s = '', round = !!o && o.round === true;
+    lay.marks.forEach(function (b) { s += qkMark(G, round && b.what === 'square' ? 'ring' : b.what, b, lay.L, '', false); });
     return '<g class="pc-quick" data-art="quick" transform="translate(' + N((+x || 0) - lay.W * k / 2) + ' ' + N((+y || 0) - lay.H * k / 2) + ') scale(' + N3(k) + ')">' + s + '</g>';
   };
   art.quickMarks.size = function (o) { var lay = quickMarksLayout(o); return { w: lay.W, h: lay.H }; };
@@ -9418,10 +9548,12 @@
   // (chapter 9: tap wing, Sprinkle's sore wing, the rub Tap; holds mint, Riffle's bunch from the Holt)
   // (chapter 10: holds miststone, our cat's, with `flash` its blue and green flash and `tap: 'stone'` on it;
   // `tap: 'nose'` on the six dragonets; `wet` on Reynard, Snip and Snatch: no new tap name)
+  // (chapter 12: `collar: false`, Chispapaw's only: no collar, no bell; absent, she wears them. `holds: 'mouse'`, in
+  // the list since chapter 8 for the weasels, is drawn on a cat too: no new hold)
   vocab.extras = { tuck: [true], asleep: [true, 'half'], snail: [true, 'in'], buzz: [true], dragonfly: [true], glow: [true],
     tap: ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes', 'fish', 'mist', 'tail', 'leaf', 'wing'],
     holds: ['stone', 'pebble', 'vole', 'bark', 'fish', 'fish2', 'pole', 'pinecone', 'pebbles', 'string', 'leaf', 'glass', 'mouse', 'mint', 'miststone'], reach: [true], starry: [true], grass: [true],
-    tailUp: [true], wet: [true], flash: [true] };
+    tailUp: [true], wet: [true], flash: [true], collar: [false] };
   vocab.clanVariants = [1, 2, 3, 4, 5, 6];
   // who takes a `variant`, and which: clancat 1-6 (coats), otter 1-3 (1 the old ferry otter), dog 1-3 (1 shaggy, 2 spotty, 3 tiny),
   // reedclan 1-4 (1 the ReedClan she-cat, 2 the young ReedClan tom, 3 and 4 two more marsh coats),

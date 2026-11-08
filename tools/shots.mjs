@@ -49,6 +49,21 @@
  *                                                         three balloons), a worked spread's steps (take:show#n). @keys=…
  *                                                         types on the take page's keypad as on a lesson's. DRY=1 on
  *                                                         take:first prints what Read to me would say, in its order
+ *   node tools/shots.mjs OUTDIR es:echo es:take es:skip es:worked es:worked:tens es:try es:try:pointer es:store
+ *                                                         chapter 12's Spanish (its spec, section 6), each opened on the
+ *                                                         test cat through the page's own PC.debug.spanish (section 2's
+ *                                                         sets inline, or PC.story.ch12's own once it has them; nothing
+ *                                                         saved): the warm-up's echo after 7 × 8 right; the end of
+ *                                                         475 − 132 with its echo; the paw thing after its fifth tap;
+ *                                                         the worked example's first column and its tens (the school
+ *                                                         words); 58 − 23's three balloons, and its ones-first pointer;
+ *                                                         the store's 175 − 42. ES_TARGETS, apart from TAKE_TARGETS
+ *   VOICES=es node tools/shots.mjs …                      the page's voice list made up (SILENT's stand-in: an es-MX
+ *                                                         Paulina, an en-US Samantha and the eight novelty voices);
+ *                                                         VOICES=none (the default) has none. Either way each utterance
+ *                                                         is noted (its text, lang and voice), never spoken. DRY=1 also
+ *                                                         prints UI.voices.plan's rows for both lists wherever a screen
+ *                                                         has Spanish: each part, its voice, its lang
  *   node tools/shots.mjs --lock                           is the screen locked (so: a session a shot)? no Safari
  *   node tools/shots.mjs --blank a.png b.png              is each PNG a blank screenshot (one flat colour)? no Safari
  *   node tools/shots.mjs --page                           the game's page as this tool serves it to Safari (the
@@ -286,9 +301,9 @@ Object.defineProperty(shim,'length',{get:function(){return keys().length;}});
 try{Object.defineProperty(window,'localStorage',{configurable:true,get:function(){return shim;}});}catch(e){}})();</script>`;
 /* No sound, whatever the page does (the header's SILENT BY CONSTRUCTION): put first in the <head> of
  * every HTML page this tool serves, so it has run before the game's first script. */
-const SILENT = `<script>(function(w){var said=w.__shotsSaid=[];function noop(){}
-function quiet(u){said.push(String(u&&u.text!=null?u.text:''));setTimeout(function(){try{if(u&&typeof u.onstart==='function')u.onstart({type:'start',utterance:u});if(u&&typeof u.onend==='function')u.onend({type:'end',utterance:u});}catch(e){}},0);}
-var mute={speaking:false,pending:false,paused:false,onvoiceschanged:null,speak:quiet,cancel:noop,pause:noop,resume:noop,getVoices:function(){return [];},addEventListener:noop,removeEventListener:noop,dispatchEvent:function(){return false;}};
+const SILENT = `<script>(function(w){var said=w.__shotsSaid=[];var heard=w.__shotsHeard=[];var voices=[];function noop(){}
+function quiet(u){said.push(String(u&&u.text!=null?u.text:''));heard.push({text:String(u&&u.text!=null?u.text:''),lang:String((u&&u.lang)||''),voice:u&&u.voice&&u.voice.name?String(u.voice.name):null});setTimeout(function(){try{if(u&&typeof u.onstart==='function')u.onstart({type:'start',utterance:u});if(u&&typeof u.onend==='function')u.onend({type:'end',utterance:u});}catch(e){}},0);}
+var mute={speaking:false,pending:false,paused:false,onvoiceschanged:null,speak:quiet,cancel:noop,pause:noop,resume:noop,getVoices:function(){return voices.slice();},addEventListener:noop,removeEventListener:noop,dispatchEvent:function(){return false;}};
 var names=['speak','cancel','pause','resume'];
 try{var real=w.speechSynthesis;if(real&&real!==mute)names.forEach(function(k){try{real[k]=k==='speak'?quiet:noop;}catch(e){}});}catch(e){}
 try{var proto=w.SpeechSynthesis&&w.SpeechSynthesis.prototype;if(proto)names.forEach(function(k){try{proto[k]=k==='speak'?quiet:noop;}catch(e){}});}catch(e){}
@@ -298,7 +313,20 @@ try{if(w.HTMLMediaElement&&w.HTMLMediaElement.prototype)w.HTMLMediaElement.proto
 try{if(w.addEventListener)w.addEventListener('play',function(e){try{e.target.muted=true;e.target.pause();}catch(x){}},true);}catch(e){}
 try{w.Audio=function(){var a=w.document.createElement('audio');a.muted=true;return a;};}catch(e){}
 ['AudioContext','webkitAudioContext'].forEach(function(k){try{Object.defineProperty(w,k,{configurable:false,get:function(){return undefined;},set:noop});}catch(e){try{w[k]=undefined;}catch(e2){}}});
+w.__shotsVoices=function(l){voices=Array.isArray(l)?l.slice():[];try{if(typeof mute.onvoiceschanged==='function')mute.onvoiceschanged({type:'voiceschanged'});}catch(e){}return true;};
 w.__shotsSilent=true;})(window);</script>`;
+/* Chapter 12: the stand-in's voice list (VOICES=es: an es-MX Paulina, an en-US Samantha and the eight novelty voices iPads
+ * carry; VOICES=none, the default: none, as before), for what Read to me would say with a Spanish voice and without. A
+ * voice is only a name and a lang here: nothing is ever spoken. */
+const ES_NOVELTY = ['Eddy', 'Flo', 'Grandma', 'Grandpa', 'Reed', 'Rocko', 'Sandy', 'Shelley'];
+const VOICE_LISTS = {
+  none: [],
+  es: [{ name: 'Paulina', lang: 'es-MX', voiceURI: 'Paulina', localService: true, default: false }, { name: 'Samantha', lang: 'en-US', voiceURI: 'Samantha', localService: true, default: true }]
+    .concat(ES_NOVELTY.map((n, i) => ({ name: n + (i % 2 ? ' (Spanish (Mexico))' : ' (Spanish (Spain))'), lang: i % 2 ? 'es-MX' : 'es-ES', voiceURI: n, localService: true, default: false })))
+};
+const VOICES = process.env.VOICES === 'es' ? 'es' : 'none';
+// runs in the page (and in every pane of a sheet) once its test cat is set up: the stand-in's list, its voiceschanged said
+const VOICES_JS = `return window.__shotsVoices ? window.__shotsVoices(arguments[0]) : 'this page has no voice stand-in';`;
 /* The page as this tool serves it: SILENT first in its head, whatever the file (a page with no
  * <head> gets it at its very top: silent comes before tidy). */
 function silenced(html) {
@@ -440,6 +468,17 @@ const TAKES = `var what = arguments[0], i = arguments[1];
   var r = i == null ? PC.debug.takes(what) : PC.debug.takes(what, { step: i });
   return r === true ? true : String(r);`;
 
+/* Chapter 12's Spanish targets (the header), in an object of their own: TAKE_TARGETS and the `takes` job stay as they are.
+ * Each opens a screen through the page's PC.debug.spanish(what), which builds it on the test cat from section 2's sets
+ * inline (or PC.story.ch12's own) and saves nothing; dev/webkit/run.mjs's `spanish` job reads this table and SPANISH. */
+const ES_TARGETS = { 'es:echo': 'echo', 'es:take': 'take', 'es:skip': 'skip', 'es:worked': 'worked', 'es:worked:tens': 'worked:tens', 'es:try': 'try', 'es:try:pointer': 'try:pointer', 'es:store': 'store' };
+// runs in the page: the Spanish screen `arguments[0]`
+const SPANISH = `var what = arguments[0];
+  if (!PC.debug || typeof PC.debug.spanish !== 'function') return 'no Spanish in this build (PC.debug.spanish)';
+  if (!PC.debug.cat()) return 'no cat';
+  var r = PC.debug.spanish(what);
+  return r === true ? true : String(r);`;
+
 /* Chapter 10's card pick (docs/chapters/10-the-gathering.spec.md, section 6): a pick frame's target with
  * `#pick` (the pick screen open on its claim), `#pick3` (three wrong picks, none of the first claim's right
  * cards nor its own: its right cards she holds then glow) or `#pickfull` (open, on the fullest file). The
@@ -542,6 +581,8 @@ async function session(fn) {
     await run(STILL);
     const ok0 = await run(SETUP, [CAT, FIXTURE, READ]);
     if (ok0 !== true) throw new Error('setting up the test cat: ' + ok0);
+    // (chapter 12: VOICES=es, the stand-in's made-up voice list; nothing is spoken either way)
+    if (VOICES !== 'none') { const vo = await run(VOICES_JS, [VOICE_LISTS[VOICES]]); if (vo !== true) throw new Error('VOICES: ' + vo); }
     if (EXTRA) {
       // more cats for "Who's playing?": added beside the test cat, which stays current
       const more = await run(`
@@ -608,6 +649,7 @@ async function sheet(S, run, four) {
   const res = await run(`
     var out = [], frames = document.querySelectorAll('iframe'), targets = arguments[0], still = arguments[1], fixture = arguments[2];
     var setup = arguments[3], cat = arguments[4], read = arguments[5], warriorJs = arguments[6], warriors = arguments[7], pickJs = arguments[8], picks = arguments[9], takesJs = arguments[10], takes = arguments[11];
+    var spanishJs = arguments[12], spanish = arguments[13], voiceList = arguments[14];
     for (var i = 0; i < frames.length; i++) {
       var w = frames[i].contentWindow, PC = w.PC, t = targets[i].split('@'), target = t[0];
       try {
@@ -615,7 +657,10 @@ async function sheet(S, run, four) {
         // the test cat, set up in the pane's own window (its PC, its storage), as SETUP does a page
         var made = new w.Function(setup).apply(null, [cat, fixture, read]);
         if (made !== true) { out.push(targets[i] + ': setting up the test cat: ' + made); continue; }
-        if (takes[i]) {
+        if (voiceList && w.__shotsVoices) w.__shotsVoices(voiceList);
+        // chapter 12: the Spanish screens (PC.debug.spanish)
+        if (spanish[i]) { var sd = new w.Function(spanishJs).apply(null, [spanish[i]]); if (sd !== true) { out.push(targets[i] + ': ' + sd); continue; } }
+        else if (takes[i]) {
           // the take-aways kit: the pane's own test cat's Counts first (take:first's re-sit), then the screen
           var tm = takes[i].recipe ? new w.Function(warriorJs).apply(null, [takes[i].recipe]) : true;
           var td = tm === true ? new w.Function(takesJs).apply(null, [takes[i].what, takes[i].step]) : tm;
@@ -641,7 +686,8 @@ async function sheet(S, run, four) {
     return out;`, [four, '(function(){' + STILL.replace(/return true;$/, '') + '})()', FIXTURE, SETUP, CAT, READ, WARRIOR,
     four.map(t => { const [c0, f0] = t.split('@')[0].split('#')[0].split(':'); return f0 && c0 === 'warrior' ? warriorTarget(f0, t.split('@')[0].split('#')[1]) : null; }), PICK,
     four.map(t => { const [t0, a0] = t.split('@')[0].split('#'); return t0.includes(':') && !t0.startsWith('warrior:') && !TAKE_TARGETS[t0] ? pickTarget(a0) : null; }), TAKES,
-    four.map(t => { const [t0, a0] = t.split('@')[0].split('#'); return takeTarget(t0, a0); })]);
+    four.map(t => { const [t0, a0] = t.split('@')[0].split('#'); return takeTarget(t0, a0); }), SPANISH, four.map(t => ES_TARGETS[t.split('@')[0].split('#')[0]] || null),
+    VOICES !== 'none' ? VOICE_LISTS[VOICES] : null]);
   res.forEach((r) => { if (r !== true) console.error(r); });
   if (four.some(t => t.includes('@'))) {
     await sleep(450);   // past each page's double-tap guard
@@ -682,6 +728,8 @@ async function sheet(S, run, four) {
   console.log(file);
 }
 
+// a row of what Read to me says: [lang voice] text
+function planRow(r) { return '[' + (r.lang || '?') + ' ' + (r.voice || 'no voice') + '] ' + r.text; }
 /* One target on its own page: open it (and tap a button on it), then shoot. */
 async function shoot(S, run, t) {
   const [target0, ...clicks] = t.split('@');
@@ -697,6 +745,9 @@ async function shoot(S, run, t) {
     const made = await run(WARRIOR, [tt.recipe]);
     if (made !== true) { console.error(t + ': ' + made); return; }
   }
+  // chapter 12: the Spanish screens (PC.debug.spanish)
+  const et = ES_TARGETS[target] || null;
+  if (!et && /^es:/.test(target)) { console.error(t + ': chapter 12’s Spanish targets: ' + Object.keys(ES_TARGETS).join(', ')); return; }
   // the Warrior Counts: its own test cat's Counts first, then the screen (PC.debug.warrior)
   const wt = ch === 'warrior' ? warriorTarget(fid, anchor) : null;
   if (ch === 'warrior') {
@@ -710,7 +761,7 @@ async function shoot(S, run, t) {
     const made = await run(PICK, [pt.recipe]);
     if (made !== true) { console.error(t + ': ' + made); return; }
   }
-  const ok = tt ? await run(TAKES, [tt.what, tt.step]) : wt ? await run('return PC.debug.warrior(arguments[0], arguments[1]);', [wt.what, wt.page]) : await run(target === 'file' ? 'if (!PC.debug.cat()) return "no cat"; return PC.debug.file(arguments[1]);' : screen
+  const ok = tt ? await run(TAKES, [tt.what, tt.step]) : wt ? await run('return PC.debug.warrior(arguments[0], arguments[1]);', [wt.what, wt.page]) : et ? await run(SPANISH, [et]) : await run(target === 'file' ? 'if (!PC.debug.cat()) return "no cat"; return PC.debug.file(arguments[1]);' : screen
     ? 'if (!PC.debug.cat()) PC.debug.go("who"); else PC.debug.go(arguments[0], { from: "hub" });' +
       'var a = arguments[1] && document.getElementById("book-" + arguments[1]); if (arguments[1] && !a) return "no page " + arguments[1]; if (a) a.scrollIntoView({ block: "start" }); return true;'
     : 'var r = PC.debug.goto(arguments[1], arguments[0]); return r === arguments[1] || r;', screen || target === 'file' ? [target, anchor || null] : [ch, fid]);
@@ -736,8 +787,12 @@ async function shoot(S, run, t) {
     // Read to me on (PC.debug.speech; nothing is said)
     const lines = await run('return PC.debug && PC.debug.speech ? PC.debug.speech() : null;');
     if (lines) console.log(t + ' (Read to me would say; it is off): ' + lines.join(' | '));
+    // (chapter 12: where the screen has Spanish, UI.voices.plan's rows with a Spanish voice and with none: each part, its voice)
+    const plans = await run('if (!PC.debug || !PC.debug.plan) return null; return [PC.debug.plan(arguments[0]), PC.debug.plan([])];', [VOICE_LISTS.es]);
+    if (plans && JSON.stringify(plans[0]) !== JSON.stringify(plans[1])) ['es', 'none'].forEach((k, i) => console.log(t + ' (VOICES=' + k + ', the plan): ' + plans[i].map(planRow).join(' | ')));
     // READ=1: what Read to me would have read on this screen (the stand-in's notes; nothing was said)
     if (READ) console.log(t + ' (read to me, unspoken): ' + (await run('return (window.__shotsSaid || []).slice(-40);')).join(' | '));
+    if (READ) console.log(t + ' (read to me, unspoken, by voice): ' + (await run('return (window.__shotsHeard || []).slice(-40);')).map(planRow).join(' | '));
     return;
   }
   if (DUMP) {

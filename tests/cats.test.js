@@ -5118,6 +5118,15 @@ const CH9_SWEEP = new Promise((resolve) => {
     'process.stdout.write(JSON.stringify({ n: out.length, sha: require("crypto").createHash("sha256").update(out.join("\\n")).digest("hex") }));';
   require('child_process').execFile(process.execPath, ['-e', code], { maxBuffer: 1 << 20 }, (err, stdout, stderr) => resolve({ err, stdout, stderr }));
 });
+// (chapter 12) the same sweep with each cat's `holds: 'mouse'` taken out of its call (the weasels keep theirs): before
+// chapter 12 a cat's mouse drew nothing, so this must give the shipped tree's hash
+const CH9_SWEEP_NO_CAT_MICE = new Promise((resolve) => {
+  const code = 'const PC = require(' + JSON.stringify(require('path').join(__dirname, '..', 'app', 'art', 'cats.js')) + ');\n' +
+    'const A = Object.assign(Object.create(PC.art), { character: (who, o) => { if (o && o.holds === "mouse" && who !== "snip" && who !== "snatch") { o = Object.assign({}, o); delete o.holds; delete o.holdAt; } return PC.art.character(who, o); } });\n' +
+    'const out = (' + sweep9.toString() + ')(A);\n' +
+    'process.stdout.write(JSON.stringify({ n: out.length, sha: require("crypto").createHash("sha256").update(out.join("\\n")).digest("hex") }));';
+  require('child_process').execFile(process.execPath, ['-e', code], { maxBuffer: 1 << 20 }, (err, stdout, stderr) => resolve({ err, stdout, stderr }));
+});
 
 const MIZZLE_POSES = ['curl', 'yawn', 'sit', 'wake', 'pawup'];
 const SPIDER_POSES = ['spin', 'wave'];
@@ -5166,9 +5175,15 @@ test('chapter 8’s own cast and Counts art are unchanged by chapter 9 (Hail, th
   const r = await CH9_SWEEP;
   assert.ok(!r.err, 'the sweep ran: ' + (r.err && r.err.message) + ' ' + r.stderr);
   const got = JSON.parse(r.stdout);
-  // taken 2026-10-24 by running sweep9 on chapter 8's shipped snapshot in a fresh process
+  // taken 2026-10-24 by running sweep9 on chapter 8's shipped snapshot in a fresh process. Changed on purpose 2026-11-07,
+  // chapter 12 (section 4, `holds: 'mouse'` for cats): a cat's mouse, which drew nothing, is drawn now (504 of its
+  // records, every one a cat holding a mouse; checked record by record against main at 4771cf2). Every other record is
+  // as shipped: with the cats' mice taken out of their calls, the sweep gives the shipped hash (CH9_SWEEP_NO_CAT_MICE).
   assert.strictEqual(got.n, 8279, 'as many drawings as the shipped tree made');
-  assert.strictEqual(got.sha, '017d4186c573d3bfa604982cb07d7c3affc3eebcbb11db72315d72dcb83a56ca');
+  assert.strictEqual(got.sha, '6bd596cc334bb79b04590c254bf778cd88af0302801a99d7350d4cc57ad6da08');
+  const was = await CH9_SWEEP_NO_CAT_MICE;
+  assert.ok(!was.err, 'the sweep ran: ' + (was.err && was.err.message) + ' ' + was.stderr);
+  assert.deepStrictEqual(JSON.parse(was.stdout), { n: 8279, sha: '017d4186c573d3bfa604982cb07d7c3affc3eebcbb11db72315d72dcb83a56ca' }, 'but for the cats’ mice, as shipped');
   // and here: chapter 9's new keys are the only way in. A tap or a hold nobody of theirs draws changes nothing
   const same = (a, b, m) => assert.strictEqual(strip(A.character(a[0], a[1]).svg), strip(A.character(b[0], b[1]).svg), m);
   same(['player', { pose: 'sit', holds: 'mint', tap: 'wing', look: LOOK8 }], ['player', { pose: 'sit', look: LOOK8 }], 'a cat holds no mint and has no wing to tap');
@@ -5804,7 +5819,8 @@ const viaM = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5
 const inBox10 = (b, w, h, pad) => b.x0 >= -(pad || 0) && b.y0 >= -(pad || 0) && b.x1 <= w + (pad || 0) && b.y1 <= h + (pad || 0);
 
 test('chapter 10 vocabulary: mistscale after the rest; its poses; Puddle’s eyes, Reynard’s bow and swim, the weasels’ swim and hidepaws; the variants; the hold miststone; the extras wet and flash (earlier ids never move)', () => {
-  assert.deepStrictEqual(A.vocab.cast.slice(29), ['thymeleaf', 'mizzle', 'groveclan', 'spider', 'mistscale']);
+  // (chapter 12 appends chispapaw and the extra collar after these, so the two lists are pinned as prefixes: earlier ids never move)
+  assert.deepStrictEqual(A.vocab.cast.slice(29, 34), ['thymeleaf', 'mizzle', 'groveclan', 'spider', 'mistscale']);
   assert.deepStrictEqual(A.vocab.poses.slice(15), ['run'], 'no new cat pose: the leaders and the crowd take every cat pose');
   assert.deepStrictEqual(A.vocab.moods, MOODS6, 'no new mood');
   assert.deepStrictEqual(A.vocab.otherPoses.mistscale, MS_POSES);
@@ -5817,7 +5833,7 @@ test('chapter 10 vocabulary: mistscale after the rest; its poses; Puddle’s eye
   assert.deepStrictEqual(A.vocab.variants.mistscale, [1, 2]);
   assert.deepStrictEqual(A.vocab.extras.holds.slice(14), ['miststone']);
   assert.deepStrictEqual(A.vocab.extras.tap, ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes', 'fish', 'mist', 'tail', 'leaf', 'wing'], 'no new tap name: nose and stone are chapter 5’s and 6’s');
-  assert.deepStrictEqual(Object.keys(A.vocab.extras).slice(12), ['wet', 'flash']);
+  assert.deepStrictEqual(Object.keys(A.vocab.extras).slice(12, 14), ['wet', 'flash']);
   assert.deepStrictEqual(A.vocab.extras.wet, [true]);
   assert.deepStrictEqual(A.vocab.extras.flash, [true]);
   // the published lists are copies
@@ -6207,4 +6223,454 @@ test('dev/gallery-cats.html: chapter 10’s sections draw (the Mistscales, the l
     assert.ok(!/undefined|NaN/.test(page), id);
     assert.ok(new RegExp('<small title="' + pose + '[ ·"]').test(page), id + ': ' + pose);
   }
+});
+
+// ================================================================== chapter 12
+// docs/chapters/12-a-spark-at-the-hedge.spec.md, section 4: Chispapaw (`chispapaw`), our cat's apprentice, a cat in a
+// pointed coat with a collar and a bell; her preset's keys (`points`, `collar`, `bell`) hers alone; the extra
+// `collar: false`. Step 1b (the contact sheet): her coat drawn and measured in `sit` and `walk`; then the build: every
+// cat pose and mood (her collar lifted off the ground with her head on it), her extras, the cats' `holds: 'mouse'` and
+// the quick marks' `round` (her cookie square).
+
+// Every existing cat's drawing, unchanged by chapter 12: the sweep below, run on chapter 11's tree with the take-aways
+// kit merged (main at 4771cf2, its cats.js, before chapter 12's art) in a fresh process of its own, gave the count and
+// the hash in the test (taken 2026-11-07); run here the same way, today's cats.js must give the same. It covers every
+// cat cast member drawn by buildCat (the player in every fur, the CrystalClan presets, the Clan cats, ReedClan's and
+// GroveClan's coats, the starry cat) in every cat pose with four moods each, both facings, the cat extras, and Counts
+// pictures with cats in them. It reads the vocabulary as constants and holds nothing chapter 12 changes on purpose
+// (no `holds: 'mouse'` on a cat: the build draws it). If any of this art is ever changed on purpose, take a new hash
+// and say so.
+function sweep12(A) {
+  const out = [];
+  const MOODS11 = ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn', 'sad', 'shy'];
+  const POSES11 = ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer', 'pawup', 'tummy', 'situp', 'run'];
+  const FURS11 = ['black', 'white', 'silver-tabby', 'brown-tabby', 'ginger', 'cream', 'grey', 'tortie', 'calico'];
+  const MARKS11 = ['none', 'white-paws', 'white-chest', 'back-stripe', 'nose-splash'], EYES11 = ['green', 'amber', 'blue', 'copper', 'odd'];
+  const s = (x) => String(x).replace(/pcs?[0-9a-z]+-/g, '');
+  const rec = (r) => out.push(s(r.svg), JSON.stringify([r.w, r.h, r.head, r.headBox || null, r.bounds || null, r.held || null, r.chestTop || null, r.reach || null]));
+  const cats = [];
+  for (const who of ['tallyheart', 'glintstar', 'waffles', 'grizzled', 'snorer', 'mutterer', 'murmurchime', 'snorter', 'sloshbank', 'thymeleaf']) cats.push([who, {}]);
+  FURS11.forEach((fur, i) => cats.push(['player', { look: { fur, marking: MARKS11[i % 5], eyes: EYES11[i % 5], sex: i % 2 ? 'tom' : 'she' } }]));
+  for (let v = 1; v <= 6; v++) cats.push(['clancat', { variant: v, look: { fur: FURS11[v + 1], marking: 'none', eyes: 'green', sex: 'she' } }]);
+  for (let v = 1; v <= 5; v++) cats.push(['reedclan', { variant: v }], ['groveclan', { variant: v }]);
+  cats.push(['clancat', { starry: true }]);
+  let k = 0;
+  for (const [who, base] of cats) for (const pose of POSES11) for (let j = 0; j < 4; j++) {
+    k++;
+    rec(A.character(who, Object.assign({ pose, mood: MOODS11[(k * 5 + j) % 16], facing: k % 2 ? 'left' : 'right' }, base)));
+  }
+  const EX = [{ tailUp: true, tap: 'tail' }, { asleep: true }, { asleep: 'half' }, { claws: true, tap: 'paw' }, { tap: 'ears', flatEars: true }, { tap: 'nose' }, { puffed: true },
+    { holds: 'stone' }, { holds: 'leaf', holdAt: 'mouth' }, { holds: 'vole' }, { tuck: true, claws: true }, { glow: true }, { collar: false }, { reach: true }];
+  for (const [who, base] of cats.slice(0, 16)) for (const pose of ['sit', 'walk', 'crouch', 'curl', 'stand', 'pawup']) for (const ex of EX) rec(A.character(who, Object.assign({ pose, mood: 'kind' }, base, ex)));
+  // the Counts pictures that draw cats: the 4s with a who of cast cats, the 5s' forepaws, cats in rows
+  const LOOK = { fur: 'cream', marking: 'white-chest', eyes: 'blue', sex: 'she' };
+  for (let g = 1; g <= 6; g++) out.push(s(A.countsPicture({ table: 4, per: 4, groups: g, highlight: g * 2, look: LOOK, who: [{ who: 'player' }, { who: 'murmurchime' }, { who: 'thymeleaf' }, { who: 'clancat', variant: 3 }, { who: 'snorer' }, { who: 'grizzled' }] })));
+  for (let g = 1; g <= 10; g += 3) out.push(s(A.countsPicture({ table: 2, per: 2, groups: g, highlight: g, totals: true, next: true, look: LOOK })));
+  for (let g = 1; g <= 10; g += 3) out.push(s(A.countsPicture({ table: 5, per: 5, groups: g, thing: 'claw', highlight: g * 2, look: LOOK })));
+  out.push(JSON.stringify([MOODS11, POSES11, FURS11]));
+  return out;
+}
+const runSweep12 = (file) => new Promise((resolve) => {
+  const code = 'const PC = require(' + JSON.stringify(file) + ');\n' +
+    'const out = (' + sweep12.toString() + ')(PC.art);\n' +
+    'process.stdout.write(JSON.stringify({ n: out.length, sha: require("crypto").createHash("sha256").update(out.join("\\n")).digest("hex") }));';
+  require('child_process').execFile(process.execPath, ['-e', code], { maxBuffer: 1 << 20 }, (err, stdout, stderr) => resolve({ err, stdout, stderr }));
+});
+const CH12_SWEEP = runSweep12(require('path').join(__dirname, '..', 'app', 'art', 'cats.js'));
+// any sweep function, run as sweep12 is on today's cats.js (chapter 12's own fingerprint, below)
+const runSweepOf = (fn) => new Promise((resolve) => {
+  const code = 'const PC = require(' + JSON.stringify(require('path').join(__dirname, '..', 'app', 'art', 'cats.js')) + ');\n' +
+    'const out = (' + fn.toString() + ')(PC.art);\n' +
+    'process.stdout.write(JSON.stringify({ n: out.length, sha: require("crypto").createHash("sha256").update(out.join("\\n")).digest("hex") }));';
+  require('child_process').execFile(process.execPath, ['-e', code], { maxBuffer: 1 << 20 }, (err, stdout, stderr) => resolve({ err, stdout, stderr }));
+});
+const SWEEP12_N = 7311, SWEEP12_SHA = 'f6f44b65bf01dec7110304e8811507d692e3c8e87e026c15bfaa8b8b407056b9';
+
+// her coat (cats.js PRESETS.chispapaw): the body's cream and the points' dark brown
+const CHISPA_BASE = '#f4e3c3', CHISPA_POINTS = '#553a2a', CHISPA_EYE = '#3b8df2';
+// the pass conditions of section 4, measured with this file's lum: her points at least this much darker than her body
+const POINTS_DARKER = 80;
+// her body apart from every look's fur and every CLAN coat: at least this far in RGB (the rule Thymeleaf's coat
+// follows, 38 there), and either this far apart in lum or plainly another hue (its warmth, red less blue, this far apart)
+const COAT_APART = 40, LUM_APART = 40, WARMTH_APART = 30;
+const warmth = (hex) => { const [r, , b] = rgbOf(hex); return r - b; };
+const apartInLumOrHue = (a, b) => Math.abs(lum(a) - lum(b)) >= LUM_APART || Math.abs(warmth(a) - warmth(b)) >= WARMTH_APART;
+// the two coats her cream body is near, named here: the `cream` look and CLAN 3 (cream). The points carry her apart
+// from them (and the story builder never puts a CLAN 3 cat beside her)
+const NEAR_HER = ['cream', 'clancat 3'];
+// every fill a drawing's points carry: { ear, mask, fade, leg, paw, tail }
+function pointFills(svg) {
+  const fills = (re) => [...svg.matchAll(re)].map((m) => m[1].toLowerCase());
+  return {
+    ear: fills(/<path class="pc-points-ear" d="[^"]*" fill="(#[0-9a-fA-F]{6})"/g),
+    mask: fills(/<g class="pc-points-mask">(?:<ellipse class="pc-points-fade"[^>]*\/>)*<ellipse cx="[-\d.]+" cy="[-\d.]+" rx="[\d.]+" ry="[\d.]+" fill="(#[0-9a-fA-F]{6})"\/><\/g>/g),
+    fade: fills(/<ellipse class="pc-points-fade"[^>]* fill="(#[0-9a-fA-F]{6})"/g),
+    leg: fills(/<path class="pc-points-leg" d="[^"]*" fill="(#[0-9a-fA-F]{6})"/g),
+    paw: fills(/<path class="pc-points-paw" d="[^"]*" fill="(#[0-9a-fA-F]{6})"/g),
+    // the tail's own fill (its second use: the first is its shadow)
+    tail: fills(/<g class="pc-points-tail"><use href="#[^"]+" fill="#[0-9a-fA-F]{6}"\/><g clip-path="url\(#[^)]+\)"><use href="#[^"]+" x="[-\d.]+" y="[-\d.]+" fill="(#[0-9a-fA-F]{6})"/g)
+  };
+}
+// the poses drawn and checked at step 1b, and how many legs and paws each shows
+const POSES12 = { sit: { legs: 2, paws: 3 }, walk: { legs: 4, paws: 4 } };
+// section 4's four, where her points must read at panel size (crouch: the nose in the gap; curl: asleep)
+const COAT_POSES = Object.assign({}, POSES12, { crouch: { legs: 2, paws: 4 }, curl: { legs: 0, paws: 2 } });
+// the poses with her head on the ground, where the band and the bell are lifted to rest on her lowest point
+const HEAD_DOWN = ['curl', 'flat', 'tummy'];
+const collarOf = (svg) => (svg.match(/<g class="pc-collar">[^]*?<\/g>/) || [''])[0];
+const bellOf = (svg) => (svg.match(/<g class="pc-bell">[^]*?<\/g>/) || [''])[0];
+const noCollar = (svg) => svg.replace(collarOf(svg), '').replace(bellOf(svg), '');
+// a matrix(...) as six numbers, and a point through it
+const matOf = (s) => s.split(',').map(Number);
+// the bell in the 200 x 200 box: its middle and radius, through the head's matrix (the group the collar opens) and the drawing's
+function bellInBox(svg) {
+  const M = matOf(svg.match(/^<g transform="matrix\(([^)]+)\)">/)[1]);
+  const hm = matOf(svg.match(/<g transform="matrix\(([^)]+)\)">(?:<g class="pc-collar">)/)[1]);
+  const b = svg.match(/<g class="pc-bell"><circle cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)"/);
+  const c = viaM(M, ...viaM(hm, +b[1], +b[2]));
+  const k = Math.sqrt(Math.abs(M[0] * M[3] - M[1] * M[2])) * Math.sqrt(Math.abs(hm[0] * hm[3] - hm[1] * hm[2]));
+  return { x: c[0], y: c[1], r: +b[3] * k, k };
+}
+
+test('chapter 12 vocabulary: chispapaw after the rest (a cat, one of her); the extra collar: false after the rest; no new pose, mood, tap or hold (earlier ids never move)', () => {
+  assert.deepStrictEqual(A.vocab.cast.slice(29, 34), ['thymeleaf', 'mizzle', 'groveclan', 'spider', 'mistscale']);
+  assert.deepStrictEqual(A.vocab.cast.slice(34), ['chispapaw']);
+  assert.deepStrictEqual(A.vocab.poses, POSES6.concat(['run']), 'no new cat pose: she takes every cat pose');
+  assert.deepStrictEqual(A.vocab.moods, MOODS6, 'no new mood');
+  assert.deepStrictEqual(Object.keys(A.vocab.extras).slice(12), ['wet', 'flash', 'collar']);
+  assert.deepStrictEqual(A.vocab.extras.collar, [false], 'collar: false, the only value (absent, she wears it)');
+  assert.deepStrictEqual(A.vocab.extras.tap, ['nose', 'pole', 'paw', 'ears', 'pinecone', 'pebbles', 'cheeks', 'stone', 'eyes', 'fish', 'mist', 'tail', 'leaf', 'wing']);
+  // `holds: 'mouse'` was in the list already (the weasels'): chapter 12 draws it on a cat too, no new hold
+  assert.deepStrictEqual(A.vocab.extras.holds, ['stone', 'pebble', 'vole', 'bark', 'fish', 'fish2', 'pole', 'pinecone', 'pebbles', 'string', 'leaf', 'glass', 'mouse', 'mint', 'miststone']);
+  assert.ok(!('chispapaw' in A.vocab.variants) && !('chispapaw' in A.vocab.otherPoses), 'one Chispapaw, a cat');
+  // drawn as herself, not the stand-in a name the art does not know gets (a Clan cat)
+  assert.notStrictEqual(strip(A.character('chispapaw', { pose: 'sit' }).svg), strip(A.character('clancat', { pose: 'sit' }).svg));
+});
+
+test('every existing cat’s drawing is unchanged by chapter 12 (the player in every fur, the presets, the Clan cats, ReedClan, GroveClan, the starry cat, in every pose, with the cat extras and the Counts pictures: hashed against the tree before)', async () => {
+  const r = await CH12_SWEEP;
+  assert.ok(!r.err, 'the sweep ran: ' + (r.err && r.err.message) + ' ' + r.stderr);
+  const got = JSON.parse(r.stdout);
+  // taken 2026-11-07 by running sweep12 on main's cats.js at 4771cf2 (before chapter 12's art) in a fresh process
+  assert.strictEqual(got.n, SWEEP12_N, 'as many drawings as the tree before made');
+  assert.strictEqual(got.sha, SWEEP12_SHA);
+  // and here: her keys are her preset's, never a cast entry's; collar: false on anyone else changes nothing
+  const same = (a, b, m) => assert.strictEqual(strip(A.character(a[0], a[1]).svg), strip(A.character(b[0], b[1]).svg), m);
+  same(['tallyheart', { pose: 'walk', mood: 'kind', points: '#000000', collar: true, bell: true }], ['tallyheart', { pose: 'walk', mood: 'kind' }], 'her keys are her coat’s, never a cast entry’s');
+  for (const who of ['player', 'murmurchime', 'thymeleaf', 'waffles', 'clancat', 'grizzled']) same([who, { pose: 'sit', collar: false, look: LOOK9 }], [who, { pose: 'sit', look: LOOK9 }], who + ': collar: false changes nothing');
+  for (const who of ['player', 'murmurchime', 'thymeleaf', 'waffles', 'clancat', 'reedclan', 'groveclan', 'snorer']) for (const pose of A.vocab.poses) {
+    assert.ok(!/pc-points|pc-collar|pc-bell/.test(A.character(who, { pose, look: LOOK9 }).svg), who + ' ' + pose + ': no points, no collar, no bell');
+  }
+});
+
+test('Chispapaw: every cat pose, every mood and facing, with and without the collar, draws inside a cat’s box (the collar and the bell too); ids unique; a she-cat; light', () => {
+  for (const pose of A.vocab.poses) for (const mood of A.vocab.moods) for (const facing of FACINGS) for (const collar of [undefined, false]) {
+    const r = A.character('chispapaw', { pose, mood, facing, collar }), label = `chispapaw/${pose}/${mood}/${facing}/${collar}`;
+    checkResult(r, label);
+    checkIds(r.svg, label);
+    assert.strictEqual(r.w, 200); assert.strictEqual(r.h, 200);
+    inBox(r, label, 0.5);
+    assert.ok(r.headBox && r.headBox.x0 >= -0.5 && r.headBox.x1 <= 200.5 && r.headBox.y0 >= -0.5 && r.headBox.y1 <= 200, label + ': a head box in the box ' + JSON.stringify(r.headBox));
+    assert.ok(r.svg.length < 60000, label + ': light (' + r.svg.length + ')');
+    assert.ok(!r.svg.includes('\u0001'), label + ': no stand-in left in the markup');
+  }
+  // a she-cat: lashes
+  assert.ok(/L13\.6,-7\.6/.test(A.character('chispapaw', { pose: 'sit', mood: 'neutral' }).svg), 'lashes');
+  // a look changes nothing (no Clan cat wears her coat, and she never wears the player's)
+  for (const pose of ['walk', 'curl']) {
+    const plain = strip(A.character('chispapaw', { pose, mood: 'happy' }).svg);
+    for (const look of ALL_LOOKS) assert.strictEqual(strip(A.character('chispapaw', { pose, mood: 'happy', look }).svg), plain, pose + ' ' + look.fur);
+  }
+});
+
+test('Chispapaw’s coat, measured (section 4’s pass conditions): her points at least 80 darker than her body in sit, walk, crouch and curl (ears, the mask’s core, every leg from the wrist, every paw, the tail); the mask fades from the core to the cheeks; blue eyes; big ears; points in every other pose too', () => {
+  assert.ok(lum(CHISPA_BASE) - lum(CHISPA_POINTS) >= POINTS_DARKER, 'the points colour: ' + (lum(CHISPA_BASE) - lum(CHISPA_POINTS)).toFixed(1) + ' darker than her body');
+  for (const pose of Object.keys(COAT_POSES)) for (const mood of ['neutral', 'happy', 'shy', 'wonder', 'sad', 'sleepy', 'sniff', 'worried']) for (const facing of FACINGS) for (const ex of [{}, { asleep: true }, { flatEars: true }]) {
+    const svg = A.character('chispapaw', Object.assign({ pose, mood, facing }, ex)).svg, label = `${pose}/${mood}/${facing}/${JSON.stringify(ex)}`, f = pointFills(svg);
+    assert.ok(svg.includes('fill="' + CHISPA_BASE + '"'), label + ': her cream body');
+    assert.strictEqual(f.ear.length, 2, label + ': both ears are points');
+    assert.strictEqual(f.mask.length, 1, label + ': the mask’s core');
+    assert.strictEqual(f.leg.length, COAT_POSES[pose].legs, label + ': every leg from the wrist');
+    assert.strictEqual(f.paw.length, COAT_POSES[pose].paws, label + ': every paw');
+    assert.strictEqual(f.tail.length, 1, label + ': the tail');
+    for (const part of ['ear', 'mask', 'leg', 'paw', 'tail']) for (const c of f[part]) {
+      assert.ok(lum(CHISPA_BASE) - lum(c) >= POINTS_DARKER, label + ': ' + part + ' ' + c + ' only ' + (lum(CHISPA_BASE) - lum(c)).toFixed(1) + ' darker than her body');
+    }
+    assert.deepStrictEqual([...new Set(f.ear.concat(f.mask, f.tail))], [CHISPA_POINTS], label + ': ears, mask and tail in the points’ own colour');
+    // the soft mask: two fading layers, each darker than her body and lighter than the core, the inner the darker
+    assert.strictEqual(f.fade.length, 2, label + ': two fading layers');
+    assert.ok(lum(CHISPA_BASE) > lum(f.fade[0]) && lum(f.fade[0]) > lum(f.fade[1]) && lum(f.fade[1]) > lum(CHISPA_POINTS), label + ': fading toward the cheeks ' + f.fade.join(' '));
+    // the muzzle (its puffs) is the points' colour too: darkest at the nose and muzzle
+    assert.ok(svg.includes('<g fill="' + CHISPA_POINTS + '"><circle'), label + ': a dark muzzle');
+  }
+  // every other pose: her ears, mask, tail and at least two paws are points, as dark
+  for (const pose of A.vocab.poses) for (const facing of FACINGS) {
+    const f = pointFills(A.character('chispapaw', { pose, mood: 'neutral', facing }).svg), label = pose + '/' + facing;
+    assert.ok(f.ear.length === 2 && f.mask.length === 1 && f.tail.length === 1 && f.paw.length >= 2, label + ': her points ' + JSON.stringify([f.ear.length, f.mask.length, f.tail.length, f.paw.length]));
+    for (const c of f.ear.concat(f.mask, f.leg, f.paw, f.tail)) assert.ok(lum(CHISPA_BASE) - lum(c) >= POINTS_DARKER, label + ': ' + c);
+  }
+  // sapphire blue, plainly blue at panel size
+  const svg = A.character('chispapaw', { pose: 'sit', mood: 'neutral' }).svg;
+  assert.ok(svg.includes('fill="' + CHISPA_EYE + '"'), 'her blue eyes');
+  { const [r, g, b] = rgbOf(CHISPA_EYE); assert.ok(b > r + 120 && b > g + 60, 'plainly blue: ' + CHISPA_EYE); }
+  // asleep, her eyes are shut (no blue drawn); open in every other mood but the ones that shut them
+  assert.ok(!A.character('chispapaw', { pose: 'curl', mood: 'sleepy', asleep: true }).svg.includes('fill="' + CHISPA_EYE + '"'), 'asleep: eyes shut');
+  // big ears (earS 1.3): both ears drawn 1.3 times a cat's
+  assert.strictEqual(count(svg, /rotate\([-\d.]+\) scale\(1\.3\)"><path class="pc-points-ear"/g), 2, 'big ears');
+  // a little smaller and slimmer than Murmurchime: her body lower and narrower (her ears reach as high as Murmurchime's)
+  for (const pose of Object.keys(POSES12)) {
+    const c = A.character('chispapaw', { pose, collar: false }), m = A.character('murmurchime', { pose });
+    assert.ok(c.chestTop.y > m.chestTop.y + 3, pose + ': her chest lower than Murmurchime’s: ' + c.chestTop.y + ' vs ' + m.chestTop.y);
+    assert.ok(c.bounds.x1 - c.bounds.x0 < m.bounds.x1 - m.bounds.x0, pose + ': narrower than Murmurchime');
+    assert.ok(c.bounds.y0 >= m.bounds.y0 - 2, pose + ': no taller than Murmurchime, ears and all');
+  }
+});
+
+test('Chispapaw’s body is apart from every look’s fur and every CLAN coat, but cream and CLAN 3, which her points carry (named here); apart from the cast she sits beside too', () => {
+  const coats = Object.entries(FUR_BASES).map(([fur, c]) => [fur, c]).concat(CLAN_BASES.map((c, i) => ['clancat ' + (i + 1), c]));
+  const named = [['murmurchime', FUR_BASES.tortie], ['thymeleaf', THYME_BASE], ['waffles', NAMED_BASES.waffles], ['glintstar', NAMED_BASES.glintstar], ['snorer', NAMED_BASES.snorer]];
+  for (const [name, c] of coats.concat(named)) {
+    if (NEAR_HER.includes(name)) continue;
+    assert.ok(rgbDist(CHISPA_BASE, c) >= COAT_APART, 'chispapaw vs ' + name + ': ' + rgbDist(CHISPA_BASE, c).toFixed(1));
+    assert.ok(apartInLumOrHue(CHISPA_BASE, c), 'chispapaw vs ' + name + ': lum ' + Math.abs(lum(CHISPA_BASE) - lum(c)).toFixed(1) + ', warmth ' + Math.abs(warmth(CHISPA_BASE) - warmth(c)));
+  }
+  // the two she is near, by coat alone: cream and CLAN 3 (cream) are not apart from her body ...
+  assert.strictEqual(CLAN_BASES[2], FUR_BASES.cream, 'CLAN 3 is the cream coat');
+  assert.ok(!apartInLumOrHue(CHISPA_BASE, FUR_BASES.cream) && rgbDist(CHISPA_BASE, FUR_BASES.cream) < COAT_APART, 'cream is near her body (so it is named)');
+  // ... so her points set her apart: dark on cream as on her own body, and neither the cream player nor CLAN 3 has any
+  assert.ok(lum(FUR_BASES.cream) - lum(CHISPA_POINTS) >= POINTS_DARKER, 'her points dark against cream too');
+  for (const r of [A.character('player', { pose: 'sit', look: { fur: 'cream', marking: 'none', eyes: 'blue' } }), A.character('clancat', { variant: 3, pose: 'sit' })]) {
+    assert.ok(!/pc-points|pc-collar/.test(r.svg), 'no points and no collar on a cream cat');
+  }
+  // no look among the nine is pointed
+  for (const look of EVERY_LOOK) assert.ok(!/pc-points/.test(A.character('player', { pose: 'sit', look }).svg), look.fur + ' ' + look.marking);
+});
+
+test('Chispapaw’s collar: narrow and red, a tiny round gold bell at the throat, drawn whenever she is, in every pose; collar: false leaves both off and nothing else moves; her head box takes them in', () => {
+  for (const pose of A.vocab.poses) for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    const on = A.character('chispapaw', { pose, mood, facing }), off = A.character('chispapaw', { pose, mood, facing, collar: false }), label = `${pose}/${mood}/${facing}`;
+    assert.strictEqual(count(on.svg, /<g class="pc-collar">/g), 1, label + ': one collar');
+    assert.strictEqual(count(on.svg, /<g class="pc-bell">/g), 1, label + ': one bell');
+    assert.ok(!/pc-collar|pc-bell/.test(off.svg), label + ': collar: false, no collar and no bell');
+    // the same drawing but for them: the same size and place, the same face
+    assert.strictEqual(strip(noCollar(on.svg)), strip(off.svg), label + ': nothing else moves');
+    assert.deepStrictEqual([on.head, on.bounds, on.chestTop], [off.head, off.bounds, off.chestTop], label + ': the same size and place');
+    // the head box takes the collar and the bell in (never higher), and stays in the box
+    assert.ok(on.headBox.y1 >= off.headBox.y1 && on.headBox.y0 === off.headBox.y0 && on.headBox.y1 <= 200, label + ': the head box takes the bell in');
+  }
+  for (const pose of Object.keys(POSES12)) for (const mood of A.vocab.moods) for (const facing of FACINGS) {
+    assert.ok(A.character('chispapaw', { pose, mood, facing }).headBox.y1 > A.character('chispapaw', { pose, mood, facing, collar: false }).headBox.y1, pose + '/' + mood + '/' + facing + ': the bell lower than her chin');
+  }
+  const svg = A.character('chispapaw', { pose: 'sit', mood: 'neutral' }).svg, c = collarOf(svg) + bellOf(svg);
+  // red, narrow (its band 7 wide at most, a head about 90 wide), drawn before her head so her chin lies over it
+  const band = c.match(/<path d="[^"]+" stroke="(#[0-9a-f]{6})" stroke-width="([\d.]+)" fill="none" stroke-linecap="round"\/><\/g>/);
+  assert.ok(band, 'the band');
+  { const [r, g, b] = rgbOf(band[1]); assert.ok(r > 180 && r > g + 120 && r > b + 120, 'red: ' + band[1]); }
+  assert.ok(Math.max(...[...collarOf(svg).matchAll(/stroke-width="([\d.]+)"/g)].map((m) => +m[1])) <= 7, 'narrow');
+  assert.ok(svg.indexOf('<g class="pc-collar">') < svg.indexOf('<g class="pc-points-mask">'), 'under her head: drawn first');
+  // the bell: tiny, round, gold, at the throat (under the chin, on the middle of her face), right after the band
+  assert.ok(svg.includes(collarOf(svg) + bellOf(svg)), 'the bell hangs on the band');
+  const bell = c.match(/<g class="pc-bell"><circle cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)" fill="(#[0-9a-f]{6})"/);
+  assert.ok(bell, 'the bell');
+  const [bx, by, br] = bell.slice(1, 4).map(Number);
+  assert.ok(br <= 5, 'tiny: r ' + br + ' in head units');
+  { const [r, g, b] = rgbOf(bell[4]); assert.ok(r > 200 && g > 150 && b < 90, 'gold: ' + bell[4]); }
+  assert.ok(by - br > 26 && Math.abs(bx - 4) < 3, 'at the throat, below the chin: (' + bx + ', ' + by + ')');
+});
+
+test('Chispapaw’s collar with her head on the ground (crouch, curl, flat, tummy): never below her lowest point; in curl, flat and tummy the bell is lifted to rest on it, in front of her chin, and the band behind it; standing up, nothing is lifted', () => {
+  const lifted = {};
+  for (const pose of A.vocab.poses) for (const mood of A.vocab.moods) for (const facing of FACINGS) for (const ex of [{}, { asleep: true }, { tailUp: true }, { flatEars: true }]) {
+    const r = A.character('chispapaw', Object.assign({ pose, mood, facing }, ex)), label = `${pose}/${mood}/${facing}/${JSON.stringify(ex)}`;
+    const b = bellInBox(r.svg), up = !bellOf(r.svg).includes('cx="5" cy="36.4"');
+    // its lowest point (the circle and half its outline) no lower than hers: never into the ground, never out of the box
+    assert.ok(b.y + b.r + 0.65 * b.k <= r.bounds.y1 + 0.15, label + ': the bell’s bottom ' + (b.y + b.r).toFixed(2) + ' below her lowest point ' + r.bounds.y1);
+    // a bell lifted off the band is drawn after her face, lying in front of her chin; one on the band, before it
+    const bi = r.svg.indexOf('<g class="pc-bell">'), mi = r.svg.indexOf('<g class="pc-points-mask">');
+    assert.ok(up ? bi > mi : bi < mi, label + ': ' + (up ? 'a lifted bell in front of her chin' : 'the bell on the band, under her chin'));
+    if (up) lifted[pose] = (lifted[pose] || 0) + 1;
+    // the band's middle, lifted or not, no lower than her lowest point either
+    const hm = matOf(r.svg.match(/<g transform="matrix\(([^)]+)\)">(?:<g class="pc-collar">)/)[1]), M = matOf(r.svg.match(/^<g transform="matrix\(([^)]+)\)">/)[1]);
+    const d = pairsOf(collarOf(r.svg).match(/<path d="([^"]+)"/)[1]);
+    const mid = [0.25 * d[0][0] + 0.5 * d[1][0] + 0.25 * d[2][0], 0.25 * d[0][1] + 0.5 * d[1][1] + 0.25 * d[2][1]];
+    assert.ok(viaM(M, ...viaM(hm, mid[0], mid[1]))[1] + 3.5 * b.k <= r.bounds.y1 + 0.15, label + ': the band below her lowest point');
+  }
+  // the bell is lifted only with her head on the ground, and there in every mood (curl and flat) or with it low (tummy)
+  assert.deepStrictEqual(Object.keys(lifted).sort(), HEAD_DOWN.slice().sort(), 'lifted only in ' + JSON.stringify(lifted));
+  for (const pose of ['curl', 'flat']) assert.strictEqual(lifted[pose], A.vocab.moods.length * 2 * 4, pose + ': lifted in every mood, facing and extra');
+  // crouch, the nose in the gap: her bell on the band, above the ground, under her chin
+  for (const mood of ['shy', 'sniff', 'neutral', 'happy']) {
+    const r = A.character('chispapaw', { pose: 'crouch', mood }), b = bellInBox(r.svg);
+    assert.ok(bellOf(r.svg).includes('cx="5" cy="36.4"') && b.y + b.r < r.bounds.y1, 'crouch/' + mood + ': on the band, off the ground');
+  }
+});
+
+test('Chispapaw’s extras: tailUp (her dark tail straight up, her head where it was), holds: leaf in the mouth (over the collar, the bell still drawn), flatEars, asleep, loaf; purr: true is the scene’s and changes nothing in her drawing', () => {
+  for (const pose of ['sit', 'stand', 'walk', 'crouch']) for (const facing of FACINGS) {
+    const up = A.character('chispapaw', { pose, mood: 'happy', facing, tailUp: true }), down = A.character('chispapaw', { pose, mood: 'happy', facing });
+    assert.notStrictEqual(strip(up.svg), strip(down.svg), pose + ': the tail goes up');
+    assert.deepStrictEqual([up.head, up.chestTop], [down.head, down.chestTop], pose + ': her head and chest where they were');
+    assert.ok(up.bounds.y0 < down.bounds.y0 + 1, pose + ': the tail reaches up');
+    assert.deepStrictEqual(pointFills(up.svg).tail, [CHISPA_POINTS], pose + ': a point, raised');
+    inBox(up, pose + ' tailUp', 0.5);
+  }
+  for (const facing of FACINGS) {
+    const r = A.character('chispapaw', { pose: 'walk', mood: 'proud', facing, holds: 'leaf' });
+    assert.ok(r.held && r.held.what === 'leaf' && r.held.at === 'mouth', 'the leaf in her mouth: ' + JSON.stringify(r.held));
+    assert.strictEqual(count(r.svg, /<g class="pc-leaf"/g), 1, 'one leaf');
+    assert.ok(r.svg.indexOf('<g class="pc-leaf"') > r.svg.indexOf('<g class="pc-bell">') && r.svg.indexOf('<g class="pc-bell">') > r.svg.indexOf('<g class="pc-collar">'), 'the collar, the bell, then the leaf over them');
+    inBox(r, 'walk leaf ' + facing, 0.5);
+  }
+  // flatEars: her big ears laid flat, still points; sad with them, the mutter
+  const flat = A.character('chispapaw', { pose: 'sit', mood: 'sad', flatEars: true }), sad = A.character('chispapaw', { pose: 'sit', mood: 'sad' });
+  assert.notStrictEqual(strip(flat.svg), strip(sad.svg), 'flatEars lays them flat');
+  assert.ok(flat.headBox.y0 > sad.headBox.y0, 'flatter, lower ears');
+  assert.strictEqual(pointFills(flat.svg).ear.length, 2);
+  // asleep: curl and loaf, eyes shut; the collar and bell still drawn
+  for (const pose of ['curl', 'loaf']) {
+    const r = A.character('chispapaw', { pose, mood: 'sleepy', asleep: true });
+    assert.ok(!r.svg.includes('fill="' + CHISPA_EYE + '"') && /pc-collar/.test(r.svg) && /pc-bell/.test(r.svg), pose + ' asleep');
+  }
+  // the scene draws the purr (scenes.js fxPurr): in her drawing, purr: true is nothing
+  for (const pose of ['sit', 'stand', 'lookup']) assert.strictEqual(strip(A.character('chispapaw', { pose, mood: 'happy', purr: true, tailUp: true }).svg), strip(A.character('chispapaw', { pose, mood: 'happy', tailUp: true }).svg), pose + ': purr is the scene’s');
+});
+
+// the cats that take `holds: 'mouse'` (section 4: our cat, Murmurchime, the old tom, a Clan cat, Chispapaw)
+const MOUSERS = [['player', { look: LOOK9 }], ['murmurchime', {}], ['grizzled', {}], ['clancat', { variant: 2 }], ['clancat', { variant: 5 }], ['chispapaw', {}]];
+test('holds: mouse on every cat (our cat, Murmurchime, the old tom, the Clan cats, Chispapaw): PC.art.prey’s mouse in the mouth in walk, sit, stand and crouch, its tail hanging, the mouth full; `held` reported; inside the box; on the ground with holdAt; off unless asked', () => {
+  for (const [who, base] of MOUSERS) for (const pose of ['walk', 'sit', 'stand', 'crouch']) for (const mood of ['neutral', 'happy', 'proud', 'stern']) for (const facing of FACINGS) {
+    const o = Object.assign({ pose, mood, facing, holds: 'mouse' }, base), r = A.character(who, o), label = `${who}/${pose}/${mood}/${facing}`;
+    checkResult(r, label);
+    checkIds(r.svg, label);
+    inBox(r, label, 0.5);
+    assert.strictEqual(count(r.svg, /<g class="pc-mouse">/g), 1, label + ': one mouse');
+    assert.ok(r.held && r.held.what === 'mouse' && r.held.at === 'mouth', label + ': held ' + JSON.stringify(r.held));
+    assert.ok(r.held.r > 10 && r.held.r < 30, label + ': a mouse’s size ' + r.held.r);
+    // in the mouth: inside her head box, its lower half (the muzzle)
+    const hb = r.headBox;
+    assert.ok(r.held.x > hb.x0 && r.held.x < hb.x1 && r.held.y > (hb.y0 + hb.y1) / 2 && r.held.y < hb.y1 + 2, label + ': on the muzzle ' + JSON.stringify([r.held, hb]));
+    // its tail hanging below it (the weasels' mouse's tail), and the mood's own mouth not drawn (a mouthful)
+    const m = r.svg.match(/<g class="pc-mouse"><path d="M([-\d.]+),([-\d.]+)q[-\d.]+,([-\d.]+) [-\d.]+,([-\d.]+)/);
+    assert.ok(m && +m[3] > 6 && +m[4] > 10, label + ': its tail hangs down ' + (m && m.slice(1).join(' ')));
+    // nothing else changes when the cat holds nothing: off unless asked
+    assert.ok(!/pc-mouse/.test(A.character(who, Object.assign({ pose, mood, facing }, base)).svg), label + ': no mouse unless asked');
+  }
+  // the mood's mouth: a mouthful draws only the puffed cheeks (as the vole does)
+  const vole = A.character('murmurchime', { pose: 'walk', mood: 'happy', holds: 'vole' }).svg, mouse = A.character('murmurchime', { pose: 'walk', mood: 'happy', holds: 'mouse' }).svg;
+  const cheeks = (s) => count(s, /<path d="M-13,13Q-15,18 -11,22M13,13Q15,18 11,22"/g);
+  assert.ok(cheeks(vole) === 1 && cheeks(mouse) === 1, 'a mouthful, as the vole');
+  // holdAt: 'paws' (or sitting with it at her feet): on the ground in front of her, its tail lying along the ground
+  for (const [who, base] of MOUSERS) for (const pose of ['sit', 'crouch', 'loaf']) {
+    const r = A.character(who, Object.assign({ pose, mood: 'proud', holds: 'mouse', holdAt: 'paws' }, base)), label = `${who}/${pose}/paws`;
+    assert.ok(r.held && r.held.at === 'paws' && r.held.y > 165, label + ': on the ground ' + JSON.stringify(r.held));
+    const m = r.svg.match(/<g class="pc-mouse"><path d="M[-\d.]+,[-\d.]+q([-\d.]+),([-\d.]+)/);
+    assert.ok(m && Math.abs(+m[1]) > Math.abs(+m[2]), label + ': its tail along the ground');
+    inBox(r, label, 0.5);
+  }
+  // falling over or on her back, a cat holds nothing (as every hold)
+  for (const pose of ['fall', 'tummy']) assert.ok(!A.character('player', { pose, holds: 'mouse', look: LOOK9 }).held, pose + ': nothing held');
+  // PC.art.prey's mouse when the pile set is there (looked up when drawn, as the vole is), else our own
+  const prey = A.prey;
+  try {
+    A.prey = (q) => ({ svg: '<g class="test-prey-' + q.kind + '"></g>', w: 72, h: 44 });
+    const r = A.character('chispapaw', { pose: 'walk', holds: 'mouse' });
+    assert.ok(r.svg.includes('<g class="test-prey-mouse"></g>'), 'the pile set’s mouse');
+  } finally { if (prey === undefined) delete A.prey; else A.prey = prey; }
+  assert.ok(!A.character('chispapaw', { pose: 'walk', holds: 'mouse' }).svg.includes('test-prey'), 'our own mouse without it');
+});
+
+// the quick marks' `round` (Chispapaw's cookie square): the rings a drawing carries, as the on-curve points of each
+// closed C path (qkRingD), each once (the last, closing it, is the first again)
+const ringsOf = (s) => [...s.matchAll(/<path d="(M[-\d.]+,[-\d.]+(?:C[-\d., ]+)+Z)" stroke="([^"]+)" stroke-width="([\d.]+)" stroke-linecap="round" stroke-linejoin="round" fill="none"\/>/g)]
+  .map((m) => ({ pts: pairsOf(m[1]).filter((q, i) => i % 3 === 0).slice(0, -1), stroke: m[2], width: +m[3] }));
+test('the quick marks’ round: true scratches each square as a soft wobbly ring in its place (the same stroke and shine, no fill, no crumbs: no more dots than before); off, false or anything but true, every mark byte for byte; kit.quick passes it through', () => {
+  const SETS = [{ hundreds: 1, tens: 1, ones: 1 }, { hundreds: 3, tens: 2, ones: 4 }, { hundreds: 9, tens: 19, ones: 19 }, { hundreds: 0, tens: 3, ones: 2 }, { hundreds: 1 }, { hundreds: 6, ones: 7 }];
+  for (const set of SETS) for (const ground of [undefined, 'sand', 'earth', 'mud', 'grit', 'log']) for (const k of [1, 0.6, 2]) {
+    const o = Object.assign({ ground }, set), base = A.quickMarks(300, 120, k, o), label = JSON.stringify(o) + ' x' + k;
+    for (const off of [false, 'yes', 1, null, undefined]) assert.strictEqual(A.quickMarks(300, 120, k, Object.assign({ round: off }, o)), base, label + ': round ' + off + ' changes nothing');
+    const r = A.quickMarks(300, 120, k, Object.assign({ round: true }, o)), h = set.hundreds || 0;
+    if (!h) { assert.strictEqual(r, base, label + ': no square, nothing to round'); continue; }
+    // the same group, the same place and size, the same lines and dots (count every circle: dots and their shine)
+    assert.strictEqual(r.slice(0, r.indexOf('>') + 1), base.slice(0, base.indexOf('>') + 1), label + ': the same group');
+    assert.deepStrictEqual(A.quickMarks.size(Object.assign({ round: true }, o)), A.quickMarks.size(o));
+    assert.strictEqual(count(r, /<circle/g), count(base, /<circle/g), label + ': no crumbs, no new dot');
+    assert.strictEqual(count(r, /<path/g), count(base, /<path/g), label + ': a stroke and its shine for each, as the square');
+    assert.strictEqual(count(r, /fill="(?!none)/g), count(base, /fill="(?!none)/g), label + ': nothing filled that was not');
+    const rings = ringsOf(r), G = { undefined: '#9c7440', sand: '#9c7440', earth: '#4e3524', mud: null, grit: null, log: '#4d3219' }[ground];
+    assert.strictEqual(rings.length, h, label + ': one ring a square');
+    assert.strictEqual(ringsOf(base).length, 0, label + ': no ring without round');
+    for (const ring of rings) {
+      if (G) assert.strictEqual(ring.stroke, G, label + ': the ground’s own groove');
+      // round and soft: every point near its middle's radius (a wobble, never a corner), in the square's 56 x 56 place
+      const cx = ring.pts.reduce((a, q) => a + q[0], 0) / ring.pts.length, cy = ring.pts.reduce((a, q) => a + q[1], 0) / ring.pts.length;
+      const ds = ring.pts.map((q) => Math.hypot(q[0] - cx, q[1] - cy)), mean = ds.reduce((a, b) => a + b, 0) / ds.length;
+      assert.ok(Math.max(...ds) / mean < 1.06 && Math.min(...ds) / mean > 0.94 && Math.max(...ds) - Math.min(...ds) > 0.5, label + ': a soft wobbly ring ' + ds.map((d) => d.toFixed(1)).join(' '));
+      assert.ok(Math.abs(mean - 56 * 0.49) < 1.5, label + ': as big as the square ' + mean.toFixed(1));
+    }
+  }
+  // kit.quick (scenes.js) delegates with its options: round: true reaches the marks (the page's scripts, in a process of their own)
+  const code = 'const PC = require(' + JSON.stringify(require('path').join(__dirname, '_load.js')) + ').load(); const o = { hundreds: 1, tens: 1, ones: 1, ground: "sand", round: true };' +
+    'process.stdout.write(JSON.stringify([PC.art.kit.quick(300, 200, 0.8, o) === PC.art.quickMarks(300, 200, 0.8, o), PC.art.kit.quick(300, 200, 0.8, o)]));';
+  const [same, svg] = JSON.parse(require('child_process').execFileSync(process.execPath, ['-e', code], { maxBuffer: 1 << 24 }).toString());
+  assert.ok(same, 'kit.quick is the marks');
+  assert.strictEqual(ringsOf(svg).length, 1, 'her ring, through the kit');
+});
+
+// Chapter 12's own art, fingerprinted for the chapters after it: Chispapaw in every cat pose, mood and facing, with
+// and without the collar, her extras; every cat with a mouse; the round marks. Run in a fresh process (as the sweeps
+// above). If any of it is ever changed on purpose, take a new hash and say so.
+function sweep12own(A) {
+  const out = [];
+  const MOODS = ['neutral', 'happy', 'dreamy', 'wonder', 'worried', 'scared', 'sleepy', 'laugh', 'stern', 'kind', 'proud', 'sniff', 'shout', 'solemn', 'sad', 'shy'];
+  const POSES = ['sit', 'stand', 'walk', 'crouch', 'curl', 'loaf', 'lookup', 'flat', 'lie', 'fall', 'stretch', 'peer', 'pawup', 'tummy', 'situp', 'run'];
+  const s = (x) => String(x).replace(/pcs?[0-9a-z]+-/g, '');
+  const rec = (r) => out.push(s(r.svg), JSON.stringify([r.w, r.h, r.head, r.headBox || null, r.bounds || null, r.held || null, r.chestTop || null]));
+  let k = 0;
+  for (const pose of POSES) for (const mood of MOODS) for (const facing of ['left', 'right']) rec(A.character('chispapaw', { pose, mood, facing }));
+  for (const pose of POSES) for (const mood of ['neutral', 'shy', 'sleepy', 'happy']) { k++; rec(A.character('chispapaw', { pose, mood, facing: k % 2 ? 'left' : 'right', collar: false })); }
+  const EX = [{ tailUp: true }, { tailUp: true, tap: 'tail' }, { asleep: true }, { asleep: 'half' }, { flatEars: true }, { holds: 'leaf' }, { holds: 'leaf', holdAt: 'paws' }, { holds: 'mouse' }, { holds: 'mouse', holdAt: 'paws' },
+    { tap: 'paw' }, { tap: 'ears' }, { claws: true, tap: 'paw' }, { puffed: true }, { reach: true }, { collar: false, tailUp: true }];
+  for (const pose of POSES) for (const ex of EX) { k++; rec(A.character('chispapaw', Object.assign({ pose, mood: MOODS[k % 16], facing: k % 2 ? 'left' : 'right' }, ex))); }
+  const LOOK = { fur: 'ginger', marking: 'white-chest', eyes: 'green', sex: 'she' };
+  for (const [who, base] of [['player', { look: LOOK }], ['murmurchime', {}], ['grizzled', {}], ['clancat', { variant: 2 }], ['chispapaw', {}]]) for (const pose of POSES) for (const holdAt of [undefined, 'paws', 'mouth', 'chin', 'nose']) {
+    k++; rec(A.character(who, Object.assign({ pose, mood: MOODS[k % 16], facing: k % 2 ? 'left' : 'right', holds: 'mouse', holdAt }, base)));
+  }
+  for (const ground of [undefined, 'sand', 'earth', 'mud', 'grit', 'log']) for (const set of [{ hundreds: 1, tens: 1, ones: 1 }, { hundreds: 4, tens: 12, ones: 9 }]) out.push(A.quickMarks(200, 100, 0.9, Object.assign({ round: true, ground }, set)));
+  out.push(JSON.stringify([MOODS, POSES]));
+  return out;
+}
+const CH12_OWN = runSweepOf(sweep12own);
+const SWEEP12_OWN_N = 2445, SWEEP12_OWN_SHA = '93c910038c5899b9487edec06987d40f06f49f2735858fec19ccccf78f2dca36';
+test('chapter 12’s own art, fingerprinted (Chispapaw in every pose, mood and facing, with and without her collar, her extras; every cat with a mouse; the round marks): taken when it was finished', async () => {
+  const r = await CH12_OWN;
+  assert.ok(!r.err, 'the sweep ran: ' + (r.err && r.err.message) + ' ' + r.stderr);
+  const got = JSON.parse(r.stdout);
+  // taken 2026-11-07 on chapter 12's finished art (the cats owner's build), in a fresh process
+  assert.strictEqual(got.n, SWEEP12_OWN_N, 'as many drawings as when it was taken');
+  assert.strictEqual(got.sha, SWEEP12_OWN_SHA);
+});
+
+test('dev/gallery-cats.html: chapter 12’s section draws (Chispapaw in every pose, with and without the collar, her head on the ground, her extras, every mood; every cat with a mouse; the round marks)', () => {
+  const fs = require('fs'), path = require('path'), vm = require('vm');
+  const dir = path.join(__dirname, '..', 'dev'), html = fs.readFileSync(path.join(dir, 'gallery-cats.html'), 'utf8');
+  const scripts = [...html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)];
+  const els = {};
+  const el = (id) => els[id] || (els[id] = { id, innerHTML: '', value: id === 'size' ? '120' : '', options: [{ value: '120' }], add() {} });
+  const ctx = { URLSearchParams, document: { getElementById: el, body: { className: '' } }, location: { search: '?only=chispapaw' } };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  for (const m of scripts) vm.runInContext(m[1] ? fs.readFileSync(path.join(dir, m[1]), 'utf8') : m[2], ctx, { filename: m[1] || 'gallery-cats.html' });
+  const out = els.out.innerHTML;
+  assert.ok(els.nav.innerHTML.includes('href="?only=chispapaw"'), 'in the menu');
+  assert.ok(/<section id="chispapaw"><h2>[^<]*hapter 12/.test(out), 'its section');
+  assert.ok(count(out, /<svg[ >]/g) >= 6 + 32 + 6 + 12 + 32 + 25 + 1 + 2, count(out, /<svg[ >]/g) + ' drawings');
+  assert.ok(!/NaN|undefined|\[object |Infinity|\u0001/.test(out), 'every drawing drew');
+  assert.strictEqual(balanced(out.replace(/<small title="[^"]*">/g, '<small>')), null, 'well-formed');
+  for (const label of ['sit · collar: false', 'walk · collar: false', 'curl · asleep', 'flat · worried', 'tummy · happy', 'walk · holds: leaf', 'sit · sad · flatEars', 'loaf · sleepy']) assert.ok(out.includes('<small title="' + label + '">'), label);
+  for (const pose of A.vocab.poses) assert.ok(new RegExp('<small title="' + pose + ' · ').test(out), pose);
+  assert.ok(count(out, /class="pc-collar"/g) >= 70 && count(out, /class="pc-points-mask"/g) >= 90, 'her collar and her mask, all through');
+  // every cat with a mouse (the pile set's, loaded by the page), and the marks: two sets square, hers round, and one big each
+  assert.strictEqual(count(out, /<g class="pc-mouse">/g), 25, 'five cats, four poses and the paws');
+  assert.strictEqual(count(out, /class="pc-quick"/g), 5, 'the quick marks');
+  assert.strictEqual(ringsOf(out).length, 2, 'her round square, twice');
 });

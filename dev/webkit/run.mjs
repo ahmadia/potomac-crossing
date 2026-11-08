@@ -16,6 +16,9 @@
  *                digit is then typed on the page's keypad and the next column measured too (`@next`: the keypad must
  *                not move). The page review's four more sizes: SIZE=1080x700 (1024x768, 768x1024, 844x390) AA=0,1
  *                node dev/webkit/run.mjs OUT.json takes, or `node tools/sweep.mjs --takes` (TAKE_SIZES, cached)
+ *       spanish  chapter 12's Spanish screens (ES_SCREENS, opened through the tree's tools/shots.mjs SPANISH and
+ *                ES_TARGETS: PC.debug.spanish), each in a fresh page at its own scroll, measured; and the Hollow's
+ *                shelf with Chispapaw (TAKES' shelf). For the page review's sizes, as the takes job
  *   …  only:ch05:f010,ch05:f011       the plain sweep over those frames alone
  *   …  settle:ch05:f010,…             each frame opened and measured after 0.9 s
  *   …  probe:FILE.js:ch05:f010        open the frame, run FILE (a function body returning something JSON-able)
@@ -50,6 +53,9 @@ export const TAKE_SIZES = ['1080x700', '1024x768', '768x1024', '844x390'];
 export const TAKE_SCREENS = ['take:first', 'take:q', 'take:show', 'take:tap', 'take:echo', 'take:sand', 'take:done', 'hollow:shelf', 'store:q'];
 // the screens measured again after a right digit (the next column outlined)
 const TAKE_NEXT = ['take:q', 'take:echo'];
+// chapter 12's Spanish screens the page review measures (its spec, section 10); tools/shots.mjs's ES_TARGETS says how each
+// opens, and the shelf (with Chispapaw's "¡A contar!") is the take-aways kit's own TAKE_TARGETS entry
+export const ES_SCREENS = ['es:echo', 'es:take', 'es:skip', 'es:worked', 'es:worked:tens', 'es:try', 'es:try:pointer', 'es:store', 'hollow:shelf'];
 
 /* A tree's own page scripts, verbatim from its tools/shots.mjs (as every earlier checker read them). */
 export function pageScripts(root) {
@@ -57,13 +63,14 @@ export function pageScripts(root) {
   const lit = (name, need = true) => { const m = src.match(new RegExp('const ' + name + ' = (`[\\s\\S]*?`);\\n')); if (!m) { if (need) throw new Error('no ' + name + ' in ' + root + '/tools/shots.mjs'); return null; } return eval(m[1]); };
   const sm = src.match(/const SETUP = (`[\s\S]*?arguments\[2\]\);`);\n/); if (!sm) throw new Error('no SETUP in ' + root + '/tools/shots.mjs');
   const cm = src.match(/const CAT = Object\.assign\((\{[\s\S]*?\n\}), process\.env\.CAT/); if (!cm) throw new Error('no CAT in ' + root + '/tools/shots.mjs');
-  const WARRIOR = lit('WARRIOR', false), QUIET = lit('QUIET'), TAKES = lit('TAKES', false);
+  const WARRIOR = lit('WARRIOR', false), QUIET = lit('QUIET'), TAKES = lit('TAKES', false), SPANISH = lit('SPANISH', false);
   const tm = src.match(/const TAKE_TARGETS = (\{[\s\S]*?\n\});\n/);
+  const em = src.match(/const ES_TARGETS = (\{[^\n]*\});\n/);
   // SETUP splices WARRIOR and QUIET in by name (the `+ WARRIOR +` in its source): put them where it does
   const SETUP = eval(sm[1]);
   const fm = src.match(/const PICK_FULL = (\[[\s\S]*?\]);\n/);
   return { SILENT: lit('SILENT'), STILL: lit('STILL'), QUIET, SETUP, WARRIOR, CAT: eval('(' + cm[1] + ')'), PICK_FULL: fm ? eval(fm[1]) : null,
-    TAKES, TAKE_TARGETS: TAKES && tm ? eval('(' + tm[1] + ')') : null };
+    TAKES, TAKE_TARGETS: TAKES && tm ? eval('(' + tm[1] + ')') : null, SPANISH, ES_TARGETS: SPANISH && em ? eval('(' + em[1] + ')') : null };
 }
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml',
@@ -203,6 +210,8 @@ const takeM = (tag) => ({ js: call('if (window.__tfail) return JSON.stringify({ 
 /* Open a take screen (the tree's TAKES, verbatim, inside): what it says when it cannot is the job's one note, and the
  * steps after it then do nothing (no screen of another page measured in its name). */
 export const takeOpen = (TAKES, what) => ({ js: call('var r = (function () { ' + TAKES + '\n}).apply(null, arguments); if (r !== true) window.__tfail = true; return r;', [what, null]), wait: 0.9 });
+/* Chapter 12: open a Spanish screen (the tree's SPANISH, verbatim, inside), as takeOpen does a take screen. */
+export const esOpen = (SPANISH, what) => ({ js: call('var r = (function () { ' + SPANISH + '\n}).apply(null, arguments); if (r !== true) window.__tfail = true; return r;', [what]), wait: 0.9 });
 
 /* The measuring jobs for `what` (run.mjs's words: plain, taps, lessons, screens, warrior, only:…, settle:…, probe:…,
  * shot:…, shott:…), each { name, big, url, out, steps }. */
@@ -239,6 +248,14 @@ export function measureJobs(S, site, what, { aas = [false, true], cat = sweepCat
         steps.push(takeOpen(S.TAKES, tt[0]), takeM(t));
         if (TAKE_NEXT.includes(t)) steps.push({ js: call(TAKE_TYPE), wait: 0.45 }, { js: call(TAKE_KEY), wait: 0.45 }, { js: call(TAKE_KEY), wait: 0.2 }, { js: call(TAKE_NEXT_UP), wait: 0.4 }, takeM(t + '@next'));
         job('takes', big, steps);
+      }
+    }
+    if (what.includes('spanish') && S.SPANISH && S.ES_TARGETS) {
+      // chapter 12's Spanish screens (its spec, section 10), each in a fresh page; the shelf through the kit's TAKES
+      for (const t of ES_SCREENS) {
+        const shelf = S.TAKE_TARGETS && S.TAKE_TARGETS[t], w = S.ES_TARGETS[t];
+        if (!w && !(shelf && S.TAKES)) { job('spanish', big, [{ js: call('return arguments[0];', [t + ': not in tools/shots.mjs ES_TARGETS']), wait: 0.02 }]); continue; }
+        job('spanish', big, [w ? esOpen(S.SPANISH, w) : takeOpen(S.TAKES, shelf[0]), takeM(t)]);
       }
     }
     for (const w of what.filter((x) => x.startsWith('only:'))) job('plain', big, [SWEEP('plain', w.slice(5).split(','))]);

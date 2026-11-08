@@ -1071,6 +1071,8 @@ test('with no arguments the tool writes a storyboard for every chapter (run in a
     for (const d of ['tools', 'app/story', 'docs']) fs.mkdirSync(path.join(tmp, d), { recursive: true });
     fs.copyFileSync(TOOL, path.join(tmp, 'tools/storyboard.mjs'));
     fs.copyFileSync(path.join(ROOT, 'app/engine.js'), path.join(tmp, 'app/engine.js'));
+    // (chapter 12: the tool requires module 2's words beside the engine; words.js is never taken for a chapter)
+    fs.copyFileSync(path.join(ROOT, 'app/story/words.js'), path.join(tmp, 'app/story/words.js'));
     for (const f of chapters) fs.copyFileSync(path.join(ROOT, 'app/story', f), path.join(tmp, 'app/story', f));
     const run = spawnSync(process.execPath, [path.join(tmp, 'tools/storyboard.mjs')], { encoding: 'utf8', cwd: tmp });
     assert.equal(run.status, 0, run.stderr);
@@ -1080,6 +1082,7 @@ test('with no arguments the tool writes a storyboard for every chapter (run in a
       assert.match(md, new RegExp(id === 'warrior' ? '^# Storyboard: The Warrior Counts\\n' : '^# Storyboard: Chapter \\d+, '), id);
       assert.match(run.stdout, new RegExp('Wrote docs/storyboard/' + id + '\\.md'));
     }
+    assert.ok(!fs.existsSync(path.join(tmp, 'docs/storyboard/words.md')), 'words.js is not a chapter');
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -1141,6 +1144,65 @@ test('chapter 11’s two additions: the `{ending}` sentence (the Warrior Counts�
     fs.writeFileSync(more, JSON.stringify({ sets: { camp: { opts: { moon: 'number' } }, den: { anchors: ['next-nest'], opts: { moon: [15], nextNest: [false, true] } } } }));
     const run = spawnSync(process.execPath, [TOOL, '--check-words', more], { encoding: 'utf8' });
     assert.equal(run.status, 0, run.stderr);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+/* Chapter 12: Chispapaw's Spanish in the storyboard (docs/chapters/12-a-spark-at-the-hedge.spec.md, section 6, "The storyboard
+ * and the tools"): a `lang: 'es'` balloon printed *[es]* with its Spanish and its English (E.esLine's), a {es:key} token as
+ * «its Spanish», the paw thing counted in her Spanish, each set's `echo` in a line under its set; and the art's new names. */
+test('chapter 12: a Spanish balloon *[es]* with its Spanish and its gloss, a {es:key} token as «its Spanish», the paw thing in Chispapaw’s Spanish, the sets’ echoes; Chispapaw, her collar off, a cat with a mouse, the store under the bridge and its plan in the Hollow, the quick marks, the hedge’s third spot, the den’s moon at 16; chapters 1 to 11 and warrior.md unchanged', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-storyboard-'));
+  try {
+    const fx12 = {
+  id: 'fx12', number: 12, title: 'Spanish (fixture)', module: 2, start: 'f001', names: { player: '{name}{ending}' },
+  frames: {
+    f001: { board: 'B', scene: { set: 'garden', cam: 'hedge', cast: [{ who: 'chispapaw', pose: 'crouch', mood: 'shy', at: 'hedge-gap', facing: 'right' }, { who: 'player', pose: 'sit', at: 'hedge-side' }, { who: 'tallyheart', pose: 'sit', at: 'hedge-right', facing: 'left' }] },
+      caption: ['She’s counting the Clan, under her breath.'], say: [{ who: 'chispapaw', name: 'The little cat', kind: 'whisper', lang: 'es', text: '…⁠{es:11}, {es:12}. {Es:12} {es:gatos}.' }], next: 'f002' },
+    f002: { board: 'B', scene: { set: 'den', cam: 'inside', cast: [{ who: 'snorer', pose: 'curl', asleep: true, at: 'sleeper-1' }] }, caption: ['By {es:50}, the grey tom is snoring.'], say: [{ who: 'chispapaw', text: 'My Tall Ones call me {es:galleta}. It means cookie.' }], next: 'f003' },
+    f003: { board: 'B', scene: { set: 'hollow', cam: 'lesson', opts: { marks: 10, store: 500, storeGlow: 'hundreds', tap: 'squares' } }, counts: { set: 'ch12-warm', intro: false, next: 'f004' } },
+    f004: { board: 'B', scene: { set: 'hollow', cam: 'lesson', opts: { quick: 3 } }, counts: { set: 'ch12-take', intro: false, next: 'f005' } },
+    f005: { board: 'B', scene: { set: 'bridge', cam: 'store', light: 'sunset', opts: { store: 133, tap: 'store' }, cast: [{ who: 'murmurchime', pose: 'walk', holds: 'mouse', at: 'way-in', facing: 'left' }, { who: 'player', pose: 'sit', at: 'store-left', facing: 'right' }, { who: 'chispapaw', pose: 'sit', at: 'store-right', facing: 'left', collar: false }] },
+      say: [{ who: 'chispapaw', kind: 'whisper', lang: 'es', text: '¡{Es:133}!' }], next: 'f006' },
+    f006: { board: 'B', scene: { set: 'den', cam: 'inside', opts: { moon: 16 } }, say: [{ who: 'chispapaw', lang: 'es', text: '{es:aContar}' }],
+      skip: { table: 10, groups: 5, paws: 'both', teacher: 'chispapaw', lang: 'es', carry: false, prompt: '**Tap** your forepaws.', next: 'f007' } },
+    f007: { board: 'B', end: true }
+  },
+  counts: {
+    'ch12-warm': { teacher: 'tallyheart', warmHard: { table: 'all', at: [0, 1], alt: [{ a: 3, b: 8, table: 3 }] }, facts: [{ a: 6, b: 7, table: 6 }, { a: 8, b: 4, table: 4 }, { a: 3, b: 9, table: 3 }], praise: [], fast: [], done: '',
+      echo: { on: 'first', lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:fact}!' }, { who: 'chispapaw', text: 'My little Tall One says these every night! I never knew what they MEANT.' }] } },
+    'ch12-take': { op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '', facts: [{ a: 254, b: 131, regroup: 'show' }, [58, 23], [475, 132]],
+      echo: { on: [[475, 132]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] } }
+  },
+  cards: {}
+};
+    const file = path.join(tmp, 'fx12.js');
+    fs.writeFileSync(file, 'globalThis.PC = globalThis.PC || {}; PC.story = PC.story || {}; PC.story.fx12 = ' + JSON.stringify(fx12) + ';\nmodule.exports = PC;\n');
+    const md = generate(file, tmp);
+    // the Spanish: a whole line, a word in a line and in a caption, the count, the echoes
+    assert.ok(md.includes('- **The little cat (Chispapaw)**, whispering: *[es]* “…\u2060once, doce. Doce gatos.” (…\u2060eleven, twelve. Twelve cats.)'), 'a whole Spanish line and its English');
+    assert.ok(md.includes('- **Chispapaw**: “My Tall Ones call me «Galleta». It means cookie.”'), 'a word in a line');
+    assert.ok(md.includes('> By «cincuenta», the grey tom is snoring.'), 'a number in a caption');
+    assert.ok(md.includes('- **Chispapaw**, whispering: *[es]* “¡Ciento treinta y tres!” (One hundred thirty-three!)'));
+    assert.ok(md.includes('- **Chispapaw**: *[es]* “¡A contar!” (Let’s count!)'));
+    assert.ok(md.includes('**Then the paw thing in Chispapaw’s Spanish** (the skip-count, by 10s): Diez, veinte, treinta, cuarenta, ¡cincuenta! (Ten, twenty, thirty, forty, fifty!).'), 'the Spanish count');
+    assert.ok(md.includes('the page waits for Next (a Spanish count never turns its own page)') && md.includes('On to f007, which does not show the number.'));
+    assert.ok(md.includes('- Chispapaw echoes her first right answer (a retry counts) in Spanish, once: *[es]* “¡Siete por ocho, cincuenta y seis!” (Seven times eight, fifty-six!), then “My little Tall One says these every night! I never knew what they MEANT.” for 7 × 8, after the line that answer earned, all waiting for Next.'), 'the warm-up\'s echo');
+    assert.ok(md.includes('- After 475 − 132, right or helped (never its twin), Chispapaw echoes it in Spanish: *[es]* “¡Trescientos cuarenta y tres!” (Three hundred forty-three!).'), 'the lesson\'s echo');
+    assert.ok(!/\{[Ee]s:/.test(md), 'no token left as written');
+    // the art's new names
+    ['Chispapaw, a small cream pillow cat with a dark brown face, ears, paws and tail, big ears, blue eyes and a collar with a tiny bell', 'without her collar and bell',
+      'a mouse in the mouth', 'at the front left of the store', 'at the front right of the store', 'at the right, by the way in', 'on the lawn just right of the gap in the hedge',
+      'the dry den, the very back of the dark under the Old Bridge where Sprinkle slept', 'the store laid out on the floor: one square, three rows and three loose, 133', 'the store on the floor is what she taps',
+      'the store’s plan in the sand: five empty squares', 'the squares of the store’s plan glowing', 'the whole store’s plan in the sand is what she taps (the squares)',
+      'three sets of a square, a line and a dot', 'then Chispapaw’s beside it, her square round like a cookie, then yours beside hers', 'the moon one evening past full, waning, sixteen evenings old'
+    ].forEach((w) => assert.ok(md.includes(w), w));
+    // chapters 1 to 11 and the Warrior Counts: no Spanish in them (every storyboard regenerates byte for byte: the first test)
+    fs.readdirSync(path.join(ROOT, 'docs/storyboard')).filter((f) => /^(ch(0\d|1[01])|warrior)\.md$/.test(f)).forEach((f) => {
+      const s = fs.readFileSync(path.join(ROOT, 'docs/storyboard', f), 'utf8');
+      assert.ok(!/[«»]|\*\[es\]\*|in Chispapaw’s Spanish/.test(s), f);
+    });
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

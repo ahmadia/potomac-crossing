@@ -943,8 +943,11 @@ test('12. Count the store: closed until a teach set is finished, then the shelf 
   assert.equal(E.storeOpen(part, ALL), false);
   const c = stepsCat(['none']);
   assert.equal(E.storeOpen(c, ALL), true); assert.equal(E.storeOpen(c, REAL), false, 'chapters 1 to 11 teach no step');
+  // (chapter 12: the shelf gains `friend`, Chispapaw's "¡A contar!" through E.esLine, after Tallyheart's greeting; the spanish
+  // owner's, spec section 6's kit pins, item 4)
   assert.deepEqual(E.hollowShelf(c, ALL), { greet: E.STORE_LINES.greet, line: E.STORE_LINES.greet, steps: ['none'],
-    buttons: [{ id: 'store', label: 'Count the store' }, { id: 'counts', label: 'One Count at a time' }, { id: 'nest', label: 'My nest' }] });
+    buttons: [{ id: 'store', label: 'Count the store' }, { id: 'counts', label: 'One Count at a time' }, { id: 'nest', label: 'My nest' }],
+    friend: { who: 'chispapaw', text: E.esLine('{es:aContar}') } });
   assert.equal(E.hollowShelf(c, ALL, { reward: true }).line, 'Another round? I’ve got all evening.');
   assert.equal(E.hollowShelf(c, REAL, { stories: ALL }).line, E.STORE_LINES.greet, 'opts.stories in place of the stories');
   assert.equal(E.STORE_LINES.greet, 'Count the store, or one Count at a time? A full round earns a treasure for your nest.');
@@ -995,6 +998,9 @@ test('12. a round: five problems, every answer different, the first with no spre
   const d = E.takeRoundDef();
   assert.deepEqual([d.id, d.op, d.teacher, d.picture.kind, d.done, d.intro], ['store', '-', 'tallyheart', 'store', 'The whole store, counted! That deserves a treasure for your nest.', 'Five from the store. Ready? Here we go.']);
   assert.deepEqual(d.praise, E.TAKE_LINES.praise);
+  // (chapter 12: a round's def gains `echo`, Chispapaw's Spanish on the round's first problem right in every column; the spanish
+  // owner's, spec section 6's kit pins, item 4)
+  assert.deepEqual(d.echo, { on: 'first', lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] });
 });
 test('12. a round never says a line about a step she has not learned (the kit\'s rule, E.takeSlip\'s taught): its tens never "no row went" before ones2, its hundreds never "no square went" before tens; "Let\'s scratch it out." in their place, played through the runner', () => {
   const ROW = /no row went/, SQUARE = /no square went/;
@@ -1212,6 +1218,30 @@ test('13. the words table: a token for every form, no form written into any line
   assert.equal(E.takeLine(def, plan(503, 278), 1, null, 'hers', true), 'Now the tens. Your turn: take away seven.');
   const { st } = lessonOf([[58, 23]], def);
   assert.equal(answerProblem(st, Object.assign({ id: 'test-take', op: '-' }, def), rightTyper, { t: 1 }).line, 'Super!');
+});
+
+// (chapter 12: the kit's design gives the school words to chapter 12's and 13's worked examples, its section 1 and call 28;
+// E.takeLine says them once, before a 'show' problem's tens line in a teach 'none' or 'ones2' set: the kit review's case)
+test('13. the school words ("A row is a ten. A square is a hundred."): before the tens line of a \'show\' problem in a teach \'none\' or \'ones2\' set, once; never on the first column, a \'tap\' twin, a \'hers\' problem or any other set; filled from the words table', () => {
+  const none = { teach: 'none' }, line = (def, a, b, col, mode) => E.takeLine(def, plan(a, b), col, null, mode, true);
+  assert.equal(line(none, 254, 131, 0, 'show'), 'Ones first. Four take away one.', 'not on the first column (the kit\'s longest)');
+  assert.equal(line(none, 254, 131, 1, 'show'), 'A row is a ten. A square is a hundred. Now the tens. Five take away three.');
+  assert.equal(line(none, 254, 131, 2, 'show'), 'Now the hundreds. Two take away one.');
+  assert.equal(line({ teach: 'ones2' }, 43, 16, 1, 'show'), 'A row is a ten. A square is a hundred. Now the tens. Three take away one.', 'chapter 13\'s worked example');
+  assert.equal(line(none, 254, 131, 1, 'tap'), 'Now the tens. Five take away three.', 'its twin (\'tap\'): once is enough');
+  assert.equal(line(none, 254, 131, 1, 'hers'), 'Now the tens. Take away three.');
+  [{}, { teach: 'ones' }, { teach: 'tens' }, { teach: 'mixed' }].forEach((d) => assert.ok(!/A row is a ten/.test(line(d, 254, 131, 1, 'show')), JSON.stringify(d)));
+  assert.equal(E.takeLine(none, plan(254, 131), 1, null, 'show', false), 'Now the tens.', 'the name alone stays the name alone');
+  const keep = PC.words;
+  try {
+    PC.words = { row: 'fila', square: 'cuadro' };
+    assert.equal(line(none, 254, 131, 1, 'show'), 'A fila is a ten. A cuadro is a hundred. Now the tens. Five take away three.', 'the words table, read at call time');
+  } finally { if (keep === undefined) delete PC.words; else PC.words = keep; }
+  // through the runner: chapter 12's worked example, column by column (the line each column outlines)
+  const def = { id: 'test-take', op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, facts: [{ a: 254, b: 131, regroup: 'show' }] };
+  const st = E.takes.start(def, { now: 1 }), said = [];
+  [3, 2, 1].forEach((d, k) => { const q = E.takes.question(st); said.push(E.takeLine(def, q.plan, q.col, q.stage, q.mode, q.full)); E.takes.digit(st, def, d, 2000, 1000 * (k + 1)); });
+  assert.deepEqual(said.map((x) => /A row is a ten/.test(x)), [false, true, false], 'said once, on the tens');
 });
 
 test('13. E.takeQuestion: the prompt\'s balloons, a twin\'s or the warm-up\'s introduction, then the problem in words, said only', () => {

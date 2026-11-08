@@ -40,7 +40,11 @@
  * (docs/take-aways.md, built before chapter 12) adds three-digit subtraction: a Counts set with `op: '-'`,
  * its own runner (E.takes), plan, slips, help in the sand and twins, and an optional `takes` on a cat, its
  * own log, absent until her first take-away (its own section, after the Warrior Counts'). No chapter 1 to 11
- * has a take set, so nothing it adds is reached before chapter 12.
+ * has a take set, so nothing it adds is reached before chapter 12. Chapter 12 adds Chispapaw's Spanish
+ * (docs/chapters/12-a-spark-at-the-hedge.spec.md, section 6; its own section, after the kit's): PC.words' Spanish,
+ * the {es:key} token filled in E.fill's one pass as «…», a whole Spanish line (`lang: 'es'`, E.esLine with its
+ * English), the voices' parts (E.speechParts), a set's `echo`, a skip's `lang`, the kit's school words, Count the
+ * store's friend and the guards. No line of chapters 1 to 11 reaches any of it; the save is untouched.
  *
  * Functions that change a cat change the object they are given (and return it or a result).
  * Nothing here reads the clock on its own: callers pass `now` (ms since epoch) where it matters,
@@ -189,14 +193,13 @@
     return cat && typeof cat.name === 'string' && cat.name.toLowerCase() === 'murmur' ? 'mutter' : 'murmur';
   };
   /* Fill {tokens} from a cat. Unknown tokens stay as written, so a typo shows up instead of
-   * vanishing. `extra` adds tokens (the Counts runner uses {a} {b} {groups} ...). */
+   * vanishing. `extra` adds tokens (the Counts runner uses {a} {b} {groups} ...).
+   * Chapter 12: a Spanish token, {es:key} or {Es:key}, is filled in the same one pass (a value the fill
+   * inserted, a typed dream or a name, is never scanned again), between the engine's marks, «…»
+   * (the section "chapter 12: Spanish", below: esFill). Every other token fills exactly as before. */
   E.fill = function (text, cat, extra) {
     if (text == null) return '';
-    var t = E.tokens(cat);
-    return String(text).replace(/\{([A-Za-z]+)\}/g, function (m, k) {
-      if (extra && own(extra, k)) return String(extra[k]);
-      return own(t, k) ? t[k] : m;
-    });
+    return esFill(String(text), cat, extra, 'marks');
   };
   /* Only a question's own tokens ({a} {b} {answer}); the cat's are filled later, by the UI. */
   function fillFact(text, q) {
@@ -1614,12 +1617,15 @@
     else if (kind) { cat.flags[kind] = E.cleanDream(value); }
     return E.go(cat, story, E.landing(cat, story, f.input.next), now);
   };
-  /* Her dream for a chapter, as typed ('' when skipped or not reached). */
+  /* Her dream for a chapter, as typed ('' when skipped or not reached). Chapter 12: a « or » she typed is
+   * read as “ or ” (the engine's own marks letter Spanish), on read, so a save made before keeps working
+   * and nothing stored changes. */
+  function dreamMarks(s) { return s.indexOf('«') < 0 && s.indexOf('»') < 0 ? s : s.replace(/«/g, '“').replace(/»/g, '”'); }
   E.dreamOf = function (cat, chapterId) {
     if (!cat) return '';
-    if (typeof cat.dream === 'string' && cat.dream) return cat.dream;   // a version-1 cat, or a test's
+    if (typeof cat.dream === 'string' && cat.dream) return dreamMarks(cat.dream);   // a version-1 cat, or a test's
     var d = isObj(cat.dreams) && chapterId ? cat.dreams[chapterId] : '';
-    return typeof d === 'string' ? d : '';
+    return typeof d === 'string' ? dreamMarks(d) : '';
   };
   E.confirmLook = function (cat, story, look, now) {
     var f = E.currentFrame(cat, story);
@@ -1751,6 +1757,8 @@
     }
     if (skip.paws === 'log') { v.paws = 'log'; v.anywhere = true; }
     if (skip.paws === 'mud') v.paws = 'mud';
+    // chapter 12: a Spanish count (`lang: 'es'`, section "chapter 12: Spanish"); every other skip exactly as before
+    if (skip.lang === 'es') esSkip(v, totals, n, done, table);
     return v;
   };
   /* A skip-count that keeps the frame's own scene on screen (`paws: 'log'`): the scene after that
@@ -1847,6 +1855,9 @@
     // (no big number over these pictures: Tallyheart says her paws aboard, and the mud's forepaws
     // carry their own 5, 10, 15 under them, where the big one would sit on the next to light)
     if (paws === 'board' || paws === 'mud') w.noNumber = true;
+    // chapter 12: a Spanish count is said out loud (its counter is the skip's own `teacher`) and lettered in words, in
+    // Comic Neue (the plain counter's Andika bold has no italic, and Spanish is never lettered in Andika)
+    if (skip.lang === 'es') { w.whisper = false; w.words = true; }
     return w;
   };
   /* `keep: true` on a skip: the running totals stay. The page it turns to, the plain pages after
@@ -2520,9 +2531,15 @@
     var by = function (text) { return silent ? { text: text, kind: 'caption' } : { who: teacher, text: text }; };
     // an opening line and the question after it: one balloon; in a silent set, a caption each
     var two = function (lead, question) { return silent ? [by(lead), by(question)] : [by(lead + ' ' + question)]; };
+    // (chapter 12's design for the chapters after it: a prompt balloon with `lang: 'es'` is a whole Spanish line, lettered
+    // through E.esLine with the question's own numbers, so '¿{Es:a} {es:por} {es:b}?' asks any pair; it keeps its `lang`)
     var lines = function (x) {
       return asList(x).map(function (b) { return typeof b === 'string' ? { text: b } : b; }).filter(function (b) { return b && b.text; })
-        .map(function (b) { return b.kind === 'caption' || (silent && !b.who) ? { text: fillQ(b.text, D, q), kind: 'caption' } : { who: b.who || teacher, text: fillQ(b.text, D, q), kind: b.kind }; });
+        .map(function (b) {
+          if (b.kind === 'caption' || (silent && !b.who)) return { text: fillQ(b.text, D, q), kind: 'caption' };
+          if (b.lang === 'es') return { who: b.who || teacher, text: E.esLine(b.text, null, { a: q.a, b: q.b }), kind: b.kind, lang: 'es' };
+          return { who: b.who || teacher, text: fillQ(b.text, D, q), kind: b.kind };
+        });
     };
     if (q.retry) {
       // a borrowed question coming back under the bridge isn't "my dinner again": it opens as it did,
@@ -2539,6 +2556,8 @@
       return lines(q.prompt);
     }
     if (D.firstPrompt && q.number === 1) return [by(fillQ(D.firstPrompt, D, q))];
+    // (a set's prompt given as balloons, chapter 12's design for a Spanish ask: no set of chapters 1 to 11 has one)
+    if (D.prompt && typeof D.prompt !== 'string') return lines(D.prompt);
     if (D.prompt) return [by(fillQ(D.prompt, D, q))];
     return [by(E.genericQuestion(D, q))];
   };
@@ -2786,7 +2805,7 @@
   /* The dream as the book prints it (the cat keeps what she typed): a capital first letter,
    * "i" and "i'm" as "I" and "I'm", and a full stop unless it already ends a sentence. */
   E.tidyDream = function (raw) {
-    var s = E.cleanDream(raw);
+    var s = dreamMarks(E.cleanDream(raw));   // (chapter 12: a typed « » as “ ”, as E.dreamOf reads it)
     if (!s) return s;
     s = s.replace(/(^|[^\p{L}\p{N}'’])i(?=$|[^\p{L}\p{N}])/gu, '$1I');
     s = s.charAt(0).toUpperCase() + s.slice(1);
@@ -4324,7 +4343,11 @@
     if (full === false) return name;
     if (col === 0) return takeFill(takeLine(def, 'colFirst'), { top: c.before, bottom: bv || 0 }, words);
     var part = mode === 'hers' ? takeLine(def, bv == null ? 'nothingHers' : 'colHers') : takeLine(def, bv == null ? 'nothingShown' : 'colShown');
-    return name + ' ' + takeFill(part, { top: c.before, bottom: bv || 0 }, words);
+    // chapter 12 (the kit's design, its section 1 and call 28): the school words once on chapter 12's and 13's worked examples,
+    // before a 'show' problem's tens line in a teach 'none' or 'ones2' set (never on the first column, the kit's longest; its
+    // twin is 'tap', so they are said once)
+    var school = col === 1 && mode === 'show' && def && (def.teach === 'none' || def.teach === 'ones2') ? takeFill(takeLine(def, 'schoolWords'), {}, words) + ' ' : '';
+    return school + name + ' ' + takeFill(part, { top: c.before, bottom: bv || 0 }, words);
   };
 
   /* 'show''s steps and 'tap''s lines for a turn that spreads (null for one that does not). `steps`
@@ -4829,12 +4852,18 @@
       var w = E.hollowLines(cat, S, opts.now != null ? { now: opts.now } : {}).waiting;
       if (w) { out.waiting = w; out.line = w; }
     }
+    // chapter 12 (the kit's section 5 leaves her lines to it): Chispapaw's "¡A contar!" after Tallyheart's greeting, absent
+    // while a Warrior Counts sitting waits (its waiting line takes the place, and the room); the store opens only once
+    // chapter 12's lesson is finished, so she is always met by then
+    if (!out.waiting) out.friend = { who: 'chispapaw', text: E.esLine('{es:aContar}') };
     return out;
   };
-  /* A store round's set: Tallyheart's, the store picture, the kit's praise, its own closing line and its introduction. */
+  /* A store round's set: Tallyheart's, the store picture, the kit's praise, its own closing line and its introduction.
+   * Chapter 12: Chispapaw echoes the round's first problem right in every column, in Spanish (one echo a round). */
   E.takeRoundDef = function () {
     return { id: 'store', op: '-', teacher: 'tallyheart', picture: { kind: 'store' }, praise: clone(E.TAKE_LINES.praise),
-      done: E.STORE_LINES.done, intro: E.STORE_LINES.intro };
+      done: E.STORE_LINES.done, intro: E.STORE_LINES.intro,
+      echo: { on: 'first', lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] } };
   };
   /* A round (section 5): 1 an easy one (a `none` template); 2 her hardest step (E.hardTakes, among the steps she has
    * learned), else the newest; 3 her next hardest, else an older step; 4 the newest; 5 an older step (an older step is
@@ -4988,6 +5017,339 @@
       } else if (d.teach == null) {
         steps.forEach(function (s, i) { if (!taught[s]) errs.push(w + 'fact ' + i + ': its step "' + s + '" is taught by no take set of this chapter or an earlier one'); });
       }
+    });
+    return errs;
+  };
+
+  /* ------------------------------------------------------------ chapter 12: Spanish
+   * docs/chapters/12-a-spark-at-the-hedge.spec.md, section 6 (decisions 53 and 54): Chispapaw's Spanish, chapter 12's one
+   * feature. No new interaction, and the save is untouched. The words are PC.words.es (app/story/words.js, read at call
+   * time); a story writes a Spanish word as a token, {es:key} ({Es:key} capitalised), which E.fill letters between the
+   * engine's marks, «…», and a whole Spanish line as a balloon with `lang: 'es'` whose text is tokens and punctuation only,
+   * lettered by E.esLine: the Spanish between the marks, then on a line of its own its English in parentheses, made here
+   * (E.esGloss), so no story information is ever in Spanish only. The page reads the marks: rich() letters them in italics
+   * with lang="es", Read to me says them in the Spanish voice (E.speechParts), so every page that passes text (a frame, the
+   * Counts page's balloons, the take page's echo, the skip's counter, the shelf) carries Spanish with no change of its own.
+   * Reached only by a `lang`, a {es:…} token, a set's `echo`, a skip's `lang` or the marks the engine makes: no line of
+   * chapters 1 to 11, PC.warrior, E.TAKE_LINES or E.STORE_LINES has one, and a « or » typed into a dream is read as “ or ”
+   * (E.dreamOf). Numbers are Latin American (the same words everywhere), 0 to 1,000. */
+  var ES_ONES = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce',
+    'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco',
+    'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve'];
+  var ES_TENS = ['', '', '', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+  var ES_HUNDREDS = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+  var ES_ASK = ['a', 'b', 'answer'];                    // a question's own numbers, as tokens ({Es:answer}); `fact` beside them
+  var ES_OPEN = { '¡': '!', '¿': '?' };                 // an opening mark before a token goes inside the marks with its close
+  var ES_STRIP = /[¡!¿?…,.⁠]/g;                    // what E.esEnglish ignores around a word
+  /* The bare Spanish number: "cero" … "quince", "dieciséis", "veintiuno", "treinta y uno", "cien", "ciento uno" (never
+   * "ciento y uno"), "doscientos", "mil"; outside 0 to 1,000 the digits as a string. */
+  E.esNumber = function (n) {
+    if (!(typeof n === 'number' && n === Math.floor(n) && n >= 0 && n <= 1000)) return String(n);
+    if (n === 1000) return 'mil';
+    if (n === 100) return 'cien';
+    var h = Math.floor(n / 100), r = n % 100, s = h ? ES_HUNDREDS[h] : '';
+    if (r || !h) s = (s ? s + ' ' : '') + (r < 30 ? ES_ONES[r] : ES_TENS[Math.floor(r / 10)] + (r % 10 ? ' y ' + ES_ONES[r % 10] : ''));
+    return s;
+  };
+  /* PC.words.es, read at call time (as E.TAKE_WORDS reads PC.words); {} when there is none. */
+  E.esWords = function () { var w = isObj(PC.words) ? PC.words.es : null; return isObj(w) ? w : {}; };
+  function esWord(key, side, fallback) { var w = E.esWords()[key]; return isObj(w) && typeof w[side] === 'string' && w[side] ? w[side] : fallback; }
+  /* "siete por ocho, cincuenta y seis" (Aron's form, decision 53: the fact, a comma, the answer). */
+  E.esFact = function (a, b) { return E.esNumber(a) + ' ' + esWord('por', 'es', 'por') + ' ' + E.esNumber(b) + ', ' + E.esNumber(a * b); };
+  // the first letter in capitals, after any leading ¡ ¿ … or word joiner (U+2060)
+  function esCap(s) { return String(s).replace(/^([¡¿…⁠\s]*)(.)/, function (m, lead, c) { return lead + c.toUpperCase(); }); }
+  /* A token's key, as { es, en } (en: the English the gloss takes; a word's own `say` is E.esEnglish's), or null: a whole
+   * number (E.esNumber); `fact`, `a`, `b`, `answer` when `extra` has them (a Counts page or a take page); else a key of
+   * PC.words.es. An unknown key stays as written, as any token does. */
+  function esValue(key, extra) {
+    if (/^\d+$/.test(key)) return { es: E.esNumber(+key), en: E.numberWords(+key) };
+    if (key === 'fact' && extra && okNum(extra.a) && okNum(extra.b)) {
+      return { es: E.esFact(extra.a, extra.b), en: E.numberWords(extra.a) + ' ' + esWord('por', 'en', 'times') + ' ' + E.numberWords(extra.b) + ', ' + E.numberWords(extra.a * extra.b) };
+    }
+    if (ES_ASK.indexOf(key) >= 0 && extra && okNum(extra[key])) return { es: E.esNumber(extra[key]), en: E.numberWords(extra[key]) };
+    if (key === 'fact' || ES_ASK.indexOf(key) >= 0) return null;
+    var w = E.esWords()[key];
+    return own(E.esWords(), key) && isObj(w) && typeof w.es === 'string' ? { es: w.es, en: typeof w.en === 'string' ? w.en : '' } : null;
+  }
+  /* The one pass that fills both kinds of token (E.fill's): the first group is exactly the old \{([A-Za-z]+)\}, filled
+   * exactly as before (`extra`, then the cat's), so every existing line fills as it did; the second is {es:key} or
+   * {Es:key}. `mode`: 'marks' (E.fill: a Spanish token between «», a ¡ or ¿ just before it with its ! or ? just after
+   * going inside with it), 'bare' (E.esLine's inside: the Spanish alone), 'en' (E.esGloss: its English), 'esmarks' (an
+   * echo's English line: the Spanish tokens filled with marks, the cat's left for the page). */
+  function esFill(s, cat, extra, mode) {
+    var re = /\{(?:([A-Za-z]+)|([Ee]s):([^}]+))\}/g, out = '', i = 0, t = null, m;
+    while ((m = re.exec(s))) {
+      var from = i;
+      out += s.slice(i, m.index);
+      i = re.lastIndex;
+      if (m[1] != null) {
+        if (mode === 'esmarks') { out += m[0]; continue; }
+        if (extra && own(extra, m[1])) { out += String(extra[m[1]]); continue; }
+        if (!t) t = E.tokens(cat);
+        out += own(t, m[1]) ? t[m[1]] : m[0];
+        continue;
+      }
+      var v = esValue(m[3], extra);
+      if (!v) { out += m[0]; continue; }
+      var word = mode === 'en' ? v.en : v.es;
+      if (m[2] === 'Es') word = esCap(word);
+      if (mode === 'bare' || mode === 'en') { out += word; continue; }
+      var pre = m.index > from ? s.charAt(m.index - 1) : '';
+      if (ES_OPEN[pre] && s.charAt(i) === ES_OPEN[pre]) { out = out.slice(0, -1); word = pre + word + s.charAt(i); i++; }
+      out += '«' + word + '»';
+    }
+    return out + s.slice(i);
+  }
+  /* A line's Spanish tokens filled between the marks, its cat's tokens left as written (an echo's English line, and the
+   * storyboard's words for a {es:key}). */
+  E.esMarks = function (text, extra) { return text == null ? '' : esFill(String(text), null, extra, 'esmarks'); };
+  /* The English of a Spanish line: each token by its English (a number by E.numberWords; `fact` as "seven times eight,
+   * fifty-six"; a word by its `en`), {Es:…} capitalised, ¡ and ¿ dropped, every other character kept. */
+  E.esGloss = function (text, cat, extra) { return text == null ? '' : esFill(String(text), cat, extra, 'en').replace(/[¡¿]/g, ''); };
+  /* A whole Spanish line as the page letters it: its tokens filled with no inner marks, the whole between «», then a new
+   * line and its gloss in parentheses: "«…once, doce. Doce gatos.»\n(…eleven, twelve. Twelve cats.)". */
+  E.esLine = function (text, cat, extra) {
+    if (text == null) return '';
+    return '«' + esFill(String(text), cat, extra, 'bare') + '»\n(' + E.esGloss(text, cat, extra) + ')';
+  };
+  var ES_NUM_AT = null;
+  function esNumberAt(s) {
+    if (!ES_NUM_AT) { ES_NUM_AT = {}; for (var n = 0; n <= 1000; n++) ES_NUM_AT[E.esNumber(n)] = n; }
+    return own(ES_NUM_AT, s) ? ES_NUM_AT[s] : null;
+  }
+  /* What a Spanish word or phrase is in English, for speech with no Spanish voice: a words-table entry's `say`, else its
+   * `en` (matched on its `es`); a number's words, matched against E.esNumber(0 … 1000) ignoring case, ¡ ! ¿ ? … , . and
+   * U+2060 (the English capitalised as the Spanish was); else ''. */
+  E.esEnglish = function (s) {
+    s = String(s == null ? '' : s).trim();
+    var bare = s.replace(ES_STRIP, '').replace(/\s+/g, ' ').trim(), W = E.esWords(), keys = Object.keys(W), k, i;
+    var said = function (w) { return typeof w.say === 'string' && w.say ? w.say : typeof w.en === 'string' ? w.en : ''; };
+    for (i = 0; i < keys.length; i++) { k = W[keys[i]]; if (isObj(k) && k.es === s) return said(k); }
+    for (i = 0; i < keys.length && bare; i++) { k = W[keys[i]]; if (isObj(k) && typeof k.es === 'string' && k.es.replace(ES_STRIP, '').trim().toLowerCase() === bare.toLowerCase()) return said(k); }
+    var n = bare ? esNumberAt(bare.toLowerCase()) : null;
+    if (n == null) return '';
+    var en = E.numberWords(n);
+    return bare.charAt(0) !== bare.charAt(0).toLowerCase() ? cap1(en) : en;
+  };
+  /* English speech, respelled (PC.words.sayAs): whole words, in the table's order (Chispapaw before Chispa, so never
+   * "Cheespapaw"); a respelled word that is the cat's own name, her Clan name, her warrior name or her pet name (ignoring
+   * case) is skipped, so a cat a player named Chispa is said as she always was. A no-op for every line of chapters 1 to 11. */
+  E.sayAs = function (text, cat) {
+    var s = String(text == null ? '' : text), list = isObj(PC.words) && Array.isArray(PC.words.sayAs) ? PC.words.sayAs : [];
+    if (!s || !list.length) return s;
+    var mine = [];
+    if (cat && typeof cat.name === 'string' && cat.name) mine.push(cat.name, cat.name + 'paw', E.warriorName(cat));
+    if (cat && typeof cat.petname === 'string' && cat.petname) mine.push(cat.petname);
+    mine = mine.filter(Boolean).map(function (x) { return x.toLowerCase(); });
+    list.forEach(function (p) {
+      if (!Array.isArray(p) || typeof p[0] !== 'string' || !p[0] || typeof p[1] !== 'string' || mine.indexOf(p[0].toLowerCase()) >= 0) return;
+      var re = new RegExp('(^|[^\\p{L}\\p{N}])' + p[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}\\p{N}])', 'gu');
+      s = s.replace(re, function (m, lead) { return lead + p[1]; });
+    });
+    return s;
+  };
+  /* A filled line split for the voices: [{ text, lang: 'en' | 'es', en?, line?, gloss? }]. Outside «» English (E.sayAs
+   * applied); inside Spanish, its `en` E.esEnglish's. A Spanish part is a line (`line: true`) only when the text after its
+   * closing » is exactly a new line and its gloss in parentheses (that part `gloss: true`); every other Spanish part is a
+   * word in a line. A line with no « and `lang: 'es'` is one Spanish part with no English; any other one English part. */
+  E.speechParts = function (text, lang, cat) {
+    var s = String(text == null ? '' : text), out = [], i = 0;
+    if (s.indexOf('«') < 0) return lang === 'es' ? [{ text: s, lang: 'es', en: '' }] : [{ text: E.sayAs(s, cat), lang: 'en' }];
+    var en = function (x) { if (x) out.push({ text: E.sayAs(x, cat), lang: 'en' }); };
+    while (i < s.length) {
+      var a = s.indexOf('«', i), b = a < 0 ? -1 : s.indexOf('»', a + 1);
+      if (a < 0 || b < 0) { en(s.slice(i).replace(/«/g, '')); break; }
+      en(s.slice(i, a));
+      var es = s.slice(a + 1, b), g = /^\n\(([^«»\n]*)\)$/.exec(s.slice(b + 1));
+      if (g) {
+        out.push({ text: es, lang: 'es', en: E.esEnglish(es), line: true });
+        out.push({ text: E.sayAs(g[1], cat), lang: 'en', gloss: true });
+        return out;
+      }
+      out.push({ text: es, lang: 'es', en: E.esEnglish(es) });
+      i = b + 1;
+    }
+    return out;
+  };
+  /* The echoes: a set's `echo`, { on: 'first' | [[a, b], …], lines: [{ who, text, lang?, kind? }] }. A `lang: 'es'` line is
+   * lettered by E.esLine with the answer's numbers; an English line takes its Spanish tokens filled, its cat's for the page. */
+  function echoLines(def) { return isObj(def && def.echo) ? asList(def.echo.lines).filter(function (l) { return isObj(l) && typeof l.text === 'string' && l.text; }) : []; }
+  function echoOn(on, a, b, either) { return Array.isArray(on) && on.some(function (p) { var q = factPair(p); return (q[0] === a && q[1] === b) || (!!either && q[0] === b && q[1] === a); }); }
+  function echoBalloon(l, x) {
+    var o = { who: l.who || 'chispapaw', text: l.lang === 'es' ? E.esLine(l.text, null, x) : esFill(l.text, null, x, 'esmarks') };
+    if (l.lang === 'es') o.lang = 'es';
+    if (l.kind) o.kind = l.kind;
+    return o;
+  }
+  /* The Counts page's echo (runLesson, one guarded statement after E.counts.answer): null unless the set has `echo` and the
+   * answer is right; `on: 'first'` only for the lesson's first right answer (its log's right entries are one: a retry or a
+   * filler counts, and a lesson picked up after it never echoes again); a list, when the answer's pair is one of it (either
+   * order). The balloons the page shows, waiting for Next: the line this answer earned (`res.line`, the teacher's, if any;
+   * else the fact's own `res.balloons`), then each echo line, its numbers the answer's as it was asked. */
+  E.countsEcho = function (def, st, res, teacher) {
+    if (!def || !isObj(def.echo) || !res || !res.correct || !isObj(res.entry)) return null;
+    var e = res.entry, on = def.echo.on;
+    if (on === 'first') { if (((st && st.log) || []).filter(function (x) { return x && x.correct; }).length !== 1) return null; }
+    else if (!echoOn(on, e.a, e.b, true)) return null;
+    var out = res.line ? [{ who: teacher || def.teacher || 'tallyheart', text: res.line }] : res.balloons && res.balloons.length ? clone(asList(res.balloons)) : [];
+    var x = { a: e.a, b: e.b, answer: e.a * e.b };
+    echoLines(def).forEach(function (l) { out.push(echoBalloon(l, x)); });
+    return out.length ? out : null;
+  };
+  /* The take page's echo (runTakes' problem end, for every finished problem; never the kit's `o.echo` hook, which would hold
+   * an echo's room above every column): null unless the set has `echo` and `info` is a problem (a column is never echoed);
+   * a list, when its pair is one of it, right or helped (a twin never has the original's top, so it never matches); `on:
+   * 'first'`, only for a problem right in every column that is the first such in the state's log (a store round's: one echo
+   * a round). One balloon, { who, text }: the first echo line, its numbers the problem's. */
+  E.takeEcho = function (def, info, st) {
+    if (!def || !isObj(def.echo) || !isObj(info) || !info.problem) return null;
+    var on = def.echo.on;
+    if (on === 'first') {
+      if (!info.correct) return null;
+      var log = (st && st.log) || [], rights = log.filter(function (x) { return x && x.correct; }), last = log[log.length - 1];
+      if (rights.length > 1 || (rights.length === 1 && !(last && last.correct && last.a === info.a && last.b === info.b))) return null;
+    } else if (!echoOn(on, info.a, info.b, false)) return null;
+    var l = echoLines(def)[0];
+    if (!l) return null;
+    var b = echoBalloon(l, { a: info.a, b: info.b, answer: okNum(info.answer) ? info.answer : info.a - info.b });
+    return { who: b.who, text: b.text };
+  };
+  /* The Spanish count (E.skipView, a skip with `lang: 'es'`): the numbers so far in Spanish words between the marks, the
+   * first capitalised, joined by commas, "…" after them while it grows and the last "¡…!" when done (a capital made before
+   * the ¡…! is put round a word, so a one-group count is "¡Diez!"); done, a new line and its English in parentheses.
+   * `say`: the newest number between the marks ("«veinte»"); `gloss`: the English line when done; `wait`: the page waits
+   * for Next (a Spanish count never turns its own page). */
+  function esSkip(v, totals, n, done, table) {
+    var es = totals.map(function (t) { return E.esNumber(t); }), en = totals.map(function (t) { return E.numberWords(t); });
+    if (n) { es[0] = esCap(es[0]); en[0] = cap1(en[0]); }
+    if (done && n) { es[n - 1] = '¡' + es[n - 1] + '!'; en[n - 1] = en[n - 1] + '!'; }
+    v.lang = 'es';
+    v.count = !n ? '' : '«' + es.join(', ') + (done ? '' : '…') + '»' + (done ? '\n(' + en.join(', ') + ')' : '');
+    v.say = n ? '«' + E.esNumber(n * table) + '»' : '';
+    if (done && n) v.gloss = en.join(', ');
+    v.wait = true;
+    return v;
+  }
+  /* Chapter 12's guards, added to E.checkStory's errors (none for a chapter with no Spanish: chapters 1 to 11 raise none).
+   * A balloon's `lang` is 'es', only on a frame's `say` balloon, a set's `echo.lines` or a Counts set's prompt balloon (a
+   * fact's `prompt` or `retryPrompt`, a set's `prompt` given as balloons: the design the chapters after this one ask for);
+   * never a caption, an option, a take set's prompt or any other line. A `lang: 'es'` line has a token and, its tokens
+   * removed, no letter; filled with its largest numbers it is at most eight words; it holds no cat token. Every {es:key}
+   * resolves: a whole number 0 to 1,000; `fact`, `a`, `b`, `answer` only in an echo line (`fact` only on a set without
+   * `op: '-'`), `a` and `b` in a Counts prompt's Spanish line; else a key of PC.words.es with string `es` and `en`; and no
+   * words-table key is a number or one of those four. No « or » anywhere in a story file. A skip's `lang` is 'es', its
+   * groups × table at most 1,000. A set's `echo` is { on, lines }: `on` 'first' or pairs among the set's facts, `lines`
+   * one to three on a Counts set and exactly one on a take set, each { who, text, lang?, kind? }. For the chapters after
+   * this one: a lowercase {es:…} lettered lowercase that opens a line, or follows . ! or ? (after any ¡ or ¿; never after
+   * "…"); a number token ending in "uno" straight before a word token ("veintiuno gatos" for veintiún). */
+  E.ES_MAX_WORDS = 8;
+  E.checkSpanish = function (story) {
+    var errs = [], W = E.esWords();
+    if (!story || typeof story !== 'object') return errs;
+    var counts = isObj(story.counts) ? story.counts : {};
+    Object.keys(W).forEach(function (k) {
+      if (/^\d+$/.test(k) || k === 'fact' || ES_ASK.indexOf(k) >= 0) errs.push('PC.words.es: ' + k + ' is a number or a question’s own token, never a word');
+      else if (!(isObj(W[k]) && typeof W[k].es === 'string' && W[k].es && typeof W[k].en === 'string' && W[k].en)) errs.push('PC.words.es: ' + k + ' is { es, en, say? }');
+    });
+    // where a line sits decides what its tokens may name: 'echo' (a set's echo line), 'ask' (a Counts prompt's Spanish line)
+    function tokens(where, text, ctx) {
+      var re = /\{([Ee]s):([^}]+)\}/g, m;
+      while ((m = re.exec(text))) {
+        var k = m[2], ok;
+        if (/^\d+$/.test(k)) ok = +k >= 0 && +k <= 1000;
+        else if (k === 'fact') ok = ctx.echo && !ctx.take;
+        else if (ES_ASK.indexOf(k) >= 0) ok = ctx.echo || (ctx.ask && k !== 'answer');
+        else ok = own(W, k) && isObj(W[k]) && typeof W[k].es === 'string' && typeof W[k].en === 'string';
+        if (!ok) errs.push(where + ': ' + m[0] + ' names nothing it may here (a whole number 0 to 1,000, a word of PC.words.es; fact, a, b, answer in an echo line, fact on a Counts set; a, b in a Counts prompt’s Spanish line)');
+        // (the chapters after this one) a lowercase token lettered lowercase at a sentence's start
+        if (ok && m[1] === 'es') {
+          var v = esValue(k, { a: 7, b: 8, answer: 56 }), lead = text.slice(0, m.index).replace(/[¡¿]+$/, '');
+          if (v && /^[¡¿…⁠]*\p{Ll}/u.test(v.es) && (/(^|\n)\s*$/.test(lead) || /[.!?]\s*$/.test(lead))) errs.push(where + ': ' + m[0] + ' opens a sentence in lower case: {Es:' + k + '}');
+        }
+      }
+      var n = /\{[Ee]s:(\d+)\}\s+\{[Ee]s:([A-Za-z]+)\}/g;
+      while ((m = n.exec(text))) if (/uno$/.test(E.esNumber(+m[1])) && own(W, m[2])) errs.push(where + ': ' + m[0] + ': a number ending in uno before a word is cut short in Spanish (veintiún gatos): reword it');
+    }
+    function esLineCheck(where, text, ctx) {
+      if (!/\{[Ee]s:[^}]+\}/.test(text)) errs.push(where + ': a Spanish line (lang: \'es\') is written in {es:…} tokens');
+      if (/\{[A-Za-z]+\}/.test(text)) errs.push(where + ': a Spanish line holds only {es:…} tokens ({name} is never Spanish)');
+      if (/\p{L}/u.test(text.replace(/\{[^}]*\}/g, ''))) errs.push(where + ': a Spanish line is tokens and punctuation only (its English is made by the engine)');
+      var big = ctx.take ? { a: 999, b: 999, answer: 999 } : { a: 9, b: 9, answer: 999 };
+      var words = esFill(text, null, big, 'bare').split(/\s+/).filter(function (w) { return /[\p{L}\p{N}]/u.test(w); }).length;
+      if (words > E.ES_MAX_WORDS) errs.push(where + ': a Spanish line is at most ' + E.ES_MAX_WORDS + ' words (' + words + ' with its largest numbers)');
+    }
+    function balloonCheck(where, b, ctx, langOk) {
+      if (!isObj(b)) return;
+      if (b.lang != null && !(langOk && b.lang === 'es')) errs.push(where + ': lang is \'es\', on a frame’s balloon, an echo line or a Counts prompt’s balloon only');
+      else if (b.lang === 'es' && typeof b.text === 'string') esLineCheck(where, b.text, ctx);
+    }
+    // every string in the story: no « or » (the engine's marks), every token resolved where it stands (a set's echo line:
+    // `echo`; a Counts prompt's Spanish balloon: `ask`; a take set: `take`)
+    var seen = [];
+    function walk(o, where, ctx, depth) {
+      if (o == null || depth > 40) return;
+      if (typeof o === 'string') {
+        if (/[«»]/.test(o)) errs.push(where + ': « and » are the engine’s marks for Spanish: write {es:…}');
+        tokens(where, o, ctx);
+        return;
+      }
+      if (typeof o !== 'object' || seen.indexOf(o) >= 0) return;
+      seen.push(o);
+      var inner = ctx.prompt && o.lang === 'es' ? { ask: true, take: ctx.take } : ctx;
+      Object.keys(o).forEach(function (k) { if (k !== 'scene') walk(o[k], where + '.' + k, inner, depth + 1); });   // (a scene: the art's options)
+    }
+    Object.keys(story).forEach(function (k) {
+      if (k !== 'counts') return walk(story[k], k, {}, 1);
+      Object.keys(counts).forEach(function (sid) {
+        var d = counts[sid], take = isObj(d) && d.op === '-';
+        if (!isObj(d)) return;
+        Object.keys(d).forEach(function (k2) {
+          var at = 'counts ' + sid + '.' + k2, c = { take: take };
+          if (k2 === 'echo') return walk(d.echo, at, { take: take, echo: true }, 2);
+          if (k2 === 'prompt') return walk(d.prompt, at, { take: take, prompt: !take }, 2);
+          if (k2 !== 'facts' || !Array.isArray(d.facts)) return walk(d[k2], at, c, 2);
+          d.facts.forEach(function (f, i) {
+            if (!isObj(f)) return walk(f, at + '.' + i, c, 3);
+            Object.keys(f).forEach(function (k3) { walk(f[k3], at + '.' + i + '.' + k3, k3 === 'prompt' || k3 === 'retryPrompt' ? { take: take, prompt: !take } : c, 4); });
+          });
+        });
+      });
+    });
+    // a balloon's lang: where it may stand
+    Object.keys(isObj(story.frames) ? story.frames : {}).forEach(function (id) {
+      var f = story.frames[id];
+      if (!isObj(f)) return;
+      asList(f.say).forEach(function (b, i) { balloonCheck(id + ' say ' + i, b, {}, true); });
+      asList(f.caption).forEach(function (c, i) { balloonCheck(id + ' caption ' + i, c, {}, false); });
+      if (isObj(f.choice)) asList(f.choice.options).forEach(function (o, i) { balloonCheck(id + ' option ' + i, o, {}, false); });
+      if (isObj(f.skip) && f.skip.lang != null) {
+        if (f.skip.lang !== 'es') errs.push(id + ': skip lang is \'es\' (the count in Spanish words)');
+        else if (num(f.skip.groups, 0) * num(f.skip.table, 0) > 1000) errs.push(id + ': a Spanish count goes no higher than 1,000 (groups × table)');
+      }
+    });
+    Object.keys(counts).forEach(function (sid) {
+      var d = counts[sid];
+      if (!isObj(d)) return;
+      var take = d.op === '-', at = 'counts ' + sid;
+      (d.facts || []).forEach(function (f, i) {
+        if (!isObj(f)) return;
+        ['prompt', 'retryPrompt'].forEach(function (k) { if (f[k] != null && typeof f[k] !== 'string' && f[k] !== true && f[k] !== false) asList(f[k]).forEach(function (b, j) { balloonCheck(at + ': fact ' + i + ' ' + k + ' ' + j, b, { ask: true }, !take && b && b.kind !== 'caption'); }); });
+        ['right', 'rightAgain'].forEach(function (k) { if (f[k] != null && typeof f[k] !== 'string' && f[k] !== true) asList(f[k]).forEach(function (b, j) { balloonCheck(at + ': fact ' + i + ' ' + k + ' ' + j, b, {}, false); }); });
+      });
+      if (d.prompt != null && typeof d.prompt !== 'string') asList(d.prompt).forEach(function (b, j) { balloonCheck(at + ': prompt ' + j, b, { ask: true }, !take && b && b.kind !== 'caption'); });
+      if (d.echo == null) return;
+      var E2 = d.echo;
+      if (!isObj(E2) || Object.keys(E2).some(function (k) { return k !== 'on' && k !== 'lines'; })) { errs.push(at + ': echo is { on, lines }'); return; }
+      var pairs = pairSet(d.facts || []);
+      if (!(E2.on === 'first' || (Array.isArray(E2.on) && E2.on.length && E2.on.every(function (p) { var q = factPair(p); return own(pairs, pairKey(q[0], q[1])) && (!take || (d.facts || []).some(function (f) { var r = factPair(f); return r[0] === q[0] && r[1] === q[1]; })); })))) {
+        errs.push(at + ': echo on is \'first\' or a list of the set’s own facts, like [[475, 132]]');
+      }
+      var L = Array.isArray(E2.lines) ? E2.lines : [];
+      if (take ? L.length !== 1 : !(L.length >= 1 && L.length <= 3)) errs.push(at + ': echo lines are ' + (take ? 'exactly one on a take set (the kit’s echo is one balloon)' : 'one to three on a Counts set'));
+      L.forEach(function (l, j) {
+        if (!(isObj(l) && typeof l.who === 'string' && l.who && typeof l.text === 'string' && l.text && Object.keys(l).every(function (k) { return ['who', 'text', 'lang', 'kind'].indexOf(k) >= 0; }))) errs.push(at + ': echo line ' + j + ' is { who, text, lang?, kind? }');
+        else balloonCheck(at + ': echo line ' + j, l, { echo: true, take: take }, true);
+      });
     });
     return errs;
   };
@@ -5340,6 +5702,8 @@
     checkBookTwo(story, others, checkWhen).forEach(function (e) { errs.push(e); });
     // the take-aways kit's guards (docs/take-aways.md, section 3): none for a chapter with no take set
     E.checkTakes(story, stories).forEach(function (e) { errs.push(e); });
+    // chapter 12's Spanish guards (the section "chapter 12: Spanish"): none for a chapter with no Spanish
+    E.checkSpanish(story, stories).forEach(function (e) { errs.push(e); });
     return errs;
   };
 

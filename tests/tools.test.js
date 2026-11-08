@@ -504,3 +504,109 @@ test('storyboard.mjs --check-words: words for every name chapter 10’s spec add
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+/* Chapter 12: the same, for every new name in chapter 12's spec (docs/chapters/12-a-spark-at-the-hedge.spec.md, section 4):
+ * the bridge's `store` camera, its six spots, its `store` option and Tap; the Hollow's store plan, its glow, its Tap and the
+ * quick marks; the den's moon at 16; the garden's third spot at the hedge; Chispapaw and her collar off; a cat with a mouse. */
+test('storyboard.mjs --check-words: words for every name chapter 12’s spec adds to the art (the store under the bridge and its spots, the Hollow’s plan, glow, Tap and quick marks, the den’s moon at 16, the hedge’s third spot, Chispapaw, her collar off, a mouse), declared as the spec has them; a name the spec never gave fails', () => {
+  const fs = require('node:fs'), os = require('node:os');
+  const TOOL = path.join(ROOT, 'tools/storyboard.mjs');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-words-'));
+  try {
+    const ch12 = {
+      sets: {
+        bridge: { cams: ['store'], anchors: ['store-left', 'store-right', 'store-back-1', 'store-back-2', 'store-back-3', 'way-in'], opts: { store: 'number', tap: ['none', 'print', 'store'] } },
+        hollow: { opts: { store: 'number', storeGlow: [false, 'hundreds', 'tens'], tap: ['none', 'squares'], quick: [0, 1, 2, 3] } },
+        den: { opts: { moon: [16] } },
+        garden: { anchors: ['hedge-right'] }
+      },
+      cast: ['chispapaw'],
+      extras: { collar: [false], holds: ['mouse'] }
+    };
+    const run = (x) => { const f = path.join(tmp, 'more.json'); fs.writeFileSync(f, JSON.stringify(x)); return spawnSync(process.execPath, [TOOL, '--check-words', f], { encoding: 'utf8' }); };
+    const ok = run(ch12);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.match(ok.stdout, /^Every set, camera, anchor, option, pose, mood, effect, cast member and cast extra has words\.$/m);
+    // the store at the story's numbers and the plan at 500: words of their own (the check samples a number at 3)
+    const nums = run({ sets: { bridge: { opts: { store: [175, 133] } }, hollow: { opts: { store: [500] } } } });
+    assert.equal(nums.status, 0, nums.stderr);
+    // names nobody gave: a camera, a spot, a Tap on the wrong set, a glow, a fourth set of marks, a cast member, the collar on
+    const bad = run({ sets: { bridge: { cams: ['larder'], anchors: ['store-back-4'], opts: { tap: ['squares'] } }, hollow: { opts: { storeGlow: ['ones'], quick: [4], tap: ['store'] } } },
+      cast: ['galleta'], extras: { collar: [true] } });
+    assert.equal(bad.status, 1);
+    assert.deepEqual(bad.stderr.trim().split('\n').slice(1).map(l => l.trim()).sort(),
+      ['bridge anchor store-back-4', 'bridge camera larder', 'bridge option tap: "squares"', 'cast extra collar: true', 'cast galleta', 'hollow option quick: 4', 'hollow option storeGlow: "ones"', 'hollow option tap: "store"'].sort());
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+/* Chapter 12's Spanish in the tools (docs/chapters/12-a-spark-at-the-hedge.spec.md, section 6, "The storyboard and the tools"):
+ * shots.mjs's es: targets in an object of their own (TAKE_TARGETS untouched), opened through the page's PC.debug.spanish; the
+ * silent stand-in's made-up voice lists (VOICES=es, VOICES=none), each utterance noted (text, lang, voice) and never spoken;
+ * DRY=1's plan rows for both lists; dev/webkit/run.mjs's `spanish` job. Nothing here starts Safari or says a word. */
+test('shots.mjs, chapter 12: ES_TARGETS (eight Spanish screens through PC.debug.spanish, apart from TAKE_TARGETS); the stand-in\'s voice lists, each utterance noted with its lang and voice and never spoken; DRY=1 prints UI.voices.plan\'s rows for both lists; the WebKit tool\'s spanish job', async () => {
+  const fs = require('node:fs'), vm = require('node:vm');
+  const src = fs.readFileSync(SHOTS, 'utf8');
+  const ES = new Function('return ' + /const ES_TARGETS = (\{[^\n]*\});\n/.exec(src)[1])();
+  assert.deepEqual(ES, { 'es:echo': 'echo', 'es:take': 'take', 'es:skip': 'skip', 'es:worked': 'worked', 'es:worked:tens': 'worked:tens', 'es:try': 'try', 'es:try:pointer': 'try:pointer', 'es:store': 'store' });
+  assert.ok(src.indexOf('const ES_TARGETS') > src.indexOf('const TAKE_TARGETS = {'), 'an object of its own, after the kit\'s');
+  // the page script: PC.debug.spanish for the screen; a build without it says so
+  const SPANISH = /const SPANISH = `([\s\S]*?)`;/.exec(src)[1];
+  const call = (debug, what) => new Function('PC', 'return (function () { ' + SPANISH + ' }).apply(null, arguments[1]);').call(null, { debug }, [what]);
+  const asked = [];
+  assert.equal(call({ cat: () => ({}), spanish: (w) => { asked.push(w); return w === 'echo' ? true : 'spanish: no ' + w; } }, 'echo'), true);
+  assert.equal(call({ cat: () => ({}), spanish: () => 'spanish: nope' }, 'nope'), 'spanish: nope');
+  assert.equal(call({ cat: () => ({}) }, 'echo'), 'no Spanish in this build (PC.debug.spanish)');
+  assert.equal(call({ cat: () => null, spanish: () => true }, 'echo'), 'no cat');
+  assert.deepEqual(asked, ['echo']);
+  assert.ok(!/speechSynthesis\.speak|readBtn/.test(SPANISH));
+  // wired into the single shot (after the kit's and the Warrior Counts' screens) and a sheet's panes; an unknown es: target named
+  assert.match(src, / : wt \? await run\('return PC\.debug\.warrior\(arguments\[0\], arguments\[1\]\);', \[wt\.what, wt\.page\]\) : et \? await run\(SPANISH, \[et\]\) : /);
+  assert.match(src, /if \(!et && \/\^es:\/\.test\(target\)\) \{ console\.error\(t \+ ': chapter 12’s Spanish targets: '/);
+  assert.match(src, /if \(spanish\[i\]\) \{ var sd = new w\.Function\(spanishJs\)\.apply\(null, \[spanish\[i\]\]\);/);
+  assert.match(src, / \* {3}node tools\/shots\.mjs OUTDIR es:echo es:take es:skip es:worked es:worked:tens es:try es:try:pointer es:store\n/, 'the header names them');
+  // the stand-in: no voices by default (as before); a made-up list handed in after setup; every utterance noted, none spoken
+  const SILENT = /const SILENT = `<script>([\s\S]*?)<\/script>`;/.exec(src)[1];
+  const lists = new Function('return ' + /const VOICE_LISTS = (\{[\s\S]*?\n\});\n/.exec(src)[1].replace(/ES_NOVELTY/g, JSON.stringify(['Eddy', 'Flo', 'Grandma', 'Grandpa', 'Reed', 'Rocko', 'Sandy', 'Shelley'])))();
+  assert.deepEqual(lists.none, []);
+  assert.deepEqual(lists.es.slice(0, 2).map((v) => [v.name, v.lang]), [['Paulina', 'es-MX'], ['Samantha', 'en-US']]);
+  assert.equal(lists.es.length, 10, 'Paulina, Samantha and the eight novelty voices');
+  const calls = [], win = { setTimeout, Promise, document: { createElement: () => ({}) }, addEventListener: () => {} };
+  win.window = win;
+  vm.runInNewContext(SILENT, win);
+  const synth = win.speechSynthesis;
+  assert.deepEqual(Array.from(synth.getVoices()), []);
+  let changed = 0;
+  synth.onvoiceschanged = () => { changed++; };
+  assert.equal(win.__shotsVoices(lists.es), true);
+  assert.deepEqual(Array.from(synth.getVoices()).map((v) => v.name), lists.es.map((v) => v.name));
+  assert.equal(changed, 1, 'the page hears voiceschanged (its cached voices cleared)');
+  // what the page would pick from it: Paulina for Spanish, Samantha for English, never a novelty voice
+  const { load } = require('./_load.js');
+  const PC = load();
+  require(path.join(ROOT, 'app/ui.js'));
+  assert.deepEqual([PC.ui.voices.pick(lists.es, 'es').name, PC.ui.voices.pick(lists.es, 'en').name, PC.ui.voices.pick(lists.es.slice(1), 'es')], ['Paulina', 'Samantha', null]);
+  const u = new win.SpeechSynthesisUtterance('cincuenta'); u.lang = 'es-MX'; u.voice = lists.es[0];
+  await new Promise((done) => { u.onend = done; synth.speak(u); });
+  assert.deepEqual(JSON.parse(JSON.stringify(win.__shotsHeard)), [{ text: 'cincuenta', lang: 'es-MX', voice: 'Paulina' }]);
+  assert.deepEqual(Array.from(win.__shotsSaid), ['cincuenta'], 'the words noted as before');
+  assert.deepEqual(calls, []);
+  // run once a page's test cat is set up (and in each pane of a sheet), only for VOICES=es
+  assert.match(src, /if \(VOICES !== 'none'\) \{ const vo = await run\(VOICES_JS, \[VOICE_LISTS\[VOICES\]\]\); if \(vo !== true\) throw new Error\('VOICES: ' \+ vo\); \}/);
+  assert.match(src, /if \(voiceList && w\.__shotsVoices\) w\.__shotsVoices\(voiceList\);/);
+  // DRY=1: the plan's rows for both lists wherever the screen has Spanish (PC.debug.plan: nothing said)
+  assert.match(src, /const plans = await run\('if \(!PC\.debug \|\| !PC\.debug\.plan\) return null; return \[PC\.debug\.plan\(arguments\[0\]\), PC\.debug\.plan\(\[\]\)\];', \[VOICE_LISTS\.es\]\);/);
+  const ui = fs.readFileSync(path.join(ROOT, 'app/ui.js'), 'utf8');
+  assert.ok(ui.includes("      plan: function (list) { return voicePlan(currentSpeech || [], Array.isArray(list) ? list : [], { cat: cat }); },"));
+  // the WebKit tool: its spanish job, the eight screens and the shelf, each opened by the tree's own scripts
+  const run = await import(path.join(ROOT, 'dev/webkit/run.mjs'));
+  const S = run.pageScripts(ROOT);
+  assert.deepEqual(S.ES_TARGETS, ES);
+  assert.deepEqual(run.ES_SCREENS, Object.keys(ES).concat(['hollow:shelf']));
+  const jobs = run.measureJobs(S, 'http://localhost:1/', ['spanish'], { aas: [false, true] });
+  assert.equal(jobs.length, 18);
+  assert.ok(jobs.every((j) => j.name === 'spanish'));
+  assert.ok(jobs[0].steps.some((st) => st.js.includes("PC.debug.spanish(what)") && st.js.includes('["echo"]')));
+  assert.ok(jobs[8].steps.some((st) => st.js.includes('PC.debug.takes') && st.js.includes('"shelf"')), 'the shelf through the kit\'s TAKES');
+});

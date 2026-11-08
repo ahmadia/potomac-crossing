@@ -1,7 +1,7 @@
 # Chapter 13: The Hunter’s Crouch
 
-*Draft v0.4 · 2026-11-07 (the editor, round 3: the edit verifier’s, the leftover lows’ and the maths critic’s
-findings applied on round 2’s v0.3) · about 21½ minutes to play on the plain path (20½ to 22½ across the kit’s maths),
+*Draft v0.5 · 2026-11-07 (decision 55: Chispapaw’s whispered «¡Desagrupo!» as the row spreads, one line, on v0.4,
+the editor’s round 3) · about 21½ minutes to play on the plain path (20½ to 22½ across the kit’s maths),
 about 23 with the groundhog*
 
 *How to read this draft: each line (---) is a new screen, about one comic panel. **Choose** marks a choice (one sets a
@@ -232,6 +232,8 @@ She scratches forty-three in the sand: four lines, three dots. “Three loose. T
 ---
 
 “Then we spread a row,” says Tallyheart. “Ten more loose.” She crosses out one line and scratches ten new dots.
+
+*[es]* “¡Desagrupo!” whispers Chispapaw. (Breaking it into groups!)
 
 **Tap** to scratch yours. *One tap: your own forty-three beside hers, one line crossed out and ten new dots in a
 scratched frame under the three, two rows of five, as the help’s sand draws them, and the page turns.*
@@ -545,16 +547,17 @@ Who will stay awake?
 
 *Words she reads, by chapter 12’s rules (`ch13/editor-r3/measure.py`, the optional scene split out), all 60 plain
 readings; minutes chapter 12’s way (123 a minute, 2 s a screen, 3 a Tap, 6 a choice, 10 the dream), maths 4.6–6.7.*
-- *Plain: 1,564–1,590 words (`teach`: show 1,564–1,579, try 1,568–1,583, words 1,575–1,590; `specialty`: noticing and
-  climbing lowest, 1,564–1,577, swimming highest, 1,577–1,590; `ch2Stone` none). 20.4–22.7 minutes, 21.4–21.6 at the
-  middle maths; 25.1–27.4 at 90 a minute. Inside 1,450–1,650: nothing in the cut order is needed.*
-- *The groundhog: 165 words, six screens, two Taps, 7 × 8: 1.8–1.9 minutes more (1,729–1,755 words; 22.2–24.6 minutes,
-  23.2–23.5 at the middle maths).*
+- *Plain: 1,571–1,597 words (`teach`: show 1,571–1,586, try 1,575–1,590, words 1,582–1,597; `specialty`: noticing and
+  climbing lowest, 1,571–1,584, swimming highest, 1,584–1,597; `ch2Stone` none). 20.5–22.8 minutes, 21.5–21.7 at the
+  middle maths; 25.2–27.5 at 90 a minute. Inside 1,450–1,650: nothing in the cut order is needed.*
+- *The groundhog: 165 words, six screens, two Taps, 7 × 8: 1.8–1.9 minutes more (1,736–1,762 words; 22.3–24.7 minutes,
+  23.3–23.6 at the middle maths).*
 - *53 screens (63 to 73 frames by chapter 12’s ratio, 70 to 82 with the groundhog; cap 125), 13 Taps, 5 choices
   (`teach` the only flag), 5 Counts, 6 take-aways, the dream; no screen over 40 words, never 4 quiet in a row.*
 
 *Spanish (eight words or fewer, the English on the same screen; three answers of eleven echoed):* «la resta»
-*(take-aways)* · ¡No alcanza! *(Not enough!)* · ¡Nueve por siete, sesenta y tres! *(Nine times seven, sixty-three!:
+*(take-aways)* · ¡No alcanza! *(Not enough!)* · ¡Desagrupo! *(Breaking it into groups!: her word for a spread, decision
+55, whispered as the row spreads)* · ¡Nueve por siete, sesenta y tres! *(Nine times seven, sixty-three!:
 the set’s 9 × 7)* · ¡Cuarenta y seis! *(Forty-six!: after 85 − 39)* · ¡Veinticinco! *(Twenty-five!: at the pile)*.
 
 *Calls made:*

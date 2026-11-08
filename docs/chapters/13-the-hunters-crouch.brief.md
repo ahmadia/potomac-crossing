@@ -114,7 +114,7 @@ fresh: chapter 12's shape in the Training Hollow, Tallyheart teaching warrior an
   draws **178** (module-2's bracketed day-2 figure, never said: 133 + 27 + 18). No line says what the store holds. Count the
   store needs nothing new: once this set is finished, its rounds take `ones2` and their help speaks of spreading.
 - The words: spread a row, ten more loose, not enough, take-aways, loose, a row, a square, ones first, the school words;
-  «la resta». **Never "borrow" or "carry"**, and no "regroup" (*desagrupar* is chapter 14's, *reagrupar* 16's); no spreading
+  «la resta». **Never "borrow" or "carry"**, and no "regroup" (*desagrupar* is chapter 14's, *reagrupar* 16's; superseded by decision 55: her word «¡Desagrupo!» is whispered at this chapter's first spread); no spreading
   a square (chapter 15's), no three-digit spread (chapter 14's). A take-away is never called a Count.
 
 ## Steering calls (Claude's, under decision 46; call 4's mentor by decision 54)

@@ -7,6 +7,11 @@ chapter's rules, a 400 ms guard after every OK, the echo's room in the stack, `f
 `extra` never at the ones, the stack over the panel on a phone held sideways, test 17's small sample, `flip`'s tens and
 zero forms with `E.takeTwin`'s one signature, and the students' sweep with the blank box asked*
 
+*After the kit's review (2026-11-07), still v0.3, the built engine's fixes are written in: every balloon of a prompt
+counted, `extra` only once its spread is taught, `kept` before the written top's flip, a chapter's answers kept from its
+twins, a round's older steps those that spread, a set's first two full lines her own problems, the corner's first asks
+and time hers, the log's cap 500, and decision 55's word*
+
 *For the engine owner, the art owner, the UI owner and the tools owner, who build it as its own piece before chapter 12,
 as the Warrior Counts were built before chapter 10 (`docs/production.md`, section 8). Then book two, a second and smaller
 piece, in the same window (section 7). Decision 53 is Aron's: multiplication kept fresh, three-digit subtraction with
@@ -137,7 +142,8 @@ starts again. A typing habit gets a pointer, not a help, on her first page of so
 column is named in the school words, as the maths study's section 1 has it ("the column is said in them"): "Ones first."
 "Now the tens." "Now the hundreds." Things in the picture keep the picture words ("Nine rows now.", "Four squares
 now."), and chapter 12's and chapter 13's worked examples say `E.TAKE_LINES.schoolWords` once: "A row is a ten. A square
-is a hundred." So the game meets her school page (decenas and centenas at school, tens and hundreds at home), which is
+is a hundred." (The kit defines the line but never says it: chapter 12 wires it into `E.takeLine`, its spec's engine
+need.) So the game meets her school page (decenas and centenas at school, tens and hundreds at home), which is
 where what she learns here carries over.
 - **The first column** says its top as written, never what to do: "Ones first. Three take away eight." Seeing that she
   cannot is the lesson.
@@ -148,10 +154,12 @@ where what she learns here carries over.
 - **A later column, in `'show'` and `'tap'`** (the scaffold), says its top as it stands: "Now the tens. Nine take away
   seven."; after a spread she was shown or tapped, "Thirteen take away eight."; with no bottom digit, "Now the hundreds.
   Nothing to take: four."
-- **Full and short.** The full line is said on a set's first two problems, every `'show'` and `'tap'` problem, a twin,
-  and the column after a help. Otherwise a column says its name alone ("Now the tens."; the first column "Ones first.",
-  or nothing past the prompt's balloon when there is a prompt), so some sixty lesson problems and every store round do
-  not open on the same three lines two hundred times.
+- **Full and short.** The full line is said on a set's first two problems of her own (`'hers'` and not a twin, the made
+  warm-up among them; a `'show'` and a `'tap'` problem have the full line anyway, so they use up neither place, and
+  chapter 13's 85 − 39, her first on her own, hears "Ones first. Five take away nine."), every `'show'` and `'tap'`
+  problem, a twin, and the column after a help. Otherwise a column says its name alone ("Now the tens."; the first
+  column "Ones first.", or nothing past the prompt's balloon when there is a prompt), so some sixty lesson problems and
+  every store round do not open on the same three lines two hundred times.
 - **With a prompt**, the first column's line joins the prompt's balloon when both are Tallyheart's, else follows it in
   her own. **With no prompt**, nothing else is lettered: the column already shows 702 − 345, and a balloon reading
   "Seven hundred two take away three hundred forty-five" would repeat it in the hardest words on the page. "{A} take away
@@ -232,27 +240,34 @@ can be read (0.6 s and 0.38 s a word, 1.6 s at the least) or, Read to me on, has
 that long; a step that is only a number (a count back by ones) is 775 ms, the lesson's hop; a tap on the sand moves on
 one step, never to the end.
 
-**Naming her slip** (`E.takeSlip(plan, col, given)`, read in this order; the first match names it):
+**Naming her slip** (`E.takeSlip(plan, col, given, shown, taught)`, read in this order, with the one exception the
+paragraph under the table gives; the first match names it):
 
 | Slip | When | The first line (the 43 − 16, 503 − 278 or 811 − 356 column) | Then |
 |---|---|---|---|
 | `zero` | at a turn that chains across a zero, she typed bottom − top or 0 (0 at 503 − 278's ones; 3 or 0 at 702 − 345's); at a zero's own turn after it lent, she typed 10 − bottom (3 at 503 − 278's tens: the row it gave not taken off), the bottom itself (7: 0 − 7 read as 7) or 0 | "Three take away eight? Not enough loose, and no rows to spread." / at the tens: "Careful. That zero became ten rows, then gave one away. Nine rows now." | at the ones, the chain, one spread at a time: "So a square first: ten rows." "Now a row: ten more loose."; then the take. At the tens, the take |
-| `flip` | her turn needed a spread from a digit that is not 0, and she typed bottom − top (3 for 3 − 6): the smaller from the bigger, the commonest slip; at the ones or the tens (6 for 735 − 391's tens, 3 − 9; 8 for 607 − 283's tens, 0 − 8) | "Careful: it's three take away six, the top take away the bottom. Only three loose. Not enough." / at the tens: "Careful: it's three take away nine, the top take away the bottom. Only three rows. Not enough." / a top of 0: "Careful: it's zero take away eight, the top take away the bottom. No rows. Not enough." ("No loose." at the ones: 640 − 218) | "Spread a row: ten more loose." / at the tens: "Spread a square: ten more rows." / a top of 0: "Spread a square: ten rows." ("Spread a row: ten loose."); the take |
-| `nospread` | her turn needed a spread from a digit that is not 0, and she typed 0 ("not enough, so none"; 811 − 356's tens, which lent their one row) | "Three take away six? Not enough loose. But we can spread a row." / at the tens: "No rows to take five from? But we can spread a square." | the spread; the take |
-| `kept` | this column gave a row (or a square) to the right and she used its top as written (3 for 43 − 16's tens, 4 − 1; 3 for 503 − 278's hundreds, 5 − 2; 6 for 811 − 356's tens, 11 − 5; 1 for 500 − 467's blank hundreds, 5 − 4) | "Careful. One row went to the loose. Three rows now." / hundreds: "Careful. One square became ten rows. Four squares now." (the struck digit and its gold one glow) | any spread the column still needs (811 − 356's tens: "No rows now.", so a square spreads); the take, from the top as it stands |
-| `extra` | the tens or the hundreds (never the ones, which has no column on its right to give a row to: 2 at 475 − 132's ones is `fact`), when the column did not lend and needed no spread of its own, and she typed its top − 1 − bottom: a row taken when the loose had enough, the opposite of the flip (3 for 475 − 132's tens, where 7 − 3 = 4) | "Careful. The loose had enough, so no row went. Seven rows still." / hundreds: "Careful. The rows had enough, so no square went. Four squares still." | the take |
+| `flip` | her turn needed a spread from a digit that is not 0, and she typed bottom − top (3 for 3 − 6): the smaller from the bigger, the commonest slip; at the ones or the tens (6 for 735 − 391's tens, 3 − 9; 8 for 607 − 283's tens, 0 − 8); at a column that lent and needs its own spread, also bottom − top as written, after `kept` (4 for 811 − 356's tens, 5 − 1; 4 for 432 − 178's tens, 7 − 3): the smaller from the bigger with the one not taken off, never `fact`, so the corner's teen row never files it | "Careful: it's three take away six, the top take away the bottom. Only three loose. Not enough." / at the tens: "Careful: it's three take away nine, the top take away the bottom. Only three rows. Not enough." / a top of 0: "Careful: it's zero take away eight, the top take away the bottom. No rows. Not enough." ("No loose." at the ones: 640 − 218) | "Spread a row: ten more loose." / at the tens: "Spread a square: ten more rows." / a top of 0: "Spread a square: ten rows." ("Spread a row: ten loose."); the take |
+| `nospread` | her turn needed a spread from a digit that is not 0, and she typed 0 ("not enough, so none"; 811 − 356's tens, which lent their one row), unless that 0 is `kept` (566 − 168's tens: 6 − 6, the one not taken off) | "Three take away six? Not enough loose. But we can spread a row." / at the tens: "No rows to take five from? But we can spread a square." | the spread; the take |
+| `kept` | this column gave a row (or a square) to the right and she used its top as written (3 for 43 − 16's tens, 4 − 1; 3 for 503 − 278's hundreds, 5 − 2; 6 for 811 − 356's tens, 11 − 5; 1 for 500 − 467's blank hundreds, 5 − 4; 0 for 566 − 168's tens, 6 − 6, ahead of `nospread`; 5 for 110 − 61's tens, 11 − 6, where the written top's flip, 6 − 1, is 5 too) | "Careful. One row went to the loose. Three rows now." / hundreds: "Careful. One square became ten rows. Four squares now." (the struck digit and its gold one glow) | any spread the column still needs (811 − 356's tens: "No rows now.", so a square spreads); the take, from the top as it stands |
+| `extra` | the tens or the hundreds (never the ones, which has no column on its right to give a row to: 2 at 475 − 132's ones is `fact`), when the column did not lend and needed no spread of its own, and she typed its top − 1 − bottom: a row taken when the loose had enough, the opposite of the flip (3 for 97 − 52's tens in chapter 13, where 9 − 5 = 4; 4 for 879 − 346's hundreds in chapter 15). Only once she has met that column's spread: at the tens once a step that spreads a row is taught (`ones2` on), at the hundreds once one that spreads a square is (`tens` on), by `taught`: in a lesson the steps of its chapter and the earlier ones, in a store round the steps she has learned. Before that the digit is `fact`, so no set or round says "no row went" before chapter 13 or "no square went" before chapter 15 (2 at 58 − 23's tens in chapter 12, 1 at 486 − 253's hundreds in chapter 13, and a store round's twin of 475 − 132 until `tens` is learned). Never a 0 where the bottom is empty or 0 (0 at 175 − 42's hundreds, 1 with nothing to take read as 0, is `fact`, as is 0 for 1 − 0) | "Careful. The loose had enough, so no row went. Seven rows still." / hundreds: "Careful. The rows had enough, so no square went. Four squares still." | the take |
 | `fact` | anything else: a fact slipped (8 for 43 − 16's 13 − 6); at a chain's turn, any other digit (4 or 6 for 503 − 278's 13 − 8: she went across the zero and slipped on the teen fact); at a lent zero's turn, any other digit (1 or 8 for 9 − 7) | "Let's scratch it out." / with a spread of her own to make: "Three take away six: we spread a row, then take six." / at a chain's turn: "Across the zero: thirteen loose. Take away eight." (the sand starts with the chain already drawn) / at a lent zero: "Nine take away seven: let's scratch it out." | any spread the column still needs; the take |
 
-A slip is named from what she typed and the plan alone; nothing asks her why. The order is the table's: `zero` first at
-a chain's turn and at a lent zero's, so a turn across a zero is never `flip` or `nospread`; `extra` after `kept`, and
-only at the tens or the hundreds of a column that did not lend. A turn with no spread of its own has `fact` (or `extra`
+A slip is named from what she typed and the plan alone; nothing asks her why. The order is the table's, with one
+exception: `zero` first at a chain's turn and at a lent zero's, so a turn across a zero is never `flip` or `nospread`; at
+a column that lent and needs its own spread, `flip` (bottom − top as it stands) first, then `kept`, then the written
+top's `flip`, then `nospread`, so the one not taken off is `kept` even when it comes to 0, and where `kept` and the
+written top's flip meet (bottom − top = 5) `kept` names it; `extra` after `kept`, only at the tens or the hundreds of a
+column that did not lend, and only once its spread is taught (the kit's rule: a set's or a round's line never names a
+spread she has not met, so no chapter carries an override). A turn with no spread of its own has `fact` (or `extra`
 left of the ones), or `kept` or `zero` when its column lent. A turn whose spread she was shown or tapped has it in the
 sand already and is never `flip`, `nospread` or a chain's `zero`: its help starts at the take. `extra` is the slip
 chapter 17 exists to catch («¿Hay que desagrupar?», in English "Do we need to spread a row?", at the tens "a square?":
 section 8's rule for the word); it can show only because a later column's line no longer says its top. Every case above
 is in `check-v0.2.js` (33 of them, the designer's fourteen re-read under this order) and is copied into test 5, with
 v0.3's four (`check-v0.3.js`: 2 at 475 − 132's ones `fact`; 6 at 735 − 391's tens, 8 at 607 − 283's tens and 8 at
-640 − 218's ones `flip`).
+640 − 218's ones `flip`), and the review's four (0 at 566 − 168's tens and 5 at 110 − 61's tens `kept`; 4 at
+811 − 356's and 432 − 178's tens `flip`). Test 5 also plays chapters 12 to 15's sets through the runner for `extra`'s
+rule, and test 12 every store round's lines for every number of steps learned.
 
 **Every line has its tens form and its zero form.** A line written for the ones says rows and a square in place of
 loose and a row when the turn is the tens' (`flip` above; "No rows to take five from? But we can spread a square."; the
@@ -287,8 +302,9 @@ herself, and nothing ever stops a lesson: every digit moves it on.
 **The twin.** A problem with any column helped comes back as a **twin**: the same shape (section 3: which turns spread,
 where the zeros are in the top, the bottom and the answer, the digits' count, a leading zero or not), new digits
 (`E.takeTwin`, seeded by the lesson's `startedAt`, its `pos` and the requeue count), never the same top, never an answer
-the lesson has had. It comes `E.REQUEUE_GAP` (two) problems later, or as late as the lesson allows: next, when it was the
-last. No fillers are added (section 11: a take-away takes 25 to 40 seconds, so two fillers would add a minute to a
+the lesson has had nor one its chapter has (`E.takeLesson` hands the runner the chapter's answers, its lessons' and its
+stories', as `avoid`, so a story problem is asked once, in the story: section 3). It comes `E.REQUEUE_GAP` (two)
+problems later, or as late as the lesson allows: next, when it was the last. No fillers are added (section 11: a take-away takes 25 to 40 seconds, so two fillers would add a minute to a
 lesson's end; a twin's new digits already mean it never tests the last ten seconds). At most `E.MAX_REQUEUE` (two) a
 problem, counted by lineage: a twin carries its original's key (`of: '<a>-<b>'` in the queue, `twin: '<a>-<b>'` on its
 log entry), so a twin's twin counts against the first problem and `requeues` is keyed by it; a twin missed brings one
@@ -374,7 +390,7 @@ The frame is a plain Counts frame: `counts: { set: 'ch12-take', next: 'f070' }` 
 |---|---|
 | `[a, b]` or `{ a, b }` | the problem: whole numbers, 10 ≤ a ≤ 999, 1 ≤ b < a, b with no more digits than a |
 | `regroup` | this problem's `'show'`, `'tap'` or `'hers'` |
-| `prompt` | its question, as a Counts fact's (a line, or balloons and captions); its first balloon at most 12 words. Without one, nothing is lettered past the column's line, and "{A} take away {B}." is said in words (section 1) |
+| `prompt` | its question, as a Counts fact's (a line, or balloons and captions); each balloon at most 12 words (the first column's line joins the last one when it is Tallyheart's). Without one, nothing is lettered past the column's line, and "{A} take away {B}." is said in words (section 1) |
 | `right` | balloons after it is right in every column first time, in place of praise (its picture stays, Next to go on) |
 | `picture` | its own `{ kind: 'store' }` or `{ kind: 'marks' }` |
 
@@ -383,9 +399,9 @@ can check:
 - **a take fact**: in range as above (whole numbers, no negative answer, no answer of 0, no four-digit top, no leading
   zero in a number, a bottom with no more digits than the top), and an answer at most one digit shorter than its top
   (503 − 498 = 5, with two blank boxes, is refused); `regroup` one of the three; `picture.kind` `'store'` or `'marks'`;
-  no `table` (so `E.countSets`, which reads a set's first fact's `table`, never files a take set as a Count); its
-  prompt's first balloon, the one the first column's line joins, at most 12 words, so the joined balloon stays at three
-  lines or fewer;
+  no `table` (so `E.countSets`, which reads a set's first fact's `table`, never files a take set as a Count); each
+  balloon of its prompt at most 12 words (the first column's line joins the last one when it is Tallyheart's), so the
+  joined balloon stays at three lines or fewer and no balloon gets more room than the joined one;
 - **a take set**: none of the multiplication keys above; `teach`, when present, one of `E.TAKE_STEPS`; `twins` and `warm`
   booleans; `lines` only `E.TAKE_LINES`' keys; no Counts set's `fillFrom` names it;
 - **a set's step**: with `teach` other than `none` or `mixed`, exactly three problems whose `E.takeStepOf` is `teach`,
@@ -395,7 +411,7 @@ can check:
   lesson, a story's set), every problem's step one that a `teach` set of this chapter or an earlier one teaches;
 - **a chapter**: no answer twice, across all its take sets and stories (a story problem that is also a lesson problem is
   asked once, in the story); no `noHundreds` problem before the chapter that teaches `mixed`; the answers a `warm`
-  lesson's made warm-up must avoid are the chapter's.
+  lesson's made warm-up must avoid are the chapter's, and so are a twin's (section 2).
 
 **The twin's shape** (`E.takeShape(plan)`), kept exactly: the digits' count of the top and of the bottom; for each
 column, whether its top is 0, whether its bottom is 0 or absent, the spreads at its turn and whether they chain, whether
@@ -445,7 +461,9 @@ second older problem is 815 − 69 = 746 (for 815 − 469), a two-digit bottom u
 a help adds about 10 to 15, a twin 25 to 40. Counted at those figures with what a chapter really holds (three Counts,
 the made warm-up take in chapters 14 to 17 and 20, the `'show'` problem's extra lines, five lesson problems, the story's
 one or two, and the help and twin to expect), a chapter's maths runs about 4½ to 7 minutes (`check-v0.2.js`: 22 to 35%
-of a 20-minute chapter), and a chapter with a Tricky Counts run about a minute more. That is past decision 10's 20%, so
+of a 20-minute chapter), and a chapter with a Tricky Counts run about a minute more. That is past decision 10's 20%;
+decision 56 (Aron, 2026-11-07) sets module 2's share at about a quarter of a chapter as played, never past a third, with a
+chapter's Tricky Counts run at five Counts, not eight (chapter 14 also loses its fifth lesson problem). So
 the kit fixes the order lessons are cut in play, rather than each chapter's brief deciding it, and no cut breaks the
 rules above (`check-v0.3.js` tries every cut):
 1. one lesson problem the rules can spare, never one of the new step's three: chapter 13's 486 − 253, 14's 586 − 231,
@@ -523,8 +541,10 @@ with the waiting line over its first problem (startChapterLesson's `wWait`, pass
 Hollow's shelf says it in its greeting's place; a Count the store round picked up says it over its next problem. A digit
 typed but its problem unfinished sets nothing aside, as a problem is the answer.
 
-**The log's cap.** `E.TAKE_LOG_CAP` 2,000 entries, the oldest first out. At about 60 take-aways in the module and 5 a store
-round, that is some 380 rounds. What reads it for play (`E.hardTakes`) reads each step's latest ask.
+**The log's cap.** `E.TAKE_LOG_CAP` 500 entries, the oldest first out: some 90 store rounds after the module. Four cats at
+both caps then come to about 1.4M characters, about half of WebKit's localStorage quota (2.62M characters once a save
+holds a curly quote), which Potion Lab shares on ahmadia.github.io. The grown-ups' table then reads only the log, and its
+heading says "(her last 500)". What reads it for play (`E.hardTakes`) reads each step's latest ask.
 
 ## 5. The Training Hollow: Count the store
 
@@ -547,9 +567,13 @@ top whose hundreds has nothing to take, after lending in 403 − 57's case), see
 every answer different:
 1. an easy one: a twin of a `none` template (58 − 23 or 475 − 132);
 2. her hardest step (`E.hardTakes`, among the steps she has learned), else the newest step she has learned;
-3. her next hardest, else one of the older steps;
+3. her next hardest, else an older step that spreads (the newest when there is none);
 4. the newest step;
-5. one of the older steps.
+5. an older step that spreads (the newest when there is none).
+
+An older step is one learned before the newest, `none` apart: place 1 is the round's easy one, so a round has one
+problem with no spread unless `none` is one of her hard steps (with `none` and `ones2` learned and no hard step, a round
+is one `none` and four `ones2`).
 
 | Step | Templates (each twin keeps its shape) |
 |---|---|
@@ -566,7 +590,10 @@ Each template's `E.takeStepOf` is its row (`check-v0.2.js`; once chapters 12 to 
 against its step's chapter: a problem of that chapter's lesson, or for the store's own two a step that chapter teaches,
 so the table cannot drift from the lessons). Every problem `'hers'` (practice: the help catches what slips), never with
 a flip that lands (section 2). Simulated for every number of steps learned, 500 rounds each: five different answers, the
-first with no spread, no flip landing, no answer without hundreds before `mixed`, never a fallback. Round 1 once the zeros are learned: 575 − 241, 500 − 289, 80 − 13, 600 − 527, 937 − 768.
+first with no spread, no flip landing, no answer without hundreds before `mixed`, never a fallback. Round 1 once the
+zeros are learned, as built (test 12 pins it): 53 − 32, 400 − 317, 517 − 288, 900 − 886, 365 − 184. A round's state
+carries the steps she has learned (`taught`), so its tens never say "no row went" before `ones2` is learned nor its
+hundreds "no square went" before `tens` (section 2's `extra`): the kit's rule, so no chapter carries an override.
 
 Its set (`E.takeRoundDef`): id `store`, `op: '-'`, Tallyheart, the store picture, the kit's praise, `done` "The whole
 store, counted! That deserves a treasure for your nest."; introduced "Five from the store. Ready? Here we go."
@@ -625,8 +652,8 @@ chapter 12's first column, its 117-character prompt joined, came out about 60 px
 it on; upright the question line's 96 px cap gave 82 px digits and a 365 px column, a third of the store picture; at
 844 × 390 the column and the keypad were about 364 px against 342 under the bar. So:
 - **The digits** are Andika bold at `font-size: clamp(24px, min(8cqi, 4.6vh), 44px)`: about 33 px at 1080 × 720, 35 at
-  1180 × 820, 44 upright, 29 on a phone and 24 at 844 × 390, about the keypad's own 32 px. The gold marks .5em, the heads
-  .35em, her boxes as `.q .slot` at that size.
+  1180 × 820, 44 upright, 29 on a phone and 24 at 844 × 390, about the keypad's own 32 px. The gold marks .5em, at
+  least 16 px, the heads .35em, her boxes as `.q .slot` at that size.
 - **The column's height**, the heads and marks rows in it, stays within about 165 px at 1080 × 720, 195 at 820 × 1180,
   150 at 390 × 844 and 125 at 844 × 390. Bigger text grows the balloons, not the column.
 - **The fallbacks**, each a media query on the take page only (`.frame[data-mode="take"]`), not the existing "little
@@ -760,7 +787,7 @@ text.
 
 | Piece | What it does |
 |---|---|
-| `E.TAKE_KINDS`, `E.TAKE_STEPS`, `E.TAKE_SLIPS` (`zero`, `flip`, `nospread`, `kept`, `extra`, `fact`, in that order), `E.TAKE_REGROUP` ['show', 'tap', 'hers'], `E.TAKE_TEMPLATES`, `E.TAKE_TRIES` 400, `E.TAKE_ROUND` 5, `E.TAKE_LOG_CAP` 2000, `E.FROST_TREASURES` (ids `frost-leaf`, `snow-feather`, `acorn-cap`, `river-pebble`) | the names and numbers above |
+| `E.TAKE_KINDS`, `E.TAKE_STEPS`, `E.TAKE_SLIPS` (`zero`, `flip`, `nospread`, `kept`, `extra`, `fact`, in that order), `E.TAKE_REGROUP` ['show', 'tap', 'hers'], `E.TAKE_TEMPLATES`, `E.TAKE_TRIES` 400, `E.TAKE_ROUND` 5, `E.TAKE_LOG_CAP` 500, `E.FROST_TREASURES` (ids `frost-leaf`, `snow-feather`, `acorn-cap`, `river-pebble`) | the names and numbers above |
 | `E.TAKE_WORDS` | the kit's maths words in one place, each form listed: the picture words (loose; row, rows, Row; square, squares), the school words for the columns (ones, tens, hundreds), take away (take away, Take away), the regrouping word (spread, Spread: its base form only, below), and Ones first (a phrase of its own, so a language that orders it differently changes it whole). Read lazily, at call time, from `PC.words` when it holds them (chapter 12 brings it, with the Spanish beside), as `warriorStory()` reads `PC.warrior`, with the English as the fallback: `PC.words` does not exist until chapter 12, and a table read once at load would miss a stub loaded after `app/engine.js`. `E.TAKE_LINES`, the heads' and the panel's `aria-label`s, the hidden button, the digit lines and `plain()` all read it, so a class word changes in one line (decision 53) |
 | `E.TAKE_LINES` | every line the kit says, with tokens: the numbers' (`{Top}`, `{bottom}`, `{first}`, `{rest}`, `{left}`, `{digit}`, `{A}`, `{B}`, as number words) and the words', one for every form `E.TAKE_WORDS` lists (`{spread}`, `{Spread}`, `{row}`, `{rows}`, `{Row}`, `{loose}`, `{square}`, `{squares}`, `{ones}`, `{tens}`, `{hundreds}`, `{takeAway}`, `{TakeAway}`, `{OnesFirst}`, filled from `E.TAKE_WORDS`: "Ones first. Three take away eight." is `{OnesFirst}. {Top} {takeAway} {bottom}.`, "Take away seven." `{TakeAway} {bottom}.`); no form of a maths word is written into a line literally, and the cat's tokens are left for the page. Its keys: the column lines (`colFirst`, `colHers`, `colShown`, `colName`, `nothingHers`, `nothingShown`), `schoolWords`, `blank`, `onesFirst`, `tap`, `tapSquare`, `tapRow`, `tapHere`, the spread lines, the six slips' first lines, each with its tens and zero forms (section 2), and `fact`'s chain and lent-zero openings, the take's hops, the digit, `twinIntro`, `warmIntro`, `again`, `rememberedStep` (one a step), `miss` and `missLast`, the default praise. A set's `lines` overrides any |
 | `E.numberWords(n)` | number words 0 to 1,000 |
@@ -769,22 +796,22 @@ text.
 | `E.takeStepOf(plan)` | the step a problem belongs to: `ones2` for a two-digit spread; `zero` and `zeros` their kind; `mixed` only for a problem with no hundreds left of kind `none`, `ones`, `tens` or `both`; else its kind (her hard steps, section 4; the guards, section 3; the round's templates, section 5) |
 | `E.takeTwin(plan, seed, avoid, mode)` | a twin, or the original after 400 draws; for `mode` `'hers'`, never one whose flip lands on a right digit (section 2) |
 | `E.takeWarm(seed, avoid)` | the made two-digit warm-up (`'hers'`, so its flip never lands) |
-| `E.takeSlip(plan, col, given)` | section 2's slip, or null for a right digit; a blank column's empty OK is given as 0 |
+| `E.takeSlip(plan, col, given, shown, taught)` | section 2's slip, or null for a right digit; a blank column's empty OK is given as 0; `shown` the turn's spreads were shown or tapped; `taught` the steps taught so far (absent: every step), which `extra` needs |
 | `E.takeLine(def, plan, col, stage, mode, full)` | the column's line: in `'hers'` the column and its bottom digit, never its top (the first column its top as written); in `'show'` and `'tap'` the top as it stands, or after a shown or tapped spread; `full` false gives the column's name alone (section 1) |
 | `E.takeShow(def, plan, col)` | `'show'`'s steps, and `'tap'`'s lines, for a turn that spreads |
 | `E.takeHelp(def, plan, col, slip)` | the help: `{ intro, steps: [{ say, sand, n? }], digit, line }`, `sand` as `E.takeSandOpts` takes it |
 | `E.takeSandOpts(step)`, `E.takePicture(def, q, stage)` | what `PC.art.sand` (`kind: 'quick'`) and `PC.art.placeValue` take, exactly the option objects pinned below: the number as it stands, crossed and fresh marks, the taken and lit ones, the spread in flight, the glowing zone |
 | `E.takeQuestion(def, q)` | what comes before the first column: the prompt's balloons (lettered and said), a twin's `twinIntro` or the warm-up's `warmIntro` (lettered and said), then "{A} take away {B}." in words, said only, its own speech item before the first column's line (section 6's order) |
-| `E.takes` (`T`): `T.start(def, opts)`, `T.done(st)`, `T.question(st)`, `T.digit(st, def, digit, ms, now)`, `T.tap(st)`, `T.summary(st)` | the runner. A take state: `{ op: '-', set, mode, queue: [{ a, b, regroup?, prompt?, right?, picture?, of?, warm? }], pos, col, got, first, slips, cols, tapped, requeues, log, lineIdx, missed, onesFirst, startedAt, round? }` (`of` a twin's lineage, its original's `'<a>-<b>'`; `requeues` keyed by it; `lineIdx` the praise and miss lines' turn, not to be confused with a set's `lines`; `onesFirst` whether this problem's pointer has been given): `pos` moves only when a problem is done, so `T.done` and `E.counts.done` agree and the slot machinery (`busy`, `E.lessonAt`, `E.holdLesson`, `E.hollowRound`, `E.settleLesson`) works untouched. `T.question` gives the problem, its plan, the column, the line's mode and form, her digits so far and the marks lettered (per column, by the mode: section 1); `T.digit` one column's OK: right or wrong, the ones-first pointer, the slip and the help, the marks, a blank asked, and at a problem's end its log entry, the twin queued (seeded by `startedAt`, `pos` and the requeue count), its line (`again`, `rememberedStep`, praise or `right`, or the miss line); `T.tap` one spread of a `'tap'` turn; `T.summary` has `C.summary`'s keys (`noHelp` and `finished` too, so `when: { lessonClean }` reads a take set) and `op: '-'` |
-| `E.takeLesson(cat, story, setId, now, stories)` | a chapter's take lesson: the set's facts (and its made warm-up first) and a fresh take state |
+| `E.takes` (`T`): `T.start(def, opts)`, `T.done(st)`, `T.question(st)`, `T.digit(st, def, digit, ms, now)`, `T.tap(st)`, `T.summary(st)` | the runner. A take state: `{ op: '-', set, mode, queue: [{ a, b, regroup?, prompt?, right?, picture?, of?, warm? }], pos, col, got, first, slips, cols, tapped, requeues, log, lineIdx, missed, onesFirst, startedAt, round?, taught?, avoid? }` (`taught` the steps taught so far: a lesson's, its chapter's and the earlier ones'; a round's, those she has learned; `avoid` the answers no twin may have: a lesson's, its chapter's; `of` a twin's lineage, its original's `'<a>-<b>'`; `requeues` keyed by it; `lineIdx` the praise and miss lines' turn, not to be confused with a set's `lines`; `onesFirst` whether this problem's pointer has been given): `pos` moves only when a problem is done, so `T.done` and `E.counts.done` agree and the slot machinery (`busy`, `E.lessonAt`, `E.holdLesson`, `E.hollowRound`, `E.settleLesson`) works untouched. `T.question` gives the problem, its plan, the column, the line's mode and form, her digits so far and the marks lettered (per column, by the mode: section 1); `T.digit` one column's OK: right or wrong, the ones-first pointer, the slip and the help, the marks, a blank asked, and at a problem's end its log entry, the twin queued (seeded by `startedAt`, `pos` and the requeue count), its line (`again`, `rememberedStep`, praise or `right`, or the miss line); `T.tap` one spread of a `'tap'` turn; `T.summary` has `C.summary`'s keys (`noHelp` and `finished` too, so `when: { lessonClean }` reads a take set) and `op: '-'` |
+| `E.takeLesson(cat, story, setId, now, stories)` | a chapter's take lesson: the set's facts (and its made warm-up first) and a fresh take state, with the steps this chapter and the earlier ones teach (`taught`) and the chapter's answers (`avoid`) |
 | `E.chapterLesson` (changed) | one branch first: a set with `op: '-'` goes to `E.takeLesson`. Every other set as now |
 | `E.recordLesson` (changed) | one branch before the Hollow's (`st.mode === 'hollow'`) and after the Warrior Counts': a state with `op: '-'`: a chapter's under `lessons[set]` (`T.summary`), `lesson` cleared, returned as today; a store round to `E.takeRoundFinish`, returned as `{ mode: 'store', summary, hollow: null, store: { awarded, rounds } }`, so it never reaches `E.hollowFinish` (module 1's treasures and `byTable['1']`) nor `renderHollow`'s pinned `hollowReward`. Its signature stays `(cat, st)` |
 | `E.logTake(cat, entry)` | into `cat.takes.log` (created on her first), capped |
-| `E.hardTakes(cat)`, `E.takeTable(cat)` | her hard steps (section 4); the corner's table by kind: problems, right first time of first asks, helped, typical time, her commonest slip; under it a "teen facts missed" row (for example "13 − 8 ×2"), built from each `fact` slip's top at her turn and the column's bottom digit, for grown-ups only: those facts are a grade 2 prerequisite the kit has no other way to show |
+| `E.hardTakes(cat)`, `E.takeTable(cat)` | her hard steps (section 4); the corner's table by kind: problems, right first time of her own first asks (not a twin, not `worked`, not `'tap'`: E.hardTakes' rule; the made warm-up and a store round's problems count), helped, typical time (the median of her right `'hers'` answers), her commonest slip; `capped` and `cap` (at `E.TAKE_LOG_CAP` the table is her last 500, and the corner's heading says so); under it a "teen facts missed" row (for example "13 − 8 ×2"), built from each `fact` slip's top at her turn and the column's bottom digit, for grown-ups only: those facts are a grade 2 prerequisite the kit has no other way to show |
 | `E.questionDef` (changed) | only for a set with `warmHard.table === 'all'` and a question whose numeric `table` differs from the set's: the set with `W_ASK_KEYS` copied from `E.hollowDef(stories, q.table)` and its own lines kept (section 4). Every other set and question as now, `from` included |
 | `E.takeSteps(cat, stories)`, `E.storeOpen(cat, stories)` | the steps her finished `teach` sets taught, in order; whether Count the store shows |
 | `E.hollowShelf(cat, stories, opts)` | the shelf's greeting (or the waiting line, from `E.hollowLines`, reused) and its buttons; null while the store is closed; `opts.stories` in place of `stories` (for `PC.debug.takes`) |
-| `E.takeRoundDef()`, `E.takeRoundStart(cat, stories, now, opts)`, `E.takeRoundFinish(cat, st)` | section 5 (no flip landing; entries `round: n`, first asks); the finish once, as `E.hollowFinish`; `opts.stories` as above |
+| `E.takeRoundDef()`, `E.takeRoundStart(cat, stories, now, opts)`, `E.takeRoundFinish(cat, st)` | section 5 (no flip landing; entries `round: n`, first asks; the older steps those that spread; its state's `taught` the steps learned); the finish once, as `E.hollowFinish`; `opts.stories` as above |
 | `E.checkTakes(story, stories)` | section 3's guards, each spelled out there, as a list of errors |
 | `E.checkStory` (changed) | adds `E.checkTakes`' errors: none for a chapter with no take set |
 | `okLesson`, `E.okLesson` (changed) | only for a state with `op: '-'`: also each queued problem in range, `col` a whole number within its columns, `got`, `first`, `slips` and `cols` lists; anything else dropped like any bad lesson. Every other state as now |
@@ -844,7 +871,7 @@ keys.
 | `storeReward(res)` | the reward page for a store round (the frost treasure; "Another round" to the shelf) |
 | `onBack` (changed) | from the Counts page under the shelf, back to the shelf |
 | `plain()` (changed) | − as `E.TAKE_WORDS`' take away, read at call time |
-| `openGrownups` (changed) | with `takes` data: a "Take-aways" table by kind (`E.takeTable`, its teen-facts row under it) after the Counts' tables, and "Count the store N (M without help)" on the Training Hollow's line. Nothing for a cat without it |
+| `openGrownups` (changed) | with `takes` data: a "Take-aways" table by kind (`E.takeTable`, its teen-facts row under it, with a note on what its columns count; "(her last 500)" in its heading once the log is at its cap) after the Counts' tables, and "Count the store N (M without help)" on the Training Hollow's line, the module-1 part led by "One Count at a time". Nothing for a cat without it |
 | `treasureSvg` (changed) | the four frost treasures' drawings (the UI owner's: the treasures are drawn here, not in the art files); every other id as now |
 | `PC.ui.takes` | pure, for Node: the column's view (cells, marks per column by the mode, struck digits, boxes, heads, `aria-label`s), `press(typed, k)` (one digit: a new one replaces it, Delete empties), the steps' and lines' waits, the stack's lines at each stage, the reading order |
 | `PC.debug.takes(what)` | for the tools: `first`, `q`, `show`, `tap`, `spread`, `echo`, `sand`, `done`, `shelf`, `store`. The shipped page has no take data (no chapter has a take set, and `tests/fixtures/takes-stub.js` is not served), so it builds its own definitions inline: 503 − 278 `'hers'`, 43 − 16 `'tap'`, 254 − 131 `'show'` with chapter 12's worked prompt, a help at 503 − 278's ones; for the shelf and the store round, an in-memory stories list holding a stub `teach` set, never registered in `PC.story`, passed as `opts.stories` to `renderHollow`, `E.hollowShelf` and `E.takeRoundStart`. Returns true or an error string, as `PC.debug.warrior` does |
@@ -912,7 +939,8 @@ and a stub chapter 12 and 13 with take sets (and stub take sets for every step, 
    3's table; the marks of 503 − 278 (4, 9, 13) and of 811 − 356 (7, 10, 11, its tens lettered 0 first).
 2. **The kinds and flags** of every problem in section 3's chapters' table, as it says.
 3. **The guards.** `E.checkTakes` refuses each bad fact (a negative, 0, a four-digit top, a longer bottom, a decimal, an
-   answer two digits short, a `table`, a bad `regroup` or `picture.kind`, a first balloon over 12 words), a bad set key
+   answer two digits short, a `table`, a bad `regroup` or `picture.kind`, a balloon of its prompt over 12 words, the
+   last one the page joins among them, captions apart), a bad set key
    (`teach` not a step, `twins` or `warm` not a boolean, an unknown `lines` key), a Counts set lending to a take set, a
    step's set with the wrong count of its step or a later step among the rest, a `mixed` set of three kinds, an answer
    twice in a chapter, `noHundreds` before `mixed`; it passes the stub and, once they land, chapters 12 to 21.
@@ -930,26 +958,32 @@ and a stub chapter 12 and 13 with take sets (and stub take sets for every step, 
    the one off are each green on none (`check-v0.3.js`; v0.1's lines, its blank filled, let them through on 7 and on 45;
    at the blank hundreds of 731 − 696, 500 − 412, 503 − 478 and 500 − 467 both type 1, `kept`), with `kept` at
    43 − 16's tens, `zero` at 503 − 278's tens and `kept` at its hundreds; one who spreads where nothing needed it gets
-   `extra` at 475 − 132's tens.
-5. **Every slip's help** (section 2's 33 cases, by value, in the engine file; the sample in the exhaustive one). For
+   `extra` at 475 − 132's tens. The full line on a set's first two `'hers'` problems (chapter 13's 85 − 39 and 97 − 52,
+   after its `'show'` and `'tap'` ones), every `'show'` and `'tap'`, a twin and after a help.
+5. **Every slip's help** (section 2's cases, by value, in the engine file; the sample in the exhaustive one). For
    every three-digit problem of each kind (a sample of 2,000 a kind, seeded) and every column, every wrong digit 0 to 9:
    a help whose steps end on the right digit, whose spreads are the plan's, whose take hops end at the digit (old marks
    first), whose first line is the slip's; at a chain's turn `zero` only for bottom − top and 0, `fact` with the chain drawn for the
    rest; at a lent zero `zero` only for 10 − bottom, the bottom and 0; `extra` only at the tens or the hundreds, where the
    column did not lend (never the ones: 2 at 475 − 132's ones is `fact`); `flip` at the tens and on a 0 with its own
-   words (section 2); the sand's numbers at each step the top as it stands.
+   words (section 2); the sand's numbers at each step the top as it stands. `extra` only once its spread is taught
+   (chapters 12 to 15's sets played through the runner, every three-digit sample under three `taught` lists) and never
+   for a 0 where the bottom is empty or 0; at a lent column that needs its own spread, `kept` before the written top's
+   `flip` and before `nospread`.
 6. **The twin** (the 1,000 seeds in the exhaustive file). For each chapter problem and 1,000 seeds: the same shape and
    kind, a new top, no answer of the lesson's, at most 400 draws, and for `'hers'` no spread turn whose flip lands on its
    digit; forced (`TRIES` 0): the original. Queued `E.REQUEUE_GAP` later or next when last, with `of` its original's key;
    at most twice by lineage (a twin's twin counts against the first problem); its log entry's `twin` that key; seeded by
-   `startedAt`, `pos` and the requeue count; `'show'`'s twin `'tap'`.
+   `startedAt`, `pos` and the requeue count; `'show'`'s twin `'tap'`; no twin with an answer its chapter has (a hundred
+   starts of every stub chapter's sets, each problem's first column missed).
 7. **`'show'` and `'tap'`.** `E.takeShow`'s steps across a row, a square and a zero (the zero's mark "10", then "9");
    `T.tap` spreads one at a time, a digit before it types nothing, a tap off the glowing zone says `tapHere` once; the
    column's line after it says the new top.
 8. **The record.** Entries as section 4 says (round and warm-up entries first asks, `round: n`); `E.takeStepOf` on
    500 − 412 (`zeros`), 503 − 478 (`zero`), 731 − 696 and 382 − 345 (`mixed`), 43 − 16 (`ones2`); `E.hardTakes` from first
-   asks only (not twins, `worked` or `'tap'`), a step leaving once right; `E.takeTable`'s rows and its teen-facts row;
-   the cap at 2,000.
+   asks only (not twins, `worked` or `'tap'`), a step leaving once right; `E.takeTable`'s rows (right first time of her
+   own first asks, the typical time of her right `'hers'` answers) and its teen-facts row (a written top's flip is not a
+   teen fact); the cap at 500, and the table's `capped` at it.
 9. **The slots.** Random walks through chapter lessons (take and Counts), Hollow rounds of both, and reloads: nothing
    lost; a take lesson waits in its place and comes back at its frame, problem and column; a store round gives way and
    comes back through `hollowWaiting`; a take state never reaches `E.counts.question`.
@@ -964,10 +998,12 @@ and a stub chapter 12 and 13 with take sets (and stub take sets for every step, 
     a picture that is not the fallback, the set's own lines kept; `E.takeWarm` a two-digit `ones` avoiding the chapter's
     answers, its flip never landing.
 12. **Count the store.** Closed until a `teach` set is finished, then the shelf; every round five distinct answers, the
-    first `none`, hard steps at 2 and 3, the newest at 4, `noHundreds` only after `mixed`, no flip landing; the finish
-    once, returned as `mode: 'store'`, a frost treasure in turn by the store's rounds (ids distinct from `E.TREASURES` and
-    `E.GIFTS`), `hollow.rounds` and each Count's record untouched; each template's step its row, and once chapters 12 to
-    21 land, each template against its step's chapter (one of its lesson's problems; the store's own two, its step).
+    first `none`, hard steps at 2 and 3, the newest at 4, older steps that spread at 3 and 5 (so one `none` unless it is
+    hard), section 5's round 1 as built, no line about a step she has not learned, `noHundreds` only after `mixed`, no
+    flip landing; the finish once, returned as `mode: 'store'`, a frost treasure in turn by the store's rounds (ids
+    distinct from `E.TREASURES` and `E.GIFTS`), `hollow.rounds` and each Count's record untouched; each template's step
+    its row, and once chapters 12 to 21 land, each template against its step's chapter (one of its lesson's problems;
+    the store's own two, its step).
 13. **Number words and the words table.** `E.numberWords` 0 to 1,000 against a hand list of the tricky ones (101, 110,
     118, 503, 999) and equal to `E.countWords` to 100; every kit line filled for each column of each kind, at the ones
     and the tens, on a top of 0 and not, with no `{` left, singular and plural right ("one row", "two rows"), no "Only
@@ -977,8 +1013,8 @@ and a stub chapter 12 and 13 with take sets (and stub take sets for every step, 
     filled lines are pinned ("Spread a row: tap it." becomes "Break apart a row: tap it."); `E.TAKE_WORDS` read at call
     time (a `PC.words` stub loaded after the engine is seen).
 14. **Migration.** A cat with `takes` goes through the store unchanged, idempotently; junk dropped (not an object: no key;
-    bad entries out; `kind` recomputed; a `__proto__` holding `takes` makes none); a lesson whose take state is bad is
-    dropped from `lesson`, a place and `hollowWaiting`.
+    bad entries out; `kind` recomputed; a `__proto__` holding `takes` makes none); a lesson whose take state is bad (a bad
+    `taught` or `avoid` among them) is dropped from `lesson`, a place and `hollowWaiting`; the cap at 500.
 15. **Chapters 1 to 11 and the Warrior Counts unchanged** (section 8's list): `cat.counts`, `cat.hollow`, `cat.warrior`
     and the module-1 part of `cat.nest` deep-equal before and after a take lesson and a store round, for every golden end
     cat; `E.questionDef` unchanged for every existing set and question.
@@ -1079,7 +1115,9 @@ no module-2 chapter), so both deploy dormant and chapter 12 builds on them.
     named from her digit alone; each slip's line has its tens and zero forms (v0.3: `flip` is named at the tens too).
     `zero` is named only for the chain's own mistakes (bottom − top or 0 at the chain's turn; 10 − bottom, the bottom or
     0 at the lent zero); a slip on the teen fact after a right chain is `fact`, and its help does not lecture the chain
-    she already did.
+    she already did. After the review: `extra` only once the column's spread is taught, so no line names a spread she
+    has not met, and at a column that lent and needs its own spread `kept` comes before the written top's flip and
+    `nospread`, so each of the two classic bugs there gets its own name.
 12. **Take to ten for a teen take; by ones for five or less; a sweep otherwise** (the study's, completed).
 13. **A twin comes back with no fillers**, as late as the lesson allows: two 30-second fillers would add a minute, and a
     twin's new digits never test the last ten seconds.
@@ -1097,7 +1135,8 @@ no module-2 chapter), so both deploy dormant and chapter 12 builds on them.
     One Count at a time is today's page, word for word, and its ‹ goes back to the shelf.
 22. **Count the store's rounds are twins of the chapters' own problems**, by step, so the round can never ask a step the
     chapters have not taught; two templates of its own (352 − 28, 403 − 57) add a two-digit bottom under a three-digit
-    top, which the column lines up for her, and "Nothing to take" in a column that lent, where `kept` shows.
+    top, which the column lines up for her, and "Nothing to take" in a column that lent, where `kept` shows. Its older
+    steps are those that spread (after the review), so a round has one easy problem, not three.
 23. **Frost-time treasures for store rounds only**, by the store's own count: module 1's treasure order is untouched.
 24. **The kit's words in one table, as tokens, the regrouping word in its base form only** (`E.TAKE_WORDS`, read lazily
     from `PC.words`): decision 53's "easy to change" made true, since a word written into fifteen lines, or used as a
@@ -1118,8 +1157,10 @@ no module-2 chapter), so both deploy dormant and chapter 12 builds on them.
 28. **The columns are named in school words** (ones, tens, hundreds), the picture in picture words (loose, rows,
     squares), with "A row is a ten. A square is a hundred." in chapters 12 and 13: the study's rule, which v0.1 dropped,
     and the bridge from the game to her school page.
-29. **A full column line on a set's first two problems, every `'show'` and `'tap'`, a twin and after a help; the
-    column's name alone otherwise**: about two hundred repeats of the same three openings would bore her.
+29. **A full column line on a set's first two problems of her own (`'hers'`), every `'show'` and `'tap'`, a twin and
+    after a help; the column's name alone otherwise**: about two hundred repeats of the same three openings would bore
+    her. After the review a `'show'` or `'tap'` problem uses up neither place, so her first problem on her own after a
+    worked example (chapter 13's 85 − 39) hears its full line.
 30. **No twin or store problem with a flip that lands on the right digit**, at about half a draw a twin.
 31. **A fixed order for cutting a lesson that runs long**, since the real maths time, about 4½ to 7 minutes, is past
     decision 10's 20%. v0.3: a lesson problem only where the chapter's rules can spare one (13's 486 − 253, 14's
@@ -1153,14 +1194,14 @@ no module-2 chapter), so both deploy dormant and chapter 12 builds on them.
 ## 12. For Aron
 
 Each is built as the first answer until he says otherwise; none blocks the build.
-1. **Her class's words for regrouping.** The kit says *spread* in English ("Spread a row: ten more loose.") and, from
-   chapter 14 (*desagrupar*) and chapter 16 (*reagrupar*), the Spanish words (decision 53). If her class says something
-   else in either language ("trade", "regroup", "break apart"; *canjear*, *descomponer*, *pedir prestado*), it is one
-   line each: every kit line uses the word in its base form, before what it acts on or after it, never before "it", so
-   any of these fits ("Break apart a row: tap it.").
-2. **Does she ever say "me llevo una" when she subtracts, and how does her class mark a spread?** In Spain and parts of
-   Latin America, subtraction adds a ten to both numbers instead of spreading a row; the little marks are written
-   differently. The kit is the US method her school's English side most likely uses. If her class does it the other way,
-   the help's words and the marks need a note before chapter 13 (chapter 12 has no spread). Also: does her class mark a
-   spread with 13 above a struck 3 (the kit's way) or with a small 1 written before the 3, and does it head the columns
-   C D U (centenas, decenas, unidades)? Either answer changes one CSS rule and the heads.
+1. ~~**Her class's words for regrouping.**~~ Answered by decision 55 (Aron, 2026-11-07): her Spanish word is
+   *desagrupar*, said as she says it, «desagrupo» ("breaking it into groups"); the English stays the kit's *spread*
+   ("Spread a row: ten more loose."). It first comes at chapter 13's first spread, not chapter 14 as planned (decision
+   55's call in the README), and chapter 16 brings *reagrupar* (decision 53). A class word is still one line each: every
+   kit line uses the word in its base form, before what it acts on or after it, never before "it", so any word fits
+   ("Break apart a row: tap it.").
+2. **How does her class mark a spread?** Answered in part by decision 55: the US decomposition method is hers ("me llevo
+   una", the Spanish and Latin American way of adding a ten to both numbers, is not), so the help's words and the marks
+   stand. Still open, not blocking: does her class mark a spread with 13 above a struck 3 (the kit's way) or with a small
+   1 written before the 3, and does it head the columns C D U (centenas, decenas, unidades)? Either answer changes one
+   CSS rule and the heads.

@@ -123,6 +123,28 @@ test('renderBook: the first volume is v23\'s markup (the title line, the pages, 
   assert.ok(UI_SRC.includes("nextBtn('See your book', function () { go('book', { from: 'end', scrollTo: story.id }); });"), 'a chapter\'s end as before');
 });
 
+test('the volume she left survives the Hollow\'s shelf and One Count at a time (the take-aways review, screens S4): First Moon, the Hollow, One Count at a time, ‹, ‹ comes back to First Moon, not to First Frost-Time', () => {
+  // the shelf's button and onBack, taken from the source as written, run on stand-ins: each go() is recorded
+  const gone = [];
+  const go = (n, o) => { gone.push([n, o]); };
+  const L = two();
+  const sh = UI_SRC.slice(UI_SRC.indexOf("    $('countsBtn').addEventListener('click',"), UI_SRC.indexOf('\n', UI_SRC.indexOf("    $('countsBtn').addEventListener('click',")));
+  let tap = null;
+  new Function('$', 'go', 'view', 'opts', sh)(() => ({ addEventListener: (t, f) => { tap = f; } }), go, { name: 'hollow', opts: { from: 'book', vol: 1, stories: L } }, { stories: L });
+  tap();
+  assert.deepEqual(gone[0], ['hollow', { counts: true, from: 'book', vol: 1, stories: L }], 'One Count at a time keeps the volume');
+  const back = (view, hollowSub) => new Function('view', 'hollowSub', 'go', 'E', 'cat', 'story', 'persist', fnSrc('onBack') + 'return onBack;')(view, hollowSub, go, E, null, null, () => {})();
+  back({ name: 'hollow', opts: gone[0][1] }, 'counts');
+  assert.deepEqual(gone[1], ['hollow', { from: 'book', vol: 1, back: true, stories: L }], '‹: the shelf, the volume kept');
+  back({ name: 'hollow', opts: gone[1][1] }, null);
+  assert.deepEqual(gone[2], ['book', { back: true, vol: 1 }], '‹ again: First Moon');
+  // from camp, as before: the shelf and its ‹ go back to camp
+  gone.length = 0;
+  back({ name: 'hollow', opts: { from: 'hub', back: true } }, 'counts');
+  back({ name: 'hollow', opts: gone[0][1] }, null);
+  assert.deepEqual(gone.map((g) => g[0]), ['hollow', 'hub']);
+});
+
 test('the second volume\'s title: her warrior name, which may break at its join (richN), smaller when long, as the first volume\'s is', () => {
   const list = two();
   const short = page(catAt(12, list), list).bookTitleTwo('Fernheart’s First Frost-Time');

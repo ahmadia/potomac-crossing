@@ -24,8 +24,8 @@
  *   ROOT_DIR=tree   another tree (its own tools/shots.mjs scripts; default: this repo)
  *   SIZE=1180x820   the page's size in CSS px (default 1080x720)     AA=0,1   Aa off, on, or both (the default)
  *   CAT='{…}'       over the sweep's cat (below)                      CSS=file  a candidate stylesheet, put in after setup
- * OUT.json: { root, size, secs, jobs: [{ name, big, rows | ms, notes, skipped? }] } (rows: one __JM per frame; notes:
- * step errors; skipped: a take screen the engine cannot show yet). Whole-tree renders and measurements: use
+ * OUT.json: { root, size, secs, jobs: [{ name, big, rows | ms, notes }] } (rows: one __JM per frame; notes:
+ * step errors). Whole-tree renders and measurements: use
  * tools/sweep.mjs, which caches them; this is for the frames you change. Exit 75 when the render lock stays busy for 5
  * minutes (LOCK_WAIT).
  */
@@ -48,10 +48,8 @@ export const SIZES = ['1080x720', '1180x820', '820x1180', '390x844'];
 export const TAKE_SIZES = ['1080x700', '1024x768', '768x1024', '844x390'];
 // the take screens the gate measures (section 6), in order; tools/shots.mjs's TAKE_TARGETS says how each opens
 export const TAKE_SCREENS = ['take:first', 'take:q', 'take:show', 'take:tap', 'take:echo', 'take:sand', 'take:done', 'hollow:shelf', 'store:q'];
-// the screens measured again after a right digit (the next column outlined), and what each needs in the engine before it
-// can be shown at all (the Hollow's shelf and Count the store come in the kit's second pass: until then, skipped)
+// the screens measured again after a right digit (the next column outlined)
 const TAKE_NEXT = ['take:q', 'take:echo'];
-const TAKE_NEEDS = { 'hollow:shelf': 'hollowShelf', 'store:q': 'takeRoundStart' };
 
 /* A tree's own page scripts, verbatim from its tools/shots.mjs (as every earlier checker read them). */
 export function pageScripts(root) {
@@ -168,9 +166,9 @@ const SWEEP = (mode, only) => ({ js: call('return JSON.stringify({ J: 1, rows: w
 /* The take-aways kit's page, typed on as she types (the `takes` job's `@next`): the outlined box's right digit, read
  * from the column's own words (its aria-label says the problem in words) and the engine's plan, then OK, each a tap on
  * the page's keypad past its double-tap guard; then the next column outlined (a spread lands first: polled, 30 s at
- * most). A screen the engine cannot show yet (TAKE_NEEDS) is skipped: its steps do nothing and it is listed apart. */
+ * most). */
 const TAKE_TYPE = `var E = PC.engine, col = document.querySelector('#screen .tcol'), on = col && col.querySelector('.tbox.on');
-  if (window.__tskip || window.__tfail) return true;
+  if (window.__tfail) return true;
   if (!col) return 'no column (.tcol) to type in';
   if (!on) return 'no outlined box (.tbox.on) to type in';
   var said = String(col.getAttribute('aria-label') || '').toLowerCase().replace(/[.,!?:;]/g, ' ').replace(/\\s+/g, ' ').trim();
@@ -189,23 +187,22 @@ const TAKE_TYPE = `var E = PC.engine, col = document.querySelector('#screen .tco
   if (c === boxes.length - 1) return 'the outlined box is the last column: no next column to measure';
   window.__tk = { at: at, keys: pc.blank ? ['ok'] : [String(pc.digit), 'ok'], polls: 0 };
   return true;`;
-const TAKE_KEY = `if (window.__tskip || window.__tfail) return true; var t = window.__tk; if (!t) return 'nothing to type';
+const TAKE_KEY = `if (window.__tfail) return true; var t = window.__tk; if (!t) return 'nothing to type';
   if (!t.keys.length) return true;
   var k = t.keys.shift(), b = document.querySelector('#screen .key[data-k="' + k + '"]');
   if (!b) return 'no key ' + k + ' on the take page';
   b.click(); return true;`;
-const TAKE_NEXT_UP = `if (window.__tskip || window.__tfail) return true; var t = window.__tk; if (!t) return 'nothing typed';
+const TAKE_NEXT_UP = `if (window.__tfail) return true; var t = window.__tk; if (!t) return 'nothing typed';
   var col = document.querySelector('#screen .tcol'), on = col && col.querySelector('.tbox.on');
   var at = on ? Array.prototype.indexOf.call(col.querySelectorAll('.tbox'), on) : -1;
   if (on && at !== t.at) return true;
   if (col && col.querySelectorAll('.tbox')[t.at] && col.querySelectorAll('.tbox')[t.at].classList.contains('miss')) return 'the digit typed was a miss (the help came): not the outlined column’s right digit';
   return ++t.polls < 75 ? 'pending' : 'the next column was not outlined within 30 s of the OK';`;
 export const TAKE_JS = { type: TAKE_TYPE, key: TAKE_KEY, next: TAKE_NEXT_UP };   // (for the tests)
-const takeNeeds = (fn, t) => ({ js: call('var f = PC.engine[arguments[0]]; window.__tskip = typeof f === "function" ? null : arguments[1] + ": no E." + arguments[0] + " in this build yet"; return true;', [fn, t]), wait: 0.02 });
-const takeM = (tag) => ({ js: call('if (window.__tskip) return JSON.stringify({ J: 1, skip: window.__tskip }); if (window.__tfail) return JSON.stringify({ J: 1 }); return JSON.stringify({ J: 1, m: window.__JM(arguments[0]) });', [tag]), wait: 0.05 });
+const takeM = (tag) => ({ js: call('if (window.__tfail) return JSON.stringify({ J: 1 }); return JSON.stringify({ J: 1, m: window.__JM(arguments[0]) });', [tag]), wait: 0.05 });
 /* Open a take screen (the tree's TAKES, verbatim, inside): what it says when it cannot is the job's one note, and the
  * steps after it then do nothing (no screen of another page measured in its name). */
-export const takeOpen = (TAKES, what) => ({ js: call('if (window.__tskip) return true; var r = (function () { ' + TAKES + '\n}).apply(null, arguments); if (r !== true) window.__tfail = true; return r;', [what, null]), wait: 0.9 });
+export const takeOpen = (TAKES, what) => ({ js: call('var r = (function () { ' + TAKES + '\n}).apply(null, arguments); if (r !== true) window.__tfail = true; return r;', [what, null]), wait: 0.9 });
 
 /* The measuring jobs for `what` (run.mjs's words: plain, taps, lessons, screens, warrior, only:…, settle:…, probe:…,
  * shot:…, shott:…), each { name, big, url, out, steps }. */
@@ -237,8 +234,8 @@ export function measureJobs(S, site, what, { aas = [false, true], cat = sweepCat
       for (const t of TAKE_SCREENS) {
         const tt = S.TAKE_TARGETS[t];
         if (!tt) { job('takes', big, [{ js: call('return arguments[0];', [t + ': not in tools/shots.mjs TAKE_TARGETS']), wait: 0.02 }]); continue; }
-        const steps = [takeNeeds(TAKE_NEEDS[t] || 'takePlan', t)];
-        if (tt[1] && S.WARRIOR) steps.push({ js: call('if (window.__tskip) return true; ' + S.WARRIOR, [tt[1]]), wait: 0.1 });
+        const steps = [];
+        if (tt[1] && S.WARRIOR) steps.push({ js: call(S.WARRIOR, [tt[1]]), wait: 0.1 });
         steps.push(takeOpen(S.TAKES, tt[0]), takeM(t));
         if (TAKE_NEXT.includes(t)) steps.push({ js: call(TAKE_TYPE), wait: 0.45 }, { js: call(TAKE_KEY), wait: 0.45 }, { js: call(TAKE_KEY), wait: 0.2 }, { js: call(TAKE_NEXT_UP), wait: 0.4 }, takeM(t + '@next'));
         job('takes', big, steps);
@@ -262,7 +259,7 @@ export function collect(jobs, run) {
   return jobs.map((j, i) => {
     const r = { name: j.name, big: j.big, notes: [] }, got = run.jobs[i];
     for (const [step, v] of got.results) {
-      if (v.startsWith('{"J":1')) { const o = JSON.parse(v); if (o.rows) r.rows = o.rows; else if (o.skip) (r.skipped = r.skipped || []).push(o.skip); else if (o.m) (r.ms = r.ms || []).push(o.m); }
+      if (v.startsWith('{"J":1')) { const o = JSON.parse(v); if (o.rows) r.rows = o.rows; else if (o.m) (r.ms = r.ms || []).push(o.m); }
       else r.notes.push('step ' + step + ': ' + v.slice(0, 300));
     }
     for (const [step, v] of got.errors) r.notes.push('STEPERR step ' + step + ': ' + v.slice(0, 300));

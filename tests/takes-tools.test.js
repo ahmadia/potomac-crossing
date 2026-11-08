@@ -174,7 +174,7 @@ test('shots.mjs: the take screen’s page script asks PC.debug.takes for the scr
 
 /* ------------------------------------------------------------------ the WebKit tool's takes job */
 
-test('dev/webkit/run.mjs: the `takes` job measures the gate’s screens (section 6) through the tree’s own shots.mjs scripts, verbatim: stills, Read to me off, take:first’s re-sit, the shelf and the store skipped until the engine has them', async () => {
+test('dev/webkit/run.mjs: the `takes` job measures the gate’s screens (section 6) through the tree’s own shots.mjs scripts, verbatim: stills, Read to me off, take:first’s re-sit', async () => {
   const { pageScripts, measureJobs, call, takeOpen, SIZES, TAKE_SIZES, TAKE_SCREENS } = await imp('dev/webkit/run.mjs');
   assert.deepEqual(SIZES, ['1080x720', '1180x820', '820x1180', '390x844'], 'the sweep keeps its four sizes');
   assert.deepEqual(TAKE_SIZES, ['1080x700', '1024x768', '768x1024', '844x390'], 'the page review’s four more');
@@ -197,9 +197,7 @@ test('dev/webkit/run.mjs: the `takes` job measures the gate’s screens (section
     const ms = j.steps.filter((s) => /window\.__JM\(arguments\[0\]\)/.test(s.js)).map((s) => JSON.parse(s.js.slice(s.js.lastIndexOf('}).apply(null, ') + 15, -1))[0]);
     assert.deepEqual(ms, t === 'take:q' || t === 'take:echo' ? [t, t + '@next'] : [t], t + ': measured (and after a right digit, the next column)');
     assert.ok(!j.steps.slice(j.steps.indexOf(open)).some((s) => /scrollTo\(/.test(s.js)), t + ': at the page’s own scroll (it brings the keypad into view)');
-    const needs = j.steps.find((s) => s.js.includes('window.__tskip = typeof f === "function"'));
-    assert.equal(JSON.parse(needs.js.slice(needs.js.lastIndexOf('}).apply(null, ') + 15, -1))[0], t === 'hollow:shelf' ? 'hollowShelf' : t === 'store:q' ? 'takeRoundStart' : 'takePlan', t + ': skipped until the engine has it');
-    assert.equal(j.steps.some((s) => s.js === call('if (window.__tskip) return true; ' + Sx.WARRIOR, [{ sittings: [52], answers: 10 }])), t === 'take:first', t + ': the re-sit only for take:first');
+    assert.equal(j.steps.some((s) => s.js === call(Sx.WARRIOR, [{ sittings: [52], answers: 10 }])), t === 'take:first', t + ': the re-sit only for take:first');
     assert.ok(!j.steps.some((s) => /readBtn/.test(s.js) && !/QUIET|readAloud !== want/.test(s.js)), t + ': nothing taps Read to me');
   });
   // a tree whose shots.mjs has no take screens (the live one, before the merge): no takes job, so a compare is clean
@@ -258,10 +256,6 @@ test('dev/webkit/run.mjs: on take:q and take:echo the outlined column’s right 
   assert.match(fakePage('', 3, 2).run(TAKE_JS.type), /^the column’s aria-label does not say its problem in words/);
   assert.match(fakePage('503 − 278', 3, 2).run(TAKE_JS.type), /^the column’s aria-label does not say its problem in words/);
   assert.equal(fakePage('Five hundred three take away two hundred seventy-eight.', 3, -1).run(TAKE_JS.type), 'no outlined box (.tbox.on) to type in');
-  const none = fakePage('x', 3, 2); none.window.__tskip = 'store:q: no E.takeRoundStart in this build yet';
-  assert.equal(none.run(TAKE_JS.type), true, 'a skipped screen types nothing');
-  assert.equal(none.run(TAKE_JS.key), true);
-  assert.deepEqual(none.taps, []);
   const failed = fakePage('Five hundred three take away two hundred seventy-eight.', 3, 2); failed.window.__tfail = true;
   assert.equal(failed.run(TAKE_JS.type), true, 'a screen that did not open types nothing (its one note is the open’s)');
   assert.equal(failed.run(TAKE_JS.next), true);
@@ -299,7 +293,7 @@ test('sweep.mjs col-off: a take page’s column, outlined box and stack’s last
   assert.deepEqual(colOff(TAKE('take:q', { tbar: 0, tcol: [40, 0, 300, 160] })), [], 'no bar: the viewport’s top');
 });
 
-test('sweep.mjs: a take page’s problems in the summary (col-off, keypad-moved at a column and the next), the screens not built yet apart; the screens group measures the take screens; --takes their own folder at the four more sizes', async () => {
+test('sweep.mjs: a take page’s problems in the summary (col-off, keypad-moved at a column and the next); the screens group measures the take screens; --takes their own folder at the four more sizes', async () => {
   const { summarize, keypadMoved } = await imp('tools/sweep.mjs');
   assert.equal(keypadMoved(TAKE('take:q'), TAKE('take:q@next')), null);
   assert.equal(keypadMoved(TAKE('take:q'), TAKE('take:q@next', { kp: [40, 428, 400, 708] })), 'the keypad moved from 420-700 (x 40-400) to 428-708 (x 40-400) between one column and the next');
@@ -310,7 +304,6 @@ test('sweep.mjs: a take page’s problems in the summary (col-off, keypad-moved 
       { name: 'takes', big: true, notes: [], ms: [TAKE('take:first', { vw: 844, vh: 390, tsb: [430, 300, 830, 420] })] },
       { name: 'takes', big: true, notes: [], ms: [TAKE('take:q', { vw: 844, vh: 390, kp: [10, 150, 400, 380] }), TAKE('take:q@next', { vw: 844, vh: 390, kp: [10, 162, 400, 392] })] },
       { name: 'takes', big: true, notes: [], ms: [TAKE('take:echo', { vw: 844, vh: 390, kp: [10, 150, 400, 380] }), TAKE('take:echo@next', { vw: 844, vh: 390, kp: [10, 150, 400, 380] })] },
-      { name: 'takes', big: true, notes: [], skipped: ['hollow:shelf: no E.hollowShelf in this build yet'] },
       { name: 'takes', big: true, notes: ['step 14: no take-aways in this build (PC.debug.takes)'] }] }));
     const s = summarize(d, ['844x390']);
     assert.deepEqual(s.sizes, ['844x390']);
@@ -319,7 +312,7 @@ test('sweep.mjs: a take page’s problems in the summary (col-off, keypad-moved 
     assert.deepEqual(s.problems.filter((p) => p.kind === 'col-off').map((p) => p.at + ': ' + p.detail), ['take:first: the stack’s last balloon 300-420: 30px below the fold']);
     assert.deepEqual(s.problems.filter((p) => p.kind === 'keypad-moved').map((p) => p.at + ': ' + p.detail), ['take:q: the keypad moved from 150-380 (x 10-400) to 162-392 (x 10-400) between one column and the next'], 'take:echo’s keypad stayed put');
     assert.deepEqual(s.problems.filter((p) => p.kind === 'page-error').map((p) => p.detail), ['step 14: no take-aways in this build (PC.debug.takes)']);
-    assert.deepEqual(s.skipped, [{ size: '844x390', aa: 'on', why: 'hollow:shelf: no E.hollowShelf in this build yet' }], 'not a problem');
+    assert.equal(s.skipped, undefined, 'nothing skipped: every take screen is built');
   } finally { fs.rmSync(d, { recursive: true, force: true }); }
   assert.match(SWEEP, /\['screens', \['screens', 'warrior', 'takes'\]\]/, 'the take screens in --pages’ screens group, at its four sizes');
   assert.match(SWEEP, /const TAKES_RUN = \{ sub: 'takes', sizes: TAKE_SIZES, groups: \[\['takes', \['takes'\]\]\]/);

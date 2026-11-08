@@ -1,7 +1,10 @@
 # Chapter 12 spec: A Spark at the Hedge
 
 *v0.2 · 2026-11-07 · v0.2 applies the spec critics' findings (continuity, Counts, kit, Spanish; their runs in
-`~/potomac-crossing-work/ch12/critic-*/`, the editor's list in `ch12/spec-editor/notes.md`). No word of the story changes.*
+`~/potomac-crossing-work/ch12/critic-*/`, the editor's list in `ch12/spec-editor/notes.md`). No word of the story changes.
+After the kit's review (2026-11-07), still v0.2: the kit now does two things this spec asked of chapter 12, so the
+`NO_SPREAD` override and its store-round copy are gone (no line names a spread before its step is taught: the kit's
+rule, `taught`) and a twin never takes one of the chapter's answers (`avoid`); section 7's items 15 and 16 say so.*
 
 *The build's contract for chapter 12, beside `docs/build.md` and the take-aways kit's design (`docs/take-aways.md` v0.3).
 The story, [`12-a-spark-at-the-hedge.md`](12-a-spark-at-the-hedge.md) (Draft v0.4, final), is the source of every word she
@@ -76,8 +79,8 @@ which are the Spanish feature's (section 6).
 | – | Bedtime, the paw thing | 5 × 10 (50) | a skip, five taps, nothing typed, the count in Chispapaw's Spanish | her two forepaws (chapter 4's bedtime tens) |
 
 The written problems' answers are all different (123, 35, 34, 343, 223, 133; 322 for the spare; a helped problem's twin
-may rarely land on the store's 133: section 7, item 15), every take-away is of kind `none` (no spread), and nothing in the
-chapter is a Count (`E.countSets` is chapter 10's ten, run).
+never takes one of them: the kit's `avoid`, section 7, item 15), every take-away is of kind `none` (no spread), and
+nothing in the chapter is a Count (`E.countSets` is chapter 10's ten, run).
 
 ### `ch12-warm`, the Counts warm-up (Counts frame f042, `intro: false`)
 
@@ -120,9 +123,8 @@ chapter is a Count (`E.countSets` is chapter 10's ten, run).
 
 ```js
 function T(text) { return { who: 'tallyheart', text: text }; }
-var NO_SPREAD = { extra: { tens: 'Let’s scratch it out.', hundreds: 'Let’s scratch it out.' } };   // see "The `extra` slip" below
 'ch12-take': {
-  op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '', lines: NO_SPREAD,
+  op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '',
   facts: [
     { a: 254, b: 131, regroup: 'show',
       prompt: 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.',   // the kit's twelve words
@@ -152,19 +154,19 @@ var NO_SPREAD = { extra: { tens: 'Let’s scratch it out.', hundreds: 'Let’s s
   "¡Trescientos cuarenta y tres!" with "(Three hundred forty-three!)" under it, after the kit's end line. No column is ever
   echoed, and never «menos» (call 6 of the story).
 - **The ones-first pointer** is on (`teach: 'none'`): a first digit equal to the answer's leading digit is not checked.
-- **The `extra` slip** (`lines: NO_SPREAD`, on this set and `ch12-store`): on a problem with no spread the kit names a
-  later column's top − 1 − bottom digit `extra` (12 of the 171 wrong digits on the chapter's seven problems: critic-counts'
-  `extra.js`), and its line, "Careful. The loose had enough, so no row went. …", talks about spreading the day before
-  spreading is taught (the brief: "no spreading yet"). The set overrides that one line (a kit key, the same kind:
-  `E.checkTakes` clean, run), so the help is word for word a `fact` help: "Let’s scratch it out." / "Seven rows take away
-  three rows." … The slip is still logged `extra` (section 7, item 16).
+- **No `extra` slip yet** (the kit's rule since its review, no override): a later column's top − 1 − bottom digit (12 of
+  the 171 wrong digits on the chapter's seven problems: critic-counts' `extra.js`) would be the kit's `extra`, whose line,
+  "Careful. The loose had enough, so no row went. …", talks about spreading the day before spreading is taught (the brief:
+  "no spreading yet"). A take state knows the steps taught (`taught`: this chapter's and the earlier ones'), and before
+  `ones2` (for the tens) or `tens` (for the hundreds) `E.takeSlip` names such a digit `fact`, so the help is a `fact`
+  help: "Let’s scratch it out." / "Seven rows take away three rows." …, and the log says `fact` (section 7, item 16).
 - `done: ''`: f049 carries the story's two "Done" balloons. Finishing this set opens Count the store (`E.storeOpen`).
 
 ### `ch12-store`, the store's catch (Counts frame f059, `intro: false`)
 
 ```js
 'ch12-store': {
-  op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, twins: false, done: '', lines: NO_SPREAD,
+  op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, twins: false, done: '',
   facts: [{ a: 175, b: 42,
     prompt: [{ who: 'glintstar', text: 'How many stay in the store, {name}{ending}?' }],
     right: [{ who: 'glintstar', text: 'One hundred thirty-three in the store.' }] }]
@@ -176,8 +178,8 @@ var NO_SPREAD = { extra: { tens: 'Let’s scratch it out.', hundreds: 'Let’s s
   in her own balloon. Its first problem, so the lines are full: "Ones first. Five take away two." "Now the tens. Take away
   four." "Now the hundreds. Nothing to take." (her first two-digit number under a three-digit one; the kit's line carries
   it, section 7, item 5). Right: Glintstar's line, waiting for Next. Helped: "And you finished it." (no twin). At the
-  hundreds, a 0 typed, or OK on the empty box (read as 0), is an `extra` slip: with `NO_SPREAD` its help opens "Let’s scratch it out."
-  / "Nothing to take." / "One square.", never "no square went".
+  hundreds, a 0 typed, or OK on the empty box (read as 0), is a `fact` slip (the kit's: a 0 where the bottom is empty or 0),
+  so its help opens "Let’s scratch it out." / "Nothing to take." / "One square.", never "no square went".
 - **`teach: 'none'`, for the pointer only**: her sixth take-away, so without it the ones-first pointer is off (the kit's
   `pointerOn`: `teach: 'none'` or fewer than five logged), and a leading 1 typed first would be checked as a miss and
   the sand's help would take Glintstar's right line from her (critic-counts' `takes.js`). The step is the lesson's own
@@ -881,10 +883,9 @@ restore the loaded table, never delete it (`takes-ui.test.js`' `withWords`, `tak
   in every column: one echo a round); **`E.hollowShelf(...)`** gains `friend: { who: 'chispapaw', text: E.esLine('{es:aContar}') }`
   after Tallyheart's greeting (and after "Another round? I've got all evening."), absent while a Warrior Counts sitting
   waits (its waiting line takes the place, and the room). The store opens only when chapter 12's lesson is finished, so
-  she is always met by then. **`E.takeRoundStart`**, while `E.takeSteps(cat)` is only `['none']` (between chapters 12 and
-  13), gives the round's def chapter 12's `lines: { extra: { tens: 'Let’s scratch it out.', hundreds: 'Let’s scratch it
-  out.' } }`, so no Count the store round talks about spreading before chapter 13 teaches it (section 2, "The `extra`
-  slip"); with any other step learned, the kit's lines.
+  she is always met by then. No Count the store round talks about spreading before chapter 13 teaches it: a round's state
+  carries the steps she has learned (`taught`), the kit's rule since its review, so `E.takeRoundStart` needs nothing of
+  this chapter's (section 2, "No `extra` slip yet").
 - **The kit's school words** (the kit's section 1 and call 28: "chapter 12's and chapter 13's worked examples say
   `E.TAKE_LINES.schoolWords` once"): **`E.takeLine`**, for a `'show'` problem in a set whose `teach` is `'none'` or
   `'ones2'`, puts the school words before **the tens column's** line: "A row is a ten. A square is a hundred. Now the tens.
@@ -1076,8 +1077,7 @@ whispered line, the kit's stub echo, "«veinte»" alone (a word part, not a line
 and `E.takeEcho` (475 − 132 right and helped, its twin never, a column never, `on: 'first'`); the Spanish count
 (`E.skipView` at taps 0 to 5, its `say`, `gloss`, `wait`, a one-group count "¡Diez!"; `E.skipWords`' `whisper: false` and
 `words: true`; every existing skip's view and words unchanged); `E.takeLine`'s school words on a `'show'` problem of a
-`teach: 'none'` set's tens, not on its twin, not on any other set; `E.takeRoundDef`'s echo, `E.takeRoundStart`'s
-`lines.extra` while only `none` is learned (and the kit's lines once another step is), and `E.hollowShelf`'s `friend`
+`teach: 'none'` set's tens, not on its twin, not on any other set; `E.takeRoundDef`'s echo and `E.hollowShelf`'s `friend`
 (absent while a sitting waits); each `E.checkStory` guard, the later chapters' ones included (and no new error for
 chapters 1 to 11); **the page in Node**: `rich()` on every line of chapters 1 to 11 unchanged and on the Spanish forms as
 above; `plain()`; `UI.voices.pick` on the made-up lists (es-US Google first, then Paulina, an `es_MX` voice and a decomposed
@@ -1162,14 +1162,14 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
     story letters it.
 14. **Frames: 77 to 80** a reading, against the story's estimate of 73 to 83: the captions-first splits, the option
     frames and the title panel. Under the brief's 125.
-15. **A twin may land on 133** (the kit's and the Counts critics' low): a helped lesson problem's twin avoids only its own
-    lesson queue's answers (`T.digit`), not the store's, so about 0.8% of the twins of a helped 254 − 131, 475 − 132 or
-    368 − 145 come out at 133, which the store then asks at sunset. Accepted: a kit change for a rare repeat, and the
-    written problems' answers are all different (section 2). If play shows it, `E.takeLesson` can pass
-    `chapterAnswers(story)` into the twins' avoid list (the engine's, with a test).
-16. **The `extra` slip is still logged `extra`**: `NO_SPREAD` changes only the line she hears; the take log keeps the
-    kit's name, so the grown-ups' table labels such a slip "regrouped when not needed", though nothing was. Only a kit
-    change (naming `fact` where no spread step has been learned) would fix the label; for a grown-up, not her. Kept.
+15. **A twin never lands on 133** (the kit's and the Counts critics' low, answered by the kit's review): a helped lesson
+    problem's twin once avoided only its own lesson queue's answers, so about 0.8% of the twins of a helped 254 − 131,
+    475 − 132 or 368 − 145 came out at 133, which the store then asks at sunset. `E.takeLesson` now passes the chapter's
+    answers as the state's `avoid`, and `T.digit` keeps every twin off them (the kit's test 6). Nothing of chapter 12's.
+16. **No `extra` slip before its spread is taught** (answered by the kit's review): v0.2's `NO_SPREAD` changed only the
+    line she heard, and the log kept `extra`, which the grown-ups' table labels "regrouped when not needed". The kit now
+    names `fact` where the column's spread has not been taught (`E.takeSlip`'s `taught`), so the line and the label agree,
+    in the lesson, the store's catch and Count the store alike.
 17. **A cat named Chispa** (`keepNameChars` allows it, a common Spanish pet name): she was Chispapaw through chapters 2
     to 10, and chapter 12 gives the newcomer that very name, a collision like Murmur's (`E.tortieWord`). Her speech is
     guarded (`E.sayAs` never respells her own name or pet name), and the collision on the page is accepted for chapter 12
@@ -1197,7 +1197,7 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
 - **Count the store is open** in the Training Hollow (`E.storeOpen`: chapter 12's lesson finished): the shelf with
   Tallyheart's greeting and Chispapaw's "¡A contar!" (Let's count!), her in the shelf's scene at `sand-right`; a round's
   first problem right in every column echoed in her Spanish, with no echo room held; while `none` is the only step
-  learned, a round's help never talks about spreading (`lines.extra`). Steps learned: `none`.
+  learned, a round's help never talks about spreading (the kit's `taught`). Steps learned: `none`.
 - **The maths.** Take-aways, step 1: loose, a row, a square, ones first; the quick way to scratch a count (a square, a line,
   a dot), not credited to any Clan (where it comes from is chapter 21's); no spread yet (chapter 13's), never "borrow". Her
   take log has her first six take-aways (the ones-first pointer's first five are spent). Counts: none new; the warm-up
@@ -1312,9 +1312,9 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
 29. **A cat named Chispa: the collision accepted for chapter 12, her speech guarded** (section 7, item 17). Reason: a token
     would change the story's words for her (the text phase's, not the build's), and the name check cleared Chispa; her own
     name is never respelled, so chapters 1 to 11 sound as they did.
-30. **No spreading talk before chapter 13** (`lines: NO_SPREAD` on both take sets, and on Count the store's rounds while only
-    `none` is learned). Reason: the brief's "no spreading yet"; the kit's `extra` line names a spread on what is, this
-    chapter, an ordinary fact slip; the override is a kit key, no kit change.
+30. **No spreading talk before chapter 13** (the kit's rule since its review: a take state's `taught`; v0.2 carried an
+    override, `lines: NO_SPREAD`, on both take sets and on Count the store's rounds). Reason: the brief's "no spreading
+    yet"; the kit's `extra` line names a spread on what is, this chapter, an ordinary fact slip.
 31. **The store's one problem takes `teach: 'none'`, for the ones-first pointer only.** Reason: it is her sixth take-away, so
     the pointer would be off, and a leading digit typed first would cost her Glintstar's right line.
 32. **Cats carry mice: `holds: 'mouse'` drawn for cats** (the cats owner's), not voles in their place. Reason: the story says

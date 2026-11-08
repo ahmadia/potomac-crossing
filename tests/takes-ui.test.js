@@ -17,7 +17,11 @@
  * the stacks that make it so.) The kit's second pass (section 10, step 3) adds the Hollow's shelf, its ‹, a Count the store
  * round on the take page and its reward, the frost treasures' drawings, the grown-ups' table and PC.debug.takes' shelf and
  * store, with phase 2's three fixes (Read to me's order on a 'tap' or 'show' first column, a 'tap' turn saying its top, the
- * phone held sideways's panel on the screen). */
+ * phone held sideways's panel on the screen). The review's (2026-11-07): the 'tap' page's lending column a tap target its
+ * full height (S1), the gold marks at least 16 px (S2), Count the store's reward on a phone held sideways (S3), the volume
+ * kept through One Count at a time (S4), the slash clear of the marks (S5), a late speech `end` never running a step again
+ * nor a page that was left (TR1, TR2: wait, hush and timedWait run here on stand-ins), a 'show' first column's wait (TR3),
+ * the corner's note, cap and line (CN1's page line, CN3, CN5, CN6), and the kit's words the engine's alone (F3). */
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -71,8 +75,8 @@ test('17. the column: left to right, the heads labelled in words ("hundreds, squ
   const html = U.html(v);
   assert.match(html, /^<span class="tsign" aria-hidden="true">−<\/span>/, 'the minus sign U+2212 in its own column');
   assert.equal((html.match(/class="thead"/g) || []).length, 3);
-  assert.match(html, /class="tbox on" role="img" aria-label="ones: 5" aria-current="true" style="grid-column:4">5<\/span>/);
-  assert.match(html, /class="tbox" role="img" aria-label="hundreds" style="grid-column:2"> <\/span>/, 'an empty box keeps its height');
+  assert.match(html, /class="tbox on" data-col="0" role="img" aria-label="ones: 5" aria-current="true" style="grid-column:4">5<\/span>/);
+  assert.match(html, /class="tbox" data-col="2" role="img" aria-label="hundreds" style="grid-column:2"> <\/span>/, 'an empty box keeps its height');
   assert.match(html, /<span class="trule" aria-hidden="true"><\/span>$/);
   // a two-digit bottom under a three-digit top: no bottom digit in the hundreds
   const p2 = plan(815, 69), v2 = U.view(p2, { marks: E.takeMarks(p2, 'hers', {}, 0, 0) });
@@ -288,9 +292,14 @@ test('17. the keypad stays put, in the page: the stack\'s min-height set on the 
   const page = fnSrc(UI_SRC, 'runTakes');
   assert.ok(page.includes("      takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt }).forEach(function (L) {"));
   assert.ok(page.includes("      if (max) stack.style.minHeight = max + 'px';"));
+  // each candidate's height to the next whole pixel, never offsetHeight's rounding: a stack 0.11 px over its held height
+  // moved the keypad a pixel between two columns (take:q and take:echo at 1024 x 768, Aa on, the sweep's keypad-moved)
+  assert.ok(page.includes("      var tall = function () { return Math.ceil(stack.getBoundingClientRect().height - 0.01); };\n      var was = stack.innerHTML, max = tall();"));
+  assert.ok(page.includes('        max = Math.max(max, tall());'));
+  assert.ok(!page.slice(page.indexOf('    function reserve() {'), page.indexOf('    function echoInfo(')).includes('stack.offsetHeight'), 'no offsetHeight in reserve()');
   assert.ok(page.includes("      stack.innerHTML = '';\n      reserve();\n      outline(true);\n      fit();\n      bringPad();"), 'measured on the first column, then the fallbacks, then the keypad into view');
   assert.ok(page.includes("      phase = 'end'; echoLines = []; on = -1; glowCol = -1;\n      stack.style.minHeight = '';"), 'released at the problem\'s end');
-  assert.ok(HTML.includes('grid-template-rows:var(--th) .54em 1em 1em 10px auto'), 'every row of the column reserved from the start');
+  assert.ok(HTML.includes('grid-template-rows:var(--th) max(.54em,17px) 1em 1em 10px auto'), 'every row of the column reserved from the start (the marks\' at least 17px)');
   assert.ok(HTML.includes('.frame[data-mode="take"] .col{align-self:start}'));
   assert.ok(HTML.includes('html:has(.frame[data-mode="take"]){overflow-anchor:none}'), 'a scrolled page keeps its scroll when the stack changes');
 });
@@ -323,7 +332,7 @@ test('17. the \'tap\' page: the keypad dim, the tap target the glowing zone (the
   assert.ok(page.includes("'<button class=\"sr\" id=\"tspread\" type=\"button\" hidden></button></div>'"));
   assert.ok(page.includes('      spreadBtn.textContent = takeSpreadLabel(cur.glow); spreadBtn.hidden = false;'));
   assert.ok(page.includes("      var rs = art.querySelectorAll('.pc-zone');"), 'the art\'s zones, hit by x alone: the panel\'s full height');
-  assert.ok(page.includes("      tapZone(d && +d.getAttribute('data-col') === TAKE_ZONES.indexOf(tapWant) ? tapWant : 'off');"));
+  assert.ok(page.includes("      var w = TAKE_ZONES.indexOf(tapWant), wb = tcol.querySelector('.tbox[data-col=\"' + w + '\"]'), r = wb && wb.getBoundingClientRect();\n      tapZone(r && e.clientX >= r.left - 6 && e.clientX <= r.right + 6 ? tapWant : 'off');"), 'the lending column, its full height, by x against its box');
   assert.ok(page.includes("      if (phase === 'tap') { if (k !== 'del') wiggle(); return; }   // a digit before the spread types nothing"));
   assert.ok(page.includes("      else if (e.key === ' ') { if (phase === 'tap') { e.preventDefault(); tapZone(tapWant); }"));
   assert.ok(HTML.includes('.frame[data-mode="take"] .keypad.dim .key{opacity:.45}'));
@@ -333,6 +342,135 @@ test('17. the \'tap\' page: the keypad dim, the tap target the glowing zone (the
   assert.equal(T.tap(st, true).say, false);
   assert.deepEqual(T.digit(st, def, 3, 0, 5000), { ignored: 'tap' });
   assert.deepEqual(E.takeShow(def, plan(43, 16), 0, { mode: 'tap' }).here, { tens: 'The rows: up here.' });
+});
+
+// the page's handler for a click on the column, taken from runTakes' source and run on a stand-in column (screens S1)
+function tcolClick(phase, tapWant, boxes) {
+  const page = fnSrc(UI_SRC, 'runTakes'), i = page.indexOf("    tcol.addEventListener('click', function (e) {");
+  assert.ok(i > 0);
+  const src = page.slice(i, page.indexOf('\n    });\n', i) + 8);
+  const got = [], adv = [];
+  let h = null;
+  const tcol = { addEventListener: (t, f) => { h = f; }, querySelector: (sel) => { const m = /^\.tbox\[data-col="(\d)"\]$/.exec(sel); return m && boxes[m[1]] ? { getBoundingClientRect: () => boxes[m[1]] } : null; } };
+  new Function('tcol', 'phase', 'tapWant', 'TAKE_ZONES', 'tapZone', 'advance', src)(tcol, phase, tapWant, U.ZONES, (z) => got.push(z), () => adv.push(1));
+  return { click: (x) => { h({ clientX: x, clientY: 0, target: {} }); return got[got.length - 1]; }, got, adv };
+}
+
+test('17. the \'tap\' page\'s column (screens S1): the lending column is the tap target its full height, by x against its box 6 px either side; the lending digit alone was 15 x 24 px at 844 x 390, and a tap a little below or beside it said "The rows: up here."', () => {
+  // 43 − 16 at 844 x 390, as WebKit measured it: the ones' box (0) and the tens' (1); the lending 4 is 189.2 to 203.7
+  const boxes = { 0: { left: 216.9, right: 250.9, top: 153.4, bottom: 187.3 }, 1: { left: 179.4, right: 213.5, top: 153.4, bottom: 187.3 } };
+  const C = tcolClick('tap', 'tens', boxes);
+  assert.equal(C.click(196), 'tens', 'on the 4 itself, or under it on the 1 of 16 or its box');
+  assert.equal(C.click(207.7), 'tens', '4 px right of the 4 (said "up here" before)');
+  assert.equal(C.click(173.4), 'tens', '6 px left of the box');
+  assert.equal(C.click(219.5), 'tens', '6 px right of it (into the gap: only one thing can be tapped now)');
+  assert.equal(C.click(173), 'off', 'past the 6 px: the sign\'s side');
+  assert.equal(C.click(234), 'off', 'the ones');
+  // a square to spread (the hundreds lend): its own column, nobody else's
+  const H = tcolClick('tap', 'hundreds', { 0: boxes[0], 1: boxes[1], 2: { left: 141.9, right: 176 } });
+  assert.equal(H.click(159), 'hundreds');
+  assert.equal(H.click(196), 'off', 'the tens are not the lending column here');
+  // outside the 'tap' phase a tap on the column moves a step on (a show, an echo), never during a help, and taps nothing
+  const S = tcolClick('show', null, boxes);
+  S.click(196);
+  assert.deepEqual([S.got.length, S.adv.length], [0, 1]);
+  const Hp = tcolClick('help', null, boxes);
+  Hp.click(196);
+  assert.deepEqual([Hp.got.length, Hp.adv.length], [0, 0]);
+  // and every box carries its column (takeHtml), so the page can find the lending one
+  const q = T.question(T.start(Object.assign({}, DEF, { facts: [{ a: 43, b: 16, regroup: 'tap' }] }), { now: 1 }));
+  const html = U.html(U.view(q.plan, { marks: q.marks, on: 0 }));
+  assert.deepEqual((html.match(/class="tbox[^"]*" data-col="(\d)"/g) || []).map((m) => m.slice(-2, -1)), ['1', '0']);
+});
+
+// the page's waits, taken from runTakes' source (wait, hush, timedWait) and run on stand-ins: timers on a clock of the
+// test's own (`tick(ms)` runs those due), the speech's `end` hooks handed back, Read to me on (take-page-runtime TR1, TR2)
+function takeWaitsHarness(readAloud) {
+  const page = fnSrc(UI_SRC, 'runTakes');
+  const line = (start) => { const i = page.indexOf(start); assert.ok(i > 0, start); return page.slice(i, page.indexOf('\n', i)); };
+  const i = page.indexOf('    function timedWait('), block = page.slice(i, page.indexOf('\n    }\n', i) + 6);
+  const src = [line('    function wait(fn, ms)'), line('    var waitGen = 0;'), line('    function hush()'), block].join('\n') +
+    '\nreturn { wait: wait, hush: hush, timedWait: timedWait };';
+  const timers = [], ends = [], said = [];
+  let t = 0;
+  const env = {
+    later: (fn, ms) => { timers.push({ fn, ms, at: t + ms }); }, clearTimers: () => { timers.length = 0; }, stopSpeech: () => { said.push('stop'); },
+    speakItems: (items, onDone) => { said.push(items.map((x) => x.text).join(' ')); if (onDone) ends.push(onDone); },
+    save: { settings: { readAloud: readAloud !== false } }, root: { speechSynthesis: {} }, frameEl: { isConnected: true }, frozen: false, quick: false, takeWaits: U.waits
+  };
+  const f = new Function(...Object.keys(env), src)(...Object.values(env));
+  const tick = (ms) => {
+    t += ms;
+    for (let due; (due = timers.filter((x) => x.at <= t).sort((a, b) => a.at - b.at)[0]);) { timers.splice(timers.indexOf(due), 1); due.fn(); }
+  };
+  return Object.assign(f, { env, timers, ends, said, tick });
+}
+
+test('17. a speech `end` that comes after a step has moved on never runs the step again (take-page-runtime TR1): a tap withdraws every wait begun before it, and a new step\'s wait withdraws the last one\'s', () => {
+  const H = takeWaitsHarness(true), ran = [];
+  H.timedWait([{ text: 'Take two.' }], 'step', () => ran.push('a'));
+  assert.equal(H.ends.length, 1);
+  H.hush();                 // a tap on the sand: the timers cleared, the speech stopped...
+  H.ends[0]();              // ...and the stopped utterance still says `end` (cancel() does, or it was late)
+  H.tick(300);
+  assert.deepEqual(ran, [], 'one tap moves one step: the stale end runs nothing');
+  // the step the tap went to: its own end runs it once
+  H.timedWait([{ text: 'Take three.' }], 'step', () => ran.push('b'));
+  H.ends[1](); H.tick(300);
+  assert.deepEqual(ran, ['b']);
+  H.ends[1](); H.tick(300);
+  assert.deepEqual(ran, ['b'], 'and only once');
+  // a step's wait begun after another's (no tap between): the older end runs nothing
+  H.timedWait([{ text: 'Seven loose.' }], 'step', () => ran.push('c'));
+  H.timedWait([{ text: 'Got it!' }], 'step', () => ran.push('d'));
+  H.ends[2](); H.tick(300);
+  assert.deepEqual(ran, ['b']);
+  H.ends[3](); H.tick(300);
+  assert.deepEqual(ran, ['b', 'd']);
+  // Read to me off: the line's reading time, and a tap's hush withdraws it too
+  const O = takeWaitsHarness(false), r2 = [];
+  O.timedWait([{ text: 'Take two.' }], 'step', () => r2.push(1));
+  assert.deepEqual(O.timers.map((t) => t.ms), [U.waits('Take two.', 'step').read]);
+  O.tick(U.waits('Take two.', 'step').read);
+  assert.deepEqual(r2, [1]);
+  // the page: every tap that moves it on hushes (a show's first column and its steps, the echo, a help's step, the end line)
+  const page = fnSrc(UI_SRC, 'runTakes');
+  ["        advance = function () { hush(); playShow(); };", "        advance = function () { landNow(); hush(); step(j + 1); };", "      advance = function () { hush(); next(); };",
+    "        advance = function () { if (now() - startedAt < TAKE_MS.tapGuard || at >= steps.length - 1) return; hush(); step(at + 1); };", "      advance = function () { hush(); goOn(); };"]
+    .forEach((l) => assert.ok(page.includes(l), l));
+  assert.equal((page.match(/clearTimers\(\); stopSpeech\(\);/g) || []).length, 1, 'only inside hush()');
+});
+
+test('17. after Camp or ‹ the take page that was left does nothing more (take-page-runtime TR2): no step, no line, no done page and no store reward over the next screen', () => {
+  const H = takeWaitsHarness(true), ran = [];
+  H.timedWait([{ text: 'One like it.' }], 'end', () => ran.push('next problem'));
+  H.env.frameEl.isConnected = false;    // go(): the screen redrawn, its timers cleared, its speech stopped
+  H.timers.length = 0;
+  H.ends[0](); H.tick(400);                // the end of the line that was cut off
+  assert.deepEqual(ran, []);
+  H.wait(() => ran.push('a wait'), 100); H.tick(100);
+  assert.deepEqual(ran, [], 'no wait of a page that is gone runs');
+  const page = fnSrc(UI_SRC, 'runTakes');
+  assert.ok(page.includes("    function wait(fn, ms) { return later(function () { if (!frozen && frameEl.isConnected) fn(); }, quick ? 0 : ms); }"));
+  assert.ok(page.includes("    function finish() {\n      if (!frameEl.isConnected) return;"), 'the done page and the store\'s reward only from the page on screen');
+  assert.ok(page.includes("    var frameEl = scr.querySelector('.frame');"), 'frameEl is the take page\'s own frame');
+});
+
+test('17. Read to me off, a \'show\' problem\'s first column waits for what is lettered, not for the question in words that is only said (take-page-runtime TR3): "Ones first." 1.6 s, not 4.4 s', () => {
+  const st = T.start(Object.assign({}, DEF, { facts: [{ a: 503, b: 278, regroup: 'show' }] }), { now: 1 }), q = T.question(st), F = U.first(DEF, q);
+  const words = (L) => L.map((l) => l.text).join(' ');
+  assert.deepEqual(F.lines.map((l) => l.text), ['Ones first.']);
+  assert.equal(U.waits(words(F.lines), 'step').read, 1600);
+  assert.equal(U.waits(words(F.heard), 'step').read, 4400, 'what the old wait counted: the question in words too');
+  const page = fnSrc(UI_SRC, 'runTakes');
+  assert.ok(page.includes("        return timedWait(save.settings.readAloud || !(q.col === 0 && fresh) ? said : heard(lines), 'step', playShow);"), 'only the first column; Read to me on, what is said');
+});
+
+test('the kit\'s words are the engine\'s only (integration F3, decision 53): PC.ui.takes.words is E.TAKE_WORDS, read at call time; no second English copy in ui.js', () => {
+  assert.deepEqual(U.words(), E.TAKE_WORDS);
+  withWords({ rows: 'filas' }, () => assert.equal(U.words().rows, E.TAKE_WORDS.rows));
+  assert.ok(!UI_SRC.includes('TAKE_EN'));
+  assert.ok(UI_SRC.includes('  function takeWordsNow() { return PC.engine.TAKE_WORDS; }'));
 });
 
 test('17. "Got it!" at the top of the keypad\'s place; the keypad and "Got it!" brought into view; the slot kept after every column and the lesson recorded at its last answer; nothing saved by PC.debug.takes', () => {
@@ -352,6 +490,8 @@ test('17. "Got it!" at the top of the keypad\'s place; the keypad and "Got it!" 
   assert.ok(dbg.includes("if (what === 'shelf') { go('hollow', { from: 'hub', stories: list }); return $('storeBtn') ? true : 'takes: no shelf drawn (a round in the slot?)'; }"));
   assert.ok(dbg.includes("var r = E.takeRoundStart(cat, stories(), now(), { stories: list });") && dbg.includes('storeLesson(r.state, false, null, true);'), 'the store round in debug mode: nothing saved');
   assert.ok(!dbg.includes('persist()'), 'PC.debug.takes never saves');
+  assert.ok(!dbg.includes('typeof E.hollowShelf'), 'no check for a function of the same build (integration F2)');
+  assert.ok(UI_SRC.includes("  function storeSays(n) { return 'In the store: ' + E.numberWords(n) + '.'; }"));
   assert.ok(fnSrc(UI_SRC, 'storeLesson').includes("mode: debug ? 'debug' : 'hollow'"));
   // a chapter's take set runs on the take page, with the lesson's options and its end
   const scl = fnSrc(UI_SRC, 'startChapterLesson');
@@ -368,7 +508,7 @@ test('nothing a player can reach changes: runLesson, the keypad and go() as in v
   // (book two's block, docs/take-aways.md section 7, follows the take block before </style>: tests/book2-ui.test.js has it)
   const two = HTML.indexOf('/* ---------- book two ('), block = HTML.slice(start, two > start ? two : end);
   assert.equal(sha(HTML.slice(0, start) + HTML.slice(end)), 'ed069d652c0b7bea405c26063a7d39cf9459a2a7ac07c01bc22c172fba23a028', 'v23\'s index.html');
-  const own = /^(\.frame\[data-mode="take"\]|html:has\(\.frame\[data-mode="take"\]\)|\.tcol|\.thead|\.tmark|\.tdig|\.ttop|\.tbot|\.tsign|\.trule|\.tbox|\.tstruck|\.tshelf|(html\.big )?\.frame\[data-mode="shelf"\])/;
+  const own = /^(\.frame\[data-mode="take"\]|html:has\(\.frame\[data-mode="take"\]\)|\.tcol|\.thead|\.tmark|\.tdig|\.ttop|\.tbot|\.tsign|\.trule|\.tbox|\.tstruck|\.tshelf|(html\.big )?\.frame\[data-mode="shelf"\]|\.frame\[data-mode="store-reward"\])/;
   const sels = [];
   block.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes [a-z]+\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '').replace(/@media[^{]*\{/g, '').split('}').forEach((r) => {
     const sel = r.split('{')[0].trim();
@@ -391,8 +531,8 @@ test('17. the take block\'s CSS: the digits\' size, the boxes\' colours, the gol
     '.tbox.right{background:#c9f2c0}',
     '.tbox.miss{background:var(--caption)}',
     '.tbox.blank{background:transparent;border-style:dotted;border-color:var(--cream);box-shadow:none}',
-    '.tmark{grid-row:2;justify-self:center;align-self:end;font-size:.5em;color:var(--gold);text-shadow:2px 2px 0 var(--ink)}',
-    '.tstruck::after{content:"";position:absolute;left:50%;top:-.04em;height:1.08em;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 1.5px var(--cream);transform:rotate(32deg)}',
+    '.tmark{grid-row:2;justify-self:center;align-self:end;font-size:max(.5em,16px);color:var(--gold);text-shadow:2px 2px 0 var(--ink)}',
+    '.tstruck::after{content:"";position:absolute;left:50%;top:.02em;height:1.08em;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 1.5px var(--cream);transform:rotate(32deg)}',
     'background:#e8cf98;border:2px solid var(--ink)',
     '.frame[data-mode="take"].tnohead .tcol{--th:0px}',
     '.frame[data-mode="take"].tkeys .key{min-height:56px}',
@@ -538,7 +678,7 @@ test('the Hollow\'s shelf: a branch before `var HW` at its indentation, only wit
   assert.ok(rh.includes("    if (opts && opts.counts) hollowSub = 'counts';"), 'opts.counts: only the shelf\'s button sets it');
   assert.equal((UI_SRC.match(/counts: true/g) || []).length, 1, 'One Count at a time is the one way to it');
   const sh = fnSrc(UI_SRC, 'renderShelf');
-  assert.ok(sh.includes("$('countsBtn').addEventListener('click', function () { go('hollow', { counts: true, from: view.opts.from, stories: opts.stories }); });"));
+  assert.ok(sh.includes("$('countsBtn').addEventListener('click', function () { go('hollow', { counts: true, from: view.opts.from, vol: view.opts.vol, stories: opts.stories }); });"), 'the volume she came from kept (Read my book on First Moon, the Hollow, One Count at a time, ‹, ‹: First Moon)');
   assert.ok(sh.includes("      var r = E.takeRoundStart(cat, stories(), now(), { stories: opts.stories });\n      E.holdLesson(cat);"));
   assert.ok(sh.includes("say: [{ who: 'tallyheart', text: SH.line }]"), 'the waiting line in the greeting\'s place (E.hollowShelf)');
   assert.ok(sh.includes('<i class="storeicon" aria-hidden="true">'));
@@ -546,7 +686,7 @@ test('the Hollow\'s shelf: a branch before `var HW` at its indentation, only wit
   const ph = HTML.indexOf('@media (orientation: landscape) and (max-height: 500px){\n  .frame[data-mode="shelf"]{grid-template-areas:"top stack" "int stack" "int panel";');
   assert.ok(ph > 0, 'on a phone held sideways the shelf\'s stack over the panel');
   const back = fnSrc(UI_SRC, 'onBack');
-  assert.ok(back.includes("    if (n === 'hollow' && hollowSub === 'counts') return go('hollow', { from: view.opts.from, back: true, stories: view.opts.stories });\n    if (n === 'hollow' || n === 'nest') return go("));
+  assert.ok(back.includes("    if (n === 'hollow' && hollowSub === 'counts') return go('hollow', { from: view.opts.from, vol: view.opts.vol, back: true, stories: view.opts.stories });\n    if (n === 'hollow' || n === 'nest') return go("), 'back to the shelf with its volume, so its own ‹ reaches the book she left');
   assert.equal(sha(fnSrc(UI_SRC, 'go')), '4ea06e5f48bfda23d68d1a0c5726b3038fdcbc13b3c5549fb8494e38ac6d9254', 'no new view');
   // a store round on the take page, the slot kept as a Hollow round's; its reward goes back to the shelf
   const sl = fnSrc(UI_SRC, 'storeLesson');
@@ -555,6 +695,15 @@ test('the Hollow\'s shelf: a branch before `var HW` at its indentation, only wit
   const sr = fnSrc(UI_SRC, 'storeReward');
   assert.ok(sr.includes("$('againBtn').addEventListener('click', function () { go('hollow', { from: 'hub', reward: true }); });"));
   assert.ok(sr.includes("hollowScene('tree', [], ['sparkle'])"), 'the tree insert, no glow');
+  // (screens S3) on a phone held sideways its stack over the panel and the card laid flat: "Another round" on the screen
+  assert.ok(sr.includes("    scr.querySelector('.frame').setAttribute('data-mode', 'store-reward');"), 'its own mode');
+  assert.ok(sr.includes("    var lay = function () { layoutText(ctx); if ($('stack').innerHTML && root.matchMedia && root.matchMedia(TAKE_PHONE).matches) layoutText(ctx); };\n    relayoutFn = lay;\n    lay();"), 'laid out again when its line went to the stack');
+  const rp = HTML.indexOf('@media (orientation: landscape) and (max-height: 500px){\n  .frame[data-mode="store-reward"]{grid-template-areas:"int stack" "int panel";');
+  assert.ok(rp > HTML.indexOf('/* ---------- the take-aways kit: the take page') && rp < HTML.indexOf('/* ---------- book two ('), 'inside the take block');
+  const rb = HTML.slice(rp, HTML.indexOf('\n}', rp));
+  ['.frame[data-mode="store-reward"] .reward{display:grid;grid-template-columns:64px auto;', '.frame[data-mode="store-reward"] .reward svg{grid-row:1 / span 2;width:64px;height:64px}',
+    '.frame[data-mode="store-reward"] .interact{grid-area:int;align-self:center;', 'height:calc(100dvh - var(--bar) - var(--st) - 18px)'].forEach((x) => assert.ok(rb.includes(x), x));
+  assert.ok(!fnSrc(UI_SRC, 'hollowReward').includes('data-mode'), 'module 1\'s reward page as it was');
   assert.ok(sr.includes('treasureSvg(t.id)'));
 });
 
@@ -589,13 +738,32 @@ test('the grown-ups corner: with `takes` data, a "Take-aways" table by kind afte
   c.takes.rounds = 3; c.takes.cleanRounds = 2;
   const K = U.corner(c.takes, E.takeTable(c));
   assert.equal(K.line, 'Count the store 3 (2 without help)');
-  assert.ok(K.html.startsWith('<h4>Take-aways</h4><div class="scroll"><table><thead><tr><th>Kind</th><th>Problems</th><th>Right first time</th><th>Helped</th><th>Typical time</th><th>Commonest slip</th></tr></thead>'));
+  // (corner-numbers CN3) a note on what its columns count, between the heading and the table
+  assert.ok(K.html.startsWith('<h4>Take-aways</h4><p class="muted">“Right first time” is her own first try at a problem with every column right; worked problems, ones where she was told to regroup, and second goes are left out. “Problems” and “Helped” count them all (“helped”: a column slipped and Tallyheart helped). Typical time is of her right answers she regrouped herself.</p>' +
+    '<div class="scroll"><table><thead><tr><th>Kind</th><th>Problems</th><th>Right first time</th><th>Helped</th><th>Typical time</th><th>Commonest slip</th></tr></thead>'), K.html);
+  assert.match(K.html, /<td>\d+&nbsp;of&nbsp;\d+<\/td>/, 'a ratio never breaks inside (a phone wrapped "36 of" from its "40")');
   assert.ok(K.html.includes('<td>Regroup a ten</td>') && K.html.includes('<td>a fact slipped</td>'), K.html);
   assert.ok(K.html.includes('<td>Across a zero</td>') && K.html.includes('<td>No regrouping</td>'));
-  assert.ok(K.html.includes('<p class="muted">Teen facts missed: 13 − 6 ×1</p>'), K.html);
+  assert.ok(K.html.includes('<p class="muted">Teen facts missed: 13 − 6 ×1</p>'), K.html);
+  assert.equal(E.takeTable(c).teen[0].text, '13 − 6 ×1', 'the spaces made fast by the page, not in the engine\'s text');
+  // (corner-numbers CN1's page line) no first ask of her own in a row: a dash, never "0 of 0"
+  const none = U.corner(c.takes, { rows: [{ kind: 'ones', problems: 2, firstAsks: 0, rightFirst: 0, helped: 0, ms: null, slip: null }], teen: [] });
+  assert.ok(none.html.includes('<td>Regroup a ten</td><td>2</td><td>–</td><td>0</td>'), none.html);
+  // (corner-numbers CN6) at the log's cap the table is her last E.TAKE_LOG_CAP, and its heading says so; the line counts every round
+  assert.equal(E.takeTable(c).capped, false);
+  assert.ok(!K.html.includes('her last'));
+  const full = E.blankCat({ now: 1 }), e0 = c.takes.log[0];
+  for (let i = 0; i < E.TAKE_LOG_CAP; i++) E.logTake(full, Object.assign({}, e0, { at: 100 + i }));
+  full.takes.rounds = 440; full.takes.cleanRounds = 150;
+  const KF = U.corner(full.takes, E.takeTable(full));
+  assert.ok(KF.html.startsWith('<h4>Take-aways <span class="muted">(her last ' + E.TAKE_LOG_CAP + ')</span></h4><p class="muted">'), KF.html.slice(0, 120));
+  assert.equal(KF.line, 'Count the store 440 (150 without help)');
   assert.equal(U.corner({ log: [], rounds: 0, cleanRounds: 0 }, { rows: [], teen: [] }).html, '<h4>Take-aways</h4><p class="muted">No take-aways yet.</p>');
   // the page: only for a cat with `takes`, after the Counts' tables, on the Training Hollow's line
   const og = fnSrc(UI_SRC, 'openGrownups');
-  assert.ok(og.includes("      var TC = c.takes && typeof E.takeTable === 'function' ? takeCorner(c.takes, E.takeTable(c), fmtMs) : null;\n      if (TC) hollowTxt += '; ' + TC.line;"));
+  assert.ok(og.includes("      var TC = c.takes ? takeCorner(c.takes, E.takeTable(c), fmtMs) : null;\n      if (TC) hollowTxt += '; ' + TC.line;"), 'no check for a function of the same build (integration F2)');
+  // (corner-numbers CN5) the module-1 part led by its name: "One Count at a time 2 rounds: the 1s 2 (…); Count the store 20 (…)"
+  assert.ok(og.includes("      if (TC) hollowTxt += '; ' + TC.line;\n      if (TC) hollowTxt = 'One Count at a time ' + hollowTxt;"));
+  assert.ok(og.indexOf("var hollowTxt = c.hollow.rounds + ' round'") < og.indexOf("hollowTxt = 'One Count at a time '"));
   assert.ok(og.indexOf("'<p class=\"muted\">No answers yet.</p>') +\n        (TC ? TC.html : '') +") > og.indexOf('E.factTables(c, stories())'));
 });

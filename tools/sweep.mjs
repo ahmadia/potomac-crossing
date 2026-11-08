@@ -47,8 +47,6 @@
  *                       would let a page that pushed its column or its line under the bar pass
  *   keypad-moved        on a take page, the keypad's box not the same at a column and the next (`@next`: the right
  *                       digit typed on the page's own keypad), so a finger could land on the wrong key
- * A take screen the engine cannot show yet (the Hollow's shelf and Count the store, before the kit's second pass) is
- * listed under `skipped`, not as a problem.
  * The screens that scroll by design (the hub, the book, My nest, her Case File, the grown-ups corner; chapter 1's
  * look chooser, f011) list their off-screen controls under `scrolls`, not as problems.
  */
@@ -253,7 +251,6 @@ function rowsOf(pages) {
     const d = JSON.parse(readFileSync(join(pages, f), 'utf8')), size = d.size.join('x'), aa = d.big ? 'on' : 'off';
     for (const j of d.jobs) {
       for (const n of j.notes) out.push({ size, aa, job: j.name, note: n });
-      for (const k of j.skipped || []) out.push({ size, aa, job: j.name, skip: k });
       for (const r of j.rows || j.ms || []) out.push({ size, aa, job: j.name, row: r });
     }
   }
@@ -286,14 +283,13 @@ export function keypadMoved(before, after) {
   return 'the keypad moved from ' + before.kp[1] + '-' + before.kp[3] + ' (x ' + before.kp[0] + '-' + before.kp[2] + ') to ' + after.kp[1] + '-' + after.kp[3] + ' (x ' + after.kp[0] + '-' + after.kp[2] + ') between one column and the next';
 }
 export function summarize(pages, sizes = SIZES) {
-  const problems = [], scrolls = [], skipped = [], counts = {};
+  const problems = [], scrolls = [], counts = {};
   const add = (kind, size, aa, at, detail) => { problems.push({ kind, size, aa, at, detail }); counts[kind] = (counts[kind] || 0) + 1; };
   let measured = 0;
   const all = rowsOf(pages), seen = new Map();
   for (const x of all) if (x.row && x.row.t) seen.set(x.size + ' ' + x.aa + ' ' + x.row.t, x.row);
   for (const x of all) {
     if (x.note) { add('page-error', x.size, x.aa, x.job, x.note); continue; }
-    if (x.skip) { skipped.push({ size: x.size, aa: x.aa, why: x.skip }); continue; }
     const r = x.row, at = r.t, base = String(at).replace(/@.*$/, '');
     measured++;
     if (r.err) { add('page-error', x.size, x.aa, at, r.err); continue; }
@@ -309,11 +305,10 @@ export function summarize(pages, sizes = SIZES) {
     for (const c of colOff(r)) add('col-off', x.size, x.aa, at, c);
     if (/@next$/.test(at)) { const kp = keypadMoved(seen.get(x.size + ' ' + x.aa + ' ' + base), r); if (kp) add('keypad-moved', x.size, x.aa, base, kp); }
   }
-  return { measured, sizes, counts, problems, scrolls, skipped };
+  return { measured, sizes, counts, problems, scrolls };
 }
 function summaryMd(s, dir, title) {
   const md = ['# ' + (title || 'The pages, measured') + ' (' + dir + ')', '', s.measured + ' pages measured at ' + s.sizes.join(', ') + ', Aa off and on. Problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, n]) => k + ' ' + n).join(', ') : 'none') + '.', ''];
-  if (s.skipped && s.skipped.length) md.push('Skipped (not built yet, so not problems): ' + [...new Set(s.skipped.map((k) => k.why))].join('; ') + '.', '');
   const by = {};
   for (const p of s.problems) (by[p.kind] = by[p.kind] || []).push(p);
   for (const [k, list] of Object.entries(by)) {
@@ -398,7 +393,7 @@ async function ensure(root, want, { force, waitMin, log }) {
     }
     if (n.takes) {
       const s = await buildPages(root, dir, S, log, TAKES_RUN);
-      log('takes: ' + s.measured + ' measured at ' + TAKE_SIZES.join(', ') + '; problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, v]) => k + ' ' + v).join(', ') : 'none') + (s.skipped.length ? '; skipped ' + s.skipped.length : '') + ' (takes/summary.md)');
+      log('takes: ' + s.measured + ' measured at ' + TAKE_SIZES.join(', ') + '; problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, v]) => k + ' ' + v).join(', ') : 'none') + ' (takes/summary.md)');
     }
     log('built in ' + Math.round((Date.now() - t1) / 1000) + ' s');
     // the tree must not have changed under the sweep, or the cache would lie about it

@@ -949,13 +949,13 @@ html.big .frame .next-row > .btn.back + .tapline{flex:1 1 0;min-width:0;line-hei
 .frame[data-mode="take"] .gotit{align-items:flex-start}
 .frame[data-mode="take"] .keypad.dim .key{opacity:.45}
 .frame[data-mode="take"] .counts{gap:8px}
-.tcol{--tn:3;--th:.6em;display:grid;grid-template-columns:auto repeat(var(--tn), 1.42em);grid-template-rows:var(--th) .54em 1em 1em 10px auto;column-gap:.14em;justify-content:center;align-items:center;
+.tcol{--tn:3;--th:.6em;display:grid;grid-template-columns:auto repeat(var(--tn), 1.42em);grid-template-rows:var(--th) max(.54em,17px) 1em 1em 10px auto;column-gap:.14em;justify-content:center;align-items:center;
   font-family:var(--digits);font-weight:700;font-size:clamp(24px, min(8cqi, 4.6vh), 44px);line-height:1;color:var(--cream);text-shadow:3px 3px 0 var(--ink);font-variant-numeric:tabular-nums;margin:0}
 .thead{grid-row:1;justify-self:center;display:grid;place-items:center;width:1em;height:calc(var(--th) - .06em);border-radius:.14em;background:#e8cf98;border:2px solid var(--ink);box-shadow:2px 2px 0 rgba(0,0,0,.35)}
 .thead svg{width:.4em;height:.4em;display:block}
 .thead svg path[stroke="#9c7440"]{stroke-width:9px}
 .thead svg path[stroke="#fbecc8"]{display:none}
-.tmark{grid-row:2;justify-self:center;align-self:end;font-size:.5em;color:var(--gold);text-shadow:2px 2px 0 var(--ink)}
+.tmark{grid-row:2;justify-self:center;align-self:end;font-size:max(.5em,16px);color:var(--gold);text-shadow:2px 2px 0 var(--ink)}
 .tdig{justify-self:center;position:relative}
 .ttop{grid-row:3}
 .tbot{grid-row:4}
@@ -968,8 +968,10 @@ html.big .frame .next-row > .btn.back + .tapline{flex:1 1 0;min-width:0;line-hei
 .tbox.blank{background:transparent;border-style:dotted;border-color:var(--cream);box-shadow:none}
 .tbox.pulse{animation:tpulse .45s ease-in-out 4 alternate}
 @keyframes tpulse{to{transform:scale(1.12);box-shadow:0 0 0 6px var(--gold), 5px 5px 0 2px rgba(0,0,0,.5)}}
-/* a top digit struck through once it has spread: a slash, never a line through (which would read as a minus) */
-.tstruck::after{content:"";position:absolute;left:50%;top:-.04em;height:1.08em;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 1.5px var(--cream);transform:rotate(32deg)}
+/* a top digit struck through once it has spread: a slash, never a line through (which would read as a minus), centred on
+   the digit's ink (its top end clear of the gold mark over it), and longer than the digit, so a struck 0 never reads as a
+   slashed zero */
+.tstruck::after{content:"";position:absolute;left:50%;top:.02em;height:1.08em;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 1.5px var(--cream);transform:rotate(32deg)}
 .tmark.tglow,.ttop.tglow{text-shadow:0 0 .3em var(--gold), 0 0 .12em var(--gold), 2px 2px 0 var(--ink)}
 .frame[data-mode="take"] .panel.twiggle .pc-pv-glow{animation:twiggle .5s ease-in-out;transform-box:fill-box;transform-origin:50% 50%}
 @keyframes twiggle{20%{transform:rotate(-2deg)}40%{transform:rotate(2deg)}60%{transform:rotate(-1.5deg)}80%{transform:rotate(1deg)}}
@@ -1028,6 +1030,21 @@ html:has(.frame[data-mode="take"]){overflow-anchor:none}
   .frame[data-mode="shelf"] .tshelf .btn.big{min-height:46px;padding:.04em .3em;gap:.3em;line-height:1.05}
   .frame[data-mode="shelf"] .tshelf .storeicon{width:1.8em;height:.8em}
   .frame[data-mode="shelf"] #shelfNest{min-height:46px;padding-top:.04em;padding-bottom:.04em}
+}
+/* Count the store's reward (ui.js storeReward), on a phone held sideways: the stack over the panel, as the shelf's, and the
+   treasure's card laid flat (its drawing 64px beside its name and "for your nest"), so "Another round" is on the screen,
+   Aa on or off (it was 386 to 450 under a 390 screen). Module 1's reward page (hollowReward) is left as it is */
+@media (orientation: landscape) and (max-height: 500px){
+  .frame[data-mode="store-reward"]{grid-template-areas:"int stack" "int panel";grid-template-rows:auto minmax(96px,1fr);align-items:stretch;row-gap:8px;min-height:0;height:calc(100dvh - var(--bar) - var(--st) - 18px)}
+  .frame[data-mode="store-reward"] .col{display:contents}
+  .frame[data-mode="store-reward"] .stack{grid-area:stack;min-width:0}
+  .frame[data-mode="store-reward"] .interact{grid-area:int;align-self:center;min-width:0;gap:6px}
+  .frame[data-mode="store-reward"] .panel-side{grid-area:panel;position:static;min-height:0;height:100%}
+  .frame[data-mode="store-reward"] .panel{width:100%;height:100%;aspect-ratio:auto}
+  .frame[data-mode="store-reward"] .reward{display:grid;grid-template-columns:64px auto;column-gap:12px;row-gap:2px;align-items:center;justify-content:center;text-align:left;padding:8px 14px}
+  .frame[data-mode="store-reward"] .reward svg{grid-row:1 / span 2;width:64px;height:64px}
+  .frame[data-mode="store-reward"] .reward b{align-self:end}
+  .frame[data-mode="store-reward"] .reward span{align-self:start}
 }
 /* ---------- book two (docs/take-aways.md v0.3, section 7; app/ui.js renderBook): Read my book's two volumes, the store under a
    chapter's page, the winter sleepers (the dragonets' classes), the badger page and the keepsake. Nothing here is drawn for a

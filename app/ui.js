@@ -1036,14 +1036,9 @@
   // has been said and 0.4 s (a step 0.3 s) more, at most twice the reading time; a tap on the sand counts after 350 ms
   var TAKE_MS = { outline: 900, miss: 650, ok: 400, hop: 775, slide: 600, open: 400, tapGuard: 350, endMin: 1800, stepMin: 1600,
     endSaid: 400, stepSaid: 300, word: 380, base: 600, quiet: 1000 };
-  var TAKE_EN = { loose: 'loose', row: 'row', rows: 'rows', Row: 'Row', square: 'square', squares: 'squares', ones: 'ones', tens: 'tens',
-    hundreds: 'hundreds', takeAway: 'take away', TakeAway: 'Take away', spread: 'spread', Spread: 'Spread', OnesFirst: 'Ones first' };
-  // the kit's words as the engine reads them now (E.TAKE_WORDS, a getter over PC.words), else English
-  function takeWordsNow() {
-    var w = null;
-    try { w = PC.engine && PC.engine.TAKE_WORDS; } catch (e) { w = null; }
-    return w && typeof w === 'object' ? w : TAKE_EN;
-  }
+  // the kit's words as the engine reads them now (E.TAKE_WORDS, a getter over PC.words): one place for the class words
+  // (decision 53). PC.engine, not E: PC.ui.takes can be called before boot sets E
+  function takeWordsNow() { return PC.engine.TAKE_WORDS; }
   function tEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function tWords(s) { return String(s == null ? '' : s).trim().split(/\s+/).filter(Boolean).length; }
   /* One digit a box: a new digit replaces the one there (no Delete hunt), Delete empties it. OK is the caller's. */
@@ -1098,7 +1093,7 @@
         '<span class="tmark' + (c.glow ? ' tglow' : '') + '" aria-hidden="true"' + gc + '>' + tEsc(c.mark) + '</span>' +
         '<span class="tdig ttop' + (c.struck ? ' tstruck' : '') + (c.glow ? ' tglow' : '') + '" data-col="' + c.col + '" aria-hidden="true"' + gc + '>' + tEsc(c.top) + '</span>' +
         '<span class="tdig tbot" aria-hidden="true"' + gc + '>' + tEsc(c.bottom) + '</span>' +
-        '<span class="tbox' + (c.boxCls ? ' ' + c.boxCls : '') + '" role="img" aria-label="' + tEsc(c.boxLabel) + '"' + (c.current ? ' aria-current="true"' : '') + gc + '>' +
+        '<span class="tbox' + (c.boxCls ? ' ' + c.boxCls : '') + '" data-col="' + c.col + '" role="img" aria-label="' + tEsc(c.boxLabel) + '"' + (c.current ? ' aria-current="true"' : '') + gc + '>' +
         (c.box !== '' ? tEsc(c.box) : ' ') + '</span>';
     });
     return s + '<span class="trule" aria-hidden="true"></span>';
@@ -1235,24 +1230,30 @@
   }
   /* The grown-ups corner's take-aways (section 8, openGrownups): `takes` the cat's (null: nothing at all, for a cat who has
    * not met a take-away), `table` E.takeTable's. `line` goes on the Training Hollow's line ("Count the store 3 (2 without
-   * help)"); `html` the table by kind (problems, right first time of first asks, helped, typical time, her commonest slip)
-   * and under it the teen facts her `fact` slips missed ("13 − 8 ×2"), for grown-ups only. `secs` formats a time. */
+   * help)"); `html` the table by kind (problems, right first time of her own first asks, helped, typical time, her
+   * commonest slip) under a note on what its columns count, its heading "(her last 500)" once the log is at its cap
+   * (`table.capped`, `table.cap`: the table reads only the log, the line every round), and under it the teen facts her
+   * `fact` slips missed ("13 − 8 ×2"), for grown-ups only. A ratio and a fact never break inside (a phone wrapped "36 of"
+   * from its "40"). `secs` formats a time. */
   var TAKE_KIND_WORDS = { none: 'No regrouping', ones: 'Regroup a ten', tens: 'Regroup a hundred', both: 'Regroup both',
     zero: 'Across a zero', zeros: 'Across two zeros' };
   var TAKE_SLIP_WORDS = { zero: 'across the zero', flip: 'smaller from bigger', nospread: 'did not regroup', kept: 'kept the ten it gave',
     extra: 'regrouped when not needed', fact: 'a fact slipped' };
+  // (what the columns count: E.takeTable's own-ask rule and its typical time, docs/take-aways.md section 4)
+  var TAKE_CORNER_NOTE = '<p class="muted">“Right first time” is her own first try at a problem with every column right; worked problems, ones where she was told to regroup, and second goes are left out. “Problems” and “Helped” count them all (“helped”: a column slipped and Tallyheart helped). Typical time is of her right answers she regrouped herself.</p>';
   function takeCorner(takes, table, secs) {
     if (!takes || typeof takes !== 'object') return null;
     secs = secs || function (ms) { return ms == null ? '–' : (ms / 1000).toFixed(1) + ' s'; };
     var n = function (v) { return typeof v === 'number' && v >= 0 ? Math.floor(v) : 0; };
     var line = 'Count the store ' + n(takes.rounds) + ' (' + n(takes.cleanRounds) + ' without help)';
     var T0 = table || { rows: [], teen: [] };
-    var html = '<h4>Take-aways</h4>' + (T0.rows.length ? '<div class="scroll"><table><thead><tr><th>Kind</th><th>Problems</th><th>Right first time</th><th>Helped</th><th>Typical time</th><th>Commonest slip</th></tr></thead><tbody>' +
+    var html = '<h4>Take-aways' + (T0.capped ? ' <span class="muted">(her last ' + T0.cap + ')</span>' : '') + '</h4>' + (T0.rows.length ? TAKE_CORNER_NOTE +
+      '<div class="scroll"><table><thead><tr><th>Kind</th><th>Problems</th><th>Right first time</th><th>Helped</th><th>Typical time</th><th>Commonest slip</th></tr></thead><tbody>' +
       T0.rows.map(function (r) {
-        return '<tr><td>' + tEsc(TAKE_KIND_WORDS[r.kind] || r.kind) + '</td><td>' + r.problems + '</td><td>' + r.rightFirst + ' of ' + r.firstAsks + '</td><td>' + r.helped + '</td><td>' +
+        return '<tr><td>' + tEsc(TAKE_KIND_WORDS[r.kind] || r.kind) + '</td><td>' + r.problems + '</td><td>' + (r.firstAsks ? r.rightFirst + '&nbsp;of&nbsp;' + r.firstAsks : '–') + '</td><td>' + r.helped + '</td><td>' +
           tEsc(secs(r.ms)) + '</td><td>' + tEsc(r.slip ? TAKE_SLIP_WORDS[r.slip] || r.slip : '–') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
-      (T0.teen.length ? '<p class="muted">Teen facts missed: ' + tEsc(T0.teen.map(function (t) { return t.text; }).join(', ')) + '</p>' : '') : '<p class="muted">No take-aways yet.</p>');
+      (T0.teen.length ? '<p class="muted">Teen facts missed: ' + tEsc(T0.teen.map(function (t) { return t.text.replace(/ /g, '\u00a0'); }).join(', ')) + '</p>' : '') : '<p class="muted">No take-aways yet.</p>');
     return { line: line, html: html };
   }
   UI.takes = { press: takePress, waits: takeWaits, view: takeView, html: takeHtml, colLine: takeColLine, first: takeFirst,
@@ -1731,7 +1732,7 @@
     if (n === 'book') return view.opts.from === 'end' ? go('frame', { back: true }) : go('hub', { back: true });
     // (book two: the Hollow and My nest, opened from her book, go back to the volume she left)
     // (the take-aways kit: One Count at a time's page, under the Hollow's shelf, goes back to the shelf)
-    if (n === 'hollow' && hollowSub === 'counts') return go('hollow', { from: view.opts.from, back: true, stories: view.opts.stories });
+    if (n === 'hollow' && hollowSub === 'counts') return go('hollow', { from: view.opts.from, vol: view.opts.vol, back: true, stories: view.opts.stories });
     if (n === 'hollow' || n === 'nest') return go(view.opts.from === 'book' ? 'book' : 'hub', view.opts.from === 'book' && view.opts.vol ? { back: true, vol: view.opts.vol } : { back: true });
     if (n === 'hub') return go('who', { back: true });
     // the Warrior Counts: to camp, the sitting kept (E.warriorKeep has it after every answer)
@@ -4020,12 +4021,12 @@
 
   /* ================================================================ the take-aways kit: the take page
    * docs/take-aways.md v0.3, sections 1, 2, 6 and 8 (PC.ui.takes, above, has its words, stacks and waits). One take
-   * set on its own page: a chapter's lesson (startChapterLesson, a set with `op: '-'`) and, from the kit's second
-   * pass, Count the store. The lesson page's shape, kept: the panel (the store picture, PC.art.placeValue; on a miss
+   * set on its own page: a chapter's lesson (startChapterLesson, a set with `op: '-'`) and a Count the store round
+   * (storeLesson). The lesson page's shape, kept: the panel (the store picture, PC.art.placeValue; on a miss
    * the help's sand, PC.art.sand's `quick`), the stack of balloons, the keypad where her fingers know it; the question
    * line's place holds the column, answered one box at a time, ones first, with OK. Within a problem nothing above the
    * keypad changes height (the stack's min-height, the column's reserved rows), so a digit typed fast never lands on
-   * the wrong key. `o`: { def, state, intro, waitLine, mode ('chapter'; 'hollow' in the second pass; 'debug': nothing
+   * the wrong key. `o`: { def, state, intro, waitLine, mode ('chapter'; 'hollow' (a Count the store round); 'debug': nothing
    * is saved, PC.debug.takes), frameId, onDone(summary, recorded), echo (chapter 12's Chispapaw: called with each right
    * column and each right problem, returning a balloon or nothing; absent, the no-op), debug ({ quick, stop }) }.
    * Nothing here runs before chapter 12: no chapter 1 to 11 has a take set. */
@@ -4073,8 +4074,14 @@
     var base = [], baseHeard = [], echoLines = [], advance = null, gotAct = null, tapWant = null, tapShow = null, flying = null;
     relayoutFn = null;
 
-    // the page's own timers: none moves the page on once PC.debug.takes has stopped it for a picture (`quick`: at once)
-    function wait(fn, ms) { return later(function () { if (!frozen) fn(); }, quick ? 0 : ms); }
+    // the page's own timers: none moves the page on once PC.debug.takes has stopped it for a picture (`quick`: at once), nor
+    // once the page is gone (Camp or ‹: a speech `end` that comes after go() never brings a dead page back, as the
+    // Warrior pause's `!scrEl.isConnected`)
+    function wait(fn, ms) { return later(function () { if (!frozen && frameEl.isConnected) fn(); }, quick ? 0 : ms); }
+    // a tap that moves the page on: every wait begun before it is withdrawn (its timers cleared, its speech stopped, and a
+    // speech `end` that still comes, from cancel() or late, finds its generation gone and runs nothing)
+    var waitGen = 0;
+    function hush() { waitGen++; clearTimers(); stopSpeech(); }
     function stop(tag) { if (dbg && dbg.stop === tag) { frozen = true; return true; } return false; }
     function stackHtml(list) {
       return list.map(function (l) {
@@ -4133,8 +4140,8 @@
     function landNow() { if (flying) { var f = flying; clearTimers(); f(); } }
     /* A line on the page until it can be read, or, Read to me on, said and a little more (at most twice as long). */
     function timedWait(items, kind, fn) {
-      var text = items.map(function (i) { return i.text || ''; }).join(' '), w = takeWaits(text, kind), done = false;
-      var next = function () { if (done) return; done = true; fn(); };
+      var text = items.map(function (i) { return i.text || ''; }).join(' '), w = takeWaits(text, kind), done = false, g = ++waitGen;
+      var next = function () { if (done || g !== waitGen) return; done = true; fn(); };
       if (save.settings.readAloud && 'speechSynthesis' in root && items.length) {
         speakItems(items, function () { wait(next, w.after); });
         wait(next, w.cap);
@@ -4169,11 +4176,14 @@
     function reserve() {
       stack.style.minHeight = '';
       if (!q) return;
-      var was = stack.innerHTML, max = stack.offsetHeight;
+      // (each height up to the next whole pixel: offsetHeight rounds, so a stack 0.11 px over its held height moved the
+      // keypad, measured at 1024 x 768 with Aa on once the gold marks' row was 17px)
+      var tall = function () { return Math.ceil(stack.getBoundingClientRect().height - 0.01); };
+      var was = stack.innerHTML, max = tall();
       var echoAt = typeof o.echo === 'function' ? function (c) { return echoOf(echoInfo(c)); } : false;
       takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt }).forEach(function (L) {
         stack.innerHTML = stackHtml(L);
-        max = Math.max(max, stack.offsetHeight);
+        max = Math.max(max, tall());
       });
       stack.innerHTML = was;
       if (max) stack.style.minHeight = max + 'px';
@@ -4257,8 +4267,9 @@
       drawCol();
       if (q.show) {
         phase = 'show'; pad.classList.add('away'); drawCol();
-        advance = function () { clearTimers(); stopSpeech(); playShow(); };
-        return timedWait(said, 'step', playShow);
+        advance = function () { hush(); playShow(); };
+        // (Read to me off: the first column waits for what is lettered, not for the question in words, which is only said)
+        return timedWait(save.settings.readAloud || !(q.col === 0 && fresh) ? said : heard(lines), 'step', playShow);
       }
       if (q.tap) return startTap(said);
       wake(said);
@@ -4282,7 +4293,7 @@
         flyTo(s.picture, function () {});
         if (last) { landNow(); wake([line]); stop('show' + j); return; }
         if (stop('show' + j)) return;
-        advance = function () { landNow(); clearTimers(); stopSpeech(); step(j + 1); };
+        advance = function () { landNow(); hush(); step(j + 1); };
         timedWait([line], 'step', function () { step(j + 1); });
       };
       step(0);
@@ -4403,7 +4414,7 @@
       echoLines = e ? [e] : [];
       var next = function () { advance = null; q = T.question(st); outline(false); };
       if (!d && !e) return next();
-      advance = function () { clearTimers(); next(); };
+      advance = function () { hush(); next(); };
       // (the echo lettered and said at once; the next column once it can be read, or has been said, and the 0.9 s)
       if (e) { say(echoLines); saying(heard(echoLines)); return timedWait(heard(echoLines), 'step', d ? function () { wait(next, d); } : next); }
       wait(next, d);
@@ -4444,7 +4455,7 @@
         show(i);
         var s = steps[i], line = T1(s.say);
         if (s.write) return end([line]);
-        advance = function () { if (now() - startedAt < TAKE_MS.tapGuard || at >= steps.length - 1) return; clearTimers(); stopSpeech(); step(at + 1); };
+        advance = function () { if (now() - startedAt < TAKE_MS.tapGuard || at >= steps.length - 1) return; hush(); step(at + 1); };
         timedWait([line], s.hop ? 'hop' : 'step', function () { step(i + 1); });
       };
       // (PC.debug.takes: the help at a step, for a picture: its last, "Got it!", by default)
@@ -4477,11 +4488,12 @@
         stop('end');
         return;
       }
-      advance = function () { clearTimers(); stopSpeech(); goOn(); };
+      advance = function () { hush(); goOn(); };
       if (stop('end')) return;
       timedWait(heard(lines), 'end', goOn);
     }
     function finish() {
+      if (!frameEl.isConnected) return;   // (the page left: no done page, no reward, over the next screen)
       keyHandler = null; relayoutFn = null;
       inLesson = false; phase = 'done';
       var sum = T.summary(st);
@@ -4498,12 +4510,14 @@
     pad.addEventListener('click', function (e) { var b = e.target.closest('.key'); if (b) press(b.getAttribute('data-k')); });
     gotBtn.addEventListener('click', function () { var f = gotAct; gotAct = null; if (!f) return; nextWrap.hidden = true; f(); });
     spreadBtn.addEventListener('click', function () { tapZone(tapWant); });
-    // the tap target: the glowing zone, the panel's full height (generous), or the lending digit in the column
+    // the tap target: the glowing zone, the panel's full height (generous), or the lending digit's column in the column, its
+    // full height (hit by x against its box, 6 px either side: the lending digit alone is under 44 px, and a near miss said
+    // "up here" though she tapped the right column; only one thing can be tapped in this phase)
     panel.addEventListener('click', function (e) { if (phase === 'tap') return tapZone(zoneAt(e.clientX) || 'off'); if (advance) advance(); });
     tcol.addEventListener('click', function (e) {
       if (phase !== 'tap') { if (advance && phase !== 'help') advance(); return; }
-      var d = e.target.closest && e.target.closest('.ttop');
-      tapZone(d && +d.getAttribute('data-col') === TAKE_ZONES.indexOf(tapWant) ? tapWant : 'off');
+      var w = TAKE_ZONES.indexOf(tapWant), wb = tcol.querySelector('.tbox[data-col="' + w + '"]'), r = wb && wb.getBoundingClientRect();
+      tapZone(r && e.clientX >= r.left - 6 && e.clientX <= r.right + 6 ? tapWant : 'off');
     });
     stack.addEventListener('click', function () { if (phase === 'tap') return tapZone('off'); if (advance && phase !== 'help') advance(); });
     keyHandler = function (e) {
@@ -4549,7 +4563,6 @@
   function takesDebug(what, opts) {
     if (!E || !E.takes || typeof E.takePlan !== 'function') return 'no take-aways kit in this build';
     if (!TAKE_DEBUG[what]) return 'takes: first, q, show, tap, spread, echo, sand, done, shelf or store';
-    if ((what === 'shelf' || what === 'store') && typeof E.hollowShelf !== 'function') return 'takes: no Hollow shelf in this build';
     if (!cat) { cat = E.addCat(save, { now: now() }) || save.cats[0]; save.current = cat.id; }
     if (what === 'shelf' || what === 'store') {
       var list = E.chapters(stories()).concat([TAKE_DEBUG_CH]);
@@ -4787,7 +4800,7 @@
     return '<figure class="storepic">' + (n > 0 ? '<div class="sp-pic" aria-hidden="true">' + (artCall('placeValue', po) || takeStoreFallback(po)) + '</div>' : '') +
       '<figcaption><span class="sp-words">In the store:</span> <span class="sp-num">' + n + '</span></figcaption></figure>';
   }
-  function storeSays(n) { return 'In the store: ' + (typeof E.numberWords === 'function' ? E.numberWords(n) : String(n)) + '.'; }
+  function storeSays(n) { return 'In the store: ' + E.numberWords(n) + '.'; }
   /* The winter sleepers, as the dragonets' pages (their classes reused): a page for each she has found, with room for her
    * own drawing, and the rest as silhouettes, still sleeping. */
   function sleeperPages(sp) {
@@ -5017,7 +5030,7 @@
       cat.lesson = { mode: 'hollow', state: r.state }; persist();
       storeLesson(r.state, false, null);
     });
-    $('countsBtn').addEventListener('click', function () { go('hollow', { counts: true, from: view.opts.from, stories: opts.stories }); });
+    $('countsBtn').addEventListener('click', function () { go('hollow', { counts: true, from: view.opts.from, vol: view.opts.vol, stories: opts.stories }); });
     $('shelfNest').addEventListener('click', function () { go('nest', { from: 'hollow' }); });
     currentSpeech = (ctx.reading || []).concat([{ text: label('store') + '.' }, { text: label('counts') + '.' }]);
   }
@@ -5051,13 +5064,18 @@
     var t = res && res.awarded, def = E.takeRoundDef();
     var scr = $('screen');
     scr.innerHTML = frameShell('reward', 'reward');
+    // (`data-mode="store-reward"`: on a phone held sideways its stack stands over the panel and the treasure's card lies
+    // flat, as the shelf's page does, so "Another round" is on the screen, Aa on or off; every other size as hollowReward)
+    scr.querySelector('.frame').setAttribute('data-mode', 'store-reward');
     var panel = $('panel');
     var f = { scene: hollowScene('tree', [], ['sparkle']) };
     var heads = drawArt(panel, shownFrame(f), cat.look);
     var line = fill(def.done);
     var ctx = { panel: panel, frame: f, heads: heads, caps: [], balloons: [{ who: 'tallyheart', text: line, kind: 'say' }] };
-    relayoutFn = function () { layoutText(ctx); };
-    layoutText(ctx);
+    // (a phone held sideways: a line that went to the stack made the panel shorter, so the text is laid out again for it)
+    var lay = function () { layoutText(ctx); if ($('stack').innerHTML && root.matchMedia && root.matchMedia(TAKE_PHONE).matches) layoutText(ctx); };
+    relayoutFn = lay;
+    lay();
     $('interact').innerHTML =
       (t ? '<div class="reward' + (reduceMotion ? '' : ' pop') + '" role="status">' + treasureSvg(t.id) + '<b>' + esc(t.name) + '</b><span>for your nest</span></div>' : '') +
       '<div class="row end"><button class="btn" type="button" id="storeNest">My nest</button><button class="btn go big" type="button" id="againBtn">Another round</button></div>';
@@ -5515,8 +5533,9 @@
         return 'the ' + k.table + 's ' + r.rounds + ' (' + r.cleanRounds + ' without help' + (r.glow ? ', claw mark glowing' : '') + ')';
       }).join('; ') : '');
       // the take-aways kit (docs/take-aways.md, section 8): only for a cat with `takes` data
-      var TC = c.takes && typeof E.takeTable === 'function' ? takeCorner(c.takes, E.takeTable(c), fmtMs) : null;
+      var TC = c.takes ? takeCorner(c.takes, E.takeTable(c), fmtMs) : null;
       if (TC) hollowTxt += '; ' + TC.line;
+      if (TC) hollowTxt = 'One Count at a time ' + hollowTxt;
       html += '<h3>' + nameHtml(c) + '</h3>' +
         '<dl><dt>Clan name</dt><dd>' + esc(c.name ? c.name + 'paw' : '(not yet)') + '</dd>' +
         '<dt>Pet name</dt><dd>' + esc(c.petname || '(not yet)') + '</dd>' +

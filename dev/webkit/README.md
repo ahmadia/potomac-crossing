@@ -20,11 +20,12 @@ node dev/webkit/run.mjs OUT.json shot:ch05:f010:0:/abs/f010.png          one fra
 node dev/webkit/run.mjs OUT.json shott:ch05:f049:1:12:/abs/f049.png     the frame after 12 taps, Aa on
 node dev/webkit/run.mjs OUT.json only:ch05:f010,ch05:f011               these frames measured (Aa off and on)
 SIZE=820x1180 AA=1 node dev/webkit/run.mjs OUT.json plain taps lessons   every frame, Taps page and keypad at one size
+SIZE=844x390 node dev/webkit/run.mjs OUT.json takes                      the take screens at one of the page review's sizes (tools/sweep.mjs --takes caches all four)
 ROOT_DIR=/path/to/tree node dev/webkit/run.mjs …                        another tree (its own tools/shots.mjs scripts)
 node dev/webkit/build.mjs --check                                       is the binary current? (builds nothing)
 ```
 
-The top of `run.mjs` lists every target (`screens`, `warrior`, `settle:`, `probe:`), the environment (`SIZE`, `AA`,
+The top of `run.mjs` lists every target (`screens`, `warrior`, `takes`, `settle:`, `probe:`), the environment (`SIZE`, `AA`,
 `CAT`, `CSS`) and the output's shape.
 
 ## Safety, kept from every earlier copy

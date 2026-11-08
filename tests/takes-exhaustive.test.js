@@ -48,7 +48,7 @@ function sampleOf(kind, per, seed) {
   }
   return out;
 }
-test('5. for 2,000 three-digit problems of each kind, every column and every wrong digit 0 to 9: the help ends on the right digit, draws the plan\'s spreads, hops to the digit (old marks first), opens on the slip\'s line; zero, extra and flip only where section 2 names them', () => {
+test('5. for 2,000 three-digit problems of each kind, every column and every wrong digit 0 to 9: the help ends on the right digit, draws the plan\'s spreads, hops to the digit (old marks first), opens on the slip\'s line; zero, extra and flip only where section 2 names them; extra only once its spread is taught; the written top\'s flip at a lent column is flip or kept', () => {
   let helps = 0;
   E.TAKE_KINDS.forEach((kind, ki) => {
     const list = sampleOf(kind, 2000, 101 + ki);
@@ -66,6 +66,13 @@ test('5. for 2,000 three-digit problems of each kind, every column and every wro
           if (slip === 'extra' && (col === 0 || c.lent || c.spreads.length)) assert.fail(tag + ': extra only left of the ones, where the column did not lend');
           if ((slip === 'flip' || slip === 'nospread') && !c.spreads.length) assert.fail(tag);
           if (slip === 'kept' && !c.lent) assert.fail(tag);
+          // extra only where its spread is taught (E.takeSlip's taught): never before ones2, at the hundreds never before tens
+          if (E.takeSlip(p, col, g, false, ['none']) === 'extra') assert.fail(tag + ': extra before a row is spread');
+          if (col === 2 && E.takeSlip(p, col, g, false, ['none', 'ones2', 'ones']) === 'extra') assert.fail(tag + ': extra at the hundreds before a square is spread');
+          if (slip === 'extra' && E.takeSlip(p, col, g, false, ['none', 'ones2', 'ones', 'tens']) !== 'extra') assert.fail(tag + ': extra once tens is taught');
+          if (slip === 'extra' && g === 0 && bv === 0) assert.fail(tag + ': a 0 where the bottom is empty or 0');
+          // a lent column that needs its own spread: the written top's flip is flip, or kept where the two meet
+          if (c.lent && c.spreads.length && !c.chain && c.top > 0 && g === bv - c.top && slip !== 'flip' && slip !== 'kept') assert.fail(tag + ': the written top\'s flip');
           const h = E.takeHelp({}, p, col, slip);
           helps++;
           const steps = h.steps, last = steps[steps.length - 1];

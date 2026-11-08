@@ -16,7 +16,8 @@ const PC = load();
 const E = PC.engine;
 const stub = require('./fixtures/takes-stub.js');
 const clone = (o) => JSON.parse(JSON.stringify(o));
-const MODULE1 = () => E.chapters(PC.story);
+// module 1's chapters: the real ones from chapter 12 on are module 2's, and the stand-ins stand in for them here
+const MODULE1 = () => E.chapters(PC.story).filter((s) => (s.number || 1) < 12);
 
 /* v23's E.buildFullBook, verbatim (app/engine.js as shipped in potomac-crossing-v23), run on today's engine: the book a
  * cat had before book two. */

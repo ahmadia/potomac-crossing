@@ -78,7 +78,8 @@ function readyCat(id) {
   const cat = E.blankCat({ now: 1, id: id || 'warrior-cat' });
   cat.name = 'Minnow'; cat.petname = 'Pickle';
   // (chapter 11: never the Ceremony itself, which opens only once she has passed; a built one is in STORIES)
-  E.chapters(STORIES).filter(s => s.opensWhen !== 'warrior').forEach(s => { cat.finished[s.id] = 1; });
+  // (module 1 only: module 2's chapters, from chapter 12, come after the Ceremony and are not this file's)
+  E.chapters(STORIES).filter(s => s.opensWhen !== 'warrior' && (s.number || 1) < 12).forEach(s => { cat.finished[s.id] = 1; });
   E.countSets(STORIES).forEach(c => { cat.lessons[c.setId] = { set: c.setId, mode: 'chapter', answers: 10, correct: 10, fast: 10, facts: 10, firstTry: 10, helped: 0, noHelp: true, finished: true }; });
   return cat;
 }
@@ -1176,7 +1177,7 @@ test('opening: closed before chapter 10 is finished, open after; a stand-in Cere
   sit(cat, { at: T0 + 5 * HOUR });
   assert.equal(E.isOpen(cat, CH11, WITH_CEREMONY), true, 'passed: the Ceremony opens');
   assert.equal(E.upNext(cat, WITH_CEREMONY).id, 'ch11');
-  assert.equal(E.chapters(WITH_CEREMONY).filter(s => !E.isOpen(cat, s, WITH_CEREMONY)).length, 0);
+  assert.equal(E.chapters(WITH_CEREMONY).filter(s => (s.number || 1) < 12 && !E.isOpen(cat, s, WITH_CEREMONY)).length, 0, 'every module 1 chapter open (module 2 waits for the Ceremony)');
   ws = E.warriorState(cat, STORIES, T0 + 6 * HOUR);
   assert.deepEqual([ws.passed, ws.unseen, ws.notYet], [true, true, false]);
   // a finished Ceremony stays open (read again), passed or not

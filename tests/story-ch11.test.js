@@ -1576,11 +1576,11 @@ test('book: title, chapter title, seven entries on every reading (one by how she
   assert.match(E.buildBook(ch10, tom).recap.join(' '), /Stormpaw/, 'chapter 10’s page keeps {name}paw: it happened before');
 });
 
-test('the teaser is module 2’s: “A new adventure” (the hub’s “A new adventure is coming soon”), the badger’s old track, no number; chapter 10’s teaser leads here now', () => {
+test('the teaser is module 2’s: “A new adventure”, the badger’s old track, no number, and it leads to chapter 12; chapter 10’s teaser leads here now', () => {
   assert.deepEqual(story.teaser, { title: 'A new adventure', lines: ['Out on Gathering Island, an old badger track lies in the mud. Who made it? Another day.'] });
   assert.doesNotMatch(story.teaser.lines.join(' '), /\d/);
   const cat = E.blankCat({}); cat.name = 'Moon';
-  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'A new adventure', lines: story.teaser.lines, built: false, next: null }, 'no chapter 12 yet');
+  assert.deepEqual(E.teaser(story, cat, PC.story), { title: 'A new adventure', lines: story.teaser.lines, built: true, next: 'ch12' }, 'chapter 12 is built: the teaser leads to it');
   // chapter 10's teaser stays as it is, and now has its chapter (the spec's section 10)
   assert.deepEqual(ch10.teaser, { title: 'The Warrior Ceremony', lines: ['Pass your Warrior Counts, and the Clan will gather for your name.'] });
   assert.deepEqual(E.teaser(ch10, cat, PC.story), { title: 'The Warrior Ceremony', lines: ch10.teaser.lines, built: true, next: 'ch11' });
@@ -1613,7 +1613,7 @@ test('her pass opens the Ceremony, and finishing it: her warrior name on the pag
   assert.deepEqual([E.warriorName(cat), E.displayName(cat), E.clanName(cat)], ['Fernsplash', 'Fernsplash', 'Fernpaw']);
   p = E.progress(cat, S);
   const h = U.hub(E.warriorState(cat, S, t), Object.assign({}, p, { ceremonyBuilt: true }));
-  assert.deepEqual([p.next, p.soon && p.soon.title, h.hideSoon], [null, 'A new adventure', false], 'the hub: “A new adventure is coming soon”');
+  assert.deepEqual([p.next && p.next.id, p.soon, h.hideSoon], ['ch12', null, false], 'the hub: chapter 12 next, the teasers shown');
   const book = E.buildFullBook(cat, S);
   assert.deepEqual([book.teaser && book.teaser.title, book.pages[book.pages.length - 1].id], ['A new adventure', 'ch11'], 'her book: module 2’s teaser after the Ceremony’s page, no “Your ceremony is coming soon.”');
   assert.equal(E.fill(story.book.title, cat), 'Fernpaw’s First Moon', 'the book’s title: the apprentice’s first moon');

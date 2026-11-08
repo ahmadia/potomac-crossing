@@ -201,7 +201,8 @@ test('chapter 11: once the Ceremony is finished the hub shows the chapters’ te
     teaser: { title: 'A new adventure', lines: ['An old badger track.'] } };
   const C12 = { id: 'ch12', number: 12, title: 'Stand-in twelve', start: 'f001', frames: { f001: { board: 'STUB.', next: 'f002' }, f002: { board: 'STUB.', end: true } },
     teaser: { title: 'Chapter 13', lines: ['Later.'] } };
-  const list = E.chapters(S).filter(s => s.opensWhen !== 'warrior').concat([C11]);
+  // chapters 1 to 10 only: the stand-ins play chapters 11 and 12 here (the real chapter 12 is module 2's)
+  const list = E.chapters(S).filter(s => s.opensWhen !== 'warrior' && (s.number || 1) < 11).concat([C11]);
   const c = catAfter10();
   delete c.finished.ch11;
   const t = Date.UTC(2026, 10, 9, 15);

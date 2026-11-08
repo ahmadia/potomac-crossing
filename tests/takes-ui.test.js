@@ -507,7 +507,9 @@ test('nothing a player can reach changes: runLesson, the keypad and go() as in v
   assert.ok(start > 0 && end > start);
   // (book two's block, docs/take-aways.md section 7, follows the take block before </style>: tests/book2-ui.test.js has it)
   const two = HTML.indexOf('/* ---------- book two ('), block = HTML.slice(start, two > start ? two : end);
-  assert.equal(sha(HTML.slice(0, start) + HTML.slice(end)), 'ed069d652c0b7bea405c26063a7d39cf9459a2a7ac07c01bc22c172fba23a028', 'v23\'s index.html');
+  // module 2's script tags (chapter 12 on: words.js and each chapter's story) are cut before hashing
+  const v23 = (HTML.slice(0, start) + HTML.slice(end)).replace(/<script src="app\/story\/(words|ch(1[2-9]|2\d))\.js"><\/script>\n/g, '');
+  assert.equal(sha(v23), 'ed069d652c0b7bea405c26063a7d39cf9459a2a7ac07c01bc22c172fba23a028', 'v23\'s index.html');
   const own = /^(\.frame\[data-mode="take"\]|html:has\(\.frame\[data-mode="take"\]\)|\.tcol|\.thead|\.tmark|\.tdig|\.ttop|\.tbot|\.tsign|\.trule|\.tbox|\.tstruck|\.tshelf|(html\.big )?\.frame\[data-mode="shelf"\]|\.frame\[data-mode="store-reward"\])/;
   const sels = [];
   block.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes [a-z]+\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '').replace(/@media[^{]*\{/g, '').split('}').forEach((r) => {

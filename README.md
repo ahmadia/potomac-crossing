@@ -199,6 +199,12 @@ Hunter's Crouch*, is next.
     takes about a quarter of a chapter as played, never past a third. The new step's three take-aways always stay. A
     chapter's Tricky Counts run is five Counts, her hardest first, not eight; chapter 14 loses its fifth lesson problem
     (586 − 231); chapters 12 and 13 stay as written. The Hollow's own rounds are hers to choose and are not chapter time.
+57. **The borrow is a step she does, and the marks are hers to choose** (Aron, 2026-11-08): keep giving her the
+    mechanics of grouping, run like an algorithm. When a column needs a spread she touches the digit that gives (it is
+    crossed out) and types its new number, then the new number for the column she is working, as intermediate steps,
+    before the answer; across a zero, each link of the chain the same way. Lissa decides how a borrow is marked (the new
+    number above the struck digit, or a small 1 in front of it), and can change it. Supersedes the kit's `'hers'` mode,
+    where the spread was done in her head and the marks came after.
 
 ## Claude's calls under decision 46
 

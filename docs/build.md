@@ -2053,7 +2053,7 @@ lines may also name the answer's numbers: `{es:fact}` (a Counts set: "siete por 
   facts, one to three lines on a Counts set and exactly one on a take set. For the chapters after this one: a lowercase
   `{es:…}` lettered in lower case that opens a line or follows . ! ? (after any ¡ ¿, never after "…"), and a number ending
   in "uno" straight before a word token ("veintiuno gatos": write it otherwise).
-- `E.VERSION` and its pin are the orchestrator's, at the ship.
+- `E.VERSION = '0.12.0 (chapter 12, 2026-11-08)'`, CACHE v25; the save stays version 2 and nothing new is stored.
 - **A store round's twins** (the review's round): `E.takeRoundStart` gives the round's state an `avoid`, the answers of
   every chapter with a take set that the cat has begun and not finished, so a round played between chapter 12's lesson
   and its store never queues a twin on 133; with no such chapter there is no `avoid` and the state is as before.

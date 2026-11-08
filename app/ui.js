@@ -4676,7 +4676,8 @@
    *   take          the end of 475 − 132 with its echo
    *   skip          the paw thing after its fifth tap (the gloss in, Next waiting)
    *   worked        254 − 131 at its first column (the prompt joined); worked:tens at its tens, the school words in
-   *   try           58 − 23 at its first column (three balloons); try:pointer after a leading 3 typed first (the pointer)
+   *   try           58 − 23 at its first column (its prompt with the column's line, one balloon; three in v0.2); try:pointer
+   *                 after a leading 3 typed first (the pointer)
    *   store         175 − 42 at its first column (Glintstar's question)
    * Returns true or an error string, as PC.debug.takes does. */
   var ES_DEBUG = { echo: 1, take: 1, skip: 1, worked: 1, 'worked:tens': 1, 'try': 1, 'try:pointer': 1, store: 1 };

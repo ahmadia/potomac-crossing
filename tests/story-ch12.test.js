@@ -478,8 +478,10 @@ test('a child who listens hears every sentence finished: the sound effects are t
   const some = [{ flags: { ch2Stone: 'nose', ch10Best: 'counts', specialty: 'noticing' } }, { flags: { ch2Stone: 'chin', ch10Best: 'friends', specialty: 'friends' } }, { flags: {} }];
   ids.forEach(id => {
     const f = frames[id];
-    // (the title panel's caption is a title, not a sentence: chapter 8's)
-    (f.caption || []).map(capText).forEach(t => assert.ok(E.endsSentence(t) || (id === 'f001' && t === 'Chapter 12: A Spark at the Hedge'), id + ': “' + t + '” runs on'));
+    // (the title panel's caption is a title, not a sentence: chapter 8's; f051b's speech tag leads into her balloon with a
+    // colon, as chapters 3, 6, 9 and 10 letter a lead-in: the final review)
+    (f.caption || []).map(capText).forEach(t => assert.ok(E.endsSentence(t) || (id === 'f001' && t === 'Chapter 12: A Spark at the Hedge') ||
+      (id === 'f051b' && t === 'In her deepest, grumpiest old-tom voice:' && f.say && f.say.length), id + ': “' + t + '” runs on'));
     some.forEach(c => assert.deepEqual(E.captionsRead(f, c), E.captions(f, c), id + ': heard as it is lettered'));
   });
 });
@@ -543,7 +545,7 @@ test('choices: seven, none setting a flag; the light ones (her answer to {Murmur
   assert.deepEqual(['f037a', 'f037b', 'f037c'].map(T), ['Chispapaw purrs so hard her whiskers shake. Chispapaw’s tail goes up too, just like yours. Now you know how I felt, the day you came.',
     'Ready! …' + WJ + 'What’s work?', 'That’s MY line. Hmph.']);
   assert.deepEqual(['f040a', 'f040b'].map(T), ['Chispapaw’s eyes go huge. A DRAGON?! The dragon story at the store. Lessons now.', 'Okay. DRAGON first. The dragon story at the store. Lessons now.']);
-  assert.deepEqual(['f051a', 'f051b', 'f052c'].map(T), ['Not for long. I can do not-for-long.', 'Chips-paw?', 'Up ahead, Tallyheart’s ear twitches. She heard. Chispapaw’s whiskers lift. I’ll show them. Like you did.']);
+  assert.deepEqual(['f051a', 'f051b', 'f052c'].map(T), ['Not for long. I can do not-for-long.', 'In her deepest, grumpiest old-tom voice: Chips-paw?', 'Up ahead, Tallyheart’s ear twitches. She heard. Chispapaw’s whiskers lift. I’ll show them. Like you did.']);
 });
 
 /* ------------------------------------------------------------------ inputs, counts, skips and taps */
@@ -912,9 +914,13 @@ test('the lettering is the story’s own: every caption, balloon, sound effect, 
   // a line as she reads it: the Spanish filled (marks dropped), the cat's tokens kept, the word joiner and italics' stars gone
   const asRead = (s, lang) => (lang === 'es' ? unmark(E.esLine(s, null).split('\n')[0]) : unmark(E.esMarks(s))).replace(/\u2060/g, '').replace(/\*/g, '');
   const mine = [];
+  // the one speech tag lettered (f051b, the final review: in the wide shot the picture cannot carry it), the story's own
+  // words moved before her balloon, a capital and a colon its only change (spec section 5)
+  const LEAD = { 'In her deepest, grumpiest old-tom voice:': 'says Chispapaw, in her deepest, grumpiest old-tom voice.' };
+  Object.keys(LEAD).forEach(k => assert.ok(page.includes('“Chips-paw?” ' + LEAD[k]) && LEAD[k].includes(k.charAt(0).toLowerCase() + k.slice(1, -1) + '.'), 'the tag is the story’s: ' + k));
   ids.forEach(id => {
     const f = frames[id];
-    (f.caption || []).forEach(c => { const s = asRead(capText(c)); if (!inText(s) && !bySentence(s)) mine.push(id + ': ' + s); });
+    (f.caption || []).forEach(c => { const s = asRead(capText(c)); if (!inText(s) && !bySentence(s) && !(id === 'f051b' && LEAD[s])) mine.push(id + ': ' + s); });
     (f.say || []).forEach(b => { const s = asRead(b.text, b.lang); if (!inText(s) && !bySentence(s)) mine.push(id + ' ' + b.who + ': ' + s); });
     if (f.sfx && !page.includes(f.sfx.replace(/!$/, ''))) mine.push(id + ' sfx: ' + f.sfx);
     if (f.choice) f.choice.options.forEach(o => { if (!page.includes(o.label.replace(/^“|”$/g, ''))) mine.push(id + ' option: ' + o.label); });
@@ -1109,6 +1115,10 @@ test('staging, the people: Glintstar at the fountain’s foot for the count and 
   ['f025a', 'f026'].forEach(id => assert.match(frames[id].say[0].text, /^Thank you\.$/, id + ': the thanks, to our cat'));
   assert.deepEqual(castOf('f025c', 'clancat').map(c => c.mood), ['happy', 'happy'], 'f025c: the two Clan cats hide grins');
   assert.deepEqual(castOf('f031', 'grizzled').map(c => [c.mood, c.purr]), [['stern', true]], 'f031: the old tom purrs, frowning at the new word');
+  // the whole camp hums (the caption): our cat, Glintstar, Tallyheart and the old tom purr, the crowd behind them with its
+  // eyes shut; the little cat in the middle of it does not (the final review)
+  assert.deepEqual(frames.f031.scene.cast.filter(c => c.purr).map(c => c.who).sort(), ['glintstar', 'grizzled', 'player', 'tallyheart'], 'f031: four purr');
+  assert.ok(!castOf('f031', 'chispapaw')[0].purr, 'f031: she is purred at, astonished');
   // given to our cat, Chispapaw looks up at her mentor and stays turned to her (f036 to f038c: the review's round)
   seq('f036', 'f038c').forEach(id => assert.deepEqual(castOf(id, 'chispapaw').map(c => c.facing), ['right'], id + ': facing our cat'));
   assert.deepEqual(castOf('f036', 'chispapaw').map(c => c.pose), ['lookup']);
@@ -1203,7 +1213,7 @@ test('staging, depth: a cast member further back is never drawn over a nearer on
 // the purr words (scenes.js fxPurr): a marked purrer's word beside her back was checked only against the panel's edge; on
 // f037a it was lettered across our cat's face and on f031 across Tallyheart's chin (the review's round). Now it is left out
 // where it meets any other cast member's head, and the word over her own head stays
-test('the purr words keep off every friend’s face: on the naming’s purrs (f031, f037a) no ‘purrr’ lies over another cast member’s head, and every purrer still has one', { skip: !A.character && 'no cats.js' }, () => {
+test('the purr words keep off every friend’s face: on the naming’s purrs (f031, f037a) no ‘purrr’ lies over another cast member’s head, nor beside a back over a friend’s body, and every purrer still has one', { skip: !A.character && 'no cats.js' }, () => {
   for (const id of ['f031', 'f037a']) {
     const cat = Object.assign(E.blankCat({}), { flags: { ch2Stone: 'nose' } });
     const sc = E.resolveScene(frames[id].scene, cat, STORIES), svg = A.render(sc, { look: LOOKD }).svg, b = boxesOn(id);
@@ -1219,6 +1229,12 @@ test('the purr words keep off every friend’s face: on the naming’s purrs (f0
       const own = x.m.purr && Math.abs((w[0] + w[2]) / 2 - (x.head[0] + x.head[2]) / 2) < 140 && w[3] <= x.head[1] + 20;
       if (!own) assert.ok(!meets(w, x.head), id + ': a purrr over ' + x.m.who + '’s face (' + w.map(Math.round) + ' on ' + x.head.map(Math.round) + ')');
     }));
+    // and a word beside her back keeps off a friend's body too: on f031, where four purr side by side, each word is one
+    // purrer's own over her head (Glintstar's beside her back lay across the old tom's chest: the final review)
+    if (id === 'f031') {
+      assert.equal(words.length, purrers, 'f031: one word each');
+      words.forEach((w) => assert.ok(b.some((x) => x && x.m.purr && Math.abs((w[0] + w[2]) / 2 - (x.head[0] + x.head[2]) / 2) < 140 && w[3] <= x.head[1] + 20), 'f031: ' + w.map(Math.round) + ' over a purrer’s own head'));
+    }
   }
 });
 
@@ -1504,7 +1520,7 @@ test('the warm-up’s echo: Chispapaw says her first right answer in Spanish, in
   assert.ok(never.every(r => !r.echo) && never[never.length - 1].res.done);
 });
 
-test('the take lesson as the spec plays it: the worked example’s three full lines (the school words once, before the tens), its right line waiting; 58 − 23’s two prompt balloons; the echo after 475 − 132, right or helped, never after its twin; no twin anywhere with a prompt or a right line; finishing it opens Count the store', () => {
+test('the take lesson as the spec plays it: the worked example’s three full lines (the school words once, before the tens), its right line waiting; 58 − 23’s one prompt balloon, the sigh 76 − 42’s; the echo after 475 − 132, right or helped, never after its twin; no twin anywhere with a prompt or a right line; finishing it opens Count the store', () => {
   const play = (digits) => {
     const cat = fresh({});
     assert.equal(E.storeOpen(cat, STORIES), false, 'the store closed before the lesson');
@@ -1722,6 +1738,8 @@ test('book: book two’s title, the chapter title, seven entries (eight sentence
   cat.dreams.ch12 = 'a spark in the snow';
   assert.match(E.buildBook(story, cat).dream, /^Fernheart’s dream: “A spark in the snow\.”$/);
   assert.match(page.recap.join(' '), /one hundred thirty-three, one square, three rows and three loose\./);
+  // for a she-cat the third entry's chooser is never ambiguous: the little cat chose her name, not our cat (the final review)
+  assert.match(page.recap.join(' '), /Fernheart spoke up for her, and the little cat chose her own Clan name: Chispa, which means spark\./);
   // its page in book two: the store drawn under it
   const tom = before12({}, { name: 'Storm', ending: 'leap', sex: 'tom' });
   tom.finished.ch12 = 12;

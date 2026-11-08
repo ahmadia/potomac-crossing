@@ -57,7 +57,8 @@
  *                                                         saved): the warm-up's echo after 7 × 8 right; the end of
  *                                                         475 − 132 with its echo; the paw thing after its fifth tap;
  *                                                         the worked example's first column and its tens (the school
- *                                                         words); 58 − 23's three balloons, and its ones-first pointer;
+ *                                                         words); 58 − 23's first column (its prompt with the column's
+ *                                                         line, one balloon; three in v0.2), and its ones-first pointer;
  *                                                         the store's 175 − 42. ES_TARGETS, apart from TAKE_TARGETS
  *   VOICES=es node tools/shots.mjs …                      the page's voice list made up (SILENT's stand-in: an es-MX
  *                                                         Paulina, an en-US Samantha and the eight novelty voices);

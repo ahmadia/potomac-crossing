@@ -4,8 +4,9 @@
 `~/potomac-crossing-work/ch12/critic-*/`, the editor's list in `ch12/spec-editor/notes.md`; after the kit's review, still
 v0.2: the kit now does two things this spec asked of chapter 12, so the `NO_SPREAD` override and its store-round copy are
 gone and a twin never takes one of the chapter's answers, section 7's items 15 and 16. v0.3 records the build as made and
-the review's round, 2026-11-08: section 7, items 18 to 22, and the lines of sections 2, 4, 5, 8 and 10 they change). No
-word of the story changes.*
+the review's round, 2026-11-08: section 7, items 18 to 22, and the lines of sections 2, 4, 5, 8 and 10 they change; after
+the final review, the same day, still v0.3: item 23, and the lines of sections 2, 4, 5, 6, 8 and 10 it names, each marked
+"as built" or "the final review"). No word of the story changes.*
 
 *The build's contract for chapter 12, beside `docs/build.md` and the take-aways kit's design (`docs/take-aways.md` v0.3).
 The story, [`12-a-spark-at-the-hedge.md`](12-a-spark-at-the-hedge.md) (Draft v0.4, final), is the source of every word she
@@ -130,9 +131,11 @@ function T(text) { return { who: 'tallyheart', text: text }; }
     { a: 254, b: 131, regroup: 'show',
       prompt: 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.',   // the kit's twelve words
       right: [T('One square, two rows, three loose left.')] },
-    { a: 58, b: 23, prompt: [T('Now you try, all by yourself. Little take-aways first, then big.'),
-      { who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
-    [76, 42], [475, 132], [368, 145]
+    // (Chispapaw's whisper is 76 − 42's prompt, not 58 − 23's second balloon: three balloons over her first column of her
+    // own put Tallyheart's “Now you try” under the bar on a sideways iPad, the review's round)
+    { a: 58, b: 23, prompt: [T('Now you try, all by yourself. Little take-aways first, then big.')] },
+    { a: 76, b: 42, prompt: [{ who: 'chispapaw', kind: 'whisper', text: 'My little Tall One always sighs at homework.' }] },
+    [475, 132], [368, 145]
     // (if play shows the lesson is fast: [589, 267] after [368, 145]; if it drags: [368, 145] goes, the kit's first cut)
   ],
   echo: { on: [[475, 132]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] }
@@ -229,7 +232,7 @@ light); `day` from the midday count to the walk; `sunset` at the Old Bridge; `ni
 | `room` (`scenes.js`) | `outside` (dusk: the memory, f016) | `{ door: 'closed', clan: true }` | nothing |
 | `hollow` (`scenes.js`) | `lesson` (by `day`) | `H12 = { marks: 10, glow: 'auto' }` on every frame (her ten claw marks on the leaning tree, as chapters 2 to 10 carry them), with **`store`, `storeGlow`, `quick`, `tap`** on top | **four options** |
 | `riverbank` (`sets/riverbank.js`) | `path` (by `day`: the walk) | `{}` | nothing |
-| `bridge` (`sets/bridge.js`) | `bank`, `under`, `back` (sunset), **`store`** (sunset) | `back`: `{ stones: true, prints: true }`; `under`: `{ prints: true }`; `store`: **`store: 175`** or **`133`**, **`tap: 'store'`** | **camera `store`, its spots, option `store`, `tap: 'store'`** |
+| `bridge` (`sets/bridge.js`) | `bank`, `under`, `back` (sunset), **`store`** (sunset) | `bank`: `BANK = { drag: false }` (as every chapter after the second; as built); `back`: `{ stones: true, prints: true }`; `under`: `{ prints: true }`; `store`: **`store: 175`** or **`133`**, **`tap: 'store'`** | **camera `store`, its spots, option `store`, `tap: 'store'`** |
 
 #### The store (`sets/bridge.js`, camera `store`)
 
@@ -315,7 +318,8 @@ behind our cat). The sets owner settles the point and writes it in its notes for
   `hedge-gap` and Tallyheart at `hedge-right` stand three in a row with the little cat between, none touching. About
   `A(1548, 724, 222, 'left')`, Tallyheart's tail cropped by the frame's right edge (at the first guess, `A(1530, …)`, she
   spans x 1452–1607: she touches the little cat and runs past the edge; at 1548, 13 to 32 units clear: critic-continuity's
-  `measure.js`); the sets owner settles the point. **Acceptance** (`tools/frames.mjs`, a `clancat` stand-in at 0.78 until
+  `measure.js`); the sets owner settles the point. (As built: `A(1562, 724, 222, 'left')`; at 1548 a crouching Chispapaw
+  touched Tallyheart.) **Acceptance** (`tools/frames.mjs`, a `clancat` stand-in at 0.78 until
   `chispapaw` lands): f015, f017, f020 and f021's casts, our cat `sit` and `walk`, Chispapaw facing right and facing left,
   none touching.
 - **The camp by `day`** (no new art): no camp frame has been drawn at `day` (only morning, sunset, dusk, night). The sets
@@ -384,9 +388,9 @@ cat `holds: 'mouse'`: checked), so every existing fingerprint stands; a `tests/c
   true`.
 - **{Murmur}chime** (`murmurchime`): `sit` and `lie` at `next-nest` (`asleep` at the end), `walk` with `holds: 'mouse'`
   (one mouse drawn: section 7, item 4).
-- **Tallyheart**: `sit`, `walk`, `stand`; `kind`, `happy`, `proud`, `wonder` (her ears up).
-- **Glintstar**: `stand` on `fountain-top`, `walk` (coming down), `sit`; `solemn`, `kind`, `proud`.
-- **The old tom** (`grizzled`): `sit`, `walk` with `holds: 'mouse'`; `stern`, `shout`, `sniff`.
+- **Tallyheart**: `sit`, `walk`, `stand`; `kind`, `happy`, `proud`, `wonder` (her ears up); `purr: true` (f031).
+- **Glintstar**: `stand` on `fountain-top`, `walk` (coming down), `sit`; `solemn`, `kind`, `happy`, `proud`; `purr: true` (f031).
+- **The old tom** (`grizzled`): `sit`, `walk` with `holds: 'mouse'`; `stern`, `shout`, `sniff`; `purr: true` (f031).
 - **The grey tom** (`snorer`, still unnamed, labelled "Snoring apprentice" as always): `sit` at `sleeper-1`, `curl`
   asleep; `happy`, `proud`, `sleepy`.
 - **Princess Waffles**: `peer` and `shout` at `railing` (`up`, `balcony`, `balcony-close`).
@@ -422,8 +426,11 @@ General rules, then the chapter frame by frame. Chapter 11's file (`app/story/ch
 - **No panel holds five boxes.** A speaker's paragraphs in a row are balloons in a row; a quote the story splits round its
   tag is one balloon, its comma a full stop where the quote resumes with a new sentence.
 - **Speech tags' narration is not lettered** (the picture carries it): "says {Murmur}chime, back from patrol", "she
-  whispers", "squeaks", "chirps", "he calls, proudly", "in her deepest, grumpiest old-tom voice", "Her ears are up." between
-  Tallyheart's two halves on f068, "In the next nest, {Murmur}chime mutters" (f076).
+  whispers", "squeaks", "chirps", "he calls, proudly", "Her ears are up." between Tallyheart's two halves on f068, "In the
+  next nest, {Murmur}chime mutters" (f076). **The one exception, f051b** (the final review): "in her deepest, grumpiest
+  old-tom voice" is lettered as a caption before her balloon, "In her deepest, grumpiest old-tom voice:" (the story's words,
+  a capital and a colon their only change, as chapters 3, 6, 9 and 10 letter a lead-in), since in the wide shot of the path
+  the picture cannot carry it, and without it she seems to get her own new name wrong.
 - **Long captions** (at most 95 characters a box; split at a sentence break, the words unchanged): f002, f031, f039, f080
   (named below).
 - **Speakers**: every balloon's speaker is in the frame's cast, but two off-panel voices, each with `name` so the stack
@@ -467,8 +474,8 @@ General rules, then the chapter frame by frame. Chapter 11's file (`app/story/ch
   miststone: true }` (her warrior's nest, `morning`); `DENW_NIGHT = merge(DENW_DAY, { moon: 16 })` (night); `DEN_APP = {
   weather: 'clear', moon: 16 }` (the apprentices' den, night); `CAMP_DAY = { crowd: true }` (`day`); `CAMP_NIGHT = { moon:
   16 }` (night); `H12 = { marks: 10, glow: 'auto' }` (the Hollow, `day`: merged into every opts set of f041 to f049, with
-  `store`, `storeGlow`, `quick` and `tap` on top); `BACK = { stones: true, prints: true }`; `UNDER = { prints: true }`;
-  `STORE175 = { store: 175 }`, `STORE133 = { store: 133 }` (sunset).
+  `store`, `storeGlow`, `quick` and `tap` on top); `BANK = { drag: false }` (the bank, as every chapter after the second: as built); `BACK = { stones: true, prints: true }`;
+  `UNDER = { prints: true }`; `STORE175 = { store: 175 }`, `STORE133 = { store: 133 }` (sunset).
 - **Spots**: the den's `nest` and `next-nest` (chapter 11's), `sleeper-1`; the garden's `hedge-side`, `hedge-gap`,
   `hedge-right` (new); the tower's `foot`, `railing`; the camp's `entrance`, `fountain-top`, `fountain-foot`, `crowd-left`,
   `crowd-right`, `center`, with chapter 11's raw spots where they serve (RING_YOU, RING_TALLY, OLD, BESIDE); the hollow's
@@ -580,8 +587,9 @@ screen, named by its first words; every line below is the story's.
 - **f029** the same, Glintstar `kind`: caption "Glintstar’s whiskers twitch."; her "A spark. Frost-time could use one." (the
   story's split).
 - **f030** the same, Glintstar `solemn`: her "Chispapaw." (with tremendous dignity); the purr Tap.
-- **f031** `camp`/`purr`, `CAMP_DAY`, `purr`: our cat (`purr: true`), Chispapaw, Glintstar, Tallyheart, the old tom (`purr:
-  true`). Captions "You purr it first." / "Then, one by one, the cats join in, till the whole camp is humming her new name."
+- **f031** `camp`/`purr`, `CAMP_DAY`, `purr`: our cat, Glintstar, Tallyheart and the old tom each `purr: true`, Chispapaw in
+  the middle not (purred at, astonished; the crowd behind purrs with its eyes shut): the caption's whole camp (the final
+  review; v0.3 had our cat and the old tom only). Captions "You purr it first." / "Then, one by one, the cats join in, till the whole camp is humming her new name."
   (split at its sentence); the old tom's "Chips-paw?"
 - **f032** `camp`/`crowd`: Chispapaw `stand`, `happy`, the `motion` effect; `sfx: 'Ting! Ting!'`. Caption "Chispapaw can’t help
   it. She BOUNCES." (the story's split). From here her balloons carry no `name` (the label "Chispapaw").
@@ -642,8 +650,8 @@ fixed box between our cat and Tallyheart: section 4)
 - **f050**: caption "Down to the Old Bridge, Chispapaw copies your every step."; her "Were the cats grumpy at you, too? At
   first?"; **Choose** "“Some of them. Not for long.”" (f051a) / "“The old tom STILL is.”" (f051b) / "“Tallyheart wasn’t. Not
   once.”" (f052c).
-- **f051a** her whisper "Not for long. I can do not-for-long." → f052. **f051b** her "Chips-paw?" (`stern`: her old-tom
-  voice) → f052.
+- **f051a** her whisper "Not for long. I can do not-for-long." → f052. **f051b** caption "In her deepest, grumpiest old-tom voice:"
+  (the speech tags' one exception, above), then her "Chips-paw?" (`stern`: her old-tom voice) → f052.
 - **f052** (after a and b): caption "Chispapaw’s whiskers lift."; her "I’ll show them. Like you did." **f052c** (option c)
   Tallyheart ahead of them in the picture: captions "Up ahead, Tallyheart’s ear twitches. She heard." / "Chispapaw’s
   whiskers lift."; her "I’ll show them. Like you did." Both → f053.
@@ -738,7 +746,7 @@ book: {
   recap: [
     { text: 'On {name}{ending}’s first day as a warrior, {they} slept till noon, and Glintstar gave {them} a frost-time job: counting a new store under the Old Bridge, five hundred pieces by the full moon.' },
     { text: 'At the hedge, a little pillow cat from {their} old tower was counting the Clan in Spanish, the way {name}{ending} once watched through the glass.' },
-    { text: '{name}{ending} spoke up for her, and she chose her own Clan name: Chispa, which means spark. Glintstar named her Chispapaw, and gave her to {name}{ending} as {their} very first apprentice.' },
+    { text: '{name}{ending} spoke up for her, and the little cat chose her own Clan name: Chispa, which means spark. Glintstar named her Chispapaw, and gave her to {name}{ending} as {their} very first apprentice.' },
     { text: 'In the Training Hollow, Tallyheart taught them both something new: take-aways, with loose ones, rows and squares, ones first.' },
     { text: 'At sunset the Clan’s first frost-time catch went into the store, and {name}{ending} counted what stayed: one hundred thirty-three, one square, three rows and three loose.' },
     { text: 'Riffle brought news: Granny has found another badger track, a fresh one.' },
@@ -866,7 +874,7 @@ restore the loaded table, never delete it (`takes-ui.test.js`' `withWords`, `tak
   Spanish was); else ''.
 - **`E.sayAs(text, cat)`**: `PC.words.sayAs` applied to English speech, whole words, in its order ("Chispapaw" before
   "Chispa", so "Chispapaw" is never "Cheespapaw"); "Chips-paw?" is untouched; **a sayAs word equal (ignoring case) to the
-  cat's own name or pet name is skipped**, so a cat a player named Chispa is said as she always was (the name is one
+  cat's own name or pet name is skipped** (as built: also her Clan name, {name}paw, and her warrior name), so a cat a player named Chispa is said as she always was (the name is one
   `keepNameChars` allows, and a common Spanish pet name: section 7, item 17). A no-op for every line of chapters 1 to 11,
   for every cat.
 - **`E.speechParts(text, lang, cat)`**: a filled line split for the voices: `[{ text, lang: 'en' | 'es', en?, line?,
@@ -901,7 +909,8 @@ restore the loaded table, never delete it (`takes-ui.test.js`' `withWords`, `tak
   has no italic face, and Spanish is never lettered in Andika (the kit's design). Every other skip exactly as before.
 - **Count the store's friend** (the kit's section 5 leaves Chispapaw's lines to this chapter): **`E.takeRoundDef()`** gains
   `echo: { on: 'first', lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] }` (the round's first problem right
-  in every column: one echo a round); **`E.hollowShelf(...)`** gains `friend: { who: 'chispapaw', text: E.esLine('{es:aContar}') }`
+  in every column: one echo a round; a twin right counts when every problem before it was helped, so an echo the moment
+  she gets one right reads as a reward: the final review, pinned on real rounds in `tests/spanish.test.js`); **`E.hollowShelf(...)`** gains `friend: { who: 'chispapaw', text: E.esLine('{es:aContar}') }`
   after Tallyheart's greeting (and after "Another round? I've got all evening."), absent while a Warrior Counts sitting
   waits (its waiting line takes the place, and the room). The store opens only when chapter 12's lesson is finished, so
   she is always met by then. No Count the store round talks about spreading before chapter 13 teaches it: a round's state
@@ -915,7 +924,8 @@ restore the loaded table, never delete it (`takes-ui.test.js`' `withWords`, `tak
   once. `takeReserve` measures the tens' line in its full form already, so the keypad stays put. `PC.debug.takes`' inline
   254 − 131 has no `teach`, so the kit's measured `take:first` is unchanged.
 - **`E.checkStory`** (new guards, none raised by chapters 1 to 11): a balloon's `lang` is `'es'`, only on a frame's `say`
-  balloon or a set's `echo.lines`, never a caption, option or prompt; a `lang: 'es'` line has a token and, its tokens
+  balloon or a set's `echo.lines`, never a caption, option or prompt (as built: also a Counts set's prompt balloon, the
+  design for the chapters after this one, `E.promptLines`; never a take set's); a `lang: 'es'` line has a token and, its tokens
   removed, no letter (spaces, ¡ ! ¿ ? … , . ; : and U+2060 only), and filled with its largest numbers (a fact 9 × 9, an
   answer 999) has at most eight words; every `{es:key}` resolves (a whole number 0 to 1,000; `fact`, `a`, `b`, `answer`
   only in an `echo` line, `fact` only on a set without `op: '-'`; else a key of `PC.words.es`, an object with string `es`
@@ -1126,6 +1136,7 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
      (section 6), not with the prompt, which is already the kit's longest first column.
    - *"Chispapaw says the first right answer … wherever it comes"* and *"Her echo and her line hold the page"*: the line
      the answer earned (her hardest remembered, a retry's "There it is…") stays, before the echo (section 9, call 8).
+   - *"Now you try…" / the sigh as 58 − 23's prompt* (the story's 342-343, For us 8): the sigh is 76 − 42's (item 19).
    - *"its twin, if any, is asked plainly"* (both the worked example's and 58 − 23's): the kit's queue copies no `prompt` and
      no `right` into any twin (run); pinned for every twin in the chapter.
    - The Waffles cut (the brief's): if the plain path passes 2,000, f011 goes and f012 opens "{petname}! NEWS, darling!"
@@ -1168,7 +1179,9 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
    pins it; the page review looks at a later column of 76 − 42 at 1080 × 720 and 390 × 844 to see no band.
 9. **A gloss makes a Spanish balloon two lines taller**: at the end of 475 − 132 the stack is released (the kit's), so the
    keypad may sit lower for that end screen only; on the Counts page the keypad is away. The page review measures `es:take`
-   and `es:echo` at the four sizes, Aa off and on (section 10).
+   and `es:echo` at the four sizes, Aa off and on (section 10). (v0.3, the final review: at 1080 × 720 with Aa on and at
+   1080 × 700 that end screen scrolls Next in and lays the kit's end line under the bar, the echo and Next whole: accepted
+   in section 10's page review.)
 10. **A re-sit waiting over the take lesson**: the warm-up's first answer sets a waiting Warrior Counts sitting aside, so the
     take lesson opens without the waiting line, except for a cat who starts a re-sit between the warm-up and f048 and comes
     back within two hours (the kit's UI owner's warning: `take:first` with the waiting line does not fit at 1080 × 720).
@@ -1230,6 +1243,18 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
     sideways, and with no Spanish voice a line's English parts are one utterance. The art: a marked purrer's 'purrr' keeps
     off every other cast member's head (f037a, f031; no frame of chapters 1 to 11 moves). Not changed: "You hop up onto the
     hedge-top" (f013, item 4: a climber's line over the one picture) and f077's Tallyheart (settled by look).
+23. **The final review's round** (2026-11-08, still v0.3; no word of the story changes): f051b letters the story's own
+    speech tag as a caption before her balloon (section 5's one exception: in the wide shot Chispapaw seemed to get her own
+    new name wrong); on f031 Glintstar and Tallyheart purr too, so the caption's whole camp is drawn, and a purrer's word
+    beside her back keeps off a friend's body as well as her head (Glintstar's lay across the old tom's chest; no frame of
+    chapters 1 to 11 moves: the four with a marked purrer draw byte for byte); the book's third entry says "the little cat
+    chose her own Clan name" (for a she-cat, "she" could be our cat); Count the store's echo on a twin is kept and named
+    (section 6) and pinned on real rounds; section 2's `ch12-take` block shows the sigh as 76 − 42's prompt, as built; the
+    end of 475 − 132 with the echo at 1080 × 720 with Aa on is accepted (item 9, section 10). Not changed: the store
+    picture's square drawn smaller than a row (the kit's `placeValue`, its design and every take page's, chapter 12's and
+    the kit's live ones: the kit owner's call, `docs/take-aways.md`), and a dream typed but not yet put in her book lost on
+    a reload of the dream page (every chapter's since chapter 1, a change to all eleven live chapters' dream pages: not
+    chapter 12's).
 
 ## 8. What chapter 13 inherits
 
@@ -1278,8 +1303,8 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
 - **Drawn now** (copy into continuity's places table at ship): the bridge's `store` camera (the dry den's floor, the store
   laid out by the kit's picture, `store: n`, `tap: 'store'`, six spots); the hollow's `store` (the store's plan, empty
   pressed places), `storeGlow`, `quick` (her square round: the quick marks' `round`) and `tap: 'squares'`; the den's
-  `moon: 16`; the garden's `hedge-right`; the camp, the garden's hedge and the tower's balcony by `day` (or the midday run
-  at `morning`, as the sets owner found); Chispapaw; a cat carrying a mouse (`holds: 'mouse'`).
+  `moon: 16`; the garden's `hedge-right`; the camp, the garden's hedge and the tower's balcony by `day` (no `morning`
+  fallback: the sets owner found the day looks right); Chispapaw; a cat carrying a mouse (`holds: 'mouse'`).
 - **Words on screen now**: take-aways, loose, a row, a square, ones first, the store, frost-time, a warrior's nest, the
   apprentices' den, the paw thing, "the quick way to scratch a count"; Spanish as above. Not used: borrow, StarClan,
   Twoleg, kittypet, fresh-kill, Thunderpath, vigil, warriors' den, whisker-length, claw-length.
@@ -1436,7 +1461,7 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
   apprentice at her naming.
 - **`docs/continuity.md`** (ship): section 8; the store's running count's first entry (133, day 1); the places table
   (section 8, "Drawn now"); the cast (Chispapaw); the Counts table, row 12: three Counts (the cross-table warm-up), six
-  take-aways (step 1, no spread), the store's 175 − 42, the paw thing in Spanish; no new Count, marks 10.
+  take-aways (step 1, no spread: five in the lesson, the store's 175 − 42 the sixth), the paw thing in Spanish; no new Count, marks 10.
 - **`docs/build.md`** gets a "Chapter 12" section from the spanish owner (section 6 as built; the store camera, the hollow's
   options, the den's 16 and Chispapaw in a line each).
 - **`E.VERSION`** '0.12.0 (chapter 12, <ship date>)' and its pin in `tests/engine.test.js`: the orchestrator's, at the
@@ -1454,7 +1479,10 @@ Spanish critics (v0.4). Every low in `critique-known.json` was applied by v0.4 b
   Named: `tnohead`, then `tkeys` sideways, is the accepted fallback at 1080 × 700, the heads' words staying in the
   aria-labels; on a phone held
   sideways with Aa on, 58 − 23's first column may push the store picture under the screen, the column and the keypad
-  whole: the column needs no picture to type it.) A later
+  whole: the column needs no picture to type it. At the end of 475 − 132 with Chispapaw's echo, at 1080 × 720 with Aa on
+  and at 1080 × 700, Aa off and on, Next is scrolled in and the kit's end line lies 27px (14 and 42) under the bar, the
+  echo and Next whole: accepted, the final review (item 9's lower keypad for that end screen; holding the line would put
+  Next under the screen).) A later
   column of 76 − 42 (no echo band, item 8). `DRY=1` with `VOICES=es` and `VOICES=none` on f014, f018, f027, f061, f074,
   f075, f076 and the `es:` targets (the plan's rows: each part, its voice, its lang; never aloud on the mini).
 - **The ship's look** (at most 25 pictures, silent, the screen locked: `tools/shots.mjs`): her warrior's nest at noon (f002);

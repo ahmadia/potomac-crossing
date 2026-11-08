@@ -4747,7 +4747,10 @@
         var h = c.hb || b, hx = (h[0] + h[2]) / 2;
         var bwx = (back < 0 ? b[0] : b[2]) + back * (half + 8), bwy = clamp(cy, 60, 960), bwb = [bwx - 60 * ws, bwy - 40 * ws, bwx + 60 * ws, bwy + 8 * ws];
         var onHead = function (bx) { return info.some(function (o) { var hb = o && o !== c && o.hb; return hb && bx[0] < hb[2] && bx[2] > hb[0] && bx[1] < hb[3] && bx[3] > hb[1]; }); };
-        if (room >= half * 2 + 10 && !onHead(bwb)) words.push([bwx, bwy, back * 8, ws]);
+        // (the word by her back keeps off a friend's body too: chapter 12's f031, where Glintstar purrs beside the old tom,
+        // lettered it across his chest; no frame of chapters 1 to 11 has a friend there)
+        var onBody = function (bx) { return info.some(function (o) { var bb = o && o !== c && o.bb; return bb && bx[0] < bb[2] && bx[2] > bb[0] && bx[1] < bb[3] && bx[3] > bb[1]; }); };
+        if (room >= half * 2 + 10 && !onHead(bwb) && !onBody(bwb)) words.push([bwx, bwy, back * 8, ws]);
         // (the word over her head leans back; where that meets a friend's head, it leans the other way, still over her own)
         var hy = Math.max(50 * ws, h[1] - 14 * ws), hw = ws * 0.9, lean = back;
         var hbx = function (sd) { var x = clamp(hx + sd * half, half + 4, 1596 - half); return [x - 60 * hw, hy - 40 * hw, x + 60 * hw, hy + 8 * hw]; };

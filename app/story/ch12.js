@@ -1,7 +1,7 @@
 /* Chapter 12: A Spark at the Hedge.
  *
  * The story (docs/chapters/12-a-spark-at-the-hedge.md, Draft v0.4, final) cut into graphic-novel panels, per the
- * frame contract in docs/build.md; its spec (docs/chapters/12-a-spark-at-the-hedge.spec.md, v0.2) is the build's
+ * frame contract in docs/build.md; its spec (docs/chapters/12-a-spark-at-the-hedge.spec.md, v0.3) is the build's
  * contract for the Counts sets, the art, the pages she taps, the Spanish and the book. Module 2's first chapter: the
  * day after her ceremony, her first day as a warrior. Each frame is one moment: a drawn scene, a written storyboard
  * (`board`) for a future illustrator, short captions, speech balloons and sound effects, and exactly one interaction.
@@ -538,8 +538,9 @@
     },
 
     f031: {
-      // the whole camp wide on the `purr` camera; our cat purrs first, the old tom joins in
-      scene: S('camp', 'purr', CAMP_DAY, naming({ old: ['sit', 'stern', { purr: true }], glint: ['sit', 'happy'], chispa: ['sit', 'wonder'], me: ['sit', 'happy', { purr: true }], tally: ['sit', 'happy'] }), ['day', 'purr']),
+      // the whole camp wide on the `purr` camera; our cat purrs first, Glintstar, Tallyheart and the old tom join in (the
+      // crowd purrs with its eyes shut), round the little cat, who does not: the caption's whole camp (the final review)
+      scene: S('camp', 'purr', CAMP_DAY, naming({ old: ['sit', 'stern', { purr: true }], glint: ['sit', 'happy', { purr: true }], chispa: ['sit', 'wonder'], me: ['sit', 'happy', { purr: true }], tally: ['sit', 'happy', { purr: true }] }), ['day', 'purr']),
       board: 'WIDE, THE WHOLE CAMP BY DAY. Our cat purrs first, the purr drawn as warm rings, and then one by one every cat round the fountain joins in, till the whole camp hums; the little cream cat stands in the middle of it, astonished, and the old grizzled tom purrs too, frowning at the new word. Two captions top left; his balloon puzzled.',
       caption: ['You purr it first.', 'Then, one by one, the cats join in, till the whole camp is humming her new name.'],
       say: [{ who: 'grizzled', text: 'Chips-paw?' }],
@@ -795,9 +796,11 @@
     },
 
     f051b: {
-      // her old-tom voice: `stern`
+      // her old-tom voice: `stern`; the story's tag lettered first (the spec's one lettered speech tag: in the wide shot the
+      // picture cannot carry it, and without it she seems to get her own new name wrong; the final review)
       scene: S('riverbank', 'path', {}, [chispa('walk', 'stern', PATH_CHISPA, 'right'), you('walk', 'happy', 'path-left', 'right'), tally('walk', 'kind', PATH_TALLY, 'right')], ['day']),
-      board: 'WIDE, THE RIVERBANK PATH, ONLY FOR A CAT WHO SAYS THE OLD TOM STILL IS, COMEDY BEAT. Chispapaw scrunches her face into the old grizzled tom’s frown, puffs out her chest and does his voice as deep and grumpy as she can; our cat grins, and Tallyheart pads on far ahead. Her balloon gruff.',
+      board: 'WIDE, THE RIVERBANK PATH, ONLY FOR A CAT WHO SAYS THE OLD TOM STILL IS, COMEDY BEAT. Chispapaw scrunches her face into the old grizzled tom’s frown, puffs out her chest and does his voice as deep and grumpy as she can; our cat grins, and Tallyheart pads on far ahead. One caption top left; her balloon gruff.',
+      caption: ['In her deepest, grumpiest old-tom voice:'],
       say: [{ who: 'chispapaw', text: 'Chips-paw?' }],
       next: 'f052'
     },
@@ -1074,7 +1077,7 @@
     },
 
     f077: {
-      // Tallyheart padding past behind the two nests, touching nobody
+      // Tallyheart padding past a step nearer than the two nests, at the close-up's edge, touching nobody
       scene: S('den', 'nest', DENW_NIGHT, [nestChime('lie', 'sleepy', { asleep: true }), nestYou('loaf', 'happy'), tally('walk', 'kind', PAST, 'left')], ['night']),
       board: 'CLOSE-UP, HER WARRIOR’S NEST, NIGHT. Tallyheart pads quietly past the nest on her way to her own, coming in at the edge of the panel, and looks down at our cat with a warm, proud look without stopping; the tortoiseshell warrior sleeps on. Her balloon soft.',
       say: [{ who: 'tallyheart', text: 'A good day’s work, warrior.' }],
@@ -1177,7 +1180,7 @@
       recap: [
         { text: 'On {name}{ending}’s first day as a warrior, {they} slept till noon, and Glintstar gave {them} a frost-time job: counting a new store under the Old Bridge, five hundred pieces by the full moon.' },
         { text: 'At the hedge, a little pillow cat from {their} old tower was counting the Clan in Spanish, the way {name}{ending} once watched through the glass.' },
-        { text: '{name}{ending} spoke up for her, and she chose her own Clan name: Chispa, which means spark. Glintstar named her Chispapaw, and gave her to {name}{ending} as {their} very first apprentice.' },
+        { text: '{name}{ending} spoke up for her, and the little cat chose her own Clan name: Chispa, which means spark. Glintstar named her Chispapaw, and gave her to {name}{ending} as {their} very first apprentice.' },
         { text: 'In the Training Hollow, Tallyheart taught them both something new: take-aways, with loose ones, rows and squares, ones first.' },
         { text: 'At sunset the Clan’s first frost-time catch went into the store, and {name}{ending} counted what stayed: one hundred thirty-three, one square, three rows and three loose.' },
         { text: 'Riffle brought news: Granny has found another badger track, a fresh one.' },

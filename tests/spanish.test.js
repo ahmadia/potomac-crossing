@@ -9,7 +9,8 @@
  * prompt asked in Spanish (E.promptLines: the design the chapters after this one ask for); and the page in Node: rich()
  * and plain(), the Spanish voice (UI.voices.pick) and what Read to me says, row by row (UI.voices.plan), with a Spanish
  * voice and without, never aloud; the CSS block and the page's wiring pinned as text. Chapters 1 to 11, the Warrior Counts
- * and the kit's lines fill, letter, check and sound exactly as before. Fixtures are inline (never the stub chapter 12). */
+ * and the kit's lines fill, letter, check and sound exactly as before. Fixtures are inline (never the stub chapter 12), but
+ * for Count the store's real rounds, played on a cat who has finished the built chapter 12 (the final review). */
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -252,6 +253,91 @@ test('E.takeEcho: 475 − 132 right and helped, its twin never, a column never; 
   assert.deepEqual(E.takeEcho(def, info(76, 42, true), round), { who: 'chispapaw', text: '«¡Treinta y cuatro!»\n(Thirty-four!)' });
   round.log.push({ a: 368, b: 145, correct: true });
   assert.equal(E.takeEcho(def, info(368, 145, true), round), null, 'one echo a round');
+});
+
+// Count the store played as the page plays it (storeBtn: E.takeRoundStart and cat.lesson; runTakes: T.digit a column at a
+// time, E.logTake, E.recordLesson at the end; problemEnd: E.takeEcho(E.takeRoundDef(), info, st)), real rounds in a row on
+// a cat who has finished chapter 12 (its lesson and its store played through E.takeLesson, PC.story.ch12's own sets), so
+// a change that carried a round's log into the next, or lost it on a reload, cannot pass on a hand-made log (the final
+// review; its template, ~/potomac-crossing-work/ch12/gap-store-round/node-check.js)
+test('Count the store, real rounds in a row: one echo a round, on the first problem right in every column; none on a helped one or after it; a twin right counts when every problem before it was helped; none again after the save is reloaded mid-round', () => {
+  const T = E.takes, STORIES = E.chapters(PC.story);
+  const cat = E.blankCat({ now: 1 });
+  cat.name = 'Moon';
+  STORIES.forEach((s, i) => { cat.finished[s.id] = 1000 + i; });
+  E.countSets(STORIES).forEach((k) => { cat.lessons[k.setId] = { set: k.setId, mode: 'chapter', answers: 10, correct: 10, fast: 5, facts: 10, firstTry: 10, helped: 0, noHelp: true, finished: true }; });
+  // the column's own digit, or (a slip) the next one; the ones-first pointer answered as the page does, the same digit again
+  const type = (st, def, miss, t) => {
+    const q = T.question(st), c = q.plan.cols[q.col];
+    const d = c.blank ? '' : String(miss ? (c.digit + 1) % 10 : c.digit);
+    let r = T.digit(st, def, d, 2000, t);
+    if (r && r.pointer) r = T.digit(st, def, d, 2000, t + 500);
+    return r;
+  };
+  ['ch12-take', 'ch12-store'].forEach((id) => {
+    const L = E.takeLesson(cat, PC.story.ch12, id, 5000, STORIES);
+    let t = 6000;
+    while (!T.done(L.state)) {
+      if (T.question(L.state).mode === 'tap') while (T.tap(L.state)) { /* the worked example's taps */ }
+      const r = type(L.state, L.def, false, t += 1000);
+      if (r && r.entry) E.logTake(cat, r.entry);
+      if (r && r.done) E.recordLesson(cat, L.state);
+    }
+  });
+  assert.ok(E.storeOpen(cat, STORIES), 'the store is open');
+  let me = cat;
+  // one round: help(q, i) says whether problem i gets a slip at its ones; trip, the problem after whose end the save goes
+  // through JSON, E.migrate and E.hollowRound, and the round is picked up from the copy
+  const round = (now, help, trip) => {
+    const R0 = E.takeRoundStart(me, STORIES, now, {});
+    me.lesson = { mode: 'hollow', state: R0.state };
+    let st = R0.state, def = E.takeRoundDef(), t = now, i = 0;
+    const out = [];
+    while (!T.done(st)) {
+      const q0 = T.question(st), miss = !!help(q0, i);
+      let res;
+      do {
+        const q = T.question(st);
+        res = type(st, def, miss && q.col === 0, t += 1500);
+        if (res.entry) E.logTake(me, res.entry);
+        if (res.done) E.recordLesson(me, st);
+      } while (!res.problemDone);
+      const e = res.entry, echo = E.takeEcho(def, { problem: true, a: e.a, b: e.b, answer: e.answer, correct: e.correct, helped: e.helped }, st);
+      out.push({ a: e.a, b: e.b, correct: e.correct, twin: !!e.twin, echo });
+      if (echo) assert.deepEqual(echo, { who: 'chispapaw', text: E.esLine('¡{Es:answer}!', null, { a: e.a, b: e.b, answer: e.a - e.b }) }, e.a + ' − ' + e.b);
+      if (i === trip && !res.done) {
+        const save = E.newSave(); save.cats = [me]; save.current = me.id;
+        me = E.migrate(JSON.parse(JSON.stringify(save))).cats[0];
+        const HL = E.hollowRound(me);
+        assert.ok(HL && !T.done(HL.state), 'the round picked up after the reload');
+        st = HL.state; def = E.takeRoundDef();
+      }
+      i++;
+    }
+    return out;
+  };
+  const echoed = (P) => P.map((p, i) => (p.echo ? i : -1)).filter((i) => i >= 0);
+  const firstRight = (P) => P.findIndex((p) => p.correct);
+  // the first problem helped, the rest right: the echo on the second, the first right in every column, and only there
+  const r1 = round(100000, (q, i) => i === 0);
+  assert.equal(r1[0].correct, false);
+  assert.deepEqual(echoed(r1), [firstRight(r1)], 'round 1: ' + JSON.stringify(r1));
+  assert.equal(firstRight(r1), 1);
+  // every problem right, twice: an echo in each round, after one in the round before (no log carried over)
+  [200000, 300000].forEach((now) => { const r = round(now, () => false); assert.deepEqual(echoed(r), [0], 'round at ' + now); });
+  // her first three problems helped: the first right in every column is the first one's twin, and it is echoed (spec
+  // section 6: a twin right counts when every problem before it was helped), once
+  const r4 = round(400000, (q, i) => i <= 2 && !q.twin);
+  assert.deepEqual(r4.slice(0, 3).map((p) => p.correct), [false, false, false]);
+  assert.equal(r4[3].twin, true, 'the first one’s twin comes back fourth');
+  assert.deepEqual(echoed(r4), [3], 'round 4: ' + JSON.stringify(r4));
+  // the save reloaded right after the echo, and two problems after it: the round finishes with no second echo
+  const r5 = round(500000, () => false, 0);
+  assert.deepEqual(echoed(r5), [0], 'reloaded after the echo');
+  const r6 = round(600000, (q, i) => i === 0, 1);
+  assert.deepEqual(echoed(r6), [1], 'helped, the echo, then reloaded');
+  const r7 = round(700000, () => false, 2);
+  assert.deepEqual(echoed(r7), [0], 'reloaded two problems after the echo');
 });
 
 /* ------------------------------------------------------------------ the Spanish count */

@@ -1247,7 +1247,7 @@ Each is Aron's to reverse.
   fresh rows' spacing (the block is read as a square opened into ten rows, and two stacks of five do not fit a phone's
   115 px zone) and the small answers (each a valid twin of its shape). The suite: 46 files, 1,903 tests, all pass.
 - **Chapter 12 as built** (2026-11-08, CACHE v25, `E.VERSION` 0.12.0 at the ship; `app/story/ch12.js`'s header has each
-  call, the spec's section 7, items 18 to 22, the review's round; the builders' notes in `~/potomac-crossing-work/ch12/`
+  call, the spec's section 7, items 18 to 22, the review's round, and item 23, the final review's; the builders' notes in `~/potomac-crossing-work/ch12/`
   `build-cats/`, `build-sets/`, `build-spanish/` and `story/`). *A Spark at the Hedge*, module 2's first chapter: 88 frames,
   77 to 80 a reading (the cap is 125); twelve Taps, one count by taps, seven choices (none sets a flag), three Counts and
   six take-aways, the dream. **Decisions 53 to 55 bind it**: 53 (the maths, a Spanish-speaking friend, the words easy to
@@ -1408,6 +1408,25 @@ Each is Aron's to reverse.
   f061, f064, f070); of 14,360 pages no box of chapters 1 to 11 moved (the grown-ups corner's row apart, now measured on
   the corner); the take and Spanish screens measured again after the last two changes at all eight sizes. The suite: 48
   files, 2,002 tests, all pass.
+  - *The final review's round* (2026-11-08; `~/potomac-crossing-work/ch12/final.json`, six confirmed findings, four of
+    them this round's and two the ship's own steps; the spec's section 7, item 23; notes in `ch12/integrate-r2/`). f051b
+    letters the story's own speech tag before Chispapaw's "Chips-paw?", "In her deepest, grumpiest old-tom voice:" (the
+    spec's one lettered tag: in the wide shot of the path the picture could not carry it, and she seemed to get her own new
+    name wrong; a lead-in with a colon, as chapters 3, 6, 9 and 10 letter one). The spec's `ch12-take` block shows the
+    sigh as 76 − 42's prompt, as built; continuity's Counts row 12 says five take-aways in the lesson and the store's the
+    sixth (nine typed answers on every reading) and puts the whisper on f061; the spec accepts the end of 475 − 132 with
+    the echo at 1080 x 720 with Aa on (item 9, section 10). Lows taken: on f031 Glintstar and Tallyheart purr too (the
+    caption's whole camp), and a purrer's word beside her back keeps off a friend's body as well as her head
+    (Glintstar's lay across the old tom's chest; the four frames of chapters 1 to 11 with a marked purrer draw byte for
+    byte); the book's third entry says "the little cat chose her own Clan name" (for a she-cat "she" could be our cat);
+    Count the store's echo on a twin (every problem before it helped) kept, named in the spec and pinned with real store
+    rounds played in a row, reloaded mid-round, in `tests/spanish.test.js`; the spec's other disagreements with the build
+    (the bank's `drag: false`, `hedge-right` at 1562, no `morning` fallback, `E.sayAs`'s Clan and warrior names, a Counts
+    prompt's `lang`) marked as built; stale comments and a test title; `docs/build.md` and `CLAUDE.md` written for the
+    ship of v25. Left: the store picture's square drawn smaller than a row (the kit's `placeValue`, its stated design and
+    every take page's, the kit's live pages among them: the kit owner's call), and a dream typed and not yet put in her
+    book lost when the dream page reloads (every chapter's since chapter 1: a change to eleven live chapters, not chapter
+    12's). `E.VERSION` 0.12.0 and the ledger's v25 entry are the ship commit's. The suite: 48 files, 2,003 tests, all pass.
 
 ## Open questions, waiting on Aron
 

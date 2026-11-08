@@ -1505,7 +1505,10 @@ function ch13Fingerprint(art, crypto) {
 // (chapter 12's review: a marked purrer's 'purrr' beside her back is left out where it would cover another cast member's
 // head, the whole-camp purr's test. No frame of chapters 1 to 11 has such a word (every frame's art compared, before and
 // after: none moved), but this test's placeholder cats stand at every one of the hollow's twelve spots, every seventh
-// marked purr, and on `wide` and `lesson` one word met a neighbour's head: those two fingerprints are new, nothing else)
+// marked purr, and on `wide` and `lesson` one word met a neighbour's head: those two fingerprints are new, nothing else.
+// The final review: the word beside her back keeps off a neighbour's body too (f031's Glintstar lettered it across the old
+// tom's chest); again no frame of chapters 1 to 11 moved (the four with a marked purrer, ch02 f077, ch03 f027b, ch05 f140
+// and ch06 f127a, draw byte for byte), and of these placeholders only `sand` had such a word: its fingerprint is new)
 const CH13_FINGERPRINT = {
   'room/wide': '1c060c96692a8094', 'room/cushion': '7bd537b108b3312d', 'room/glass': '4652bc4f27c59950', 'room/outside': 'a5fec3c0419d252a',
   'tower/up': '3e305d8a72779fd1', 'tower/balcony': '79a707cac5a1d77e', 'tower/balcony-close': '3e86a8936d1adede',
@@ -1513,7 +1516,7 @@ const CH13_FINGERPRINT = {
   'garden/meet': '55807ec6b2f15f08', 'garden/hedge': 'e8e7020ce5b0f14a', 'garden/hedge-close': 'b1555508971c43b9',
   'camp/reveal': '82d2b71e8ae0209e', 'camp/crowd': '96218e76d85441e4', 'camp/fountain': '68ff733bb524a469', 'camp/entrance': '7411b4ff9e385650', 'camp/fountain-close': 'f23e1c54970d3492',
   'camp/ferns': '8a8cbfa4c44c4cd3', 'camp/purr': '54b99ac976dd6911',
-  'hollow/wide': '07d7cd0b6831ad32', 'hollow/lesson': '335166c9e0bbc01f', 'hollow/sand': '22575ad532bb51b1', 'hollow/tree': '1a75e6bdf7879c08',
+  'hollow/wide': '07d7cd0b6831ad32', 'hollow/lesson': '335166c9e0bbc01f', 'hollow/sand': '4252f4e2a7ae0d47', 'hollow/tree': '1a75e6bdf7879c08',
   'den/outside': '2835ed7eb7615b45', 'den/inside': '9add5e42e49787df', 'den/nest': 'd036e0b1ac61ab7d', 'den/doorway': '30c9140ff0a4ea45',
   'sky/up': 'fcf06935598addc6', 'sky/cats': 'de9e7845a2de172a', 'river/crash': '36031dec6afdee48', 'title/wide': 'c3078ad2d62c5efb'
 };

@@ -1176,6 +1176,69 @@ Each is Aron's to reverse.
   class works in Spanish, so the English is ours, and "spread" is what the store's picture shows). Chapter 14 has it again
   as Chispapaw's word at a spread; chapter 17's «¿Hay que desagrupar?» is unchanged. `docs/module-2.md`'s table follows.
   Still open and not blocking: how her class marks a spread on paper and whether it heads the columns C D U.
+- **The take-aways kit and book two** (2026-11-07, CACHE v24, players reach none of it until chapter 12): module 2's
+  long subtraction as its own piece, built before chapter 12 as the Warrior Counts were before chapter 10, on the
+  `take-aways` branch from 8195ad1, in four phases (the engine and the store's art; the take page and its tools; the
+  Hollow's shelf, Count the store and the grown-ups' table; book two), then reviewed in six lenses: 25 findings, each
+  checked by a skeptic and all taken, two rejected with reasons. `docs/take-aways.md` (v0.3, the fixes written in) is the
+  contract, its section 11 the design's 37 calls; `docs/build.md`'s "The take-aways kit" is what a chapter codes against;
+  `E.VERSION` 0.11.1. No chapter 1 to 11 has a take set, so every changed function takes its old path for every live
+  save. Measured with the shared sweep against live's cache (898fa1b5, `node tools/sweep.mjs --all`): 1,464 of 1,466
+  pictures byte for byte, and ch09 f099 and f100 differ only because that cache is older than live's ch09 (drawn from
+  live now, all 140 frames match); 13,456 pages at the four sizes, Aa off and on, no box moved, no panel changed, no
+  problem new or gone, the 88 new rows (the take screens, the shelf, Count the store) and the Warrior Counts' sittings
+  apart; `--takes`, 88 pages at the review's four more sizes, no problems. Notes, probes and pictures:
+  `~/potomac-crossing-work/take-aways/`. The builders' calls, each with its reason:
+  1. *Columns are numbered ones first everywhere* (a plan, a state, a slip, the marks, the sand); only a log entry's
+     `given` reads left to right, as an answer does.
+  2. *`PC.words` speaks to the kit through top-level keys of `E.TAKE_WORDS`' names*, a lower-case form bringing its
+     capital: one shape for chapter 12 to fill, and any other key (the Spanish) the chapters' own.
+  3. *The store's spread sits under the old pieces in its zone, not beside them*, squares two to a row: side by side,
+     every piece shrank to about 0.6. With nothing of the hundreds to show the picture has two zones, so a two-digit
+     problem's pieces are bigger; what is taken goes pale old first, each block from its end.
+  4. *The take page*: its panel is 2:1, the store picture's own shape (about 100 px less height upright); the column's
+     line joins the last prompt balloon when it is the teacher's, a twin's or warm-up's introduction its own; the heads
+     are the quick marks cropped and stroked at 9 units (the art's 4.6 vanished at chip size); no scroll anchoring
+     (WebKit's moved a scrolled page 8 px between two columns).
+  5. *The room fallbacks are set only when a problem's held stack needs them*, before she types, never within a problem:
+     blanket per-size rules would have taken the heads off every page at 1080 x 720.
+  6. *The echo's room is measured with the echo itself as well as two lines*: chapter 12's eight-word stub runs three
+     lines at 1080 x 720 and moved the keypad 11 px.
+  7. *On a phone held sideways with Aa on the help's counter joins the step's line* (section 6's named fallback: the sand
+     gets about 149 px, not 96), the panel's row is at least 96 px, and the shelf's and the store reward's stack stands
+     over the panel too, so "Another round" is on the screen.
+  8. *take:first is the worst case the gate measures* (the worked example's prompt joined, a re-sit's waiting line over
+     it); take:q and take:echo type the right digit on the page's own keypad, and the next column must not move it.
+  9. *The shelf reuses the Counts page's button list and sizes*; "Another round" from either kind of round lands on it
+     with the reward line; One Count at a time opens with its own greeting; Chispapaw and the echo are chapter 12's.
+  10. *The grown-ups' words say "regroup"* ("Regroup a ten", "smaller from bigger", "kept the ten it gave"); the kit's
+      lines never do, since "spread" is hers.
+  11. *Book two*: a volume drops its teaser once she has read the chapter it points to; a sleeper's page needs its
+      chapter finished, then its `when`; the book-two keys are refused on a module 1 chapter and module 2 must follow
+      module 1; every silhouette is the same plain shape, so none gives away who is still to find; a crossed rumour is
+      struck in red and read "crossed out:", and a sighting that comes first stands alone until its rumour arrives; an
+      empty store is the words alone; the volume buttons sit between the title and the portrait, 44 px.
+  The review's fixes:
+  12. *No line names a spread she has not met*: a take state knows the steps taught (a lesson's chapter and the ones
+      before, a round's learned), and `extra` ("no row went") waits for its spread, so no chapter carries an override
+      (chapter 12's spec dropped its `NO_SPREAD`) and the log and the corner say `fact`. The slips' order at a column that
+      lent: the flip, then `kept`, then the written top's flip, then `nospread`.
+  13. *No twin takes one of the chapter's answers* (a helped 254 − 131's twin could land on the store's 133), and a
+      round's older steps are those that spread, so it has one problem with no spread unless that is a hard step.
+  14. *Every prompt balloon is at most 12 words*, captions apart; `schoolWords` waits for chapter 12 to say it.
+  15. *The 'tap' page's lending digit is a finger's target*, its column's box and 6 px either side; the gold marks are at
+      least 16 px and the struck slash's tip clears them; Back from the shelf returns to the book's volume she came from.
+  16. *A tap, a newer step or a page gone never lets a late timer run a step twice*, and a 'show' problem's first column
+      waits on the words on the page (1.6 s for "Ones first.", not 4.4).
+  17. *The corner counts what it says*: Right first time is her own first asks (no worked, tapped or second go), Typical
+      time her right answers she spread herself, a note says so, and "One Count at a time" leads the module 1 part. The
+      log keeps her last 500 (four cats at both caps about 1.4M characters, half the WebKit quota Potion Lab shares), and
+      the table's heading says "(her last 500)" once it is full.
+  18. *A set's first two full lines are her own problems*: chapter 13's 85 − 39 hears "Ones first. Five take away nine."
+  Left: take:first at 844 x 390 with Aa on scrolls 62 px (a fitting rule hid the joined line's end in a scroll box iOS
+  draws no bar for); chapter 12's spec keeps the waiting line off its take lesson but for a rare re-sit. Rejected: the
+  fresh rows' spacing (the block is read as a square opened into ten rows, and two stacks of five do not fit a phone's
+  115 px zone) and the small answers (each a valid twin of its shape). The suite: 46 files, 1,903 tests, all pass.
 
 ## Open questions, waiting on Aron
 

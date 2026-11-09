@@ -1223,6 +1223,13 @@
     var heard = pre.concat(prompts, introB, [ask], line ? [{ who: teacher, text: line }] : []);
     return { lines: lines, heard: heard, joined: joined, line: line, ask: ask.text };
   }
+  /* What stays over the slot on a problem's first column (design section 3): its prompts only. A move-help or a pointer takes
+   * the place of the column's line, of the page's intro and of a twin's or the warm-up's introduction; heard, the prompts
+   * and then the question in words. */
+  function tSlotFirst(def, q, o) {
+    var F = takeFirst(def, q, Object.assign({}, o, { line: '', intro: [] })), n = F.lines.length - ((q.twin || q.of || q.warm) && F.lines.length ? 1 : 0);
+    return { lines: F.lines.slice(0, n), heard: F.heard.slice(0, n).concat(F.heard.slice(-1)) };
+  }
   function tOnesFirst(def) {
     var E0 = PC.engine, L = def && def.lines && def.lines.onesFirst != null ? def.lines.onesFirst : E0.TAKE_LINES.onesFirst;
     return E0.takeFill(typeof L === 'string' ? L : asList0(L)[0], {});
@@ -1270,9 +1277,9 @@
    * lines over it with each prompt a 'tap' or 'show' turn says under them (askLend, askGet, tapRow, colShown; 'show''s
    * steps), and the one slot: the longest line a move-help or a pointer can bring at this column's moves (not their sum),
    * in the column line's place (the reserve probe: under it, the keypad went under at 1080 x 720), so `slotBase` is the
-   * lines over the column with its line taken out (a prompt's and the page's intro stay; an echo about the column before
-   * goes with it: a help is about this one). `o.taught` (the state's) says whether a column with no spread has a
-   * target (an `extra` touch). A balloon `{ slot: true }` is drawn as the slot. */
+   * lines over the column with its line taken out, and the page's intro, a twin's or the warm-up's introduction and an echo
+   * about the column before with it (a help is about this column; a prompt stays: tSlotFirst). `o.taught` (the state's)
+   * says whether a column with no spread has a target (an `extra` touch). A balloon `{ slot: true }` is drawn as the slot. */
   function takePrompts(def, q, c) {
     var E0 = PC.engine, p = q.plan;
     if (!p.cols[c].spreads.length || q.mode === 'hers') return [];
@@ -1286,7 +1293,8 @@
     var M = q.moves[c];
     var add = function (k, j) { var h = E0.takeMoveHelp(def, p, c, k, j, style, mode); if (h && h.say) out.push(h.say.filter(Boolean).join(' ')); };
     if (!col.spreads.length) {
-      if (E0.takeTargets(p, c, 0, taught).length) add(0, { slip: 'extra', line: 'extraTouch', touched: c + 1 });
+      // (each column she can strike: the hundreds at a ones turn says its own line, "No square goes", chapter 15 on)
+      E0.takeTargets(p, c, 0, taught).forEach(function (t) { add(0, { slip: 'extra', line: 'extraTouch', touched: t }); });
       return out;
     }
     var form = (col.bottom || 0) - col.before === col.digit ? 'flip' : 'right';
@@ -1323,12 +1331,12 @@
       var bases, slotBases;
       if (c === q.col && c === 0) {
         bases = [takeFirst(def, q, o).lines];
-        slotBases = [takeFirst(def, q, Object.assign({}, o, { line: '' })).lines];
+        slotBases = [tSlotFirst(def, q, o).lines];
         if (!q.onesFirst) out.push(takeFirst(def, q, Object.assign({}, o, { line: tOnesFirst(def) })).lines);
       } else if (c === q.col) {
         var l0 = takeColLine(def, q);
         bases = [asList0(o.intro).concat(l0 ? [B(l0)] : [])];
-        slotBases = [asList0(o.intro).slice()];
+        slotBases = [[]];   // (the page's intro goes with the line: a help takes its place)
       } else {
         var L = [B(E0.takeLine(def, p, c, 'before', q.mode, true))], e = typeof o.echo === 'function' ? o.echo(c - 1) : null;
         bases = [room.concat(L)].concat(e ? [[e].concat(L)] : []);
@@ -1374,11 +1382,14 @@
   function takeStoreLabel(po, W) {
     W = W || takeWordsNow();
     var E0 = PC.engine, t = (po && po.taken) || {}, parts = [];
-    var left = function (k) { return Math.max(0, ((po && po[k]) || 0) - (t[k] || 0)); };
+    // (a lend's piece resting by the receiver, not yet opened ('out', between her lend and her get): not counted as landed)
+    var sp = po && po.spread && po.spread.stage === 'out' ? po.spread : null;
+    var left = function (k) { return Math.max(0, ((po && po[k]) || 0) - (t[k] || 0) - (sp && sp.to === k ? 10 : 0)); };
     var h = left('hundreds'), r = left('tens'), l = left('ones');
     if (h) parts.push(E0.numberWords(h) + ' ' + (h === 1 ? W.square : W.squares));
     if (r) parts.push(E0.numberWords(r) + ' ' + (r === 1 ? W.row : W.rows));
     if (l) parts.push(E0.numberWords(l) + ' ' + W.loose);
+    if (sp) parts.push(E0.numberWords(1) + ' ' + (sp.from === 'hundreds' ? W.square : W.row) + ' resting');
     var s = parts.join(', ');
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
   }
@@ -1558,7 +1569,7 @@
     if (half && n) st.half = true;
     return st;
   }
-  UI.takes = { press: takePress, waits: takeWaits, view: takeView, html: takeHtml, colLine: takeColLine, first: takeFirst,
+  UI.takes = { press: takePress, waits: takeWaits, view: takeView, html: takeHtml, colLine: takeColLine, first: takeFirst, slotFirst: tSlotFirst,
     reserve: takeReserve, helpStack: takeHelpStack, end: takeEnd, storeLabel: takeStoreLabel, spreadLabel: takeSpreadLabel,
     minus: takeMinus, words: takeWordsNow, corner: takeCorner, MS: TAKE_MS, ZONES: TAKE_ZONES,
     press2: takePress2, key: takeKey, tapAct: takeTapAct, prompts: takePrompts, slotLines: takeSlotLines, marksHtml: takeMarksHtml,
@@ -4485,11 +4496,11 @@
     var padWrap = box.querySelector('.padwrap');
     // (the kit v0.4's: the one slot under the column's line and the lines it stands under, the column's quiet time after a
     // phase change, the green flash, Tallyheart's paw-tap, her own digit's wiggle, a move-help's glow, the last press)
-    var slot = null, slotHelp = false, slotBase = [], slotHeard = [], quietUntil = 0, flash = null, ripple = -1, wig = -1, wigGen = 0, helpGlow = -1, press0 = null;
+    var slot = null, slotAsk = null, slotHelp = false, slotBase = [], slotHeard = [], quietUntil = 0, flash = null, ripple = -1, wig = -1, wigGen = 0, helpGlow = -1, press0 = null;
     // the problem as it stands (E.takes' question), her digit in the outlined box, the boxes and the marks as drawn
     var q = null, typed = '', boxes = [], marks = [], on = -1, glowCol = -1, askText = '';
     // 'line' (a column outlined), 'show', 'tap', 'type' (the keypad awake), 'busy' (a spread landing), 'help', 'end'
-    var phase = 'idle', padLockedUntil = 0, t0 = 0, firstAsk = true, firstIntro = [];
+    var phase = 'idle', padLockedUntil = 0, t0 = 0, clockGen = 0, firstAsk = true, firstIntro = [];
     // (`base` the lines on the page over the column; `baseHeard` what Read to me's button says of them: on a first column the
     // question in words before the column's line, section 6's order, which every later line of the column is said after)
     var base = [], baseHeard = [], echoLines = [], advance = null, gotAct = null, tapWant = null, tapShow = null, flying = null;
@@ -4572,18 +4583,28 @@
       } else { speakItems(items); wait(next, w.read); }
     }
     /* The column's clock (section 4's `cols`): it starts again once the column's line has been said, or would have
-     * been read, and never while she is typing. */
+     * been read, and never while she is typing. Under the moves a move's own clock (wakeM, tapM: `clockGen` moved on)
+     * withdraws that restart, so a box opened before the line was read keeps its own start; 'tap' waits at its target. */
     function startClock(items) {
-      var forCol = q.col, forPos = st.pos;
+      var forCol = q.col, forPos = st.pos, g = clockGen;
       t0 = perfNow();
-      var rc = function () { if (q && q.col === forCol && st.pos === forPos && phase === 'type' && typed === '') t0 = perfNow(); };
+      var rc = function () { if (g === clockGen && q && q.col === forCol && st.pos === forPos && (phase === 'type' || (mv && phase === 'tap')) && typed === '') t0 = perfNow(); };
       var text = items.map(function (i) { return i.text || ''; }).join(' ');
       if (save.settings.readAloud && 'speechSynthesis' in root && items.length) speakItems(items, rc);
       else { speakItems(items); if (text) later(rc, takeWaits(text, 'step').read); }
     }
     function bringIn(el) {
       var b = el.getBoundingClientRect().bottom, vh = root.innerHeight || 0;
-      if (vh && b > vh) root.scrollBy(0, b - vh + 8);
+      if (!(vh && b > vh)) return;
+      var by = b - vh + 8;
+      // (the kit v0.4: the keypad brought in never takes the stack's first balloon under the bar; its 8px margin goes first.
+      // Sideways the panel stands beside the column, so no fallback of its height helps: take:echo at 1080 x 700 with Aa on,
+      // the second marks row kept and an echo over the column, went 9 px over and the balloon 5 px under the bar)
+      if (mv && el === pad) {
+        var bar = $('bar'), room = stack.getBoundingClientRect().top - (bar ? bar.offsetHeight : 0);   // (sticky at the top: its height, not its rect mid-scroll)
+        if (by > room) by = Math.max(b - vh, room);
+      }
+      root.scrollBy(0, by);
     }
     // the keypad, and "Got it!", brought into view (after go()'s scroll to the top too: a lesson picked up is drawn inside it)
     function bringPad() { bringIn(pad); later(function () { bringIn(pad); }, 0); }
@@ -4726,14 +4747,14 @@
       storeNowM();
       var lines, said;
       if (q.col === 0 && fresh) {
-        var F = takeFirst(def, q, { intro: firstIntro, fill: fill }), F0 = takeFirst(def, q, { intro: firstIntro, fill: fill, line: '' });
-        lines = F.lines; said = F.heard; slotBase = F0.lines; slotHeard = F0.heard;
+        var F = takeFirst(def, q, { intro: firstIntro, fill: fill }), S0 = tSlotFirst(def, q, { intro: firstIntro, fill: fill });
+        lines = F.lines; said = F.heard; slotBase = S0.lines; slotHeard = S0.heard;
       } else {
         var lt = takeColLine(def, q), L = lt ? [T1(lt)] : [];
         var pre = fresh ? firstIntro : echoLines;
         lines = pre.concat(L); said = (fresh ? heard(pre) : []).concat(L);
-        // (a help is about this column: an echo about the one before goes with the line; the page's intro stays)
-        slotBase = fresh ? pre.slice() : []; slotHeard = heard(slotBase);
+        // (a help is about this column and takes the line's place: an echo about the one before and the page's intro go with it)
+        slotBase = []; slotHeard = [];
       }
       firstAsk = false;
       base = lines;
@@ -4754,13 +4775,15 @@
       }
       if (q.mode === 'tap' && spreads && m && m.move === 'touch' && q.tap) return tapM(said);
       if (k > 0) { var pr = movePrompt(k); if (pr) slotSay(T1(pr), false, false); }
+      // (her pale `ahead` digit picked up: the pointer's line back in the slot, unsaid, as afterMove put it)
+      if (q.pale != null && litDecide()) { var ahl = E.takeAheadLine(def, q); if (ahl) slotSay(T1(ahl[0]), true, false); }
       wakeM(said);
     }
     // the prompt a 'tap' or 'show' column stands at, move k (the step or the ask at it, else the last before it)
     function movePrompt(k) {
       if (q.mode === 'hers' || !q.plan.cols[q.col].spreads.length) return null;
       var S = E.takeShow(def, q.plan, q.col, { mode: q.mode, style: q.style, picture: q.picture }), M = q.moves[q.col];
-      if (k >= M.length - 1) return S.line;
+      if (k >= M.length - 1) return takeColLine(def, q) ? null : S.line;   // (the column's line says it already)
       var list = (q.mode === 'show' ? S.steps.slice(1) : S.taps).filter(function (x) { return x.idx <= k && x.say; });
       return list.length ? list[list.length - 1].say : null;
     }
@@ -4770,7 +4793,7 @@
       if (q.box && q.box.kind === 'answer' && typed === '') boxes[q.col] = q.pale != null ? { v: String(q.pale), cls: 'pale' } : { v: '', cls: '' };
       drawCol();
       // (each move's clock starts when its box opens or its target is live; the first column's after its line, as v0.3's)
-      if (said && said.length) startClock(said); else t0 = perfNow();
+      if (said && said.length) startClock(said); else { clockGen++; t0 = perfNow(); }
     }
     // 'show' (the worked example): the column's opening line, then Tallyheart's touches
     function showOpenM() {
@@ -4805,9 +4828,11 @@
       paintStore(E.takePicture(def, qAt(), Object.assign(takeStageAt(q), { glow: q.glow })));
       var b = t && t.say ? T1(t.say) : null;
       if (b) slotSay(b, false, false);
-      speakItems((said || []).concat(b ? heard([b]) : []));
+      var items = (said || []).concat(b ? heard([b]) : []);
       drawCol();
-      t0 = perfNow();
+      // (the first column's touch clock starts once its line and the tap prompt have been read, as v0.3's startTap did;
+      // a later touch's, or one after an undo, when its target is live)
+      if (said && said.length) startClock(items); else { speakItems(items); clockGen++; t0 = perfNow(); }
     }
     // the next move's phase: Tallyheart's touch ('show'), the glowing lender ('tap'), or her keys
     function resumeM() {
@@ -4826,10 +4851,12 @@
       if (r.undone) { storeNowM(); return resumeM(); }
       if (r.pointer) {
         if (r.pointer === 'ahead') { typed = ''; boxes[q.col] = { v: String(r.pale), cls: 'pale' }; }
-        if (r.line) slotSay(T1(r.line), true, true);
+        if (r.line) { slotSay(T1(r.line), true, true); if (r.pointer === 'touchMade') slotAsk = slot; }
         moveStore(r.picture || E.takePicture(def, qAt(), takeStageAt(q)), litZone());
         return resumeM();
       }
+      // (the touch made for her asked the lend: once she has made it, its ask leaves the slot)
+      if (slot && slot === slotAsk && (r.move === 'lend' || r.move === 'get')) { slot = null; slotHelp = false; say(base); saying(baseHeard); }
       moveStore(r.picture, litZone());
       if (r.line && !(q.mode === 'tap' && curMove() && curMove().move === 'touch' && q.tap)) slotSay(T1(r.line), false, true);
       resumeM();
@@ -5030,7 +5057,10 @@
         var it0 = st.queue[st.pos];
         if (it0 && !it0.moveStyle) { st.style = styleNow(); q = T.question(st); }
         if (needMarks()) return marksPhase(ask);
-        frameEl.classList.toggle('tsecond', E.takeMoveMarks(q.plan, q.style, q.plan.n, 0).some(function (m) { return !!m.m2; }));
+        // (the second marks row kept under the heads row's fallback: the plan's own marks need it, or a lent hundreds can take
+        // an extra touch at the tens, whose box opens there: set as the problem begins, so nothing moves within it)
+        frameEl.classList.toggle('tsecond', E.takeMoveMarks(q.plan, q.style, q.plan.n, 0).some(function (m) { return !!m.m2; }) ||
+          (q.plan.cols.some(function (c) { return c.chain; }) && E.takeTargets(q.plan, 1, 0, st.taught).indexOf(2) >= 0));
       }
       typed = ''; echoLines = []; glowCol = -1; marks = q.marks;
       boxes = q.plan.cols.map(function (c, i) { return i < q.col ? (q.got[i] === '' ? { v: '', cls: 'blank' } : { v: String(q.got[i]), cls: 'right' }) : { v: '', cls: '' }; });
@@ -5332,6 +5362,9 @@
     if (mv) [tcol, panel, stack].forEach(function (el) { el.addEventListener('pointerdown', function (e) { press0 = { x: e.clientX, y: e.clientY, t: perfNow() }; }); });
     keyHandler = function (e) {
       if (isTyping(e)) return;
+      // (the marks page: a focused picture button keeps its own Enter and Space once the pictures are live, so a keyboard can pick
+      // and switch; before that, Enter moves the lines on as anywhere on the page)
+      if (mv && phase === 'marks' && doc.activeElement && doc.activeElement.closest && doc.activeElement.closest('#screen .tpick.tlive .tpb')) return;
       if (mv && (e.key === ' ' || e.key === 'Enter')) {
         // a tap target focused (VoiceOver, a keyboard): Space or Enter taps it; Space on the 'tap' page taps the glowing lender
         var tgt = doc.activeElement && doc.activeElement.closest ? doc.activeElement.closest('#tcol .ttarget') : null;
@@ -5478,8 +5511,8 @@
     touch: 1, lend: 1, get: 1, 'get:one': 1, chain: 1, 'help:move': 1, ahead: 1, marks: 1, 'hollow:marks': 1 };
   // chapter 13's marks page, inline (its spec's `ch13-take` marks: design section 2's table), until PC.story.ch13 has its own
   var TAKE_DEBUG_MARKS = { lines: [{ who: 'chispapaw', text: 'My little Tall One writes it like THIS.' }, { who: 'chispapaw', text: 'A little 1 in front!' },
-    { who: 'tallyheart', text: 'Some write the new number on top instead.' }, { who: 'tallyheart', text: 'Both are right. Which way do YOU like?' }],
-  one: [{ who: 'chispapaw', text: 'Just like my little Tall One!' }], above: [{ who: 'tallyheart', text: 'On top it is.' }] };
+    { who: 'tallyheart', text: 'Some write the new number on top instead.' }, { who: 'tallyheart', text: 'Both are right. Which marks do YOU like?' }],
+  one: [{ who: 'chispapaw', text: 'Just like my little Tall One!' }], above: [{ who: 'tallyheart', text: 'On top it is. That’s how I write it too!' }] };
   function takeDebugMarks() {
     var ch = PC.story && PC.story.ch13, sets = ch && ch.counts ? Object.keys(ch.counts).map(function (k) { return ch.counts[k]; }) : [];
     var own = sets.filter(function (d) { return d && d.op === '-' && d.marks && typeof d.marks === 'object'; })[0];

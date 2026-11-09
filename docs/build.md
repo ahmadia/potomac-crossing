@@ -1860,6 +1860,8 @@ written in), built in `app/engine.js`, `app/art/cats.js` (one entry in `app/art/
 the sets and the guards, section 4 the record, section 8 every piece with its guard, section 9 the tests); the calls
 are in the README, under decision 46. No chapter 1 to 11 has a take set, so no player reaches any of it until chapter
 12: every changed function takes its old path for every live save. This section is what a chapter codes against.
+Decision 57's v0.4 (the borrow made as moves she touches and types, in the marks she chooses), built 2026-11-09 to ship
+with chapter 13, is its last paragraph: where it and v0.3's text below differ, a state under its gate follows v0.4.
 
 **A take set** sits in a chapter's `counts` beside its Counts sets, on a plain Counts frame (`counts: { set, next }`).
 - Set keys: `op: '-'` (required; any other `op` is an error), `teach` (one of `E.TAKE_STEPS`), `picture` (`{ kind:
@@ -1988,6 +1990,95 @@ frame's place ("**Then the take-aways**").
 in `tests/fixtures/takes-stub.js` (never served); `takes-exhaustive.test.js` is in `SLOW`. The chapter-7, -8 and -9
 goldens, the fingerprints and the Warrior Counts' three files pass untouched; the version pin is in
 `tests/engine.test.js`.
+
+**v0.4: the borrow as a step she does** (decision 57; [`take-aways.md`](take-aways.md) Design v0.4, its section 1a the
+moves and the marks, section 8 the names as built; designed and planned in `~/potomac-crossing-work/regroup/`, built on
+chapter 13's branch on `e000777` as `5b974cb` plus the review's round, 2026-11-09; it ships with chapter 13 as v26, so
+`E.VERSION` moves to 0.13.0 with chapter 13 at the ship and `CACHE` stays v26, already bumped by chapter 13's stub).
+Every piece is behind one gate, and a chapter codes nothing for it but a take set's `marks`:
+- **The gate.** `E.takeMovesOn(st)`: a take state whose `taught` is a list holding a step from `ones2` on. Chapter 12's
+  lesson (`['none']`), a chapter-12-only player's store rounds, `T.start` with no `taught` (`take:first`,
+  `PC.debug.spanish`) and every v25 save play v0.3 exactly (`tests/fixtures/takes-v25-entries.json`, v25's entries,
+  states and lines for 27 cases, recorded before any change, deep-equal); `T.start` writes the new keys only under it,
+  and the page sets `.tmoves` on the frame only under it, so chapter 12's columns, corner and shelf are byte for byte.
+  From chapter 13's lesson on (`taught` `['none', 'ones2']`), and in a round once `ones2` is learned, it is on.
+- **The moves** (section 1a.1). A column that needs a spread is moves, ones first: tap the lender (it is struck), type
+  its new number, type the receiving column's new number in her style, then the answer; across a zero each link the same
+  (seven moves at the ones). `E.takeMoves(plan, style)` lists them (`{ move: 'touch' | 'lend' | 'get' | 'answer', col,
+  link, value, reads, before, to | from, zero }`); `E.takeTargets(plan, col, moveIdx, taught)` the columns she can tap,
+  only at a decide (move 0, or a chain's second touch, 3) and only once a spread out of them is taught (the tens from
+  `ones2`, the hundreds from `tens`); `E.takeMoveMarks(plan, style, col, moveIdx)` the marks the column draws (`{ struck,
+  front, frontStruck, m1, m2 }`; `E.takeMarks` stays v0.3's). The runner gains `T.touch(st, def, col, now, ms?)` (a tap:
+  `{ accepted, box }`, a pointer, a slip with its help, `{ undone }` only for a strike she made herself, or `{ ignored }`)
+  and `T.digit` takes a move's number (`'13'` allowed; in `'one'` 1 or the column's new number); `T.tap(st, off, def?,
+  now?)` stays, a thin wrapper calling `T.touch` on the glowing column. `T.question` adds `move`, `moves`, `box`,
+  `targets`, `style`, `pale` and `glow`. A right answer typed before the moves is `ahead`: kept pale, the lender lit,
+  never `correct`, no twin (`E.takeAheadLine(def, q)` gives its line back to a page picking the column up). `'show'` has
+  Tallyheart tap and say each number while she types it (`E.takeShow`'s steps carry `ask` and `touch`); `'tap'` prompts
+  each move and asks the numbers only of a link of a kind no earlier chapter taught (by the set's `teach`: chapter 13's
+  70 − 34 asks, chapter 14's 640 − 218 does not); `'hers'` prompts nothing. The store's picture rests the lent piece
+  unopened between a lend and its get (`E.takePicture`'s `half`, drawn by `PC.art.placeValue` as `spread.stage: 'out'`,
+  static).
+- **The slips and lines** (section 1a.4). `E.TAKE_SLIPS` is `zero`, `flip`, `nospread`, `kept`, `lend`, `get`, `extra`,
+  `fact` (`lend` and `get` new: a wrong new number; a keying slip twins only on its second problem in the lesson or
+  round). `E.takeMoveSlip(plan, col, moveIdx, given, style, taught, ctx)` judges a move (a slip, or a pointer `ahead`,
+  `zeroFirst`, `where`, `gave`, `nine`, `order`); `E.takeMoveHelp(def, plan, col, moveIdx, slip, style, mode)` helps it
+  in one move, no sand; the answer keeps v0.3's sand help, her marks kept (`E.takeHelp`'s `opts.style`). `E.TAKE_LINES`
+  gains `showLend`, `showGet`, `chainLend`, `chainGet`, `chainLend2`, `chainFirst`, `askLend`, `askGet`, `extraTouch`
+  (with `onesFar`, a struck hundreds at a ones turn), `zeroTouch`, `zeroStop`, `zeroLend`, `nine`, `keptMove`, `keptGot`,
+  `lendMove`, `getMove`, `ahead`, `where`, `gave`, `order`, `marksAsk`, `marksAfter` and `marksLabel`, tokens as v0.3's
+  plus `{old}`, `{left}`, `{new}`; `tap` gains `onesZero` and `tensZero` ("No loose. Spread a row: tap it."), and
+  `tapHere` becomes "The rows: the glowing ones." (no live chapter says it); every other v0.3 value is v25's. A set's
+  `lines` may replace any of them, as before. Every value is written out in section 8.
+- **Her marks: the marks page and My marks** (section 1a.2). `E.TAKE_STYLES` `['above', 'one']`: the new number on top
+  of the struck digit (13 over a struck 3, the default and v0.3's look) or a little 1 in front of it (¹3); in `'above'`
+  a column marked twice uses a second marks row in the heads row's place. `E.takeStyle(cat)` reads `cat.takes.style`
+  (`'above'` while unset), `E.setTakeStyle(cat, style)` writes it, never a flag; `E.takeLesson` and `E.takeRoundStart`
+  pass it, and a problem keeps the style of its first move (`moveStyle` on its queue item). The take page opens **the
+  marks page** before a problem's prompt when that problem will ask a spread move and she has no style yet (every
+  player: chapter 13's worked example, 43 − 16): `E.takeMarksPage(def, cat)` (`{ lines, options, after, current }`, from
+  the set's `marks` or the kit's lines), drawn by `marksPage(host, o)`, two done pictures of 43 − 16, one balloon at a
+  time, the buttons live only after the last line, a pick saved and switchable through its answer line, which takes the
+  question's place; the page waits for a pick and goes on after the answer line or a tap on the stack or the panel.
+  **My marks**, on the Hollow's shelf beside My nest once `ones2` is learned or a style is set (`#marksBtn`, its icon her
+  receiver's mark), opens the same page with the kit's lines (`go('hollow', { marks: true })`, `renderMarks`); a change
+  reaches the next problem. The grown-ups corner names her marks on one line and, once a row has moves, counts "Marks
+  right" and "In her head first".
+- **A chapter's key: `marks`.** A take set may carry `marks: { lines, one, above }`, each a list of balloons `{ who,
+  text }`, 12 words or fewer, no `lang` (`E.checkTakes`): the marks page's lines and its two answer lines. Chapter 13's
+  `ch13-take` carries Chispapaw's and Tallyheart's four (its spec, section 2); a set without it gets the kit's
+  ("When you spread a row, how do you write it?" / "Both are right. Tap the marks you like." / "Then that’s how we’ll
+  write it."). The take page shows the marks page only while she has no style, so after chapter 13 a set's `marks`
+  would never be seen: only `ch13-take` carries it.
+- **The save and the log** (section 4). Still version 2: one new optional field, `cat.takes.style`, absent until she
+  picks (`normTakes` keeps it when it is one of the two). A log entry of a problem with a spread (or a move she made)
+  gains `style` and `moves` (`[col, code, given, ms]`: `'t'` a touch, `'u'` a touch undone, `'l'` a lend's number,
+  `'g'` a get's), `ahead` and `nudges` when they happened, and each slip its `move`; `correct` is no slip and no counted
+  pointer, `helped` a slip; `cols` sums her move and answer times, the figures decision 56's re-measure will read. A take
+  state in the slot gains `style`, `move`, `moveMs`, `moveLog`, `ahead`, `nudges`, `seen`, `keyed` (and per column
+  `pale`, `lit`, `litTyped`, `touched`, `shut`), each optional; a v25 `'tap'` state with `tapped` k resumes at move 3k.
+- **The page** (`app/ui.js`, `index.html`). `runTakes` under the gate (its `…M` functions beside v0.3's), the column's
+  small boxes (`.tmini`), the `'one'` front box, the second marks row, the tap targets (`.ttarget`, `role="button"`, at
+  least 44 × 44, live only at a decide, Space or Enter taps), the one slot under the prompts (`.tslot`: a move-help or a
+  pointer takes the column line's place, and the page's intro and a twin's introduction with it, so the keypad stays
+  put at every size), the move-help's dimmed keypad, the 400 ms after a phase change, every move timed from when its box
+  opens or its target goes live. The CSS hangs on `.frame[data-mode="take"].tmoves`, `.tpick` and `.tpickicon`.
+- **The tools.** `PC.debug.takes` gains `touch`, `lend`, `get`, `get:one`, `chain`, `help:move`, `ahead`, `marks` and
+  `hollow:marks` (and `q`, `show`, `tap`, `spread`, `echo`, `sand`, `done` now show v0.4; `first`, `shelf`, `store` as
+  before), so `tools/shots.mjs`' `TAKE_TARGETS` and `dev/webkit/run.mjs`' `TAKE_SCREENS` gain the same `take:` and
+  `hollow:marks` screens, with `@next` on `take:lend` and `take:get` (`TAKE_NEXT`, a map: the keypad must not move
+  from one move to the next). `dev/webkit/measure.js` records the small boxes (`tmini`), the targets' hit boxes
+  (`ttgt`), the slot (`tslot`), the marks page (`tpick`, its little 1 `tone`) and the markup's hash (`hx`); `node
+  tools/sweep.mjs --takes` widens `col-off` (a small box out of the column, meeting the stack, or nearer the neighbour's
+  mark than its own digit) and adds `hit-small` (a live target under 44 × 44) and `marks-small` (the marks page's little 1
+  under 16 px); `--takes --compare` checks `TAKE_COMPARED` (`take:first`, `hollow:shelf`, `store:q` and chapter 12's
+  eight Spanish screens) byte for byte against the live tree, and `prune(...keep)` keeps the tree it compares from.
+  `tools/storyboard.mjs` prints a set's marks page as "**Then the marks page**" before its first spread.
+- **Tests.** `takes-engine` (v0.3's tests 4, 6, 7, 9 and 12 run both paths; the proofs E1 to E11 and E9b, L2 to L4),
+  `takes-exhaustive` (the moves of all 498,465 problems, both styles), `takes-art` (the resting stage, every other
+  picture pinned), `takes-ui` (U1 to U5, L5), `takes-tools` and `render-tools`, on `tests/fixtures/takes-stub.js`
+  (chapter 13's lesson set with `MARKS13`; `stub.sets()`: `ch13`, `ch14`, `zero`, `both` with their `taught`).
+  `tests/fixtures/v1.js`'s take branch plays the moves when `T.question(st).moves` is present.
 
 ## Chapter 12 (v0.3)
 
@@ -2151,15 +2242,25 @@ staging, the purr words), `tests/cats.test.js` (Chispapaw, `holds: 'mouse'`, `ro
 
 ## Chapter 13 (v0.1)
 
-Chapter 13, "The Hunter's Crouch", is told with the engine as it is: **data and art only**
-([its spec](chapters/13-the-hunters-crouch.spec.md) v0.2, section 6; decisions 53, 54 and 55; Claude's calls under decision
-46). No new interaction, no new engine key, no save change (version 2). Two flags (`teach`, replaced; `foundGroundhog`,
-sticky), six Counts sets, three words-table lines, the groundhog, and the places' new options; every new option off by
-default and every new camera, composition and spot additional, so chapters 1 to 12, the Warrior Counts and the kit's pages
-draw byte for byte.
+Chapter 13, "The Hunter's Crouch", needs **one engine piece, the take-aways kit v0.4** (decision 57: the borrow as
+moves she touches and types, her marks chosen on the kit's marks page; "The take-aways kit", its v0.4 paragraph above),
+built on chapter 13's branch before its frames and shipped with it as v26 ([its spec](chapters/13-the-hunters-crouch.spec.md)
+v0.3, section 6; decisions 53 to 55 and 57; Claude's calls under decision 46). Beyond the kit the chapter is **data and
+art only**: no interaction of its own, no new engine key, no save change (version 2; the kit's `cat.takes.style` is
+optional). Its one new set key is the kit's: `ch13-take` carries `marks` (Chispapaw's and Tallyheart's four lines and
+the two answer lines), and its first problem, 43 − 16, is where every player meets the marks page. Two flags (`teach`,
+replaced; `foundGroundhog`, sticky), six Counts sets, three words-table lines, the groundhog, and the places' new
+options; every new option off by default and every new camera, composition and spot additional, so chapters 1 to 12, the
+Warrior Counts and the kit's pages draw byte for byte.
+
+**The kit v0.4, the spec's fourth check** (decision 57; `~/potomac-crossing-work/regroup/plan.md`): `E.takeMoves`,
+`T.touch` and `E.takeMarksPage` exist; on the stub chapter 13 of `tests/fixtures/takes-stub.js` (its lesson set with
+`MARKS13`, chapter 13's lines exactly), `E.takeLesson` gives `taught` `['none', 'ones2']` and the moves, `'show'` 43 − 16
+asks 3 and then 13, the marks page has the four lines and the two answer lines with no style chosen, and `E.checkTakes`
+is clean (2026-11-09). Chapter 13's frames builder runs it again on `ch13-take` as coded in `app/story/ch13.js`.
 
 **The engine's three checks** (the spec's section 6), run on main after chapter 12 (v25, `E.VERSION` 0.12.0) with the
-spec's `ch13-take` in memory, all passed, so `app/engine.js` is unchanged and `ch13-take` carries no `lines`:
+spec's `ch13-take` in memory, all passed, so beyond the kit `app/engine.js` is unchanged and `ch13-take` carries no `lines`:
 1. Rule (a) is in: typing 1 at 486 − 253's hundreds in `E.takeLesson` is the slip `'fact'` and the help opens "Let’s
    scratch it out."; `E.takeSlip(E.takePlan(486, 253), 2, 1, false, ['none', 'ones2']) === 'fact'`; a cat that has finished
    chapter 13 gets `E.takeRoundStart(cat).state.taught` equal to `E.takeSteps(cat)`, `['none', 'ones2']`. Rule (b) is in:

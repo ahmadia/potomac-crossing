@@ -34,9 +34,9 @@ const C = (text) => ({ who: 'chispapaw', text });
 const TH = (text) => ({ who: 'tallyheart', text });
 const MARKS13 = {
   lines: [C('My little Tall One writes it like THIS.'), C('A little 1 in front!'),
-    TH('Some write the new number on top instead.'), TH('Both are right. Which way do YOU like?')],
+    TH('Some write the new number on top instead.'), TH('Both are right. Which marks do YOU like?')],
   one: [C('Just like my little Tall One!')],
-  above: [TH('On top it is.')]
+  above: [TH('On top it is. That’s how I write it too!')]
 };
 
 function fact([a, b, regroup], i, ch) {

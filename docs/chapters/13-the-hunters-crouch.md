@@ -254,12 +254,12 @@ Chispapaw stares. “Three, and ten more… It’s like opening a pack of cookie
 the 4 crossed out with 3 over it, a little 1 in front of the 3, the answer 27)*
 
 “Some write the new number on top instead,” says Tallyheart. *(hers glows: the same, the 3 crossed out with 13 over
-it)* “Both are right. Which way do YOU like?”
+it)* “Both are right. Which marks do YOU like?”
 
 **Choose** *(tap a picture once both glow: it sets her marks, never a flag; she can switch while the answer shows, and
 change them any time in the Training Hollow, My marks)*: A little 1 in front / The new number on top
 
-*A little 1:* “Just like my little Tall One!” says Chispapaw. / *On top:* “On top it is,” says Tallyheart.
+*A little 1:* “Just like my little Tall One!” says Chispapaw. / *On top:* “On top it is,” says Tallyheart. “That’s how I write it too!”
 
 ---
 

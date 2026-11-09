@@ -1071,6 +1071,8 @@ html:has(.frame[data-mode="take"]){overflow-anchor:none}
 .frame[data-mode="take"].tmoves .tmini{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;font-size:.86em;min-width:1.34em;height:100%;padding:0 .08em;line-height:1;
   border-radius:6px;border:3px solid var(--ink);background:var(--cream);color:var(--ink);text-shadow:none;box-shadow:3px 3px 0 1px rgba(0,0,0,.5);font-variant-numeric:tabular-nums}
 .frame[data-mode="take"].tmoves .tmini.tw2{min-width:2.04em}
+/* (a phone held sideways: the second marks row's box is a 14px row, so its border thins and its digit shrinks to fit inside) */
+@media (orientation: landscape) and (max-height: 500px){.frame[data-mode="take"].tmoves .tm2 .tmini{border-width:2px;font-size:.72em}}
 .frame[data-mode="take"].tmoves .tmini.on{box-shadow:0 0 0 3px var(--gold), 3px 3px 0 1px rgba(0,0,0,.5)}
 .frame[data-mode="take"].tmoves .tmini.right{background:#c9f2c0}
 .frame[data-mode="take"].tmoves .tgrp,.tpick .tgrp{position:relative;display:inline-block}
@@ -1139,6 +1141,8 @@ html:has(.frame[data-mode="take"]){overflow-anchor:none}
 .tpickicon .tpi-d{font-size:32px;position:relative;line-height:.9}
 .tpickicon .tpi-f{position:absolute;right:100%;top:-2px;font-size:16px;color:var(--gold)}
 .tpickicon.tpi-one{padding-left:10px}
+/* (the stacked 13 over 3 is taller than a .btn's line: its margins pulled in, so My marks stands as tall as My nest) */
+.tpickicon:not(.tpi-one){margin-top:-7px;margin-bottom:-7px}
 /* on a phone held sideways the shelf's last row holds My marks beside My nest on one line, both 46px (the shelf's own size
    there: with Aa its row had no room for a second line) */
 @media (orientation: landscape) and (max-height: 500px){

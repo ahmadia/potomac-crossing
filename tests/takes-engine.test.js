@@ -1639,7 +1639,7 @@ test('E4. the marks are hers to choose: E.setTakeStyle writes cat.takes.style an
   assert.deepEqual(page.options, [{ style: 'one', label: 'A little 1 in front' }, { style: 'above', label: 'The new number on top' }]);
   assert.equal(page.current, 'one');
   const kit = E.takeMarksPage({ teacher: 'tallyheart' }, E.blankCat({ now: 1 }));
-  assert.deepEqual(kit.lines, [{ who: 'tallyheart', text: 'When you spread a row, how do you write it?' }, { who: 'tallyheart', text: 'Both are right. Tap your way.' }]);
+  assert.deepEqual(kit.lines, [{ who: 'tallyheart', text: 'When you spread a row, how do you write it?' }, { who: 'tallyheart', text: 'Both are right. Tap the marks you like.' }]);
   assert.deepEqual(kit.after.one, [{ who: 'tallyheart', text: 'Then that’s how we’ll write it.' }]);
   assert.equal(kit.current, null);
   const keep = PC.words;
@@ -1663,9 +1663,15 @@ const TABLE4 = [
   [[43, 16], 0, 0, 0, null, 'nospread', 'decide', 'Three take away six? Not enough loose. But we can spread a row.', { move: 'touch', col: 1 }],
   [[43, 16], 0, 0, 8, null, 'fact', 'decide', 'Three take away six: we spread a row, then take six.', { move: 'touch', col: 1 }],
   [[503, 278], 0, 0, 0, null, 'zero', 'decide', 'Three take away eight? Not enough loose, and no rows to spread. | So a square first.', { move: 'touch', col: 2 }],
+  // (the review's T2: another wrong digit at a chain's turn says why a square comes first, as `zero` does; still a `fact`)
+  [[702, 345], 0, 0, 5, null, 'fact', 'decide', 'Two take away five? Not enough loose, and no rows to spread. | So a square first.', { move: 'touch', col: 2 }],
   [[43, 16], 0, 0, 7, null, 'ahead', null, 'Right! Now show me your marks.', null],
   [[52, 27], 0, 0, 5, null, 'ahead', null, 'Marks first, then the answer.', null],
   [[97, 52], 0, 0, 8, { extra: 1 }, 'extra', 'touch', 'Careful: seven take away two? The loose have enough. No row goes.', { move: 'undo', col: 1 }],
+  // (the review's extra-square-line: the hundreds struck at a ones turn, chapter 15 on, names a square; the tens' form as it was)
+  [[396, 152], 0, 0, 5, { extra: 2 }, 'extra', 'touch', 'Careful: six take away two? The loose have enough. No square goes.', { move: 'undo', col: 2 }],
+  [[396, 152], 0, 0, 5, { extra: 1 }, 'extra', 'touch', 'Careful: six take away two? The loose have enough. No row goes.', { move: 'undo', col: 1 }],
+  [[396, 152], 1, 0, 5, { extra: 2 }, 'extra', 'touch', 'Careful: nine take away five? The rows have enough. No square goes.', { move: 'undo', col: 2 }],
   [[503, 278], 0, 0, { t: 1 }, {}, 'zeroFirst', null, 'That zero has no rows to give. So a square first.', null],
   [[503, 278], 0, 0, { t: 1 }, { zeroFirst: true }, 'zero', 'touch', 'That zero has no rows to give. So a square first.', { move: 'touch', col: 2 }],
   [[352, 127], 0, 0, { t: 2 }, {}, 'where', null, 'Next door first: the rows.', null],
@@ -1678,7 +1684,7 @@ const TABLE4 = [
   [[43, 16], 0, 1, 4, null, 'kept', 'lend', 'Careful. One row goes to the loose. Three rows now.', { move: 'lend', col: 1, value: 3 }],
   [[43, 16], 0, 1, 5, null, 'lend', 'lend', 'Four rows, and one goes: three rows.', { move: 'lend', col: 1, value: 3 }],
   [[503, 278], 0, 4, 10, null, 'zero', 'lend', 'Careful. That zero is ten rows now, and one goes: nine rows.', { move: 'lend', col: 1, value: 9 }],
-  [[503, 278], 0, 2, 9, null, 'nine', null, 'Nine at the end! First the zero gets ten rows.', { move: 'get', col: 1, value: { above: 10, one: 1 } }],
+  [[503, 278], 0, 2, 9, null, 'nine', null, 'Yes, nine soon! First the zero gets ten rows.', { move: 'get', col: 1, value: { above: 10, one: 1 } }],
   [[43, 16], 0, 2, 3, null, 'get', 'get', { above: 'Three loose and ten more: thirteen loose.', one: 'Ten more loose: a little 1 in front. Thirteen loose.' }, { move: 'get', col: 0, value: { above: 13, one: 1 } }],
   [[811, 356], 1, 3, 6, null, 'kept', 'answer', 'Careful. One row went to the loose, then ten came: ten rows now.', null]
 ];
@@ -1941,6 +1947,56 @@ test('E9. targets: [] at a lend, a get and an answer; the tens from ones2, the h
   assert.deepEqual([r.slip, r.move, r.line, r.help.fix], ['extra', 'touch', 'Careful: seven take away two? The loose have enough. No row goes.', { move: 'undo', col: 1 }]);
   assert.deepEqual([T.question(x.st).marks[1].struck, T.question(x.st).box.kind, T.question(x.st).targets], [false, 'answer', []], 'the strike undone, the answer box ringed, no target left');
   assert.deepEqual(x.st.slips, [{ col: 0, move: 'touch', given: 1, slip: 'extra' }]);
+});
+
+test('E9b (the review\'s undo-help-strike). a tap on the lender undoes only a strike she made: never the strike a decide slip\'s help, the second zero tap\'s help or the touch made after `ahead` made for her (the column stays at its lend, the slip logged once); her own strike, in \'hers\' and through T.tap in \'tap\', still undoes', () => {
+  // (a) a decide slip: the help strikes the 4; her tap on it does nothing; her same digit at the lend is no second slip
+  const a = movesLesson('ch13', [[43, 16]]);
+  T.digit(a.st, a.def, 3, 1, 2000);
+  assert.deepEqual([T.question(a.st).move, T.question(a.st).box.kind], [1, 'lend'], 'the help made the touch');
+  assert.deepEqual(T.touch(a.st, a.def, 1, 2500), { ignored: 'move' });
+  assert.deepEqual([T.question(a.st).move, a.st.nudges, a.st.slips.length], [1, 0, 1], 'still at the lend, one slip, no nudge');
+  assert.equal(T.digit(a.st, a.def, 3, 1, 3000).right !== false, true, 'her 3 at the lend is the lend');
+  assert.equal(a.st.slips.length, 1);
+  // (b) the touch made after `ahead` (her right digit, then two digits while the lender glows)
+  const b = movesLesson('ch13', [[43, 16]]);
+  T.digit(b.st, b.def, 7, 1, 2000); T.digit(b.st, b.def, 7, 1, 3000);
+  assert.equal(T.digit(b.st, b.def, 7, 1, 4000).pointer, 'touchMade');
+  assert.deepEqual(T.touch(b.st, b.def, 1, 4500), { ignored: 'move' });
+  assert.equal(T.question(b.st).move, 1);
+  // (c) the zero tapped first twice: the help strikes the hundreds; her tap on the hundreds does nothing
+  const c = movesLesson('zero', [[503, 278]]);
+  T.touch(c.st, c.def, 1, 2000);
+  assert.equal(T.touch(c.st, c.def, 1, 3000).slip, 'zero');
+  assert.deepEqual(T.touch(c.st, c.def, 2, 3500), { ignored: 'move' });
+  assert.deepEqual([T.question(c.st).move, c.st.slips.length], [1, 1]);
+  // (e) her own strike undoes, after a pointer too ('where', then her touch of the tens)
+  const e = movesLesson('ch14', [[352, 127]], { taught: ['none', 'ones2', 'ones', 'tens'] });
+  T.touch(e.st, e.def, 2, 2000);
+  assert.equal(T.touch(e.st, e.def, 1, 2500).accepted, true);
+  assert.equal(T.touch(e.st, e.def, 1, 3000).undone, true);
+  // (f) 'tap': her tap through T.tap strikes the lender; a second tap undoes it
+  const f = movesLesson('ch13', [{ a: 70, b: 34, regroup: 'tap' }]);
+  assert.equal(T.tap(f.st, false, f.def, 2000).accepted, true);
+  assert.equal(T.touch(f.st, f.def, 1, 2500).undone, true);
+  assert.equal(T.question(f.st).move, 0);
+});
+
+test('E.takeAheadLine (the review\'s F3): her pale `ahead` digit\'s line recomputed from the question, both forms, for a page picking the column up; null with no pale digit; nothing saved', () => {
+  const r = movesLesson('ch13', [[43, 16]]);
+  assert.equal(E.takeAheadLine(r.def, T.question(r.st)), null, 'no pale digit');
+  const was = JSON.stringify(r.st);
+  T.digit(r.st, r.def, 7, 1, 2000);
+  const keys = Object.keys(r.st).sort().join();
+  assert.deepEqual(E.takeAheadLine(r.def, T.question(r.st)), ['Right! Now show me your marks.']);
+  assert.equal(Object.keys(r.st).sort().join(), keys, 'reading it changes nothing');
+  assert.ok(was);
+  const fl = movesLesson('ch13', [[52, 27]]);
+  T.digit(fl.st, fl.def, 5, 1, 2000);
+  assert.deepEqual(E.takeAheadLine(fl.def, T.question(fl.st)), ['Marks first, then the answer.'], 'the flip lands');
+  // picked up: the question rebuilt from the saved state says the same
+  const back = JSON.parse(JSON.stringify(fl.st));
+  assert.deepEqual(E.takeAheadLine(fl.def, T.question(back)), ['Marks first, then the answer.']);
 });
 
 test('E10 and 7 (v0.4). the modes: \'show\' asks each number (a wrong one lettered, no slip); \'tap\' asks only a link new to the chapter (chapter 13\'s 70 − 34 both; 14\'s 640 − 218 none); the picture moves before each ask in \'tap\' and \'show\', after each OK in \'hers\'; T.tap is T.touch on the glowing column', () => {

@@ -202,6 +202,11 @@ test('17. the panel\'s label says the store in words, what is left; the \'tap\' 
   assert.equal(U.storeLabel(E.takePicture(DEF, { a: 503, b: 278 }, 'done')), 'Two squares, two rows, five loose');
   assert.equal(U.storeLabel(E.takePicture(DEF, { a: 43, b: 16 }, 'start')), 'Four rows, three loose');
   assert.equal(U.storeLabel(E.takePicture(DEF, { a: 115, b: 13 }, 'start')), 'One square, one row, five loose');
+  // (the kit v0.4's store review: between her lend and her get the lend's piece rests by the receiver, unopened ('out'), so
+  // its ten is not counted as landed: VoiceOver never says the get's number before she types it)
+  assert.equal(U.storeLabel(E.takePicture(DEF, { plan: plan(74, 55), col: 0 }, { col: 0, spreads: 1, half: true })), 'Six rows, four loose, one row resting');
+  assert.equal(U.storeLabel(E.takePicture(DEF, { plan: plan(503, 278), col: 0 }, { col: 0, spreads: 1, half: true })), 'Four squares, three loose, one square resting');
+  assert.equal(U.storeLabel(E.takePicture(DEF, { plan: plan(74, 55), col: 0 }, { col: 0, spreads: 1 })), 'Six rows, fourteen loose', 'opened: landed');
   assert.equal(U.spreadLabel('tens'), 'Spread a row');
   assert.equal(U.spreadLabel('hundreds'), 'Spread a square');
   withWords({ spread: 'break apart' }, () => assert.equal(U.spreadLabel('tens'), 'Break apart a row'));
@@ -1051,14 +1056,15 @@ test('U5. the \'one\' front box takes 1 or 13 (fitted in its own width while she
 });
 
 /* the stacks under the moves, as the page shows them (runTakes' slotSay): a 'tap' or 'show' prompt under the lines over the
- * column; a move-help or a pointer in the column line's place (slotBase), the reserve probe's fallback */
+ * column; a move-help or a pointer in the column line's place (slotBase: the prompts alone, the page's intro and a twin's or
+ * the warm-up's introduction gone with the line, the store review's fix), the reserve probe's fallback */
 function movesUnder(set, style, student) {
   const def = set.def, st = mst(def, set.facts || def.facts, style, set.taught), clock = { t: 1e6 }, out = [];
   while (!T.done(st)) {
     let q = T.question(st);
     const cands = U.reserve(def, q, { taught: set.taught }), at = (w) => q.a + '−' + q.b + ' ' + style + ' col ' + q.col + ' ' + w;
     const fresh = q.col === 0, base = fresh ? U.first(def, q, {}).lines : (U.colLine(def, q) ? [{ who: 'tallyheart', text: U.colLine(def, q) }] : []);
-    const slotBase = fresh ? U.first(def, q, { line: '' }).lines : [];
+    const F0 = U.first(def, q, { line: '', intro: [] }).lines, slotBase = fresh ? ((q.twin || q.of || q.warm) && F0.length ? F0.slice(0, -1) : F0) : [];
     const show = (r, w) => {
       if (!r || r.ignored) return;
       const say = r.help && r.help.say ? r.help.say.join(' ') : r.line;
@@ -1116,12 +1122,12 @@ test('U4. the keypad stays put: every stack she sees under the moves (the column
   assert.deepEqual(U.stageAt(PQ), { col: 0, spreads: 1, half: true });
   assert.equal(E.takePicture(DEF, PQ, U.stageAt(PQ)).spread.stage, 'out');
   assert.ok(page.includes("    function storeNowM() { var po = E.takePicture(def, qAt(), takeStageAt(q)); if (po && litZone()) po.glow = litZone(); paintStore(po); }"), 'never a slide replayed');
-  assert.ok(page.includes("        var F = takeFirst(def, q, { intro: firstIntro, fill: fill }), F0 = takeFirst(def, q, { intro: firstIntro, fill: fill, line: '' });"));
+  assert.ok(page.includes("        var F = takeFirst(def, q, { intro: firstIntro, fill: fill }), S0 = tSlotFirst(def, q, { intro: firstIntro, fill: fill });"));
 });
 
 test('U1. the marks page (takeMarksFlow, takeMarksHtml, marksPage): one line at a time, its picture lifting; no button live before the last line; a pick saves and presses (a ring, a check, aria-pressed) and its answer line takes the question\'s place; through it the other switches; a button never goes on, the stack or the panel does; Read to me says the lines, then the labels; stacked on a phone held upright; the shelf\'s My marks opens it', () => {
   const page13 = E.takeMarksPage(stub.sets().ch13.def, null);
-  assert.deepEqual(page13.lines.map((b) => b.who + ': ' + b.text), ['chispapaw: My little Tall One writes it like THIS.', 'chispapaw: A little 1 in front!', 'tallyheart: Some write the new number on top instead.', 'tallyheart: Both are right. Which way do YOU like?']);
+  assert.deepEqual(page13.lines.map((b) => b.who + ': ' + b.text), ['chispapaw: My little Tall One writes it like THIS.', 'chispapaw: A little 1 in front!', 'tallyheart: Some write the new number on top instead.', 'tallyheart: Both are right. Which marks do YOU like?']);
   assert.deepEqual([0, 1, 2, 3].map((k) => U.marksGlow(page13, k)), ['one', 'one', 'above', 'both'], 'Chispapaw\'s with the little 1, Tallyheart\'s with the top, both with her last');
   const kit = E.takeMarksPage({ teacher: 'tallyheart' }, null);
   assert.deepEqual([0, 1].map((k) => U.marksGlow(kit, k)), ['both', 'both']);
@@ -1219,4 +1225,67 @@ test('PC.debug.takes\' new screens (the tools\' take:touch … hollow:marks), on
   const marks = new Function('return ' + /var TAKE_DEBUG_MARKS = (\{[\s\S]*?\] \});/.exec(UI_SRC)[1])();
   assert.deepEqual(marks, stub.MARKS13, 'chapter 13\'s lines, as its spec has them');
   assert.ok(fnSrc(UI_SRC, 'takeDebugMarks').includes("var ch = PC.story && PC.story.ch13"));
+});
+
+/* the kit v0.4's review, round 2 (~/potomac-crossing-work/regroup/review.json): the page's fixes, as logic where PC.ui.takes
+ * has it and as text where runTakes does (the page's own wiring needs a browser: measured in WebKit by the fixer) */
+test('the review\'s page fixes: a help in the slot takes the place of the store round\'s intro and a twin\'s "One like it." (store-1080-fallbacks), a prompt stays; the slot\'s held stacks hold no intro; tsecond kept for a lent hundreds\' extra touch in \'one\'; f1, f2, f6, F1, F2, F3 and the shelf\'s and the sideways second row\'s CSS', () => {
+  const INTRO = [{ who: 'tallyheart', text: 'Five from the store. Ready? Here we go.' }];
+  // a twin in a store round: the slot keeps nothing over it; heard, the question in words
+  const tw = T.question(T.start(DEF, { facts: [{ a: 74, b: 55, twin: true, of: '40-17' }], now: 1, logged: 99, taught: STEPS, style: 'one' }));
+  assert.deepEqual(U.first(DEF, tw, { intro: INTRO }).lines.map((b) => b.text), ['Five from the store. Ready? Here we go.', 'One like it.', 'Ones first. Four take away five.']);
+  assert.deepEqual(U.slotFirst(DEF, tw, { intro: INTRO }), { lines: [], heard: [{ who: 'tallyheart', text: 'Seventy-four take away fifty-five.' }] });
+  // a prompt stays over the slot; the page's intro goes
+  const pq = T.question(T.start(Object.assign({}, DEF, { facts: [{ a: 254, b: 131, prompt: PROMPT }] }), { now: 1, logged: 99, taught: STEPS }));
+  const sf = U.slotFirst(DEF, pq, { intro: INTRO });
+  assert.deepEqual(sf.lines.map((b) => b.text), [PROMPT]);
+  assert.deepEqual(sf.heard.map((b) => b.text), [PROMPT, 'Two hundred fifty-four take away one hundred thirty-one.']);
+  // the held stacks: every slot candidate of a store round's first problem and of a twin stands with no intro over it
+  [[74, 55], { a: 74, b: 55, twin: true, of: '40-17' }].forEach((f) => {
+    const q = T.question(T.start(DEF, { facts: [f], now: 1, logged: 99, taught: STEPS, style: 'one' }));
+    const slots = U.reserve(DEF, q, { intro: INTRO, taught: STEPS }).filter((L) => L.some((b) => b.slot));
+    assert.ok(slots.length >= 1);
+    slots.forEach((L) => assert.ok(!L.some((b) => b.text === INTRO[0].text || b.text === 'One like it.'), JSON.stringify(L.map((b) => b.text))));
+  });
+  // the slot's lines at a ones turn that needs nothing: the hundreds' extra touch (chapter 15 on) is held too
+  const nq = T.question(mst(DEF, [[396, 152]], 'above'));
+  assert.deepEqual(U.slotLines(DEF, nq, 0, STEPS), ['Careful: six take away two? The loose have enough. No row goes.', 'Careful: six take away two? The loose have enough. No square goes.']);
+  assert.deepEqual(U.slotLines(DEF, nq, 0, ['none', 'ones2', 'ones']), ['Careful: six take away two? The loose have enough. No row goes.'], 'before `tens`, the tens alone');
+  // tsecond: in 'one' a lent hundreds' extra touch at the tens opens its box in the second marks row, which the plan's own marks
+  // never need; the page's condition keeps the row for it (and for 'above''s own second marks, as before)
+  const tsecond = (q, taught) => E.takeMoveMarks(q.plan, q.style, q.plan.n, 0).some((m) => !!m.m2) || (q.plan.cols.some((c) => c.chain) && E.takeTargets(q.plan, 1, 0, taught).indexOf(2) >= 0);
+  const one = mst(DEF, [[503, 278]], 'one');
+  assert.equal(tsecond(T.question(one), STEPS), true);
+  assert.equal(E.takeMoveMarks(T.question(one).plan, 'one', 3, 0).some((m) => !!m.m2), false, 'the old condition: off');
+  walk(one, DEF, ['t2', '4', '1', 't1', '9', '1', '5']);
+  assert.equal(T.question(one).col, 1);
+  walk(one, DEF, ['t2']);
+  assert.deepEqual(T.question(one).box, { col: 2, kind: 'lend', row: 2 }, 'the box in the second marks row');
+  assert.equal(tsecond(T.question(mst(DEF, [[503, 278]], 'one', ['none', 'ones2', 'ones'])), ['none', 'ones2', 'ones']), false, 'no hundreds target: off');
+  assert.equal(tsecond(T.question(mst(DEF, [[43, 16]], 'one')), STEPS), false, 'no chain: off');
+  const page = fnSrc(UI_SRC, 'runTakes');
+  assert.ok(page.includes("(q.plan.cols.some(function (c) { return c.chain; }) && E.takeTargets(q.plan, 1, 0, st.taught).indexOf(2) >= 0));"), 'tsecond');
+  // store-1080-fallbacks in the page: the slot's base on a first column is tSlotFirst's; on a later one, nothing
+  assert.ok(page.includes('lines = F.lines; said = F.heard; slotBase = S0.lines; slotHeard = S0.heard;'));
+  assert.ok(page.includes('        slotBase = []; slotHeard = [];'));
+  // f1: a 'tap' or 'show' column picked up at its answer says its line once
+  assert.ok(page.includes('      if (k >= M.length - 1) return takeColLine(def, q) ? null : S.line;'));
+  // f2: a focused picture button on the marks page keeps its own Enter and Space
+  assert.ok(page.includes("      if (mv && phase === 'marks' && doc.activeElement && doc.activeElement.closest && doc.activeElement.closest('#screen .tpick.tlive .tpb')) return;\n      if (mv && (e.key === ' ' || e.key === 'Enter')) {"));
+  // f6: the touch made for her asked the lend; it leaves the slot at her lend (a move-help after `ahead` stays)
+  assert.ok(page.includes("if (r.line) { slotSay(T1(r.line), true, true); if (r.pointer === 'touchMade') slotAsk = slot; }"));
+  assert.ok(page.includes("      if (slot && slot === slotAsk && (r.move === 'lend' || r.move === 'get')) { slot = null; slotHelp = false; say(base); saying(baseHeard); }"));
+  // F1, F2: a move's own clock withdraws the column line's pending restart; 'tap''s first touch clock waits for its line
+  const clock = fnSrc(page.replace(/^ {2}/gm, ''), 'startClock');
+  assert.ok(clock.includes('var forCol = q.col, forPos = st.pos, g = clockGen;'));
+  assert.ok(clock.includes("if (g === clockGen && q && q.col === forCol && st.pos === forPos && (phase === 'type' || (mv && phase === 'tap')) && typed === '') t0 = perfNow();"));
+  assert.ok(!/clockGen\+\+/.test(clock), 'startClock never moves the generation itself (v0.3\'s pages keep their clocks)');
+  assert.ok(page.includes('      if (said && said.length) startClock(said); else { clockGen++; t0 = perfNow(); }'), 'wakeM');
+  assert.ok(page.includes('      if (said && said.length) startClock(items); else { speakItems(items); clockGen++; t0 = perfNow(); }'), 'tapM');
+  assert.equal((page.match(/clockGen\+\+/g) || []).length, 2, 'only the moves\' wakeM and tapM');
+  // F3: her pale digit picked up brings the `ahead` line back into the slot, unsaid
+  assert.ok(page.includes('      if (q.pale != null && litDecide()) { var ahl = E.takeAheadLine(def, q); if (ahl) slotSay(T1(ahl[0]), true, false); }'));
+  // f3, f4: My marks as tall as My nest; the sideways second row's box fitted
+  assert.ok(HTML.includes('.tpickicon:not(.tpi-one){margin-top:-7px;margin-bottom:-7px}'));
+  assert.ok(HTML.includes('@media (orientation: landscape) and (max-height: 500px){.frame[data-mode="take"].tmoves .tm2 .tmini{border-width:2px;font-size:.72em}}'));
 });

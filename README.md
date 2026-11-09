@@ -46,8 +46,9 @@ Hunter's Crouch*, is next.
   onto chapter 9 (2026-10-31), so they ship with chapter 10.
 - [`docs/module-2.md`](docs/module-2.md): the second module, *The Badger Under the Bridge* (decisions 53 to 56):
   chapters 12 to 21, the cast, Chispapaw and the Spanish rules, the maths (long subtraction, the Counts kept fresh).
-- [`docs/take-aways.md`](docs/take-aways.md): the take-aways kit's design (v0.3), the take page, the store's picture,
-  the Hollow's shelf and Count the store, and book two; built 2026-11-07, before chapter 12.
+- [`docs/take-aways.md`](docs/take-aways.md): the take-aways kit's design (v0.4), the take page, the store's picture,
+  the Hollow's shelf and Count the store, and book two; built 2026-11-07, before chapter 12; v0.4 (decision 57: the
+  borrow as moves she makes, in the marks she chooses) built 2026-11-09, to ship with chapter 13.
 - [`docs/continuity.md`](docs/continuity.md): where the story stands after the last shipped
   chapter (what happened, the flags, the cards, the names), for whoever writes the next one.
 - [`docs/production.md`](docs/production.md): how a chapter gets made, what the first five cost,
@@ -1433,6 +1434,137 @@ Each is Aron's to reverse.
     every take page's, the kit's live pages among them: the kit owner's call), and a dream typed and not yet put in her
     book lost when the dream page reloads (every chapter's since chapter 1: a change to eleven live chapters, not chapter
     12's). `E.VERSION` 0.12.0 and the ledger's v25 entry are the ship commit's. The suite: 48 files, 2,003 tests, all pass.
+- **The take-aways kit v0.4: the borrow as a step she does** (2026-11-09, decision 57; ships with chapter 13 as v26):
+  decision 57 built as a piece of its own before chapter 13's frames, as the kit was before chapter 12. Designed
+  (`~/potomac-crossing-work/regroup/design.md`, after four critics, a teacher, an engineer, a child and a budget, every
+  high and medium taken, then an editor's round; the moves of all 498,465 problems run in both styles), planned
+  (`plan.md`), and built on chapter 13's branch on top of e000777 (local commit 5b974cb, not pushed): first the engine
+  recorded v25's take entries for 27 cases; then the engine, the art's resting stage, `docs/take-aways.md` and chapters
+  13's and 14's texts; then the page and the tools. Reviewed in six lenses (the engine; the page at the eight sizes, Aa
+  off and on; the compare against v25; a teacher's, for Lissa; and the two the review's critic added: Count the store
+  with the moves on the real page, and the saved path with a style change mid-lesson): 18 findings, each checked by a
+  skeptic and all taken, with the build checker's two. `docs/take-aways.md` (Design v0.4: section 1a the moves and the
+  marks, section 8 the names as built, section 11 calls 38 to 59) is the contract; `docs/build.md`'s "The take-aways
+  kit" has a v0.4 paragraph, what a chapter codes against. What she does: when a column has too few, she taps the number
+  next door (it is crossed out), types its new number, types her own column's new number, then takes away; across a
+  zero, every link the same; her marks are the new number on top or a little 1 in front, chosen on the kit's marks page
+  at chapter 13's worked example and changed in the Training Hollow (My marks). Everything is behind one gate, a take
+  state whose steps taught reach a spread (`E.takeMovesOn`), so no chapter 1 to 12 player meets any of it: v25's 27
+  recorded cases play deep-equal on the new engine, every v25 save migrates deep-equal, chapter 12's columns and corner
+  are byte for byte, and `node tools/sweep.mjs --takes --compare` against live gives 88 of 88 byte for byte (take:first,
+  the shelf, a store round and chapter 12's eight Spanish screens, at the review's four more sizes, Aa off and on).
+  Notes, probes and pictures: `~/potomac-crossing-work/regroup/`. The design's calls, each with its reason:
+  1. *The spread is moves in the column: tap the lender, type its number, type the receiver's, then the answer*, the
+     lender first (decision 57's order), so the decrement, the commonest thing forgotten, is never left to the end.
+  2. *Across a zero every link is its own tap and numbers* (seven moves at the ones), so the zero is seen becoming ten
+     and then nine, as on paper; a 9 at the zero's get (fifty tens become forty-nine) is accepted kindly as the `nine`
+     pointer, the 10 lettered, and no third style is built.
+  3. *The two styles are 'above' (the default, v0.3's look) and 'one'*; in 'one' she types the little 1 she would write
+     (or the thirteen she means), and the lender is still struck with its new number over it.
+  4. *A column is tappable only once a spread out of it is taught, and only at a decide*, so no line has to explain a
+     spread she has not met, chapter 13 cannot spread a square, and a stray tap mid-column does nothing.
+  5. *A tap on her own column wiggles its digit, the same at every turn*; a done column or a stray bottom digit does
+     nothing: any line there, or anything that differed by need, would hint at the decision.
+  6. *The store is a tap target only while a lender glows, and in 'hers' the panel does nothing at a decide*, so a tap
+     meant to hurry a line never lands as a spread (taps are used up, 400 ms after a phase change ignored, a held press
+     is no tap).
+  7. *Slips are caught at the move and helped in one move, without the sand or "Got it!"*; the answer keeps v0.3's sand
+     help, starting at the take, her own marks kept.
+  8. *A right answer typed before the moves is `ahead`: kept pale, the lender lit, never right first time*, because it
+     cannot be told from a flip that lands; "Right!" only when the flip does not land; no twin; it cannot loop.
+  9. *The zero tapped first is a pointer the first time and a slip the second; tapping two columns over is a pointer*:
+     many classes teach looking next door then one more, and the moves make the bug's ending impossible anyway.
+  10. *'show' has Tallyheart tap and say each number while Lissa types it*, so f036's "I'll say each step. You type
+      it." is literal and her fingers make every move from the first problem; 'tap' prompts every move and asks the
+      numbers of a link new to her; 'hers' prompts nothing.
+  11. *The choice is the kit's marks page, not a story frame, before the worked example's prompt*: the shelf reuses it,
+      chapter 13 needs no new frame feature, the prompt stays joined to its column, and the lines come from the set
+      (`marks`); its buttons go live only after the last line, a pick can be switched through the answer line, and only
+      the stack or the panel moves on.
+  12. *Chispapaw shows the little 1 and Tallyheart the number on top, and "Both are right"*: the little 1 is the common
+      mark in Spanish classrooms, Chispapaw's Tall One does her homework in Spanish, and the question asks Lissa, not
+      her school.
+  13. *'above''s second mark stands in the heads row's place, column by column*, so the column never grows and the
+      keypad never moves; 'one' never needs it.
+  14. *Her marks live in `cat.takes.style`, changed on the shelf, named (not changed) in the grown-ups corner*: decision
+      57 makes them hers.
+  15. *In 'hers' the store moves after each of her numbers; in 'tap' and 'show' before each ask*: in her own problems
+      the picture confirms what her number meant, in the guided ones it shows what to count.
+  16. *The new look hangs on `.tmoves`, set only under the gate*, so chapter 12 renders byte for byte.
+  17. *No animation locks the keypad*: the next box opens at once and the store moves beside it; only OK's double tap is
+      guarded, so a quick child's keys land where she meant them.
+  18. *A keying slip (a wrong new number: `lend`, `get`) is helped but brings no twin unless it repeats*: a typo is not a
+      misconception, and a twin is the biggest cost against decision 56.
+  19. *A 'tap' problem drops its two asks for a link she has made on her own*: the tap prompt, the glow and the boxes
+      stay, so decision 57's mechanics stay, and about 5 s a link goes.
+  The orchestrator's three calls, on the design's questions (`docs/take-aways.md` section 11, calls 57 to 59):
+  20. *The kit ships with chapter 13, as v26*, not apart as v27: her first spread is made the decision-57 way, and the
+      marks page meets her at chapter 13's worked example with Chispapaw's lines (apart, it would first come at a store
+      round's spread or in chapter 14, with the kit's own lines). `CACHE` is already v26 from chapter 13's stub.
+  21. *Decision 56's third binds the plain path*: at the middle-to-slow rates a chapter as played stays inside a third,
+      and a reading with a miss and its help may run a little over (chapter 13 with a second help and twin, 34.9%;
+      chapter 14 with a warm-up miss, 35.3%). The design's time for a link (+6 to +9 s, long on purpose) is an estimate:
+      the log now times every move, and the shares are measured again from her logged move times after she plays
+      chapter 13, before chapter 14 ships and before chapter 15's brief. No chapter is cut for decision 57 now.
+  22. *Her class's paper habits are the design's defaults until you say*: the 3 crossed out under the 13 written over
+      it; the marks made column by column as she reaches each; a zero's 10 becoming 9 one link at a time (Open
+      questions, "Her class's paper habits": each a one-line change).
+  The builders' calls, where the plan left room:
+  23. *The slot takes the column line's place*: a move-help or a pointer replaces the column's line (and the page's
+      intro, a twin's introduction and an echo about the column before), one balloon at a time. Standing under the line,
+      the longest (18 words) put the keypad under the screen at 1080 × 720 and at every size but 820 × 1180 and the phone
+      held sideways. A 'tap' or 'show' prompt still stands under the line.
+  24. *The marks page's answer line takes the question's place*, and the stack is held at its tallest from the start:
+      with a fifth balloon the pictures ran under the screen. On an iPad held sideways its balloons stand over the panel
+      (the design's phone arrangement), and its pictures have no heads row.
+  25. *A keying slip is counted once a problem*: two links typed the same wrong way in one problem are one habit (the
+      design's students, each problem alone, twin none).
+  26. *Her marks are written on a take state only under the gate*, so a chapter-12-only round's state stays v25's
+      exactly; `PC.debug.takes` writes nothing to the test cat.
+  27. *A later column brings the keypad back into view*: WebKit's scroll anchoring moved a scrolled page 13 px between
+      two columns (v0.4's reserve is taller, so pages scroll where v0.3's did not).
+  The review's fixes:
+  28. *A strike is undone only by a second tap on a lender she struck herself*: a help's strike (a slip at the decide, the
+      zero's second tap) or the touch made for her after `ahead` stays, so her same digit never logs the same slip twice.
+  29. *The words* (the teacher's lens): "marks" is given to her before it is used ("Both are right. Which marks do YOU
+      like?", chapter 13's fourth line; "Both are right. Tap the marks you like.", the kit's); Tallyheart's answer to the
+      number on top is as warm as Chispapaw's ("On top it is. That’s how I write it too!": the page asks which mark she
+      really uses, and a flat answer tilted it); the `nine` pointer says "Yes, nine soon! First the zero gets ten rows."
+      ("Nine at the end!" read as an instruction); a wrong digit at a chain's first decide says why before "So a square
+      first." ("Two take away five? Not enough loose, and no rows to spread.", still logged `fact`); a struck hundreds at
+      a ones turn says "No square goes" (chapter 15 on).
+  30. *The page*: Enter or Space on a focused picture picks it (the take page's keys stood in front of it, so the marks
+      page could not be passed by keyboard); a 'tap' or 'show' column picked up at its answer says its line once; the ask
+      made for her after `ahead` leaves the slot once she types the lend; her pale `ahead` digit picked up again (a
+      reload, ‹, Camp) brings its line back, unsaid (`E.takeAheadLine`, worked out from the plan: nothing more is saved);
+      My marks is as tall as My nest (its stacked 13 over 3 made it 63 to 72 px, and at 844 × 390 with Aa on both buttons
+      ran under the screen); on a phone held sideways the second marks row's box thins its border and digit, so a 9 sits
+      inside it; that row is also kept under the heads row's fallback when a lent hundreds can take an extra touch at the
+      tens, so no box opens in a row of no height.
+  31. *Count the store with the moves, played on the real page* (the review's critic's lens, on a scratch copy with the
+      stub chapter 13, since no served chapter reaches it yet): at 1080 × 720 a round's intro and a twin's "One like it."
+      go with the column's line when a help takes the slot, so with Aa off the round's first problem and its twins take
+      no fallback (both were set, the heads row hidden and the keys 56 px, and the keypad jumped between problems), and
+      with Aa on only the heads row goes, as in a chapter-12-only round; between her lend and her get the panel's label
+      says the resting piece apart ("Six rows, four loose, one row resting"), so VoiceOver never gives the get's number
+      before she types it.
+  32. *Her move times are the figures call 21 rests on* (the saved path's lens): the first column's delayed clock restart
+      no longer resets a later move's clock (a quick touch's get logged 3,593 ms, not 864), and a 'tap' problem's touch
+      clock starts once its lines are read (70 − 34's touch 1,510 ms, not 8,572; those lines are budgeted apart).
+  33. *The compare covers what a chapter-12-only player sees of the kit*: `--takes --compare` adds the shelf (no My
+      marks) and a store round (the gate off), and the sweep's `prune` keeps the cache of the tree it compares from (it
+      deleted it, and the compare crashed, whenever four caches stood).
+  34. *take:echo at 1080 × 700 with Aa on* (the build checker's): its fix, a shorter panel, moves nothing there, where the
+      panel stands beside the column; instead the keypad brought into view never scrolls the stack's first balloon under
+      the bar (its 8 px margin goes first). Only the debug screen and a later zero-chain set with a column echo reach it.
+  Left: the sweep's `col-off` on es:take at 1080 × 700 and `off-screen` on es:skip at 844 × 390 with Aa on are in live
+  too (not this piece's); at 844 × 390 with Aa on the marks page's four balloons fill the right column and squeeze the
+  panel to its top edge (the design's arrangement at its worst; both still go on); the storyboard still words a take
+  set's spreads as v0.3's (the picture spreads, the zone glows) beside its new marks page; a picture's own Enter is
+  proved only by the page not preventing it (no synthetic key activates a button); the rates in call 21 are estimates
+  until her log has times. Chapter 13's `ch13-take`, with its `marks`, is coded by chapter 13's frames builder next,
+  from its spec (v0.3); until then the moves are reached only through `PC.debug.takes` and the stub, and live stays v25.
+  `E.VERSION` 0.13.0 and the ledger's v26 entry are the ship's. The suite: 48 files, 2,082 tests, all pass.
 
 ## Open questions, waiting on Aron
 
@@ -1485,3 +1617,11 @@ Nothing here blocks the chapter being built; each chapter's own questions are in
   rest; it does not work without the tucked claw.
 - **A near-miss version of Murmurpaw's test** is written out in chapter 3's notes, if you ever want
   to show what "nine in every ten" allows.
+- **Her class's paper habits** (decision 57; the take-aways kit v0.4, `docs/take-aways.md` section 12, item 4): each
+  is a one-line change in the build, and each is built on the design's default until you say. (a) When it writes 13
+  over a 3, does it cross the 3 out? Built: yes, in the 'above' marks (as v0.3 did; one CSS rule). (b) Does it mark every
+  column before it subtracts ("get ready to subtract", as Eureka Math and its Spanish edition teach)? Built: no, column
+  by column as she reaches each; if it does, the `order` pointer (which sends her back to the column she is on) goes,
+  and the columns stay tappable at the answer moves. (c) Does it make 50 into 49 in one mark? Built: one link at a time,
+  the zero's 10 and then 9; a 9 typed at the zero's get is already accepted kindly (the `nine` pointer, the 10 lettered
+  for her). Still open beside them, from "Her word at the first spread": whether it heads the columns C D U.

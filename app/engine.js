@@ -4041,12 +4041,13 @@
     },
     extraTouch: {
       ones: 'Careful: {top} {takeAway} {bottom}? The {loose} have enough. No {row} goes.',
-      tens: 'Careful: {top} {takeAway} {bottom}? The {rows} have enough. No {square} goes.'
+      tens: 'Careful: {top} {takeAway} {bottom}? The {rows} have enough. No {square} goes.',
+      onesFar: 'Careful: {top} {takeAway} {bottom}? The {loose} have enough. No {square} goes.'
     },
     zeroTouch: 'That zero has no {rows} to give. So a {square} first.',
     zeroStop: { ones: 'Careful. Ten {rows} now, and still only {top} {loose}. Now a {row}.', onesZero: 'Careful. Ten {rows} now, and still no {loose}. Now a {row}.' },
     zeroLend: 'Careful. That zero is ten {rows} now, and one goes: nine {rows}.',
-    nine: 'Nine at the end! First the zero gets ten {rows}.',
+    nine: 'Yes, nine soon! First the zero gets ten {rows}.',
     keptMove: {
       ones: 'Careful. One {row} goes to the {loose}. {Left} {rows} now.', onesZero: 'Careful. One {row} goes to the {loose}. No {rows} now.',
       tens: 'Careful. One {square} goes to the {rows}. {Left} {squares} now.', tensZero: 'Careful. One {square} goes to the {rows}. No {squares} now.'
@@ -4067,7 +4068,7 @@
     gave: 'The {squares} gave already. Now the {rows}.',
     order: '{TakeAway} first, then the next column.',
     // the marks page (E.takeMarksPage): the kit's own lines, for a set with no `marks`; both said, in order
-    marksAsk: ['When you {spread} a {row}, how do you write it?', 'Both are right. Tap your way.'],
+    marksAsk: ['When you {spread} a {row}, how do you write it?', 'Both are right. Tap the marks you like.'],
     marksAfter: 'Then that’s how we’ll write it.',
     marksLabel: { one: 'A little 1 in front', above: 'The new number on top' }
   };
@@ -4464,10 +4465,11 @@
     var to = m && m.move === 'lend' ? TAKE_COLS[m.to] : m && m.move === 'get' ? TAKE_COLS[m.col] : name;
     switch (key) {
       case 'flip': case 'nospread': case 'kept': return [fill(key, formKeys(name, zero))];
-      case 'factSpread': return c.chain && k === 0 ? [fill('factSpread', [name]), fill('chainFirst')] : [fill('factSpread', [name])];
+      // (at a chain's turn there are no rows to spread: the help says why, as `zero` does, then the square first)
+      case 'factSpread': return c.chain && k === 0 ? [fill('zero', zero ? ['onesZero', 'ones'] : ['ones']), fill('chainFirst')] : [fill('factSpread', [name])];
       case 'zero': return [fill('zero', zero ? ['onesZero', 'ones'] : ['ones']), fill('chainFirst')];
       case 'zeroStop': return [fill('zeroStop', formKeys(name, zero))];
-      case 'extraTouch': return [fill('extraTouch', [name])];
+      case 'extraTouch': return [fill('extraTouch', form === 'far' ? [name + 'Far', name] : [name])];
       case 'keptMove': case 'lendMove': return [fill(key, formKeys(to, m.value === 0), { old: m.before, left: m.value })];
       case 'getMove': return [styleLine(def, 'getMove', style, formKeys(to, m.before === 0), { top: m.before, new: m.reads }, words)];
       case 'ahead': return [fill('ahead', [form === 'flip' ? 'flip' : 'right'])];
@@ -4476,6 +4478,14 @@
       default: return [fill(key)];
     }
   }
+  /* The `ahead` pointer's line for a question showing her pale digit (q.pale), recomputed from the plan as T.answer made
+   * it ('flip' when bottom − top is her digit), for a page picking the column up again (a reload, ‹, Camp): [line], or
+   * null when no pale digit stands. Nothing is saved for it. */
+  E.takeAheadLine = function (def, q) {
+    if (!q || q.pale == null || !q.moves || !q.plan || !q.plan.cols[q.col]) return null;
+    var c = q.plan.cols[q.col];
+    return moveLine(def, q.plan, q.col, q.moves[q.col], q.move || 0, 'ahead', q.style, (c.bottom || 0) - c.before === q.pale ? 'flip' : 'right', takeWords());
+  };
   var POINTER_LINES = { ahead: 'ahead', zeroFirst: 'zeroTouch', where: 'where', gave: 'gave', nine: 'nine', order: 'order' };
   /* A move's help (design section 4): { say: [line, line?], fix: { move, col, value? } (the move made for her: 'touch',
    * 'lend', 'get', or 'undo' for an `extra` touch's strike; null for a pointer that only lights the lender), next (the
@@ -4502,7 +4512,8 @@
       var h = E.takeHelp(def, plan, col, j.slip || 'fact', { mode: mode, shown: true, style: style });
       return { say: [h.intro], fix: null, next: k, marks: E.takeMoveMarks(plan, style, col, k), stage: moveStage(mode, M, k, col), picture: null, glow: null, help: h };
     }
-    var say = moveLine(def, plan, col, M, k, key, style, j.form, words), fix = null, next = k, glow = null;
+    // (an `extra` touch two columns over, the hundreds at a ones turn, says its own form: the piece struck is a square)
+    var say = moveLine(def, plan, col, M, k, key, style, j.slip === 'extra' && num(j.touched, col + 1) === col + 2 ? 'far' : j.form, words), fix = null, next = k, glow = null;
     if (j.slip === 'extra') { fix = { move: 'undo', col: num(j.touched, col + 1) }; }
     else if (j.slip && m.move === 'touch') { fix = { move: 'touch', col: m.col }; next = k + 1; glow = TAKE_COLS[m.col]; }
     else if ((j.slip || j.pointer === 'nine') && (m.move === 'lend' || m.move === 'get')) { fix = { move: m.move, col: m.col, value: m.value }; next = k + 1; glow = TAKE_COLS[m.col]; }
@@ -5232,7 +5243,9 @@
     if (!(t === Math.floor(t) && t >= 0 && t < p.n)) return { ignored: 'col' };
     var line = function (key, form) { return moveLine(def, p, cc, Mc, k, key, style, form, words); };
     // the strike undone: her extra touch's, or the lender's while its lend box is empty
-    if (st.touched != null || (m.move === 'lend' && t === m.col && mode !== 'show')) {
+    // (only a strike she made: the last move logged is her touch of this lender; a help's or a pointer's touch is not hers)
+    var lm = st.moveLog[st.moveLog.length - 1], hers = !!lm && lm[0] === cc && lm[1] === 't' && lm[2] === t;
+    if (st.touched != null || (m.move === 'lend' && t === m.col && mode !== 'show' && hers)) {
       if (st.touched != null ? t !== st.touched : false) return { ignored: 'move' };
       logMove(st, cc, 'u', t, dt); st.nudges++;
       if (st.touched != null) delete st.touched; else st.move = k - 1;

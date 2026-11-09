@@ -9,7 +9,8 @@ high and medium taken) and an editor's; every number run by `~/potomac-crossing-
 (the moves of all 498,465 problems, both styles), `~/potomac-crossing-work/regroup/editor/students-v0.4.js` (the
 students) and `~/potomac-crossing-work/regroup/editor/time-v0.4.js` (the time, chapters 13 to 20); the design is
 `~/potomac-crossing-work/regroup/design.md`, the build `~/potomac-crossing-work/regroup/plan.md`. Chapter 12, and any
-state with no `taught`, plays v0.3 as written below. It ships with chapter 13, as v26.*
+state with no `taught`, plays v0.3 as written below. It ships with chapter 13, as v26. Built and reviewed 2026-11-09:
+the review's 18 fixes are written in, and section 8 gives the names as built.*
 
 *Design v0.3 · 2026-11-07 · decisions 53 and 54 · v0.2 applied the critics' findings (teaching, engine, screens); v0.3
 fixes the twelve problems v0.2's checker found: a help's marks in `'hers'` (one rule, its exception said), the
@@ -389,8 +390,11 @@ Then she makes the moves (the rest of that column's touches glow as in `'tap'`, 
 the last one the answer box is ringed again holding her pale digit: OK takes it, or she types another. So a second
 `ahead` cannot happen. A digit typed while the lender glows types nothing: the first says `tap`'s line once ("Not enough
 loose. Spread a row: tap it.", its zero form, or across a zero `tapSquare` / `tapRow`), the next makes the touch for her,
-saying `askLend` ("One row goes. How many rows now?"), so every digit still moves it on (the kit's "never a wall"). Both
-are counted in `nudges`. Not a slip, no help, no twin; the entry carries `ahead: [col]`; the problem is not `correct`
+saying `askLend` ("One row goes. How many rows now?"), so every digit still moves it on (the kit's "never a wall");
+that ask leaves the slot once she has typed the lend. Both are counted in `nudges`. A column picked up with her pale digit
+(a reload, ‹, Camp) letters the `ahead` line again in the slot, unsaid (`E.takeAheadLine`, worked out from the plan:
+nothing more is saved). A second tap on a struck lender undoes the strike only when she struck it herself, never when a
+help or this touch struck it for her. Not a slip, no help, no twin; the entry carries `ahead: [col]`; the problem is not `correct`
 (the decision was pointed at) and its end line is chosen as for any problem with no slip (section 1a.4, "Twins and the
 log"). Decision 57 keeps the moves; the fade (section 12, item 5) is where in-head answers could one day stand.
 
@@ -463,16 +467,17 @@ section 1a.4). **Count the store** rounds are `'hers'`, with moves, in her style
 a second time, its head chip gives way to the gold number (`~/potomac-crossing-work/regroup/pictures/a503-above.png`:
 square chip, 9, dot chip). The row is there from the start, so nothing moves, and the column is never taller than
 v0.3's. The chip's words stay in its `aria-label`. Where the heads row has already gone (the fallback `tnohead`), on a
-problem that will mark a column twice the row is kept as the second marks row (the chips hidden) and the fallback goes
+problem that will mark a column twice, or whose lent hundreds can take an extra touch at the tens, the row is kept as the second marks row (the chips hidden) and the fallback goes
 straight to its next step; if 844 × 390 with Aa on cannot hold it (the page review's measure), the second mark is
 lettered beside the first, struck small, on that size only.
 
 **The default** is `'above'` until she picks: it is v0.3's look, the kit's tests already pin it, and it is what any page
 reached before the pick shows (a `PC.debug` screen, a lesson left on the marks page).
 
-**Where she picks: the marks page.** A page of the kit's own (`E.takeMarksPage`; the UI's `marksPage(o)`, one function,
-called by `runTakes`' `'marks'` phase and by the Hollow's `{ marks: true }` branch), shown by the take page **before a
-problem's prompt when that problem will ask a spread move and her style is not yet set** (`cat.takes.style` absent): for
+**Where she picks: the marks page.** A page of the kit's own (`E.takeMarksPage`; the UI's `marksPage(host, o)`, one
+function, called by `runTakes`' `'marks'` phase and by the Hollow's `{ marks: true }` branch, `renderMarks(opts)`),
+shown by the take page **before a problem's prompt when that problem will ask a spread move and her style is not yet
+set** (`cat.takes.style` absent): for
 every player that is chapter 13's worked example, 43 − 16, before its prompt, so the prompt and "Ones first." stay
 joined right before the column. The take page's interact area (where the column and keypad stand) holds two big picture
 buttons, each a small column (the kit's `.tcol` markup) of 43 − 16 **done**, its answer 2 7 in plain ink in its boxes
@@ -490,8 +495,16 @@ tap made to move the lines on never picks. A tap on a picture sets `cat.takes.st
 pressed (a ring, a check and `aria-pressed`), and the style's answer line is lettered. Through the answer line the other
 button stays live: a tap on it switches, saves and says that style's line. The page goes on after the answer line's
 reading time, or with a tap on the stack or the panel, never with a tap on a button. The set's `marks` key gives the
-lines; with none, the kit's own (Tallyheart: "When you spread a row, how do you write it?" / "Both are right. Tap your
-way." / after: "Then that’s how we’ll write it.").
+lines; with none, the kit's own (Tallyheart: "When you spread a row, how do you write it?" / "Both are right. Tap the
+marks you like." / after: "Then that’s how we’ll write it."). Before a pick, once the buttons are live, nothing goes on:
+the page waits for her choice. **As built** (the page owner's calls): the answer line takes the question's place, so the
+page never holds more than its four balloons (with a fifth the pictures ran under the screen at every landscape iPad
+size and on the phone upright), and the stack is held from the start at its tallest (the four lines, or three and the
+longer answer line), so the pictures never move as the lines come; on an iPad held sideways too the balloons stand over
+the panel (the frame's `tmkpage`: beside the pictures four balloons ran them 60 to 130 px under the screen); the
+pictures have no heads row; on the phone held upright the panel is made shorter (never under half, the take page's own
+fallback) and the pictures are brought into view once live. Enter or Space on a focused picture picks it (the take
+page's keys stand aside for a live `.tpick .tpb`).
 
 **Chapter 13's lines** (the set's `marks`; four balloons, each under the 12-word guard):
 
@@ -500,9 +513,9 @@ way." / after: "Then that’s how we’ll write it.").
 | 1 | Chispapaw | "My little Tall One writes it like THIS." (the `'one'` picture, on the left, glows) | 8 |
 | 2 | Chispapaw | "A little 1 in front!" (the same) | 5 |
 | 3 | Tallyheart | "Some write the new number on top instead." (the `'above'` picture, on the right, glows) | 8 |
-| 4 | Tallyheart | "Both are right. Which way do YOU like?" (both glow; the buttons go live) | 8 |
+| 4 | Tallyheart | "Both are right. Which marks do YOU like?" (both glow; the buttons go live) | 8 |
 | after `'one'` | Chispapaw | "Just like my little Tall One!" | 6 |
-| after `'above'` | Tallyheart | "On top it is." | 4 |
+| after `'above'` | Tallyheart | "On top it is. That’s how I write it too!" | 10 |
 
 The little 1 is lettered as the digit everywhere she reads it (the labels, the lines, `showGet.one`), and said "one".
 "Both are right" tells her neither is a test; "do YOU like" asks her, not her school, which she may not know yet (decision
@@ -512,11 +525,13 @@ question 12.2): this page asks the one person who does.
 
 **After that: the shelf.** Once `ones2` is learned (or a style is set), the Hollow's shelf shows a **My marks** button
 beside My nest, a normal `.btn` (56 px), labelled "My marks", its icon only her receiver's mark (¹3, or 13 over a struck
-3) drawn at 32 px or more, as the column draws it. It opens the marks page in the Hollow (`go('hollow', { marks: true
-})`, a branch beside `{ counts: true }`, before the pinned `var HW`: no new view), her current style pressed (ring,
-check, `aria-pressed`), the kit's lines, both buttons live at once; a tap changes it at once, no cost; ‹ goes back to
-the shelf. A change reaches the next problem (a lesson waiting in its place included: section 8, v0.4's "State"); a
-problem under way keeps its marks.
+3) drawn at 32 px or more, as the column draws it (`#marksBtn`, its icon `takeMarksIcon(style)`, as tall as My nest).
+It opens the marks page in the Hollow (`go('hollow', { marks: true })`, `renderMarks(opts)` at the top of
+`renderHollow`, beside `{ counts: true }`: no new view), her current style pressed (ring, check, `aria-pressed`), the
+kit's lines (Tallyheart's, `E.takeRoundDef()`'s), both buttons live at once; a tap changes it at once, no cost, saved,
+and the style's answer line takes the question's place; ‹ goes back to the shelf (`onBack`'s `hollowSub === 'marks'`).
+A change reaches the next problem (a lesson waiting in its place included: section 8, v0.4's "State"); a problem under
+way keeps its marks.
 
 **The grown-ups corner** names it on one line under the Take-aways table, once `ones2` is learned or a style is set:
 "Her marks: a little 1 in front (¹3), her choice. She can change it in the Training Hollow (My marks)." / "Her marks: the
@@ -594,7 +609,8 @@ stacks under it. The stack's held height (`takeReserve`) counts, from the column
 say (`askLend`, `askGet`, `tapRow`) and **the longest** line that slot can hold on this problem (its moves decide which
 can come), not their sum. **Before the build**, the UI owner measures that reserve at the eight sizes, Aa off and on (a
 probe on the v25 page with the longest lines inserted): if the keypad goes under at 1080 × 720, the slot's balloon takes
-the column line's place instead of standing under it. Pinned as v0.3's is: the keypad's box equal at decide, lend, get and
+the place of the column line and of the page's and a twin's introduction instead of standing under them (as built: the
+store round's intro and a twin's "One like it." go with the line; a `'tap'` or `'show'` prompt stays). Pinned as v0.3's is: the keypad's box equal at decide, lend, get and
 answer, with and without the slot filled (`keypad-moved`, measured on the new screens).
 
 **Focus and keys.** The page keeps keyboard focus on itself; digits, Backspace and Enter work on whichever box is
@@ -643,9 +659,10 @@ style, unchanged by the help; the sand alone shows the take), so no help ever sh
 | decide | typed 0 at a spread turn | `nospread` (v0.3's) | "Three take away six? Not enough loose. But we can spread a row." | taps the lender |
 | decide | typed another wrong digit at a spread turn | `fact` (v0.3's `factSpread`) | "Three take away six: we spread a row, then take six." | taps the lender |
 | decide | at a chain's turn, typed bottom − top or 0 | `zero` (v0.3's) | "Three take away eight? Not enough loose, and no rows to spread." + "So a square first." (`chainFirst`) | taps the hundreds |
+| decide | at a chain's turn, typed another wrong digit | `fact` | "Two take away five? Not enough loose, and no rows to spread." + "So a square first." (`zero`'s lines, 702 − 345) | taps the hundreds |
 | decide | typed the right digit at a spread turn | – (`ahead`, a pointer) | "Right! Now show me your marks." (`ahead.right`), or, when the flip lands, "Marks first, then the answer." (`ahead.flip`) | none: her digit stays pale, the lender glows (section 1a.1) |
 | decide | typed a digit while the lender glows after `ahead` | – (counted in `nudges`) | the first: `tap`'s line; the next: the touch made, `askLend` | the second time: the touch |
-| touch | tapped a lender when the column needs nothing, and typed its number | `extra`, judged when she commits that lend number, logged with `move: 'touch'` | "Careful: seven take away two? The loose have enough. No row goes." (`extraTouch`) | the strike undone; the answer box ringed |
+| touch | tapped a lender when the column needs nothing, and typed its number | `extra`, judged when she commits that lend number, logged with `move: 'touch'` | "Careful: seven take away two? The loose have enough. No row goes." (`extraTouch`); at a ones turn with the hundreds struck (chapter 15 on), "… No square goes." (`extraTouch.onesFar`) | the strike undone; the answer box ringed |
 | touch | at a chain, tapped the zero first: the first time in a problem | – (`zeroFirst`, a pointer, in `nudges`) | "That zero has no rows to give. So a square first." (`zeroTouch`) | none: no strike; the hundreds glows, she taps it |
 | touch | at a chain, tapped the zero first again in the same problem | `zero` | the same line | the strike made on the hundreds, its box open |
 | touch | tapped the hundreds when the tens can give (chapter 15 on) | – (`where`, a pointer, in `nudges`) | "Next door first: the rows." | none: the tens glows, she taps it |
@@ -656,7 +673,7 @@ style, unchanged by the help; the sand alone shows the take), so no help ever sh
 | lend | typed the lender as it stood (4 for the 4) | `kept` | "Careful. One row goes to the loose. Three rows now." (`keptMove`) | 3 lettered in the box |
 | lend | typed another wrong number | `lend` (new) | "Four rows, and one goes: three rows." (`lendMove`) | 3 lettered |
 | lend | at a chain, the zero's ten: typed anything but 9 | `zero` | "Careful. That zero is ten rows now, and one goes: nine rows." (`zeroLend`) | 9 lettered |
-| get | at a chain's zero, typed 9 (either style: fifty tens become forty-nine, the hundreds already taken) | – (`nine`, a pointer, in `nudges`) | "Nine at the end! First the zero gets ten rows." (`nine`) | the 10 (or the little 1) lettered; the second touch is hers |
+| get | at a chain's zero, typed 9 (either style: fifty tens become forty-nine, the hundreds already taken) | – (`nine`, a pointer, in `nudges`) | "Yes, nine soon! First the zero gets ten rows." (`nine`) | the 10 (or the little 1) lettered; the second touch is hers |
 | get | `'above'`: typed another wrong number (3, 14 …) | `get` (new) | "Three loose and ten more: thirteen loose." (`getMove`) | 13 lettered |
 | get | `'one'`: typed anything but 1 or the column's new number | `get` | "Ten more loose: a little 1 in front. Thirteen loose." (`getMove.one`) | the little 1 lettered |
 | answer | as v0.3 (`fact`; at a column that lent, `kept`; at a lent zero, `zero`; `extra` typed in her head at the tens or hundreds) | v0.3's | v0.3's lines; but `kept` at a column that lent **and then got** says `keptGot`: "Careful. One row went to the loose, then ten came: ten rows now." (811 − 356's tens answered 6) | v0.3's sand help, her marks kept |
@@ -1090,7 +1107,9 @@ on a requeued twin, its original's key (`'503-278'`); `warm` and `worked` (a `'s
 the store round's number on a round's entries. A store round's problems and the made warm-up are first asks: twins of
 templates, built fresh, never `twin`.
 
-**The log entry with moves** (v0.3's, plus, **only on a problem with a spread**, so chapter 12's entries are unchanged):
+**The log entry with moves** (v0.3's, plus, **only on a problem with a spread**, so chapter 12's entries are unchanged;
+as built, also on one with no spread where she made a move, an `extra` touch, which keeps its `'t'` and `'l'` beside
+its slip; `ahead` and `nudges` whenever they happened, and an undo makes a problem with no spread not `correct`):
 `style`; `moves: [[col, code, given, ms]]`, always four elements, one a move she made, `col` the column whose turn it
 was (as for slips), `code` `'t'` (a touch: `given` the column tapped), `'u'` (an undone touch), `'l'` (a lend: her
 number), `'g'` (a get: her number, 13 or 1), `given` `null` when there is none (43 − 16: `[[0, 't', 1, 1800], [0, 'l',
@@ -1354,12 +1373,19 @@ balloon are on the screen together, as `col-off` requires, with no scroll. The v
 `hollow:marks`, at the eight sizes (`SIZES` and `TAKE_SIZES`), Aa off and on, with `col-off` also failing a `.tmini`
 that leaves `.tcol`, meets the stack's last balloon, or stands nearer the neighbour's mark than its own digit, and two
 new checks: `hit-small` (a live target's hit box under 44 × 44) and `marks-small` (the marks page's little 1 under 16
-px). `--takes --compare` keeps `PC.debug.spanish`'s eight screens and `take:first` byte for byte against the live tree.
+px). `--takes --compare` keeps what a chapter-12-only player sees of the kit byte for byte against the live tree:
+`TAKE_COMPARED` (`dev/webkit/run.mjs`, as built after the review) is `take:first`, `hollow:shelf` (no My marks),
+`store:q` (the gate off) and `PC.debug.spanish`'s eight screens, at `TAKE_SIZES`, Aa off and on (88 rows). As built the
+slot's balloon is `.tslot` (measure.js's `tslot`), a live target is the `[role="button"]` element's own box (`ttgt`),
+the marks page's little 1 is `tone`; `take:lend` and `take:get` carry `@next` (`TAKE_NEXT`, a map: the ringed
+`.tmini.on` typed its right number, and the keypad must not move between them).
 
 **For VoiceOver.** The column is a group labelled with the problem in words; each box is labelled by its column
 ("ones", "tens", "hundreds", from `E.TAKE_WORDS`) and what is in it, the outlined one `aria-current`; the column's line
 is in the stack's live region; the `'tap'` page's hidden "Spread a row" button (its words from `E.TAKE_WORDS` too); the
-panel's label says the store in words ("Five squares, three loose"). Under `movesOn` the column's own targets take the
+panel's label says the store in words ("Five squares, three loose"); between a lend and its get the lend's piece rests
+unopened and is said apart, never counted as landed ("Six rows, four loose, one row resting"), so the label never gives the
+get's number before she types it. Under `movesOn` the column's own targets take the
 hidden button's place (`role="button"`, live only at a decide, Space or Enter taps, labelled "Spread a row" or "Spread a
 square"), and each small box is labelled by its column and its job ("tens, new number: 3"), `aria-current` while it is
 ringed (section 1a.3, "Focus and keys").
@@ -1582,6 +1608,16 @@ ship check's five are re-shot.
   every move.
 - `moveMs`: this problem's moves' times, in order (each move's clock starts when its box opens or its target is live).
 - `ahead`, `nudges`: this problem's pointers; `keyed`: the lesson's (or round's) `lend` and `get` slips so far, by name.
+- As built (the engine owner's names, `app/engine.js`, "the runner under the kit v0.4's gate"): `moveLog`, this problem's
+  moves as the log keeps them (`[col, code, given, ms]`, `code` `'t'` a touch, `'u'` a touch undone, `'l'` a lend's
+  number, `'g'` a get's); `seen`, this problem's `zeroFirst`, `order`, the keying slips already counted (`lend`, `get`)
+  and `twin` (a keying slip come twice: the problem twins); `keyed` counts a keying slip **once a problem** (two links
+  typed the same wrong way in one problem are one habit; "twice in the lesson" is two problems). The column's own, absent
+  when unset and cleared as a column ends: `pale` (her `ahead` digit), `lit` (1: a pointer lit the lender, until her
+  touch; 2: `ahead` lit the column's touches), `litTyped` (digits typed while lit), `touched` (the column she struck at a
+  turn that needs nothing: its lend box open, `extra` judged at its number), `shut` (no target left in the column: an
+  `extra` helped, so it cannot loop). `T.start` writes `style` and the move keys only under the gate, so a
+  chapter-12-only round's state is v25's exactly (L2). `okTakeState` checks each when present.
 
 **Pieces** (the section "the take-aways kit"; each change only under `movesOn`, for a problem with a spread, or with the
 new keys):
@@ -1589,16 +1625,19 @@ new keys):
 | Piece | What it does |
 |---|---|
 | `movesOn(st)` (new, internal; exported as `E.takeMovesOn`) | the gate (above) |
-| `E.takeMoves(plan, style)` (new) | per column, ones first: `[{ move: 'touch' \| 'lend' \| 'get' \| 'answer', col, value?, reads?, link, zero? }]` (section 1a.1). Not `E.takeSteps`, which stays the steps her sets taught |
+| `E.TAKE_STYLES` (new) | `['above', 'one']`, her two marks; `E.takeStyle` reads anything else as `'above'` |
+| `E.takeMoves(plan, style)` (new) | per column, ones first: `[{ move: 'touch' \| 'lend' \| 'get' \| 'answer', col, link, value?, reads?, before?, to? \| from?, zero?, blank? }]` (section 1a.1): `col` the column the move acts on, `link` its link in the turn (null at the answer), `value` the right number (a lend's new number, a get's in the style: 1 in `'one'`, the answer's digit), `reads` a get's new number as a number (13 in either style), `before` the column as it stood, `zero` a chain zero's touch, lend or get. Not `E.takeSteps`, which stays the steps her sets taught |
 | `E.takeTargets(plan, col, moveIdx, taught)` (new) | the columns she can tap now: `[]` unless `moveIdx` is a decide (0, or a chain's second touch, 3) |
 | `E.takeMoveMarks(plan, style, col, moveIdx)` (new) | per column: `{ struck, front: null \| 1 \| 'box', frontStruck, m1: null \| { v, struck, front, box }, m2: null \| { v, box } }`, the option object the column draws (pinned before the build, as v0.3 pinned its objects). `E.takeMarks` (v0.3's, `(plan, mode, helped, col, k)`) is kept unchanged for the v0.3 path |
 | `E.takeMoveSlip(plan, col, moveIdx, given, style, taught, ctx)` (new) | section 1a.4's table, or `{ pointer: 'ahead' (with `form`) \| 'zeroFirst' \| 'where' \| 'gave' \| 'nine' \| 'order' }`, or null (right); `ctx` carries this problem's earlier pointers (a second zero tap) and whether the column needs nothing (`extra` at the lend); the answer move defers to `E.takeSlip` with `shown: true`, `kept` at a lent-then-got column naming `keptGot` |
-| `E.takeMoveHelp(def, plan, col, moveIdx, slip, style)` (new) | `{ say: [line, line?], fix: { move, col, value }, marks, picture, glow }` |
+| `E.takeMoveHelp(def, plan, col, moveIdx, slip, style, mode)` (new; `mode` as built, `'hers'` by default) | `{ say: [line, line?], fix: { move: 'touch' \| 'lend' \| 'get' \| 'undo', col, value? } \| null, next, marks, stage, picture, glow }`: `fix` the move made for her (`'undo'` an `extra` touch's strike; null for a pointer that only lights the lender), `next` the move she makes next; `slip` a slip's name or `E.takeMoveSlip`'s object (`touched` for `extra`: the hundreds struck at a ones turn says `extraTouch.onesFar`). At the answer, v0.3's sand help (`help`, `E.takeHelp`, her marks kept). A wrong digit at a chain's first decide says `zero`'s line, then `chainFirst` (logged `fact`) |
+| `E.takeAheadLine(def, q)` (new, the review's) | the `ahead` line for a question showing her pale digit (`q.pale`), recomputed from the plan (`'flip'` when bottom − top is her digit), for a page picking the column up again (a reload, ‹, Camp): `[line]`, or null; nothing saved for it |
 | `E.takeHelp` (changed) | with `opts.style` (a moves problem), every step's `marks` is `E.takeMoveMarks(plan, style, col, lastMove)`, unchanged by the help; without it, v0.3's |
-| `E.takeShow(def, plan, col, opts)` (changed) | `'show'`'s moves (`steps: [{ say, move, marks, picture, ask }]`: each number asked, her box ringed) and `'tap'`'s prompts (`taps: [{ say, move, glow, marks, picture }]`, `askLend`/`askGet` only for a link not known by `taught`), in `opts.style`; the picture moved before each ask |
+| `E.takeShow(def, plan, col, opts)` (changed) | `'show'`'s moves (`steps: [{ say, idx, move, touch, marks, picture, ask }]`: each number asked, her box ringed; `touch` the column the page calls `T.touch` on for Tallyheart; `ask` `{ col, kind, value, reads? }`) and `'tap'`'s prompts (`taps: [{ say, idx, move, glow, col, marks, picture, ask }]`, `askLend`/`askGet` said only for a link of a kind no earlier chapter taught, by the set's `teach`, else `say` null and the box still ringed), in `opts.style`, with `here` and `line` as v0.3's; `idx` the move each stands at; the picture moved before each ask |
 | `E.takePicture(def, q, stage)` (changed) | a new stage key `half`: `{ col, spreads: k, half: true }` is the k-th spread's lender decremented and its piece resting unopened in the receiving zone, drawn by `placeValue` as `spread.stage: 'out'` (static); every v0.3 stage as it was |
-| `T.touch(st, def, col, now)` (new) | a tap on a column: `{ ignored }`, `{ pointer, line, glow }`, `{ slip, help }`, `{ undone }` or `{ accepted, box }`; `'tap'` mode's zone tap is `T.touch` on the glowing column (`T.tap` kept as its thin wrapper, so the slot machinery stands) |
-| `T.digit(st, def, value, ms, now)` (changed) | the ringed box's OK: a move's number (`value` may be `'13'`) or the answer as v0.3; returns the move's result, its picture stage (`half` after a lend, the open after a get, in `'hers'`), the next box, `res.marks` from `E.takeMoveMarks`, and at a problem's end v0.3's entry with `helped` and `correct` as section 1a.4 says (`helped` = a slip; `correct` = no slip, no counted pointer), the twin by section 1a.4's rule, and the end line by `helped` |
+| `T.touch(st, def, col, now, ms?)` (new; `ms` as built, the touch's time, else 0) | a tap on a column: `{ ignored: 'off' }` outside the gate (v0.3's column takes no taps); `{ ignored: 'own' }` her own column (the page wiggles it), `'done'`, `'move'`, `'target'`, `'show'`, `'col'`; `{ undone }`, a second tap on the lender **she** struck while its box is empty (the last logged move her own `'t'` of that lender: a strike a help, the second zero tap or the touch made after `ahead` made for her is never undone), back at the decide, a nudge, logged `'u'`; `{ pointer: 'zeroFirst' \| 'where' \| 'gave' \| 'order', line, say }` (the lender lit; `order` once a problem, not counted); `{ slip: 'zero', help }`; `{ accepted, box }`. In `'tap'` a target that is not the glowing lender is v0.3's tap off the zone (`off`, `tapHere` once); in `'show'` the page makes Tallyheart's touch on the step's `touch` (the right lender only, `worked: true`, not logged as hers) |
+| `T.tap(st, off, def?, now?)` (changed) | under the gate a thin wrapper: `T.touch` on the glowing column (or, with `off`, v0.3's tap off the zone); null when nothing glows, so a caller's `while (q.tap) T.tap(st)` never spins (`q.tap` counts the touches left only while one is due); off the gate v0.3's exactly |
+| `T.digit(st, def, value, ms, now)` (changed) | the ringed box's OK: a move's number (`value` may be `'13'`) or the answer as v0.3; returns the move's result, its picture stage (`half` after a lend, the open after a get, in `'hers'`), the next box, `res.marks` from `E.takeMoveMarks`, and at a problem's end v0.3's entry with `helped` and `correct` as section 1a.4 says (`helped` = a slip; `correct` = no slip, no counted pointer), the twin by section 1a.4's rule, and the end line by `helped`. As built, its pointers by name: `'onesFirst'` (v0.3's ones-first pointer; off the gate still `pointer: true`), `'ahead'` (with `form` and `pale`), `'tapLine'` (the first digit while the lender is lit: `tap`'s line), `'touchMade'` (the next: the touch made for her, `askLend`), `'nine'`; in `'show'` a wrong number is `res.lettered`, no slip; `{ ignored: 'guard' \| 'tap' \| 'show' \| 'digit' \| 'empty' }` (the 400 ms guard after an OK ignores OK only). Every move's result (and `T.touch`'s) also carries `line` and `say` (the help's or pointer's, else the `'tap'`/`'show'` ask or step at the new move), `stage` (`flight: 'open'` where a link has just landed), `picture`, `marks`, `box`, `targets`, `glow` and `moveIdx` |
 | `T.question(st)` (changed) | adds `move`, `moves`, `box` (`{ col, kind: 'lend' \| 'get' \| 'answer', row: 1 \| 2 \| 'front' }`), `targets`, `style`, `pale` (her `ahead` digit), `glow`, and the marks from `E.takeMoveMarks` on a moves state |
 | `E.takeMarksPage(def, cat)` (new) | `{ lines, options: [{ style: 'one', label }, { style: 'above', label }], after: { one, above }, current }` from the set's `marks` or the kit's lines |
 | `E.takeStyle(cat)`, `E.setTakeStyle(cat, style)` (new) | read (default `'above'`) and write `cat.takes.style` (creating `takes` as `E.logTake` does) |
@@ -1628,11 +1667,11 @@ value is as it is, but `tap` gains two forms and `tapHere` changes (no live chap
 | `askLend` | `ones` "One {row} goes. How many {rows} now?" · `tens` "One {square} goes. How many {squares} now?" |
 | `askGet.above` | `ones` "{Top} {loose}, and ten more. How many {loose} now?" · `onesZero` "No {loose}, and ten more. How many {loose} now?" · `tens`/`tensZero` the same with {rows} |
 | `askGet.one` | `ones` "{Top} {loose}, and ten more: write a little 1 in front." · `onesZero` "No {loose}, and ten more: write a little 1 in front." · `tens`/`tensZero` the same with {rows} |
-| `extraTouch` | `ones` "Careful: {top} take away {bottom}? The {loose} have enough. No {row} goes." · `tens` "Careful: {top} take away {bottom}? The {rows} have enough. No {square} goes." |
+| `extraTouch` | `ones` "Careful: {top} take away {bottom}? The {loose} have enough. No {row} goes." · `tens` "Careful: {top} take away {bottom}? The {rows} have enough. No {square} goes." · `onesFar` (a ones turn, the hundreds struck; a chapter's own `extraTouch` without it falls back to `ones`) "Careful: {top} take away {bottom}? The {loose} have enough. No {square} goes." |
 | `zeroTouch` | "That zero has no {rows} to give. So a {square} first." |
 | `zeroStop` | `ones` "Careful. Ten {rows} now, and still only {top} {loose}. Now a {row}." · `onesZero` "Careful. Ten {rows} now, and still no {loose}. Now a {row}." |
 | `zeroLend` | "Careful. That zero is ten {rows} now, and one goes: nine {rows}." |
-| `nine` | "Nine at the end! First the zero gets ten {rows}." |
+| `nine` | "Yes, nine soon! First the zero gets ten {rows}." |
 | `keptMove` | `ones` "Careful. One {row} goes to the {loose}. {Left} {rows} now." (left 0: "… No {rows} now.") · `tens` the same with {square}/{rows}/{squares} |
 | `keptGot` | `tens` "Careful. One {row} went to the {loose}, then ten came: ten {rows} now." |
 | `lendMove` | `ones` "{Old} {rows}, and one goes: {left} {rows}." (old 1: "One {row}, and one goes: none now.") · `tens` the same with {squares} |
@@ -1641,8 +1680,8 @@ value is as it is, but `tap` gains two forms and `tapHere` changes (no live chap
 | `ahead` | `right` "Right! Now show me your marks." · `flip` "Marks first, then the answer." |
 | `where` | "Next door first: the {rows}." |
 | `gave` | "The {squares} gave already. Now the {rows}." |
-| `order` | "Take away first, then the next column." |
-| `marksAsk` | ["When you {spread} a {row}, how do you write it?", "Both are right. Tap your way."] |
+| `order` | "{TakeAway} first, then the next column." (as built: every maths word a token; it reads "Take away first, then the next column.") |
+| `marksAsk` | ["When you {spread} a {row}, how do you write it?", "Both are right. Tap the marks you like."] |
 | `marksAfter` | "Then that’s how we’ll write it." |
 | `marksLabel` | `one` "A little 1 in front" · `above` "The new number on top" |
 
@@ -1657,20 +1696,22 @@ Warrior Counts, `E.takePlan`, `E.takeKind`, `E.takeFlags`, `E.takeShape`, `E.tak
 `E.hardTakes` (a helped first ask, as now), `E.takeSteps`, `E.storeOpen`, `E.takeMarks`, the shelf's other buttons, the
 echoes (`E.takeEcho`; no column is echoed), book two.
 
-**Art, page and tools with moves** (the plan's owners; the names as built come after the reviews):
+**Art, page and tools with moves**, the names as built (2026-11-09, the owners' notes and the review's round; the notes
+are in `~/potomac-crossing-work/regroup/build-art/`, `build-page/`, `build-tools/` and `fixer/`):
 
 | Piece | What it does |
 |---|---|
-| `PC.art.placeValue(o)` (changed) | `o.spread.stage === 'out'` drawn statically: the k-th spread's lender already decremented and its piece (a row, or a square) resting unopened in the receiving zone's tray, beside the old pieces, in the zone's own drawing, with no animation and no flight (`E.takePicture`'s `half`); every other option and stage byte for byte as before; `dev/gallery.html`'s take-aways section gains the three `'out'` pictures (a row, a square, a zero's row) |
-| `runTakes`, `PC.ui.takes` (changed) | the column draws `E.takeMoveMarks`' object (struck, `front`, `frontStruck`, `m1`, `m2`, the `.tmini` boxes, the second marks row in the heads row's place, the chip's words kept in its `aria-label`), and identical markup for a column with no moves; section 1a.3's phases, taps, `ahead` and slot (`takeReserve`); a `'marks'` phase before a problem's prompt when that problem asks a spread move and `cat.takes.style` is absent |
-| `marksPage(o)` (new) | the marks page (section 1a.2) in a `.tpick` wrapper, called by `runTakes`' `'marks'` phase and by `renderHollow`'s `{ marks: true }` branch (beside `{ counts: true }`, before the pinned `var HW`): no new view |
-| `renderHollow`, the shelf (changed) | **My marks**, a normal `.btn` beside My nest once `ones2` is learned or a style is set, its icon her receiver's mark at 32 px or more; `go('hollow', { marks: true })`; ‹ back to the shelf, the warrior pins kept |
-| `takeCorner` (changed) | "Marks right" and "In her head first: N" only when a row has moves; the style line once `ones2` is learned or a style is set; the slips' new words; a chapter-12-only cat's corner byte for byte |
-| `PC.debug.takes(what)` (changed) | gains `touch`, `lend`, `get`, `get:one`, `chain`, `help:move`, `ahead`, `marks` and `hollow:marks`, on stub definitions of its own with `taught: E.TAKE_STEPS` (chapter 13's `marks` lines inline, or `PC.story.ch13`'s once present); its existing spread screens (`q`, `tap`, `spread`, `echo`, `sand`, `done`) pass `taught: E.TAKE_STEPS`, so they show v0.4; `first` stays as it is (no `taught`) |
-| `index.html` | the v0.4 rules on `.frame[data-mode="take"].tmoves` (the boxes, the front box, the second marks row, the targets' widened hit areas, `ahead`'s pale digit, the ripple, the slot) and the picture buttons' on `.tpick`; nothing outside those selectors changes |
-| `tools/shots.mjs`, `dev/webkit/run.mjs` | `TAKE_TARGETS` and `TAKE_SCREENS` gain `take:touch`, `take:lend`, `take:get`, `take:get:one`, `take:chain`, `take:help:move`, `take:ahead`, `take:marks` and `hollow:marks`, with `@next` on `take:lend` and `take:get` (the keypad must not move between them) |
-| `dev/webkit/measure.js`, `tools/sweep.mjs` | every `.tmini` rect (and which is `.on`), the targets' hit boxes, the marks page's little 1 and the slot's balloon recorded; `col-off` widened, `hit-small` and `marks-small` new (section 6, "The gate") |
-| `tools/storyboard.mjs` | a take set's `marks` printed as "**Then the marks page**" (its lines and after-lines, the labels) before the set's first problem; every other chapter and `warrior.md` byte for byte |
+| `PC.art.placeValue(o)` (changed) | `o.spread.stage === 'out'` drawn statically: the k-th spread's lender already decremented and its piece (a row, or a square) resting unopened in the receiving zone's tray, beside the old pieces, in the zone's own drawing, with no animation and no flight (`E.takePicture`'s `half`); as built a plain group `pc-pv-row` or `pc-pv-square` with `pc-pv-out` at the slide's end box (no `<style>`, no `pc-pv-moving`, so Reduce Motion draws the same), the receiving zone's fresh block not drawn, and its `aria-label` adding "a row resting by the loose, not yet opened" (a square by the rows); every other option and stage byte for byte as before (19,065 pictures pinned before the change); `dev/gallery.html`'s take-aways section gains the three `'out'` pictures (a row, a square, a zero's row) |
+| `PC.ui.takes` (changed; pure, Node-tested) | `takeView`/`takeHtml` gain the moves view (`takeCellMoves`, `takeCellHtml`, `tMini`, `tMarkHtml`) and emit identical markup for a column with no moves (chapter 12's columns hashed against v25's own `ui.js`); `takeReserve` hands a moves problem to `takeReserveMoves` (with `takePrompts`, a `'tap'` or `'show'` turn's prompts, and `takeSlotLines`, the slot's candidates, each target's `extra` line among them), whose slot stands in place of `tSlotFirst`'s lines (a help takes the place of the column's line, of the page's intro and of a twin's or the warm-up's introduction; a prompt stays); `takePress2` (the two-digit box: a digit added while it holds fewer than two, starting again at two, so 1, 4, 1, 3 gives 13), `takeKey`, `takeTapAct` (a press over 10 px of slide or 0.5 s held is no tap), `takeMarksHtml`, `takeMarksGlow`, `takeMarksFlow` (the marks page's run), `takeStageAt` (the store at a move picked up), `takeStoreLabel` (the resting piece said apart: "Six rows, four loose, one row resting"), `takeCorner(takes, table, secs, steps)` |
+| `runTakes` (changed) | under `mv = E.takeMovesOn(st)` the frame takes `.tmoves` and each v0.3 function gets one `if (mv) return …M()` at its top, its own lines kept: `outlineM`, `drawColM`, `slotSay`, `moveStore` (the slide to `'out'` 600 ms, the open 400 ms, picture only), `wakeM`, `showOpenM`/`showTouchM` (Tallyheart's touch through `T.touch`, the paw-tap ripple), `tapM`, `resumeM`, `afterMove`, `moveHelpM` (phase `'mhelp'`: the keypad `.dim` and its keys ignored for the reading time), `flashBox`, `pressM`/`digitM`/`submitM`/`answerM`, `touchCol`, `wigCol`, `offTapM`, `colClickM`/`panelClickM`/`stackClickM`, and the `'marks'` phase, `marksPhase` (when `needMarks()`: a problem's first move asks a spread and `cat.takes.style` is absent). As built: a move's clock (`startClock(items)`, with `clockGen`, bumped only on the moves path) is never reset by the first column's delayed restart, and a `'tap'` problem's touch clock starts after its lines are read; `quietUntil` (400 ms after a phase change, the zone's taps too); `slotAsk` (the ask made for her after `ahead` leaves the slot once she types the lend); a pale `ahead` digit picked up again letters `E.takeAheadLine` in the slot, unsaid; a `'tap'` or `'show'` column picked up at its answer says its line once; a later column brings the keypad back into view (WebKit's scroll anchoring); `bringIn` never scrolls the stack's first balloon under the bar (its 8 px margin goes first); `.tsecond` set as a problem begins, when its own marks need the second row or a lent hundreds can take an `extra` touch at the tens; the slot's balloon `.tslot`; a new problem with no `moveStyle` takes `styleNow()` |
+| `marksPage(host, o)` (new) | the marks page (section 1a.2) drawn into `host` (`.tpickwrap`, then `.tpick`, `.tlive` once live; buttons `.tpb` with `data-style`, `aria-pressed`, `aria-disabled` until live), returning `{ glow, live, press, onPick, remove }`; called by `runTakes`' `marksPhase` (the frame `tmkpage`) and by `renderMarks(opts)`; no new view. `PC.debug.takes` writes nothing to the test cat: its pick sets the page's own `o.style` |
+| `renderHollow`, the shelf (changed) | `renderMarks(opts)` at its top for `{ marks: true }` (the shelf's `data-mode`, Tallyheart with the kit's lines, both buttons live, `hollowSub = 'marks'`, ‹ back to the shelf in `onBack`, the warrior pins kept); **My marks**, `#marksBtn`, a normal `.btn` beside My nest once `ones2` is learned or a style is set, its icon `takeMarksIcon(style)` (`.tpickicon`, the digit at 32 px; its margins pulled in for `'above'`'s stacked 13 over 3, so the button is as tall as My nest); on a phone held sideways both on one row, 46 px; `openGrownups` passes `E.takeSteps(c, stories())` |
+| `takeCorner` (changed) | "Marks right" and "In her head first: N" only when a row has moves; the note "Her marks are the new numbers she writes when she spreads: the one that gave, then her column. “Marks right” is how many of them, in her own first tries, were right first time."; the style line once `ones2` is learned or a style is set; the slips' new words (`kept` "did not take one off" only on a row with moves); a chapter-12-only cat's corner byte for byte |
+| `PC.debug.takes(what)` (changed) | gains `touch`, `lend`, `get`, `get:one`, `chain`, `help:move`, `ahead`, `marks` and `hollow:marks`, on stub definitions of its own with `taught: E.TAKE_STEPS` (chapter 13's `marks` lines inline, `TAKE_DEBUG_MARKS`, or `PC.story.ch13`'s once present); `q`, `show`, `tap`, `spread`, `echo`, `sand` and `done` pass `taught: E.TAKE_STEPS`, so they show v0.4 (`show`'s steps: 0 the opening line, 1 the square's lend, 2 the zero's ten, 3 the row's lend, 4 the loose, 5 the column's line); `first`, `shelf` and `store` stay as they were (no `taught`) |
+| `index.html` | about 90 lines in the take block, on `.frame[data-mode="take"].tmoves`, `.tpick` and `.tpickicon` (and two `.frame[data-mode="shelf"]` rules for the sideways shelf's row): `.tmini` (`.tw2` a get's, `.on` ringed, `.right` the flash), the `'one'` front box `.tfront.tfb` (`.tfit` for two digits), the second marks row `.tmark.tm2` (the chip kept as `.thead.tgone`), struck groups `.tgrp.tstruck` (a ¹0 struck as one, `.tfs`), the targets `.ttarget` (`role="button"`, its column's width plus half of each gap, at least 44 px, `.tfar` for a column not next to hers), `.thalo`, `.tripple`, `.twig`, `ahead`'s pale digit, the slot; on a phone held sideways the second marks row's box takes a 2 px border and .72em digits, so a 9 sits inside its 14 px row; nothing outside those selectors changes |
+| `tools/shots.mjs`, `dev/webkit/run.mjs` | `TAKE_TARGETS` and `TAKE_SCREENS` gain `take:touch`, `take:lend`, `take:get`, `take:get:one`, `take:chain`, `take:help:move`, `take:ahead`, `take:marks` and `hollow:marks`; `TAKE_NEXT` (exported) is a map, `take:q` and `take:echo` `'column'` as before, `take:lend` `'lend'` and `take:get` `'get'` (`@next`: `TAKE_MOVE` types the ringed `.tmini.on`'s right number, `TAKE_MOVE_UP` waits for the next box; the keypad must not move between them); `TAKE_COMPARED` (exported): `take:first`, `hollow:shelf`, `store:q` and the eight `es:` screens; a tree that lacks the new targets gets one note job per Aa |
+| `dev/webkit/measure.js`, `tools/sweep.mjs` | measure: `tmini` (every shown `.tmini`: its box, `on`, `front`, its own digit and its neighbour's mark), `ttgt` (each `[role="button"]` in the column: its own box as the hit box, and whether it is live), `tslot`, `tpick`, `tone` (the marks page's little 1 and its rendered size) and `hx` (the markup's hash, for the compare); sweep: `col-off` widened, `hit-small` and `marks-small` new (section 6, "The gate"), `keypad-moved` "between one move and the next" on `take:lend`/`take:get`; `--takes --compare DIR` measures the other tree's `TAKE_COMPARED` alone and `compareCaches` gains `takes`; `prune(...keep)` and `ensure`'s `keepAlso`, so a compare never deletes the cache of the tree it compares from |
+| `tools/storyboard.mjs` | a take set's `marks` printed as "**Then the marks page**" (its lines and after-lines, the labels) as its own paragraph before the problems' lines, "before N − M's prompt" naming the first problem with a spread; a set with no spread says it never shows; every other chapter and `warrior.md` byte for byte. The take-aways paragraph above it still words v0.3 (the picture spreads, the zone glows) for a set under the gate |
 
 ## 9. Tests
 
@@ -1829,7 +1870,9 @@ recorded before any change and never again.
   correct: false, helped: false, ahead: [0] }`; a `lend` slip alone queues no twin, the second in the lesson does; `kept`,
   `extra`, `flip`, `nospread`, `zero`, `fact` each queue one.
 - E9. **Targets**: `[]` at lend, get and answer moves; the tens from `ones2`, the hundreds from `tens`; the undo; `order`
-  once; `zeroFirst` then `zero`.
+  once; `zeroFirst` then `zero`. E9b (the review's): the undo only of a strike she made herself; a strike a decide slip's
+  help, the second zero tap's help or the touch made for her after `ahead` made is `{ ignored: 'move' }`, one slip each;
+  her own strike, in `'hers'` and through `T.tap` in `'tap'`, still undone.
 - E10. **The modes**: `'show'` asks each number (wrong lettered, no slip); `'tap'` asks only a link new to the chapter
   (the stub chapter 13's 70 − 34 asks both; the stub chapter 14's 640 − 218 none); the picture moves before each ask in
   `'tap'`/`'show'` and after each OK in `'hers'`.
@@ -1848,6 +1891,12 @@ recorded before any change and never again.
 - U5. **The `'one'` front box** takes 1 or 13 and letters the little 1 alone.
 - T1. **The screens**: the new shots at the eight sizes, Aa off and on, with `col-off`, `hit-small`, `marks-small` and
   `keypad-moved` clean (the page review's run: `node tools/sweep.mjs --takes` and `--pages`).
+- **The review's round** (2026-11-09; `~/potomac-crossing-work/regroup/review.json`, 18 findings, each with a test or a
+  measure): section 1a.4's table rows for 702 − 345 typed 5 at its first decide (`zero`'s line, then `chainFirst`, logged
+  `fact`) and for `extraTouch.onesFar` (three rows); `E.takeAheadLine`'s; in `takes-ui`, `tsecond` for a lent hundreds an
+  `extra` touch can reach, `tSlotFirst` in `takeReserveMoves` (a store round's intro and a twin's introduction go with
+  the line), `takeStoreLabel`'s resting row and square, and the marks lines' pins; in `takes-tools`, `TAKE_COMPARED` with
+  the shelf and a store round; in `render-tools`, `prune` with a list to keep, run on a scratch cache.
 
 **Chapters 1 to 12 as live, unchanged**:
 - L1. Untouched and passing: `tests/story-ch12.test.js`, `tests/spanish.test.js`, the chapter-7, -8 and -9 goldens, the
@@ -1863,7 +1912,8 @@ recorded before any change and never again.
 - L5. `takeHtml` emits identical markup for every column of chapter 12's problems; `.tmoves` is never set on a
   chapter 12 page; a chapter-12-only cat's corner is byte for byte.
 - L6. `node tools/sweep.mjs --takes --compare`: `PC.debug.spanish`'s eight screens and `take:first` byte for byte against
-  the live tree (v25).
+  the live tree (v25); as built (the review's R1), the shelf (`hollow:shelf`) and a store round (`store:q`) too:
+  `TAKE_COMPARED`, 88 of 88 at `TAKE_SIZES`, Aa off and on.
 
 **In Safari**, for the shipping check (`tools/shots.mjs`, the screen locked, a fresh short session each, silent): `take:q`,
 `take:tap`, `take:sand`, `take:done` and `hollow:shelf`, five shots; the rest is checked in Node, by the sweep and by the
@@ -1921,7 +1971,14 @@ its tests and fixtures), the art (`placeValue`'s resting stage), this document a
 the page lens at the eight sizes, Aa off and on, the compare against v25); phase 4, the integrator (`E.VERSION`
 0.13.0 with chapter 13, `docs/build.md`, the README, `docs/continuity.md`) and this document's names as built. About
 450 to 600 engine lines, 500 to 700 page lines (70 of CSS), 40 art lines and 1,000 to 1,300 test lines. Chapter 13's
-`ch13-take` set, with its `marks`, is coded by chapter 13's frames builder after it, from its spec.
+`ch13-take` set, with its `marks`, is coded by chapter 13's frames builder after it, from its spec. **As built**
+(2026-11-09, local commit `5b974cb` on `e000777`, then the review's round): about 760 engine lines (most of the excess
+comments and the lines table), about 830 page lines and 91 of CSS (the marks page's two homes, the slot, and the tap and
+key logic made pure for Node), 28 art lines; the review read it in six lenses (the engine, the page, the compare against
+v25, a teacher's for Lissa, and the two its critic added: Count the store with the moves on the real page, and the saved
+path with a style change mid-lesson), 18 findings, each checked by a skeptic and all taken, with the build checker's two
+(the compare's `prune`, and take:echo at 1080 × 700 with Aa on, fixed another way); the suite 48 files, 2,082 tests, all
+pass. The README's entry, "The take-aways kit v0.4", has the calls.
 
 ## 11. Calls made, with reasons (under decision 46; for the README)
 
@@ -2077,6 +2134,14 @@ the page lens at the eight sizes, Aa off and on, the compare against v25); phase
     her first spread is made the decision-57 way, and the marks page meets her at chapter 13's worked example, with
     Chispapaw's lines; `CACHE` is already v26 from chapter 13's stub, so nobody bumps it. Shipped apart, as v27, the marks
     page would first come at her first spread in a store round or in chapter 14, with the kit's own lines.
+58. **Decision 56's third binds the plain path** (the orchestrator's call on section 12's question 3, 2026-11-09): at
+    the middle-to-slow rates a chapter as played stays inside a third; a reading with a miss and its help may run a
+    little over; the move times are measured again from her log after she plays chapter 13, before chapter 14 ships and
+    before chapter 15's brief (the log times every move for it: `moves`' ms). So no chapter is cut for decision 57 now.
+59. **Her class's paper habits, the design's defaults until Aron says** (the orchestrator's call on section 12's question
+    4): the 3 crossed out when 13 is written over it; the marks made column by column as she reaches each (the `order`
+    pointer stays); a zero's 10 becoming 9 one link at a time (a 9 at the zero's get the kind `nine` pointer). Each is a
+    one-line change if her class does otherwise.
 
 ## 12. For Aron
 

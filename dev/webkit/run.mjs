@@ -61,8 +61,9 @@ export const TAKE_SCREENS = ['take:first', 'take:q', 'take:show', 'take:tap', 't
 // digit (the next column outlined); 'lend' or 'get', the ringed small box's number (the next box ringed)
 export const TAKE_NEXT = { 'take:q': 'column', 'take:echo': 'column', 'take:lend': 'lend', 'take:get': 'get' };
 // the screens `--takes --compare` holds byte for byte against another tree (the live one): what a chapter-12-only player
-// sees of the kit, take:first and chapter 12's eight Spanish screens (the plan's L6)
-export const TAKE_COMPARED = ['take:first', 'es:echo', 'es:take', 'es:skip', 'es:worked', 'es:worked:tens', 'es:try', 'es:try:pointer', 'es:store'];
+// sees of the kit, take:first, the shelf, a store round and chapter 12's eight Spanish screens (the plan's L6, with the shelf
+// and a store round)
+export const TAKE_COMPARED = ['take:first', 'hollow:shelf', 'store:q', 'es:echo', 'es:take', 'es:skip', 'es:worked', 'es:worked:tens', 'es:try', 'es:try:pointer', 'es:store'];
 // chapter 12's Spanish screens the page review measures (its spec, section 10); tools/shots.mjs's ES_TARGETS says how each
 // opens, and the shelf (with Chispapaw's "¡A contar!") is the take-aways kit's own TAKE_TARGETS entry
 export const ES_SCREENS = ['es:echo', 'es:take', 'es:skip', 'es:worked', 'es:worked:tens', 'es:try', 'es:try:pointer', 'es:store', 'hollow:shelf'];

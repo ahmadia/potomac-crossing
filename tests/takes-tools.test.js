@@ -5,7 +5,8 @@
  * `--takes` over the page review's four more sizes (tools/sweep.mjs). The kit v0.4 (decision 57; the plan's tools owner,
  * ~/potomac-crossing-work/regroup/plan.md): the new targets and screens (the moves, a move-help, `ahead`, the marks page),
  * `@next` at a move, the measure's small boxes, targets, slot and marks page (on a stand-in page), `col-off`'s small boxes,
- * `hit-small`, `marks-small`, `--takes --compare` (take:first and chapter 12's Spanish screens byte for byte), and the
+ * `hit-small`, `marks-small`, `--takes --compare` (take:first, the shelf, a store round and chapter 12's Spanish screens
+ * byte for byte), and the
  * storyboard's marks page. No WebKit, Safari or Quick Look runs here; every cache is a scratch directory, and the
  * storyboards are written to one. On the stub chapters (tests/fixtures/takes-stub.js) until the real ones land.
  * node --test */
@@ -127,8 +128,8 @@ test('storyboard.mjs, the kit v0.4: a take set’s `marks` boarded as “Then th
     assert.ok(md.includes('**Then the marks page** (the kit’s; before 43 − 16’s prompt, the first problem here with a spread to make, while she has no marks yet: her pick is saved as her marks, and she can change it on the Hollow’s shelf, My marks): two picture buttons in the column’s place, 43 − 16 done in each style, “A little 1 in front” on the left and “The new number on top” on the right.'));
     assert.ok(md.includes(' Read to me says the lines, then the labels.\n- Its lines, in order:\n' +
       '  - **Chispapaw**: “My little Tall One writes it like THIS.”\n  - **Chispapaw**: “A little 1 in front!”\n' +
-      '  - **Tallyheart**: “Some write the new number on top instead.”\n  - **Tallyheart**: “Both are right. Which way do YOU like?”\n' +
-      '- After “A little 1 in front”:\n  - **Chispapaw**: “Just like my little Tall One!”\n- After “The new number on top”:\n  - **Tallyheart**: “On top it is.”\n\n- Asking'), md);
+      '  - **Tallyheart**: “Some write the new number on top instead.”\n  - **Tallyheart**: “Both are right. Which marks do YOU like?”\n' +
+      '- After “A little 1 in front”:\n  - **Chispapaw**: “Just like my little Tall One!”\n- After “The new number on top”:\n  - **Tallyheart**: “On top it is. That’s how I write it too!”\n\n- Asking'), md);
     assert.equal(md.split('**Then the marks page**').length, 2, 'once: the story set (52 − 27) has no marks');
     for (const n of [12, 14, 17]) assert.doesNotMatch(board(dir, 'ch' + n, fromStub(n)), /Then the marks page/, 'chapter ' + n + '’s stub sets have no marks');
     // a set's `marks` with no lines of its own: the kit's, in the set's teacher's voice; a made warm-up comes first; a set
@@ -138,7 +139,7 @@ test('storyboard.mjs, the kit v0.4: a take set’s `marks` boarded as “Then th
       counts: { 'ch15-take': Object.assign({ op: '-', teach: 'tens', teacher: 'tallyheart', picture: { kind: 'store' }, facts, marks: {} }, more) } }) + ';');
     const kit = own([[97, 52], [526, 254]]);
     assert.ok(kit.includes('**Then the marks page** (the kit’s; before 526 − 254’s prompt, the first problem here with a spread to make,'));
-    assert.ok(kit.includes('- Its lines, in order:\n  - **Tallyheart**: “When you spread a row, how do you write it?”\n  - **Tallyheart**: “Both are right. Tap your way.”\n' +
+    assert.ok(kit.includes('- Its lines, in order:\n  - **Tallyheart**: “When you spread a row, how do you write it?”\n  - **Tallyheart**: “Both are right. Tap the marks you like.”\n' +
       '- After “A little 1 in front”:\n  - **Tallyheart**: “Then that’s how we’ll write it.”\n- After “The new number on top”:\n  - **Tallyheart**: “Then that’s how we’ll write it.”'), kit);
     assert.ok(own([[97, 52]], { warm: true }).includes('(the kit’s; before the made warm-up’s prompt (it always has a row to spread), while she has no marks yet'));
     assert.ok(own([[97, 52], [486, 253]]).includes('**Then the marks page** (the kit’s; it never shows here: no problem in this set has a spread to make): two picture buttons'));
@@ -664,10 +665,10 @@ function takeCaches(here, there, sub) {
   return [mk(here, 'takes'), mk(there, sub || 'takes-compare')];
 }
 
-test('sweep.mjs --takes --compare: what a chapter-12-only player sees of the kit (take:first and chapter 12’s eight Spanish screens) byte for byte against the other tree: its boxes and its markup, the rest of the kit’s screens not held', async () => {
+test('sweep.mjs --takes --compare: what a chapter-12-only player sees of the kit (take:first, the shelf, a store round and chapter 12’s eight Spanish screens) byte for byte against the other tree: its boxes and its markup, the rest of the kit’s screens not held', async () => {
   const { compareCaches } = await imp('tools/sweep.mjs');
   const { TAKE_COMPARED, ES_SCREENS } = await imp('dev/webkit/run.mjs');
-  assert.deepEqual(TAKE_COMPARED, ['take:first'].concat(ES_SCREENS.filter((t) => /^es:/.test(t))), 'the plan’s L6: take:first and PC.debug.spanish’s eight');
+  assert.deepEqual(TAKE_COMPARED, ['take:first', 'hollow:shelf', 'store:q'].concat(ES_SCREENS.filter((t) => /^es:/.test(t))), 'the plan’s L6: take:first, the shelf (no My marks for her), a store round and PC.debug.spanish’s eight');
   const same = { fp: 'f', pfp: 'p', hx: 'h' };
   const [a, b] = takeCaches({ 'take:first': same, 'es:echo': same, 'es:take': Object.assign({}, same, { fp: 'moved' }), 'es:skip': Object.assign({}, same, { hx: 'new markup' }), 'es:worked': same, 'take:touch': { fp: 'new' } },
     { 'take:first': same, 'es:echo': same, 'es:take': same, 'es:skip': same, 'es:try': same });
@@ -705,7 +706,7 @@ test('sweep.mjs --takes --compare on two trees with no take screens: the other t
     assert.equal(r.status, 0, r.stderr + r.stdout);
     assert.match(r.stdout, /\ntakes: 0 measured at 1080x700, 1024x768, 768x1024, 844x390; problems: none \(takes\/summary\.md\)/);
     assert.match(r.stdout, /\ntakes-compare: 0 measured at 1080x700, 1024x768, 768x1024, 844x390; problems: none \(takes-compare\/summary\.md\)/);
-    assert.ok(r.stdout.includes('takes against ' + t2 + ' (take:first and chapter 12\'s eight Spanish screens): 0 of 0 byte for byte; boxes moved on 0, markup changed on 0; only here 0, only there 0'), r.stdout);
+    assert.ok(r.stdout.includes('takes against ' + t2 + ' (take:first, the shelf, a store round and chapter 12\'s eight Spanish screens): 0 of 0 byte for byte; boxes moved on 0, markup changed on 0; only here 0, only there 0'), r.stdout);
     const d1 = path.join(cache, cacheKey(t1)), d2 = path.join(cache, cacheKey(t2));
     assert.equal(fs.readdirSync(path.join(d2, 'takes-compare')).filter((f) => f.endsWith('-takes.json')).length, 8, 'a record a size and an Aa');
     assert.ok(!fs.existsSync(path.join(d2, 'takes')) && !fs.existsSync(path.join(d2, 'pages')) && !fs.existsSync(path.join(d2, 'art')), 'the other tree: TAKE_COMPARED alone');

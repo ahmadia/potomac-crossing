@@ -203,6 +203,35 @@ test('sweep.mjs --compare: the frames whose art differs, the pages whose boxes o
   assert.deepEqual(c.pages.goneProblems.map((x) => x.at), ['ch01:f009']);
 });
 
+test('sweep.mjs: prune keeps the newest KEEP caches, complete ones first, and every cache it is told to keep; --compare keeps this tree\'s own cache while it builds the other tree\'s (it deleted it once 4 complete caches stood, and the compare crashed)', () => {
+  const cache = scratch('prunecache');
+  try {
+    // six caches, a day apart (k0 newest): k0 to k3 complete, k4 and k5 pages only; prune told to keep k5 and k4
+    const ds = [0, 1, 2, 3, 4, 5].map((i) => {
+      const d = path.join(cache, 'k' + i);
+      fs.mkdirSync(path.join(d, 'pages'), { recursive: true });
+      fs.writeFileSync(path.join(d, 'pages/summary.json'), '{}');
+      if (i < 4) { fs.mkdirSync(path.join(d, 'art')); fs.writeFileSync(path.join(d, 'art/index.json'), '{}'); }
+      fs.writeFileSync(path.join(d, 'tree.json'), '{}');
+      const t = new Date(Date.now() - i * 86400000);
+      fs.utimesSync(path.join(d, 'tree.json'), t, t);
+      return d;
+    });
+    const code = "const m = await import(" + JSON.stringify(pathToFileURL(T('tools/sweep.mjs')).href) + "); m.prune(...JSON.parse(process.argv[1]));";
+    let r = node(['--input-type=module', '-e', code, JSON.stringify([ds[5], ds[4]])], { PC_CACHE_DIR: cache });
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(fs.readdirSync(cache).sort(), ['k0', 'k1', 'k2', 'k3', 'k4', 'k5'], 'both kept, though past the newest four');
+    r = node(['--input-type=module', '-e', code, JSON.stringify([ds[5]])], { PC_CACHE_DIR: cache });
+    assert.deepEqual(fs.readdirSync(cache).sort(), ['k0', 'k1', 'k2', 'k3', 'k5'], 'k4 not kept: removed');
+    r = node(['--input-type=module', '-e', code, '[]'], { PC_CACHE_DIR: cache });
+    assert.deepEqual(fs.readdirSync(cache).sort(), ['k0', 'k1', 'k2', 'k3'], 'the newest four complete ones');
+  } finally { fs.rmSync(cache, { recursive: true, force: true }); }
+  const src = fs.readFileSync(T('tools/sweep.mjs'), 'utf8');
+  assert.ok(src.includes('async function ensure(root, want, { force, waitMin, log, keepAlso }) {'));
+  assert.ok(src.includes('    prune(dir, ...(keepAlso || []));'));
+  assert.ok(src.includes("{ force: false, waitMin, log, keepAlso: [dir] });"), 'the compare\'s other tree keeps this one');
+});
+
 test('sweep.mjs: one WebKit process at a time, the lock let go between chapters and sizes, a low priority, and a tree that changed under the sweep is never cached', () => {
   const src = fs.readFileSync(T('tools/sweep.mjs'), 'utf8');
   assert.ok(!/Promise\.all|parallel\(/.test(src), 'nothing in parallel');

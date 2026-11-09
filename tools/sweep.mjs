@@ -25,10 +25,10 @@
  *   node tools/sweep.mjs --compare DIR   this tree against another (a copy of the live tree, say): the frames whose
  *                                     art differs, the pages whose boxes moved, the problems new and gone; builds
  *                                     whichever of the two caches is missing (both need the same parts: add --pages);
- *                                     with --takes, what a chapter-12-only player sees of the kit (take:first and
- *                                     chapter 12's eight Spanish screens, TAKE_COMPARED) byte for byte: its boxes
- *                                     (the fingerprints) and its markup (`hx`), the other tree measured for those
- *                                     alone (its takes-compare/, unless it has takes/ already)
+ *                                     with --takes, what a chapter-12-only player sees of the kit (take:first, the
+ *                                     shelf, a store round and chapter 12's eight Spanish screens, TAKE_COMPARED) byte
+ *                                     for byte: its boxes (the fingerprints) and its markup (`hx`), the other tree
+ *                                     measured for those alone (its takes-compare/, unless it has takes/ already)
  *   --root DIR      sweep another tree (default: this repo)      --force   build again even if the cache is there
  *   --wait MIN      how long to wait for another sweep of the same tree to finish (default 60)
  *
@@ -234,10 +234,11 @@ const GROUPS = [['plain', ['plain']], ['taps', ['taps', 'lessons']], ['screens',
 // the take-aways kit's screens and chapter 12's Spanish screens at the page review's four more sizes (--takes): their own
 // folder, `takes/`
 const TAKES_RUN = { sub: 'takes', sizes: TAKE_SIZES, groups: [['takes', ['takes', 'spanish']]], title: 'The take-aways kit’s and chapter 12’s Spanish screens at the page review’s four more sizes' };
-// another tree's TAKE_COMPARED alone (take:first and chapter 12's eight Spanish screens), for `--takes --compare`: its own
+// another tree's TAKE_COMPARED alone (take:first, the shelf, a store round and chapter 12's eight Spanish screens), for
+// `--takes --compare`: its own
 // folder, `takes-compare/`, so a partial run is never read as that tree's takes/
 const TAKES_COMPARE_RUN = { sub: 'takes-compare', sizes: TAKE_SIZES, groups: [['takes', ['takes', 'spanish']]], screens: { takeScreens: TAKE_COMPARED.filter((t) => !/^es:/.test(t)), esScreens: TAKE_COMPARED.filter((t) => /^es:/.test(t)) },
-  title: 'What a chapter-12-only player sees of the kit (take:first and chapter 12’s eight Spanish screens), for a compare' };
+  title: 'What a chapter-12-only player sees of the kit (take:first, the shelf, a store round and chapter 12’s eight Spanish screens), for a compare' };
 const VARIES = /^warrior:(q|sand|notyet|afterpass)\b/;
 
 /* The pages measured (`pages/`, the four SIZES, every group), or the take screens at the review's four more sizes
@@ -427,7 +428,7 @@ export function compareCaches(a, b) {
 }
 
 /* ------------------------------------------------------------------ one tree's cache, built as asked */
-async function ensure(root, want, { force, waitMin, log }) {
+async function ensure(root, want, { force, waitMin, log, keepAlso }) {
   const key = cacheKey(root), dir = cacheDir(key);
   mkdirSync(dir, { recursive: true });
   const artDone = () => (want.only ? want.only.every((g) => groupDone(dir, g)) : status(dir).art);
@@ -479,7 +480,7 @@ async function ensure(root, want, { force, waitMin, log }) {
     log('built in ' + Math.round((Date.now() - t1) / 1000) + ' s');
     // the tree must not have changed under the sweep, or the cache would lie about it
     if (cacheKey(root) !== key) { rmSync(dir, { recursive: true, force: true }); console.error('sweep: the tree changed while it was swept; nothing kept. Run it again when the tree is still.'); process.exit(1); }
-    prune(dir);
+    prune(dir, ...(keepAlso || []));   // (a compare's other tree keeps this tree's cache too)
     return dir;
   } finally { release(); process.removeListener('exit', release); }
 }
@@ -489,15 +490,16 @@ function progress(dir) {
   const t = existsSync(join(dir, 'takes')) ? readdirSync(join(dir, 'takes')).filter((f) => /-aa[01]-\w+\.json$/.test(f)).length : 0;
   return 'art: ' + a + ' chapters done; pages: ' + p + ' of ' + SIZES.length * 2 * GROUPS.length + ' runs' + (t ? '; takes: ' + t + ' of ' + TAKE_SIZES.length * 2 + ' runs' : '');
 }
-/* Keep the newest KEEP caches (and any being built). */
-function prune(keep) {
+/* Keep the newest KEEP caches (and any being built, and every one in `keep`: the cache just built and, for a compare, this
+ * tree's, which the other tree's build must not remove before the compare reads it). */
+export function prune(...keep) {
   if (!existsSync(CACHE)) return;
   // a complete cache (art and pages) is kept before a partial one (an integrator's `--only` runs), so iterating on one
   // chapter never pushes out the live tree's full cache; then newest first
   const full = (d) => (existsSync(join(d, 'art', 'index.json')) ? 1 : 0) + (existsSync(join(d, 'pages', 'summary.json')) ? 1 : 0);
   const all = readdirSync(CACHE).map((k) => join(CACHE, k)).filter((d) => existsSync(join(d, 'tree.json')))
     .sort((x, y) => full(y) - full(x) || statSync(join(y, 'tree.json')).mtimeMs - statSync(join(x, 'tree.json')).mtimeMs);
-  for (const d of all.slice(KEEP)) if (d !== keep && !status(d).building) { rmSync(d, { recursive: true, force: true }); console.error('sweep: removed an old cache, ' + d); }
+  for (const d of all.slice(KEEP)) if (!keep.includes(d) && !status(d).building) { rmSync(d, { recursive: true, force: true }); console.error('sweep: removed an old cache, ' + d); }
 }
 
 /* ------------------------------------------------------------------ the command */
@@ -527,13 +529,13 @@ async function main() {
       const o = resolve(other);
       if (!existsSync(join(o, 'index.html'))) { console.error('sweep: --compare needs a tree (a folder with index.html): ' + o); process.exit(2); }
       // (the other tree's take screens: only what a chapter-12-only player sees, TAKE_COMPARED, and only with --takes)
-      const odir = await ensure(o, Object.assign({}, want, { takes: false, takesCompare: !!want.takes }), { force: false, waitMin, log });
+      const odir = await ensure(o, Object.assign({}, want, { takes: false, takesCompare: !!want.takes }), { force: false, waitMin, log, keepAlso: [dir] });
       const c = compareCaches(dir, odir);
       const file = join(dir, 'compare-' + cacheKey(o) + '.json');
       writeFileSync(file, JSON.stringify(c, null, 1));
       if (c.art) log('art against ' + o + ': ' + c.art.differ.length + ' of ' + c.art.frames + ' frames differ' + (c.art.differ.length ? ' (' + c.art.differ.slice(0, 30).join(' ') + (c.art.differ.length > 30 ? ' …' : '') + ')' : '') + '; only here ' + c.art.onlyHere.length + ', only there ' + c.art.onlyThere.length);
       if (c.pages) log('pages against ' + o + ': boxes moved on ' + c.pages.boxesMoved.length + ', panel changed on ' + c.pages.panelChanged.length + ' (the Warrior Counts\' question and result screens, which vary run to run, apart: ' + c.pages.variesRunToRun.length + '); problems new ' + c.pages.newProblems.length + ', gone ' + c.pages.goneProblems.length);
-      if (c.takes && want.takes) log('takes against ' + o + ' (take:first and chapter 12\'s eight Spanish screens): ' + c.takes.same + ' of ' + c.takes.rows + ' byte for byte; boxes moved on ' + c.takes.boxesMoved.length +
+      if (c.takes && want.takes) log('takes against ' + o + ' (take:first, the shelf, a store round and chapter 12\'s eight Spanish screens): ' + c.takes.same + ' of ' + c.takes.rows + ' byte for byte; boxes moved on ' + c.takes.boxesMoved.length +
         (c.takes.boxesMoved.length ? ' (' + c.takes.boxesMoved.slice(0, 12).join('; ') + ')' : '') + ', markup changed on ' + c.takes.markupChanged.length + (c.takes.markupChanged.length ? ' (' + c.takes.markupChanged.slice(0, 12).join('; ') + ')' : '') +
         '; only here ' + c.takes.onlyHere.length + ', only there ' + c.takes.onlyThere.length);
       log('compare: ' + file);

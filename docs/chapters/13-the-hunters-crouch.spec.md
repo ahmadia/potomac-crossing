@@ -192,9 +192,9 @@ function C(text) { return { who: 'chispapaw', text: text }; }
   // the kit's marks page (decision 57): once, before 43 − 16's prompt, while she has no marks; her style, never a flag
   marks: {
     lines: [C('My little Tall One writes it like THIS.'), C('A little 1 in front!'),
-            T('Some write the new number on top instead.'), T('Both are right. Which way do YOU like?')],
+            T('Some write the new number on top instead.'), T('Both are right. Which marks do YOU like?')],
     one: [C('Just like my little Tall One!')],
-    above: [T('On top it is.')]
+    above: [T('On top it is. That’s how I write it too!')]
   }
   // + lines: LINES13 only if the merged kit lacks rule (a) (section 6, check 1): below, "The extra slip"
 }
@@ -207,9 +207,10 @@ var LINES13 = { extra: { tens: 'Careful. The {loose} had enough, so no {row} wen
   43 − 16 done in each style (27 in its boxes, the receiver's mark haloed); four balloons, one at a time, each picture
   glowing with its lines: Chispapaw's "My little Tall One writes it like THIS." and "A little 1 in front!" (the left
   picture, a little 1), Tallyheart's "Some write the new number on top instead." (the right, 13 over the struck 3) and
-  "Both are right. Which way do YOU like?" (both glow; the buttons go live). A tap sets `cat.takes.style` (`'one'` or
-  `'above'`), never a flag, and letters Chispapaw's "Just like my little Tall One!" or Tallyheart's "On top it is."; she
-  can switch while it shows; the answer line's reading time, or a tap on the stack or the panel, goes on to the prompt.
+  "Both are right. Which marks do YOU like?" (both glow; the buttons go live). A tap sets `cat.takes.style` (`'one'` or
+  `'above'`), never a flag, and letters Chispapaw's "Just like my little Tall One!" or Tallyheart's "On top it is.
+  That’s how I write it too!" (each as warm as the other: the page asks which marks she really uses); she can switch
+  while it shows; the answer line's reading time, or a tap on the stack or the panel, goes on to the prompt.
   Read to me says the lines, then the labels "A little 1 in front" and "The new number on top".
 - **The worked example, 43 − 16** (`'show'`; run on the kit): the prompt's balloon and the first column's line are one
   balloon (both Tallyheart's): "Pretend the pile holds forty-three, and the Clan eats sixteen. Ones first." Then

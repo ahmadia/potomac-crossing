@@ -1606,3 +1606,46 @@ with chapter 11's standing rules kept.
   its English on the same screen, Latin American spelling, never in an English voice, never aloud on the mini; no story
   information in Spanish only; a take-away is never called a Count; the store is drawn only at the story's numbers; a
   newcomer's facing follows who she speaks to (the review's round: her thanks and her first look at her mentor).
+
+## What chapter 14 inherits
+
+*Begun 2026-11-09, before chapter 13 ships: what the take-aways kit v0.4 (decision 57), built on chapter 13's branch and
+shipped with it as v26, leaves to chapter 14 (`docs/take-aways.md` Design v0.4, section 1a; `docs/build.md`, "The take-aways
+kit", its v0.4 paragraph). The rest of this section, chapter 13's story, flags, cards and names, is chapter 13's spec,
+section 8, checked against the chapter as built and written in at its ship, when this file's header moves to chapter 13.*
+- **Her marks** (`cat.takes.style`, decision 57: hers to choose). `'above'`, the new number on top of the crossed-out
+  digit (13 over a struck 3), or `'one'`, a little 1 in front of it (¹3). She chose on the kit's marks page at chapter 13's
+  worked example, 43 − 16, before its prompt: Chispapaw's "My little Tall One writes it like THIS." and "A little 1 in
+  front!", Tallyheart's "Some write the new number on top instead." and "Both are right. Which marks do YOU like?"; her
+  pick answered by Chispapaw's "Just like my little Tall One!" or Tallyheart's "On top it is. That’s how I write it too!".
+  That page waits for a pick, so every player who reaches chapter 14 has marks. They are not a flag: no story line can
+  depend on them or say which she chose (both are right), and every column, help and twin draws hers; a story's own
+  text or picture that wrote a spread in digits would have to assume one, and none does (the kit's quick marks, a
+  crossed line and a framed ten, are the same in both). The grown-ups corner names them on one line ("Her marks: a
+  little 1 in front (¹3), her choice. …"). A problem keeps the marks it began with; a change reaches the next one. The
+  save: still version 2, `cat.takes.style` its one new optional field.
+- **The moves.** Every spread is hers to make, as moves in the column, ones first: she taps the digit next door (it is
+  crossed out), types its new number, types her own column's new number in her marks, then the answer; across a zero
+  (chapter 18 on), each link the same. She can tap the tens from chapter 13 and the hundreds from chapter 15 (a column is
+  tappable only once a spread out of it is taught, and only when she decides), so in chapter 14 only the tens. In a
+  worked example (`'show'`) Tallyheart taps and says each new number and she types it ("I’ll say each step. You type
+  it."); a `'tap'` problem lights the lender and prompts the tap ("No loose. Spread a row: tap it." for a top of 0, "Not
+  enough loose. Spread a row: tap it." otherwise) and asks the two numbers only for a link of a kind no earlier chapter
+  taught: a row's link is chapter 13's, so chapter 14's 640 − 218 asks none (its boxes ringed, unasked), and chapter 15's
+  418 − 162, a square's, asks every number; her own problems prompt nothing and nothing glows, and no line says which
+  need a spread. A slip is caught at its move and helped in one move, in the set's teacher's balloon (chapter 14's
+  `ch14-wall`: {Murmur}chime's), the rest left hers; a wrong answer keeps the sand's help, her marks kept. A tap where no
+  spread is needed, then its number typed, is `extra` ("Careful: eight take away five? The loose have enough. No row
+  goes.": 768 − 315's 6 tapped at the ones). A right answer typed before the moves stays pale ("Right! Now show me your
+  marks.", or "Marks first, then the answer." when it may be a flip), never right first time, no twin; a wrong new number
+  alone brings no twin unless it repeats. Count the store's rounds are moves too, in her marks (steps learned after
+  chapter 13: `none`, `ones2`). Every move is timed in her log (`moves`): chapter 14's maths share (its spec, item 15:
+  33.3% at the top after the kit's last cut, 35.3% with a warm-up miss) is measured again from her chapter 13 times
+  before it ships, and decision 56's third binds the plain path (the orchestrator's call: a reading with a miss and its
+  help may run a little over).
+- **My marks** in the Training Hollow: on the shelf beside My nest from chapter 13's lesson on (once `ones2` is learned),
+  a normal button, "My marks", with her own mark as its icon. It opens the marks page with Tallyheart's lines, the kit's
+  own ("When you spread a row, how do you write it?" / "Both are right. Tap the marks you like." / after: "Then that’s
+  how we’ll write it."), her marks pressed and both pictures live; a tap changes them at once, at no cost; ‹ goes back to
+  the shelf. Chispapaw says nothing there. The shelf's two big buttons stay as they are, so chapter 14's Tricky Counts
+  still goes between them, and My marks stays on the last row with My nest.

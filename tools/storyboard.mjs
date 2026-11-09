@@ -1525,6 +1525,8 @@ function board(storyPath, outPath) {
     if (modes.includes('tap')) out[0] += ' In a tapped one, the zone to spread from glows and the keypad waits until she taps it.';
     out[0] += ' She writes each answer under the column a digit at a time, ones first, with OK after each; a slip gets that column scratched out in the sand (the help writes its digit, and the rest is hers), ' +
       (set.twins === false ? 'and a helped one does not come back (`twins: false`).' : 'and a helped one comes back as a twin (new numbers, the same shape) ' + numWord(E.REQUEUE_GAP || 2) + ' problems later.') + ' On to ' + f.counts.next + '.';
+    // (the kit v0.4, decision 57: a set's own marks page, before its first problem with a spread to make)
+    if (set.marks && typeof set.marks === 'object') out.push('', marksPageWords(set, facts, lines));
     const more = [];
     const bare = facts.find(x => x.prompt == null);
     if (bare) more.push('- Asking a problem with no words of its own: its column alone, and Read to me says it in words (“' + fill(first(kit('ask')), { a: bare.a, b: bare.b }) + '”).');
@@ -1544,6 +1546,22 @@ function board(storyPath, outPath) {
     else if (set.done === '' || set.done === null) more.push('- No closing line: the next frame goes straight on.');
     if (more.length) out.push('', more.join('\n'));
     return out.join('\n');
+  }
+  /* The kit v0.4's marks page (decision 57; docs/take-aways.md, section 1a): a take set's `marks` ({ lines, one, above }),
+   * shown by the take page before the first problem that asks a spread move (the made warm-up's, when it has one) while
+   * she has no marks yet; its lines, after-lines and labels as the engine gives them (E.takeMarksPage). */
+  function marksPageWords(set, facts, lines) {
+    const page = typeof E.takeMarksPage === 'function' ? E.takeMarksPage(set, null)
+      : { lines: asList(set.marks.lines), options: [{ style: 'one', label: 'A little 1 in front' }, { style: 'above', label: 'The new number on top' }], after: { one: asList(set.marks.one), above: asList(set.marks.above) } };
+    const label = st => (page.options.find(o => o.style === st) || { label: st }).label;
+    const spread = x => { const p = E.takePlan(x.a, x.b); return !!p && E.takeKind(p) !== 'none'; };
+    const firstSpread = facts.find(spread);
+    const when = set.warm === true ? 'before the made warm-up’s prompt (it always has a row to spread)' : firstSpread ? 'before ' + firstSpread.a + ' − ' + firstSpread.b + '’s prompt, the first problem here with a spread to make' : null;
+    return ['**Then the marks page** (the kit’s; ' + (when ? when + ', while she has no marks yet: her pick is saved as her marks, and she can change it on the Hollow’s shelf, My marks' : 'it never shows here: no problem in this set has a spread to make') + '): two picture buttons in the column’s place, 43 − 16 done in each style, “' +
+      label('one') + '” on the left and “' + label('above') + '” on the right. The lines come one balloon at a time, each picture glowing with its own, and the buttons go live after the last; a tap picks (the button pressed) and letters that pick’s line, and she can switch while it shows; its reading time, or a tap on the stack or the panel, goes on. Read to me says the lines, then the labels.',
+    '- Its lines, in order:', ...lines(page.lines),
+    '- After “' + label('one') + '”:', ...lines(page.after.one),
+    '- After “' + label('above') + '”:', ...lines(page.after.above)].join('\n');
   }
   function countsWords(f) {
     // chapter 5: a Counts frame may run another chapter's set (the roof, found later: chapter 4's riddle)

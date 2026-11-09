@@ -9335,6 +9335,11 @@
   //     ten pieces drawn in their places, each animated out of the row (or the square) into its place (400 ms);
   //     'end' draws what no spread draws. The animation lives in a <style> inside the picture, all of it under
   //     prefers-reduced-motion: no-preference (as PC.art.css), so a Reduce Motion page sees each stage's end.
+  //     'out' (v0.4, decision 57: between her lend and her get; E.takePicture's `half`): the slide's end drawn still,
+  //     with no <style> and no flight: the lender's piece resting unopened where the slide ends, in the middle of the
+  //     `to` zone's tray, beside the old pieces (class pc-pv-out). The counts as for 'slide' (the spread counted as
+  //     landed, the lender already one less); the `to` zone's fresh block is not drawn, so a caller passing the
+  //     receiver as it stood draws the same. Reduce Motion sees the same picture.
   //   - `glow`: the zone the 'tap' page asks for, lit gold over the picture's full height (class pc-pv-glow, with
   //     art.css's soft pulse). Every zone carries an unpainted <rect class="pc-zone" data-zone="hundreds|tens|
   //     ones">, the full height and, between them, the full width: the page's tap targets.
@@ -9585,7 +9590,7 @@
     if (st.ones - st.fresh.ones > 10) st.fresh.ones = 10;
     st.taken = { hundreds: pvNum(t.hundreds, 0, st.hundreds), tens: pvNum(t.tens, 0, st.tens), ones: pvNum(t.ones, 0, st.ones) };
     var sp = o.spread && typeof o.spread === 'object' ? o.spread : null;
-    st.spread = sp && (sp.from === 'hundreds' || sp.from === 'tens') && (sp.stage === 'slide' || sp.stage === 'open') ? { from: sp.from, to: sp.from === 'hundreds' ? 'tens' : 'ones', stage: sp.stage } : null;
+    st.spread = sp && (sp.from === 'hundreds' || sp.from === 'tens') && (sp.stage === 'slide' || sp.stage === 'open' || sp.stage === 'out') ? { from: sp.from, to: sp.from === 'hundreds' ? 'tens' : 'ones', stage: sp.stage } : null;
     st.glow = o.glow === 'hundreds' || o.glow === 'tens' ? o.glow : null;
     st.three = st.hundreds > 0 || st.taken.hundreds > 0 || st.fresh.tens > 0 || !!(st.spread && st.spread.from === 'hundreds') || st.glow === 'hundreds';
     return st;
@@ -9639,9 +9644,11 @@
       var fc = [from.x + from.w / 2, from.y + from.h / 2], ms = st.spread.stage === 'slide' ? 600 : 400;
       // the row (or the square) slides to the middle of the block it opens into, and opens from there
       var mb = { x: tray.x + tray.w / 2 - from.w / 2, y: tray.y + tray.h / 2 - from.h / 2, w: from.w, h: from.h, g5: from.g5 };
-      if (st.spread.stage === 'slide') {
+      // ('out': where the slide ends, still: no flight, no <style>)
+      var still = st.spread.stage === 'out';
+      if (still || st.spread.stage === 'slide') {
         var inner = st.marks ? qkMark(G, mk[st.spread.from], mb, L, '', false) : st.spread.from === 'hundreds' ? pvSquare(mb, '') : pvRow(mb, 1, '');
-        pieces.push({ box: mb, svg: pvMoving(A, mb, fc, 1, ms, 'pc-pv-' + kinds[st.spread.from], inner) });
+        pieces.push({ box: mb, svg: still ? '<g class="pc-pv-' + kinds[st.spread.from] + ' pc-pv-out"' + pvBox(mb) + '>' + inner + '</g>' : pvMoving(A, mb, fc, 1, ms, 'pc-pv-' + kinds[st.spread.from], inner) });
       } else {
         // the ten, each out of its place in the row (or the square) into its own
         for (var m = 0; m < 10; m++) {
@@ -9670,7 +9677,7 @@
     if (st.small) {
       var y1 = 0;
       pieces.forEach(function (q) { y1 = Math.max(y1, q.box.y + q.box.h); });
-      geo.zones.forEach(function (z) { if (z.tray && (st.fresh[z.id] > 0)) y1 = Math.max(y1, z.tray.y + z.tray.h); });
+      geo.zones.forEach(function (z) { if (z.tray && (st.fresh[z.id] > 0 || (st.spread && st.spread.stage === 'out' && st.spread.to === z.id))) y1 = Math.max(y1, z.tray.y + z.tray.h); });
       var y0 = geo.zones.reduce(function (a, z) { return Math.min(a, z.old.length ? z.old[0].y : a); }, H);
       if (!pieces.length) y1 = y0 + 40;
       top = Math.max(0, y0 - 48);
@@ -9698,10 +9705,14 @@
     var body = pieces.map(function (q) { return q.svg; }).join('');
     var style = A.css.length ? '<style>@media (prefers-reduced-motion: no-preference){' + A.css.join('') + '}</style>' : '';
     // what the picture says to a screen reader (the page may say it its own way)
-    var label;
-    if (st.marks) label = 'The quick picture: ' + st.hundreds + (st.hundreds === 1 ? ' square, ' : ' squares, ') + st.tens + (st.tens === 1 ? ' line and ' : ' lines and ') + st.ones + (st.ones === 1 ? ' dot' : ' dots');
-    else label = 'The store: ' + (st.three ? st.hundreds + ' ' + (st.hundreds === 1 ? pvWord('square', 'square') : pvWord('squares', 'squares')) + ', ' : '') +
-      st.tens + ' ' + (st.tens === 1 ? pvWord('row', 'row') : pvWord('rows', 'rows')) + ', ' + st.ones + ' ' + pvWord('loose', 'loose');
+    // ('out': the `to` zone as it stood, and the piece resting there, not yet opened)
+    var label, rest = st.spread && st.spread.stage === 'out' ? st.spread : null, cnt = { hundreds: st.hundreds, tens: st.tens, ones: st.ones };
+    if (rest) cnt[rest.to] -= st.fresh[rest.to];
+    if (st.marks) label = 'The quick picture: ' + cnt.hundreds + (cnt.hundreds === 1 ? ' square, ' : ' squares, ') + cnt.tens + (cnt.tens === 1 ? ' line and ' : ' lines and ') + cnt.ones + (cnt.ones === 1 ? ' dot' : ' dots');
+    else label = 'The store: ' + (st.three ? cnt.hundreds + ' ' + (cnt.hundreds === 1 ? pvWord('square', 'square') : pvWord('squares', 'squares')) + ', ' : '') +
+      cnt.tens + ' ' + (cnt.tens === 1 ? pvWord('row', 'row') : pvWord('rows', 'rows')) + ', ' + cnt.ones + ' ' + pvWord('loose', 'loose');
+    if (rest) label += '; a ' + (rest.from === 'hundreds' ? (st.marks ? 'square' : pvWord('square', 'square')) : st.marks ? 'line' : pvWord('row', 'row')) + ' resting by the ' +
+      (rest.to === 'tens' ? (st.marks ? 'lines' : pvWord('rows', 'rows')) : st.marks ? 'dots' : pvWord('loose', 'loose')) + ', not yet opened';
     var gone = PV_ZONES.filter(function (id) { return st.taken[id]; });
     if (gone.length) label += '; taken: ' + gone.map(function (id) { return st.taken[id] + ' ' + (id === 'hundreds' ? (st.marks ? 'squares' : pvWord('squares', 'squares')) : id === 'tens' ? (st.marks ? 'lines' : pvWord('rows', 'rows')) : (st.marks ? 'dots' : pvWord('loose', 'loose'))); }).join(', ');
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ' + N(top) + ' ' + N(W) + ' ' + N(H) + '" role="img" aria-label="' + label + '" data-art="place-value">' + style + under + glow + trays + body + hits + '</svg>';

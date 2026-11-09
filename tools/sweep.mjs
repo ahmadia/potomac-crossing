@@ -17,13 +17,18 @@
  *                                     Spanish screens at the page review's four more sizes, 1080x700, 1024x768,
  *                                     768x1024 and 844x390, Aa off and on
  *                                     (takes/summary.json, the same problems; --pages has them at its own four sizes,
- *                                     in its screens group); with --pages or --all, both
+ *                                     in its screens group); with --pages or --all, both. The kit v0.4's screens
+ *                                     (decision 57: the moves, a move-help, `ahead`, the marks page) are among them
  *   node tools/sweep.mjs --only ch12  the art of these chapters only (a comma list; `warrior` for its scenes): about
  *                                     30 seconds a chapter, into the same cache (a later whole sweep reuses them)
  *   node tools/sweep.mjs --path       where this tree's cache is and what it holds (builds nothing)
  *   node tools/sweep.mjs --compare DIR   this tree against another (a copy of the live tree, say): the frames whose
  *                                     art differs, the pages whose boxes moved, the problems new and gone; builds
- *                                     whichever of the two caches is missing (both need the same parts: add --pages)
+ *                                     whichever of the two caches is missing (both need the same parts: add --pages);
+ *                                     with --takes, what a chapter-12-only player sees of the kit (take:first and
+ *                                     chapter 12's eight Spanish screens, TAKE_COMPARED) byte for byte: its boxes
+ *                                     (the fingerprints) and its markup (`hx`), the other tree measured for those
+ *                                     alone (its takes-compare/, unless it has takes/ already)
  *   --root DIR      sweep another tree (default: this repo)      --force   build again even if the cache is there
  *   --wait MIN      how long to wait for another sweep of the same tree to finish (default 60)
  *
@@ -50,8 +55,15 @@
  *                       between the bar's bottom and the viewport's (measure.js's `tcol`, `tbox`, `tsf`, `tsb`): the
  *                       controls alone would let a page that pushed its column or its line under the bar pass (the
  *                       first balloon since chapter 12's review: 58 − 23 opened with it under the bar, its last in view)
+ *                       The kit v0.4 adds: a small box (.tmini) out of the column or meeting the stack's last
+ *                       balloon; a front box (the little 1's) nearer the neighbour's mark than its own digit; the
+ *                       slot's balloon (measure.js's `tslot`) off the screen like the rest
  *   keypad-moved        on a take page, the keypad's box not the same at a column and the next (`@next`: the right
- *                       digit typed on the page's own keypad), so a finger could land on the wrong key
+ *                       digit typed on the page's own keypad), so a finger could land on the wrong key; or at a move and
+ *                       the next (take:lend, take:get: the ringed small box's number typed)
+ *   hit-small           a live tap target's hit box (measure.js's `ttgt`, the kit v0.4's [role=button] in the column)
+ *                       under 44 x 44
+ *   marks-small         the marks page's little 1 (measure.js's `tone`) rendered under 16 px, or not found on it
  * The screens that scroll by design (the hub, the book, My nest, her Case File, the grown-ups corner; chapter 1's
  * look chooser, f011) list their off-screen controls under `scrolls`, not as problems.
  */
@@ -61,7 +73,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, s
 import { homedir, setPriority } from 'os';
 import { dirname, join, relative, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { REPO, SIZES, TAKE_SIZES, pageScripts, serve, runJobs, measureJobs, sweepCat, collect, call, fontSteps } from '../dev/webkit/run.mjs';
+import { REPO, SIZES, TAKE_SIZES, TAKE_NEXT, TAKE_COMPARED, pageScripts, serve, runJobs, measureJobs, sweepCat, collect, call, fontSteps } from '../dev/webkit/run.mjs';
 import { EXIT_LOCKED } from './lock.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -222,11 +234,15 @@ const GROUPS = [['plain', ['plain']], ['taps', ['taps', 'lessons']], ['screens',
 // the take-aways kit's screens and chapter 12's Spanish screens at the page review's four more sizes (--takes): their own
 // folder, `takes/`
 const TAKES_RUN = { sub: 'takes', sizes: TAKE_SIZES, groups: [['takes', ['takes', 'spanish']]], title: 'The take-aways kit’s and chapter 12’s Spanish screens at the page review’s four more sizes' };
+// another tree's TAKE_COMPARED alone (take:first and chapter 12's eight Spanish screens), for `--takes --compare`: its own
+// folder, `takes-compare/`, so a partial run is never read as that tree's takes/
+const TAKES_COMPARE_RUN = { sub: 'takes-compare', sizes: TAKE_SIZES, groups: [['takes', ['takes', 'spanish']]], screens: { takeScreens: TAKE_COMPARED.filter((t) => !/^es:/.test(t)), esScreens: TAKE_COMPARED.filter((t) => /^es:/.test(t)) },
+  title: 'What a chapter-12-only player sees of the kit (take:first and chapter 12’s eight Spanish screens), for a compare' };
 const VARIES = /^warrior:(q|sand|notyet|afterpass)\b/;
 
 /* The pages measured (`pages/`, the four SIZES, every group), or the take screens at the review's four more sizes
  * (`takes/`, TAKES_RUN): a run a size, an Aa and a group, each kept as it lands so a stopped sweep picks up there. */
-async function buildPages(root, dir, S, log, { sub = 'pages', sizes = SIZES, groups = GROUPS, title } = {}) {
+async function buildPages(root, dir, S, log, { sub = 'pages', sizes = SIZES, groups = GROUPS, title, screens = {} } = {}) {
   const pages = join(dir, sub);
   mkdirSync(pages, { recursive: true });
   const srv = await serve(root, S.SILENT);
@@ -236,7 +252,7 @@ async function buildPages(root, dir, S, log, { sub = 'pages', sizes = SIZES, gro
       const file = join(pages, size + '-aa' + (big ? 1 : 0) + '-' + g + '.json');
       if (existsSync(file)) continue;
       const [W, H] = size.split('x').map(Number);
-      const jobs = measureJobs(S, srv.site, what, { aas: [big], cat });
+      const jobs = measureJobs(S, srv.site, what, Object.assign({ aas: [big], cat }, screens));
       // (a tree with no take screens, measured for them: nothing to run, an empty record)
       const run = jobs.length ? await runJobs({ width: W, height: H, silent: S.SILENT, jobs }, { what: 'tools/sweep.mjs ' + sub + ' ' + size + ' Aa ' + (big ? 'on' : 'off') + ' ' + g, dir: pages }) : { jobs: [], warn: [], code: 0, secs: 0 };
       const res = collect(jobs, run);
@@ -265,32 +281,64 @@ function rowsOf(pages) {
   return out;
 }
 /* A take page's column, outlined box and stack's first and last balloons (measure.js's `tcol`, `tbox`, `tsf`, `tsb`; a
- * one-balloon stack's first is its last, said once) not wholly between
+ * one-balloon stack's first is its last, said once), and the kit v0.4's slot balloon (`tslot`, said only when it is not
+ * the stack's last), not wholly between
  * the bar's bottom (`tbar`) and the viewport's: each as a line ("the column 30-180: 18px under the bar"). A take page
- * with no column shown says so. Nothing for a row that is not a take page. */
+ * with no column shown says so (not the marks page, `tpick`, which shows pictures in its place). The kit v0.4's small
+ * boxes (`tmini`): one out of the column, one meeting the stack's last balloon, a front box nearer the neighbour's mark
+ * (`nb`) than its own digit (`own`). Nothing for a row that is neither a take page nor a marks page. */
+const same = (a, b) => Array.isArray(a) && Array.isArray(b) && a.every((v, i) => v === b[i]);
+// the gap between two boxes, px (0 when they touch or overlap)
+export const boxGap = (a, b) => Math.round(Math.hypot(Math.max(0, b[0] - a[2], a[0] - b[2]), Math.max(0, b[1] - a[3], a[1] - b[3])));
 export function colOff(r) {
-  if (!r || !(r.take || r.tcol)) return [];
+  if (!r || !(r.take || r.tcol || r.tpick)) return [];
   const out = [], top = Math.max(0, r.tbar || 0);
-  if (r.take && !r.tcol) out.push('no column (.tcol) shown on the take page');
-  for (const [k, what] of [['tcol', 'the column'], ['tbox', 'the outlined box'], ['tsf', 'the stack’s first balloon'], ['tsb', 'the stack’s last balloon']]) {
+  if (r.take && !r.tcol && !r.tpick) out.push('no column (.tcol) shown on the take page');
+  for (const [k, what] of [['tcol', 'the column'], ['tbox', 'the outlined box'], ['tsf', 'the stack’s first balloon'], ['tsb', 'the stack’s last balloon'], ['tslot', 'the slot’s balloon']]) {
     const b = r[k];
     if (!Array.isArray(b)) continue;
-    if (k === 'tsf' && Array.isArray(r.tsb) && b.every((v, i) => v === r.tsb[i])) continue;
+    if ((k === 'tsf' || k === 'tslot') && same(b, r.tsb)) continue;
     const f = [];
     if (b[1] < top - 0.5) f.push((top - b[1]) + 'px under the bar');
     if (b[3] > r.vh + 0.5) f.push((b[3] - r.vh) + 'px below the fold');
     if (b[0] < -0.5 || b[2] > r.vw + 0.5) f.push('off the screen sideways');
     if (f.length) out.push(what + ' ' + b[1] + '-' + b[3] + ': ' + f.join(', '));
   }
+  for (const x of Array.isArray(r.tmini) ? r.tmini : []) {
+    const b = x && x.b;
+    if (!Array.isArray(b)) continue;
+    const what = (x.front ? 'the front box' : 'the small box') + (x.on ? ' (ringed)' : '') + ' ' + b[0] + ',' + b[1] + '-' + b[2] + ',' + b[3];
+    const c = r.tcol;
+    if (Array.isArray(c) && (b[0] < c[0] - 0.5 || b[1] < c[1] - 0.5 || b[2] > c[2] + 0.5 || b[3] > c[3] + 0.5)) {
+      const f = [];
+      if (b[1] < c[1] - 0.5) f.push((c[1] - b[1]) + 'px above'); if (b[3] > c[3] + 0.5) f.push((b[3] - c[3]) + 'px below');
+      if (b[0] < c[0] - 0.5) f.push((c[0] - b[0]) + 'px left'); if (b[2] > c[2] + 0.5) f.push((b[2] - c[2]) + 'px right');
+      out.push(what + ': out of the column (' + f.join(', ') + ')');
+    }
+    const t = r.tsb;
+    if (Array.isArray(t) && b[0] < t[2] && t[0] < b[2] && b[1] < t[3] && t[1] < b[3]) out.push(what + ': meets the stack’s last balloon ' + t[1] + '-' + t[3]);
+    if (x.front && Array.isArray(x.own) && Array.isArray(x.nb) && boxGap(b, x.nb) < boxGap(b, x.own)) out.push(what + ': nearer the neighbour’s mark (' + boxGap(b, x.nb) + 'px) than its own digit (' + boxGap(b, x.own) + 'px)');
+  }
   return out;
 }
+/* The kit v0.4's live tap targets (measure.js's `ttgt`) whose hit box is under 44 x 44: each as a line. */
+export function hitSmall(r) {
+  return (r && Array.isArray(r.ttgt) ? r.ttgt : []).filter((g) => g && g.live && Array.isArray(g.b) && (g.b[2] - g.b[0] < 44 || g.b[3] - g.b[1] < 44))
+    .map((g) => (g.n ? '“' + g.n + '”' : 'a target') + ' ' + (g.b[2] - g.b[0]) + ' x ' + (g.b[3] - g.b[1]) + ' at ' + g.b[0] + ',' + g.b[1] + ': under 44 x 44');
+}
+/* The marks page's little 1 (measure.js's `tone`) rendered under 16 px, or not found on a marks page (`tpick`). */
+export function marksSmall(r) {
+  if (!r || !Array.isArray(r.tpick)) return [];
+  if (!r.tone) return ['no little 1 found in the marks page’s “A little 1 in front” picture (a [class*="front"] 1, or a lone 1 that is no digit or box)'];
+  return r.tone.fs < 16 - 0.05 ? ['the little 1 is ' + r.tone.fs + 'px: under 16px'] : [];
+}
 /* The keypad at a column and at the next (`<screen>` and `<screen>@next`, measured in one page): the same box, or what
- * moved. Null when it stayed put. */
-export function keypadMoved(before, after) {
+ * moved. Null when it stayed put. `step`: 'column' (the default), or 'move' (the kit v0.4's take:lend and take:get). */
+export function keypadMoved(before, after, step = 'column') {
   if (!before || !after) return null;
-  if (!Array.isArray(before.kp) || !Array.isArray(after.kp)) return 'no keypad ' + (!Array.isArray(before.kp) ? 'at the first column' : 'at the next column');
+  if (!Array.isArray(before.kp) || !Array.isArray(after.kp)) return 'no keypad ' + (!Array.isArray(before.kp) ? 'at the first ' + step : 'at the next ' + step);
   if (before.kp.every((v, i) => v === after.kp[i])) return null;
-  return 'the keypad moved from ' + before.kp[1] + '-' + before.kp[3] + ' (x ' + before.kp[0] + '-' + before.kp[2] + ') to ' + after.kp[1] + '-' + after.kp[3] + ' (x ' + after.kp[0] + '-' + after.kp[2] + ') between one column and the next';
+  return 'the keypad moved from ' + before.kp[1] + '-' + before.kp[3] + ' (x ' + before.kp[0] + '-' + before.kp[2] + ') to ' + after.kp[1] + '-' + after.kp[3] + ' (x ' + after.kp[0] + '-' + after.kp[2] + ') between one ' + step + ' and the next';
 }
 export function summarize(pages, sizes = SIZES) {
   const problems = [], scrolls = [], counts = {};
@@ -313,7 +361,10 @@ export function summarize(pages, sizes = SIZES) {
     if (r.said || r.read || r.silent === false) add('said-aloud', x.size, x.aa, at, 'said ' + r.said + ', Read to me ' + (r.read ? 'on' : 'off') + ', silenced ' + r.silent);
     // the take-aways kit's page: its column and its line on the screen, and the keypad put at the next column
     for (const c of colOff(r)) add('col-off', x.size, x.aa, at, c);
-    if (/@next$/.test(at)) { const kp = keypadMoved(seen.get(x.size + ' ' + x.aa + ' ' + base), r); if (kp) add('keypad-moved', x.size, x.aa, base, kp); }
+    if (/@next$/.test(at)) { const kp = keypadMoved(seen.get(x.size + ' ' + x.aa + ' ' + base), r, TAKE_NEXT[base] && TAKE_NEXT[base] !== 'column' ? 'move' : 'column'); if (kp) add('keypad-moved', x.size, x.aa, base, kp); }
+    // the kit v0.4: a live target too small for a finger; the marks page's little 1 under the marks' floor
+    for (const c of hitSmall(r)) add('hit-small', x.size, x.aa, at, c);
+    for (const c of marksSmall(r)) add('marks-small', x.size, x.aa, at, c);
   }
   return { measured, sizes, counts, problems, scrolls };
 }
@@ -332,7 +383,7 @@ function summaryMd(s, dir, title) {
 
 /* ------------------------------------------------------------------ comparing two caches */
 export function compareCaches(a, b) {
-  const out = { a, b, art: null, pages: null };
+  const out = { a, b, art: null, pages: null, takes: null };
   if (existsSync(join(a, 'art/index.json')) && existsSync(join(b, 'art/index.json'))) {
     const list = (d) => { const m = new Map(); for (const g of readdirSync(join(d, 'art'))) { const f = join(d, 'art', g, 'index.json'); if (existsSync(f)) for (const fr of JSON.parse(readFileSync(f, 'utf8')).frames) m.set(g + ':' + fr.id, join(d, 'art', fr.jpg)); } return m; };
     const A = list(a), B = list(b);
@@ -356,6 +407,22 @@ export function compareCaches(a, b) {
     const sb = new Set(pb.map(key)), sa = new Set(pa.map(key));
     out.pages = { boxesMoved: moved, panelChanged: panel, variesRunToRun: varies, newProblems: pa.filter((p) => !sb.has(key(p))), goneProblems: pb.filter((p) => !sa.has(key(p))) };
   }
+  // (--takes: what a chapter-12-only player sees of the kit, TAKE_COMPARED, byte for byte: this tree's takes/ against the
+  // other's takes-compare/, or its takes/; each row the same when its boxes (fp, pfp) and its markup (hx) are)
+  const theirs = existsSync(join(b, 'takes-compare/summary.json')) ? join(b, 'takes-compare') : existsSync(join(b, 'takes/summary.json')) ? join(b, 'takes') : null;
+  if (existsSync(join(a, 'takes/summary.json')) && theirs) {
+    const idx = (d) => { const m = new Map(); for (const x of rowsOf(d)) if (x.row && TAKE_COMPARED.includes(x.row.t)) m.set(x.size + ' ' + x.aa + ' ' + x.row.t, x.row); return m; };
+    const A = idx(join(a, 'takes')), B = idx(theirs), boxes = [], markup = [], here = [], there = [];
+    let same = 0;
+    for (const [k, r] of A) {
+      const o = B.get(k);
+      if (!o) { here.push(k); continue; }
+      const moved = o.fp !== r.fp || o.pfp !== r.pfp;
+      if (moved) boxes.push(k); else if (o.hx !== r.hx) markup.push(k); else same++;
+    }
+    for (const k of B.keys()) if (!A.has(k)) there.push(k);
+    out.takes = { screens: TAKE_COMPARED, against: theirs, rows: A.size, same, boxesMoved: boxes, markupChanged: markup, onlyHere: here, onlyThere: there };
+  }
   return out;
 }
 
@@ -364,12 +431,15 @@ async function ensure(root, want, { force, waitMin, log }) {
   const key = cacheKey(root), dir = cacheDir(key);
   mkdirSync(dir, { recursive: true });
   const artDone = () => (want.only ? want.only.every((g) => groupDone(dir, g)) : status(dir).art);
-  const need = () => ({ art: want.art && !artDone(), pages: want.pages && !status(dir).pages, takes: !!want.takes && !status(dir).takes });
-  const none = () => { const n = need(); return !n.art && !n.pages && !n.takes; };
+  // (`takesCompare`: another tree's TAKE_COMPARED alone, for a compare, unless its takes/ has them already)
+  const need = () => ({ art: want.art && !artDone(), pages: want.pages && !status(dir).pages, takes: !!want.takes && !status(dir).takes,
+    takesCompare: !!want.takesCompare && !status(dir).takes && !existsSync(join(dir, 'takes-compare/summary.json')) });
+  const none = () => { const n = need(); return !n.art && !n.pages && !n.takes && !n.takesCompare; };
   if (force) {
     if (want.art) { if (want.only) { for (const g of want.only) rmSync(join(dir, 'art', g), { recursive: true, force: true }); rmSync(join(dir, 'art/index.json'), { force: true }); } else rmSync(join(dir, 'art'), { recursive: true, force: true }); }
     if (want.pages) rmSync(join(dir, 'pages'), { recursive: true, force: true });
     if (want.takes) rmSync(join(dir, 'takes'), { recursive: true, force: true });
+    if (want.takesCompare) rmSync(join(dir, 'takes-compare'), { recursive: true, force: true });
   }
   log('cache: ' + dir);
   // a cache in use is a new one, to the pruning here and to clean-work.py
@@ -401,9 +471,10 @@ async function ensure(root, want, { force, waitMin, log }) {
       const s = await buildPages(root, dir, S, log);
       log('pages: ' + s.measured + ' measured; problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, v]) => k + ' ' + v).join(', ') : 'none') + ' (pages/summary.md)');
     }
-    if (n.takes) {
-      const s = await buildPages(root, dir, S, log, TAKES_RUN);
-      log('takes: ' + s.measured + ' measured at ' + TAKE_SIZES.join(', ') + '; problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, v]) => k + ' ' + v).join(', ') : 'none') + ' (takes/summary.md)');
+    for (const [k, run] of [['takes', TAKES_RUN], ['takesCompare', TAKES_COMPARE_RUN]]) {
+      if (!n[k]) continue;
+      const s = await buildPages(root, dir, S, log, run);
+      log(run.sub + ': ' + s.measured + ' measured at ' + TAKE_SIZES.join(', ') + '; problems: ' + (s.problems.length ? Object.entries(s.counts).map(([k, v]) => k + ' ' + v).join(', ') : 'none') + ' (' + run.sub + '/summary.md)');
     }
     log('built in ' + Math.round((Date.now() - t1) / 1000) + ' s');
     // the tree must not have changed under the sweep, or the cache would lie about it
@@ -455,12 +526,16 @@ async function main() {
     if (other) {
       const o = resolve(other);
       if (!existsSync(join(o, 'index.html'))) { console.error('sweep: --compare needs a tree (a folder with index.html): ' + o); process.exit(2); }
-      const odir = await ensure(o, Object.assign({}, want, { takes: false }), { force: false, waitMin, log });
+      // (the other tree's take screens: only what a chapter-12-only player sees, TAKE_COMPARED, and only with --takes)
+      const odir = await ensure(o, Object.assign({}, want, { takes: false, takesCompare: !!want.takes }), { force: false, waitMin, log });
       const c = compareCaches(dir, odir);
       const file = join(dir, 'compare-' + cacheKey(o) + '.json');
       writeFileSync(file, JSON.stringify(c, null, 1));
       if (c.art) log('art against ' + o + ': ' + c.art.differ.length + ' of ' + c.art.frames + ' frames differ' + (c.art.differ.length ? ' (' + c.art.differ.slice(0, 30).join(' ') + (c.art.differ.length > 30 ? ' …' : '') + ')' : '') + '; only here ' + c.art.onlyHere.length + ', only there ' + c.art.onlyThere.length);
       if (c.pages) log('pages against ' + o + ': boxes moved on ' + c.pages.boxesMoved.length + ', panel changed on ' + c.pages.panelChanged.length + ' (the Warrior Counts\' question and result screens, which vary run to run, apart: ' + c.pages.variesRunToRun.length + '); problems new ' + c.pages.newProblems.length + ', gone ' + c.pages.goneProblems.length);
+      if (c.takes && want.takes) log('takes against ' + o + ' (take:first and chapter 12\'s eight Spanish screens): ' + c.takes.same + ' of ' + c.takes.rows + ' byte for byte; boxes moved on ' + c.takes.boxesMoved.length +
+        (c.takes.boxesMoved.length ? ' (' + c.takes.boxesMoved.slice(0, 12).join('; ') + ')' : '') + ', markup changed on ' + c.takes.markupChanged.length + (c.takes.markupChanged.length ? ' (' + c.takes.markupChanged.slice(0, 12).join('; ') + ')' : '') +
+        '; only here ' + c.takes.onlyHere.length + ', only there ' + c.takes.onlyThere.length);
       log('compare: ' + file);
     }
     const s = status(dir);

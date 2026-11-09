@@ -7,6 +7,11 @@
  *   const stub = require('./fixtures/takes-stub.js');   const { ch12, ch13, list } = stub();
  *
  * `CH` is the table itself: { 12: { teach, lesson: [[a, b, regroup?]…], story: [[a, b]…], warm } … }.
+ * The kit v0.4 (decision 57): chapter 13's lesson set carries chapter 13's marks page (`marks`: its four lines and two
+ * after-lines, design section 2's table, exactly: `MARKS13`), and `stub.sets()` gives the three sets the engine's
+ * proofs play directly, each with the `taught` of its chapter: `ch13` (that lesson set, `teach: 'ones2'`), `ch14`
+ * (`teach: 'ones'`: 352 − 127 'show', 640 − 218 'tap', 462 − 135, 768 − 315), `zero` (503 − 278, 702 − 345) and `both`
+ * (811 − 356).
  * Not a test file (node --test only runs *.test.js), and not served (no page loads it).
  */
 'use strict';
@@ -24,6 +29,15 @@ const CH = {
   21: { teach: null, lesson: null, story: [[700, 463], [500, 382], [500, 467]], twins: false }
 };
 const PROMPT12 = 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.';
+// chapter 13's marks page (the kit v0.4's E.takeMarksPage; chapter 13's spec, section 2's `ch13-take`)
+const C = (text) => ({ who: 'chispapaw', text });
+const TH = (text) => ({ who: 'tallyheart', text });
+const MARKS13 = {
+  lines: [C('My little Tall One writes it like THIS.'), C('A little 1 in front!'),
+    TH('Some write the new number on top instead.'), TH('Both are right. Which way do YOU like?')],
+  one: [C('Just like my little Tall One!')],
+  above: [TH('On top it is.')]
+};
 
 function fact([a, b, regroup], i, ch) {
   if (!regroup && !(ch === 12 && i === 0)) return [a, b];
@@ -42,6 +56,7 @@ function chapter(n) {
       praise: ['Yes!', '', 'That’s it.', '', 'Every column.', ''], done: 'Take-aways tell you HOW MANY.' };
     if (c.teach) set.teach = c.teach;
     if (c.warm) set.warm = true;
+    if (n === 13) set.marks = JSON.parse(JSON.stringify(MARKS13));
     counts[id + '-take'] = set;
     frames[fid()] = { board: 'STUB.', counts: { set: id + '-take', next: 'f' + String(k + 1).padStart(3, '0') } };
     k++;
@@ -63,4 +78,20 @@ function stub() {
 }
 stub.CH = CH;
 stub.PROMPT12 = PROMPT12;
+stub.MARKS13 = MARKS13;
+/* The kit v0.4's sets, each { def, taught, facts } (a fresh copy): chapter 13's lesson (its marks page), chapter 14's
+ * four, a `zero` set and a `both` one. */
+stub.sets = function () {
+  const S = stub(), steps = ['none', 'ones2', 'ones', 'tens', 'both', 'mixed', 'zero', 'zeros'];
+  const upto = (s) => steps.slice(0, steps.indexOf(s) + 1);
+  const base = { op: '-', teacher: 'tallyheart', picture: { kind: 'store' }, praise: ['Yes!', '', 'That’s it.', '', 'Every column.', ''], done: '' };
+  const ch13 = Object.assign({ id: 'ch13-take' }, S.ch13.counts['ch13-take']);
+  const ch14 = Object.assign({ id: 'ch14-take' }, base, { teach: 'ones', facts: [{ a: 352, b: 127, regroup: 'show' }, { a: 640, b: 218, regroup: 'tap' }, [462, 135], [768, 315]] });
+  const zero = Object.assign({ id: 'zero-take' }, base, { teach: 'zero', facts: [[503, 278], [702, 345]] });
+  const both = Object.assign({ id: 'both-take' }, base, { teach: 'both', facts: [[811, 356]] });
+  return {
+    ch13: { def: ch13, taught: upto('ones2') }, ch14: { def: ch14, taught: upto('ones') },
+    zero: { def: zero, taught: upto('zero') }, both: { def: both, taught: upto('both') }
+  };
+};
 module.exports = stub;

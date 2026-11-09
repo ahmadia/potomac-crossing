@@ -292,7 +292,7 @@ test('17. the keypad stays put: every stack she types under in a problem is one 
 
 test('17. the keypad stays put, in the page: the stack\'s min-height set on the first column from those stacks and released at the problem\'s end; the marks and heads rows reserved; the column top-aligned sideways; the fallbacks set before she types', () => {
   const page = fnSrc(UI_SRC, 'runTakes');
-  assert.ok(page.includes("      takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt }).forEach(function (L) {"));
+  assert.ok(page.includes("      takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt, taught: st.taught }).forEach(function (L) {"));
   assert.ok(page.includes("      if (max) stack.style.minHeight = max + 'px';"));
   // each candidate's height to the next whole pixel, never offsetHeight's rounding: a stack 0.11 px over its held height
   // moved the keypad a pixel between two columns (take:q and take:echo at 1024 x 768, Aa on, the sweep's keypad-moved)
@@ -343,7 +343,8 @@ test('17. the \'tap\' page: the keypad dim, the tap target the glowing zone (the
   assert.equal(T.tap(st, true).say, true);
   assert.equal(T.tap(st, true).say, false);
   assert.deepEqual(T.digit(st, def, 3, 0, 5000), { ignored: 'tap' });
-  assert.deepEqual(E.takeShow(def, plan(43, 16), 0, { mode: 'tap' }).here, { tens: 'The rows: up here.' });
+  // (decision 57: tapHere's words changed, the glow is in the column too now; no live chapter said them)
+  assert.deepEqual(E.takeShow(def, plan(43, 16), 0, { mode: 'tap' }).here, { tens: 'The rows: the glowing ones.' });
 });
 
 // the page's handler for a click on the column, taken from runTakes' source and run on a stand-in column (screens S1)
@@ -354,7 +355,8 @@ function tcolClick(phase, tapWant, boxes) {
   const got = [], adv = [];
   let h = null;
   const tcol = { addEventListener: (t, f) => { h = f; }, querySelector: (sel) => { const m = /^\.tbox\[data-col="(\d)"\]$/.exec(sel); return m && boxes[m[1]] ? { getBoundingClientRect: () => boxes[m[1]] } : null; } };
-  new Function('tcol', 'phase', 'tapWant', 'TAKE_ZONES', 'tapZone', 'advance', src)(tcol, phase, tapWant, U.ZONES, (z) => got.push(z), () => adv.push(1));
+  // (`mv` false: the v0.3 page; the kit v0.4's column goes to colClickM, below)
+  new Function('tcol', 'phase', 'tapWant', 'TAKE_ZONES', 'tapZone', 'advance', 'mv', 'colClickM', src)(tcol, phase, tapWant, U.ZONES, (z) => got.push(z), () => adv.push(1), false, () => { throw new Error('the v0.4 path'); });
   return { click: (x) => { h({ clientX: x, clientY: 0, target: {} }); return got[got.length - 1]; }, got, adv };
 }
 
@@ -487,7 +489,7 @@ test('17. "Got it!" at the top of the keypad\'s place; the keypad and "Got it!" 
   assert.ok(page.includes('      if (!keep) return;'));
   // PC.debug.takes: the tools' screens (section 8), the Hollow's shelf and a store round among them
   assert.ok(UI_SRC.includes('      takes: function (what, opts) { return takesDebug(what, opts); }\n    };'), 'the last of PC.debug (pick stays right after the Warrior Counts\' entry)');
-  assert.ok(UI_SRC.includes("  var TAKE_DEBUG = { first: 1, q: 1, show: 1, tap: 1, spread: 1, echo: 1, sand: 1, done: 1, shelf: 1, store: 1 };"));
+  assert.ok(UI_SRC.includes("  var TAKE_DEBUG = { first: 1, q: 1, show: 1, tap: 1, spread: 1, echo: 1, sand: 1, done: 1, shelf: 1, store: 1,\n    touch: 1, lend: 1, get: 1, 'get:one': 1, chain: 1, 'help:move': 1, ahead: 1, marks: 1, 'hollow:marks': 1 };"));
   const dbg = fnSrc(UI_SRC, 'takesDebug');
   assert.ok(dbg.includes("if (what === 'shelf') { go('hollow', { from: 'hub', stories: list }); return $('storeBtn') ? true : 'takes: no shelf drawn (a round in the slot?)'; }"));
   assert.ok(dbg.includes("var r = E.takeRoundStart(cat, stories(), now(), { stories: list });") && dbg.includes('storeLesson(r.state, false, null, true);'), 'the store round in debug mode: nothing saved');
@@ -528,7 +530,9 @@ test('nothing a player can reach changes: runLesson, the keypad and go() as in v
   // module 2's script tags (chapter 12 on: words.js and each chapter's story) are cut before hashing
   const v23 = (HTML.slice(0, es) + HTML.slice(end)).replace(/<script src="app\/story\/(words|ch(1[2-9]|2\d))\.js"><\/script>\n/g, '');
   assert.equal(sha(v23), 'ed069d652c0b7bea405c26063a7d39cf9459a2a7ac07c01bc22c172fba23a028', 'v23\'s index.html');
-  const own = /^(\.frame\[data-mode="take"\]|html:has\(\.frame\[data-mode="take"\]\)|\.tcol|\.thead|\.tmark|\.tdig|\.ttop|\.tbot|\.tsign|\.trule|\.tbox|\.tstruck|\.tshelf|(html\.big )?\.frame\[data-mode="shelf"\]|\.frame\[data-mode="store-reward"\])/;
+  // (decision 57: the kit v0.4's rules hang on .frame[data-mode="take"].tmoves, and the marks page's pictures on .tpick, its
+  // shelf icon .tpickicon)
+  const own = /^(\.frame\[data-mode="take"\]|html:has\(\.frame\[data-mode="take"\]\)|\.tcol|\.thead|\.tmark|\.tdig|\.ttop|\.tbot|\.tsign|\.trule|\.tbox|\.tstruck|\.tshelf|\.tpick|(html\.big )?\.frame\[data-mode="shelf"\]|\.frame\[data-mode="store-reward"\])/;
   const sels = [];
   block.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes [a-z]+\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '').replace(/@media[^{]*\{/g, '').split('}').forEach((r) => {
     const sel = r.split('{')[0].trim();
@@ -538,7 +542,7 @@ test('nothing a player can reach changes: runLesson, the keypad and go() as in v
   sels.forEach((s) => assert.match(s, own, s));
   (block.match(/@keyframes ([a-z]+)/g) || []).forEach((k) => assert.match(k, /@keyframes t[a-z]+/));
   // and none of the take page's classes is used by any other page
-  ['tcol', 'thead', 'tmark', 'tbox', 'tstruck', 'tnohead', 'tkeys', 'tshelf', 'storeicon'].forEach((c) => {
+  ['tcol', 'thead', 'tmark', 'tbox', 'tstruck', 'tnohead', 'tkeys', 'tshelf', 'storeicon', 'tmoves', 'tmini', 'ttarget', 'tpick', 'tmkpage', 'tsecond'].forEach((c) => {
     const out = HTML.slice(0, start) + HTML.slice(end);
     assert.ok(!new RegExp('[." ]' + c + '[ "{.:,]').test(out), c);
   });
@@ -781,7 +785,8 @@ test('the grown-ups corner: with `takes` data, a "Take-aways" table by kind afte
   assert.equal(U.corner({ log: [], rounds: 0, cleanRounds: 0 }, { rows: [], teen: [] }).html, '<h4>Take-aways</h4><p class="muted">No take-aways yet.</p>');
   // the page: only for a cat with `takes`, after the Counts' tables, on the Training Hollow's line
   const og = fnSrc(UI_SRC, 'openGrownups');
-  assert.ok(og.includes("      var TC = c.takes ? takeCorner(c.takes, E.takeTable(c), fmtMs) : null;\n      if (TC) hollowTxt += '; ' + TC.line;"), 'no check for a function of the same build (integration F2)');
+  // (decision 57: the steps she has learned, for the style line once she has learned to spread a row)
+  assert.ok(og.includes("      var TC = c.takes ? takeCorner(c.takes, E.takeTable(c), fmtMs, E.takeSteps(c, stories())) : null;\n      if (TC) hollowTxt += '; ' + TC.line;"), 'no check for a function of the same build (integration F2)');
   // (corner-numbers CN5) the module-1 part led by its name: "One Count at a time 2 rounds: the 1s 2 (…); Count the store 20 (…)"
   assert.ok(og.includes("      if (TC) hollowTxt += '; ' + TC.line;\n      if (TC) hollowTxt = 'One Count at a time ' + hollowTxt;"));
   assert.ok(og.indexOf("var hollowTxt = c.hollow.rounds + ' round'") < og.indexOf("hollowTxt = 'One Count at a time '"));
@@ -823,7 +828,7 @@ test('chapter 12: a set\'s echo holds no room: takeReserve\'s candidates for eve
   // the page: reserve() is untouched (an echo room only for a hook), the problem's end reads the set's echo for every finished
   // problem, right or helped, through setEcho; the kit's stub hook path for a set with no echo exactly as before
   const page = fnSrc(UI_SRC, 'runTakes');
-  assert.ok(page.includes("      var echoAt = typeof o.echo === 'function' ? function (c) { return echoOf(echoInfo(c)); } : false;\n      takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt }).forEach(function (L) {"));
+  assert.ok(page.includes("      var echoAt = typeof o.echo === 'function' ? function (c) { return echoOf(echoInfo(c)); } : false;\n      takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt, taught: st.taught }).forEach(function (L) {"));
   const ri = page.indexOf('    function reserve() {'), rsv = page.slice(ri, page.indexOf('\n    }\n', ri));
   assert.ok(ri > 0 && !/def\.echo/.test(rsv), 'reserve() never reads a set\'s echo');
   assert.ok(page.includes("      var e = res.entry ? (def.echo ? setEcho({ problem: true, a: res.entry.a, b: res.entry.b, answer: res.entry.answer, correct: res.entry.correct, helped: res.entry.helped }) : (res.entry.correct ? echoOf({ problem: true, a: res.entry.a, b: res.entry.b, answer: res.entry.answer }) : null)) : null;"));
@@ -861,4 +866,357 @@ test('chapter 12\'s review: a take page opened while a Warrior Counts re-sit wai
   assert.ok(dbg.includes("if (what === 'first') { o.intro = [{ who: 'tallyheart', text: E.WARRIOR_WAITING }]; o.waitLine = E.WARRIOR_WAITING; }"));
   assert.ok(dbg.includes("    if (what === 'first' && $('lessonNext') && !$('lessonNext').hidden) {\n      renderedAt = now() - UI_GUARD_MS - 1; renderedPerf = perfNow() - UI_GUARD_MS - 1;") && dbg.includes("      $('gotIt').click();\n    }"), 'take:first passes the waiting page with Next, past the double-tap guard (the tap is the tool\'s)');
   assert.ok(dbg.indexOf("$('gotIt').click();") > dbg.indexOf('var h = runTakes('), 'after the page is built');
+});
+
+/* ================================================================== the kit v0.4 (decision 57): the page's proofs U1 to U5
+ * and L5 (plan.md, "The proofs"), the column's markup under the moves, the slot, the keys, the taps, the marks page, the
+ * shelf's My marks, the corner and PC.debug.takes' new screens. What needs a browser (the keypad's box at decide, lend,
+ * get and answer; the hit boxes; the marks page's little 1; every new screen at the eight sizes, Aa off and on) was
+ * measured in WebKit by the page owner (~/potomac-crossing-work/regroup/build-page/notes.md) and is the page review's
+ * T1; here, the logic and the markup that make it so. */
+const stub = require('./fixtures/takes-stub.js');
+const STEPS = E.TAKE_STEPS.slice();
+// a moves state (every step taught unless `taught`), her style
+function mst(def, facts, style, taught) { return T.start(Object.assign({}, def, { facts }), { now: 1, logged: 99, taught: taught || STEPS, style: style || 'above' }); }
+// moves made through the engine: 't1' a touch on the tens, a number a lend's, a get's or an answer
+function walk(st, def, list, clock) { clock = clock || { t: 5000 }; return list.map((x) => (/^t\d$/.test(x) ? T.touch(st, def, +x.slice(1), clock.t += 1000) : T.digit(st, def, x, 2000, clock.t += 1000))); }
+// the column the page draws at a moves question
+function mcol(q, o) { return U.html(U.view(q.plan, Object.assign({ moves: true, marks: q.marks, boxes: [], on: -1, box: q.box, typed: '', miniOn: true, targets: q.targets, col: q.col }, o || {}))); }
+
+test('L5. chapter 12\'s columns are v25\'s markup, byte for byte (every column of its lesson and store problem, each box state, every help step: hashed with v25\'s own ui.js at e000777), .tmoves is never set on a chapter 12 page, and a chapter-12-only cat\'s corner is as it was', () => {
+  const D12 = { id: 'ch12-take', op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, done: '' };
+  const FACTS = [{ a: 254, b: 131, regroup: 'show' }, [58, 23], [76, 42], [475, 132], [368, 145], [175, 42], { a: 254, b: 131, regroup: 'tap' }];
+  let all = '', n = 0;
+  const st = T.start(Object.assign({}, D12, { facts: FACTS }), { now: 1, logged: 99, taught: ['none'] }), clock = { t: 1e6 };
+  assert.equal(E.takeMovesOn(st), false, 'chapter 12\'s lesson: no moves');
+  while (!T.done(st)) {
+    const q = T.question(st), c = q.plan.cols[q.col];
+    const boxes = q.plan.cols.map((x, i) => (i < q.col ? { v: String(q.got[i]), cls: 'right' } : { v: '', cls: '' }));
+    for (const typed of ['', String(c.digit)]) { const b2 = boxes.slice(); b2[q.col] = { v: typed, cls: '' }; all += U.html(U.view(q.plan, { marks: q.marks, boxes: b2, on: q.col, ask: 'x' })); n++; }
+    E.takeHelp(D12, q.plan, q.col, 'fact', { mode: q.mode }).steps.forEach((s) => { all += U.html(U.view(q.plan, { marks: s.marks, boxes, on: -1, glow: q.col })); n++; });
+    while (T.question(st).tap > 0) T.tap(st);
+    T.digit(st, D12, c.blank ? '' : c.digit, 2000, clock.t += 1000);
+  }
+  assert.equal(n, 138);
+  assert.equal(sha(all), 'cb364aa138d6f69087cd772f0ce835ea27283be4313c5842188a52ca96e8a5a7', 'v25\'s markup');
+  assert.ok(!/tmini|ttarget|tm2|tfront|tgone/.test(all));
+  assert.equal(E.takeMovesOn(T.start(D12, { now: 1 })), false, 'T.start with no taught (take:first, PC.debug.spanish)');
+  const page = fnSrc(UI_SRC, 'runTakes');
+  assert.ok(page.includes("    var mv = E.takeMovesOn(st);\n    if (mv) frameEl.classList.add('tmoves');"), '.tmoves only under the gate');
+  assert.equal((UI_SRC.match(/classList\.add\('tmoves'\)/g) || []).length, 1);
+  // the corner of a cat who has played only chapter 12 (a slip, two store rounds): v25's, with or without her steps
+  const cat = E.blankCat({ now: 1 }), s2 = T.start(Object.assign({}, D12, { facts: [[58, 23], [76, 42], [475, 132]] }), { now: 1, logged: 10, taught: ['none'] });
+  for (let k = 0; k < 20 && !T.done(s2); k++) { const q = T.question(s2), c = q.plan.cols[q.col]; const r = T.digit(s2, D12, q.a === 76 && q.col === 0 && !q.twin ? 9 : c.blank ? '' : c.digit, 3000, clock.t += 1000); if (r && r.entry) E.logTake(cat, r.entry); }
+  cat.takes.rounds = 2; cat.takes.cleanRounds = 1;
+  [U.corner(cat.takes, E.takeTable(cat)), U.corner(cat.takes, E.takeTable(cat), undefined, ['none'])].forEach((K) => assert.equal(sha(K.html + '|' + K.line), '4f3071f01e674ce3b7c2cd0dcb5f7878c6a6cfd5281ba9ac731fef96084daf6c'));
+});
+
+test('the column under the moves (design sections 2 and 3): the lend box over the struck lender (one digit), the get box over the struck receiver (two wide, \'above\') or in front of it (\'one\'), the second marks row in the heads row\'s place with the chip\'s words kept, a ¹0 struck as one; each small box labelled by its column and job, aria-current while ringed', () => {
+  const def = Object.assign({}, DEF), above = mst(def, [[43, 16]], 'above');
+  walk(above, def, ['t1']);
+  let q = T.question(above), h = mcol(q, { typed: '3', lit: [q.box.col] });   // (drawColM lights the struck lender while its box is open)
+  assert.deepEqual(q.box, { col: 1, kind: 'lend', row: 1 });
+  assert.match(h, /<span class="tmark tglow tbx" style="grid-column:2"><span class="tmini on" role="img" aria-label="tens, new number: 3" aria-current="true">3<\/span><\/span><span class="tdig ttop tstruck tglow" data-col="1"/, 'the lend box over the struck 4, which glows');
+  walk(above, def, ['3']);
+  q = T.question(above); h = mcol(q, { typed: '' });
+  assert.match(h, /<span class="tmark" aria-hidden="true" style="grid-column:2"><span class="tmv">3<\/span><\/span>/, 'her gold 3');
+  assert.match(h, /<span class="tmini tw2 on" role="img" aria-label="ones, new number" aria-current="true"> <\/span><\/span><span class="tdig ttop tstruck" data-col="0"/, 'the get box two digits wide over the struck 3, empty (never a 0)');
+  const one = mst(def, [[43, 16]], 'one');
+  walk(one, def, ['t1', '3']);
+  q = T.question(one); h = mcol(q, { typed: '1' });
+  assert.deepEqual(q.box, { col: 0, kind: 'get', row: 'front' });
+  assert.match(h, /<span class="tdig ttop" data-col="0" style="grid-column:3"><span class="tfront tfb"><span class="tmini tw2 on" role="img" aria-label="ones, the little 1: 1" aria-current="true">1<\/span><\/span>3<\/span>/, 'the front box before the unstruck 3');
+  // 503 − 278 at the zero's second change: the box in the heads row's place, the chip kept for its words; 'one': ¹0 struck as one
+  const z = mst(def, [[503, 278]], 'above');
+  walk(z, def, ['t2', '4', '10', 't1']);
+  q = T.question(z); h = mcol(q);
+  assert.deepEqual(q.box, { col: 1, kind: 'lend', row: 2 });
+  assert.match(h, /<span class="thead tgone" role="img" aria-label="tens, rows" style="grid-column:3">/);
+  assert.match(h, /<span class="tmark tm2 tbx" style="grid-column:3"><span class="tmini on" role="img" aria-label="tens, new number" aria-current="true">/);
+  assert.match(h, /<span class="tgrp tstruck"><span class="tmv">10<\/span><\/span>/, 'the gold 10 struck');
+  const z1 = mst(def, [[503, 278]], 'one');
+  walk(z1, def, ['t2', '4', '1', 't1', '9']);
+  assert.match(mcol(T.question(z1)), /<span class="tgrp tstruck tfs"><span class="tfront">1<\/span>0<\/span>/, 'the ¹0 struck as one');
+  // the done marks of 503 − 278 in 'above': a second row on the tens (9), its chip gone, its words kept
+  const done = U.html(U.view(plan(503, 278), { moves: true, marks: E.takeMoveMarks(plan(503, 278), 'above', 3, 0), boxes: [], on: -1 }));
+  assert.match(done, /<span class="tmark tm2" aria-hidden="true" style="grid-column:3"><span class="tmv">9<\/span><\/span>/);
+  // a right number green for 250 ms (the flash), then the gold mark; a help's fix glowing
+  q = T.question(above);
+  assert.match(mcol(q, { flash: { col: 1, row: 1, v: '3' } }), /<span class="tmini right" aria-hidden="true">3<\/span>/);
+});
+
+test('the targets (design section 1): a role="button" over the lender\'s column above the rule (rows 1 to 4: its bottom digit included), labelled from E.TAKE_WORDS, live only at a decide; next to her column it widens into it, else outwards (tfar); at least 44px wide', () => {
+  const def = Object.assign({}, DEF), st = mst(def, [[503, 278]]);
+  let q = T.question(st);
+  assert.deepEqual(q.targets, [1, 2]);
+  const h = mcol(q);
+  assert.match(h, /<span class="ttarget" role="button" tabindex="0" aria-label="Spread a row" data-col="1" style="grid-column:3"><\/span>/);
+  assert.match(h, /<span class="ttarget tfar" role="button" tabindex="0" aria-label="Spread a square" data-col="2" style="grid-column:2"><\/span>/);
+  walk(st, def, ['t2']);
+  q = T.question(st);
+  assert.deepEqual(q.targets, [], 'none at a lend');
+  assert.ok(!mcol(q).includes('ttarget'));
+  // chapter 13's `taught`: the tens only, at the ones' turn
+  const s13 = mst(def, [[486, 253]], 'above', stub.sets().ch13.taught);
+  assert.deepEqual(T.question(s13).targets, [1]);
+  [
+    '.frame[data-mode="take"].tmoves .ttarget{grid-row:1 / 5;align-self:stretch;justify-self:start;margin-left:-.07em;width:max(1.56em, 44px);',
+    '.frame[data-mode="take"].tmoves .ttarget.tfar{justify-self:end;margin-left:0;margin-right:-.07em}'
+  ].forEach((r) => assert.ok(HTML.includes(r), r));
+  // (the narrowest: 844 x 390's 24px digits give 1.56em = 37.4px, so 44px; WebKit measured 44 x 79.4 there)
+  assert.ok(1.56 * 24 < 44 && 0.5 * 1.42 * 24 > 44 - 1.56 * 24, 'the widening stays inside the near half of her column');
+});
+
+test('U2. taps (takeTapAct): a panel click at a \'hers\' decide is neither a touch nor a move on; a column tap within 400 ms of a phase change, or a press held 0.6 s or slid 12 px, is not a tap; the lender\'s bottom digit is the lender; her own top digit wiggles, with no line; the lend box\'s undo only while it is empty', () => {
+  const A = (o) => U.tapAct(Object.assign({ phase: 'type', now: 10000, quiet: 0, her: 0 }, o)).act;
+  assert.equal(A({ where: 'panel', zone: 'tens', glow: null }), 'none', 'nothing glows in \'hers\': the panel does nothing');
+  assert.equal(A({ where: 'panel', zone: 'tens', glow: 'tens' }), 'touch', 'a lit lender\'s zone is its target');
+  assert.equal(A({ where: 'panel', zone: 'ones', glow: 'tens' }), 'none', 'the loose zone is never a lender');
+  assert.equal(A({ where: 'panel', zone: 'ones', glow: 'tens', phase: 'tap' }), 'off', '\'tap\': the glowing ones, once');
+  assert.equal(A({ where: 'panel', advance: true }), 'advance', 'a line or a help: the panel moves it on');
+  assert.equal(A({ where: 'col', target: 1, col: 1, quiet: 10300 }), 'none', 'within 400 ms of a phase change');
+  assert.equal(A({ where: 'col', target: 1, col: 1, held: 600 }), 'none', 'held 0.6 s: a finger resting');
+  assert.equal(A({ where: 'col', target: 1, col: 1, slide: 12 }), 'none', 'slid 12 px');
+  assert.equal(A({ where: 'col', target: 1, col: 1 }), 'touch', 'the target: its bottom digit included (rows 1 to 4)');
+  assert.equal(A({ where: 'col', col: 0, onTop: true }), 'wiggle');
+  assert.equal(A({ where: 'col', col: 0, onTop: false }), 'none', 'her own column elsewhere: nothing');
+  assert.equal(A({ where: 'col', col: 1, kind: 'lend', boxCol: 1, typed: '' }), 'touch', 'the undo, the lend box empty');
+  assert.equal(A({ where: 'col', col: 1, kind: 'lend', boxCol: 1, typed: '3' }), 'none', 'not once a digit is in');
+  assert.equal(A({ where: 'col', col: 1, advance: true, phase: 'mhelp' }), 'advance', 'a help: the column moves it on (the tap used up)');
+  assert.equal(A({ where: 'stack', advance: false }), 'none');
+  // the engine's side: her own column is ignored ('own': the page wiggles it, no line); the page calls T.touch only there
+  const def = Object.assign({}, DEF), st = mst(def, [[43, 16]]);
+  assert.deepEqual(T.touch(st, def, 0, 5000), { ignored: 'own' });
+  const page = fnSrc(UI_SRC, 'runTakes');
+  assert.equal((page.match(/T\.touch\(/g) || []).length, 2, 'touchCol and Tallyheart\'s \'show\' touch');
+  assert.ok(page.includes("      if (r.ignored) { if (r.ignored === 'own') wigCol(col); return; }"));
+  assert.ok(page.includes("    panel.addEventListener('click', function (e) { if (mv) return panelClickM(e);"));
+  assert.ok(page.includes("    if (mv) [tcol, panel, stack].forEach(function (el) { el.addEventListener('pointerdown', function (e) { press0 = { x: e.clientX, y: e.clientY, t: perfNow() }; }); });"));
+  assert.ok(page.includes("    function toPhase(p) { phase = p; quietUntil = now() + TAKE_MS.ok; }"));
+  assert.ok(HTML.includes('@keyframes twig{25%{transform:rotate(-7deg)}75%{transform:rotate(7deg)}}') && HTML.includes('.frame[data-mode="take"].tmoves .ttop.twig{animation:twig .18s ease-in-out}'), 'the wiggle, 180 ms');
+});
+
+test('U3. keys (takeKey): "3, OK, 1, 3, OK" typed 150 ms apart gives lend 3 and get 13 with no slip (the 400 ms guard after an OK ignores OK only, never a digit); a two-digit box adds a digit and starts again at two; a move-help\'s reading time dims the keypad and ignores keys', () => {
+  const def = Object.assign({}, DEF), st = mst(def, [[43, 16]]);
+  walk(st, def, ['t1'], { t: 1000 });
+  let typed = '', okLock = 0;
+  const press = (k, now) => {
+    const q = T.question(st), A = U.key({ phase: 'type', k, typed, kind: q.box.kind, lit: false, now, okLock });
+    if (A.act === 'type') typed = A.typed;
+    if (A.act === 'ok') { const r = T.digit(st, def, typed, 150, now); okLock = now + U.MS.ok; typed = ''; return r; }
+    return A;
+  };
+  const t0 = 1e5;
+  press('3', t0);
+  const r1 = press('ok', t0 + 150);
+  assert.equal(r1.right, true);
+  press('1', t0 + 300);
+  assert.equal(typed, '1', 'a digit 150 ms after an OK goes into the box that has just opened');
+  press('3', t0 + 450);
+  assert.equal(typed, '13');
+  const r2 = press('ok', t0 + 600);
+  assert.equal(r2.right, true);
+  assert.deepEqual(st.slips, []);
+  assert.deepEqual(st.moveLog.map((m) => [m[1], m[2]]), [['t', 1], ['l', 3], ['g', 13]]);
+  assert.equal(U.key({ phase: 'type', k: 'ok', now: 10, okLock: 300 }).act, 'none', 'a double tap\'s second OK');
+  assert.deepEqual(['1', '4', '1', '3'].reduce((t, k) => U.press2(t, k), ''), '13', 'no Delete hunt');
+  assert.equal(U.press2('13', 'del'), '');
+  assert.equal(U.key({ phase: 'type', k: '7', typed: '3', kind: 'lend' }).typed, '7', 'a lend box holds one digit');
+  assert.equal(U.key({ phase: 'mhelp', k: '7' }).act, 'none', 'a move-help\'s reading time');
+  assert.equal(U.key({ phase: 'tap', k: '7' }).act, 'wiggle', '\'tap\': the glowing zone wiggles');
+  assert.equal(U.key({ phase: 'type', k: '5', lit: true }).act, 'digit', 'a lit lender: the digit goes to the engine, which types nothing');
+  const page = fnSrc(UI_SRC, 'runTakes');
+  assert.ok(page.includes("      toPhase('mhelp'); typed = '';") && page.includes("      pad.classList.remove('away'); pad.classList.add('dim');\n      drawCol();\n      moveStore("), 'the help dims the keypad');
+  assert.ok(page.includes("      if (stop('mhelp')) return;\n      timedWait([b], 'step', done);"), 'for its reading time (or said), a tap moving it on');
+});
+
+test('U5. the \'one\' front box takes 1 or 13 (fitted in its own width while she types) and letters the little 1 alone; a lone 3 there is the `get` slip', () => {
+  const def = Object.assign({}, DEF);
+  for (const v of ['1', '13']) {
+    const st = mst(def, [[43, 16]], 'one');
+    walk(st, def, ['t1', '3']);
+    const tq = T.question(st);
+    if (v === '13') assert.match(mcol(tq, { typed: '13' }), /<span class="tmini tw2 on" role="img" aria-label="ones, the little 1: 13" aria-current="true"><span class="tfit">13<\/span><\/span>/);
+    const r = walk(st, def, [v], { t: 20000 })[0];
+    assert.equal(r.right, true, v);
+    const h = mcol(T.question(st));
+    assert.match(h, /<span class="tdig ttop" data-col="0" aria-hidden="true" style="grid-column:3"><span class="tfront">1<\/span>3<\/span>/, v + ': the little 1 lettered, the 3 unstruck');
+    assert.ok(!h.includes('>13<'), v + ': never 13');
+  }
+  const st = mst(def, [[43, 16]], 'one');
+  walk(st, def, ['t1', '3']);
+  assert.equal(walk(st, def, ['3'], { t: 20000 })[0].slip, 'get');
+  assert.ok(HTML.includes('.frame[data-mode="take"].tmoves .tfront.tfb{font-size:.5em;'), 'below 32px digits the front box drops the 16px floor');
+  assert.ok(HTML.includes('.frame[data-mode="take"].tmoves .tfit{display:inline-block;font-size:.7em;'));
+});
+
+/* the stacks under the moves, as the page shows them (runTakes' slotSay): a 'tap' or 'show' prompt under the lines over the
+ * column; a move-help or a pointer in the column line's place (slotBase), the reserve probe's fallback */
+function movesUnder(set, style, student) {
+  const def = set.def, st = mst(def, set.facts || def.facts, style, set.taught), clock = { t: 1e6 }, out = [];
+  while (!T.done(st)) {
+    let q = T.question(st);
+    const cands = U.reserve(def, q, { taught: set.taught }), at = (w) => q.a + '−' + q.b + ' ' + style + ' col ' + q.col + ' ' + w;
+    const fresh = q.col === 0, base = fresh ? U.first(def, q, {}).lines : (U.colLine(def, q) ? [{ who: 'tallyheart', text: U.colLine(def, q) }] : []);
+    const slotBase = fresh ? U.first(def, q, { line: '' }).lines : [];
+    const show = (r, w) => {
+      if (!r || r.ignored) return;
+      const say = r.help && r.help.say ? r.help.say.join(' ') : r.line;
+      if (!say) return;
+      out.push({ shown: (r.help || r.pointer || r.off ? slotBase : base).concat([{ who: 'tallyheart', text: say }]), cands, at: at(w) });
+    };
+    out.push({ shown: base, cands, at: at('outlined') });
+    const col = q.col, c = q.plan.cols[col];
+    for (let guard = 0; guard < 30 && !T.done(st) && T.question(st).col === col && T.question(st).a === q.a; guard++) {
+      q = T.question(st);
+      const m = q.moves[col][q.move];
+      if (q.mode === 'tap' && m.move === 'touch') {
+        const tp = E.takeShow(def, q.plan, col, { mode: 'tap', style }).taps.find((x) => x.idx === q.move);
+        if (tp && tp.say) out.push({ shown: base.concat([{ who: 'tallyheart', text: tp.say }]), cands, at: at('tap prompt') });
+        show(T.tap(st, true, def, clock.t += 1000), 'tap off');
+        show(T.touch(st, def, m.col, clock.t += 1000), 'touch');
+      } else if (q.mode === 'show' && m.move === 'touch') show(T.touch(st, def, m.col, clock.t += 1000), 'Tallyheart\'s touch');
+      else if (m.move === 'touch') {
+        if (student === 'ahead') show(T.digit(st, def, c.digit, 2000, clock.t += 1000), 'ahead');
+        if (student === 'flip' && q.move === 0) show(T.digit(st, def, (c.bottom || 0) - c.before >= 0 ? (c.bottom || 0) - c.before : 0, 2000, clock.t += 1000), 'flip');
+        else show(T.touch(st, def, m.col, clock.t += 1000), 'touch');
+      } else if (m.move === 'lend') show(T.digit(st, def, student === 'kept' && !m.zero ? m.before : m.value, 2000, clock.t += 1000), 'lend');
+      else if (m.move === 'get') show(T.digit(st, def, student === 'get' ? m.before : m.value, 2000, clock.t += 1000), 'get');
+      else {
+        if (q.move > 0 && col + 1 < q.plan.n) show(T.touch(st, def, col + 1, clock.t += 1000), 'order');
+        const r = T.digit(st, def, c.blank ? '' : (student === 'answer' && q.pale == null ? (c.digit + 1) % 10 : q.pale != null ? '' : c.digit), 2000, clock.t += 1000);
+        if (r && r.help && r.help.steps) break;   // the sand's help: the page's own stack (helpStack), not the slot
+      }
+    }
+  }
+  return out;
+}
+
+test('U4. the keypad stays put: every stack she sees under the moves (the column\'s line, each \'tap\' and \'show\' prompt under it, each move-help and pointer in its place: the reserve probe\'s fallback) is one the page measured on the problem\'s first column, both styles, for six students', () => {
+  const S = stub.sets(), sets = [S.ch13, S.ch14, S.zero, S.both, { def: Object.assign({ id: 'ahead' }, S.ch13.def, { facts: [[52, 27], [811, 356], [500, 412]] }), taught: STEPS }];
+  let n = 0;
+  sets.forEach((set) => ['above', 'one'].forEach((style) => ['right', 'ahead', 'kept', 'get', 'flip', 'answer'].forEach((who) => {
+    movesUnder(set, style, who).forEach((u) => { assert.ok(u.cands.some((c) => holds(c, u.shown)), u.at + ' (' + who + '): ' + JSON.stringify(u.shown.map((b) => b.text))); n++; });
+  })));
+  assert.ok(n > 1500, n + ' stacks');
+  // the slot's candidate: the longest line the column's moves can bring, in the column line's place (not their sum)
+  const def = S.ch13.def, q = T.question(mst(def, [[43, 16]], 'above', S.ch13.taught));
+  const lines = U.slotLines(def, q, 0, S.ch13.taught), R = U.reserve(def, q, { taught: S.ch13.taught });
+  assert.ok(lines.includes('Careful. One row goes to the loose. Three rows now.') && lines.includes('Right! Now show me your marks.') && lines.includes('Three loose and ten more: thirteen loose.'), JSON.stringify(lines));
+  const slots = R.filter((L) => L.some((b) => b.slot));
+  assert.equal(slots.length, 1, 'one candidate for the slot on the ones');
+  assert.equal(slots[0][slots[0].length - 1].text.length, Math.max(...lines.map((t) => t.length)));
+  assert.equal(U.slotLines(def, T.question(mst(def, [{ a: 43, b: 16, regroup: 'show' }], 'above', S.ch13.taught)), 0, S.ch13.taught).length, 0, '\'show\': no slot (a wrong number is lettered)');
+  const page = fnSrc(UI_SRC, 'runTakes');
+  assert.ok(page.includes("      say((help ? slotBase : base).concat([Object.assign({}, b, { slot: true })]));"), 'the slot\'s balloon takes the column line\'s place');
+  // a move picked up (a reload, ‹, Camp) between a lend and its get: the store at rest, the lender's piece resting unopened
+  const pq = mst(Object.assign({}, DEF), [[43, 16]]);
+  walk(pq, DEF, ['t1', '3']);
+  const PQ = T.question(pq);
+  assert.deepEqual(U.stageAt(PQ), { col: 0, spreads: 1, half: true });
+  assert.equal(E.takePicture(DEF, PQ, U.stageAt(PQ)).spread.stage, 'out');
+  assert.ok(page.includes("    function storeNowM() { var po = E.takePicture(def, qAt(), takeStageAt(q)); if (po && litZone()) po.glow = litZone(); paintStore(po); }"), 'never a slide replayed');
+  assert.ok(page.includes("        var F = takeFirst(def, q, { intro: firstIntro, fill: fill }), F0 = takeFirst(def, q, { intro: firstIntro, fill: fill, line: '' });"));
+});
+
+test('U1. the marks page (takeMarksFlow, takeMarksHtml, marksPage): one line at a time, its picture lifting; no button live before the last line; a pick saves and presses (a ring, a check, aria-pressed) and its answer line takes the question\'s place; through it the other switches; a button never goes on, the stack or the panel does; Read to me says the lines, then the labels; stacked on a phone held upright; the shelf\'s My marks opens it', () => {
+  const page13 = E.takeMarksPage(stub.sets().ch13.def, null);
+  assert.deepEqual(page13.lines.map((b) => b.who + ': ' + b.text), ['chispapaw: My little Tall One writes it like THIS.', 'chispapaw: A little 1 in front!', 'tallyheart: Some write the new number on top instead.', 'tallyheart: Both are right. Which way do YOU like?']);
+  assert.deepEqual([0, 1, 2, 3].map((k) => U.marksGlow(page13, k)), ['one', 'one', 'above', 'both'], 'Chispapaw\'s with the little 1, Tallyheart\'s with the top, both with her last');
+  const kit = E.takeMarksPage({ teacher: 'tallyheart' }, null);
+  assert.deepEqual([0, 1].map((k) => U.marksGlow(kit, k)), ['both', 'both']);
+  const log = [];
+  let waiting = null, saved = null;
+  const h = { show: (L, g) => log.push(['show', L.map((b) => b.text).join(' | '), g]), live: () => log.push(['live']), press: (s) => log.push(['press', s]), save: (s) => { saved = s; },
+    wait: (items, fn) => { waiting = fn; }, hush: () => { waiting = null; }, labels: () => log.push(['labels']), goOn: () => log.push(['goOn']) };
+  const F = U.marksFlow({ page: page13 }, h);
+  F.start();
+  assert.deepEqual(log.pop(), ['show', 'My little Tall One writes it like THIS.', 'one']);
+  assert.equal(F.pick('one'), false, 'no button live before the last line');
+  F.tap();                                   // the stack: the next line at once
+  assert.equal(F.state().at, 1);
+  waiting(); waiting();                      // two reading times
+  assert.equal(F.state().at, 3);
+  assert.equal(F.state().live, false, 'the last line shown, its reading time not yet out');
+  assert.equal(F.pick('above'), false);
+  waiting();
+  assert.deepEqual(log.slice(-2), [['live'], ['labels']], 'live, then Read to me\'s labels');
+  assert.equal(F.pick('one'), true);
+  assert.equal(saved, 'one');
+  assert.deepEqual(log.slice(-2), [['press', 'one'], ['show', 'My little Tall One writes it like THIS. | A little 1 in front! | Some write the new number on top instead. | Just like my little Tall One!', 'one']]);
+  assert.equal(F.pick('above'), true, 'through the answer line the other switches');
+  assert.equal(saved, 'above');
+  assert.ok(!log.some((x) => x[0] === 'goOn'), 'a button never goes on');
+  F.tap();
+  assert.deepEqual(log.pop(), ['goOn'], 'the stack or the panel does');
+  // the shelf's: every line and both live at once, a pick never goes on
+  const log2 = [], F2 = U.marksFlow({ page: kit, live: true, stay: true }, Object.assign({}, h, { show: () => {}, live: () => log2.push('live'), labels: () => {}, goOn: () => log2.push('goOn'), wait: () => log2.push('wait') }));
+  F2.start(); F2.pick('one'); F2.tap();
+  assert.deepEqual(log2, ['live']);
+  // the pictures: 43 − 16 done in each style, its answer 2 7 in plain boxes, the receiver's mark haloed, the label under it
+  const H = U.marksHtml({ options: page13.options, live: false, pressed: null, glow: 'one' });
+  assert.deepEqual((H.match(/data-style="(\w+)"/g) || []), ['data-style="one"', 'data-style="above"'], 'the little 1 on the left');
+  assert.equal((H.match(/aria-pressed="false"/g) || []).length, 2);
+  assert.equal((H.match(/aria-disabled="true"/g) || []).length, 2, 'not live');
+  assert.match(H, /<button class="tpb tglowing" type="button" data-style="one"/);
+  assert.match(H, /<span class="tfront thalo">1<\/span>3<\/span>/, '¹3, haloed');
+  assert.match(H, /<span class="tdig ttop tstruck" data-col="0" aria-hidden="true" style="grid-column:3">3<\/span>/, 'the struck 3 under 13');
+  assert.match(H, /<span class="tmv thalo">13<\/span>/);
+  assert.equal((H.match(/class="tbox plain" data-col="0" role="img" aria-label="ones: 7"/g) || []).length, 2);
+  assert.ok(H.includes('<span class="tlbl">A little 1 in front</span>') && H.includes('<span class="tlbl">The new number on top</span>'));
+  const P = U.marksHtml({ options: page13.options, live: true, pressed: 'above' });
+  assert.ok(P.includes('<div class="tpick tlive" role="group">') && P.includes('data-style="above" aria-pressed="true"') && !P.includes('aria-disabled'));
+  assert.ok(HTML.includes('.tpick .tpb[aria-pressed="true"]{box-shadow:0 0 0 5px var(--gold)') && HTML.includes('.tpick .tpb[aria-pressed="true"] .tcheck{display:block}'), 'the ring and the check');
+  assert.ok(HTML.includes('@media (orientation: portrait) and (max-width: 560px){\n  .tpick{flex-direction:column;align-items:center;gap:8px}'), 'stacked on a phone held upright');
+  assert.ok(HTML.includes('.tpick .tpb .tcol{font-size:clamp(29px, min(4.2vw, 4.4vh), 40px)}'), 'sized by font-size, at least the phone column\'s 29px');
+  // the page's wiring: before the prompt of a problem that spreads, her style unset; Read to me's order; the shelf and its ‹
+  const page = fnSrc(UI_SRC, 'runTakes');
+  assert.ok(page.includes('        if (needMarks()) return marksPhase(ask);'));
+  assert.ok(page.includes("        show: function (list, g) { say(list); saying(heard(list).concat(labels)); mp.glow(g); },"), 'Read to me: the lines, then the labels');
+  assert.ok(page.includes("        save: function (s) { st.style = s; if (keep) { E.setTakeStyle(cat, s); persist(); } else { o.style = s; if (dbg) dbg.marks = false; } },"), 'saved in play; PC.debug.takes writes nothing to the test cat');
+  assert.ok(page.includes("      pad"), 'the page');
+  const mpSrc = fnSrc(UI_SRC, 'marksPage');
+  assert.ok(mpSrc.includes("      if (!wrap.classList.contains('tlive') || !pickFn) return;"), 'a button answers only while live');
+  const sh = fnSrc(UI_SRC, 'renderShelf');
+  assert.ok(sh.includes("    if (marksOn) $('marksBtn').addEventListener('click', function () { go('hollow', { marks: true, from: view.opts.from, vol: view.opts.vol, stories: opts.stories }); });"));
+  assert.ok(sh.includes("    var marksOn = E.takeSteps(cat, opts.stories || stories()).indexOf('ones2') >= 0 || !!(cat.takes && (cat.takes.style === 'one' || cat.takes.style === 'above'));"));
+  const rh = fnSrc(UI_SRC, 'renderHollow');
+  assert.ok(rh.indexOf('    if (opts && opts.marks) return renderMarks(opts);') > 0 && rh.indexOf('    if (opts && opts.marks) return renderMarks(opts);') < rh.indexOf('    var SH = opts && opts.counts'), 'beside { counts: true }, before var HW');
+  assert.ok(fnSrc(UI_SRC, 'renderMarks').includes("    var mp = marksPage($('marksPick'), { page: page, live: true, pressed: page.current });"), 'the kit\'s lines, both live, her style pressed');
+  assert.ok(fnSrc(UI_SRC, 'onBack').includes("    if (n === 'hollow' && hollowSub === 'marks') return go('hollow', { from: view.opts.from, vol: view.opts.vol, back: true, stories: view.opts.stories });\n    if (n === 'hollow' && hollowSub === 'counts')"), '‹ back to the shelf');
+  assert.equal((UI_SRC.match(/counts: true/g) || []).length, 1, 'One Count at a time still the one way to its page');
+  const back = [];
+  new Function('view', 'hollowSub', 'go', 'E', 'cat', 'story', 'persist', fnSrc(UI_SRC, 'onBack') + 'return onBack;')({ name: 'hollow', opts: { marks: true, from: 'hub' } }, 'marks', (n, o) => back.push([n, o]), E, null, null, () => {})();
+  assert.deepEqual(back, [['hollow', { from: 'hub', vol: undefined, back: true, stories: undefined }]]);
+});
+
+test('the grown-ups corner under the moves: "Marks right" between "Right first time" and "Helped" and a note on what a mark is, once a row has moves; "In her head first: N"; the move slips\' words; her marks\' line once she has learned to spread a row or has chosen', () => {
+  const cat = E.blankCat({ now: 1 }), def = stub.sets().ch13.def, st = mst(def, [[43, 16], [52, 27], [97, 52]], 'one', stub.sets().ch13.taught), clock = { t: 1e6 };
+  // 43 − 16 with a `lend` slip, 52 − 27 answered first (`ahead`), 97 − 52 right
+  const add = (rs) => rs.forEach((r) => { if (r && r.entry) E.logTake(cat, r.entry); });
+  add(walk(st, def, ['t1', '2', '1', '7', '2'], clock));
+  add(walk(st, def, ['5', 't1', '4', '1', '', '2'], clock));
+  add(walk(st, def, ['5', '4'], clock));
+  E.setTakeStyle(cat, 'one');
+  const K = U.corner(cat.takes, E.takeTable(cat), undefined, ['none', 'ones2']);
+  assert.ok(K.html.includes('<th>Right first time</th><th>Marks right</th><th>Helped</th>'), K.html);
+  assert.ok(K.html.includes('“Marks right” is how many of them'), 'what a mark is');
+  assert.match(K.html, /<td>Regroup a ten<\/td><td>2<\/td><td>0&nbsp;of&nbsp;2<\/td><td>3&nbsp;of&nbsp;4<\/td><td>1<\/td>/, 'her own first asks\' numbers right first time');
+  assert.ok(K.html.includes('<td>new number for the one that gave</td>'), K.html);
+  assert.ok(K.html.includes('<p class="muted">In her head first: 1</p>'));
+  assert.ok(K.html.endsWith('<p class="muted">Her marks: a little 1 in front (¹3), her choice. She can change it in the Training Hollow (My marks).</p>'));
+  delete cat.takes.style;
+  assert.ok(U.corner(cat.takes, E.takeTable(cat), undefined, ['none', 'ones2']).html.endsWith('<p class="muted">Her marks: not chosen yet (on top until she does).</p>'));
+  assert.ok(!U.corner(cat.takes, E.takeTable(cat), undefined, ['none']).html.includes('Her marks:'), 'not before she learns to spread a row');
+});
+
+test('PC.debug.takes\' new screens (the tools\' take:touch … hollow:marks), on definitions of their own (chapter 13\'s marks lines inline, or PC.story.ch13\'s), every step taught; take:first as it was (no taught); its spread screens v0.4; nothing saved', () => {
+  const dbg = fnSrc(UI_SRC, 'takesDebug');
+  assert.ok(dbg.includes("    var st = E.takes.start(def, v4 ? { set: def.id, mode: 'chapter', now: t, logged: 5, taught: E.TAKE_STEPS.slice(), style: o.style } : { set: def.id, mode: 'chapter', now: t, logged: 5 });"));
+  assert.ok(dbg.includes("    var v4 = what !== 'first';"));
+  assert.ok(dbg.includes("      if (what === 'hollow:marks') { go('hollow', { from: 'hub', marks: true, stories: list }); return $('marksPick') ? true : 'takes: no marks page drawn (a round in the slot?)'; }"));
+  assert.ok(!dbg.includes('persist()'));
+  const marks = new Function('return ' + /var TAKE_DEBUG_MARKS = (\{[\s\S]*?\] \});/.exec(UI_SRC)[1])();
+  assert.deepEqual(marks, stub.MARKS13, 'chapter 13\'s lines, as its spec has them');
+  assert.ok(fnSrc(UI_SRC, 'takeDebugMarks').includes("var ch = PC.story && PC.story.ch13"));
 });

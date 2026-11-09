@@ -3857,11 +3857,14 @@
    * It also holds the Hollow's shelf and Count the store (E.hollowShelf, E.takeRoundStart, E.takeRoundFinish),
    * the cross-table Counts warm-up (E.lessonFacts and E.questionDef, behind `warmHard.table === 'all'`), a
    * take-away read as practice by a waiting Warrior Counts re-sit (warriorStale, lastAnswerAt) and the
-   * grown-ups' table (E.takeTable). */
+   * grown-ups' table (E.takeTable). The kit v0.4 (decision 57, from chapter 13 on): the spread as moves she makes,
+   * in her chosen marks (the section "the kit v0.4" below), all behind one gate, movesOn(st). */
   E.TAKE_KINDS = ['none', 'ones', 'tens', 'both', 'zero', 'zeros'];
   E.TAKE_STEPS = ['none', 'ones2', 'ones', 'tens', 'both', 'mixed', 'zero', 'zeros'];
-  E.TAKE_SLIPS = ['zero', 'flip', 'nospread', 'kept', 'extra', 'fact'];   // named in this order: the first that matches
+  // named in this order: the first that matches (the kit v0.4, decision 57: `lend` and `get`, a wrong new number at a move)
+  E.TAKE_SLIPS = ['zero', 'flip', 'nospread', 'kept', 'lend', 'get', 'extra', 'fact'];
   E.TAKE_REGROUP = ['show', 'tap', 'hers'];
+  E.TAKE_STYLES = ['above', 'one'];   // her marks (the kit v0.4): the new number on top, or a little 1 in front
   // Count the store's templates by step (section 5): the chapters' own problems, and two of the store's own
   E.TAKE_TEMPLATES = {
     none: [[58, 23], [475, 132]], ones2: [[43, 16], [70, 34]], ones: [[352, 127], [640, 218], [352, 28]],
@@ -3925,11 +3928,15 @@
     schoolWords: 'A {row} is a ten. A {square} is a hundred.',
     blank: { tens: 'No {rows} left. We don’t write a zero in front.', hundreds: 'No {squares} left. We don’t write a zero in front.' },
     onesFirst: '{OnesFirst}: this box, on the right.',
-    // 'tap': the zone to tap glows (tapHere's forms are by that zone)
-    tap: { ones: 'Not enough {loose}. {Spread} a {row}: tap it.', tens: 'Not enough {rows}. {Spread} a {square}: tap it.' },
+    // 'tap': the zone to tap glows (tapHere's forms are by that zone); the kit v0.4 adds `tap`'s zero forms (said only
+    // under movesOn: the v0.3 path asks its column's form alone) and words tapHere for a glow that is in the column too
+    tap: {
+      ones: 'Not enough {loose}. {Spread} a {row}: tap it.', tens: 'Not enough {rows}. {Spread} a {square}: tap it.',
+      onesZero: 'No {loose}. {Spread} a {row}: tap it.', tensZero: 'No {rows}. {Spread} a {square}: tap it.'
+    },
     tapSquare: 'Not enough {loose}, and no {rows}. {Spread} a {square}: tap it.',
     tapRow: 'Now tap a {row}.',
-    tapHere: { tens: 'The {rows}: up here.', hundreds: 'The {squares}: up here.' },
+    tapHere: { tens: 'The {rows}: the glowing ones.', hundreds: 'The {squares}: the glowing ones.' },
     // 'show', and the spreads a help draws
     showOpen: {
       ones: '{Top} {takeAway} {bottom}? Only {top} {loose}. Not enough.', tens: '{Top} {takeAway} {bottom}? Only {top} {rows}. Not enough.',
@@ -4005,7 +4012,64 @@
     },
     miss: 'And you finished it. We’ll do one like it soon.',
     missLast: 'And you finished it.',
-    praise: ['Yes!', '', 'That’s it.', '', 'Every column.', '']
+    praise: ['Yes!', '', 'That’s it.', '', 'Every column.', ''],
+    // the kit v0.4 (decision 57): the spread as moves, said only under movesOn. New number tokens: {old} the lender as it
+    // stood, {left} as it now stands, {new} the receiver's new number. A move's form is by the column that receives (a
+    // row goes to the 'ones', a square to the 'tens'), with 'Zero' after it where the count the line names is 0 (the
+    // lender left with none: "One row, one goes: none."; the receiver standing at none: "No loose, and ten more"); a
+    // style's lines are by style first ('above', 'one'), then by that form
+    showLend: {
+      ones: 'So I {spread} a {row}. {Old} {rows}, one goes: {left}.', onesZero: 'So I {spread} a {row}. One {row}, one goes: none.',
+      tens: 'So I {spread} a {square}. {Old} {squares}, one goes: {left}.', tensZero: 'So I {spread} a {square}. One {square}, one goes: none.'
+    },
+    showGet: {
+      above: { ones: 'Ten more {loose}: {new}. Write it on top.', onesZero: 'Ten {loose}: ten. Write it on top.',
+        tens: 'Ten more {rows}: {new}. Write it on top.', tensZero: 'Ten {rows}: ten. Write it on top.' },
+      one: { ones: 'Ten more {loose}: write a little 1 in front.', onesZero: 'Ten {loose}: write a little 1 in front of the zero.',
+        tens: 'Ten more {rows}: write a little 1 in front.', tensZero: 'Ten {rows}: write a little 1 in front of the zero.' }
+    },
+    chainLend: { tens: 'So a {square} first. {Old} {squares}, one goes: {left}.', tensZero: 'So a {square} first. One {square}, one goes: none.' },
+    chainGet: { above: 'Ten {rows}: ten. Write it on top.', one: 'Ten {rows}: write a little 1 in front of the zero.' },
+    chainLend2: 'Now a {row}. Ten {rows}, one goes: nine.',
+    chainFirst: 'So a {square} first.',
+    askLend: { ones: 'One {row} goes. How many {rows} now?', tens: 'One {square} goes. How many {squares} now?' },
+    askGet: {
+      above: { ones: '{Top} {loose}, and ten more. How many {loose} now?', onesZero: 'No {loose}, and ten more. How many {loose} now?',
+        tens: '{Top} {rows}, and ten more. How many {rows} now?', tensZero: 'No {rows}, and ten more. How many {rows} now?' },
+      one: { ones: '{Top} {loose}, and ten more: write a little 1 in front.', onesZero: 'No {loose}, and ten more: write a little 1 in front.',
+        tens: '{Top} {rows}, and ten more: write a little 1 in front.', tensZero: 'No {rows}, and ten more: write a little 1 in front.' }
+    },
+    extraTouch: {
+      ones: 'Careful: {top} {takeAway} {bottom}? The {loose} have enough. No {row} goes.',
+      tens: 'Careful: {top} {takeAway} {bottom}? The {rows} have enough. No {square} goes.'
+    },
+    zeroTouch: 'That zero has no {rows} to give. So a {square} first.',
+    zeroStop: { ones: 'Careful. Ten {rows} now, and still only {top} {loose}. Now a {row}.', onesZero: 'Careful. Ten {rows} now, and still no {loose}. Now a {row}.' },
+    zeroLend: 'Careful. That zero is ten {rows} now, and one goes: nine {rows}.',
+    nine: 'Nine at the end! First the zero gets ten {rows}.',
+    keptMove: {
+      ones: 'Careful. One {row} goes to the {loose}. {Left} {rows} now.', onesZero: 'Careful. One {row} goes to the {loose}. No {rows} now.',
+      tens: 'Careful. One {square} goes to the {rows}. {Left} {squares} now.', tensZero: 'Careful. One {square} goes to the {rows}. No {squares} now.'
+    },
+    keptGot: { tens: 'Careful. One {row} went to the {loose}, then ten came: ten {rows} now.' },
+    lendMove: {
+      ones: '{Old} {rows}, and one goes: {left} {rows}.', onesZero: 'One {row}, and one goes: none now.',
+      tens: '{Old} {squares}, and one goes: {left} {squares}.', tensZero: 'One {square}, and one goes: none now.'
+    },
+    getMove: {
+      above: { ones: '{Top} {loose} and ten more: {new} {loose}.', onesZero: 'No {loose}, and ten more: ten {loose}.',
+        tens: '{Top} {rows} and ten more: {new} {rows}.', tensZero: 'No {rows}, and ten more: ten {rows}.' },
+      one: { ones: 'Ten more {loose}: a little 1 in front. {New} {loose}.', onesZero: 'Ten {loose}: a little 1 in front of the zero.',
+        tens: 'Ten more {rows}: a little 1 in front. {New} {rows}.', tensZero: 'Ten {rows}: a little 1 in front of the zero.' }
+    },
+    ahead: { right: 'Right! Now show me your marks.', flip: 'Marks first, then the answer.' },
+    where: 'Next door first: the {rows}.',
+    gave: 'The {squares} gave already. Now the {rows}.',
+    order: '{TakeAway} first, then the next column.',
+    // the marks page (E.takeMarksPage): the kit's own lines, for a set with no `marks`; both said, in order
+    marksAsk: ['When you {spread} a {row}, how do you write it?', 'Both are right. Tap your way.'],
+    marksAfter: 'Then that’s how we’ll write it.',
+    marksLabel: { one: 'A little 1 in front', above: 'The new number on top' }
   };
   function takeLine(def, key) {
     return def && isObj(def.lines) && def.lines[key] != null ? def.lines[key] : E.TAKE_LINES[key];
@@ -4251,6 +4315,203 @@
   };
   function spreadName(s) { return { from: TAKE_COLS[s.from], to: TAKE_COLS[s.to] }; }
 
+  /* ------------------------------------------------------------ the kit v0.4: the spread as moves (decision 57)
+   * ~/potomac-crossing-work/regroup/design.md (v0.4) and plan.md: the spread is moves she makes in the column, ones
+   * first, column by column: at a turn that needs one she taps the lender (it is struck), types its new number, types
+   * the receiving column's new number in her style ('above': 13 over the struck 3; 'one': a little 1 in front of it),
+   * then the answer. Every change is behind the gate, movesOn(st): a state whose `taught` holds a step from `ones2` on.
+   * An absent `taught` (T.start's tests, PC.debug's first screens), chapter 12's `['none']` and a chapter-12-only cat's
+   * rounds keep v0.3's path exactly (tests/fixtures/takes-v25-entries.json holds them to it). A move is
+   * { move: 'touch' | 'lend' | 'get' | 'answer', col (the column it acts on), link (its link in the turn), value (the
+   * right number: a lend's new number, a get's in the style, the answer's digit), reads (a get's new number as a
+   * number: 13 in either style), before (the column as it stood), to / from (the link's other end), zero (a chain's
+   * zero: its lend, its get, the touch of it) }. A column's moves are numbered from 0, its decide (the touch, or the
+   * answer of a column that needs nothing); a chain's second touch, 3, is its second decide. */
+  var TAKE_FROM = 1;   // E.TAKE_STEPS.indexOf('ones2'): the first step that spreads
+  function movesOn(st) {
+    return !!st && Array.isArray(st.taught) && st.taught.some(function (s) { return E.TAKE_STEPS.indexOf(s) >= TAKE_FROM; });
+  }
+  E.takeMovesOn = movesOn;
+  function okStyle(s) { return s === 'above' || s === 'one'; }
+  function styleOf(s) { return okStyle(s) ? s : 'above'; }
+  E.takeMoves = function (plan, style) {
+    if (!plan || !plan.cols) return null;
+    style = styleOf(style);
+    var cur = plan.cols.map(function (c) { return c.top; });
+    return plan.cols.map(function (c, i) {
+      var S = [];
+      c.spreads.forEach(function (s, k) {
+        var zl = c.chain && s.from === i + 1, zg = c.chain && s.to === i + 1, lb = cur[s.from], gb;
+        S.push({ move: 'touch', col: s.from, to: s.to, link: k, zero: zl });
+        cur[s.from] -= 1;
+        S.push({ move: 'lend', col: s.from, to: s.to, link: k, value: cur[s.from], before: lb, zero: zl });
+        gb = cur[s.to]; cur[s.to] += 10;
+        S.push({ move: 'get', col: s.to, from: s.from, link: k, value: style === 'one' ? 1 : cur[s.to], reads: cur[s.to], before: gb, zero: zg });
+      });
+      S.push({ move: 'answer', col: i, link: null, value: c.digit, blank: c.blank });
+      return S;
+    });
+  };
+  // a decide: the column's first move, or a chain's second touch (3)
+  function isDecide(M, k) { return !!(M && M[k]) && (k === 0 || (k === 3 && M[k].move === 'touch')); }
+  /* The columns she can tap now (design section 1): [] unless `moveIdx` is a decide; then each column left of `col`
+   * that a taught spread comes out of: the tens (a row) from `ones2`, the hundreds (a square) from `tens` (spreadTaught:
+   * with no list, every step). */
+  E.takeTargets = function (plan, col, moveIdx, taught) {
+    var c = plan && plan.cols && plan.cols[col], k = num(moveIdx, 0);
+    if (!c || !(k === 0 || (k === 3 && c.spreads.length === 2))) return [];
+    var out = [];
+    for (var j = col + 1; j < plan.n && j <= 2; j++) if (spreadTaught(taught, j)) out.push(j);
+    return out;
+  };
+  /* Her marks as the column draws them (design sections 2 and 5): per column, ones first, { struck (its digit as
+   * written), front (null, 1: the little 1 lettered in front of it, 'box': its box open there), frontStruck (a ¹0
+   * struck as one), m1 (the marks row: null or { v, struck, front, box }), m2 (the second marks row, the heads row's
+   * place, 'above' only: null or { v, box }) }, with every column before `col` done and `moveIdx` of col's moves made;
+   * the box of the move at `moveIdx` (a lend's or a get's) open, its `v` null. A help never changes them. */
+  function mmCol() { return { struck: false, front: null, frontStruck: false, m1: null, m2: null }; }
+  function mmOpen(m, kind, style) {
+    if (style === 'one' && kind === 'get') { if (m.m1) m.m1.front = 'box'; else m.front = 'box'; return; }
+    if (!m.m1) { m.struck = true; if (m.front != null) m.frontStruck = true; m.m1 = { v: null, struck: false, front: null, box: true }; }
+    else { m.m1.struck = true; m.m2 = { v: null, box: true }; }
+  }
+  function mmCommit(m, kind, style, v) {
+    if (style === 'one' && kind === 'get') { if (m.m1) m.m1.front = 1; else m.front = 1; return; }
+    var r = m.m2 || m.m1;
+    if (r) { r.v = v; r.box = false; }
+  }
+  function moveMarks(plan, style, col, k, M) {
+    M = M || E.takeMoves(plan, style);
+    var out = plan.cols.map(mmCol);
+    for (var i = 0; i < plan.n && i <= col; i++) {
+      var list = M[i], upto = i < col ? list.length : Math.min(k, list.length);
+      for (var j = 0; j < upto; j++) {
+        var m = list[j];
+        if (m.move === 'lend' || m.move === 'get') { mmOpen(out[m.col], m.move, style); mmCommit(out[m.col], m.move, style, m.value); }
+      }
+      if (i === col && list[k] && (list[k].move === 'lend' || list[k].move === 'get')) mmOpen(out[list[k].col], list[k].move, style);
+    }
+    return out;
+  }
+  E.takeMoveMarks = function (plan, style, col, moveIdx) {
+    if (!plan || !plan.cols) return null;
+    return moveMarks(plan, styleOf(style), Math.max(0, num(col, 0)), Math.max(0, num(moveIdx, 0)));
+  };
+  /* The picture's stage at a column's move (design section 1): in 'hers' the store moves after each of her numbers (a
+   * lend made: its piece resting, `half`; its get made: landed); in 'tap' and 'show' before each ask (a touch made:
+   * resting; its lend made: landed, the ten opening as the get box opens). */
+  function moveStage(mode, M, k, col) {
+    var n = 0, half = false, lead = mode === 'hers' ? 'lend' : 'touch';
+    M.forEach(function (m, j) { if (m.move === lead && j < k) { n = m.link + 1; half = !(j + 1 < k); } });
+    var s = { col: col, spreads: n };
+    if (half && n) s.half = true;
+    return s;
+  }
+  /* What she did at a move (design section 4's table), in its order: null (right), a slip { slip, move, line } (`move`
+   * 'decide' | 'touch' | 'lend' | 'get' | 'answer'; `line` the key its move-help says), a pointer { pointer: 'ahead'
+   * (with `form`: 'right', or 'flip' when bottom − top as it stands is her digit) | 'zeroFirst' | 'where' | 'gave' |
+   * 'nine' | 'order', line }, or { ignored } for a tap that does nothing. `given` is her number, or with `ctx.touch` the
+   * column she tapped. `ctx`: `touch`, `zeroFirst` (the zero tapped first already in this problem: now the slip),
+   * `ordered` (`order` said already), `lit` (a glowing lender, tappable though no target), `extra` (the column she struck
+   * at a turn that needs nothing: any number in its lend box is `extra`, logged as the touch's). The answer move defers
+   * to E.takeSlip with `shown` (her moves made the spread), `kept` at a column that lent and then got naming `keptGot`. */
+  E.takeMoveSlip = function (plan, col, moveIdx, given, style, taught, ctx) {
+    var c = plan && plan.cols && plan.cols[col];
+    if (!c) return null;
+    ctx = ctx || {};
+    style = styleOf(style);
+    if (ctx.extra != null && ctx.extra !== false) return { slip: 'extra', move: 'touch', line: 'extraTouch' };
+    var M = E.takeMoves(plan, style)[col], k = Math.max(0, num(moveIdx, 0)), m = M[k], bv = c.bottom || 0;
+    if (!m) return null;
+    if (ctx.touch) {
+      var t = num(given, -1);
+      if (isDecide(M, k)) {
+        if (E.takeTargets(plan, col, k, taught).indexOf(t) < 0 && !(ctx.lit != null && t === ctx.lit)) return { ignored: true };
+        if (!c.spreads.length || t === m.col) return null;   // a column that needs nothing: `extra` is judged at its lend
+        if (c.chain && k === 0 && t === col + 1) return ctx.zeroFirst ? { slip: 'zero', move: 'touch', line: 'zeroTouch' } : { pointer: 'zeroFirst', line: 'zeroTouch' };
+        if (c.chain && k === 3 && t === col + 2) return { pointer: 'gave', line: 'gave' };
+        return { pointer: 'where', line: 'where' };
+      }
+      if (m.move === 'answer' && k > 0 && t > col && t < plan.n && !ctx.ordered) return { pointer: 'order', line: 'order' };
+      return { ignored: true };
+    }
+    var g = given === '' || given == null ? 0 : +given;
+    if (m.move === 'lend') {
+      if (g === m.value) return null;
+      if (m.zero) return { slip: 'zero', move: 'lend', line: 'zeroLend' };
+      return g === m.before ? { slip: 'kept', move: 'lend', line: 'keptMove' } : { slip: 'lend', move: 'lend', line: 'lendMove' };
+    }
+    if (m.move === 'get') {
+      if (g === m.value || (style === 'one' && g === m.reads)) return null;
+      return m.zero && g === 9 ? { pointer: 'nine', line: 'nine' } : { slip: 'get', move: 'get', line: 'getMove' };
+    }
+    if (m.move === 'touch') {   // a digit at a decide of a turn that spreads
+      if (g === c.digit) return { pointer: 'ahead', form: bv - c.before === g ? 'flip' : 'right', line: 'ahead' };
+      if (k === 3) return g === bv - c.before || g === 0 ? { slip: 'zero', move: 'decide', line: 'zeroStop' } : { slip: 'fact', move: 'decide', line: 'factSpread' };
+      var s = E.takeSlip(plan, col, g, false, taught);
+      return { slip: s, move: 'decide', line: s === 'fact' ? 'factSpread' : s };
+    }
+    if (g === c.digit) return null;
+    var a = E.takeSlip(plan, col, g, true, taught);
+    return { slip: a, move: 'answer', line: a === 'kept' && c.lent && c.spreads.length ? 'keptGot' : a };
+  };
+  // a line of a style's forms ('above' / 'one', then the column's), filled
+  function styleLine(def, key, style, keys, nums, words) { return takeFill(takeForm(takeForm(takeLine(def, key), [style]), keys || []), nums, words); }
+  // the line a pointer or a slip says, by its key (E.takeMoveSlip's `line`), at the move `m` of column `col`
+  function moveLine(def, plan, col, M, k, key, style, form, words) {
+    var c = plan.cols[col], m = M[k], name = TAKE_COLS[col], zero = c.before === 0, bv = c.bottom || 0, nums = { top: c.before, bottom: bv };
+    var fill = function (x, keys, n) { return takeFill(takeForm(takeLine(def, x), keys || []), n || nums, words); };
+    var to = m && m.move === 'lend' ? TAKE_COLS[m.to] : m && m.move === 'get' ? TAKE_COLS[m.col] : name;
+    switch (key) {
+      case 'flip': case 'nospread': case 'kept': return [fill(key, formKeys(name, zero))];
+      case 'factSpread': return c.chain && k === 0 ? [fill('factSpread', [name]), fill('chainFirst')] : [fill('factSpread', [name])];
+      case 'zero': return [fill('zero', zero ? ['onesZero', 'ones'] : ['ones']), fill('chainFirst')];
+      case 'zeroStop': return [fill('zeroStop', formKeys(name, zero))];
+      case 'extraTouch': return [fill('extraTouch', [name])];
+      case 'keptMove': case 'lendMove': return [fill(key, formKeys(to, m.value === 0), { old: m.before, left: m.value })];
+      case 'getMove': return [styleLine(def, 'getMove', style, formKeys(to, m.before === 0), { top: m.before, new: m.reads }, words)];
+      case 'ahead': return [fill('ahead', [form === 'flip' ? 'flip' : 'right'])];
+      case 'tap': return [c.chain ? fill(k === 0 ? 'tapSquare' : 'tapRow') : fill('tap', formKeys(name, zero))];
+      case 'askLend': return [fill('askLend', [to])];
+      default: return [fill(key)];
+    }
+  }
+  var POINTER_LINES = { ahead: 'ahead', zeroFirst: 'zeroTouch', where: 'where', gave: 'gave', nine: 'nine', order: 'order' };
+  /* A move's help (design section 4): { say: [line, line?], fix: { move, col, value? } (the move made for her: 'touch',
+   * 'lend', 'get', or 'undo' for an `extra` touch's strike; null for a pointer that only lights the lender), next (the
+   * move she makes next), marks (E.takeMoveMarks at it), stage and picture (the store at it, in `mode`, 'hers' by
+   * default), glow (the column glowing: the fixed move's, or the lender a pointer lights) }. `slip` is a slip's name or
+   * E.takeMoveSlip's object (its `line`, `form`; `touched` for `extra`). At the answer it is v0.3's sand help
+   * (E.takeHelp, her marks kept): the runner calls that one. */
+  E.takeMoveHelp = function (def, plan, col, moveIdx, slip, style, mode) {
+    var c = plan && plan.cols && plan.cols[col];
+    if (!c) return null;
+    style = styleOf(style);
+    mode = E.TAKE_REGROUP.indexOf(mode) >= 0 ? mode : 'hers';
+    var j = isObj(slip) ? slip : { slip: slip }, words = takeWords();
+    var M = E.takeMoves(plan, style)[col], k = Math.max(0, Math.min(M.length - 1, num(moveIdx, 0))), m = M[k];
+    var key = j.line || (j.pointer ? POINTER_LINES[j.pointer] : null);
+    if (!key) {
+      if (j.slip === 'extra') key = 'extraTouch';
+      else if (m.move === 'lend') key = m.zero ? 'zeroLend' : j.slip === 'kept' ? 'keptMove' : 'lendMove';
+      else if (m.move === 'get') key = 'getMove';
+      else if (m.move === 'touch') key = j.slip === 'zero' ? (k === 3 ? 'zeroStop' : 'zero') : j.slip === 'fact' ? 'factSpread' : j.slip || 'factSpread';
+      else key = j.slip === 'kept' && c.lent && c.spreads.length ? 'keptGot' : j.slip || 'fact';
+    }
+    if (m.move === 'answer' && !j.pointer && j.slip !== 'extra') {
+      var h = E.takeHelp(def, plan, col, j.slip || 'fact', { mode: mode, shown: true, style: style });
+      return { say: [h.intro], fix: null, next: k, marks: E.takeMoveMarks(plan, style, col, k), stage: moveStage(mode, M, k, col), picture: null, glow: null, help: h };
+    }
+    var say = moveLine(def, plan, col, M, k, key, style, j.form, words), fix = null, next = k, glow = null;
+    if (j.slip === 'extra') { fix = { move: 'undo', col: num(j.touched, col + 1) }; }
+    else if (j.slip && m.move === 'touch') { fix = { move: 'touch', col: m.col }; next = k + 1; glow = TAKE_COLS[m.col]; }
+    else if ((j.slip || j.pointer === 'nine') && (m.move === 'lend' || m.move === 'get')) { fix = { move: m.move, col: m.col, value: m.value }; next = k + 1; glow = TAKE_COLS[m.col]; }
+    else if (j.pointer && j.pointer !== 'order' && m.move === 'touch') glow = TAKE_COLS[m.col];
+    var stage = moveStage(mode, M, next, col);
+    return { say: say, fix: fix, next: next, marks: E.takeMoveMarks(plan, style, col, next), stage: stage,
+      picture: E.takePicture(def, { plan: plan, col: col }, stage), glow: glow };
+  };
+
   /* The store picture as PC.art.placeValue takes it (section 8's pinned object): the counts as they
    * stand, `taken` per zone, `fresh` (a spread's ten: 10, or 9 once a row of it has spread on across a
    * zero), `spread` (the last spread landed, in flight at `stage.flight`: the counts are its end), `glow`,
@@ -4292,7 +4553,10 @@
       fresh: { tens: fresh[1], ones: fresh[0] },
       spread: null, glow: null, kind: takeKindOf(def, q), small: !!s.small
     };
-    if (s.flight && last) o.spread = { from: TAKE_COLS[last.from], to: TAKE_COLS[last.to], stage: s.flight === 'slide' || s.flight === 'open' ? s.flight : 'end' };
+    // the kit v0.4's `half` (decision 57): the k-th spread's lender one less and its piece resting unopened in the
+    // receiving zone, between her lend and her get; counted as landed, as every stage is, and drawn 'out' (static)
+    if (s.half && last) o.spread = { from: TAKE_COLS[last.from], to: TAKE_COLS[last.to], stage: 'out' };
+    else if (s.flight && last) o.spread = { from: TAKE_COLS[last.from], to: TAKE_COLS[last.to], stage: s.flight === 'slide' || s.flight === 'open' ? s.flight : 'end' };
     if (s.glow === 'hundreds' || s.glow === 'tens') o.glow = s.glow;
     return o;
   };
@@ -4359,6 +4623,7 @@
     var c = plan && plan.cols && plan.cols[col];
     if (!c || !c.spreads.length) return null;
     opts = opts || {};
+    if (okStyle(opts.style)) return takeShowMoves(def, plan, col, opts);
     var mode = opts.mode === 'tap' ? 'tap' : 'show', helped = opts.helped || {};
     var words = takeWords(), name = TAKE_COLS[col], zero = c.before === 0, bv = c.bottom || 0, nums = { top: c.before, bottom: bv };
     var q = { plan: plan, col: col, picture: opts.picture };
@@ -4391,6 +4656,68 @@
     c.spreads.forEach(function (s) { var z = TAKE_COLS[s.from]; here[z] = fill('tapHere', [z]); });
     return { col: col, steps: steps, taps: taps, here: here, line: after };
   };
+  /* The kit v0.4's 'show' and 'tap' (decision 57; E.takeShow with `opts.style`): `steps` [{ say, idx, move, touch, marks,
+   * picture, ask }], Tallyheart's: she opens the turn, then at each link taps the lender herself (`touch`: the column the
+   * page taps for her, a paw-tap ripple) and says its new number, and Lissa types it (`ask`: { col, kind: 'lend' |
+   * 'get', value }); then the line after, and the answer is hers. `taps` [{ say, idx, move, glow, col, marks, picture,
+   * ask }], one a move: each touch's prompt with its lender glowing, and each number's ask, said (`say`) only for a link
+   * of a kind no earlier chapter taught (its step: `ones2` for a row, `tens` for a square, `zero` for a chain's either
+   * link; said when that step is at or after the set's `teach`; a set with no `teach` asks none), null where it is
+   * dropped (the box still ringed). `idx` is the move the entry stands at; the picture moves before each ask. `here`
+   * and `line` as v0.3's. */
+  function takeAsks(def, c, m) {
+    var step = c.chain ? 'zero' : m.col === 1 ? 'ones2' : 'tens', t = E.TAKE_STEPS.indexOf(def && def.teach);
+    return t >= 0 && E.TAKE_STEPS.indexOf(step) >= t;
+  }
+  function takeShowMoves(def, plan, col, opts) {
+    var c = plan.cols[col], style = styleOf(opts.style), mode = opts.mode === 'tap' ? 'tap' : 'show';
+    var words = takeWords(), name = TAKE_COLS[col], zero = c.before === 0, bv = c.bottom || 0, nums = { top: c.before, bottom: bv };
+    var M = E.takeMoves(plan, style)[col], last = M.length - 1, q = { plan: plan, col: col, picture: opts.picture };
+    var fill = function (key, keys, n) { return takeFill(takeForm(takeLine(def, key), keys || []), n || nums, words); };
+    var marksAt = function (i) { return E.takeMoveMarks(plan, style, col, i); };
+    var picAt = function (i, more) { return E.takePicture(def, q, Object.assign(moveStage(mode, M, i, col), more || {})); };
+    var ask = function (m) { var a = { col: m.col, kind: m.move, value: m.value }; if (m.move === 'get') a.reads = m.reads; return a; };
+    var after = takeFill(takeLine(def, 'colShown'), { top: c.at, bottom: bv }, words);
+    var steps = [{ say: c.chain ? fill('zero', zero ? ['onesZero', 'ones'] : ['ones']) : fill('showOpen', formKeys(name, zero)), idx: 0, move: null, touch: null,
+      marks: marksAt(0), picture: picAt(0), ask: null }];
+    M.forEach(function (m, i) {
+      if (m.move === 'lend') {
+        var lend = c.chain ? (m.link === 0 ? fill('chainLend', formKeys('tens', m.value === 0), { old: m.before, left: m.value }) : fill('chainLend2'))
+          : fill('showLend', formKeys(TAKE_COLS[m.to], m.value === 0), { old: m.before, left: m.value });
+        steps.push({ say: lend, idx: i, move: 'lend', touch: m.col, marks: marksAt(i), picture: picAt(i), ask: ask(m) });
+      } else if (m.move === 'get') {
+        var get = c.chain && m.link === 0 ? takeFill(takeForm(takeLine(def, 'chainGet'), [style]), {}, words)
+          : styleLine(def, 'showGet', style, formKeys(TAKE_COLS[m.col], m.before === 0), { top: m.before, new: m.reads }, words);
+        steps.push({ say: get, idx: i, move: 'get', touch: null, marks: marksAt(i), picture: picAt(i, { flight: 'open' }), ask: ask(m) });
+      }
+    });
+    steps.push({ say: after, idx: last, move: 'answer', touch: null, marks: marksAt(last), picture: picAt(last), ask: null });
+    var taps = [];
+    M.forEach(function (m, i) {
+      if (m.move === 'touch') {
+        var glow = TAKE_COLS[m.col];
+        taps.push({ say: c.chain ? fill(m.link === 0 ? 'tapSquare' : 'tapRow') : fill('tap', formKeys(name, zero)), idx: i, move: 'touch', glow: glow, col: m.col,
+          marks: marksAt(i), picture: picAt(i, { glow: glow }), ask: null });
+      } else if (m.move === 'lend') {
+        taps.push({ say: takeAsks(def, c, M[i - 1]) ? fill('askLend', [TAKE_COLS[m.to]]) : null, idx: i, move: 'lend', glow: null, col: m.col,
+          marks: marksAt(i), picture: picAt(i), ask: ask(m) });
+      } else if (m.move === 'get') {
+        taps.push({ say: takeAsks(def, c, M[i - 2]) ? styleLine(def, 'askGet', style, formKeys(TAKE_COLS[m.col], m.before === 0), { top: m.before }, words) : null,
+          idx: i, move: 'get', glow: null, col: m.col, marks: marksAt(i), picture: picAt(i, { flight: 'open' }), ask: ask(m) });
+      }
+    });
+    var here = {};
+    M.forEach(function (m) { if (m.move === 'touch') here[TAKE_COLS[m.col]] = fill('tapHere', [TAKE_COLS[m.col]]); });
+    return { col: col, style: style, mode: mode, steps: steps, taps: taps, here: here, line: after };
+  }
+  // the line a 'show' or 'tap' turn says as its move `k` comes (the step or the ask standing at it), else null
+  function showSay(def, it, style, k, helped) {
+    if (it.mode === 'hers' || !it.p.cols[it.col].spreads.length) return null;
+    var S = takeShowMoves(def, it.p, it.col, { mode: it.mode, style: style, picture: it.q.picture, helped: helped });
+    if (k >= E.takeMoves(it.p, style)[it.col].length - 1) return S.line;
+    var list = it.mode === 'show' ? S.steps.slice(1) : S.taps, hit = list.filter(function (x) { return x.idx === k && x.say; })[0];
+    return hit ? hit.say : null;
+  }
 
   /* The help (section 2): { col, slip, intro, steps: [{ say, sand, marks, n?, hop?, glow?, write? }], digit,
    * blank, line }. The first step is the slip's line (`intro`, which stays above the steps to the end), the
@@ -4413,8 +4740,11 @@
     for (var i = 0; i < col; i++) plan.cols[i].spreads.forEach(function (s) { sandSpread(S, s); });
     var zero = c.before === 0, keys = formKeys(name, zero), nums = { top: c.before, bottom: bv };
     var fill = function (key, k, n) { return takeFill(takeForm(takeLine(def, key), k || []), n || nums, words); };
+    // the kit v0.4 (`opts.style`, a problem with moves): every step's marks are hers as she made them, in her style, the
+    // column's moves all made, unchanged by the help (the sand alone shows the take)
+    var own = okStyle(opts.style) ? E.takeMoveMarks(plan, opts.style, col, E.takeMoves(plan, opts.style)[col].length - 1) : null;
     var push = function (say, more) {
-      var st = { say: say, sand: sandOf(S, col, take, lit, ground), marks: marksOut(M) };
+      var st = { say: say, sand: sandOf(S, col, take, lit, ground), marks: own ? clone(own) : marksOut(M) };
       if (more) Object.keys(more).forEach(function (x) { st[x] = more[x]; });
       steps.push(st);
     };
@@ -4424,6 +4754,7 @@
     if (pre) c.spreads.forEach(land);
     var intro;
     if (slip === 'zero') intro = c.chain ? fill('zero', zero ? ['onesZero', 'ones'] : ['ones']) : fill('zero', ['tens']);
+    else if (own && slip === 'kept' && c.lent && c.spreads.length) intro = fill('keptGot', [name]);
     else if (slip === 'flip' || slip === 'nospread' || slip === 'kept' || slip === 'extra') intro = fill(slip, keys);
     else if (c.chain) intro = fill('factChain', null, { top: c.at, bottom: bv });
     else if (c.top === 0 && c.lent) intro = fill('factZero');
@@ -4491,7 +4822,10 @@
    * the lesson began (the pointer's first five); `okAt` the last OK's time (the 400 ms guard); `tapHere`
    * whether this column's "up here" was said; `hard` (a store round's) the step a problem asks her about;
    * `taught` the steps taught so far (E.takeSlip's `extra`: a round's E.takeSteps, a lesson's chapterSteps; absent,
-   * every step); `avoid` answers no twin may have beyond the queue's (a lesson's: its chapter's, section 3). */
+   * every step); `avoid` answers no twin may have beyond the queue's (a lesson's: its chapter's, section 3). Under
+   * the kit v0.4's gate (a `taught` holding a step from `ones2` on) the state also holds her moves (`style`, `move`,
+   * `moveMs`, `moveLog`, `ahead`, `nudges`, `seen`, `keyed`; a queue item's `moveStyle`: the section "the runner under
+   * the kit v0.4's gate"), T.touch takes her taps and T.digit her numbers at each move. */
   var T = {};
   function takeItem(f, def) {
     var it = Array.isArray(f) ? { a: +f[0], b: +f[1] } : isObj(f) ? { a: +f.a, b: +f.b } : { a: NaN, b: NaN };
@@ -4518,6 +4852,13 @@
     if (opts.round != null) st.round = opts.round;
     if (Array.isArray(opts.taught)) st.taught = opts.taught.filter(function (s) { return E.TAKE_STEPS.indexOf(s) >= 0; });
     if (Array.isArray(opts.avoid)) st.avoid = opts.avoid.filter(okNum);
+    // the kit v0.4 (decision 57), only under its gate: her style (`opts.style`: E.takeLesson's and E.takeRoundStart's
+    // E.takeStyle), the move she is at, this problem's moves (`moveMs`, `moveLog`: [col, code, given, ms]), pointers
+    // (`ahead`, `nudges`, `seen`) and the lesson's keying slips (`keyed`)
+    if (movesOn(st)) {
+      if (okStyle(opts.style)) st.style = opts.style;
+      st.move = 0; st.moveMs = []; st.moveLog = []; st.ahead = []; st.nudges = 0; st.seen = {}; st.keyed = {};
+    }
     return st;
   };
   T.done = function (st) { return C.done(st); };
@@ -4544,7 +4885,7 @@
     // (a set's first two problems of her own: 'hers', the made warm-up among them; a 'show' or 'tap' one and a
     // twin have their full lines anyway, so they use up neither place)
     var own = st.queue.slice(0, st.pos).filter(function (x) { return !x.of && x.regroup === 'hers'; }).length;
-    return {
+    var out = {
       a: q.a, b: q.b, answer: p.answer, plan: p, kind: E.takeKind(p), step: E.takeStepOf(p),
       number: st.pos + 1, total: st.queue.length, col: col, n: p.n, mode: mode,
       full: mode !== 'hers' || !!q.of || own < 2 || (col > 0 && !!helped[col - 1]),
@@ -4557,7 +4898,68 @@
       picture: q.picture != null ? clone(q.picture) : null,
       twin: q.of || null, warm: !!q.warm, worked: mode === 'show', hard: q.hard || null
     };
+    if (movesOn(st)) moveQuestion(st, it, out);
+    return out;
   };
+  /* ------------------------------------------------------------ the runner under the kit v0.4's gate (decision 57)
+   * The state's moves keys (T.start's): `style` (her style when the lesson began, refreshed by the page; a problem keeps
+   * the one it had at its first move, `moveStyle` on its queue item), `move` (the column's next move: 0 its decide),
+   * `moveMs` and `moveLog` (this problem's moves, [col, code ('t' a touch, 'u' a touch undone, 'l' a lend's number, 'g' a
+   * get's), given, ms], `col` the turn's column), `ahead` (the columns answered before their moves), `nudges` (the
+   * pointers counted), `seen` (this problem's `zeroFirst` and `order`, and `twin`: a keying slip come twice), `keyed` (the
+   * lesson's or round's `lend` and `get` slips so far). The column's own, absent when unset: `pale` (her `ahead` digit),
+   * `lit` (1: a pointer lit the lender until her touch; 2: `ahead` lit the column's touches), `litTyped` (digits typed
+   * while lit), `touched` (the column struck at a turn that needs nothing: its lend box open), `shut` (no target left in
+   * the column: an `extra` helped). A v25 state that is under the gate (none was played: no v25 chapter taught a spread)
+   * starts at its column's decide, or, a 'tap' state with `tapped` k, at move 3k. */
+  function moveOf(st, it) {
+    if (okNum(st.move)) return st.move;
+    return it && it.mode === 'tap' ? 3 * Math.max(0, Math.floor(num(st.tapped, 0))) : 0;
+  }
+  function moveSetup(st, it) {
+    st.move = moveOf(st, it);
+    ['moveMs', 'moveLog', 'ahead'].forEach(function (k) { if (!Array.isArray(st[k])) st[k] = []; });
+    if (!okNum(st.nudges)) st.nudges = 0;
+    if (!isObj(st.seen)) st.seen = {};
+    if (!isObj(st.keyed)) st.keyed = {};
+  }
+  function curStyle(st, it) { return okStyle(it.q.moveStyle) ? it.q.moveStyle : styleOf(st.style); }
+  function colReset(st) { st.move = 0; ['pale', 'lit', 'litTyped', 'touched', 'shut'].forEach(function (k) { delete st[k]; }); }
+  function marksNow(st, it, style, k) {
+    var mk = E.takeMoveMarks(it.p, style, it.col, k);
+    if (st.touched != null && mk[st.touched]) mmOpen(mk[st.touched], 'lend', style);
+    return mk;
+  }
+  function boxOf(st, it, M, k, mk) {
+    var m = M[it.col][k], row = function (x) { return mk[x].m2 && mk[x].m2.box ? 2 : 1; };
+    if (st.touched != null) return { col: st.touched, kind: 'lend', row: row(st.touched) };
+    if (m.move === 'lend') return { col: m.col, kind: 'lend', row: row(m.col) };
+    if (m.move === 'get') return { col: m.col, kind: 'get', row: curStyle(st, it) === 'one' ? 'front' : row(m.col) };
+    return { col: it.col, kind: 'answer', row: null };
+  }
+  // the lender glowing now: in 'tap' at a touch, and once a pointer or `ahead` has lit it
+  function glowOf(st, it, Mc, k) {
+    var m = Mc[k];
+    return m && m.move === 'touch' && st.touched == null && (it.mode === 'tap' || st.lit) ? m.col : null;
+  }
+  function liveTargets(st, it, Mc, k) {
+    if (it.mode === 'show' || st.touched != null || st.shut || !isDecide(Mc, k)) return [];
+    var t = E.takeTargets(it.p, it.col, k, st.taught), g = glowOf(st, it, Mc, k);
+    if (g != null && t.indexOf(g) < 0) t.push(g);
+    return t.sort();
+  }
+  function moveQuestion(st, it, out) {
+    var style = curStyle(st, it), M = E.takeMoves(it.p, style), Mc = M[it.col], k = Math.min(moveOf(st, it), Mc.length - 1), m = Mc[k];
+    var mk = marksNow(st, it, style, k), box = boxOf(st, it, M, k, mk), g = glowOf(st, it, Mc, k);
+    var touches = Mc.filter(function (x, j) { return x.move === 'touch' && j < k; }).length;
+    out.move = k; out.moves = M; out.style = style; out.box = box; out.targets = liveTargets(st, it, Mc, k);
+    out.pale = st.pale != null ? st.pale : null; out.glow = g != null ? TAKE_COLS[g] : null; out.marks = mk;
+    out.tapped = touches;
+    // ('tap': the touches still to make, counted only while one is due, so a caller tapping while `tap` stops at a box)
+    out.tap = it.mode === 'tap' && m.move === 'touch' && st.touched == null ? Mc.filter(function (x, j) { return x.move === 'touch' && j >= k; }).length : 0;
+    out.stage = it.mode !== 'hers' && Mc.length > 1 && k === Mc.length - 1 ? 'after' : 'before';
+    out.okEmpty = box.kind === 'answer' && (it.col === it.p.n - 1 || (m.move === 'answer' && st.pale != null));
+  }
   function pointerOn(st, def) { return (def && def.teach === 'none') || num(st.logged, 0) + (st.log || []).length < 5; }
   /* One column's OK (`digit` 0 to 9, or '' for OK on the empty leftmost box). Ignored (`{ ignored }`)
    * within 400 ms of the last OK ('guard'), before a 'tap' turn's spreads ('tap': the zone wiggles), on an
@@ -4573,6 +4975,7 @@
     var it = stateItem(st);
     if (!it) return null;
     def = def || {};
+    if (movesOn(st)) return moveDigit(st, def, it, digit, ms, num(now, 0));
     var q = it.q, p = it.p, mode = it.mode, col = it.col, c = p.cols[col];
     now = num(now, 0);
     if (st.okAt && now >= st.okAt && now - st.okAt < TAKE_OK_MS) return { ignored: 'guard' };
@@ -4603,22 +5006,30 @@
     res.marks = marksOut(marksTo(p, mode, helpedCols(st), col + 1, 0));
     st.col = col + 1; st.tapped = 0; st.tapHere = false;
     if (st.col < p.n) { res.next = st.col; return res; }
-    // the problem is done: its log entry, its twin, its one line
-    var correct = st.slips.length === 0, given = '', ms2 = 0;
+    return takeEnd(st, def, it, res, now, null);
+  };
+  /* The problem is done (T.digit's last column, either path): its log entry, its twin, its one line. `mv` (the kit
+   * v0.4's, null on v0.3's path): { helped (a slip at any move), correct (no slip and no counted pointer), twin (a slip
+   * that brings one: any but `lend` and `get`, which do on their second time in the lesson), extra (the entry's moves
+   * keys) }; on v0.3's path helped is a slip and correct its opposite, exactly as before. */
+  function takeEnd(st, def, it, res, now, mv) {
+    var q = it.q, p = it.p, mode = it.mode, words = takeWords();
+    var helped = mv ? mv.helped : st.slips.length > 0, correct = mv ? mv.correct : !helped, given = '', ms2 = 0;
     for (var i = p.n - 1; i >= 0; i--) given += st.first[i] == null ? '' : String(st.first[i]);
     st.cols.forEach(function (x) { ms2 += num(x, 0); });
     var entry = {
-      set: st.set, a: q.a, b: q.b, answer: p.answer, given: given, correct: correct, helped: !correct,
+      set: st.set, a: q.a, b: q.b, answer: p.answer, given: given, correct: correct, helped: helped,
       slips: clone(st.slips), ms: ms2, cols: st.cols.slice(), at: now, kind: E.takeKind(p), digits: p.n, regroup: mode
     };
     if (q.of) entry.twin = q.of;
     if (q.warm) entry.warm = true;
     if (mode === 'show') entry.worked = true;
     if (st.round != null) entry.round = st.round;
+    if (mv && mv.extra) Object.keys(mv.extra).forEach(function (k) { entry[k] = mv.extra[k]; });
     st.log.push(entry);
     res.entry = entry;
     res.requeued = false;
-    if (!correct && def.twins !== false) {
+    if ((mv ? mv.helped && mv.twin : helped) && def.twins !== false) {
       var key = q.of || takeKey(q.a, q.b), used = st.requeues[key] || 0;
       if (used < E.MAX_REQUEUE) {
         st.requeues[key] = used + 1;
@@ -4633,7 +5044,7 @@
       }
     }
     var L = isObj(st.lineIdx) ? st.lineIdx : (st.lineIdx = { praise: 0, again: 0, remembered: 0 });
-    if (correct) {
+    if (!helped) {
       if (q.of) { var ai = num(L.again, 0); L.again = ai + 1; res.line = takeTurn(takeLine(def, 'again'), ai, E.TAKE_LINES.again); res.lineKind = 'again'; }
       else if (q.hard) {
         var rs = takeLine(def, 'rememberedStep'), kit = E.TAKE_LINES.rememberedStep[q.hard];
@@ -4658,15 +5069,228 @@
     if (res.balloons) res.balloons.forEach(function (b) { b.text = takeFill(b.text, {}, words); });
     st.pos++;
     st.col = 0; st.got = []; st.first = []; st.slips = []; st.cols = []; st.onesFirst = false; st.tapped = 0; st.tapHere = false;
+    if (mv) { colReset(st); st.moveMs = []; st.moveLog = []; st.ahead = []; st.nudges = 0; st.seen = {}; }
     res.problemDone = true;
     res.done = T.done(st);
     return res;
+  }
+
+  /* ------------------------------------------------------------ T.digit and T.touch under the kit v0.4's gate
+   * (decision 57; design sections 1, 3 and 4). A move's time is `ms` as the page measured it (its clock starts when its
+   * box opens or its target is live); a column's time (`cols`) is the sum of her inputs' in it. A result carries, besides
+   * what it judged, the store and her marks after it (moveAfter): `stage` (moveStage; `flight: 'open'` where a link has
+   * just landed) and its `picture`, `marks`, the next `box`, `targets`, `glow`, `moveIdx` (the move she is at), and
+   * `line` (the line said now: the help's or the pointer's, else in 'tap' and 'show' the ask or step standing there). */
+  function msOf(ms) { return okNum(ms) ? Math.max(0, Math.round(ms)) : 0; }
+  function addMs(st, col, ms) { st.cols[col] = num(st.cols[col], 0) + ms; }
+  function logMove(st, col, code, given, ms) {
+    st.moveLog.push([col, code, given == null ? null : given, ms]);
+    st.moveMs.push(ms);
+    addMs(st, col, ms);
+  }
+  function moveAfter(st, def, it, style, res, landed) {
+    var M = E.takeMoves(it.p, style), Mc = M[it.col], k = st.move, stage = moveStage(it.mode, Mc, k, it.col);
+    if (landed && stage.spreads && !stage.half) stage.flight = 'open';
+    var mk = marksNow(st, it, style, k), g = glowOf(st, it, Mc, k);
+    res.stage = stage;
+    res.picture = E.takePicture(def, { plan: it.p, col: it.col, picture: it.q.picture }, stage);
+    res.marks = mk; res.box = boxOf(st, it, M, k, mk); res.targets = liveTargets(st, it, Mc, k);
+    res.glow = g != null ? TAKE_COLS[g] : null; res.moveIdx = k;
+    if (res.line == null) { var say = showSay(def, it, style, k, helpedCols(st)); if (say != null) res.line = say; }
+    return res;
+  }
+  // the problem keeps the look it has at its first move (a problem with a spread)
+  function keepStyle(it, style) { if (!okStyle(it.q.moveStyle) && it.p.cols.some(function (x) { return x.spreads.length; })) it.q.moveStyle = style; }
+  function moveDigit(st, def, it, digit, ms, now) {
+    var q = it.q, p = it.p, mode = it.mode, col = it.col, c = p.cols[col];
+    if (st.okAt && now >= st.okAt && now - st.okAt < TAKE_OK_MS) return { ignored: 'guard' };
+    moveSetup(st, it);
+    var style = curStyle(st, it), M = E.takeMoves(p, style), Mc = M[col], k = Math.min(st.move, Mc.length - 1), m = Mc[k], words = takeWords();
+    // the box she types into: an `extra` touch's lend box, a lend's, a get's, or the column's own (a decide, the answer)
+    var kind = st.touched != null ? 'extra' : m.move, number = kind === 'extra' || kind === 'lend' || kind === 'get';
+    if (kind === 'touch' && mode === 'tap') return { ignored: 'tap' };     // 'tap': the lender glows; a digit wiggles it
+    if (kind === 'touch' && mode === 'show') return { ignored: 'show' };   // 'show': Tallyheart makes the touch
+    var g = digit === '' || digit == null ? '' : +digit;
+    if (g !== '' && !(g === Math.floor(g) && g >= 0 && g <= (number ? 99 : 9))) return { ignored: 'digit' };
+    if (g === '' && kind === 'answer' && st.pale != null) g = st.pale;   // OK on her pale digit takes it
+    if (g === '' && !(kind === 'answer' && col === p.n - 1)) return { ignored: 'empty' };
+    st.okAt = now;
+    keepStyle(it, style);
+    var t = msOf(ms), res, j;
+    if (kind === 'extra') {
+      // a number in the lend box of a column struck at a turn that needs nothing: `extra`, logged as the touch's
+      var tc = st.touched;
+      logMove(st, col, 'l', g, t);
+      st.slips.push({ col: col, move: 'touch', given: tc, slip: 'extra' }); st.missed = true;
+      var hx = E.takeMoveHelp(def, p, col, k, { slip: 'extra', move: 'touch', line: 'extraTouch', touched: tc }, style, mode);
+      delete st.touched; st.shut = true;
+      return moveAfter(st, def, it, style, { col: col, move: 'touch', right: false, given: g, slip: 'extra', help: hx, say: hx.say, line: hx.say[0] }, false);
+    }
+    if (kind === 'lend' || kind === 'get') {
+      j = E.takeMoveSlip(p, col, k, g, style, st.taught);
+      logMove(st, col, kind === 'lend' ? 'l' : 'g', g, t);
+      res = { col: col, move: kind, right: !j, given: g, value: m.value };
+      if (j && mode === 'show') res.lettered = m.value;   // the worked example: a wrong number lettered right, no slip
+      else if (j && j.slip) {
+        st.slips.push({ col: col, move: kind, given: g, slip: j.slip }); st.missed = true;
+        // a keying slip twins on its second time in the lesson or round, counted once a problem (two links typed the same
+        // way in one problem are one habit: the design's students, each problem alone, twin none)
+        if ((j.slip === 'lend' || j.slip === 'get') && !st.seen[j.slip]) {
+          st.seen[j.slip] = true;
+          st.keyed[j.slip] = num(st.keyed[j.slip], 0) + 1;
+          if (st.keyed[j.slip] >= 2) st.seen.twin = true;
+        }
+        res.slip = j.slip;
+      } else if (j && j.pointer) { st.nudges++; res.pointer = j.pointer; }   // `nine`: the 10 (or the little 1) lettered
+      if (res.slip || res.pointer) { res.help = E.takeMoveHelp(def, p, col, k, j, style, mode); res.say = res.help.say; res.line = res.say[0]; }
+      st.move = k + 1;
+      return moveAfter(st, def, it, style, res, kind === (mode === 'hers' ? 'get' : 'lend'));
+    }
+    // v0.3's ones-first pointer: her first digit of a problem, at its first column's decide
+    if (col === 0 && k === 0 && !st.lit && !st.onesFirst && g !== c.digit && pointerOn(st, def) && g === +String(p.answer).charAt(0)) {
+      st.onesFirst = true;
+      return { pointer: 'onesFirst', col: 0, line: takeFill(takeLine(def, 'onesFirst'), {}, words) };
+    }
+    if (kind === 'touch') {
+      if (st.lit) {
+        // the lender glows: a digit types nothing; the first says `tap`'s line, the next makes the touch for her (both nudges)
+        st.nudges++;
+        if (!st.litTyped) {
+          st.litTyped = 1;
+          var tl = moveLine(def, p, col, Mc, k, 'tap', style, null, words);
+          return moveAfter(st, def, it, style, { col: col, move: 'decide', pointer: 'tapLine', say: tl, line: tl[0] }, false);
+        }
+        st.litTyped = num(st.litTyped, 0) + 1;
+        st.move = k + 1;
+        if (st.lit === 1) delete st.lit;
+        var al = moveLine(def, p, col, Mc, k + 1, 'askLend', style, null, words);
+        return moveAfter(st, def, it, style, { col: col, move: 'decide', pointer: 'touchMade', accepted: true, touch: m.col, say: al, line: al[0] }, false);
+      }
+      j = E.takeMoveSlip(p, col, k, g, style, st.taught);
+      if (st.first[col] == null) st.first[col] = g;
+      addMs(st, col, t);
+      if (j.pointer === 'ahead') {
+        // her right digit before the moves: kept pale, the lender lit, never right first time, no help, no twin
+        st.pale = g; if (st.ahead.indexOf(col) < 0) st.ahead.push(col); st.lit = 2; delete st.litTyped;
+        var ah = moveLine(def, p, col, Mc, k, 'ahead', style, j.form, words);
+        return moveAfter(st, def, it, style, { col: col, move: 'decide', given: g, pointer: 'ahead', form: j.form, pale: g, say: ah, line: ah[0] }, false);
+      }
+      st.slips.push({ col: col, move: 'decide', given: g, slip: j.slip }); st.missed = true;
+      var hd = E.takeMoveHelp(def, p, col, k, j, style, mode);
+      st.move = hd.next;
+      if (st.lit === 1) delete st.lit;
+      return moveAfter(st, def, it, style, { col: col, move: 'decide', right: false, given: g, slip: j.slip, help: hd, say: hd.say, line: hd.say[0], touch: m.col }, false);
+    }
+    // the answer: v0.3's, her moves having made the spread; the help her own marks kept
+    j = E.takeMoveSlip(p, col, k, g, style, st.taught);
+    var before = helpedCols(st);
+    if (st.first[col] == null) st.first[col] = g;
+    addMs(st, col, t);
+    st.got[col] = c.blank ? '' : c.digit;
+    res = { col: col, move: 'answer', right: !j, given: g, digit: c.blank ? null : c.digit, blank: c.blank, slip: null, help: null, spread: null };
+    if (!j) { if (c.blank) res.blankLine = takeFill(takeForm(takeLine(def, 'blank'), [TAKE_COLS[col]]), {}, words); }
+    else {
+      res.slip = j.slip;
+      st.slips.push({ col: col, move: 'answer', given: g, slip: j.slip }); st.missed = true;
+      res.help = E.takeHelp(def, p, col, j.slip, { mode: mode, helped: before, shown: true, style: style });
+    }
+    res.marks = E.takeMoveMarks(p, style, col + 1, 0);
+    st.col = col + 1; st.tapped = 0; st.tapHere = false; colReset(st);
+    if (st.col < p.n) { res.next = st.col; return res; }
+    var helped = st.slips.length > 0, extra = {};
+    if (p.cols.some(function (x) { return x.spreads.length; }) || st.moveLog.length) { extra.style = style; extra.moves = clone(st.moveLog); }
+    if (st.ahead.length) extra.ahead = st.ahead.slice();
+    if (st.nudges) extra.nudges = st.nudges;
+    return takeEnd(st, def, it, res, now, { helped: helped, correct: !helped && !st.ahead.length && !st.nudges, extra: extra,
+      twin: st.slips.some(function (s) { return s.slip !== 'lend' && s.slip !== 'get'; }) || !!st.seen.twin });
+  }
+  // a tap off the glowing lender in 'tap' (v0.3's): { off, glow, say (the first time in the column), line }
+  function offTap(st, def, it, g) {
+    var say = !st.tapHere, z = TAKE_COLS[g];
+    st.tapHere = true;
+    return { off: true, glow: z, say: say, line: takeFill(takeForm(takeLine(def, 'tapHere'), [z]), {}, takeWords()) };
+  }
+  /* A tap on column `col` (design section 1), under the gate ({ ignored: 'off' } outside it: v0.3's column takes no
+   * taps). `{ ignored }`: off a target or at a move that is not a decide ('own': her own column, which the page wiggles;
+   * 'done', 'move', 'target', 'show'); `{ undone }`: a second tap on the lender she has just struck while its box is
+   * empty (the page asks only then), back at the decide, a nudge, logged 'u'; `{ pointer, line, glow }`: `zeroFirst`
+   * (the zero tapped first, the first time in the problem), `where`, `gave` (nudges, the lender lit), `order` (once a
+   * problem, at an answer that ends a column's moves; not counted); `{ slip: 'zero', help }`: the zero tapped first again,
+   * the touch made on the hundreds for her; `{ accepted, box }`: the lender struck and its box open (at a turn that needs
+   * nothing, the column she tapped: `extra` is judged at its number). 'tap' mode: a target that is not the glowing lender
+   * is v0.3's tap off the zone (`off`, `tapHere` once); 'show': Tallyheart's touch, which the page makes for her (the right
+   * lender only, not logged as hers). `ms`, optional: the touch's time (else 0). */
+  T.touch = function (st, def, col, now, ms) {
+    var it = stateItem(st);
+    if (!it) return null;
+    if (!movesOn(st)) return { ignored: 'off' };
+    def = def || {};
+    moveSetup(st, it);
+    var p = it.p, mode = it.mode, cc = it.col, c = p.cols[cc], style = curStyle(st, it);
+    var M = E.takeMoves(p, style), Mc = M[cc], k = Math.min(st.move, Mc.length - 1), m = Mc[k], words = takeWords();
+    var t = typeof col === 'number' ? col : +col, dt = msOf(ms);
+    if (!(t === Math.floor(t) && t >= 0 && t < p.n)) return { ignored: 'col' };
+    var line = function (key, form) { return moveLine(def, p, cc, Mc, k, key, style, form, words); };
+    // the strike undone: her extra touch's, or the lender's while its lend box is empty
+    if (st.touched != null || (m.move === 'lend' && t === m.col && mode !== 'show')) {
+      if (st.touched != null ? t !== st.touched : false) return { ignored: 'move' };
+      logMove(st, cc, 'u', t, dt); st.nudges++;
+      if (st.touched != null) delete st.touched; else st.move = k - 1;
+      return moveAfter(st, def, it, style, { undone: true, col: t }, false);
+    }
+    if (t === cc) return { ignored: 'own' };
+    if (t < cc) return { ignored: 'done' };
+    if (!isDecide(Mc, k)) {
+      var o = E.takeMoveSlip(p, cc, k, t, style, st.taught, { touch: true, ordered: !!st.seen.order });
+      if (o && o.pointer === 'order') { st.seen.order = true; return { pointer: 'order', col: t, line: line('order')[0], say: line('order') }; }
+      return { ignored: 'move' };
+    }
+    if (mode === 'show') {
+      if (m.move !== 'touch' || t !== m.col) return { ignored: 'show' };
+      keepStyle(it, style);
+      st.move = k + 1;
+      return moveAfter(st, def, it, style, { accepted: true, col: t, worked: true }, false);
+    }
+    var lit = glowOf(st, it, Mc, k);
+    if (st.shut) return { ignored: 'target' };
+    if (liveTargets(st, it, Mc, k).indexOf(t) < 0) return mode === 'tap' && lit != null ? offTap(st, def, it, lit) : { ignored: 'target' };
+    if (mode === 'tap' && m.move === 'touch' && t !== m.col) return offTap(st, def, it, m.col);
+    var j = E.takeMoveSlip(p, cc, k, t, style, st.taught, { touch: true, zeroFirst: !!st.seen.zeroFirst, lit: lit });
+    if (j && j.ignored) return { ignored: 'target' };
+    keepStyle(it, style);
+    if (!j) {
+      logMove(st, cc, 't', t, dt);
+      if (!c.spreads.length) { st.touched = t; return moveAfter(st, def, it, style, { accepted: true, col: t }, false); }
+      st.move = k + 1;
+      if (st.lit === 1) delete st.lit;
+      return moveAfter(st, def, it, style, { accepted: true, col: t }, false);
+    }
+    if (j.pointer) {
+      st.nudges++;
+      if (j.pointer === 'zeroFirst') st.seen.zeroFirst = true;
+      if (!st.lit) st.lit = 1;
+      var pl = line(j.line);
+      return moveAfter(st, def, it, style, { pointer: j.pointer, col: t, say: pl, line: pl[0] }, false);
+    }
+    logMove(st, cc, 't', t, dt);
+    st.slips.push({ col: cc, move: 'touch', given: t, slip: j.slip }); st.missed = true;
+    var h = E.takeMoveHelp(def, p, cc, k, j, style, mode);
+    st.move = h.next;
+    if (st.lit === 1) delete st.lit;
+    return moveAfter(st, def, it, style, { slip: j.slip, col: t, help: h, say: h.say, line: h.say[0] }, false);
   };
   /* One spread of a 'tap' turn: { spread, tapped, left, glow (the next zone to tap), marks }, or null when
    * there is none to tap. `off`: a tap elsewhere, which makes the zone glow again: { off, glow, say }, `say`
    * true the first time in the column (E.takeShow's `here` has the line). */
-  T.tap = function (st, off) {
+  T.tap = function (st, off, def, now) {
     var it = stateItem(st);
+    // the kit v0.4 (decision 57): a thin wrapper, the zone a target while its lender glows ('tap', or lit by a pointer or
+    // `ahead`): a tap on it is T.touch on the glowing column; `off`, v0.3's tap off the zone; null when nothing glows
+    if (it && movesOn(st)) {
+      var Mt = E.takeMoves(it.p, curStyle(st, it))[it.col], kt = Math.min(moveOf(st, it), Mt.length - 1), gt = glowOf(st, it, Mt, kt);
+      if (gt == null || !isDecide(Mt, kt)) return null;
+      return off ? offTap(st, def || {}, it, gt) : T.touch(st, def, gt, now);
+    }
     if (!it || it.mode !== 'tap') return null;
     var c = it.p.cols[it.col], done = num(st.tapped, 0);
     if (done >= c.spreads.length) return null;
@@ -4737,13 +5361,46 @@
     }
     var logged = cat && isObj(cat.takes) && Array.isArray(cat.takes.log) ? cat.takes.log.length : 0;
     return { def: def, state: T.start(def, { facts: facts, set: setId, mode: 'chapter', now: now, logged: logged,
-      taught: chapterSteps(story, stories), avoid: chapterAnswers(story) }) };
+      taught: chapterSteps(story, stories), avoid: chapterAnswers(story), style: E.takeStyle(cat) }) };
+  };
+  /* Her marks (the kit v0.4, decision 57): `cat.takes.style`, 'above' (the new number on top) or 'one' (a little 1 in
+   * front), hers to choose on the marks page and to change on the Hollow's shelf; absent until she picks, read as
+   * 'above' (v0.3's look). E.setTakeStyle writes it (creating `takes` as E.logTake does), never a flag; false for
+   * anything but the two. */
+  E.takeStyle = function (cat) { return cat && isObj(cat.takes) && okStyle(cat.takes.style) ? cat.takes.style : 'above'; };
+  E.setTakeStyle = function (cat, style) {
+    if (!cat || !okStyle(style)) return false;
+    if (!isObj(cat.takes)) cat.takes = { log: [], rounds: 0, cleanRounds: 0 };
+    cat.takes.style = style;
+    return true;
+  };
+  /* The marks page (design section 2): { lines (balloons, one at a time), options: [{ style: 'one', label }, { style:
+   * 'above', label }] (left, then right), after: { one, above } (the balloons a pick letters), current (her style, or
+   * null before she picks) }, from the set's `marks` ({ lines, one, above }, each a list of balloons), else the kit's
+   * lines in the set's teacher's voice. The maths words filled; the cat's tokens left for the page. */
+  E.takeMarksPage = function (def, cat) {
+    def = def || {};
+    var teacher = E.teacherOf(def), words = takeWords(), mk = isObj(def.marks) ? def.marks : null;
+    var own = function (list) {
+      return asList(list).filter(function (b) { return isObj(b) && typeof b.text === 'string' && b.text; })
+        .map(function (b) { var o = clone(b); if (!o.who) o.who = teacher; o.text = takeFill(o.text, {}, words); return o; });
+    };
+    var kit = function (key) {
+      return asList(takeLine(def, key)).filter(function (x) { return typeof x === 'string' && x; }).map(function (x) { return { who: teacher, text: takeFill(x, {}, words) }; });
+    };
+    var choose = function (k, key) { var o = mk ? own(mk[k]) : []; return o.length ? o : kit(key); };
+    var label = function (s) { return takeFill(takeForm(takeLine(def, 'marksLabel'), [s]), {}, words); };
+    return { lines: choose('lines', 'marksAsk'), options: [{ style: 'one', label: label('one') }, { style: 'above', label: label('above') }],
+      after: { one: choose('one', 'marksAfter'), above: choose('above', 'marksAfter') },
+      current: cat && isObj(cat.takes) && okStyle(cat.takes.style) ? cat.takes.style : null };
   };
 
   /* ------------------------------------------------------------ the record: cat.takes (section 4)
-   * { log: [entry…] (the last E.TAKE_LOG_CAP), rounds, cleanRounds }, created on her first take-away.
+   * { log: [entry…] (the last E.TAKE_LOG_CAP), rounds, cleanRounds, style? }, created on her first take-away.
    * An entry: { set, a, b, answer, given, correct, helped, slips: [{ col, given, slip }], ms, cols, at,
-   * kind, digits, regroup, twin?, warm?, worked?, round? }. Never `counts`: E.hardFacts, E.warriorHard,
+   * kind, digits, regroup, twin?, warm?, worked?, round? }; under the kit v0.4's gate each slip has its `move`, and a
+   * problem with a spread (or a move she made) has `style` and `moves` ([col, code, given, ms]), with `ahead` and
+   * `nudges` when they happened (`correct`: no slip and no counted pointer; `helped`: a slip). `style` is her marks. Never `counts`: E.hardFacts, E.warriorHard,
    * E.firstTry, E.fillPool, E.siblingAsked, E.readFirst, E.factTable, E.tableOf, E.factTables,
    * E.hollowStart, the corner's "a slip?" and E.LOG_CAP never see a take-away. */
   E.logTake = function (cat, entry) {
@@ -4786,11 +5443,23 @@
       if (ownAsk(e)) { r.firstAsks++; if (e.correct) r.rightFirst++; }
       if (e.helped) r.helped++;
       if (e.regroup === 'hers' && e.correct && okNum(e.ms)) r.times.push(e.ms);
+      // the kit v0.4 (decision 57): a row with moves counts her own first asks' new numbers and those right first time
+      // ("Marks right"), and the columns she answered before their moves ("In her head first")
+      if (Array.isArray(e.moves)) {
+        r.withMoves = true;
+        r.ahead = num(r.ahead, 0) + asList(e.ahead).length;
+        if (ownAsk(e)) {
+          var nums = e.moves.filter(function (x) { return Array.isArray(x) && (x[1] === 'l' || x[1] === 'g'); }).length;
+          var bad = asList(e.slips).filter(function (s) { return isObj(s) && (s.move === 'lend' || s.move === 'get' || (s.move === 'touch' && s.slip === 'extra')); }).length;
+          r.moves = num(r.moves, 0) + nums; r.movesRight = num(r.movesRight, 0) + Math.max(0, nums - bad);
+        }
+      }
       asList(e.slips).forEach(function (s) {
         if (!isObj(s) || E.TAKE_SLIPS.indexOf(s.slip) < 0) return;
         r.slips[s.slip] = (r.slips[s.slip] || 0) + 1;
         var c = p.cols[s.col];
-        if (s.slip === 'fact' && c && c.at >= 10) {
+        // (teen facts: only a `fact` at the answer; v0.3's slips have no `move`)
+        if (s.slip === 'fact' && (s.move == null || s.move === 'answer') && c && c.at >= 10) {
           var key = c.at + '-' + (c.bottom || 0);
           if (!teen[key]) { teen[key] = { top: c.at, bottom: c.bottom || 0, n: 0 }; order.push(key); }
           teen[key].n++;
@@ -4800,8 +5469,10 @@
     var out = E.TAKE_KINDS.filter(function (k) { return rows[k]; }).map(function (k) {
       var r = rows[k], best = null;
       E.TAKE_SLIPS.forEach(function (s) { if (r.slips[s] && (best == null || r.slips[s] > r.slips[best])) best = s; });
-      return { kind: k, problems: r.problems, firstAsks: r.firstAsks, rightFirst: r.rightFirst, helped: r.helped,
+      var row = { kind: k, problems: r.problems, firstAsks: r.firstAsks, rightFirst: r.rightFirst, helped: r.helped,
         ms: r.times.length ? Math.round(median(r.times)) : null, slip: best };
+      if (r.withMoves) { row.moves = num(r.moves, 0); row.movesRight = num(r.movesRight, 0); row.ahead = num(r.ahead, 0); }
+      return row;
     });
     var tl = order.map(function (k, i) { var t = teen[k]; return { top: t.top, bottom: t.bottom, n: t.n, i: i }; })
       .sort(function (x, y) { return y.n - x.n || x.i - y.i; })
@@ -4901,7 +5572,7 @@
     asList(opts.stories || stories).forEach(function (s) {
       if (s && s.id && E.place(cat, s.id) && !E.isFinished(cat, s.id)) chapterAnswers(s).forEach(function (x) { if (avoid.indexOf(x) < 0) avoid.push(x); });
     });
-    var so = { facts: facts, set: def.id, mode: 'hollow', now: now, round: n, logged: takeLog(cat).length, taught: learned };
+    var so = { facts: facts, set: def.id, mode: 'hollow', now: now, round: n, logged: takeLog(cat).length, taught: learned, style: E.takeStyle(cat) };
     if (avoid.length) so.avoid = avoid;
     return { def: def, state: T.start(def, so) };
   };
@@ -4930,7 +5601,10 @@
     var log = (Array.isArray(t.log) ? t.log : []).filter(function (e) { return isObj(e) && okNum(e.at) && okTake(e.a, e.b); });
     log.forEach(function (e) { var k = E.takeKind(E.takePlan(e.a, e.b)); if (e.kind !== k) e.kind = k; });
     if (log.length > E.TAKE_LOG_CAP) log = log.slice(log.length - E.TAKE_LOG_CAP);
-    return { log: log, rounds: wholeNum(t.rounds), cleanRounds: wholeNum(t.cleanRounds) };
+    var out = { log: log, rounds: wholeNum(t.rounds), cleanRounds: wholeNum(t.cleanRounds) };
+    // her marks (the kit v0.4): kept when it is one of the two, else dropped
+    if (okStyle(t.style)) out.style = t.style;
+    return out;
   }
   // a saved take state the runner can take up (okLesson, for a state with `op`)
   function okTakeState(st) {
@@ -4943,6 +5617,32 @@
     if (st.tapped != null && !(okNum(st.tapped) && st.tapped >= 0)) return false;
     if (st.taught != null && !(Array.isArray(st.taught) && st.taught.every(function (s) { return E.TAKE_STEPS.indexOf(s) >= 0; }))) return false;
     if (st.avoid != null && !(Array.isArray(st.avoid) && st.avoid.every(okNum))) return false;
+    return okMoveState(st);
+  }
+  /* The kit v0.4's keys (decision 57), each optional (absent on a v25 state, which resumes at its column's decide, or a
+   * 'tap' state with `tapped` k at move 3k): `style` one of the two; `move` a whole number within the column's moves;
+   * `moveMs` a list of times, `moveLog` of [col, code, given, ms]; `ahead` columns; `nudges` a whole number; `seen`,
+   * `keyed` objects; `pale` a digit; `lit` 1 or 2; `litTyped` a whole number; `touched` a column; `shut` true or false;
+   * a queue item's `moveStyle` one of the two. */
+  function wholeOk(v) { return okNum(v) && v >= 0 && v === Math.floor(v); }
+  function okMoveState(st) {
+    if (st.style != null && !okStyle(st.style)) return false;
+    if (!st.queue.every(function (q) { return q.moveStyle == null || okStyle(q.moveStyle); })) return false;
+    if (st.move != null) {
+      if (!wholeOk(st.move)) return false;
+      var q = st.queue[st.pos], p = q && E.takePlan(q.a, q.b);
+      if (p && p.cols[st.col] && st.move > 3 * p.cols[st.col].spreads.length) return false;
+    }
+    if (st.moveMs != null && !(Array.isArray(st.moveMs) && st.moveMs.every(okNum))) return false;
+    if (st.moveLog != null && !(Array.isArray(st.moveLog) && st.moveLog.every(function (x) { return Array.isArray(x) && x.length === 4; }))) return false;
+    if (st.ahead != null && !(Array.isArray(st.ahead) && st.ahead.every(wholeOk))) return false;
+    if (st.nudges != null && !wholeOk(st.nudges)) return false;
+    if ((st.seen != null && !isObj(st.seen)) || (st.keyed != null && !isObj(st.keyed))) return false;
+    if (st.pale != null && !(wholeOk(st.pale) && st.pale <= 9)) return false;
+    if (st.lit != null && st.lit !== 1 && st.lit !== 2) return false;
+    if (st.litTyped != null && !wholeOk(st.litTyped)) return false;
+    if (st.touched != null && !(wholeOk(st.touched) && st.touched <= 2)) return false;
+    if (st.shut != null && typeof st.shut !== 'boolean') return false;
     return true;
   }
 
@@ -4978,6 +5678,24 @@
       if (d.lines != null) {
         if (!isObj(d.lines)) errs.push(w + 'lines is { key: words }, with E.TAKE_LINES’ keys');
         else Object.keys(d.lines).forEach(function (k) { if (!own(E.TAKE_LINES, k)) errs.push(w + 'lines: unknown key ' + k); });
+      }
+      // the kit v0.4's marks page (decision 57): { lines, one, above }, each a list of balloons { who, text }, every one of
+      // 12 words or fewer, in English (no `lang`, no Spanish token or mark: the page letters no gloss there)
+      if (d.marks != null) {
+        if (!isObj(d.marks)) errs.push(w + 'marks is { lines, one, above }, each a list of balloons');
+        else {
+          Object.keys(d.marks).forEach(function (k) { if (['lines', 'one', 'above'].indexOf(k) < 0) errs.push(w + 'marks: unknown key ' + k); });
+          ['lines', 'one', 'above'].forEach(function (k) {
+            var L = d.marks[k];
+            if (!(Array.isArray(L) && L.length)) { errs.push(w + 'marks: ' + k + ' is a list of balloons { who, text }'); return; }
+            L.forEach(function (b, j) {
+              var at = w + 'marks: ' + k + ' ' + j + ' ';
+              if (!isObj(b) || typeof b.who !== 'string' || !b.who || typeof b.text !== 'string' || !b.text.trim()) { errs.push(at + 'is { who, text }'); return; }
+              if (b.lang != null || /\{[Ee]s:|[«»]/.test(b.text)) errs.push(at + 'is in English (no lang, no Spanish)');
+              if (wordCount(b.text) > 12) errs.push(at + 'is ' + wordCount(b.text) + ' words (12 at most)');
+            });
+          });
+        }
       }
       all.forEach(function (s) {
         Object.keys(s.counts || {}).forEach(function (id) { var o = s.counts[id]; if (isObj(o) && o.fillFrom === sid) errs.push(w + 'the Counts set ' + id + ' fills from it (a take set lends nothing)'); });

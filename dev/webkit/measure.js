@@ -8,7 +8,10 @@
 // choices, the keypad, the question line, the column's type size, the panel's box, and two fingerprints (every shown
 // box in #app; the panel and everything in it, relative to the panel) for the "Aa off: nothing changes" check.
 // On a take page (the take-aways kit), also the column, the outlined box and the stack's last balloon, and the bar's
-// bottom (`take`, `tcol`, `tbox`, `tsf`, `tsb`, `tbar`): tools/sweep.mjs's `col-off`.
+// bottom (`take`, `tcol`, `tbox`, `tsf`, `tsb`, `tbar`): tools/sweep.mjs's `col-off`. The kit v0.4 (decision 57) adds the
+// small boxes (`tmini`), the tap targets' hit boxes (`ttgt`), the slot's balloon (`tslot`) and the marks page (`tpick`,
+// its little 1 `tone`): `col-off`, `hit-small`, `marks-small`; and on a take, store, Hollow or Spanish screen a hash of
+// the screen's markup (`hx`), for `--takes --compare`.
 // `spill`: lettering outside its own box, or cut off by a box that clips it (name:side px); `broken`: a word broken
 // across two lines inside itself (`Wo|rd in .caption`; a break after a hyphen, a dash or a soft hyphen is fine).
 // A box that scrolls (the book, her Case File) clips nothing; a box with overflow hidden or clip (the panel) does.
@@ -29,6 +32,77 @@
     return (e.id ? '#' + e.id : (typeof e.className === 'string' && e.className.trim() ? '.' + e.className.trim().split(/\s+/)[0] : e.tagName.toLowerCase())) + (t ? '"' + t + '"' : '');
   }
   function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); }
+  /* The kit v0.4 (decision 57; design section 3), on a take page or a marks page, each key only where there is one:
+   *   tmini  every shown .tmini in the column (the ringed one, an open one's place, a right one's green): { b (its box),
+   *          on (1 when ringed, .tmini.on), and for a front box (the little 1's, `'one'`: a .tmini in or under an element
+   *          whose class says front, or with data-front, or one at least half inside the top digits' row) front: 1, own
+   *          (the ink box of its own digit or mark: the lettering in its cell, .ttop or .tmark, outside the front box;
+   *          with no cell, the nearest lettering to its right in its row), nb (the ink box of the neighbour's mark: the
+   *          nearest mark to its left; a mark is any shown lettering in the column that is not in a digit, a box, a head,
+   *          the sign or the rule) }
+   *   ttgt   every [role="button"] in the column (the tap targets: their own boxes are the hit areas, widened by
+   *          index.html): { b, live (0 while hidden, aria-disabled, tabindex -1, pointer-events none or not shown), n }
+   *   tslot  the slot's balloon under the column's line (.tslot or [data-slot]), when shown
+   *   tpick  the marks page (.tpick), when shown; tone, its 'one' picture's little 1 ([data-style="one"], else the
+   *          button that says "little 1", else the first): { b, fs (its font size as rendered, px: a transform's scale in
+   *          it) }, or null when none is found (a [class*="front"] element, else a lone "1" that is no digit or box). */
+  var TCELL = /(^| )(tsign|thead|ttop|tbot|tbox|trule|tmini)( |$)/;
+  function cls(e) { return typeof e.className === 'string' ? e.className : (e.getAttribute && e.getAttribute('class')) || ''; }
+  function leafText(e) { return !e.children.length && /\S/.test(e.textContent || ''); }
+  // (lettering's own box, its ink's line box: a digit's cell is the grid column's width)
+  function ink(e) { var r = document.createRange(); r.selectNodeContents(e); var q = r.getBoundingClientRect(); return q.width > 0.5 ? [Math.round(q.left), Math.round(q.top), Math.round(q.right), Math.round(q.bottom)] : box(e); }
+  // (the ink of a cell's lettering outside its front box: the digit or gold number a little 1 stands before; null for none)
+  function inkBesides(cell) {
+    var tw = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null), n, u = null;
+    while ((n = tw.nextNode())) {
+      if (!/\S/.test(n.nodeValue) || !n.parentElement || n.parentElement.closest('.tmini, [class*="front"], .sr')) continue;
+      var r = document.createRange(); r.selectNodeContents(n); var g = r.getBoundingClientRect();
+      if (g.width <= 0.5) continue;
+      var q = [Math.round(g.left), Math.round(g.top), Math.round(g.right), Math.round(g.bottom)];
+      u = u ? [Math.min(u[0], q[0]), Math.min(u[1], q[1]), Math.max(u[2], q[2]), Math.max(u[3], q[3])] : q;
+    }
+    return u;
+  }
+  function takeMoves(m, tcol) {
+    var minis = tcol ? Array.prototype.filter.call(tcol.querySelectorAll('.tmini'), shown) : [];
+    if (minis.length) {
+      var tops = Array.prototype.filter.call(tcol.querySelectorAll('.ttop'), function (e) { return shown(e) && /\S/.test(e.textContent || ''); }).map(ink);
+      var marks = Array.prototype.filter.call(tcol.querySelectorAll('*'), function (e) {
+        return leafText(e) && !TCELL.test(cls(e)) && !e.closest('svg') && !e.closest('.tmini') && !e.closest('.sr') && !e.closest('.ttop, .tbot, .tbox') && shown(e);
+      }).map(ink);
+      var across = function (b, t, part) { return Math.min(b[3], t[3]) - Math.max(b[1], t[1]) >= part * Math.max(1, Math.min(b[3] - b[1], t[3] - t[1])); };
+      m.tmini = minis.map(function (e) {
+        var b = box(e), o = { b: b, on: /(^| )on( |$)/.test(cls(e)) ? 1 : 0 };
+        if (e.closest('[class*="front"]') || e.hasAttribute('data-front') || tops.some(function (t) { return across(b, t, 0.5); })) {
+          var own = null, nb = null, cx = (b[0] + b[2]) / 2, cell = e.closest('.ttop, .tmark');
+          if (cell && cell !== e) own = inkBesides(cell);
+          else tops.concat(marks).forEach(function (t) { if (t[0] >= cx && across(b, t, 0.34) && (!own || t[0] < own[0])) own = t; });
+          marks.forEach(function (k) { if (k[2] <= cx && (!nb || k[2] > nb[2])) nb = k; });
+          o.front = 1; o.own = own; o.nb = nb;
+        }
+        return o;
+      });
+    }
+    var tg = tcol ? Array.prototype.filter.call(tcol.querySelectorAll('[role="button"]'), function (e) { return e.getClientRects().length > 0; }) : [];
+    if (tg.length) m.ttgt = tg.map(function (e) {
+      var cs = getComputedStyle(e), b = box(e);
+      var off = e.hidden || e.getAttribute('aria-disabled') === 'true' || e.getAttribute('tabindex') === '-1' || cs.pointerEvents === 'none' || cs.visibility === 'hidden' || cs.display === 'none' || b[2] - b[0] < 1 || b[3] - b[1] < 1;
+      return { b: b, live: off ? 0 : 1, n: (e.getAttribute('aria-label') || name(e)).slice(0, 30) };
+    });
+    var slot = document.querySelector('#screen .tslot, #screen [data-slot]'); if (slot && shown(slot)) m.tslot = box(slot);
+    var pick = document.querySelector('#screen .tpick');
+    if (pick && shown(pick)) {
+      m.tpick = box(pick);
+      var btns = Array.prototype.filter.call(pick.querySelectorAll('button, [role="button"]'), shown);
+      var ob = pick.querySelector('[data-style="one"]') || btns.filter(function (x) { return /little 1/i.test((x.textContent || '') + ' ' + (x.getAttribute('aria-label') || '')); })[0] || btns[0] || null;
+      var one = ob && (Array.prototype.filter.call(ob.querySelectorAll('[class*="front"]'), function (x) { return shown(x) && (x.textContent || '').trim() === '1'; })[0] ||
+        Array.prototype.filter.call(ob.querySelectorAll('.tcol *'), function (x) { return leafText(x) && x.textContent.trim() === '1' && !x.closest('.tbot, .tbox, .thead, svg, .sr') && shown(x); })[0]);
+      if (one) {
+        var r1 = one.getBoundingClientRect(), sc = one.offsetHeight ? r1.height / one.offsetHeight : 1;
+        m.tone = { b: box(one), fs: Math.round(parseFloat(getComputedStyle(one).fontSize) * (Math.abs(sc - 1) > 0.05 ? sc : 1) * 10) / 10 };
+      } else m.tone = null;
+    }
+  }
   window.__JM = function (tag) {
     var vw = de.clientWidth, vh = de.clientHeight, sy = Math.round(window.scrollY);
     var bar = document.getElementById('bar') || document.querySelector('.bar');
@@ -67,15 +141,20 @@
     // (`tcol`), the outlined box (`tbox`, .tbox.on) and the stack's first and last balloons (`tsf`, `tsb`: chapter 12's
     // review, 58 − 23 opened with its first balloon under the bar and its last on the screen), each null when not shown, and
     // the column's type size (`tfs`). tools/sweep.mjs reports `col-off` when one is not wholly between `tbar` and `vh`.
-    var tcol = document.querySelector('#screen .tcol');
-    if ((fr && fr.getAttribute('data-mode') === 'take') || tcol) {
+    // (the page's own column: never a picture's on the marks page, .tpick, whose buttons draw the kit's .tcol markup)
+    var tcol = Array.prototype.filter.call(document.querySelectorAll('#screen .tcol'), function (e) { return !e.closest('.tpick'); })[0] || null;
+    var tpk = document.querySelector('#screen .tpick');
+    if ((fr && fr.getAttribute('data-mode') === 'take') || tcol || (tpk && shown(tpk))) {
       m.take = !!(fr && fr.getAttribute('data-mode') === 'take');
       m.tbar = bar && shown(bar) ? Math.round(bar.getBoundingClientRect().bottom) : 0;
       m.tcol = tcol && shown(tcol) ? box(tcol) : null;
       var tbx = document.querySelector('#screen .tcol .tbox.on, #screen .tbox.on'); m.tbox = tbx && shown(tbx) ? box(tbx) : null;
       var sbs = Array.prototype.filter.call(document.querySelectorAll('#screen #stack .sb, #screen .stack .sb'), shown); m.tsb = sbs.length ? box(sbs[sbs.length - 1]) : null; m.tsf = sbs.length ? box(sbs[0]) : null;
       if (m.tcol) m.tfs = parseFloat(getComputedStyle(tcol).fontSize);
+      takeMoves(m, tcol);
     }
+    // the screen's markup, on the kit's and chapter 12's screens (`--takes --compare`: byte for byte against the live tree)
+    if (/^(take|store|hollow|es):/.test(String(tag))) { var scr = document.getElementById('screen'); m.hx = scr ? hash(scr.innerHTML) : null; }
     // lettering: spilling its box (or cut by one that clips it), and words broken inside themselves. A text's box is
     // its nearest element that is not inline (an svg's <text>, a sound effect: the svg); clipped means outside the
     // nearest box with overflow other than visible.

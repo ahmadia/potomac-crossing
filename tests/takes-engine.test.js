@@ -31,18 +31,40 @@ const SPREAD = MODULE.filter(([a, b]) => plan(a, b).cols.some((c) => c.spreads.l
 function memStorage() { const m = {}; return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: (k) => { delete m[k]; } }; }
 
 /* Answer one problem of a take state column by column: `typer(q, c)` gives her digit ('' for OK on an empty
- * box); taps first on a 'tap' turn. Returns the problem's last result. */
-function answerProblem(st, def, typer, clock) {
+ * box); taps first on a 'tap' turn. Under the kit v0.4's gate (decision 57: `T.question(st).moves`) the column's moves
+ * are made first, right (each lender touched, each box its number; `mover(q, m)`, when given, types a box's number
+ * instead), and `typer` gives the answer. Returns the problem's last result. */
+function answerProblem(st, def, typer, clock, mover) {
   const pos = st.pos;
   let res = null;
-  for (let guard = 0; guard < 12 && st.pos === pos && !T.done(st); guard++) {
-    while (T.question(st).tap > 0) T.tap(st);
-    const q = T.question(st), c = q.plan.cols[q.col];
+  for (let guard = 0; guard < 40 && st.pos === pos && !T.done(st); guard++) {
+    let q = T.question(st);
+    if (q.moves) {
+      const m = q.moves[q.col][q.move];
+      if (m.move === 'touch') { res = T.touch(st, def, m.col, clock.t += 1000, 1500); continue; }
+      if (m.move === 'lend' || m.move === 'get') { res = T.digit(st, def, mover ? mover(q, m) : m.value, 1500, clock.t += 1000); continue; }
+    } else while (T.question(st).tap > 0) T.tap(st);
+    q = T.question(st);
+    const c = q.plan.cols[q.col];
     res = T.digit(st, def, typer(q, c), 2500, clock.t += 1000);
   }
   return res;
 }
 const rightTyper = (q, c) => (c.blank ? '' : c.digit);
+/* The column's spread made right before its answer: v0.3's taps on a 'tap' turn, or under the kit v0.4's gate its moves
+ * (each lender touched, each box its number), so a loop that then types the column's digit plays either path. */
+const MOVECLOCK = { t: 9e11 };
+function makeMoves(st, def, clock) {
+  clock = clock || MOVECLOCK;
+  for (let g = 0; g < 12 && !T.done(st); g++) {
+    const q = T.question(st);
+    if (!q.moves) { if (q.tap > 0) { T.tap(st); continue; } return; }
+    const m = q.moves[q.col][q.move];
+    if (m.move === 'touch') T.touch(st, def, m.col, clock.t += 1000, 1500);
+    else if (m.move === 'lend' || m.move === 'get') T.digit(st, def, m.value, 1500, clock.t += 1000);
+    else return;
+  }
+}
 function lessonOf(facts, def, opts) {
   def = Object.assign({ id: 'test-take', op: '-' }, def || {});
   return { def, st: T.start(def, Object.assign({ facts, set: def.id, mode: 'chapter', now: 1000, logged: 10 }, opts || {})) };
@@ -320,7 +342,9 @@ test('5. every slip of section 2, by value (the 33 cases, v0.3\'s four and the r
   assert.equal(E.takeSlip(plan(43, 16), 0, 0, true), 'fact');
   assert.equal(E.takeSlip(plan(503, 278), 0, 0, true), 'fact');
   assert.equal(E.takeSlip(plan(503, 278), 1, 3, true), 'zero', 'the lent zero\'s own turn still is');
-  assert.deepEqual(E.TAKE_SLIPS, ['zero', 'flip', 'nospread', 'kept', 'extra', 'fact']);
+  // (the kit v0.4 adds `lend` and `get`, a wrong number at a move, in their place; v0.3's six keep their order: proof L3)
+  assert.deepEqual(E.TAKE_SLIPS, ['zero', 'flip', 'nospread', 'kept', 'lend', 'get', 'extra', 'fact']);
+  assert.deepEqual(E.TAKE_SLIPS.filter((x) => x !== 'lend' && x !== 'get'), ['zero', 'flip', 'nospread', 'kept', 'extra', 'fact']);
   // a lent column that needs its own spread: the one not taken off is kept (566 − 168's 0, never nospread), the
   // written top's flip is flip (811 − 356's 4, never fact: so the corner's teen row stays empty), and where the two
   // meet (bottom − top = 5) kept wins
@@ -337,7 +361,7 @@ function typedInLesson(n, setId, a, b, col, g) {
   const L = E.takeLesson(E.blankCat({ now: 1 }), S['ch' + n], setId, 5000, REAL.concat(S.list));
   const clock = { t: 10000 };
   for (let guard = 0; guard < 80 && !T.done(L.state); guard++) {
-    while (T.question(L.state).tap > 0) T.tap(L.state);
+    makeMoves(L.state, L.def, clock);
     const q = T.question(L.state), c = q.plan.cols[q.col], here = q.a === a && q.b === b && q.col === col;
     const r = T.digit(L.state, L.def, here ? g : c.blank ? '' : c.digit, 2000, clock.t += 1000);
     if (here) return r;
@@ -510,11 +534,11 @@ test('7. \'show\' and \'tap\': E.takeShow across a row, a square and a zero; T.t
   assert.deepEqual(row.steps[1].marks.map((m) => m.mark), [13, 3]);
   assert.equal(row.steps[1].picture.fresh.ones, 10);
   assert.deepEqual(row.taps.map((t) => [t.say, t.glow]), [['Not enough loose. Spread a row: tap it.', 'tens']]);
-  assert.equal(row.here.tens, 'The rows: up here.');
+  assert.equal(row.here.tens, 'The rows: the glowing ones.', 'tapHere, worded anew by the kit v0.4 (no live chapter says it)');
   const sq = E.takeShow({}, plan(735, 391), 1);
   assert.deepEqual(sq.steps.map((s) => s.say), ['Three take away nine? Only three rows. Not enough.', 'So I spread a square: ten more rows.', 'Thirteen take away nine.']);
   assert.deepEqual(sq.taps.map((t) => [t.say, t.glow]), [['Not enough rows. Spread a square: tap it.', 'hundreds']]);
-  assert.equal(sq.here.hundreds, 'The squares: up here.');
+  assert.equal(sq.here.hundreds, 'The squares: the glowing ones.');
   const z = E.takeShow({}, plan(702, 345), 0);
   assert.deepEqual(z.steps.map((s) => s.say), ['Two take away five? Not enough loose, and no rows to spread.', 'So a square first: ten rows.', 'Now a row: ten more loose.', 'Twelve take away five.']);
   assert.deepEqual(z.taps.map((t) => [t.say, t.glow]), [['Not enough loose, and no rows. Spread a square: tap it.', 'hundreds'], ['Now tap a row.', 'tens']]);
@@ -573,8 +597,11 @@ test('8. the record: entries as section 4 says (warm-up entries first asks), E.h
   assert.equal(log[0].digits, 2); assert.equal(E.takeKind(plan(log[0].a, log[0].b)), 'ones');
   assert.equal(log[1].worked, true); assert.equal(log[1].regroup, 'show');
   assert.ok(log.some((e) => e.twin === '462-135'));
+  // (chapter 14 is under the kit v0.4's gate: a problem with a spread adds her style and her moves, the made ones here)
   log.forEach((e) => assert.deepEqual(Object.keys(e).filter((k) => !['twin', 'warm', 'worked', 'round'].includes(k)),
-    ['set', 'a', 'b', 'answer', 'given', 'correct', 'helped', 'slips', 'ms', 'cols', 'at', 'kind', 'digits', 'regroup']));
+    ['set', 'a', 'b', 'answer', 'given', 'correct', 'helped', 'slips', 'ms', 'cols', 'at', 'kind', 'digits', 'regroup']
+      .concat(e.kind !== 'none' ? ['style', 'moves'] : [])));
+  log.forEach((e) => e.slips.forEach((x) => assert.ok(['decide', 'touch', 'lend', 'get', 'answer'].includes(x.move), 'each slip with its move')));
   // her hard steps: 352 − 127 ('show') and 640 − 218 ('tap') never count; 462 − 135's miss makes ones hard, until a right first ask
   assert.ok(stories.length > 11);
   const hardAfter = E.hardTakes(cat);
@@ -620,43 +647,67 @@ test('8. the record: entries as section 4 says (warm-up entries first asks), E.h
 
 /* ================================================================ 9. the slots */
 test('9. the slots: a take lesson saved after every column comes back at its frame, problem and column through a reload, a chapter parked and a Hollow round; a store round never reaches E.hollowFinish; a take state never reaches E.counts.question', () => {
-  const S = stub();
   const reload = (cat) => E.migrate(clone({ version: 2, cats: [cat], current: cat.id, settings: {} })).cats[0];
-  let cat = E.blankCat({ now: 1 });
-  E.startChapter(cat, S.ch13, 1000);
   const ask = E.counts.question;
   E.counts.question = (st) => { if (st && st.op === '-') throw new Error('a take state reached E.counts.question'); return ask(st); };
-  try {
-    V1.play(E, S.ch13, cat, { t: 5000, stopIn: { f001: 2 } });
+  // both paths (the kit v0.4's gate): chapter 12's stand-in plays v0.3's (`taught: ['none']`), chapter 13's the moves,
+  // saved after every move (at 70 − 34's ones, after its touch and its lend: back at its get, the marks so far lettered)
+  const walk = (S, take, other) => {
+    const id = take.id, setId = id + '-take', n0 = plan(...stub.CH[take.number].lesson[0]).n;
+    let cat = E.blankCat({ now: 1 });
+    E.startChapter(cat, take, 1000);
+    V1.play(E, take, cat, { t: 5000, stopIn: { f001: n0 } });
     assert.equal(cat.lesson.state.op, '-'); assert.equal(cat.lesson.state.pos, 1); assert.equal(cat.lesson.state.col, 0);
+    assert.equal(E.takeMovesOn(cat.lesson.state), take.number >= 13, id + ': the gate');
     cat = reload(cat);
-    const L = E.lessonAt(cat, S.ch13, 'f001');
+    const L = E.lessonAt(cat, take, 'f001');
     assert.ok(L, 'it comes back at its frame'); assert.equal(L.state.pos, 1);
-    // one column into the next problem, then away to another chapter and back
-    const def = Object.assign({ id: 'ch13-take' }, S.ch13.counts['ch13-take']);
-    while (T.question(L.state).tap) T.tap(L.state);
-    T.digit(L.state, def, T.question(L.state).plan.cols[0].digit, 1, 900000);
+    // one column into the next problem (its moves first, under the gate), then away to another chapter and back
+    const def = Object.assign({ id: setId }, take.counts[setId]);
+    if (T.question(L.state).moves) {
+      const q0 = T.question(L.state), m0 = q0.moves[0][0];
+      assert.deepEqual([q0.a, q0.b, q0.mode, m0.move, m0.col], [70, 34, 'tap', 'touch', 1]);
+      assert.equal(T.touch(L.state, def, 1, 800000, 1200).accepted, true);
+      assert.equal(T.digit(L.state, def, 6, 1300, 801000).right, true);
+      cat = reload(cat);
+      const back = E.lessonAt(cat, take, 'f001'), qb = T.question(back.state);
+      assert.deepEqual([qb.col, qb.move, qb.box.kind, qb.box.col], [0, 2, 'get', 0], 'saved after every move: back at the get');
+      assert.equal(qb.marks[1].m1.v, 6, 'the 7 struck, her gold 6 over it'); assert.equal(qb.marks[1].struck, true);
+      assert.deepEqual(back.state.moveLog, [[0, 't', 1, 1200], [0, 'l', 6, 1300]]);
+      assert.equal(T.digit(back.state, def, 10, 1400, 802000).right, true);
+      T.digit(back.state, def, T.question(back.state).plan.cols[0].digit, 1, 900000);
+    } else {
+      while (T.question(L.state).tap) T.tap(L.state);
+      T.digit(L.state, def, T.question(L.state).plan.cols[0].digit, 1, 900000);
+    }
     cat = reload(cat);
     assert.equal(cat.lesson.state.col, 1); assert.equal(cat.lesson.state.got.length, 1, 'her digit in its box');
-    E.openChapter(cat, S.ch12, 990000);
-    assert.equal(cat.places.ch13.lesson.state.col, 1, 'parked with its chapter');
+    E.openChapter(cat, other, 990000);
+    assert.equal(cat.places[id].lesson.state.col, 1, 'parked with its chapter');
     cat = reload(cat);
-    E.openChapter(cat, S.ch13, 995000);
-    const L2 = E.lessonAt(cat, S.ch13, 'f001');
+    E.openChapter(cat, take, 995000);
+    const L2 = E.lessonAt(cat, take, 'f001');
     assert.equal(L2.state.pos, 1); assert.equal(L2.state.col, 1);
     // a module-1 Hollow round takes the slot: the take lesson waits in its place, and comes back
     const round = E.hollowStart(cat, REAL, 1000000, 1);
     E.holdLesson(cat);
     cat.lesson = { mode: 'hollow', state: round.state };
-    assert.equal(cat.places.ch13.lesson.state.op, '-');
+    assert.equal(cat.places[id].lesson.state.op, '-');
     cat = reload(cat);
-    const back = E.lessonAt(cat, S.ch13, 'f001');
+    const back = E.lessonAt(cat, take, 'f001');
     assert.ok(back && back.state.op === '-' && back.state.col === 1, 'back at its frame, problem and column');
     assert.equal(cat.hollowWaiting.state.table, 1, 'the round waits in hollowWaiting');
     // finished: Next records it under its set, as any lesson's
-    V1.play(E, S.ch13, cat, { t: 2000000 });
-    assert.equal(cat.lessons['ch13-take'].op, '-'); assert.equal(cat.lessons['ch13-take'].finished, true);
+    V1.play(E, take, cat, { t: 2000000 });
+    assert.equal(cat.lessons[setId].op, '-'); assert.equal(cat.lessons[setId].finished, true);
     assert.equal(cat.counts.length, 0);
+    return cat;
+  };
+  try {
+    const S = stub();
+    const c12 = walk(S, S.ch12, S.ch13), c13 = walk(S, S.ch13, S.ch12);
+    assert.ok(c12.takes.log.every((e) => !('moves' in e) && !('style' in e) && e.slips.every((x) => !('move' in x))), 'v0.3\'s entries as they were');
+    assert.ok(c13.takes.log.filter((e) => e.kind !== 'none').every((e) => e.style === 'above' && e.moves.every((x) => x.length === 4)), 'the moves logged');
   } finally { E.counts.question = ask; }
   // a take state whose last answer is in but was never recorded is settled as a take lesson
   const c = E.blankCat({ now: 1 });
@@ -1039,6 +1090,7 @@ test('12. a round never says a line about a step she has not learned (the kit\'s
     const target = R.state.queue.findIndex(({ a, b }) => { const h = plan(a, b).cols[2]; return h && !h.lent && h.bottom && !h.spreads.length && h.before - 1 - h.bottom >= 0; });
     if (target < 0) continue;
     for (let guard = 0; guard < 40 && !T.done(R.state); guard++) {
+      makeMoves(R.state, R.def, clock);
       const q = T.question(R.state), cc = q.plan.cols[q.col], here = q.number === target + 1 && q.col === 2 && !q.twin;
       const r = T.digit(R.state, R.def, here ? cc.before - 1 - cc.bottom : cc.blank ? '' : cc.digit, 2000, clock.t += 1000);
       if (here) { assert.equal(r.slip, 'fact', 'round ' + n); assert.equal(r.help.intro, 'Let’s scratch it out.'); played++; break; }
@@ -1047,27 +1099,33 @@ test('12. a round never says a line about a step she has not learned (the kit\'s
   assert.equal(played, 3);
 });
 test('12. a round played: its hard step right earns rememberedStep, a helped problem’s twin comes back within the round, entries `round: n` and first asks; the finish once, as mode \'store\', a frost treasure in turn by the store’s own rounds; hollow.rounds, every Count’s record and module 1’s treasures untouched; it gives way to a chapter lesson and comes back', () => {
+  // both paths: the round as E.takeRoundStart makes it (every step learned: the kit v0.4's moves, made right before each
+  // answer), and the same round started with no `taught` (v0.3's path)
+  const played = (moves) => {
   const c = withHard(stepsCat(['none', 'ones2', 'ones', 'tens', 'both', 'mixed', 'zero', 'zeros']), ['zero']);
   c.hollow.rounds = 3; c.hollow.byTable['2'] = { rounds: 3, cleanRounds: 2, glow: false }; c.nest = ['moss', 'feather', 'shell'];
   const before = clone({ hollow: c.hollow, counts: c.counts });
   const got = [];
   for (let n = 1; n <= 6; n++) {
-    const R = E.takeRoundStart(c, ALL, 100000 * n);
+    const R0 = E.takeRoundStart(c, ALL, 100000 * n);
+    const R = moves ? R0 : { def: R0.def, state: T.start(R0.def, { facts: R0.state.queue, set: R0.def.id, mode: 'hollow', now: 100000 * n, round: R0.state.round, logged: R0.state.logged }) };
+    assert.equal(E.takeMovesOn(R.state), moves);
     E.holdLesson(c);
     c.lesson = { mode: 'hollow', state: R.state };
-    let first = true, out = null, clock = 100000 * n;
-    const lines = [];
+    let first = true, out = null;
+    const lines = [], clock = { t: 100000 * n };
     for (let guard = 0; guard < 80 && !T.done(R.state); guard++) {
-      while (T.question(R.state).tap) T.tap(R.state);
+      makeMoves(R.state, R.def, clock);
       const q = T.question(R.state), col = q.plan.cols[q.col];
       // round 2: a slip on its first problem's ones (a twin comes back); else right
       const miss = n === 2 && first && q.col === 0 && q.number === 1;
-      const r = T.digit(R.state, R.def, miss ? (col.digit + 1) % 10 : col.blank ? '' : col.digit, 3000, clock += 1000);
+      const r = T.digit(R.state, R.def, miss ? (col.digit + 1) % 10 : col.blank ? '' : col.digit, 3000, clock.t += 1000);
       assert.ok(!r.ignored, 'never ignored: ' + JSON.stringify(r));
       if (r.entry) E.logTake(c, r.entry);
       if (r.problemDone) { lines.push([r.lineKind, r.line]); first = false; }
       if (r.done) out = E.recordLesson(c, R.state);
     }
+    R.state.log.forEach((e) => assert.equal('moves' in e, moves && e.kind !== 'none', 'moves logged only under the gate, on a problem with a spread'));
     assert.ok(T.done(R.state));
     if (n === 2) assert.equal(R.state.log.length, 6, 'the helped problem’s twin within the round');
     else assert.equal(R.state.log.length, 5);
@@ -1090,9 +1148,14 @@ test('12. a round played: its hard step right earns rememberedStep, a helped pro
   assert.equal(E.treasure('acorn').name, 'An acorn in its little hat', 'and every other as before');
   E.TREASURES.concat(E.GIFTS).forEach((t) => assert.equal(E.treasure(t.id), E.treasure(t.id) && (E.TREASURES.find((x) => x.id === t.id) || E.GIFTS.find((x) => x.id === t.id))));
   assert.deepEqual(E.nestGroups(c).treasures.map((x) => x.treasure.id).slice(-4), ['frost-leaf', 'snow-feather', 'acorn-cap', 'river-pebble']);
+  return c;
+  };
+  played(false);
+  const c = played(true);
   // a round in the slot gives way to a chapter lesson (hollowWaiting) and comes back at its problem and column
   const R = E.takeRoundStart(c, ALL, 9000000);
   c.lesson = { mode: 'hollow', state: R.state };
+  makeMoves(R.state, R.def, { t: 8990000 });
   T.digit(R.state, R.def, T.question(R.state).plan.cols[0].digit, 3000, 9001000);
   c.chapter = 'ch13'; c.frame = 'f001';
   const L = E.chapterLesson(c, STUB.ch13, 'ch13-take', 9002000, ALL);
@@ -1117,7 +1180,7 @@ test('12. a round played: its hard step right earns rememberedStep, a helped pro
 const FORM_RE = /\b(loose|rows?|squares?|ones|tens|hundreds|take away|spread|ones first)\b/i;
 function lineValues() {
   const out = [];
-  const walk = (key, v) => { if (typeof v === 'string') out.push([key, v]); else if (Array.isArray(v)) v.forEach((x) => walk(key, x)); else Object.keys(v).forEach((k) => walk(key + '.' + k, v[k])); };
+  const walk = (key, v) => { if (typeof v === 'string') out.push([key, v]); else if (Array.isArray(v)) v.forEach((x, i) => walk(key + '[' + i + ']', x)); else Object.keys(v).forEach((k) => walk(key + '.' + k, v[k])); };
   Object.keys(E.TAKE_LINES).forEach((k) => walk(k, E.TAKE_LINES[k]));
   return out;
 }
@@ -1165,7 +1228,8 @@ test('13. every kit line filled for every column of every kind, at the ones and 
   assert.ok(n > 10000);
   // every line in E.TAKE_LINES, every form, filled with ones and with other numbers
   // (a top of 0 only in the forms for it: a line's 'ones' form is never said over a 0, its 'onesZero' is)
-  lineValues().forEach(([key, v]) => [/Zero$/.test(key) ? 0 : 1, 2, 13].forEach((x) => checkLine(E.takeFill(v, { top: x, bottom: x, first: x, rest: x, left: x, digit: x, a: 503, b: 278 }), key)));
+  // (the kit v0.4's number tokens too: {old}, {new})
+  lineValues().forEach(([key, v]) => [/Zero$/.test(key) ? 0 : 1, 2, 13].forEach((x) => checkLine(E.takeFill(v, { top: x, bottom: x, first: x, rest: x, left: x, digit: x, old: x, new: x, a: 503, b: 278 }), key)));
   assert.equal(E.takeFill('{Top} {rows}', { top: 1 }), 'One row');
   assert.equal(E.takeFill('{Digit} {squares}.', { digit: 2 }), 'Two squares.');
   assert.equal(E.takeFill('{name}paw: {Top}', { top: 3 }), '{name}paw: Three', 'the cat\'s tokens are left for the page');
@@ -1176,7 +1240,8 @@ test('13. the words table: a token for every form, no form written into any line
   assert.deepEqual(Object.keys(W), ['loose', 'row', 'rows', 'Row', 'square', 'squares', 'ones', 'tens', 'hundreds', 'takeAway', 'TakeAway', 'spread', 'Spread', 'OnesFirst']);
   Object.keys(W).forEach((k) => assert.equal(E.takeFill('{' + k + '}', {}), W[k], 'a token for ' + k));
   lineValues().forEach(([key, v]) => {
-    assert.ok(!FORM_RE.test(v.replace(/\{[A-Za-z]+\}/g, '')), key + ': a maths word written into the line: ' + v);
+    // ("the glowing ones", the kit v0.4's tapHere: a pronoun, not the place-value word)
+    assert.ok(!FORM_RE.test(v.replace(/\{[A-Za-z]+\}/g, '').replace(/the glowing ones/g, '')), key + ': a maths word written into the line: ' + v);
     const re = /\{[Ss]pread\}/g;
     let m;
     while ((m = re.exec(v))) {
@@ -1185,7 +1250,7 @@ test('13. the words table: a token for every form, no form written into any line
       assert.ok(/^ (a|an|the) /.test(after) || /\{(rows?|squares?)\} to $/.test(before), key + ': the word acts on a row or a square: ' + v);
     }
   });
-  const kit = () => lineValues().map(([k, v]) => [k, E.takeFill(v, { top: 3, bottom: 8, first: 3, rest: 5, left: 5, digit: 5, a: 503, b: 278 })]);
+  const kit = () => lineValues().map(([k, v]) => [k, E.takeFill(v, { top: 3, bottom: 8, first: 3, rest: 5, left: 5, digit: 5, old: 4, new: 13, a: 503, b: 278 })]);
   const plainLines = kit();
   const saysIt = plainLines.filter(([, s]) => /\bspread\b/i.test(s)).map(([k]) => k);
   assert.ok(saysIt.length >= 12);
@@ -1279,7 +1344,8 @@ test('13. E.takeQuestion: the prompt\'s balloons, a twin\'s or the warm-up\'s in
     const firstCol = [];
     while (!T.done(L.state)) {
       const q4 = T.question(L.state);
-      if (q4.col === 0) firstCol.push(q4.full);
+      if (q4.col === 0 && !q4.move) firstCol.push(q4.full);
+      makeMoves(L.state, L.def, clock);
       T.digit(L.state, L.def, q4.plan.cols[q4.col].digit, 1, clock.t += 1000);
     }
     assert.deepEqual(firstCol, [true, true, false, false, false, false], 'full on the warm-up and the first of the set only');
@@ -1290,9 +1356,10 @@ test('13. E.takeQuestion: the prompt\'s balloons, a twin\'s or the warm-up\'s in
   const forms13 = (n, set) => {
     const L = E.takeLesson(E.blankCat({ now: 1 }), S13['ch' + n], set, 7000, REAL.concat(S13.list)), out = [];
     while (!T.done(L.state)) {
-      while (T.question(L.state).tap > 0) T.tap(L.state);
+      const q0 = T.question(L.state);
+      makeMoves(L.state, L.def, clock);
       const q5 = T.question(L.state);
-      if (q5.col === 0) out.push([pr(q5.a, q5.b), q5.full, E.takeLine(L.def, q5.plan, 0, q5.stage, q5.mode, q5.full)]);
+      if (q5.col === 0) out.push([pr(q5.a, q5.b), q5.full, E.takeLine(L.def, q5.plan, 0, q0.moves ? q0.stage : q5.stage, q5.mode, q5.full)]);
       T.digit(L.state, L.def, q5.plan.cols[q5.col].digit, 1, clock.t += 1000);
     }
     return out;
@@ -1448,4 +1515,575 @@ test('chapter 12\'s review: a store round played while a chapter with a take set
     }
   }
   assert.ok(twins > 300, twins + ' twins');
+});
+
+/* ================================================================ decision 57: the kit v0.4, the spread as moves
+ * ~/potomac-crossing-work/regroup/design.md (v0.4) and plan.md's proofs E1 to E11 (E3, every problem, is in
+ * takes-exhaustive.test.js) and L2 to L4; and v0.3's tests 4, 6 and 7 on the moves' path (9 and 12 run both paths above).
+ * The stub's sets (tests/fixtures/takes-stub.js, `sets()`): chapter 13's lesson (its marks page, `teach: 'ones2'`),
+ * chapter 14's four, a `zero` set and a `both` one, each with its chapter's `taught`. */
+const S57 = stub.sets();
+const MK13 = stub.MARKS13;
+function movesLesson(which, facts, opts) {
+  const s = S57[which], o = Object.assign({}, opts || {});
+  const def = Object.assign({}, s.def, o.def || {});
+  delete o.def;
+  return { def, st: T.start(def, Object.assign({ facts, set: def.id, mode: 'chapter', now: 1000, logged: 10, taught: s.taught, style: 'above' }, o)) };
+}
+const said = (r) => (r && r.say ? r.say : r && r.line ? [r.line] : []);
+const mm = (q) => q.marks.map((m) => JSON.stringify(m));
+
+test('E1. the moves come before the answer: at 43 − 16\'s ones in \'hers\' a 7 typed first is `ahead` (right form), move 0, pale 7, the tens lit; the column ends only after the touch, 3, 13 and OK on 7; 52 − 27 the same in the flip form', () => {
+  const { def, st } = movesLesson('ch13', [[43, 16]]);
+  assert.equal(E.takeMovesOn(st), true);
+  let r = T.digit(st, def, 7, 1000, 2000);
+  assert.deepEqual([r.pointer, r.form, r.line, r.pale], ['ahead', 'right', 'Right! Now show me your marks.', 7]);
+  let q = T.question(st);
+  assert.deepEqual([q.col, q.move, q.pale, q.glow, q.targets], [0, 0, 7, 'tens', [1]], 'the column not ended; the tens glowing');
+  assert.equal(st.slips.length, 0, 'not a slip');
+  assert.deepEqual(T.digit(st, def, 7, 1000, 3000).pointer, 'tapLine', 'a digit while it glows types nothing');
+  r = T.touch(st, def, 1, 4000, 900);
+  assert.equal(r.accepted, true); assert.deepEqual(T.question(st).box, { col: 1, kind: 'lend', row: 1 });
+  r = T.digit(st, def, '3', 800, 5000);
+  assert.equal(r.right, true); assert.equal(T.question(st).col, 0);
+  r = T.digit(st, def, '13', 800, 6000);
+  assert.equal(r.right, true);
+  q = T.question(st);
+  assert.deepEqual([q.col, q.move, q.box.kind, q.pale, q.okEmpty], [0, 3, 'answer', 7, true], 'the answer box ringed with her pale digit');
+  r = T.digit(st, def, '', 600, 7000);
+  assert.deepEqual([r.right, r.given, r.next], [true, 7, 1], 'OK takes it: now the column ends');
+  const f = movesLesson('ch13', [[52, 27]]);
+  r = T.digit(f.st, f.def, 5, 1000, 2000);
+  assert.deepEqual([r.pointer, r.form, r.line], ['ahead', 'flip', 'Marks first, then the answer.'], 'its flip lands: no "Right!"');
+  assert.equal(T.question(f.st).move, 0);
+});
+
+test('E2. she touches the part and puts in the new number: 43 − 16\'s marks after the touch, 3 and 13 (\'above\') or 1 (\'one\', 13 the same mark); 503 − 278\'s seven moves in order, both styles, the second marks row in \'above\' only', () => {
+  ['above', 'one'].forEach((style) => {
+    const { def, st } = movesLesson('ch13', [[43, 16]], { style });
+    T.touch(st, def, 1, 2000);
+    let q = T.question(st);
+    assert.deepEqual([q.marks[1].struck, q.marks[1].m1], [true, { v: null, struck: false, front: null, box: true }], style + ': the 4 struck, its box open');
+    T.digit(st, def, 3, 1, 3000);
+    q = T.question(st);
+    assert.deepEqual(q.marks[1].m1, { v: 3, struck: false, front: null, box: false }, 'the gold 3');
+    if (style === 'above') assert.deepEqual([q.marks[0].struck, q.marks[0].m1.box, q.box.row], [true, true, 1], 'the 3 struck, its box over it');
+    else assert.deepEqual([q.marks[0].struck, q.marks[0].front, q.box.row], [false, 'box', 'front'], 'the box in front of the 3, the 3 not struck');
+    T.digit(st, def, style === 'above' ? 13 : 1, 1, 4000);
+    q = T.question(st);
+    if (style === 'above') assert.deepEqual([q.marks[0].struck, q.marks[0].m1.v], [true, 13], '13 over the struck 3');
+    else assert.deepEqual([q.marks[0].struck, q.marks[0].front, q.marks[0].m1], [false, 1, null], 'a gold front 1, the 3 unstruck');
+  });
+  const o13 = movesLesson('ch13', [[43, 16]], { style: 'one' });
+  T.touch(o13.st, o13.def, 1, 2000); T.digit(o13.st, o13.def, 3, 1, 3000);
+  assert.equal(T.digit(o13.st, o13.def, '13', 1, 4000).right, true, '\'one\': 13 is right too');
+  assert.equal(T.question(o13.st).marks[0].front, 1, 'and letters the little 1 alone');
+  const seq = (style) => E.takeMoves(plan(503, 278), style)[0].map((m) => m.move + (m.move === 'touch' ? '' : ' ' + m.value) + '@' + m.col).join(', ');
+  assert.equal(seq('above'), 'touch@2, lend 4@2, get 10@1, touch@1, lend 9@1, get 13@0, answer 5@0');
+  assert.equal(seq('one'), 'touch@2, lend 4@2, get 1@1, touch@1, lend 9@1, get 1@0, answer 5@0');
+  const A = E.takeMoveMarks(plan(503, 278), 'above', 0, 6), O = E.takeMoveMarks(plan(503, 278), 'one', 0, 6);
+  assert.deepEqual(A[1], { struck: true, front: null, frontStruck: false, m1: { v: 10, struck: true, front: null, box: false }, m2: { v: 9, box: false } }, '\'above\': 10 struck, 9 in the second row');
+  assert.deepEqual(O[1], { struck: true, front: 1, frontStruck: true, m1: { v: 9, struck: false, front: null, box: false }, m2: null }, '\'one\': the ¹0 struck as one, 9 over it');
+  assert.deepEqual([A[0].m1.v, A[2].m1.v, O[0].front, O[2].m1.v], [13, 4, 1, 4]);
+  // and as she plays it: the box at each move
+  ['above', 'one'].forEach((style) => {
+    const z = movesLesson('zero', [[503, 278]], { style }), boxes = [];
+    for (let i = 0; i < 7; i++) {
+      const q = T.question(z.st), m = q.moves[0][q.move];
+      boxes.push(q.box.kind + '@' + q.box.col + (q.box.row != null ? ':' + q.box.row : ''));
+      if (m.move === 'touch') T.touch(z.st, z.def, m.col, 2000 + i * 1000); else T.digit(z.st, z.def, m.value, 1, 2000 + i * 1000);
+    }
+    assert.deepEqual(boxes, style === 'above' ? ['answer@0', 'lend@2:1', 'get@1:1', 'answer@0', 'lend@1:2', 'get@0:1', 'answer@0'] : ['answer@0', 'lend@2:1', 'get@1:front', 'answer@0', 'lend@1:1', 'get@0:front', 'answer@0'], style);
+    assert.equal(z.st.col, 1, 'the ones done after its seven moves');
+  });
+  // 811 − 356: its tens lent, then spreads (her gold 0 struck and 10 over it; or a little 1 before the gold 0)
+  assert.deepEqual(E.takeMoveMarks(plan(811, 356), 'above', 2, 0)[1].m1, { v: 0, struck: true, front: null, box: false });
+  assert.deepEqual(E.takeMoveMarks(plan(811, 356), 'above', 2, 0)[1].m2, { v: 10, box: false });
+  assert.deepEqual(E.takeMoveMarks(plan(811, 356), 'one', 2, 0)[1].m1, { v: 0, struck: false, front: 1, box: false });
+});
+
+test('E4. the marks are hers to choose: E.setTakeStyle writes cat.takes.style and no flag; normTakes keeps it (drops anything else); E.takeLesson and E.takeRoundStart pass it; a problem keeps its moveStyle through a reload; E.takeMarksPage gives the set\'s lines (chapter 13\'s four) or the kit\'s', () => {
+  const S = stub(), stories = REAL.concat(S.list);
+  const cat = E.blankCat({ now: 1 });
+  assert.equal(E.takeStyle(cat), 'above', 'the default, before she picks');
+  assert.equal(E.setTakeStyle(cat, 'one'), true);
+  assert.deepEqual([cat.takes.style, cat.takes.log, cat.flags], ['one', [], {}], 'her style, never a flag');
+  assert.equal(E.setTakeStyle(cat, 'sideways'), false); assert.equal(cat.takes.style, 'one');
+  const mig = (c) => E.migrate(clone({ version: 2, cats: [c], current: c.id, settings: {} }));
+  assert.equal(mig(cat).cats[0].takes.style, 'one', 'kept through a save');
+  assert.equal(mig(cat).version, 2, 'the save stays version 2');
+  assert.equal(mig(Object.assign(clone(cat), { takes: { log: [], rounds: 0, cleanRounds: 0, style: 'sideways' } })).cats[0].takes.style, undefined, 'anything else dropped');
+  assert.ok(!('style' in mig(Object.assign(clone(cat), { takes: { log: [], rounds: 1, cleanRounds: 0 } })).cats[0].takes), 'a v25 takes stays as it was');
+  const L = E.takeLesson(cat, S.ch13, 'ch13-take', 5000, stories);
+  assert.deepEqual([L.state.style, L.state.taught], ['one', ['none', 'ones2']], 'E.takeLesson passes it');
+  const c2 = clone(cat);
+  c2.lessons['ch13-take'] = { set: 'ch13-take', op: '-', finished: true };
+  assert.equal(E.takeRoundStart(c2, stories, 6000).state.style, 'one', 'and E.takeRoundStart');
+  const c12 = Object.assign(clone(cat), { lessons: { 'ch12-take': { set: 'ch12-take', op: '-', finished: true } } });
+  assert.ok(!('style' in E.takeRoundStart(c12, stories, 6000).state), 'a chapter-12-only round: no moves, no style (the gate)');
+  assert.ok(!('style' in E.takeLesson(cat, S.ch12, 'ch12-take', 5000, stories).state), 'nor chapter 12\'s lesson');
+  // a problem keeps its look from its first move, through a reload; the next takes the cat's style as the page sets it
+  const { def, st } = movesLesson('ch13', [[43, 16], [85, 39]], { style: 'one' });
+  T.touch(st, def, 1, 2000);
+  assert.equal(st.queue[0].moveStyle, 'one');
+  st.style = 'above';   // changed on the shelf while the problem was under way
+  const c3 = Object.assign(E.blankCat({ now: 1 }), { lesson: { mode: 'chapter', frame: 'f001', chapter: 'ch13', state: st }, chapter: 'ch13', frame: 'f001' });
+  const back = mig(c3).cats[0].lesson.state;
+  assert.equal(T.question(back).style, 'one', 'its marks keep their look');
+  answerProblem(back, def, rightTyper, { t: 9000 });
+  assert.equal(T.question(back).style, 'above', 'the next problem in her new style');
+  // the marks page
+  const page = E.takeMarksPage(S57.ch13.def, cat);
+  assert.deepEqual(page.lines, MK13.lines, 'chapter 13\'s four lines');
+  assert.deepEqual(page.after, { one: MK13.one, above: MK13.above });
+  assert.deepEqual(page.options, [{ style: 'one', label: 'A little 1 in front' }, { style: 'above', label: 'The new number on top' }]);
+  assert.equal(page.current, 'one');
+  const kit = E.takeMarksPage({ teacher: 'tallyheart' }, E.blankCat({ now: 1 }));
+  assert.deepEqual(kit.lines, [{ who: 'tallyheart', text: 'When you spread a row, how do you write it?' }, { who: 'tallyheart', text: 'Both are right. Tap your way.' }]);
+  assert.deepEqual(kit.after.one, [{ who: 'tallyheart', text: 'Then that’s how we’ll write it.' }]);
+  assert.equal(kit.current, null);
+  const keep = PC.words;
+  try { PC.words = { spread: 'trade' }; assert.equal(E.takeMarksPage({}).lines[0].text, 'When you trade a row, how do you write it?'); }
+  finally { if (keep === undefined) delete PC.words; else PC.words = keep; }
+  // the guards: the set's `marks` checked; the stub's chapter 13 clean
+  assert.deepEqual(E.checkTakes(S.ch13, stories), []);
+  const bad = (marks) => { const s2 = stub(); s2.ch13.counts['ch13-take'].marks = marks; return E.checkTakes(s2.ch13, REAL.concat(s2.list)); };
+  assert.ok(bad('one').some((e) => /marks is \{ lines, one, above \}/.test(e)));
+  assert.ok(bad({ lines: MK13.lines, one: MK13.one }).some((e) => /marks: above is a list/.test(e)));
+  assert.ok(bad(Object.assign({}, MK13, { lines: [{ who: 'tallyheart', text: 'One two three four five six seven eight nine ten eleven twelve thirteen.' }] })).some((e) => /13 words \(12 at most\)/.test(e)));
+  assert.ok(bad(Object.assign({}, MK13, { one: [{ who: 'chispapaw', lang: 'es', text: '¡Así!' }] })).some((e) => /in English/.test(e)));
+  assert.ok(bad(Object.assign({}, MK13, { why: [] })).some((e) => /unknown key why/.test(e)));
+  assert.ok(bad(Object.assign({}, MK13, { above: [{ text: 'On top.' }] })).some((e) => /is \{ who, text \}/.test(e)));
+});
+
+/* Section 4's table, row by row, both styles: [problem, column, move, what she gave (a tap: { t }), ctx, the slip or
+ * pointer, its move, its line (the 43 − 16 or 503 − 278 form), the help's fix] */
+const TABLE4 = [
+  [[43, 16], 0, 0, 3, null, 'flip', 'decide', 'Careful: it’s three take away six, the top take away the bottom. Only three loose. Not enough.', { move: 'touch', col: 1 }],
+  [[43, 16], 0, 0, 0, null, 'nospread', 'decide', 'Three take away six? Not enough loose. But we can spread a row.', { move: 'touch', col: 1 }],
+  [[43, 16], 0, 0, 8, null, 'fact', 'decide', 'Three take away six: we spread a row, then take six.', { move: 'touch', col: 1 }],
+  [[503, 278], 0, 0, 0, null, 'zero', 'decide', 'Three take away eight? Not enough loose, and no rows to spread. | So a square first.', { move: 'touch', col: 2 }],
+  [[43, 16], 0, 0, 7, null, 'ahead', null, 'Right! Now show me your marks.', null],
+  [[52, 27], 0, 0, 5, null, 'ahead', null, 'Marks first, then the answer.', null],
+  [[97, 52], 0, 0, 8, { extra: 1 }, 'extra', 'touch', 'Careful: seven take away two? The loose have enough. No row goes.', { move: 'undo', col: 1 }],
+  [[503, 278], 0, 0, { t: 1 }, {}, 'zeroFirst', null, 'That zero has no rows to give. So a square first.', null],
+  [[503, 278], 0, 0, { t: 1 }, { zeroFirst: true }, 'zero', 'touch', 'That zero has no rows to give. So a square first.', { move: 'touch', col: 2 }],
+  [[352, 127], 0, 0, { t: 2 }, {}, 'where', null, 'Next door first: the rows.', null],
+  [[503, 278], 0, 3, { t: 2 }, {}, 'gave', null, 'The squares gave already. Now the rows.', null],
+  [[503, 278], 0, 3, 5, null, 'ahead', null, 'Marks first, then the answer.', null],
+  [[702, 345], 0, 3, 7, null, 'ahead', null, 'Right! Now show me your marks.', null],
+  [[702, 345], 0, 3, 3, null, 'zero', 'decide', 'Careful. Ten rows now, and still only two loose. Now a row.', { move: 'touch', col: 1 }],
+  [[503, 278], 0, 3, 0, null, 'zero', 'decide', 'Careful. Ten rows now, and still only three loose. Now a row.', { move: 'touch', col: 1 }],
+  [[702, 345], 0, 3, 4, null, 'fact', 'decide', 'Two take away five: we spread a row, then take five.', { move: 'touch', col: 1 }],
+  [[43, 16], 0, 1, 4, null, 'kept', 'lend', 'Careful. One row goes to the loose. Three rows now.', { move: 'lend', col: 1, value: 3 }],
+  [[43, 16], 0, 1, 5, null, 'lend', 'lend', 'Four rows, and one goes: three rows.', { move: 'lend', col: 1, value: 3 }],
+  [[503, 278], 0, 4, 10, null, 'zero', 'lend', 'Careful. That zero is ten rows now, and one goes: nine rows.', { move: 'lend', col: 1, value: 9 }],
+  [[503, 278], 0, 2, 9, null, 'nine', null, 'Nine at the end! First the zero gets ten rows.', { move: 'get', col: 1, value: { above: 10, one: 1 } }],
+  [[43, 16], 0, 2, 3, null, 'get', 'get', { above: 'Three loose and ten more: thirteen loose.', one: 'Ten more loose: a little 1 in front. Thirteen loose.' }, { move: 'get', col: 0, value: { above: 13, one: 1 } }],
+  [[811, 356], 1, 3, 6, null, 'kept', 'answer', 'Careful. One row went to the loose, then ten came: ten rows now.', null]
+];
+test('E5. every row of section 4\'s table, both styles: E.takeMoveSlip\'s slip or pointer and its move, E.takeMoveHelp\'s line and fix; the right moves are null; every move-help and every v0.4 line filled for every column and its zero and none forms with no token left; the regrouping word set to "trade", "regroup" and "break apart"', () => {
+  ['above', 'one'].forEach((style) => {
+    TABLE4.forEach(([[a, b], col, k, given, ctx, want, move, line, fix]) => {
+      const tap = given && typeof given === 'object', p = plan(a, b), tag = style + ' ' + pr(a, b) + ' col ' + col + ' move ' + k + ' gave ' + JSON.stringify(given);
+      const j = E.takeMoveSlip(p, col, k, tap ? given.t : given, style, E.TAKE_STEPS, Object.assign(tap ? { touch: true } : {}, ctx || {}));
+      assert.equal(j.slip || j.pointer, want, tag); assert.equal(j.slip ? j.move : null, move, tag);
+      const h = E.takeMoveHelp({}, p, col, k, Object.assign({}, j, { touched: ctx && ctx.extra }), style);
+      assert.equal(h.say.join(' | '), typeof line === 'object' ? line[style] : line, tag);
+      const fx = fix && Object.assign({}, fix, typeof fix.value === 'object' ? { value: fix.value[style] } : {});
+      assert.deepEqual(h.fix, fx, tag + ': its fix');
+    });
+    // a right move is null: the lender, its number, the get (13 or, in 'one', 1 or 13), the answer
+    const p = plan(43, 16);
+    assert.equal(E.takeMoveSlip(p, 0, 0, 1, style, E.TAKE_STEPS, { touch: true }), null);
+    assert.equal(E.takeMoveSlip(p, 0, 1, 3, style), null);
+    assert.equal(E.takeMoveSlip(p, 0, 2, 13, style), null);
+    if (style === 'one') assert.equal(E.takeMoveSlip(p, 0, 2, 1, style), null);
+    assert.equal(E.takeMoveSlip(p, 0, 3, 7, style), null);
+    assert.deepEqual(E.takeMoveSlip(p, 0, 1, 1, style, E.TAKE_STEPS, { touch: true }), { ignored: true }, 'a tap at a lend does nothing');
+    assert.deepEqual(E.takeMoveSlip(p, 0, 3, 1, style, E.TAKE_STEPS, { touch: true }), { pointer: 'order', line: 'order' }, 'order at the answer that ends the moves');
+    assert.deepEqual(E.takeMoveSlip(p, 0, 3, 1, style, E.TAKE_STEPS, { touch: true, ordered: true }), { ignored: true }, 'once');
+  });
+  // every move-help, every 'show' and 'tap' line of v0.4, every column and form, filled
+  const sample = MODULE.concat([[100, 1], [910, 819], [201, 2], [105, 9], [110, 61], [150, 75], [610, 291], [500, 467], [403, 57], [811, 356], [566, 168], [19, 9], [20, 11], [90, 81], [101, 92]]);
+  const lines = (a, b, style) => {
+    const p = plan(a, b), M = E.takeMoves(p, style), out = [];
+    p.cols.forEach((c, col) => {
+      ['show', 'tap'].forEach((mode) => [{ teach: 'ones2' }, { teach: 'zeros' }, {}].forEach((def) => {
+        const S = E.takeShow(def, p, col, { mode, style });
+        if (S) out.push(...S.steps.map((x) => x.say), ...S.taps.map((x) => x.say).filter((x) => x != null), ...Object.values(S.here), S.line);
+      }));
+      M[col].forEach((m, k) => {
+        const gives = m.move === 'touch' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] : m.move === 'answer' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] : [0, 1, 3, 4, 9, 10, 11, 12, 15, 18];
+        gives.forEach((g) => {
+          const j = E.takeMoveSlip(p, col, k, g, style, E.TAKE_STEPS);
+          if (j && !j.ignored) out.push(...E.takeMoveHelp({}, p, col, k, j, style).say);
+        });
+        if (k === 0 || (k === 3 && m.move === 'touch')) [1, 2].forEach((t) => [{}, { zeroFirst: true }].forEach((cx) => {
+          const j = E.takeMoveSlip(p, col, k, t, style, E.TAKE_STEPS, Object.assign({ touch: true }, cx));
+          if (j && !j.ignored) out.push(...E.takeMoveHelp({}, p, col, k, j, style).say);
+        }));
+        if (k === 0 && !p.cols[col].spreads.length && col < 2) out.push(...E.takeMoveHelp({}, p, col, 0, { slip: 'extra', touched: col + 1 }, style).say);
+      });
+    });
+    return out;
+  };
+  let n = 0;
+  sample.forEach(([a, b]) => ['above', 'one'].forEach((style) => lines(a, b, style).forEach((s) => { checkLine(s, style + ' ' + pr(a, b)); n++; })));
+  assert.ok(n > 5000, n + ' lines');
+  const keep = PC.words;
+  try {
+    ['trade', 'regroup', 'break apart'].forEach((word) => {
+      PC.words = { spread: word };
+      [[43, 16], [503, 278], [70, 34], [702, 345], [811, 356]].forEach(([a, b]) => ['above', 'one'].forEach((style) => lines(a, b, style).forEach((s) => {
+        assert.ok(!/\bspread\b/i.test(s), word + ': ' + s); checkLine(s, word);
+      })));
+      assert.equal(E.takeShow({}, plan(43, 16), 0, { mode: 'show', style: 'above' }).steps[1].say, 'So I ' + word + ' a row. Four rows, one goes: three.');
+      assert.equal(E.takeShow({}, plan(70, 34), 0, { mode: 'tap', style: 'above' }).taps[0].say, 'No loose. ' + word.charAt(0).toUpperCase() + word.slice(1) + ' a row: tap it.');
+    });
+  } finally { if (keep === undefined) delete PC.words; else PC.words = keep; }
+});
+
+// the students (~/potomac-crossing-work/regroup/editor/students-v0.4.js), played through T.touch and T.digit
+const MODULE57 = {
+  13: [[43, 16], [70, 34], [85, 39], [97, 52], [486, 253], [52, 27]], 14: [[352, 127], [640, 218], [462, 135], [768, 315], [473, 245]],
+  15: [[526, 254], [418, 162], [607, 283], [879, 346], [563, 128], [735, 391]], 16: [[432, 178], [523, 247], [645, 278], [798, 465], [917, 653], [811, 356], [624, 357]],
+  17: [[764, 321], [371, 145], [614, 253], [731, 696], [513, 248], [382, 345], [48, 19]], 18: [[702, 345], [604, 137], [801, 263], [305, 102], [710, 254], [503, 278], [72, 18]],
+  19: [[400, 156], [600, 248], [300, 158], [857, 431], [815, 69], [500, 412], [88, 49], [300, 126]], 20: [[503, 478], [700, 349], [912, 468], [410, 136], [786, 452], [497, 427]],
+  21: [[700, 463], [500, 382], [500, 467]]
+};
+const TAUGHT57 = { 13: 2, 14: 3, 15: 4, 16: 5, 17: 6, 18: 7, 19: 8, 20: 8, 21: 8 };
+function playStudent(who, a, b, taught, style) {
+  const def = { id: 'students', op: '-', teacher: 'tallyheart' };
+  const st = T.start(def, { facts: [[a, b]], now: 1000, logged: 10, taught, style });
+  const p = plan(a, b), out = { slips: [], forms: [], end: null };
+  let t = 5000, col = -1, mem = {};
+  for (let guard = 0; guard < 60 && st.pos === 0; guard++) {
+    const q = T.question(st), c = p.cols[q.col], M = q.moves[q.col], k = q.move, m = M[k], bv = c.bottom || 0;
+    if (q.col !== col) { col = q.col; mem = {}; }
+    let act = m.move === 'touch' ? { touch: m.col } : m.move === 'answer' ? { d: q.pale != null ? '' : c.blank ? '' : c.digit } : { d: m.value };
+    if (q.box.kind === 'lend' && m.move === 'answer') act = { d: Math.max(0, p.cols[q.box.col].before - 1) };   // her extra touch's box
+    else if (who === 'flipper' && k === 0 && !mem.typed) { mem.typed = 1; act = { d: Math.abs(bv - c.before) }; }
+    else if (who === 'flipper' && m.move === 'touch' && k === 0 && q.pale != null && (mem.again || 0) < 2) { mem.again = (mem.again || 0) + 1; act = { d: q.pale }; }
+    else if (who === 'noDecrement' && m.move === 'lend') act = { d: m.value + 1 };
+    else if (who === 'overSpreader' && M.length === 1 && k === 0 && !mem.tapped && q.targets.includes(q.col + 1)) { mem.tapped = 1; act = { touch: q.col + 1 }; }
+    else if (who === 'zeroSkipper' && c.chain && k === 0 && !mem.z) { mem.z = 1; act = { touch: q.col + 1 }; }
+    else if (who === 'stopAtTen' && c.chain && k === 3 && !mem.s) { mem.s = 1; act = { d: Math.abs(bv - c.before) }; }
+    else if (who === 'stopAtTen' && m.move === 'lend' && m.zero) act = { d: m.value + 1 };
+    else if (who === 'shortcut' && m.move === 'get' && m.zero) act = { d: 9 };
+    else if (who === 'keyer' && m.move === 'get' && !m.zero) act = { d: style === 'one' ? 3 : m.reads - 10 };
+    else if (who === 'inHead' && c.spreads.length && k === 0 && !mem.h) { mem.h = 1; act = { d: c.digit }; }
+    const r = act.touch != null ? T.touch(st, def, act.touch, t += 1000, 1000) : T.digit(st, def, act.d, 1000, t += 1000);
+    assert.ok(r && !r.ignored, who + ' ' + pr(a, b) + ': ' + JSON.stringify(act) + ' ignored: ' + JSON.stringify(r && r.ignored));
+    if (r.pointer === 'ahead') out.forms.push(r.form);
+    if (r.entry) out.end = r;
+  }
+  return out;
+}
+const STUDENT_TABLE = {
+  flipper: { n: 45, correct: 0, helped: 38, twinned: 38, first: { 'flip:decide': 26, 'zero:decide': 12 }, ahead: { flip: 12 }, nudges: 24 },
+  noDecrement: { n: 45, correct: 0, helped: 45, twinned: 45, first: { 'kept:lend': 45 }, ahead: {}, nudges: 0 },
+  overSpreader: { n: 33, correct: 0, helped: 33, twinned: 33, first: { 'extra:touch': 33 }, ahead: {}, nudges: 0 },
+  zeroSkipper: { n: 14, correct: 0, helped: 0, twinned: 0, first: {}, ahead: {}, nudges: 14 },
+  stopAtTen: { n: 14, correct: 0, helped: 14, twinned: 14, first: { 'zero:decide': 12, 'zero:lend': 2 }, ahead: { flip: 2 }, nudges: 0 },
+  shortcut: { n: 14, correct: 0, helped: 0, twinned: 0, first: {}, ahead: {}, nudges: 14 },
+  keyer: { n: 45, correct: 0, helped: 45, twinned: 0, first: { 'get:get': 45 }, ahead: {}, nudges: 0 },
+  inHead: { n: 45, correct: 0, helped: 0, twinned: 0, first: {}, ahead: { right: 44, flip: 12 }, nudges: 0 },
+  clean: { n: 45, correct: 45, helped: 0, twinned: 0, first: {}, ahead: {}, nudges: 0 }
+};
+test('E6 and 4 (v0.4). the students, played through T.touch and T.digit on every module problem with a spread, chapters 13 to 21, each chapter\'s `taught`, both styles: exactly the editor\'s table', () => {
+  ['above', 'one'].forEach((style) => Object.keys(STUDENT_TABLE).forEach((who) => {
+    const got = { n: 0, correct: 0, helped: 0, twinned: 0, first: {}, ahead: {}, nudges: 0 };
+    Object.keys(MODULE57).forEach((ch) => MODULE57[ch].forEach(([a, b]) => {
+      const p = plan(a, b), taught = E.TAKE_STEPS.slice(0, TAUGHT57[ch]);
+      const rel = who === 'overSpreader' ? p.cols.some((c, i) => !c.spreads.length && E.takeTargets(p, i, 0, taught).includes(i + 1))
+        : ['zeroSkipper', 'stopAtTen', 'shortcut'].includes(who) ? p.cols.some((c) => c.chain) : p.cols.some((c) => c.spreads.length);
+      if (!rel) return;
+      got.n++;
+      const r = playStudent(who, a, b, taught, style), e = r.end.entry;
+      if (e.correct) got.correct++;
+      if (e.helped) got.helped++;
+      if (r.end.requeued) got.twinned++;
+      got.nudges += e.nudges || 0;
+      r.forms.forEach((f) => { got.ahead[f] = (got.ahead[f] || 0) + 1; });
+      if (e.slips.length) { const s = e.slips[0].slip + ':' + e.slips[0].move; got.first[s] = (got.first[s] || 0) + 1; }
+      assert.equal(e.style, style); assert.ok(e.moves.every((x) => x.length === 4));
+    }));
+    assert.deepEqual(got, STUDENT_TABLE[who], style + ' ' + who);
+  }));
+});
+
+test('E7. a help keeps her marks: 43 − 16 in \'one\' answered 8, every step\'s marks keep the front 1 and the 3 unstruck; 503 − 278 in \'above\' answered 4, the zero\'s 10 struck and 9 in the second row throughout; the help starts at the take', () => {
+  const o = movesLesson('ch13', [[43, 16]], { style: 'one' });
+  T.touch(o.st, o.def, 1, 2000); T.digit(o.st, o.def, 3, 1, 3000); T.digit(o.st, o.def, 1, 1, 4000);
+  let r = T.digit(o.st, o.def, 8, 1, 5000);
+  assert.deepEqual([r.slip, r.move], ['fact', 'answer']);
+  assert.equal(r.help.intro, 'Let’s scratch it out.', 'her moves made the spread: it starts at the take');
+  r.help.steps.forEach((s) => { assert.deepEqual([s.marks[0].front, s.marks[0].struck, s.marks[1].m1.v], [1, false, 3]); });
+  assert.equal(r.help.steps[0].sand.crossed.lines, 1, 'the spread in the sand already');
+  const z = movesLesson('zero', [[503, 278]], { style: 'above' });
+  answerProblem(z.st, z.def, (q, c) => (q.col === 0 ? 4 : c.digit), { t: 2000 });
+  const e = z.st.log[0];
+  assert.deepEqual(e.slips, [{ col: 0, move: 'answer', given: 4, slip: 'fact' }]);
+  const z2 = movesLesson('zero', [[503, 278]], { style: 'above' });
+  const ck = { t: 2000 };
+  for (let i = 0; i < 6; i++) { const q = T.question(z2.st), m = q.moves[0][q.move]; if (m.move === 'touch') T.touch(z2.st, z2.def, m.col, ck.t += 1000); else T.digit(z2.st, z2.def, m.value, 1, ck.t += 1000); }
+  r = T.digit(z2.st, z2.def, 4, 1, ck.t += 1000);
+  assert.equal(r.help.intro, 'Across the zero: thirteen loose. Take away eight.');
+  r.help.steps.forEach((s) => { assert.deepEqual([s.marks[1].m1, s.marks[1].m2], [{ v: 10, struck: true, front: null, box: false }, { v: 9, box: false }]); });
+  // E.takeHelp without a style is v0.3's (its marks as v0.3 drew them)
+  assert.deepEqual(E.takeHelp({}, plan(503, 278), 0, 'fact', { shown: true }).steps[0].marks.map((m) => m.mark), [13, 9, 4]);
+  // and 811 − 356's tens answered 6: `kept` at a column that lent and then got says keptGot
+  const b = movesLesson('both', [[811, 356]], { style: 'above' });
+  answerProblem(b.st, b.def, (q, c) => (q.col === 1 ? 6 : c.digit), { t: 2000 });
+  assert.deepEqual(b.st.log[0].slips, [{ col: 1, move: 'answer', given: 6, slip: 'kept' }]);
+  assert.equal(E.takeHelp({}, plan(811, 356), 1, 'kept', { shown: true, style: 'above' }).intro, 'Careful. One row went to the loose, then ten came: ten rows now.');
+  assert.equal(E.takeHelp({}, plan(811, 356), 1, 'kept', { shown: true }).intro, 'Careful. One row went to the loose. No rows now.', 'v0.3\'s line without a style');
+});
+
+test('E8 and 6 (v0.4). helped and correct: 52 − 27 answered 5 first, then right moves, ends on its own right line, no twin, { correct: false, helped: false, ahead: [0] }; a `lend` or `get` slip alone queues no twin, its second in the lesson does; kept, extra, flip, nospread, zero and fact each queue one; \'show\'\'s twin is \'tap\'', () => {
+  const right = [{ who: 'glintstar', text: 'Twenty-five for the Clan.' }];
+  const { def, st } = movesLesson('ch13', [{ a: 52, b: 27, right }]);
+  assert.equal(T.digit(st, def, 5, 1, 2000).form, 'flip');
+  let r = answerProblem(st, def, rightTyper, { t: 3000 });
+  assert.deepEqual([r.entry.correct, r.entry.helped, r.entry.ahead, r.entry.slips], [false, false, [0], []]);
+  assert.deepEqual([r.lineKind, r.balloons], ['right', right], 'not helped: its own right line');
+  assert.equal(st.queue.length, 1, 'no twin');
+  // the keying slips: a twin only on the second in the lesson (or round)
+  const k = movesLesson('ch13', [[43, 16], [85, 39], [97, 52]]);
+  const lendWrong = (q, m) => (m.move === 'lend' && q.number <= 2 ? m.value + 3 : m.value);
+  r = answerProblem(k.st, k.def, rightTyper, { t: 2000 }, lendWrong);
+  assert.deepEqual([r.entry.helped, r.entry.correct, r.entry.slips[0].slip, r.requeued, r.line], [true, false, 'lend', false, 'And you finished it.'], 'a lend slip alone: helped, no twin');
+  r = answerProblem(k.st, k.def, rightTyper, { t: 9000 }, lendWrong);
+  assert.deepEqual([r.entry.slips[0].slip, r.requeued], ['lend', true], 'the second in the lesson: a twin');
+  assert.deepEqual(k.st.keyed, { lend: 2 });
+  const g = movesLesson('ch13', [[43, 16]]);
+  r = answerProblem(g.st, g.def, rightTyper, { t: 2000 }, (q, m) => (m.move === 'get' ? 3 : m.value));
+  assert.deepEqual([r.entry.slips[0].slip, r.requeued], ['get', false]);
+  // every other slip queues one
+  const twins = (which, facts, typer, mover, first) => {
+    const L = movesLesson(which, facts);
+    if (first) first(L);
+    const x = answerProblem(L.st, L.def, typer, { t: 20000 }, mover);
+    return [x.entry.slips.map((s) => s.slip + ':' + s.move).join(','), x.requeued];
+  };
+  assert.deepEqual(twins('ch13', [[43, 16]], rightTyper, (q, m) => (m.move === 'lend' ? 4 : m.value)), ['kept:lend', true]);
+  assert.deepEqual(twins('ch13', [[43, 16]], (q, c) => (q.col === 1 ? 3 : c.digit)), ['kept:answer', true]);
+  assert.deepEqual(twins('ch13', [[43, 16]], rightTyper, null, (L) => T.digit(L.st, L.def, 3, 1, 1500)), ['flip:decide', true]);
+  assert.deepEqual(twins('ch13', [[43, 16]], rightTyper, null, (L) => T.digit(L.st, L.def, 0, 1, 1500)), ['nospread:decide', true]);
+  assert.deepEqual(twins('ch13', [[43, 16]], rightTyper, null, (L) => T.digit(L.st, L.def, 8, 1, 1500)), ['fact:decide', true]);
+  assert.deepEqual(twins('zero', [[503, 278]], rightTyper, null, (L) => T.digit(L.st, L.def, 0, 1, 1500)), ['zero:decide', true]);
+  assert.deepEqual(twins('ch13', [[97, 52]], rightTyper, null, (L) => { T.touch(L.st, L.def, 1, 1500); T.digit(L.st, L.def, 8, 1, 2600); }), ['extra:touch', true]);
+  // 'show''s twin is 'tap', every other 'hers'
+  const s = movesLesson('ch13', [{ a: 43, b: 16, regroup: 'show' }, { a: 70, b: 34, regroup: 'tap' }]);
+  answerProblem(s.st, s.def, (q, c) => (q.col === 0 ? 0 : c.digit), { t: 2000 });
+  answerProblem(s.st, s.def, (q, c) => (q.col === 0 ? 0 : c.digit), { t: 9000 });
+  assert.deepEqual(s.st.queue.slice(2).map((x) => [x.of, x.regroup]), [['43-16', 'tap'], ['70-34', 'hers']]);
+  // the end line: through v0.3's order when not helped (praise for an `ahead` problem with no lines of its own)
+  const pz = movesLesson('ch13', [[43, 16]]);
+  T.digit(pz.st, pz.def, 7, 1, 1500);
+  assert.equal(answerProblem(pz.st, pz.def, rightTyper, { t: 3000 }).lineKind, 'praise');
+});
+
+test('E9. targets: [] at a lend, a get and an answer; the tens from ones2, the hundreds from tens, only left of her column, only at a decide; the struck lender\'s undo; order once; zeroFirst, then zero; her own column and a done one ignored', () => {
+  const P = plan(352, 127);
+  assert.deepEqual(E.takeTargets(P, 0, 0, ['none', 'ones2']), [1]);
+  assert.deepEqual(E.takeTargets(P, 0, 0, ['none', 'ones2', 'ones']), [1], 'no square before `tens`');
+  assert.deepEqual(E.takeTargets(P, 0, 0, ['none', 'ones2', 'ones', 'tens']), [1, 2]);
+  assert.deepEqual(E.takeTargets(P, 1, 0, ['none', 'ones2', 'ones', 'tens']), [2]);
+  assert.deepEqual(E.takeTargets(P, 1, 0, ['none', 'ones2', 'ones']), [], 'the tens\' turn: nothing to tap before `tens`');
+  assert.deepEqual(E.takeTargets(P, 0, 1, E.TAKE_STEPS), [], 'not at a lend');
+  assert.deepEqual(E.takeTargets(P, 0, 3, E.TAKE_STEPS), [], 'nor its answer');
+  assert.deepEqual(E.takeTargets(plan(503, 278), 0, 3, E.TAKE_STEPS), [1, 2], 'a chain\'s second decide');
+  assert.deepEqual(E.takeTargets(plan(43, 16), 1, 0, E.TAKE_STEPS), [], 'a two-digit problem\'s tens');
+  const { def, st } = movesLesson('ch13', [[43, 16]]);
+  let q = T.question(st);
+  assert.deepEqual(q.targets, [1]);
+  assert.deepEqual(T.touch(st, def, 0, 1500), { ignored: 'own' }, 'her own column: the page wiggles it');
+  T.touch(st, def, 1, 2000, 700);
+  assert.deepEqual(T.question(st).targets, [], 'none at the lend');
+  let r = T.touch(st, def, 1, 2500, 300);
+  assert.deepEqual([r.undone, T.question(st).move, st.nudges], [true, 0, 1], 'the undo: back at the decide, a nudge');
+  assert.deepEqual(st.moveLog, [[0, 't', 1, 700], [0, 'u', 1, 300]]);
+  T.touch(st, def, 1, 3000); T.digit(st, def, 3, 1, 4000);
+  assert.deepEqual(T.touch(st, def, 1, 4500), { ignored: 'move' }, 'nothing at a get');
+  T.digit(st, def, 13, 1, 5000);
+  r = T.touch(st, def, 1, 5500);
+  assert.deepEqual([r.pointer, r.line], ['order', 'Take away first, then the next column.']);
+  assert.deepEqual(T.touch(st, def, 1, 5600), { ignored: 'move' }, 'order once a problem');
+  T.digit(st, def, 7, 1, 6000);
+  assert.deepEqual(T.touch(st, def, 0, 6500), { ignored: 'done' }, 'a column done');
+  r = T.digit(st, def, 2, 1, 7000);
+  assert.deepEqual([r.entry.correct, r.entry.nudges], [false, 1], 'the undo is counted; order is not');
+  // the zero tapped first: a pointer, then the slip
+  const z = movesLesson('zero', [[503, 278]]);
+  r = T.touch(z.st, z.def, 1, 2000);
+  assert.deepEqual([r.pointer, r.line, r.glow, T.question(z.st).move], ['zeroFirst', 'That zero has no rows to give. So a square first.', 'hundreds', 0]);
+  r = T.touch(z.st, z.def, 1, 3000);
+  assert.deepEqual([r.slip, r.help.fix, T.question(z.st).move, T.question(z.st).box.col], ['zero', { move: 'touch', col: 2 }, 1, 2], 'the second: the slip, the hundreds struck for her');
+  assert.deepEqual(z.st.slips, [{ col: 0, move: 'touch', given: 1, slip: 'zero' }]);
+  // where and gave
+  const w = movesLesson('ch14', [[352, 127]], { taught: ['none', 'ones2', 'ones', 'tens'] });
+  r = T.touch(w.st, w.def, 2, 2000);
+  assert.deepEqual([r.pointer, r.line, r.glow], ['where', 'Next door first: the rows.', 'tens']);
+  const gv = movesLesson('zero', [[503, 278]]);
+  T.touch(gv.st, gv.def, 2, 2000); T.digit(gv.st, gv.def, 4, 1, 3000); T.digit(gv.st, gv.def, 10, 1, 4000);
+  r = T.touch(gv.st, gv.def, 2, 5000);
+  assert.deepEqual([r.pointer, r.line, r.glow], ['gave', 'The squares gave already. Now the rows.', 'tens']);
+  // a turn that needs nothing: her touch strikes it, `extra` is judged at its number (a second tap undoes it)
+  const x = movesLesson('ch13', [[97, 52]]);
+  r = T.touch(x.st, x.def, 1, 2000);
+  assert.deepEqual([r.accepted, r.box], [true, { col: 1, kind: 'lend', row: 1 }]);
+  assert.equal(T.question(x.st).marks[1].struck, true);
+  assert.equal(T.touch(x.st, x.def, 1, 2500).undone, true);
+  T.touch(x.st, x.def, 1, 3000);
+  r = T.digit(x.st, x.def, 8, 1, 4000);
+  assert.deepEqual([r.slip, r.move, r.line, r.help.fix], ['extra', 'touch', 'Careful: seven take away two? The loose have enough. No row goes.', { move: 'undo', col: 1 }]);
+  assert.deepEqual([T.question(x.st).marks[1].struck, T.question(x.st).box.kind, T.question(x.st).targets], [false, 'answer', []], 'the strike undone, the answer box ringed, no target left');
+  assert.deepEqual(x.st.slips, [{ col: 0, move: 'touch', given: 1, slip: 'extra' }]);
+});
+
+test('E10 and 7 (v0.4). the modes: \'show\' asks each number (a wrong one lettered, no slip); \'tap\' asks only a link new to the chapter (chapter 13\'s 70 − 34 both; 14\'s 640 − 218 none); the picture moves before each ask in \'tap\' and \'show\', after each OK in \'hers\'; T.tap is T.touch on the glowing column', () => {
+  // 'show'
+  const S13 = S57.ch13.def;
+  const show = E.takeShow(S13, plan(43, 16), 0, { mode: 'show', style: 'above' });
+  assert.deepEqual(show.steps.map((x) => x.say), ['Three take away six? Only three loose. Not enough.', 'So I spread a row. Four rows, one goes: three.', 'Ten more loose: thirteen. Write it on top.', 'Thirteen take away six.']);
+  assert.deepEqual(show.steps.map((x) => x.ask), [null, { col: 1, kind: 'lend', value: 3 }, { col: 0, kind: 'get', value: 13, reads: 13 }, null]);
+  assert.deepEqual(show.steps.map((x) => x.touch), [null, 1, null, null], 'Tallyheart taps the 4');
+  assert.equal(E.takeShow(S13, plan(43, 16), 0, { mode: 'show', style: 'one' }).steps[2].say, 'Ten more loose: write a little 1 in front.');
+  const zs = E.takeShow(S13, plan(702, 345), 0, { mode: 'show', style: 'above' });
+  assert.deepEqual(zs.steps.map((x) => x.say), ['Two take away five? Not enough loose, and no rows to spread.', 'So a square first. Seven squares, one goes: six.', 'Ten rows: ten. Write it on top.', 'Now a row. Ten rows, one goes: nine.', 'Ten more loose: twelve. Write it on top.', 'Twelve take away five.']);
+  assert.deepEqual(zs.steps.filter((x) => x.ask).map((x) => x.ask.value), [6, 10, 9, 12], 'four numbers she types');
+  assert.equal(E.takeShow(S13, plan(702, 345), 0, { mode: 'show', style: 'one' }).steps[2].say, 'Ten rows: write a little 1 in front of the zero.');
+  assert.deepEqual(E.takeShow(S13, plan(352, 127), 0, { mode: 'show', style: 'above' }).steps[1].say, 'So I spread a row. Five rows, one goes: four.');
+  assert.equal(E.takeShow(S13, plan(105, 9), 0, { mode: 'show', style: 'above' }).steps[1].say, 'So a square first. One square, one goes: none.', 'the none form');
+  const { def, st } = movesLesson('ch13', [{ a: 43, b: 16, regroup: 'show' }]);
+  assert.deepEqual(T.digit(st, def, 7, 1, 1500), { ignored: 'show' }, 'Tallyheart makes the touch');
+  assert.deepEqual(T.question(st).targets, []);
+  let r = T.touch(st, def, 1, 2000);
+  assert.deepEqual([r.accepted, r.line, r.stage, r.picture.spread], [true, 'So I spread a row. Four rows, one goes: three.', { col: 0, spreads: 1, half: true }, { from: 'tens', to: 'ones', stage: 'out' }], 'the row slides out before she is asked');
+  r = T.digit(st, def, 4, 1, 3000);
+  assert.deepEqual([r.right, r.lettered, r.slip, r.line, r.stage.flight], [false, 3, undefined, 'Ten more loose: thirteen. Write it on top.', 'open'], 'a wrong number lettered, no slip; the ten opens as the get box does');
+  r = T.digit(st, def, 13, 1, 4000);
+  assert.deepEqual([r.right, r.line], [true, 'Thirteen take away six.']);
+  r = answerProblem(st, def, rightTyper, { t: 5000 });
+  assert.deepEqual([r.entry.correct, r.entry.worked, r.entry.slips, r.entry.moves.map((x) => x[1])], [true, true, [], ['l', 'g']], 'Tallyheart\'s touch is not hers');
+  // 'tap': the asks by the chapter that teaches the link
+  assert.deepEqual(E.takeShow(S13, plan(70, 34), 0, { mode: 'tap', style: 'above' }).taps.map((x) => x.say), ['No loose. Spread a row: tap it.', 'One row goes. How many rows now?', 'No loose, and ten more. How many loose now?']);
+  assert.equal(E.takeShow(S13, plan(70, 34), 0, { mode: 'tap', style: 'one' }).taps[2].say, 'No loose, and ten more: write a little 1 in front.');
+  assert.deepEqual(E.takeShow(S57.ch14.def, plan(640, 218), 0, { mode: 'tap', style: 'above' }).taps.map((x) => x.say), ['No loose. Spread a row: tap it.', null, null], 'the row\'s link is chapter 13\'s');
+  const asks = (teach, a, b, col) => E.takeShow({ teach }, plan(a, b), col, { mode: 'tap', style: 'above' }).taps.filter((x) => x.move !== 'touch').every((x) => x.say != null);
+  assert.deepEqual([asks('tens', 418, 162, 1), asks('zero', 604, 137, 0), asks('both', 523, 247, 0), asks('both', 523, 247, 1), asks('zeros', 600, 248, 0), asks(undefined, 43, 16, 0)],
+    [true, true, false, false, false, false], '15\'s 418 − 162 and 18\'s 604 − 137 ask; 16\'s 523 − 247, 19\'s 600 − 248 and a set with no teach do not');
+  const tp = movesLesson('ch13', [{ a: 70, b: 34, regroup: 'tap' }]);
+  assert.deepEqual(T.digit(tp.st, tp.def, 6, 1, 1500), { ignored: 'tap' }, 'a digit first types nothing');
+  assert.equal(T.question(tp.st).tap, 1); assert.equal(T.question(tp.st).glow, 'tens');
+  assert.deepEqual(T.tap(tp.st, true, tp.def), { off: true, glow: 'tens', say: true, line: 'The rows: the glowing ones.' });
+  assert.equal(T.tap(tp.st, true, tp.def).say, false, 'once');
+  r = T.tap(tp.st, false, tp.def, 2000);
+  assert.deepEqual([r.accepted, r.col, r.line, r.stage.half], [true, 1, 'One row goes. How many rows now?', true], 'T.tap: T.touch on the glowing column, the store first');
+  assert.equal(T.question(tp.st).tap, 0);
+  r = T.digit(tp.st, tp.def, 6, 1, 3000);
+  assert.deepEqual([r.right, r.line, r.stage.flight], [true, 'No loose, and ten more. How many loose now?', 'open']);
+  r = T.digit(tp.st, tp.def, 10, 1, 4000);
+  assert.deepEqual([r.right, r.line], [true, 'Ten take away four.']);
+  assert.equal(T.question(tp.st).stage, 'after');
+  const t14 = movesLesson('ch14', [{ a: 640, b: 218, regroup: 'tap' }]);
+  r = T.tap(t14.st, false, t14.def, 2000);
+  assert.deepEqual([r.accepted, r.line], [true, undefined], 'no ask');
+  r = T.digit(t14.st, t14.def, 5, 1, 3000);
+  assert.deepEqual([r.slip, r.line], ['lend', 'Four rows, and one goes: three rows.'], 'a wrong number still gets its move-help');
+  // 'hers': the store after each of her numbers
+  const h = movesLesson('ch13', [[43, 16]]);
+  r = T.touch(h.st, h.def, 1, 2000);
+  assert.deepEqual(r.stage, { col: 0, spreads: 0 }, 'nothing moves at the touch');
+  r = T.digit(h.st, h.def, 3, 1, 3000);
+  assert.deepEqual([r.stage, r.picture.spread, r.picture.tens, r.picture.ones], [{ col: 0, spreads: 1, half: true }, { from: 'tens', to: 'ones', stage: 'out' }, 3, 13], 'the row rests after her lend');
+  r = T.digit(h.st, h.def, 13, 1, 4000);
+  assert.deepEqual([r.stage, r.picture.spread.stage], [{ col: 0, spreads: 1, flight: 'open' }, 'open'], 'and opens after her get');
+  // E.takePicture's half stage: the slide's object, drawn 'out'
+  const slide = E.takePicture(null, { a: 43, b: 16 }, { col: 0, spreads: 1, flight: 'slide' });
+  assert.deepEqual(E.takePicture(null, { a: 43, b: 16 }, { col: 0, spreads: 1, half: true }), Object.assign({}, slide, { spread: { from: 'tens', to: 'ones', stage: 'out' } }));
+  assert.deepEqual(E.takePicture(null, { a: 503, b: 278 }, { col: 0, spreads: 2, half: true }).spread, { from: 'tens', to: 'ones', stage: 'out' });
+});
+
+test('E11. the log: `style`, `moves` (four elements each), `ahead`, `nudges` only on a problem with a spread; each slip with its move; `cols` the sum of her move and answer times; the save stays version 2', () => {
+  const { def, st } = movesLesson('ch13', [[43, 16], [97, 52]]);
+  T.touch(st, def, 1, 2000, 1800); T.digit(st, def, 3, 2300, 3000); T.digit(st, def, 13, 2600, 4000);
+  T.digit(st, def, 7, 1500, 5000);
+  let r = T.digit(st, def, 2, 1200, 6000);
+  assert.deepEqual(r.entry.moves, [[0, 't', 1, 1800], [0, 'l', 3, 2300], [0, 'g', 13, 2600]], 'the design\'s example');
+  assert.deepEqual([r.entry.style, r.entry.cols, r.entry.ms], ['above', [8200, 1200], 9400]);
+  assert.ok(!('ahead' in r.entry) && !('nudges' in r.entry), 'only when they happened');
+  r = answerProblem(st, def, rightTyper, { t: 9000 });
+  assert.deepEqual(Object.keys(r.entry), ['set', 'a', 'b', 'answer', 'given', 'correct', 'helped', 'slips', 'ms', 'cols', 'at', 'kind', 'digits', 'regroup'], 'a problem with no spread: v0.3\'s entry');
+  assert.equal(E.SAVE_VERSION, 2);
+  const cat = E.blankCat({ now: 1 });
+  st.log.forEach((e) => E.logTake(cat, e));
+  E.setTakeStyle(cat, 'one');
+  const back = E.migrate(clone({ version: 2, cats: [cat], current: cat.id, settings: {} }));
+  assert.equal(back.version, 2); assert.deepEqual(back.cats[0].takes, cat.takes, 'the moves and the style kept');
+  // the grown-ups' table counts the moves only once a row has some
+  const tbl = E.takeTable(cat).rows;
+  assert.deepEqual(tbl.map((x) => [x.kind, x.moves, x.movesRight, x.ahead]), [['none', undefined, undefined, undefined], ['ones', 2, 2, 0]]);
+  const c2 = E.blankCat({ now: 1 });
+  E.logTake(c2, { set: 'x', a: 43, b: 16, answer: 27, given: '27', correct: false, helped: true, style: 'above', ms: 1, cols: [], at: 1, kind: 'ones', digits: 2, regroup: 'hers',
+    moves: [[0, 't', 1, 1], [0, 'l', 4, 1], [0, 'g', 13, 1]], ahead: [0], slips: [{ col: 0, move: 'lend', given: 4, slip: 'kept' }, { col: 0, move: 'decide', given: 8, slip: 'fact' }] });
+  const t2 = E.takeTable(c2);
+  assert.deepEqual([t2.rows[0].moves, t2.rows[0].movesRight, t2.rows[0].ahead], [2, 1, 1], 'Marks right: one of her two numbers');
+  assert.deepEqual(t2.teen, [], 'a `fact` at a decide is not a teen fact missed (only at the answer)');
+});
+
+test('L2. chapters 1 to 12 as live: every case of tests/fixtures/takes-v25-entries.json (recorded on v25\'s engine, phase 0) played on today\'s gives deep-equal entries, states and lines (tapHere\'s new words apart, by name)', () => {
+  const G = require('./fixtures/make-takes-v25.js');
+  const raw = require('fs').readFileSync(require('path').join(__dirname, 'fixtures/takes-v25-entries.json'), 'utf8');
+  // tapHere is the one v0.3 line the kit v0.4 rewords (no live chapter says it): its v25 words read as today's
+  const rec = JSON.parse(raw.replace(/The rows: up here\./g, 'The rows: the glowing ones.').replace(/The squares: up here\./g, 'The squares: the glowing ones.'));
+  assert.ok(/^0\.12\.0 \(chapter 12/.test(rec.recorded.engine), 'recorded on v25\'s engine: ' + rec.recorded.engine);
+  const now = clone(G.run(PC));
+  assert.deepEqual(Object.keys(now.cases), Object.keys(rec.cases));
+  Object.keys(rec.cases).forEach((k) => assert.deepEqual(now.cases[k], rec.cases[k], k));
+  assert.ok(Object.keys(rec.cases).length >= 27);
+});
+
+test('L3. E.TAKE_LINES\' v0.3 keys deep-equal to v25\'s but tapHere (worded anew, pinned by name) and `tap` (its two zero forms added, its own two as they were); E.TAKE_SLIPS\' v0.3 names in their order', () => {
+  const rec = require('./fixtures/takes-v25-entries.json');
+  Object.keys(rec.lines).forEach((k) => {
+    if (k === 'tapHere') assert.deepEqual(E.TAKE_LINES.tapHere, { tens: 'The {rows}: the glowing ones.', hundreds: 'The {squares}: the glowing ones.' });
+    else if (k === 'tap') assert.deepEqual(E.TAKE_LINES.tap, Object.assign({}, rec.lines.tap, { onesZero: 'No {loose}. {Spread} a {row}: tap it.', tensZero: 'No {rows}. {Spread} a {square}: tap it.' }));
+    else assert.deepEqual(E.TAKE_LINES[k], rec.lines[k], k);
+  });
+  assert.deepEqual(E.TAKE_SLIPS.filter((x) => rec.slips.includes(x)), rec.slips);
+  assert.deepEqual(E.TAKE_WORDS, rec.words);
+});
+
+test('L4. a v25 take state in the slot: chapter 12\'s lesson saved at its third problem migrates deep-equal and plays on with the same lines; a v25 \'tap\' state with `tapped: 1` resumes at move 3; bad v0.4 keys drop a state; every fixture save migrates as before', () => {
+  const G = require('./fixtures/make-takes-v25.js');
+  const rec = require('./fixtures/takes-v25-entries.json');
+  const R = rec.cases['ch12-lesson-resume'];
+  const save = (state) => ({ version: 2, cats: [Object.assign(E.blankCat({ id: 'v25-cat', now: 1 }), { lesson: { mode: 'chapter', frame: 'f048', chapter: 'ch12', state: clone(state) }, chapter: 'ch12', frame: 'f048' })], current: 'v25-cat', settings: {} });
+  const st = E.migrate(save(R.saved)).cats[0].lesson.state;
+  assert.deepEqual(st, R.saved, 'migrates deep-equal');
+  const L = E.takeLesson(E.blankCat({ id: 'x', now: 1 }), PC.story.ch12, 'ch12-take', G.T0);
+  const script = clone(G.CH12_SLIPS);
+  delete script.miss['254-131:0']; delete script.miss['58-23:0'];
+  const r = G.drive(E, L.def, st, script, E.blankCat({ id: 'v25-cat', now: G.T0 }), R.t);
+  assert.deepEqual(clone(r.steps), R.steps, 'the same questions, lines and results');
+  assert.deepEqual(clone(r.state), R.state);
+  // the v25 'tap' state (every step taught, one spread tapped)
+  const tapSt = E.migrate(save(rec.tapState.state)).cats[0].lesson.state;
+  assert.deepEqual(tapSt, rec.tapState.state, 'a good state');
+  const q = T.question(tapSt);
+  assert.deepEqual([q.move, q.moves[0][q.move].move, q.moves[0][q.move].col, q.glow], [3, 'touch', 1, 'tens'], 'at move 3: the row to tap');
+  assert.deepEqual([q.marks[2].m1.v, q.marks[1].m1.v], [6, 10], 'its first link lettered');
+  const T2 = T.tap(tapSt, false, {}, 9e12);
+  assert.equal(T2.accepted, true); assert.equal(tapSt.move, 4);
+  // bad v0.4 keys drop the state
+  const good = movesLesson('ch13', [[43, 16]]).st;
+  assert.ok(E.okLesson({ state: good }));
+  [{ style: 'sideways' }, { move: 9 }, { move: 1.5 }, { moveLog: [[1, 2]] }, { moveMs: ['x'] }, { ahead: [-1] }, { nudges: -1 }, { pale: 12 }, { lit: 3 }, { touched: 5 }, { shut: 'yes' }, { keyed: [] }]
+    .forEach((bad) => assert.ok(!E.okLesson({ state: Object.assign(clone(good), bad) }), JSON.stringify(bad)));
+  const badItem = clone(good); badItem.queue[0].moveStyle = 'up';
+  assert.ok(!E.okLesson({ state: badItem }));
+  // (every v25 fixture save migrating as before: test 15)
 });

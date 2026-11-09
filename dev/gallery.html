@@ -787,11 +787,14 @@
   // the help's sand drawn the quick way (PC.art.sand, kind 'quick') and the quick marks for a set (PC.art.quickMarks).
   // Each is its own picture, not a scene, so each panel draws at once, on the lesson panel's colour; every title starts
   // "take-aways:" (?only=take-aways shows them alone). 503 - 278 and 43 - 16 are section 1's and section 2's own.
+  // v0.4 (decision 57): the resting stage, `stage: 'out'`, between her lend and its get, for a row, a square and a zero's row.
   var TAKES = [
     ['store: 503 as it opens', { fn: 'placeValue', o: { hundreds: 5, tens: 0, ones: 3 } }],
     ['store: 503 - 278, a square slides into the rows (slide)', { fn: 'placeValue', o: { hundreds: 4, tens: 10, ones: 3, fresh: { tens: 10, ones: 0 }, spread: { from: 'hundreds', to: 'tens', stage: 'slide' } } }],
+    ['store: 503 - 278, the square resting unopened in the rows, after her first lend (out: v0.4, between a lend and its get)', { fn: 'placeValue', o: { hundreds: 4, tens: 10, ones: 3, fresh: { tens: 10, ones: 0 }, spread: { from: 'hundreds', to: 'tens', stage: 'out' } } }],
     ['store: 503 - 278, the square opens into ten rows (open)', { fn: 'placeValue', o: { hundreds: 4, tens: 10, ones: 3, fresh: { tens: 10, ones: 0 }, spread: { from: 'hundreds', to: 'tens', stage: 'open' } } }],
     ['store: 503 - 278, a row slides into the loose (slide)', { fn: 'placeValue', o: { hundreds: 4, tens: 9, ones: 13, fresh: { tens: 9, ones: 10 }, spread: { from: 'tens', to: 'ones', stage: 'slide' } } }],
+    ['store: 503 - 278, the zero\'s row resting unopened by the loose, after her second lend (out)', { fn: 'placeValue', o: { hundreds: 4, tens: 9, ones: 13, fresh: { tens: 9, ones: 10 }, spread: { from: 'tens', to: 'ones', stage: 'out' } } }],
     ['store: 503 - 278, the row opens into a ten-frame (open)', { fn: 'placeValue', o: { hundreds: 4, tens: 9, ones: 13, fresh: { tens: 9, ones: 10 }, spread: { from: 'tens', to: 'ones', stage: 'open' } } }],
     ['store: 503 - 278 across the zero, landed (nine rows, one place empty; 3 loose and a ten)', { fn: 'placeValue', o: { hundreds: 4, tens: 9, ones: 13, fresh: { tens: 9, ones: 10 } } }],
     ['store: 503 - 278, the ones taken (the 3 old, then 5 of the ten)', { fn: 'placeValue', o: { hundreds: 4, tens: 9, ones: 13, fresh: { tens: 9, ones: 10 }, taken: { ones: 8 } } }],
@@ -799,6 +802,7 @@
     ['store: 811 - 356 done: 455 left (rows fresh from a square, a ten-frame)', { fn: 'placeValue', o: { hundreds: 7, tens: 10, ones: 11, fresh: { tens: 10, ones: 10 }, taken: { hundreds: 3, tens: 5, ones: 6 } } }],
     ['store: 418 - 162, tap the squares (glow: hundreds)', { fn: 'placeValue', o: { hundreds: 4, tens: 1, ones: 8, taken: { ones: 2 }, glow: 'hundreds' } }],
     ['store: 43 - 16, tap a row (glow: tens; no squares: two zones)', { fn: 'placeValue', o: { hundreds: 0, tens: 4, ones: 3, glow: 'tens' } }],
+    ['store: 43 - 16, three rows and the row resting unopened by the three loose, after her lend (out)', { fn: 'placeValue', o: { hundreds: 0, tens: 3, ones: 13, fresh: { ones: 10 }, spread: { from: 'tens', to: 'ones', stage: 'out' } } }],
     ['store: 43 - 16, the row opens (open)', { fn: 'placeValue', o: { hundreds: 0, tens: 3, ones: 13, fresh: { ones: 10 }, spread: { from: 'tens', to: 'ones', stage: 'open' } } }],
     ['store: 43 - 16 done: 27 left', { fn: 'placeValue', o: { hundreds: 0, tens: 3, ones: 13, fresh: { ones: 10 }, taken: { tens: 1, ones: 6 } } }],
     ['store: 999, every place full', { fn: 'placeValue', o: { hundreds: 9, tens: 9, ones: 9 } }],

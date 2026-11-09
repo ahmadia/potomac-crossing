@@ -98,7 +98,8 @@ function play(E, story, cat, script, stop) {
 }
 
 /* A take frame (the new engine only): the lesson taken up at its frame or started, each column answered
- * as the page answers it (a 'tap' turn's spreads tapped first; the leftmost blank box OK'd empty; the ones
+ * as the page answers it (a 'tap' turn's spreads tapped first, or under the kit v0.4 the column's moves made right
+ * first; the leftmost blank box OK'd empty; the ones
  * of the problems in `script.takeMiss` ("503-278") typed wrong the first time asked, never a twin's), each
  * entry logged (E.logTake), the lesson recorded at its last answer, then the frame's Next. False when it
  * stopped partway (`script.stopIn[frame]` columns). */
@@ -111,8 +112,16 @@ function playTakes(E, story, cat, id, setId, script) {
   const steps = script.stopIn && script.stopIn[id];
   let n = 0, rec = null;
   while (!T.done(st) && (steps == null || n < steps)) {
-    while (T.question(st).tap > 0) T.tap(st);
-    const q = T.question(st), c = q.plan.cols[q.col];
+    // the kit v0.4 (decision 57): a state with moves (`T.question(st).moves`) makes them as the page does, each target
+    // touched (in 'show', Tallyheart's touch the page makes), each box given its right number; then the column's answer
+    let q = T.question(st);
+    if (q.moves) {
+      const m = q.moves[q.col][q.move];
+      if (m.move === 'touch') { T.touch(st, def, m.col, script.t += 1000, script.ms || 3000); continue; }
+      if (m.move === 'lend' || m.move === 'get') { T.digit(st, def, m.value, script.ms || 3000, script.t += 1000); continue; }
+    } else while (T.question(st).tap > 0) T.tap(st);
+    q = T.question(st);
+    const c = q.plan.cols[q.col];
     const miss = (script.takeMiss || []).includes(q.a + '-' + q.b) && !q.twin && q.col === 0 && !st.slips.length;
     const res = T.digit(st, def, c.blank ? '' : miss ? (c.digit + 1) % 10 : c.digit, script.ms || 3000, script.t += 1000);
     if (res.entry) E.logTake(cat, res.entry);

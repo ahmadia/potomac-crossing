@@ -1,8 +1,8 @@
 # Chapter 14: The Night Watch
 
-*Draft v0.4 · 2026-11-08 (the editor on v0.3: the verify, leftovers and second maths critics’ findings) · on the brief
-v1.1 · about 22½ minutes to play on the plain path (21½ to 23½ across the kit’s maths), about 24½ with the salamander
-(23 to 25½)*
+*Draft v0.4 · 2026-11-08 (the editor on v0.3: the verify, leftovers and second maths critics’ findings; notes for
+decision 57, 2026-11-09) · on the brief v1.1 · about 23¼ minutes to play on the plain path (22 to 24½ across the kit’s
+maths, decision 57’s moves included), about 25 with the salamander (23½ to 26½)*
 
 *How to read this draft: each line (---) is a new screen, about one comic panel. **Choose** marks a choice (none sets a
 flag), **Tap** marks something she taps (one tap: nothing to type, nothing to miss), **Counts** marks a Count she types
@@ -105,9 +105,9 @@ hold this many. I’ll say each step. You type it.”
 “Pretend the store holds three hundred fifty-two.” / “The Clan eats one hundred twenty-seven.”
 
 **Take away:** 352 − 127, the store less what the Clan eats *(the set opens on it, worked, `'show'`: the two balloons
-above are its prompt, Tallyheart’s, seven words and six; she says each column, ones first, and spreads the row herself,
-and she types each digit; its flip lands at the ones, harmless in `'show'`; its twin, if any, is `'tap'`: no prompt, no
-right line)*
+above are its prompt, Tallyheart’s, seven words and six; she says each column, ones first, taps the 5 and says each
+new number, and she types each one in her marks (4, then 12, or the little 1) and then each digit (decision 57); its
+flip lands at the ones, harmless in `'show'`; its twin, if any, is `'tap'`: no prompt, no right line)*
 
 *Right:* “Two squares, two rows, five loose left,” says Tallyheart.
 
@@ -116,10 +116,11 @@ right line)*
 *The next one’s prompt:* “Your turn,” says Tallyheart.
 
 **Take away:** 640 − 218, 462 − 135, 768 − 315, Tallyheart’s three, in the same set *(640 − 218 is `'tap'`: no loose at
-all, so she taps the row to spread it; then `'hers'`; 768 − 315 needs no spread, and no line says which need one; a
-helped one comes back as a twin, asked plainly, with only the kit’s “One like it.”; at the hundreds a square too many is
-`fact` till chapter 15 (the kit’s taught rule), so its help opens “Let’s scratch it out.”; no `lines` override;
-586 − 231 is cut by decision 56)*
+all, so she taps the row to spread it (“No loose. Spread a row: tap it.”) and types its two new numbers unasked, the
+row’s link being chapter 13’s; then `'hers'`, every spread hers to make; 768 − 315 needs no spread, and no line says
+which need one; a helped one comes back as a twin, asked plainly, with only the kit’s “One like it.”; at the hundreds
+a square too many is `fact` till chapter 15 (the kit’s taught rule), so its help opens “Let’s scratch it out.”; no
+`lines` override; 586 − 231 is cut by decision 56)*
 
 *After 462 − 135, right or helped (never its twin):* *[es]* “¡Trescientos veintisiete!” cheers Chispapaw.
 (Three hundred twenty-seven!)
@@ -597,12 +598,16 @@ invited!
 *For us*
 
 *Words she reads, by ch. 13’s rules, all 240 plain readings; minutes ch. 12’s way (123 a minute, 2 s a screen, 3 a Tap,
-6 a choice, 10 the dream), the maths 5.3 / 6.4 / 7.5 (`check.txt` §9’s figures, recounted for 9 Counts, 5 takes).*
-- *Plain: 1,592–1,613 words (`teach` words and `specialty` friends longest, `ch2Stone` none). 21.4–21.5 minutes (maths
-  25%), 22.4–22.6 (28.6%), 23.5–23.7 (31.9%): under a third, the why as story (the brief). Not in it: the maths pages’
-  own lines (1.1 minutes; as maths 30 / 34 / 37%), a warm-up miss (+0.6–0.75: top 34%). 26.1–28.5 at 90 a minute.*
+6 a choice, 10 the dream), the maths 5.9 / 7.1 / 8.3 with decision 57’s moves (the kit v0.4), on `check.txt` §9’s
+figures recounted for 9 Counts, 5 takes, and the kit v0.4’s design, section 6, for the moves.*
+- *Plain: 1,592–1,613 words (`teach` words and `specialty` friends longest, `ch2Stone` none). 21.9–22.1 minutes (maths
+  26.7%), 23.1–23.3 (30.6%), 24.3–24.5 (34.0%; 33.3% after the kit’s last cut, the warm-up’s third Count): a third at
+  the slow end once that cut is played, the why as story (the brief); the shares at the design’s 16.1 minutes of story
+  (0.1 more at the shortest reading); the move times measured again from her log after chapter 13 (the spec’s item 15).
+  Not in it: the maths pages’ own lines (1.1 minutes; as maths 32 / 35 / 39%), a warm-up miss (+0.6–0.75: top 36.0%,
+  35.3% after the cut). 26.6–29.3 at 90 a minute.*
 - *The salamander: 167–171 words (171 with `foundGroundhog`), 5 screens, 1 Tap, 6 × 9 (the 15th typed answer): 1.8–1.9
-  minutes more; with it 23.1–23.4 (24%), 24.2–24.5 (27.5%), 25.3–25.6 (30.6%).*
+  minutes more; with it 23.7–23.9 (25.5%), 24.9–25.1 (29.2%), 26.2–26.4 (32.6%).*
 - *56 screens (66–76 frames, 72–83 with the salamander; cap 125), 13 Taps, 4 choices (no flag), the dream; 14 typed
   answers; no screen over 40 words (the run’s frame is 14 words; its lines come one a question); never four quiet.*
 

@@ -1,16 +1,20 @@
 # Chapter 13 spec: The Hunter's Crouch
 
+*v0.3 · 2026-11-09 (decision 57: the kit v0.4's moves and marks page; `ch13-take` gains `marks`; the run notes redone on
+the design, `~/potomac-crossing-work/regroup/design.md` and `plan.md`)*
+
 *v0.2 · 2026-11-07 (the spec editor: the spec critics' findings, counts, continuity, kit and Spanish, and decision 55;
 what changed and why in `~/potomac-crossing-work/ch13/spec-editor/notes.md`)*
 
-*The build's contract for chapter 13, beside `docs/build.md`, the take-aways kit's design (`docs/take-aways.md` v0.3) and
-chapter 12's spec (`12-a-spark-at-the-hedge.spec.md` v0.2, whose Spanish feature, Chispapaw and book two this chapter uses
-as built). The story, [`13-the-hunters-crouch.md`](13-the-hunters-crouch.md) (Draft v0.4, final but for decision 55's one
-line, its v0.5), is the source of every word she reads. This spec adds no line she reads except the instruction lines
-under a panel (each Tap's `prompt` is the story's own **Tap** line; a `label` is the hidden button's words), the dream's
-placeholder, the book page (recap, the badger page's four lines, the groundhog's sleeper page), the teaser's title, the
-Counts sets' engine lines (the groundhog's help and filler lines, borrowed from chapter 9's sleeper), the three
-words-table entries, **decision 55's «¡Desagrupo!»** (Chispapaw's whisper on f035: the story's one v0.5 line, queued in
+*The build's contract for chapter 13, beside `docs/build.md`, the take-aways kit's design (`docs/take-aways.md` v0.4,
+decision 57) and chapter 12's spec (`12-a-spark-at-the-hedge.spec.md` v0.2, whose Spanish feature, Chispapaw and book
+two this chapter uses as built). The story, [`13-the-hunters-crouch.md`](13-the-hunters-crouch.md) (Draft v0.4, final
+but for decision 55's one line, its v0.5, and decision 57's marks page and notes, its v0.6), is the source of every word
+she reads. This spec adds no line she reads except the instruction lines under a panel (each Tap's `prompt` is the
+story's own **Tap** line; a `label` is the hidden button's words), the dream's placeholder, the book page (recap, the
+badger page's four lines, the groundhog's sleeper page), the teaser's title, the Counts sets' engine lines (the
+groundhog's help and filler lines, borrowed from chapter 9's sleeper), the three words-table entries, **decision 55's
+«¡Desagrupo!»** (Chispapaw's whisper on f035: the story's one v0.5 line, queued in
 `~/potomac-crossing-work/ch13/after-spec.md`; this spec carries it whether or not v0.5 has landed when the build starts)
 and the grown-ups corner's words for the two flags. Where the story's italic notes and this spec differ, the spec is the
 build's (section 7, item 2). Names in `code` are fixed: the art, the storyboard words and the story builder use exactly
@@ -172,6 +176,7 @@ var MISS = 'There. We’ll come back to that one.', LAST = 'There. Now you’ve 
 
 ```js
 function T(text) { return { who: 'tallyheart', text: text }; }
+function C(text) { return { who: 'chispapaw', text: text }; }
 'ch13-take': {
   op: '-', teach: 'ones2', teacher: 'tallyheart', picture: { kind: 'store' }, done: '',
   facts: [
@@ -183,34 +188,62 @@ function T(text) { return { who: 'tallyheart', text: text }; }
     // if play drags: [486, 253] is cut, the chapter's only maths cut without a story edit (call 28; E.checkTakes still
     // clean, run)
   ],
-  echo: { on: [[85, 39]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] }
+  echo: { on: [[85, 39]], lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:answer}!' }] },
+  // the kit's marks page (decision 57): once, before 43 − 16's prompt, while she has no marks; her style, never a flag
+  marks: {
+    lines: [C('My little Tall One writes it like THIS.'), C('A little 1 in front!'),
+            T('Some write the new number on top instead.'), T('Both are right. Which way do YOU like?')],
+    one: [C('Just like my little Tall One!')],
+    above: [T('On top it is.')]
+  }
   // + lines: LINES13 only if the merged kit lacks rule (a) (section 6, check 1): below, "The extra slip"
 }
 var LINES13 = { extra: { tens: 'Careful. The {loose} had enough, so no {row} went. {Top} {rows} still.',
                          hundreds: 'Let’s scratch it out.' } };
 ```
 
+- **The marks page** (the kit v0.4's `E.takeMarksPage`; shown once, before 43 − 16's prompt, because she has no marks
+  yet: `cat.takes.style` absent; every player meets it here, as no spread is asked before `ones2`): two picture buttons,
+  43 − 16 done in each style (27 in its boxes, the receiver's mark haloed); four balloons, one at a time, each picture
+  glowing with its lines: Chispapaw's "My little Tall One writes it like THIS." and "A little 1 in front!" (the left
+  picture, a little 1), Tallyheart's "Some write the new number on top instead." (the right, 13 over the struck 3) and
+  "Both are right. Which way do YOU like?" (both glow; the buttons go live). A tap sets `cat.takes.style` (`'one'` or
+  `'above'`), never a flag, and letters Chispapaw's "Just like my little Tall One!" or Tallyheart's "On top it is."; she
+  can switch while it shows; the answer line's reading time, or a tap on the stack or the panel, goes on to the prompt.
+  Read to me says the lines, then the labels "A little 1 in front" and "The new number on top".
 - **The worked example, 43 − 16** (`'show'`; run on the kit): the prompt's balloon and the first column's line are one
-  balloon (both Tallyheart's): "Pretend the pile holds forty-three, and the Clan eats sixteen. Ones first." Then Tallyheart
-  works the spread before the keypad wakes: "Three take away six? Only three loose. Not enough." / "So I spread a row: ten
-  more loose." (the picture spreads: a row opens into a ten-frame beside the three loose; the 3 is struck, "13" lettered
-  over it) / "Thirteen take away six." She types 7. The tens: **the kit's school words before its line**, chapter 12's
-  `E.takeLine` change for a `'show'` problem of a `teach: 'ones2'` set: "A row is a ten. A square is a hundred. Now the
-  tens. Three take away one." She types 2. Right in every column: "Two rows, seven loose left." (Tallyheart), waiting for
-  Next. Helped: the kit's "And you finished it. We'll do one like it soon."; **its twin is `'tap'`** (the kit's rule: a
-  `'show'` problem's twin; run: 65 − 47 with the tap step), introduced "One like it.", **no prompt and no right line**.
-- **70 − 34** (`'tap'`): "Your turn. Ones first. Zero take away four." (the prompt joined), "Not enough loose. Spread a
-  row: tap it." (the rows zone glows, the keypad dim; a tap off it: "The rows: up here."; over an empty loose zone, since
-  the kit's `tap` line has no Zero form: section 7, item 16), then "Ten take away four." and "Now the tens. Six take away
-  three." Its twin, if helped, `'hers'`, asked with "One like it." only.
-- **85 − 39, 97 − 52, 486 − 253** (`'hers'`). With the integrator's rule (b), 85 − 39 and 97 − 52 are the set's first two
-  `'hers'` problems, so their lines are full: "Ones first. Five take away nine." (seeing she can't is the lesson) and "Now
-  the tens. Take away three."; "Ones first. Seven take away two." and "Now the tens. Take away five."; 486 − 253 says the
-  columns' names alone ("Ones first." "Now the tens." "Now the hundreds."). (Run both ways: under the kit's present rule
-  85 − 39 heard only "Ones first." / "Now the tens.": the maths critic's round-3 finding, now the integrator's.)
+  balloon (both Tallyheart's): "Pretend the pile holds forty-three, and the Clan eats sixteen. Ones first." Then
+  Tallyheart works the spread **and she types its numbers** (decision 57): "Three take away six? Only three loose. Not
+  enough." / "So I spread a row. Four rows, one goes: three." (a paw-tap on the 4, the 4 struck, a row slides out of the
+  rows; the box over the 4 ringed: she types 3) / "Ten more loose: thirteen. Write it on top." (the ten opens beside the
+  three loose; the box over the struck 3 ringed: she types 13; in `'one'`, "Ten more loose: write a little 1 in front.",
+  the box in front of the 3: she types 1) / "Thirteen take away six." She types 7. A wrong number here is lettered for
+  her, no slip (the worked example). The tens: **the kit's school words before its line**, chapter 12's `E.takeLine`
+  change for a `'show'` problem of a `teach: 'ones2'` set: "A row is a ten. A square is a hundred. Now the tens. Three
+  take away one." She types 2 (her own gold 3 is the top). Right in every column: "Two rows, seven loose left."
+  (Tallyheart), waiting for Next. Helped: the kit's "And you finished it. We'll do one like it soon."; **its twin is
+  `'tap'`**, every number asked (the row's link is this chapter's) (the kit's rule: a `'show'` problem's twin; run:
+  65 − 47 with the tap step), introduced "One like it.", **no prompt and no right line**.
+- **70 − 34** (`'tap'`): "Your turn. Ones first. Zero take away four." (the prompt joined), "No loose. Spread a row: tap
+  it." (the kit v0.4's `tap.onesZero`: section 7, item 16, closed; the 7 and the rows zone glow, the keypad dim; a tap
+  off them: "The rows: the glowing ones."); she taps: the row slides out, "One row goes. How many rows now?" (she types
+  6); the ten opens, "No loose, and ten more. How many loose now?" (she types 10; in `'one'`, "No loose, and ten more:
+  write a little 1 in front.", 1); then "Ten take away four." and "Now the tens. Six take away three." Its twin, if
+  helped, `'hers'`, asked with "One like it." only.
+- **85 − 39, 97 − 52, 486 − 253** (`'hers'`). With moves: each spread is hers, the tap, the two new numbers, then the
+  answer, and nothing glows (85 − 39: she taps the 8, types 7, types 15 or 1, then 6). A right digit typed before the
+  moves is the kit's `ahead`: kept pale, "Right! Now show me your marks.", the 8 glows; never right first time. With the
+  integrator's rule (b), 85 − 39 and 97 − 52 are the set's first two `'hers'` problems, so their lines are full: "Ones
+  first. Five take away nine." (seeing she can't is the lesson) and "Now the tens. Take away three."; "Ones first. Seven
+  take away two." and "Now the tens. Take away five."; 486 − 253 says the columns' names alone ("Ones first." "Now the
+  tens." "Now the hundreds."). (Run both ways: under the kit's present rule 85 − 39 heard only "Ones first." / "Now the
+  tens.": the maths critic's round-3 finding, now the integrator's.)
 - **No line says which problems need a spread** ("Do we need to spread?" is chapter 17's). A spread taken where none is
-  needed is the kit's `extra` slip: 97 − 52's tens typed 3 (9 − 1 − 5) gets "Careful. The loose had enough, so no row went.
-  Nine rows still.", the lesson's point (run).
+  needed is the kit's `extra` slip, caught twice over: **at the tap**, a tap on 97 − 52's 9 (or 486 − 253's 8) strikes
+  it and opens its box, and typing its new number is `extra`, "Careful: seven take away two? The loose have enough. No
+  row goes." (the strike undone; logged `{ col: 0, move: 'touch', slip: 'extra' }`, with a twin; a second tap on the
+  struck 9 before typing undoes it, a nudge); and **in her head**, 97 − 52's tens typed 3 (9 − 1 − 5) still gets
+  "Careful. The loose had enough, so no row went. Nine rows still.", the lesson's point (run).
 - **The `extra` slip at the hundreds.** 486 − 253's hundreds typed 1 (4 − 1 − 2) got, on the kit at 08f477a, "Careful.
   The rows had enough, so no square went. Four squares still." (run): spreading a square is chapter 15's. **The
   integrator's rule (a) makes the kit say no line about a step she has not learned**: as merged it is `E.takeSlip`'s
@@ -269,9 +302,12 @@ function G(text) { return { who: 'glintstar', text: text }; }
   the take page opens on her question (her prompt), then Tallyheart's column line in her own balloon: "Ones first. Two take
   away seven." (the set's first problem: full lines), then "Now the tens. Take away two." Right: Glintstar's line, waiting
   for Next. Helped: "And you finished it." (no twin: `twins: false`, as chapter 12's store).
-- **The flip lands** at its ones (7 − 2 = 5, the right digit), as the kit designs; **the tens catch it**: a 3 there is
-  `kept`, "Careful. One row went to the loose. Four rows now." (run). A 2 typed first at the ones is a `fact` slip ("Two
-  take away seven: we spread a row, then take seven."): its help takes Glintstar's right line (section 7, item 9).
+- **The flip lands** at its ones (7 − 2 = 5, the right digit). Under decision 57 the spread is hers to make: a 5 typed
+  before any move is the kit's `ahead` in its flip form, "Marks first, then the answer." (no "Right!": it may be a
+  flip), her 5 kept pale and the 5 of the tens glowing; she taps it, types 4 and 12 (or 1), and OKs her 5. The problem
+  is not `correct` but has no slip, so it ends on Glintstar's "Twenty-five for the Clan." (run). A 2 typed first is a
+  `fact` slip ("Two take away seven: we spread a row, then take seven."): its help takes Glintstar's right line (section
+  7, item 9). After her own gold 4, a 3 at the tens is `kept`, "Careful. One row went to the loose. Four rows now."
 - The page shows the kit's store picture at 52 (five rows, two loose): the only picture of the pile's number in the
   chapter (section 4, "No pile drawn").
 
@@ -672,6 +708,8 @@ General rules, then the chapter frame by frame. Chapter 12's file (`app/story/ch
   `meet-3`, `elder`, `fern` (`meet`), the four `oak` spots the sets owner reports clear of the dig (with `oak-near` if it
   had to add it), and the `dig` spots (new). **Vary the camp's
   cameras at noon** (`crowd`, `fountain`, `reveal`), so eight panels are not one.
+- **The storyboard**: `tools/storyboard.mjs` prints the set's marks page as "**Then the marks page**" with its four
+  lines and two after-lines, before the worked example (the kit's tools owner adds it).
 
 ### The frames
 
@@ -795,8 +833,9 @@ box, section 4)
 - **f036** `merge(H13, { spreadMarks: 'two' })`, always on `lesson`: Chispapaw (`wonder`). Caption "Chispapaw stares.";
   her "Three, and ten more… It’s like opening a pack of cookies!"; Tallyheart's "Exactly. Three rows, thirteen loose.
   Still forty-three." and "I’ll say each step. You type it." (four boxes); `counts: { set: 'ch13-take', intro: false,
-  next: 'f037' }` (the lesson: section 2; the take page carries the story's next two screens: the worked example's
-  prompt and column, "Your turn" and Tallyheart's four, and the echo after 85 − 39).
+  next: 'f037' }` (the lesson: section 2; the take page carries the story's next three screens: the kit's marks page
+  (once, while she has no marks), the worked example's prompt and column, "Your turn" and Tallyheart's four, and the
+  echo after 85 − 39).
 - **f037** `merge(H13, { spreadMarks: 'two' })`, always on `lesson`: Tallyheart's "Not enough? Spread a row. That’s a
   warrior’s trick."; Chispapaw's "Tonight, I’ll sit on my little Tall One’s homework. To HELP." (the story's *Done*
   lines: `done: ''` on the set, so they are this frame's).
@@ -1033,27 +1072,31 @@ before its tens line, its right line; 70 − 34's tap lines; a helped 43 − 16'
 helped, never after its twin; the lesson's `state.avoid` is the chapter's take answers, 27, 36, 46, 45, 233, 25, so no
 twin lands on one); **no square talk**: 486 − 253's hundreds typed 1 opens "Let’s scratch it out." and is logged slip
 `fact` in the take log (by rule (a); `extra` only under `LINES13`); 97 − 52's tens typed 3 is the kit's tens `extra`
-line; the warm-up over every one-pick and two-pick case (no pair twice, never 3 × 4 or 6 × 8, every question a numeric
-`table` whose first line is `E.genericQuestion` of `E.hollowDef(STORIES, q.table)`), its echo on the first right answer
-only, "¡Nueve por siete, sesenta y tres!" for 9 × 7; 52 − 27's flip at the ones right and its 3 at the tens `kept`, no
-twin; 6 × 8's and 7 × 8's right lines on a retry (`rightAgain`); the lullaby's prompt the groundhog's "Seven… times…
-eight…" and f063's balloon ending "Unless…"; captions at most 95 characters and no panel with five boxes; 78 frames on a
-plain reading, 84 with the groundhog; the book's lines (seven, eight with `foundGroundhog`), `store: 178`, the badger
-rows and names, the sleeper, `module: 2`; **the sleepers page as the kit draws it**: `E.buildFullBook(cat, stories,
-2).sleepers` null without `foundGroundhog`, and with it the groundhog found (its page drawing
-`PC.art.character('groundhog', { pose: 'sleep' })`) and six plain silhouettes still to find; the teaser; a tom reads
-every line with he and him; no "borrow", "carry", "regroup", "StarClan", "Twoleg", "kittypet", "fresh-kill",
-"Thunderpath", "vigil", "warriors’ den", "whisker-length", "claw-length"; no line calls the marks a dot, a number or a
-count; no badger in any cast.
+line; **the marks page**: `E.takeMarksPage(def, cat)` gives `ch13-take`'s four lines and two after-lines, `E.checkTakes`
+clean; picking writes `cat.takes.style` and no flag; 43 − 16's show asks 3, then 13 (or 1), then 7; 70 − 34's
+`tap.onesZero` and both asks; 97 − 52's 9 tapped and 8 typed logged `{ col: 0, move: 'touch', slip: 'extra' }`; the
+warm-up over every one-pick and two-pick case (no pair twice, never 3 × 4 or 6 × 8, every question a numeric `table`
+whose first line is `E.genericQuestion` of `E.hollowDef(STORIES, q.table)`), its echo on the first right answer only,
+"¡Nueve por siete, sesenta y tres!" for 9 × 7; 52 − 27 answered 5 first, then its moves: `ahead` in its flip form, the
+entry `{ correct: false, helped: false, ahead: [0] }`, Glintstar's right line; its 3 at the tens `kept`, no twin;
+6 × 8's and 7 × 8's right lines on a retry (`rightAgain`); the lullaby's prompt the groundhog's "Seven… times… eight…"
+and f063's balloon ending "Unless…"; captions at most 95 characters and no panel with five boxes; 78 frames on a plain
+reading, 84 with the groundhog; the book's lines (seven, eight with `foundGroundhog`), `store: 178`, the badger rows and
+names, the sleeper, `module: 2`; **the sleepers page as the kit draws it**: `E.buildFullBook(cat, stories, 2).sleepers`
+null without `foundGroundhog`, and with it the groundhog found (its page drawing `PC.art.character('groundhog', { pose:
+'sleep' })`) and six plain silhouettes still to find; the teaser; a tom reads every line with he and him; no "borrow",
+"carry", "regroup", "StarClan", "Twoleg", "kittypet", "fresh-kill", "Thunderpath", "vigil", "warriors’ den",
+"whisker-length", "claw-length"; no line calls the marks a dot, a number or a count; no badger in any cast.
 
 ## 6. Engine needs
 
-**None, on a tree that passes the three checks below.** No new interaction, no new key, no save change (version 2;
-`teach` and `foundGroundhog` are flags). The chapter is data, art and words: three words-table lines, two flags, six
-sets, the book's keys, the art above. Spanish asked as a question is chapter 14's (the sleepers' Spanish asks), not this
-chapter's. Each check names the one engine line the cats owner adds, with its test, only if that check fails.
+**One, the kit's: decision 57's v0.4 (the moves and the marks page), merged before the frames; then none, on a tree that
+passes the four checks below.** No new interaction, no new key, no save change (version 2; `teach` and `foundGroundhog`
+are flags). The chapter is data, art and words: three words-table lines, two flags, six sets, the book's keys, the art
+above. Spanish asked as a question is chapter 14's (the sleepers' Spanish asks), not this chapter's. Each check names
+the one engine line the cats owner adds, with its test, only if that check fails.
 
-**Three checks before the build** (the orchestrator's, on main once the kit, book two and chapter 12 are in):
+**Four checks before the build** (the orchestrator's, on main once the kit, book two and chapter 12 are in):
 1. **The kit's rules as merged** (rules (a) and (b), and the twins' `avoid`, are in the integrator's working copy as of
    2026-11-07: critic-spec-counts' `take13.txt`, critic-kit-r1's `probe-now.txt`). **(a)**, in three parts: play
    `E.takeLesson(cat, ch13, 'ch13-take')` with `T.digit`, typing 1 at 486 − 253's hundreds: the slip is `'fact'` and the
@@ -1083,6 +1126,10 @@ chapter's. Each check names the one engine line the cats owner adds, with its te
    it). On main after chapter 12, `E.takeLine` for 43 − 16's tens, in `'show'`, on a `teach: 'ones2'` set, begins "A row
    is a ten. A square is a hundred." If not (on the kit alone it is "Now the tens. Three take away one."), the cats owner
    adds that one `E.takeLine` condition, with its test.
+4. **The kit v0.4 merged** (decision 57; `~/potomac-crossing-work/regroup/plan.md`): `E.takeMoves`, `T.touch`,
+   `E.takeMarksPage` exist; `E.takeLesson(cat, ch13, 'ch13-take')` has `taught` `['none', 'ones2']`, shows the marks
+   page before 43 − 16's prompt for a cat with no `takes.style`, and its show steps ask 3 and 13; `E.checkTakes` clean
+   with `marks`. If it is not merged the frames wait: decision 57 supersedes v0.3's `'hers'`.
 
 `E.VERSION` `'0.13.0 (chapter 13, <ship date>)'` and its pin are the orchestrator's, at the ship.
 
@@ -1162,9 +1209,9 @@ What is still true of v0.4, and how the build handles it:
     splits. Under the brief's 125.
 14. **Aron's one fact: answered by decision 55** (2026-11-07): "me llevo una" is not hers, so the kit's method and lines
     and the spread and cookie screens (f032 to f036) stand, and her word «desagrupo» comes at the first spread (f035).
-    **Still open, not blocking**: how her class marks a spread on paper (13 over a struck 3, or a small 1 before the 3) and
-    whether it heads the columns C D U; module-2 says either is one CSS rule and the heads, not words-table work, so the
-    build does not wait on it.
+    **Answered by decision 57**: she chooses how a spread is marked (the kit's marks page, this chapter's worked
+    example); still open, not blocking: whether it heads the columns C D U; module-2 says either is one CSS rule and the
+    heads, not words-table work, so the build does not wait on it.
 15. **If decision 54 is reversed** (Tallyheart takes Chispapaw), the screens that change are f016 to f027 (the crouch
     taught by her mentor, the collar), `teach` and its two readers (f019, f078) and chapter 21's payoffs, f079 ("Goodnight,
     MENTOR!"), f081 ("Mentor."), and the recap's third line.
@@ -1172,7 +1219,8 @@ What is still true of v0.4, and how the build handles it:
     `E.TAKE_LINES.tap` has no Zero form, though `showOpen` and `showSpread` have one ("No loose. Not enough."). Kit data,
     the integrator's: `tap.onesZero: 'No {loose}. {Spread} a {row}: tap it.'` and `tap.tensZero` (the kit's test 13 fills
     every line); the orchestrator asks for it. Never a set's `lines.tap` here, which would replace the whole key and need
-    every form. If the kit does not take it: accepted, polish ("not enough loose" is still true of none).
+    every form. If the kit does not take it: accepted, polish ("not enough loose" is still true of none). **Closed by
+    the kit v0.4** (`tap.onesZero` and `tensZero`): 70 − 34 says "No loose. Spread a row: tap it."
 
 ## 8. What chapter 14 inherits
 
@@ -1197,6 +1245,9 @@ What is still true of v0.4, and how the build handles it:
   without it do chapter 14's sets and the store's rounds carry the override: section 6). A slip at a hundreds column that
   spreads a square she has not learned is logged `fact`. Chapter 14's lesson (352 − 127 …) has hundreds that can be
   `extra`. The take answers of a chapter are its lesson twins' `avoid` (the kit's).
+- **Her marks and the moves** (decision 57, the kit v0.4): `cat.takes.style` from this chapter's marks page; every
+  spread made as moves; a `'tap'` problem asks no numbers for a row's link from chapter 14 on (the row's link is this
+  chapter's).
 - **Spanish.** `PC.words.es` gains `resta` ('¡La resta!', Take-aways!: the table holds the form as lettered, so a later
   chapter that letters «la resta» mid-sentence adds its own entry), `noAlcanza` ('¡No alcanza!', Not enough!) and
   `desagrupo` ('¡Desagrupo!', Breaking it into groups!). **Her word for a spread, «¡Desagrupo!», whispered once, at the
@@ -1337,6 +1388,7 @@ What is still true of v0.4, and how the build handles it:
 - **Before the build: the three checks of section 6.** Nothing waits on Aron: decision 55 answered his one fact (section
   7, item 14; the paper marks and C D U are open and not blocking). Ask the integrator for the kit's `tap` Zero forms
   (section 7, item 16).
+- The kit v0.4 (decision 57) is merged before the frames (section 6, check 4).
 - **Step 1, the stub** (on main, after the kit, book two and chapter 12):
   - `app/story/ch13.js`: `PC.story.ch13 = { id: 'ch13', number: 13, title: 'The Hunter’s Crouch', module: 2, start:
     'f001', names: { player: '{name}{ending}' }, frames: { f001: { board: 'STUB.', next: 'f002' }, f002: { board: 'STUB.',

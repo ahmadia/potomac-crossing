@@ -6,6 +6,10 @@
 // art.kit.quick and art.quickMarks draw the same marks; and the gallery's take-aways section draws every panel.
 // The option objects are section 8's, pinned before phase 1: these tests draw hand-written ones (the cross-check that
 // the engine's E.takeHelp steps draw is the UI owner's, tests/takes-ui.test.js, phase 2).
+// v0.4 (decision 57; ~/potomac-crossing-work/regroup/plan.md, the art owner, proof A1): placeValue's resting stage,
+// `spread.stage: 'out'` (E.takePicture's `half`, between her lend and her get), static, for a row, a square and a zero's
+// row, Reduce Motion the same drawing; and every option and stage before it byte for byte (the pin's hash, taken from
+// the tree before the change: e000777's cats.js).
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
@@ -217,6 +221,209 @@ test('junk in, a picture out: numbers clamped, counts within their zones, never 
   assert.equal(ps.filter((p) => p.kind === 'loose' && has(p, 'fresh')).length, 10);
 });
 
+// ---------------------------------------------------------------- PC.art.placeValue, v0.4: the resting stage
+
+// The grid every option and stage before the resting stage is pinned on: 0 to 999 as written; every third as marks and
+// small; every state of every problem's turns for every top from 10 to 999 (each spread at slide, open and end), some
+// as marks, small, and both; the glows; junk, with stages that are not stages. Hashed with PC.engine stood in for
+// (English words, whatever the engine's table holds), it is e000777's (cats.js before 'out'), taken before the change.
+function pvGrid() {
+  const out = [];
+  for (let n = 0; n <= 999; n++) out.push(digits(n));
+  for (let n = 0; n <= 999; n += 3) out.push(Object.assign({ kind: 'marks' }, digits(n)), Object.assign({ small: true }, digits(n)));
+  for (let top = 10; top <= 999; top++) for (const { o } of storeStates(top)) {
+    out.push(o);
+    if (top % 3 === 0) out.push(Object.assign({ kind: 'marks' }, o));
+    if (top % 5 === 0) out.push(Object.assign({ small: true }, o));
+    if (top % 7 === 0) out.push(Object.assign({ kind: 'marks', small: true }, o));
+  }
+  for (const glow of ['hundreds', 'tens']) for (let n = 0; n <= 999; n += 11) out.push(Object.assign({ glow }, digits(n)), Object.assign({ glow, kind: 'marks' }, digits(n)));
+  out.push(undefined, null, {}, { hundreds: -4, tens: 'x', ones: 1e9 }, { hundreds: 12, tens: 30, ones: 30, taken: { hundreds: 99, tens: -1, ones: 'a' } },
+    { tens: 18, ones: 18 }, { hundreds: 3, fresh: { tens: 10, ones: 10 } }, { hundreds: 2, tens: 5, ones: 5, spread: { from: 'ones', to: 'x', stage: 'slide' } },
+    { hundreds: 0, tens: 0, ones: 0, spread: { from: 'tens', to: 'ones', stage: 'open' } }, { hundreds: 0, tens: 0, ones: 0, spread: { from: 'tens', to: 'ones', stage: 'slide' } },
+    { hundreds: 0, tens: 3, ones: 13, fresh: { ones: 10 }, spread: { from: 'tens', to: 'ones', stage: 'rest' } },
+    { hundreds: 0, tens: 3, ones: 13, fresh: { ones: 10 }, spread: { from: 'tens', to: 'ones', stage: 'half' } },
+    { hundreds: 0, tens: 3, ones: 13, fresh: { ones: 10 }, spread: { from: 'tens', to: 'ones', stage: 'OUT' } },
+    { hundreds: 0, tens: 3, ones: 13, fresh: { ones: 10 }, spread: 'out' },
+    { hundreds: 9, tens: 18, ones: 18, fresh: { tens: 10, ones: 10 }, taken: { hundreds: 9, tens: 18, ones: 18 }, kind: 'marks', small: true });
+  return out;
+}
+
+test('every placeValue option and stage before the resting stage draws byte for byte as e000777 drew it (19,065 pictures, hashed)', () => {
+  const real = PC.engine, h = crypto.createHash('sha1'), list = pvGrid();
+  try {
+    PC.engine = {};
+    for (const o of list) h.update(art.placeValue(o == null ? o : JSON.parse(JSON.stringify(o))) + '\n');
+  } finally { PC.engine = real; }
+  assert.equal(list.length, 19065);
+  assert.ok(!list.some((o) => o && o.spread && o.spread.stage === 'out'), 'the pin holds no resting stage');
+  assert.equal(h.digest('hex'), '5054a15412529891284209a3758df80c3ac39fe9', 'an existing store picture changed');
+});
+
+// a group's whole <g …>…</g> (nested groups and all), from the first match of `re`, or null
+function group(svg, re) {
+  const m = re.exec(svg);
+  if (!m) return null;
+  const tag = /<(\/?)g\b[^>]*?(\/?)>/g;
+  let depth = 0, t;
+  tag.lastIndex = m.index;
+  while ((t = tag.exec(svg))) { if (t[2]) continue; depth += t[1] ? -1 : 1; if (!depth) return svg.slice(m.index, tag.lastIndex); }
+  return null;
+}
+const RESTING = /<g class="pc-pv-(row|square) pc-pv-out"/;
+// the k-th spread of a problem's ones turn, resting (the engine's slide stage as v0.3 pins it, its stage made 'out')
+function resting(a, b, k, extra) {
+  const slide = PC.engine.takePicture(null, { a, b }, { col: 0, spreads: k, flight: 'slide' });
+  assert.equal(slide.spread.stage, 'slide', a + ' - ' + b + ': the engine\'s slide stage');
+  return Object.assign({}, slide, { spread: Object.assign({}, slide.spread, { stage: 'out' }) }, extra || {});
+}
+const zoneOf = (svg, id) => { const m = new RegExp('<rect class="pc-zone" data-zone="' + id + '" x="([\\d.]+)" y="[\\d.-]+" width="([\\d.]+)"').exec(svg); return { x: +m[1], w: +m[2] }; };
+const trayIn = (svg, z) => [...svg.matchAll(/<rect class="pc-pv-tray" x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)].map((m) => ({ x: +m[1], y: +m[2], w: +m[3], h: +m[4] })).find((t) => t.x >= z.x && t.x + t.w <= z.x + z.w);
+// the resting picture against the slide's: the same bytes but the label, the slide's <style> gone and its moving piece
+// drawn still in the same box, its drawing the same
+function asSlideEnds(o, label) {
+  const svg = art.placeValue(o), slide = art.placeValue(Object.assign({}, o, { spread: Object.assign({}, o.spread, { stage: 'slide' }) }));
+  const still = group(svg, RESTING), moving = group(slide, /<g class="pc-pv-(row|square) pc-pv-moving"/), css = /<style>.*?<\/style>/.exec(slide);
+  assert.ok(still && moving && css, label + ': a piece resting, and the slide\'s moving one');
+  assert.equal(/data-box="[^"]*"/.exec(still)[0], /data-box="[^"]*"/.exec(moving)[0], label + ': it rests where the slide ends');
+  assert.equal(still.replace(/^<g [^>]*>/, '').replace(/<\/g>$/, ''), moving.replace(/^(<g [^>]*>){3}/, '').replace(/(<\/g>){3}$/, ''), label + ': the same piece, drawn the same');
+  const noLabel = (s) => s.replace(/aria-label="[^"]*"/, '');
+  assert.equal(noLabel(svg), noLabel(slide.replace(css[0], '').replace(moving, () => still)), label + ': everything else as the slide draws it');
+  return svg;
+}
+
+test('the resting stage (\'out\'): 43 - 16 after the lend, three rows and the row resting unopened by the three loose, in their tray, still', () => {
+  const o = resting(43, 16, 1);
+  assert.deepEqual([o.tens, o.ones, o.fresh.ones, o.spread.from, o.spread.to], [3, 13, 10, 'tens', 'ones'], 'the counts as the slide\'s: landed, the lender one less');
+  const svg = asSlideEnds(o, '43 - 16'), vb = viewBox(svg), ps = pieces(svg);
+  wellFormed(svg, '43 - 16 resting');
+  for (const p of ps) inside(p.box, vb, '43 - 16 resting');
+  const plain = ps.filter((p) => !has(p, 'out'));
+  assert.deepEqual([plain.filter((p) => p.kind === 'row').length, plain.filter((p) => p.kind === 'loose').length], [3, 3], 'three rows, three loose');
+  assert.ok(plain.every((p) => p.cls.length === 0), 'nothing fresh, taken, empty or moving: the ten not opened');
+  const out = ps.filter((p) => has(p, 'out'));
+  assert.equal(out.length, 1);
+  assert.equal(out[0].kind, 'row');
+  assert.deepEqual(out[0].cls, ['pc-pv-out']);
+  const z = zoneOf(svg, 'ones'), tray = trayIn(svg, z), b = out[0].box;
+  assert.ok(tray, 'the loose zone\'s tray is drawn');
+  assert.ok(b.x >= tray.x && b.x + b.w <= tray.x + tray.w && b.y >= tray.y && b.y + b.h <= tray.y + tray.h, 'resting in the loose zone\'s tray: ' + JSON.stringify(b) + ' in ' + JSON.stringify(tray));
+  const loose = plain.filter((p) => p.kind === 'loose');
+  assert.ok(loose.every((p) => p.box.y + p.box.h <= tray.y), 'beside the old loose, under them');
+  assert.match(svg, /data-art="place-value"/);
+});
+
+test('the resting stage: 503 - 278 after its first lend, the square resting unopened in the rows\' tray (no old rows), still', () => {
+  const o = resting(503, 278, 1);
+  assert.deepEqual([o.hundreds, o.tens, o.ones, o.fresh.tens, o.spread.from, o.spread.to], [4, 10, 3, 10, 'hundreds', 'tens']);
+  const svg = asSlideEnds(o, '503 - 278, the square'), vb = viewBox(svg), ps = pieces(svg);
+  wellFormed(svg, '503 - 278 square resting');
+  for (const p of ps) inside(p.box, vb, '503 - 278 square resting');
+  const plain = ps.filter((p) => !has(p, 'out'));
+  assert.deepEqual([plain.filter((p) => p.kind === 'square').length, plain.filter((p) => p.kind === 'row').length, plain.filter((p) => p.kind === 'loose').length], [4, 0, 3]);
+  const out = ps.filter((p) => has(p, 'out'));
+  assert.equal(out.length, 1);
+  assert.equal(out[0].kind, 'square');
+  const tray = trayIn(svg, zoneOf(svg, 'tens')), b = out[0].box;
+  assert.ok(tray && b.x >= tray.x && b.x + b.w <= tray.x + tray.w && b.y >= tray.y && b.y + b.h <= tray.y + tray.h, 'resting in the rows\' tray');
+});
+
+test('the resting stage: 503 - 278 after its second lend, the zero\'s row resting unopened by the three loose (nine rows of the square\'s ten, one place empty), still', () => {
+  const o = resting(503, 278, 2);
+  assert.deepEqual([o.hundreds, o.tens, o.ones, o.fresh.tens, o.fresh.ones, o.spread.from, o.spread.to], [4, 9, 13, 9, 10, 'tens', 'ones']);
+  const svg = asSlideEnds(o, '503 - 278, the zero\'s row'), vb = viewBox(svg), ps = pieces(svg);
+  wellFormed(svg, '503 - 278 zero row resting');
+  for (const p of ps) inside(p.box, vb, '503 - 278 zero row resting');
+  const plain = ps.filter((p) => !has(p, 'out'));
+  assert.equal(plain.filter((p) => p.kind === 'square').length, 4);
+  assert.equal(plain.filter((p) => p.kind === 'row' && has(p, 'fresh') && !has(p, 'empty')).length, 9, 'nine rows of the square\'s ten');
+  assert.equal(plain.filter((p) => p.kind === 'row' && has(p, 'empty')).length, 1, 'one place empty: the row that went');
+  assert.equal(plain.filter((p) => p.kind === 'loose').length, 3);
+  assert.ok(!plain.some((p) => p.kind === 'loose' && has(p, 'fresh')), 'the ten not opened');
+  const out = ps.filter((p) => has(p, 'out'));
+  assert.equal(out.length, 1);
+  assert.equal(out[0].kind, 'row');
+  const tray = trayIn(svg, zoneOf(svg, 'ones')), b = out[0].box;
+  assert.ok(tray && b.x >= tray.x && b.x + b.w <= tray.x + tray.w && b.y >= tray.y && b.y + b.h <= tray.y + tray.h, 'resting in the loose zone\'s tray');
+});
+
+test('the resting stage is static: no <style>, no animation, no flight, so Reduce Motion draws the same picture; the same bytes twice; as marks too', () => {
+  for (const [o, label] of [[resting(43, 16, 1), '43 - 16'], [resting(503, 278, 1), '503 - 278 square'], [resting(503, 278, 2), '503 - 278 zero row'],
+    [resting(43, 16, 1, { kind: 'marks' }), '43 - 16 marks'], [resting(503, 278, 1, { kind: 'marks' }), '503 - 278 square marks'], [resting(503, 278, 2, { kind: 'marks' }), '503 - 278 zero row marks']]) {
+    const svg = art.placeValue(o);
+    wellFormed(svg, label);
+    assert.ok(!/<style|animation|@keyframes|transition|pc-pv-moving|pcpv-|prefers-reduced-motion/.test(svg), label + ': nothing moves, so nothing for Reduce Motion to stop');
+    assert.equal(art.placeValue(o), svg, label + ': the same bytes twice');
+    assert.equal((svg.match(/pc-pv-out/g) || []).length, 1, label + ': one piece resting');
+    if (o.kind === 'marks') {
+      assert.ok(!/#AE998A|#8E6448/.test(svg), label + ': no prey colours');
+      asSlideEnds(o, label);
+    }
+  }
+});
+
+test('the resting stage, through every problem\'s turns (every other top from 10 to 999, as prey and every sixth as marks): each spread\'s rest is its slide\'s end, still; a caller passing the receiver as it stood draws the same; small keeps the tray', () => {
+  let n = 0;
+  for (let top = 10; top <= 999; top += 2) {
+    for (const { o, label } of storeStates(top)) {
+      if (!o.spread || o.spread.stage !== 'slide') continue;
+      const r = Object.assign({}, o, { spread: Object.assign({}, o.spread, { stage: 'out' }) });
+      const svg = asSlideEnds(r, label + ' (out)');
+      if (top % 6 === 0) asSlideEnds(Object.assign({ kind: 'marks' }, r), label + ' (out, marks)');
+      const vb = viewBox(svg), ps = pieces(svg);
+      for (const p of ps) inside(p.box, vb, label + ' (out)');
+      assert.ok(!/<style/.test(svg), label + ': still');
+      // the counts with the receiver as it stood (the ten not yet in): the same picture, the same words
+      const before = JSON.parse(JSON.stringify(r)), to = r.spread.to;
+      before[to] -= 10; before.fresh[to] = 0;
+      assert.equal(art.placeValue(before), svg, label + ': the receiver as it stood draws the same');
+      if (top % 10 === 0) {
+        const sm = art.placeValue(Object.assign({ small: true }, r)), svb = viewBox(sm);
+        for (const p of pieces(sm)) inside(p.box, svb, label + ' (out, small)');
+        for (const m of sm.matchAll(/<rect class="pc-pv-tray" x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)) inside({ x: +m[1], y: +m[2], w: +m[3], h: +m[4] }, svb, label + ' (out, small): its tray');
+      }
+      n++;
+    }
+  }
+  assert.ok(n > 700, 'resting stages drawn: ' + n);
+});
+
+test('the resting stage\'s words: the store as it stands and the piece resting, not yet opened; junk with \'out\' never throws', () => {
+  // (the pictures' objects taken from the engine first; then PC.engine stood in for, as the words test below does)
+  const real = PC.engine, r43 = resting(43, 16, 1), r503a = resting(503, 278, 1), r503b = resting(503, 278, 2), r503m = resting(503, 278, 2, { kind: 'marks' });
+  try {
+    PC.engine = {};
+    assert.match(art.placeValue(r43), /aria-label="The store: 3 rows, 3 loose; a row resting by the loose, not yet opened"/);
+    assert.match(art.placeValue(r503a), /aria-label="The store: 4 squares, 0 rows, 3 loose; a square resting by the rows, not yet opened"/);
+    assert.match(art.placeValue(r503b), /aria-label="The store: 4 squares, 9 rows, 3 loose; a row resting by the loose, not yet opened"/);
+    assert.match(art.placeValue(r503m), /aria-label="The quick picture: 4 squares, 9 lines and 3 dots; a line resting by the dots, not yet opened"/);
+    PC.engine = { TAKE_WORDS: { squares: 'centenas', square: 'centena', rows: 'decenas', row: 'decena', loose: 'sueltas' } };
+    assert.match(art.placeValue(r43), /aria-label="The store: 3 decenas, 3 sueltas; a decena resting by the sueltas, not yet opened"/);
+  } finally { PC.engine = real; }
+  for (const o of [{ spread: { from: 'tens', stage: 'out' } }, { hundreds: 0, tens: 0, ones: 0, spread: { from: 'tens', to: 'ones', stage: 'out' } },
+    { hundreds: 0, tens: 0, ones: 0, spread: { from: 'hundreds', to: 'tens', stage: 'out' } }, { hundreds: 2, tens: 5, ones: 5, spread: { from: 'ones', to: 'x', stage: 'out' } },
+    { hundreds: 9, tens: 18, ones: 18, fresh: { tens: 10, ones: 10 }, spread: { from: 'tens', to: 'ones', stage: 'out' }, kind: 'marks', small: true, glow: 'tens' }]) {
+    const svg = art.placeValue(o), vb = viewBox(svg), label = JSON.stringify(o);
+    wellFormed(svg, label);
+    for (const p of pieces(svg)) inside(p.box, vb, label);
+    assert.ok(!/<style/.test(svg), label + ': still');
+  }
+  assert.ok(!/pc-pv-out/.test(art.placeValue({ hundreds: 2, tens: 5, ones: 5, spread: { from: 'ones', to: 'x', stage: 'out' } })), 'no lender, no rest');
+});
+
+// The engine's own `half` stage (design section 5: E.takePicture(def, q, { col, spreads: k, half: true }), the engine
+// owner's, phase 1) draws these same pictures; until it is built this waits.
+const HALF = (() => { try { const o = PC.engine.takePicture(null, { a: 43, b: 16 }, { col: 0, spreads: 1, half: true }); return !!(o && o.spread && o.spread.stage === 'out'); } catch (e) { return false; } })();
+test('E.takePicture\'s `half` stage draws the resting pictures: 43 - 16, 503 - 278 after each lend, store and marks', { skip: HALF ? false : 'the engine\'s half stage is not built yet (the engine owner, phase 1)' }, () => {
+  for (const [a, b, k] of [[43, 16, 1], [503, 278, 1], [503, 278, 2], [70, 34, 1], [811, 356, 1]]) {
+    const o = PC.engine.takePicture(null, { a, b }, { col: 0, spreads: k, half: true });
+    assert.equal(o.spread.stage, 'out', a + ' - ' + b);
+    assert.equal(art.placeValue(o), art.placeValue(resting(a, b, k)), a + ' - ' + b + ' after lend ' + k);
+    const def = { picture: { kind: 'marks' } };
+    assert.equal(art.placeValue(PC.engine.takePicture(def, { a, b }, { col: 0, spreads: k, half: true })), art.placeValue(resting(a, b, k, { kind: 'marks' })), a + ' - ' + b + ' as marks');
+  }
+});
+
 test('the store\'s words: the picture says what it holds, in the engine\'s words table when it has one (read when drawn)', () => {
   // (PC.engine stood in for, so this reads the same whatever the engine's own table holds)
   const real = PC.engine;
@@ -403,6 +610,11 @@ test('the gallery\'s take-aways section (appended to dev/gallery.html): every pa
     assert.ok(!/class="pending err"/.test(drawn), 'failed: ' + f.html.slice(0, 120));
   }
   for (const k of ['placeValue', 'sand', 'quickMarks']) assert.ok(takes.some((f) => f.html.includes('PC.art.' + k + '(')), 'the gallery shows ' + k);
+  // v0.4's resting stage: three panels (a row, a square, a zero's row), each a piece resting, still
+  const rests = takes.filter((f) => f.html.includes('"stage":"out"'));
+  assert.equal(rests.length, 3, 'the three resting pictures');
+  for (const f of rests) assert.ok(/class="pc-pv-(row|square) pc-pv-out"/.test(f.panel.html) && !/<style/.test(f.panel.html), 'resting, still: ' + f.html.slice(0, 120));
+  assert.deepEqual(rests.map((f) => /"from":"(\w+)"/.exec(f.html)[1] + (f.html.includes('"tens":9') ? '9' : '')).sort(), ['hundreds', 'tens', 'tens9']);
   for (const k of ['"stage":"slide"', '"stage":"open"', '"glow":"hundreds"', '"glow":"tens"', '"kind":"marks"', '"small":true', '"tens":9', '"kind":"quick"', '"lines":1', '"ground":"earth"'])
     assert.ok(takes.some((f) => f.html.includes(k)), 'the gallery shows ' + k);
   assert.ok(byId.nav.html.includes('#takes'), 'the nav links the section');

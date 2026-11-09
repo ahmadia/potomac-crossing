@@ -1,5 +1,8 @@
 # Chapter 14 spec: The Night Watch
 
+*v0.3 · 2026-11-09 (decision 57: the kit v0.4's moves; the take lines redone on its design,
+`~/potomac-crossing-work/regroup/design.md`; item 15 with v0.4's figures)*
+
 *v0.2 · 2026-11-08 · v0.1 with the round-1 spec critics' findings applied (the spec editor: `~/potomac-crossing-work/ch14/spec-editor/notes.md`)*
 
 *The build's contract for chapter 14, beside `docs/build.md`, the take-aways kit (`docs/take-aways.md` and build.md's "The
@@ -168,23 +171,29 @@ var LAST = 'There. Now you’ve seen it counted.';   // chapter 10's
   store holds three hundred fifty-two." / "The Clan eats one hundred twenty-seven. Ones first." (With each show step lettered under them, its first
   column holds three balloons, and `takeReserve` keeps that height for the whole problem: one more than chapter 12's and 13's worked examples.
   Measured at the page review, section 10, with its fallback named there: balloon A to f012, the take prompt B alone, the words unchanged.) Then
-  Tallyheart works the spread before the keypad wakes: "Two take away seven? Only two loose. Not enough." / "So I spread a row: ten more loose." (the
-  picture spreads: a row opens into a ten-frame beside the two loose) / "Twelve take away seven." She types 5. "Now the tens. Four take away two." She
+  Tallyheart works the spread and she types its numbers, in her marks (decision 57): "Two take away seven? Only two loose. Not enough." / "So I
+  spread a row. Five rows, one goes: four." (a paw-tap on the 5; she types 4) / "Ten more loose: twelve. Write it on top." (the ten opens; she types
+  12; in `'one'`, "Ten more loose: write a little 1 in front.", 1) / "Twelve take away seven." She types 5. "Now the tens. Four take away two." She
   types 2. "Now the hundreds. Three take away one." She types 2. Right in every column: "Two squares, two rows, five loose left." (Tallyheart),
   waiting for Next. **No school words** (`teach: 'ones'`: chapter 12's `E.takeLine` says them only on `none` and `ones2` sets). Its flip lands at the
-  ones, harmless in `'show'`. Helped: the kit's "And you finished it. We'll do one like it soon."; its twin is `'tap'` (the kit's rule), introduced
-  "One like it.", **no prompt and no right line**.
-- **640 − 218** (`'tap'`): "Your turn. Ones first. Zero take away eight." (the prompt joined), "Not enough loose. Spread a
-  row: tap it." (the rows zone glows, the keypad dim; a tap off it: "The rows: up here."; over an empty loose zone: the kit's
-  `tap` line has no Zero form, chapter 13's item 16, section 7 item 10), then "Ten take away eight.", "Now the tens. Three take
-  away one.", "Now the hundreds. Six take away two." Its twin, if helped, `'hers'`, asked with "One like it." only.
-- **462 − 135, 768 − 315** (`'hers'`, the set's first two of her own, so full lines by rule (b)): "Ones first. Two take away
-  five." (seeing she can't is the lesson), "Now the tens. Take away three.", "Now the hundreds. Take away one."; "Ones first.
-  Eight take away five.", "Now the tens. Take away one.", "Now the hundreds. Take away three." **No line says which need a
-  spread** (chapter 17's question). Run: a helped 462 − 135 queues the twin 243 − 114 two problems on.
-- **The `extra` slip**: 768 − 315's tens typed 4 (6 − 1 − 1) is `extra`, "Careful. The loose had enough, so no row went. Six
-  rows still." (`ones2` taught); its hundreds typed 3 (7 − 1 − 3) is `fact` by rule (a) (`tens` not taught: the lesson's
-  `taught` is `none`, `ones2`, `ones`), "Let’s scratch it out.", **logged `fact`**. No `lines` override (the brief).
+  ones, harmless in `'show'` (she types the answer after the moves). Helped: the kit's "And you finished it. We'll do one like it soon."; its twin is
+  `'tap'` (the kit's rule), with no asks (the row's link is chapter 13's), introduced "One like it.", **no prompt and no right line**.
+- **640 − 218** (`'tap'`): "Your turn. Ones first. Zero take away eight." (the prompt joined), "No loose. Spread a row: tap it." (the kit
+  v0.4's `tap.onesZero`: item 10 closed; the 4 and the rows zone glow, the keypad dim; a tap off them: "The rows: the glowing ones."); she taps:
+  the row slides out and the box over the struck 4 is ringed, **with no ask** (the kit drops `askLend` and `askGet` for a link she has made on
+  her own, and the row's is chapter 13's); she types 3; the ten opens and the box over the struck 0 (or in front of it) is ringed: 10 (or 1);
+  then "Ten take away eight.", "Now the tens. Three take away one.", "Now the hundreds. Six take away two." A wrong number at a box gets its
+  move-help (a `lend` or `get` slip brings no twin unless it repeats). Its twin, if helped, `'hers'`, asked with "One like it." only.
+- **462 − 135, 768 − 315** (`'hers'`, the set's first two of her own, so full lines by rule (b)): with moves (462 − 135: she taps the 6,
+  types 5, types 12 or 1, then 7); "Ones first. Two take away five." (seeing she can't is the lesson), "Now the tens. Take away
+  three.", "Now the hundreds. Take away one."; "Ones first. Eight take away five.", "Now the tens. Take away one.", "Now the
+  hundreds. Take away three." **No line says which need a spread** (chapter 17's question). Run: a helped 462 − 135 queues the
+  twin 243 − 114 two problems on.
+- **The `extra` slip**: 768 − 315's 6 tapped at the ones and its 5 typed is `extra` at the tap, "Careful: eight take away five? The
+  loose have enough. No row goes." (logged `move: 'touch'`); its tens typed 4 (6 − 1 − 1) is still the in-head `extra`, "Careful.
+  The loose had enough, so no row went. Six rows still." (`ones2` taught); its hundreds typed 3 (7 − 1 − 3) is `fact` by rule (a)
+  (`tens` not taught: the lesson's `taught` is `none`, `ones2`, `ones`), "Let’s scratch it out.", **logged `fact`**. No `lines`
+  override (the brief).
 - **The echo** (chapter 12's `E.takeEcho`): after 462 − 135, **right or helped**, never its twin, Chispapaw's balloon, out
   loud, "«¡Trescientos veintisiete!»" over "(Three hundred twenty-seven!)", after the kit's end line. No column is ever
   echoed, never «menos».
@@ -213,9 +222,10 @@ var LAST = 'There. Now you’ve seen it counted.';   // chapter 10's
   the set's first `'hers'` problem).
 - The frame (f028) letters "Sloshbank looks very pleased."; the take page opens on Sloshbank's question (his prompt). Right
   in every column: his "Two hundred twenty-eight MORE.", the caption *Drip.* and {Murmur}chime's whispered "Show-off.",
-  waiting for Next. Helped: "Two hundred twenty-eight. And you finished it." (run: a flip at the ones, "Careful: it’s three
-  take away five, the top take away the bottom. Only three loose. Not enough."; a kept row at the tens, "Careful. One row
-  went to the loose. Six rows now."). No flip lands; no Spanish in front of ReedClan; no twin.
+  waiting for Next. With moves, its move-helps in {Murmur}chime's balloon (the set's teacher). Helped: "Two hundred twenty-eight.
+  And you finished it." (run: a flip at the decide, "Careful: it’s three take away five, the top take away the bottom. Only three
+  loose. Not enough.", the 7 then tapped for her; the 7 typed at its lend, "Careful. One row goes to the loose. Six rows now.").
+  No flip lands; no Spanish in front of ReedClan; no twin.
 - The page shows the kit's store picture at 473: the only picture of ReedClan's number in the chapter.
 
 ### `ch14-watches`, Glintstar's watches (Counts frame f040, `intro: false`)
@@ -976,7 +986,8 @@ then the caption, and its retry "Here’s that one again." then the same; `docs/
 in the file; **the words**: `PC.words.Spread === 'Spread'`, its message naming f010, and `PC.words.spread === 'spread'`, its message
 naming f010 and the book's recap line 2; **the Counts claims of section 2, pinned**: `E.countSets(STORIES)` is chapter 10's ten; `E.checkStory` and
 `E.checkTakes` clean;
-the lesson as section 2 plays it (the worked example's show steps, no school words, its right line; 640 − 218's tap lines; a helped
+the lesson as section 2 plays it (the worked example's show steps, no school words, its right line; 640 − 218's tap lines (`tap.onesZero`,
+no asks) and its two boxes (3, then 10 or 1); 352 − 127's show asking 4, then 12 (or 1); 768 − 315's ones tap `extra` (`move: 'touch'`); a helped
 352 − 127's twin `'tap'` with no prompt and no right line; 462 − 135's and 768 − 315's full lines; the echo after 462 − 135 right and
 helped, never after its twin; `state.avoid` 225, 422, 327, 453, 228; 768 − 315's hundreds typed 3 opens "Let’s scratch it out." and is
 logged slip `fact`; its tens typed 4 the kit's tens `extra` line); 473 − 245's right lines, its helped `missLast` line, no twin; the
@@ -1235,6 +1246,7 @@ chapter is written (chapter 21's ferry, a Spanish-asked warm-up pick) needs `{Es
    builder starts.
 4. **Chapter 13's words and art are in** (`PC.words.es.desagrupo`, the den's `collar`, `curl` with `tailUp`, the quick marks' `crossed` and
    `fresh`, the Hollow's `spreadMarks` box, the camp's `frost`): chapter 14 uses each as chapter 13's spec defines it.
+5. **The kit v0.4 merged** (chapter 13's spec, section 6, check 4).
 
 `E.VERSION` `'0.14.0 (chapter 14, <ship date>)'` and its pin are the orchestrator's, at the ship.
 
@@ -1291,7 +1303,7 @@ of v0.4, and how the build handles it:
    stand next to 3 × 8. Accepted (her picks are hers; the alt order keeps the set's own clear otherwise).
 10. **640 − 218's tap line over an empty loose zone** says "Not enough loose. Spread a row: tap it." (the kit's `E.TAKE_LINES.tap` has no Zero
     form: chapter 13's item 16). If the integrator adds `tap.onesZero` ("No loose. Spread a row: tap it."), it applies here with no change;
-    otherwise accepted ("not enough loose" is true of none).
+    otherwise accepted ("not enough loose" is true of none). **Closed by the kit v0.4**: 640 − 218 says "No loose. Spread a row: tap it."
 11. **The lullaby's right lines need a right answer** (`rightAgain` covers a retry; `E.MAX_REQUEUE` 2, so up to three asks): a cat who
     misses all three asks hears no "Fifty-four." and no echo (missed twice and right on the third, she hears both); f036 draws it asleep
     and the scene ends as written.
@@ -1301,10 +1313,14 @@ of v0.4, and how the build handles it:
 14. **The first take prompt** (the maths low 8): v0.4 frames 352 against the morning's 245 with **"Pretend the store holds three hundred
     fifty-two."** (seven words; chapter 13's call 10's word), so a lesson picked up or "Count them again" never says the store holds 352. The
     spec uses v0.4's line, not the critic's "Say the store holds…". Closed.
-15. **The maths' share at the top** (the maths-2 low 13; editor-v0.4's note for Aron): under the brief's method (chapters 12 and 13's) the share
-    stays under a third (25 / 28.6 / 31.9%); counting the maths pages' own lines (about 140 words) it is 30.3 / 33.7 / 36.7%, and with a
-    warm-up miss at place 1 the top is about 34%. The kit's last cut (the warm-up's third Count, section 2) brings those to about 36% and 33%.
-    For the orchestrator to put to Aron with the first plays (section 10); the build makes no cut.
+15. **The maths' share at the top**, with decision 57's moves (the kit v0.4's design, section 6, at its deliberately long rates; the maths 5.87 /
+    7.08 / 8.30 minutes): 26.7 / 30.6 / 34.0%; 33.3% after the kit's last cut (the warm-up's third Count), a third exactly (32.9% at the parts'
+    rate); with a warm-up miss at place 1, 36.0%, and 35.3% after the cut. No cut is left that keeps the kit's rules and decision 57's mechanics
+    (768 − 315 is the set's one `none`). **The orchestrator's call** on the design's question 2 (2026-11-09, under decision 46): decision 56's
+    third binds the plain path at the middle-to-slow rates (30.6% at the middle; 33.3% at the top, the kit's last cut played as decision 56's
+    method plays its cuts, if play drags); a reading with a miss and its help may run a little over (the warm-up miss's 35.3%). The move times
+    are measured again from her log (each move's ms, `moves`) after she plays chapter 13, and these figures are redone from them before
+    chapter 14 ships. The build makes no cut.
 16. **The brief's leftovers** (the verify round's lows 4 and 12; editor-v0.4's list): steering call 12 still says "six of nineteen" (it is
     four of fourteen, five of fifteen); its line 141's "so they always end the run" holds for her first asks only (item 8); check (2) and
     `check.txt` describe v1's eight-place run; the brief gives no warm-up `alt` (this spec's: 4 × 4, then 3 × 6) and its warm-up passes over
@@ -1359,6 +1375,7 @@ of v0.4, and how the build handles it:
   3 × 7, 5 × 7 and 10 × 8) and the first Tricky Counts run (five, Tallyheart asking at the
   store, its picks passing over 3 × 7, 5 × 7 and 10 × 8, Chispapaw whispering the last two); 3 × 7 (watches); 6 × 9 optional. The take answers of
   the chapter are its lesson twins' `avoid`.
+- **The moves** (decision 57): a square's link is new in chapter 15, so 418 − 162's `'tap'` asks every number; her marks are `cat.takes.style`.
 - **Spanish.** `PC.words.es` gains `salud` ('¡Salud!', Bless you!). Out loud in the Hollow, none in front of ReedClan, whispered at night and at the
   stone. **A Count asked in Spanish** for the first time (the salamander's, on chapter 12's prompt route, its pair written out,
   `'¿{Es:6} {es:por} {es:9}?'`): later chapters (chapter 21's ferry, module-2's Spanish-asked warm-up picks) ask the same way, with

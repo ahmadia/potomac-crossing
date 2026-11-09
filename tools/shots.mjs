@@ -50,6 +50,19 @@
  *                                                         three balloons), a worked spread's steps (take:show#n). @keys=…
  *                                                         types on the take page's keypad as on a lesson's. DRY=1 on
  *                                                         take:first prints what Read to me would say, in its order
+ *   node tools/shots.mjs OUTDIR take:touch take:lend take:get take:get:one take:chain take:help:move take:ahead
+ *   node tools/shots.mjs OUTDIR take:marks hollow:marks
+ *                                                         the kit v0.4's screens (decision 57: the spread as moves
+ *                                                         she makes, and her marks), each through PC.debug.takes on
+ *                                                         its own stub definitions, with every step taught: 43 − 16
+ *                                                         with the 4 tapped, its lend box ringed; the same before the
+ *                                                         3 is typed; its get box ringed (the new number on top, the
+ *                                                         13 box), and the little 1's box in front; 503 − 278 at the
+ *                                                         zero's lend; a move-help (`kept`) in the slot under the
+ *                                                         column's line; 52 − 27 after a 5 typed before the moves
+ *                                                         (pale, the lender glowing, the flip line); the marks page
+ *                                                         on the take page, its last line shown; and in the Training
+ *                                                         Hollow (the shelf's My marks)
  *   node tools/shots.mjs OUTDIR es:echo es:take es:skip es:worked es:worked:tens es:try es:try:pointer es:store
  *                                                         chapter 12's Spanish (its spec, section 6), each opened on the
  *                                                         test cat through the page's own PC.debug.spanish (section 2's
@@ -450,10 +463,14 @@ function warriorTarget(fid, anchor) {
  * true or what is wrong, as PC.debug.warrior does). take:first also sets the test cat's Counts up through WARRIOR
  * first (the recipe here, unless CAT has one): a pass, then a sitting again with ten answers in it, so the take
  * lesson opens under the Warrior Counts' waiting line. dev/webkit/run.mjs reads this table and TAKES verbatim
- * (its `takes` job: the page review's screens, measured). */
+ * (its `takes` job: the page review's screens, measured). The kit v0.4's screens (decision 57, the plan's tools owner)
+ * follow v0.3's, each PC.debug.takes' own name: the moves (touch, lend, get, get:one, chain), a move-help in the slot,
+ * `ahead`, and the marks page on the take page and in the Hollow. */
 const TAKE_TARGETS = {
   'take:first': ['first', { sittings: [52], answers: 10 }], 'take:q': ['q'], 'take:show': ['show'], 'take:tap': ['tap'], 'take:spread': ['spread'],
-  'take:echo': ['echo'], 'take:sand': ['sand'], 'take:done': ['done'], 'hollow:shelf': ['shelf'], 'store:q': ['store']
+  'take:echo': ['echo'], 'take:sand': ['sand'], 'take:done': ['done'], 'hollow:shelf': ['shelf'], 'store:q': ['store'],
+  'take:touch': ['touch'], 'take:lend': ['lend'], 'take:get': ['get'], 'take:get:one': ['get:one'], 'take:chain': ['chain'],
+  'take:help:move': ['help:move'], 'take:ahead': ['ahead'], 'take:marks': ['marks'], 'hollow:marks': ['hollow:marks']
 };
 function takeTarget(target, anchor) {
   const t = TAKE_TARGETS[target];

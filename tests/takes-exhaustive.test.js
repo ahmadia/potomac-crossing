@@ -1,6 +1,6 @@
 /* The take-aways kit, the engine's exhaustive checks (docs/take-aways.md v0.3, section 9: test 1's every
  * problem, test 5's 2,000 helps a kind, test 6's 1,000 twins of every module problem, and test 15 on the
- * goldens' end cats). In tools/test.mjs's SLOW list, so the fast tier stays fast; the cases by value are in
+ * goldens' end cats; and the kit v0.4's E3, every problem's moves in both styles). In tools/test.mjs's SLOW list, so the fast tier stays fast; the cases by value are in
  * tests/takes-engine.test.js. */
 'use strict';
 const test = require('node:test');
@@ -36,6 +36,48 @@ test('1. the plan against a − b for every top 10 to 999 and every bottom below
   }
   assert.equal(n, 498465);
   assert.deepEqual(kinds, { none: 164340, ones: 111375, tens: 111375, both: 91125, zero: 16200, zeros: 4050 });
+});
+
+/* ================================================================ E3. the kit v0.4's moves, every problem (decision 57) */
+test('E3. the moves of every problem (498,465), both styles (~/potomac-crossing-work/regroup/designer/check-v0.4.js, section 1): a lend 0 to 9 (the lender as it stood, less one), a get reading 10 to 18 (\'above\' its number, \'one\' 1), at most nine moves; her marks after them end at the plan\'s values; at most two marks rows a column in \'above\' (111,375 problems need the second: both, zero, zeros), one in \'one\'', () => {
+  let n = 0, most = 0;
+  const second = {}, rows = { above: 0, one: 0 };
+  for (let a = 10; a <= 999; a++) {
+    for (let b = 1; b < a; b++) {
+      const p = plan(a, b);
+      n++;
+      ['above', 'one'].forEach((style) => {
+        const M = E.takeMoves(p, style);
+        let count = 0;
+        M.forEach((list, i) => list.forEach((m, k) => {
+          count++;
+          if (m.move === 'lend' && !(m.value >= 0 && m.value <= 9 && m.value === m.before - 1)) assert.fail(pr(a, b) + ' ' + style + ' lend ' + JSON.stringify(m));
+          if (m.move === 'get' && !(m.reads >= 10 && m.reads <= 18 && m.reads === m.before + 10 && m.value === (style === 'above' ? m.reads : 1))) assert.fail(pr(a, b) + ' ' + style + ' get ' + JSON.stringify(m));
+          if (m.move === 'answer' && !(m.col === i && m.value === p.cols[i].digit && k === list.length - 1)) assert.fail(pr(a, b) + ' answer');
+          if (m.move === 'touch' && list[k + 1].move !== 'lend') assert.fail(pr(a, b) + ' touch');
+        }));
+        most = Math.max(most, count);
+        const mk = E.takeMoveMarks(p, style, p.n, 0);
+        let twice = false;
+        mk.forEach((c, i) => {
+          const col = p.cols[i], changed = c.struck || c.front != null;
+          let end = col.top;
+          if (style === 'above') { if (c.m2) { twice = true; end = c.m2.v; } else if (c.m1) end = c.m1.v; }
+          else {
+            if (c.m2) assert.fail(pr(a, b) + ': \'one\' never needs a second row');
+            end = c.m1 ? c.m1.v + (c.m1.front === 1 ? 10 : 0) : col.top + (c.front === 1 ? 10 : 0);
+          }
+          if (end !== col.end || changed !== (col.end !== col.top || col.lent || col.spreads.length > 0 || col.toZero)) assert.fail(pr(a, b) + ' ' + style + ' col ' + i + ': ' + JSON.stringify(c) + ' ends ' + end + ', not ' + col.end);
+          if ([c.m1, c.m2].some((r) => r && r.box)) assert.fail(pr(a, b) + ': a box left open');
+        });
+        if (twice) { rows[style]++; const k = E.takeKind(p); second[k] = (second[k] || 0) + 1; }
+      });
+    }
+  }
+  assert.equal(n, 498465);
+  assert.equal(most, 9, 'at most nine moves (three answers and two links)');
+  assert.deepEqual(rows, { above: 111375, one: 0 });
+  assert.deepEqual(second, { both: 91125, zero: 16200, zeros: 4050 });
 });
 
 /* ================================================================ 5. every slip's help, sampled */

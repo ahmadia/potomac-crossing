@@ -1094,11 +1094,36 @@
     for (var i = plan.n - 1; i >= 0; i--) {
       var c = plan.cols[i], m = (o.marks && o.marks[i]) || {}, b = (o.boxes && o.boxes[i]) || {}, z = TAKE_ZONES[i];
       var v = b.v == null ? '' : String(b.v), cls = (o.on === i ? 'on' : '') + (b.cls ? (o.on === i ? ' ' : '') + b.cls : '');
-      cells.push({ col: i, zone: z, head: TAKE_HEADS[i], headLabel: W[z] + ', ' + W[TAKE_PIC[z]],
+      var cell = { col: i, zone: z, head: TAKE_HEADS[i], headLabel: W[z] + ', ' + W[TAKE_PIC[z]],
         top: String(c.top), bottom: c.bottom == null ? '' : String(c.bottom), struck: !!m.struck, mark: m.mark == null ? '' : String(m.mark),
-        box: v, boxCls: cls, boxLabel: W[z] + (v !== '' ? ': ' + v : ''), current: o.on === i, glow: o.glow === i });
+        box: v, boxCls: cls, boxLabel: W[z] + (v !== '' ? ': ' + v : ''), current: o.on === i, glow: o.glow === i };
+      if (o.moves) takeCellMoves(cell, m, o, W);
+      cells.push(cell);
     }
-    return { n: plan.n, cells: cells, label: o.ask || '' };
+    var view = { n: plan.n, cells: cells, label: o.ask || '' };
+    if (o.moves) view.moves = true;
+    return view;
+  }
+  /* The kit v0.4's column (decision 57; design sections 2 and 3), only with `o.moves`: `o.marks` are E.takeMoveMarks'
+   * objects ({ struck, front, frontStruck, m1, m2 }); `o.box` the box she types into (T.question's: { col, kind: 'lend' |
+   * 'get' | 'answer', row: 1 | 2 | 'front' }) with `o.typed` in it and `o.miniOn` (ringed); `o.flash` ({ col, row, v }:
+   * a right number, green for 250 ms); `o.targets` (the columns she can tap now: a role="button" each, its hit box);
+   * `o.lit` (columns glowing: a lender lit, the struck lender, a move-help's fix); `o.halo` (the column whose receiver's
+   * mark has the marks page's halo); `o.ripple` (Tallyheart's paw-tap); `o.wig` (her own top digit's wiggle); `o.col`
+   * the column she is on (a target next to it widens into it, the leftmost outwards). */
+  var TAKE_MINI_JOB = { lend: 'new number', get: 'new number', front: 'the little 1' };
+  function takeCellMoves(cell, m, o, W) {
+    var i = cell.col, bx = o.box && o.box.col === i && (o.box.kind === 'lend' || o.box.kind === 'get') ? o.box : null;
+    cell.mm = { struck: !!m.struck, front: m.front == null ? null : m.front, frontStruck: !!m.frontStruck, m1: m.m1 || null, m2: m.m2 || null };
+    cell.mark = '';
+    if (bx) {
+      var tv = o.typed == null ? '' : String(o.typed), job = bx.row === 'front' ? 'front' : bx.kind;
+      cell.mini = { kind: bx.kind, row: bx.row, v: tv, on: !!o.miniOn, label: W[cell.zone] + ', ' + TAKE_MINI_JOB[job] + (tv !== '' ? ': ' + tv : '') };
+    } else cell.mini = null;
+    cell.flash = o.flash && o.flash.col === i ? { row: o.flash.row, v: String(o.flash.v == null ? '' : o.flash.v) } : null;
+    cell.target = (o.targets || []).indexOf(i) >= 0 ? { label: takeSpreadLabel(cell.zone, W), near: o.col == null || o.col === i - 1 } : null;
+    cell.lit = (o.lit || []).indexOf(i) >= 0;
+    cell.halo = o.halo === i; cell.ripple = o.ripple === i; cell.wig = o.wig === i;
   }
   /* The column's markup (index.html's .tcol: a grid, the sign's column and one a digit; rows for the heads, the marks,
    * the top, the bottom, the rule and the boxes, every row reserved from the start, so nothing moves). */
@@ -1106,6 +1131,7 @@
     var s = '<span class="tsign" aria-hidden="true">−</span>';
     v.cells.forEach(function (c, k) {
       var gc = ' style="grid-column:' + (k + 2) + '"';
+      if (v.moves) { s += takeCellHtml(c, gc); return; }
       s += '<span class="thead" role="img" aria-label="' + tEsc(c.headLabel) + '"' + gc + '>' + takeHeadSvg(c.zone) + '</span>' +
         '<span class="tmark' + (c.glow ? ' tglow' : '') + '" aria-hidden="true"' + gc + '>' + tEsc(c.mark) + '</span>' +
         '<span class="tdig ttop' + (c.struck ? ' tstruck' : '') + (c.glow ? ' tglow' : '') + '" data-col="' + c.col + '" aria-hidden="true"' + gc + '>' + tEsc(c.top) + '</span>' +
@@ -1114,6 +1140,48 @@
         (c.box !== '' ? tEsc(c.box) : ' ') + '</span>';
     });
     return s + '<span class="trule" aria-hidden="true"></span>';
+  }
+  /* A small box (.tmini): only where her digits go, never a tap target; an empty one holds a no-break space (never reads as
+   * a 0); the 'one' front box fits two digits in its own width (she typed 1, 3: thirteen) until OK letters the little 1. */
+  function tMini(mini, cls) {
+    var v = mini.v, inner = v === '' ? '\u00a0' : mini.row === 'front' && v.length > 1 ? '<span class="tfit">' + tEsc(v) + '</span>' : tEsc(v);
+    return '<span class="tmini' + (mini.kind === 'get' ? ' tw2' : '') + (mini.on ? ' on' : '') + (cls ? ' ' + cls : '') + '" role="img" aria-label="' + tEsc(mini.label) + '"' +
+      (mini.on ? ' aria-current="true"' : '') + '>' + inner + '</span>';
+  }
+  function tFlash(f, two) { return '<span class="tmini right' + (two ? ' tw2' : '') + '" aria-hidden="true">' + tEsc(f.v) + '</span>'; }
+  // a marks row's content (m1, or m2 in the heads row's place): her gold number (struck as one when changed again), a little
+  // 1 lettered or boxed in front of it ('one': a column that lent, then got), or the box she types into
+  function tMarkHtml(m, c, row, halo) {
+    if (!m) return '';
+    var mini = c.mini, fl = c.flash;
+    if (m.box) return fl && fl.row === row ? tFlash(fl, mini ? mini.kind === 'get' : c.mini && c.mini.kind === 'get') : mini && mini.row === row ? tMini(mini) : '<span class="tmini" aria-hidden="true">\u00a0</span>';
+    if (fl && fl.row === row) return tFlash(fl, String(m.v).length > 1);
+    var front = m.front === 1 ? (fl && fl.row === 'front' ? '<span class="tfront tin tfb">' + tFlash(fl) + '</span>' : '<span class="tfront tin' + (halo ? ' thalo' : '') + '">1</span>') :
+      m.front === 'box' ? '<span class="tfront tin tfb">' + (mini && mini.row === 'front' ? tMini(mini) : '<span class="tmini" aria-hidden="true">\u00a0</span>') + '</span>' : '';
+    var inner = front + '<span class="tmv' + (halo && m.front !== 1 ? ' thalo' : '') + '">' + tEsc(m.v) + '</span>';
+    return m.struck ? '<span class="tgrp tstruck">' + inner + '</span>' : inner;
+  }
+  /* One column of the kit v0.4 (takeView's `moves`): the heads row (its chip, or the second marks row in its place: the chip's
+   * words kept in its aria-label), the marks row, the top digit (struck, or with the little 1 in front: lettered, boxed, or
+   * struck with it as one), the bottom digit, her answer box, and the tap target over the lender's column above the rule. */
+  function takeCellHtml(c, gc) {
+    var mm = c.mm, lit = c.lit || c.glow, two = !!mm.m2;
+    var hasBox = function (m, row) { return !!(c.mini && c.mini.row === row && m); };
+    var s = '<span class="thead' + (two ? ' tgone' : '') + '" role="img" aria-label="' + tEsc(c.headLabel) + '"' + gc + '>' + takeHeadSvg(c.zone) + '</span>';
+    if (two) s += '<span class="tmark tm2' + (lit ? ' tglow' : '') + (hasBox(mm.m2, 2) ? ' tbx"' : '" aria-hidden="true"') + gc + '>' + tMarkHtml(mm.m2, c, 2, false) + '</span>';
+    var m1box = !!mm.m1 && (mm.m1.box || mm.m1.front === 'box') && !!c.mini;
+    s += '<span class="tmark' + (lit ? ' tglow' : '') + (m1box ? (mm.m1.box ? ' tbx"' : '"') : '" aria-hidden="true"') + gc + '>' + tMarkHtml(mm.m1, c, mm.m1 && mm.m1.front === 'box' ? 'front' : 1, c.halo && !two) + '</span>';
+    var fl = c.flash && c.flash.row === 'front' && !mm.m1 ? c.flash : null, front = '';
+    if (mm.front === 1) front = fl ? '<span class="tfront tfb">' + tFlash(fl) + '</span>' : '<span class="tfront' + (c.halo ? ' thalo' : '') + '">1</span>';
+    else if (mm.front === 'box') front = '<span class="tfront tfb">' + (c.mini && c.mini.row === 'front' && !mm.m1 ? tMini(c.mini) : '<span class="tmini" aria-hidden="true">\u00a0</span>') + '</span>';
+    var top = front + tEsc(c.top), frontBox = mm.front === 'box' && !!c.mini && !mm.m1;
+    s += '<span class="tdig ttop' + (mm.struck && !mm.frontStruck ? ' tstruck' : '') + (lit ? ' tglow' : '') + (c.ripple ? ' tripple' : '') + (c.wig ? ' twig' : '') + '" data-col="' + c.col + '"' +
+      (frontBox ? '' : ' aria-hidden="true"') + gc + '>' + (mm.frontStruck ? '<span class="tgrp tstruck tfs">' + top + '</span>' : top) + '</span>';
+    s += '<span class="tdig tbot" aria-hidden="true"' + gc + '>' + tEsc(c.bottom) + '</span>' +
+      '<span class="tbox' + (c.boxCls ? ' ' + c.boxCls : '') + '" data-col="' + c.col + '" role="img" aria-label="' + tEsc(c.boxLabel) + '"' + (c.current ? ' aria-current="true"' : '') + gc + '>' +
+      (c.box !== '' ? tEsc(c.box) : '\u00a0') + '</span>';
+    if (c.target) s += '<span class="ttarget' + (c.target.near ? '' : ' tfar') + '" role="button" tabindex="0" aria-label="' + tEsc(c.target.label) + '" data-col="' + c.col + '"' + gc + '></span>';
+    return s;
   }
   function tHasPrompt(p) { return asList0(p).some(function (b) { return typeof b === 'string' ? !!b : !!(b && b.text); }); }
   /* The column's line as it is outlined (section 1, E.takeLine), '' where it says nothing: the first column of a
@@ -1169,6 +1237,7 @@
    * an eight-word Spanish line runs to three lines in the lesson column at 1080 x 720. */
   function takeReserve(def, q, o) {
     o = o || {};
+    if (q.moves) return takeReserveMoves(def, q, o);
     var E0 = PC.engine, p = q.plan, teacher = E0.teacherOf(def), fill = o.fill || function (s) { return s; }, out = [];
     var B = function (t) { return { who: teacher, text: fill(t) }; };
     var room = o.echo ? [{ who: o.echoWho || 'chispapaw', room: true }] : [];
@@ -1194,6 +1263,84 @@
         out.push(base);
         extra.forEach(function (t) { out.push(base.concat([B(t)])); });
       });
+    }
+    return out;
+  }
+  /* The kit v0.4's stacks (decision 57; design section 3, "The keypad stays put"): per column from the one she is on, the
+   * lines over it with each prompt a 'tap' or 'show' turn says under them (askLend, askGet, tapRow, colShown; 'show''s
+   * steps), and the one slot: the longest line a move-help or a pointer can bring at this column's moves (not their sum),
+   * in the column line's place (the reserve probe: under it, the keypad went under at 1080 x 720), so `slotBase` is the
+   * lines over the column with its line taken out (a prompt's and the page's intro stay; an echo about the column before
+   * goes with it: a help is about this one). `o.taught` (the state's) says whether a column with no spread has a
+   * target (an `extra` touch). A balloon `{ slot: true }` is drawn as the slot. */
+  function takePrompts(def, q, c) {
+    var E0 = PC.engine, p = q.plan;
+    if (!p.cols[c].spreads.length || q.mode === 'hers') return [];
+    var S = E0.takeShow(def, p, c, { mode: q.mode, style: q.style, picture: q.picture });
+    if (q.mode === 'show') return S.steps.map(function (x) { return x.say; });
+    return S.taps.filter(function (x) { return x.say; }).map(function (x) { return x.say; }).concat([S.line]);
+  }
+  function takeSlotLines(def, q, c, taught) {
+    var E0 = PC.engine, p = q.plan, col = p.cols[c], style = q.style, mode = q.mode, out = [];
+    if (mode === 'show') return out;
+    var M = q.moves[c];
+    var add = function (k, j) { var h = E0.takeMoveHelp(def, p, c, k, j, style, mode); if (h && h.say) out.push(h.say.filter(Boolean).join(' ')); };
+    if (!col.spreads.length) {
+      if (E0.takeTargets(p, c, 0, taught).length) add(0, { slip: 'extra', line: 'extraTouch', touched: c + 1 });
+      return out;
+    }
+    var form = (col.bottom || 0) - col.before === col.digit ? 'flip' : 'right';
+    if (mode === 'tap') {
+      var S = E0.takeShow(def, p, c, { mode: 'tap', style: style, picture: q.picture });
+      Object.keys(S.here).forEach(function (z) { out.push(S.here[z]); });
+    }
+    M.forEach(function (m, k) {
+      if (m.move === 'touch' && (k === 0 || k === 3)) {
+        if (mode === 'hers') {
+          (k === 3 ? ['zeroStop', 'factSpread'] : col.chain ? ['zero', 'factSpread'] : ['flip', 'nospread', 'factSpread']).forEach(function (key) { add(k, { slip: key === 'factSpread' ? 'fact' : key === 'zeroStop' ? 'zero' : key, line: key }); });
+          add(k, { pointer: 'ahead', form: form, line: 'ahead' });
+          add(k, { pointer: 'tap', line: 'tap' });
+          if (M[k + 1]) add(k + 1, { pointer: 'askLend', line: 'askLend' });
+        }
+        if (col.chain && k === 0) add(k, { pointer: 'zeroFirst', line: 'zeroTouch' });
+        if (col.chain && k === 3) add(k, { pointer: 'gave', line: 'gave' });
+        if (!col.chain && E0.takeTargets(p, c, k, taught).length > 1) add(k, { pointer: 'where', line: 'where' });
+      } else if (m.move === 'lend') {
+        if (m.zero) add(k, { slip: 'zero', line: 'zeroLend' });
+        else { add(k, { slip: 'kept', line: 'keptMove' }); add(k, { slip: 'lend', line: 'lendMove' }); }
+      } else if (m.move === 'get') {
+        add(k, { slip: 'get', line: 'getMove' });
+        if (m.zero) add(k, { pointer: 'nine', line: 'nine' });
+      } else if (m.move === 'answer' && k > 0) add(k, { pointer: 'order', line: 'order' });
+    });
+    return out;
+  }
+  function takeReserveMoves(def, q, o) {
+    var E0 = PC.engine, p = q.plan, teacher = E0.teacherOf(def), fill = o.fill || function (s) { return s; }, out = [];
+    var B = function (t) { return { who: teacher, text: fill(t) }; };
+    var room = o.echo ? [{ who: o.echoWho || 'chispapaw', room: true }] : [];
+    for (var c = q.col; c < p.n; c++) {
+      var bases, slotBases;
+      if (c === q.col && c === 0) {
+        bases = [takeFirst(def, q, o).lines];
+        slotBases = [takeFirst(def, q, Object.assign({}, o, { line: '' })).lines];
+        if (!q.onesFirst) out.push(takeFirst(def, q, Object.assign({}, o, { line: tOnesFirst(def) })).lines);
+      } else if (c === q.col) {
+        var l0 = takeColLine(def, q);
+        bases = [asList0(o.intro).concat(l0 ? [B(l0)] : [])];
+        slotBases = [asList0(o.intro).slice()];
+      } else {
+        var L = [B(E0.takeLine(def, p, c, 'before', q.mode, true))], e = typeof o.echo === 'function' ? o.echo(c - 1) : null;
+        bases = [room.concat(L)].concat(e ? [[e].concat(L)] : []);
+        slotBases = [[]];   // (a help is about this column: it takes the echo's place too)
+      }
+      var prompts = takePrompts(def, q, c), longest = '';
+      takeSlotLines(def, q, c, o.taught).forEach(function (t) { if (t.length > longest.length) longest = t; });
+      bases.forEach(function (base) {
+        out.push(base);
+        prompts.forEach(function (t) { out.push(base.concat([B(t)])); });
+      });
+      if (longest) slotBases.forEach(function (base) { out.push(base.concat([{ who: teacher, text: fill(longest), slot: true }])); });
     }
     return out;
   }
@@ -1258,24 +1405,164 @@
     extra: 'regrouped when not needed', fact: 'a fact slipped' };
   // (what the columns count: E.takeTable's own-ask rule and its typical time, docs/take-aways.md section 4)
   var TAKE_CORNER_NOTE = '<p class="muted">“Right first time” is her own first try at a problem with every column right; worked problems, ones where she was told to regroup, and second goes are left out. “Problems” and “Helped” count them all (“helped”: a column slipped and Tallyheart helped). Typical time is of her right answers to problems she worked herself (not worked examples or ones she was told to regroup).</p>';
-  function takeCorner(takes, table, secs) {
+  // the kit v0.4 (decision 57): a row with moves names the move slips, and `kept` as a move ("did not take one off")
+  var TAKE_SLIP_MOVES = { lend: 'new number for the one that gave', get: 'new number for her column', kept: 'did not take one off' };
+  var TAKE_CORNER_MARKS = '<p class="muted">Her marks are the new numbers she writes when she spreads: the one that gave, then her column. “Marks right” is how many of them, in her own first tries, were right first time.</p>';
+  var TAKE_STYLE_WORDS = { one: 'Her marks: a little 1 in front (¹3), her choice. She can change it in the Training Hollow (My marks).',
+    above: 'Her marks: the new number on top (13 over a crossed-out 3), her choice. She can change it in the Training Hollow (My marks).',
+    none: 'Her marks: not chosen yet (on top until she does).' };
+  function takeCorner(takes, table, secs, steps) {
     if (!takes || typeof takes !== 'object') return null;
     secs = secs || function (ms) { return ms == null ? '–' : (ms / 1000).toFixed(1) + ' s'; };
     var n = function (v) { return typeof v === 'number' && v >= 0 ? Math.floor(v) : 0; };
     var line = 'Count the store ' + n(takes.rounds) + ' (' + n(takes.cleanRounds) + ' without help)';
     var T0 = table || { rows: [], teen: [] };
-    var html = '<h4>Take-aways' + (T0.capped ? ' <span class="muted">(her last ' + T0.cap + ')</span>' : '') + '</h4>' + (T0.rows.length ? TAKE_CORNER_NOTE +
-      '<div class="scroll"><table><thead><tr><th>Kind</th><th>Problems</th><th>Right first time</th><th>Helped</th><th>Typical time</th><th>Commonest slip</th></tr></thead><tbody>' +
+    // (the kit v0.4: "Marks right" and "In her head first" only once a row has moves; a chapter-12-only cat's table as it was)
+    var mv = T0.rows.some(function (r) { return r.moves != null; }), heads = T0.rows.reduce(function (a, r) { return a + n(r.ahead); }, 0);
+    var html = '<h4>Take-aways' + (T0.capped ? ' <span class="muted">(her last ' + T0.cap + ')</span>' : '') + '</h4>' + (T0.rows.length ? TAKE_CORNER_NOTE + (mv ? TAKE_CORNER_MARKS : '') +
+      '<div class="scroll"><table><thead><tr><th>Kind</th><th>Problems</th><th>Right first time</th>' + (mv ? '<th>Marks right</th>' : '') + '<th>Helped</th><th>Typical time</th><th>Commonest slip</th></tr></thead><tbody>' +
       T0.rows.map(function (r) {
-        return '<tr><td>' + tEsc(TAKE_KIND_WORDS[r.kind] || r.kind) + '</td><td>' + r.problems + '</td><td>' + (r.firstAsks ? r.rightFirst + '&nbsp;of&nbsp;' + r.firstAsks : '–') + '</td><td>' + r.helped + '</td><td>' +
-          tEsc(secs(r.ms)) + '</td><td>' + tEsc(r.slip ? TAKE_SLIP_WORDS[r.slip] || r.slip : '–') + '</td></tr>';
+        var sw = r.slip ? (r.moves != null && TAKE_SLIP_MOVES[r.slip]) || TAKE_SLIP_WORDS[r.slip] || r.slip : '–';
+        return '<tr><td>' + tEsc(TAKE_KIND_WORDS[r.kind] || r.kind) + '</td><td>' + r.problems + '</td><td>' + (r.firstAsks ? r.rightFirst + '&nbsp;of&nbsp;' + r.firstAsks : '–') + '</td>' +
+          (mv ? '<td>' + (r.moves ? n(r.movesRight) + '&nbsp;of&nbsp;' + n(r.moves) : '–') + '</td>' : '') + '<td>' + r.helped + '</td><td>' +
+          tEsc(secs(r.ms)) + '</td><td>' + tEsc(sw) + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
-      (T0.teen.length ? '<p class="muted">Teen facts missed: ' + tEsc(T0.teen.map(function (t) { return t.text.replace(/ /g, '\u00a0'); }).join(', ')) + '</p>' : '') : '<p class="muted">No take-aways yet.</p>');
+      (T0.teen.length ? '<p class="muted">Teen facts missed: ' + tEsc(T0.teen.map(function (t) { return t.text.replace(/ /g, '\u00a0'); }).join(', ')) + '</p>' : '') +
+      (mv && heads ? '<p class="muted">In her head first: ' + heads + '</p>' : '') : '<p class="muted">No take-aways yet.</p>');
+    // her marks, once she has learned to spread a row (`steps`: E.takeSteps) or has chosen them
+    var style = takes.style === 'one' || takes.style === 'above' ? takes.style : null;
+    if (style || (steps || []).indexOf('ones2') >= 0) html += '<p class="muted">' + tEsc(TAKE_STYLE_WORDS[style || 'none']) + '</p>';
     return { line: line, html: html };
+  }
+  /* The kit v0.4's two-digit box (a get, and the 'one' front box): a digit is added while it holds fewer than two and starts
+   * it again when it holds two (no Delete hunt: 1, 4, 1, 3 gives 13); Delete empties it. */
+  function takePress2(typed, k) {
+    typed = String(typed == null ? '' : typed);
+    if (k === 'del') return '';
+    if (!/^[0-9]$/.test(String(k))) return typed;
+    return typed.length < 2 ? typed + k : String(k);
+  }
+  /* A key on the kit v0.4's page (design section 3): `o` { phase, k, typed, kind (the ringed box: 'lend', 'get', 'answer'),
+   * lit (a decide while the lender glows after `ahead` or a pointer: a digit goes straight to the engine, which types nothing
+   * and points), now, okLock (OK's 400 ms guard: OK only, never a digit) }. { act: 'none' | 'wiggle' (the 'tap' page's
+   * glowing zone) | 'type' (typed: the box's new digits) | 'ok' | 'digit' }. A move-help's reading lock is its own phase. */
+  function takeKey(o) {
+    var k = String(o.k);
+    if (o.phase === 'tap') return { act: k === 'del' ? 'none' : 'wiggle' };
+    if (o.phase !== 'type') return { act: 'none' };
+    if (k === 'ok') return { act: o.now < (o.okLock || 0) ? 'none' : 'ok' };
+    if (o.lit) return { act: /^[0-9]$/.test(k) ? 'digit' : 'none' };
+    return { act: 'type', typed: o.kind === 'get' ? takePress2(o.typed, k) : takePress(o.typed, k) };
+  }
+  /* A tap on the kit v0.4's page (design section 1, "What she can tap" and "A tap is a tap"): `o` { where: 'col' | 'panel' |
+   * 'stack', slide (px), held (ms), phase, advance (a move-on surface is waiting: a line, a help, 'show'), now, quiet (the
+   * column's 400 ms after a phase change or an outline), the column: col (under the tap, above the rule; null), target (a
+   * live target's column), onTop (her own top digit), her (her column), kind and boxCol (the ringed box), typed (its
+   * digits); the panel: zone, glow (the lender glowing, its zone) }. { act: 'none' | 'advance' | 'touch' (col) | 'wiggle'
+   * (her own digit, no line) | 'off' (the 'tap' page's tap off the glow: tapHere once) }. In 'hers' at a decide nothing
+   * glows, so the panel is neither a target nor a move-on surface. */
+  function takeTapAct(o) {
+    if ((o.slide || 0) > 10 || (o.held || 0) > 500) return { act: 'none' };
+    var live = o.phase === 'type' || o.phase === 'tap';
+    if (o.where === 'stack') return o.advance && o.phase !== 'help' ? { act: 'advance' } : o.phase === 'tap' ? { act: 'off' } : { act: 'none' };
+    if (o.where === 'panel') {
+      if (o.advance) return { act: 'advance' };
+      if (!live || !o.glow || o.now < (o.quiet || 0)) return { act: 'none' };
+      if (o.zone === o.glow) return { act: 'touch', col: TAKE_ZONES.indexOf(o.glow) };
+      return o.phase === 'tap' ? { act: 'off' } : { act: 'none' };
+    }
+    if (o.advance && o.phase !== 'help') return { act: 'advance' };
+    if (!live || o.now < (o.quiet || 0)) return { act: 'none' };
+    if (o.target != null) return { act: 'touch', col: o.target };
+    if (o.col == null) return { act: 'none' };
+    if (o.col === o.her) return o.onTop ? { act: 'wiggle', col: o.col } : { act: 'none' };
+    if (o.kind === 'lend' && o.col === o.boxCol) return o.typed ? { act: 'none' } : { act: 'touch', col: o.col };
+    return { act: 'touch', col: o.col };
+  }
+  /* The marks page's pictures (design section 2, "Where she picks"): two big buttons, each a small column of 43 − 16 done
+   * (the kit's .tcol markup, its answer 2 7 in plain ink, no ring) in one style, a soft gold halo on the receiver's mark, its
+   * label under it; `o` { options (E.takeMarksPage's), live (the buttons answer a tap), pressed (her style: a ring, a check,
+   * aria-pressed), glow ('one', 'above', 'both': the pictures lifting with the line shown) }. Sized by font-size only. */
+  var TAKE_PICK_CHECK = '<svg class="tcheck" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="11" fill="#ffd23f" stroke="#1b1622" stroke-width="2"/><path d="M6.5 12.5l3.6 3.6 7.4-7.6" fill="none" stroke="#1b1622" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function takeMarksPic(style) {
+    var E0 = PC.engine, p = E0.takePlan(43, 16), mk = E0.takeMoveMarks(p, style, p.n, 0);
+    var v = takeView(p, { moves: true, marks: mk, boxes: [{ v: '7', cls: 'plain' }, { v: '2', cls: 'plain' }], on: -1, halo: 0 });
+    return '<span class="tcol" style="--tn:2" aria-hidden="true">' + takeHtml(v) + '</span>';
+  }
+  function takeMarksHtml(o) {
+    var glow = o.glow || null;
+    return '<div class="tpick' + (o.live ? ' tlive' : '') + '" role="group">' + (o.options || []).map(function (op) {
+      var on = o.pressed === op.style, lit = glow === 'both' || glow === op.style;
+      return '<button class="tpb' + (lit ? ' tglowing' : '') + '" type="button" data-style="' + op.style + '" aria-pressed="' + (on ? 'true' : 'false') + '"' + (o.live ? '' : ' aria-disabled="true"') + '>' +
+        takeMarksPic(op.style) + '<span class="tlbl">' + tEsc(op.label) + '</span>' + TAKE_PICK_CHECK + '</button>';
+    }).join('') + '</div>';
+  }
+  // which picture lifts with line `k` (design section 2's table): the last line both; before it, by speaker: the one whose
+  // answer line the style's is (Chispapaw's little 1, Tallyheart's on top), both when one cat says both
+  function takeMarksGlow(page, k) {
+    var L = page.lines || [];
+    if (k >= L.length - 1) return 'both';
+    var who = L[k] && L[k].who, a = page.after || {}, w1 = a.one && a.one[0] && a.one[0].who, w2 = a.above && a.above[0] && a.above[0].who;
+    if (who && who === w1 && who !== w2) return 'one';
+    if (who && who === w2 && who !== w1) return 'above';
+    return 'both';
+  }
+  /* The marks page's run (design section 2, "How it runs"), pure, so Node runs it: one balloon at a time, its picture
+   * lifting; the buttons live only once the last line is shown (its reading time, or said); a pick saves and presses, and
+   * its answer line is lettered; through it the other button switches; the page goes on after the answer line's reading
+   * time or a tap on the stack or the panel, never a tap on a button. The answer line takes the last line's place (the
+ * question it answers), so the page never holds more than its lines. `o` { page (E.takeMarksPage's, its balloons filled),
+   * live (the shelf's: every line shown and both live at once), stay (the shelf's: a pick never goes on) }; `h` { show(list,
+   * glow), live(), press(style), save(style), wait(items, fn) (the line's reading time; a new wait withdraws the last),
+   * hush(), labels() (Read to me's labels, each as its button glows), goOn() }. */
+  function takeMarksFlow(o, h) {
+    var page = o.page, L = page.lines || [], at = -1, isLive = false, picked = null, shown = [], gone = false;
+    var goOn = function () { if (gone) return; gone = true; h.goOn(); };
+    var goLive = function () { if (isLive) return; isLive = true; h.live(); if (h.labels) h.labels(); };
+    var step = function (k) {
+      at = k; shown = L.slice(0, k + 1);
+      h.show(shown, takeMarksGlow(page, k));
+      h.wait([L[k]], k >= L.length - 1 ? goLive : function () { step(k + 1); });
+    };
+    return {
+      start: function () {
+        if (o.live || !L.length) { at = L.length - 1; shown = L.slice(); h.show(shown, 'both'); goLive(); return; }
+        step(0);
+      },
+      tap: function () {
+        if (gone) return;
+        if (picked) { if (!o.stay) { h.hush(); goOn(); } return; }
+        if (isLive) return;
+        h.hush();
+        if (at >= L.length - 1) goLive(); else step(at + 1);
+      },
+      pick: function (style) {
+        if (!isLive || gone || (style !== 'one' && style !== 'above')) return false;
+        picked = style;
+        h.save(style); h.press(style);
+        // (the answer line takes the question's place: four balloons at most, so the pictures stay on the screen)
+        var a = (page.after && page.after[style]) || [];
+        h.show(shown.slice(0, Math.max(0, shown.length - 1)).concat(a), style);
+        if (!o.stay) h.wait(a, goOn);
+        return true;
+      },
+      state: function () { return { at: at, live: isLive, picked: picked, gone: gone }; }
+    };
+  }
+  /* The store at a move picked up (design section 3, "Back, Camp, a reload"): drawn at rest, a lend made and its get not yet
+   * the lender's piece resting unopened ('hers': after her lend; 'tap' and 'show': after the touch); E.takePicture's stage. */
+  function takeStageAt(q) {
+    var M = q.moves && q.moves[q.col], k = q.move || 0, n = 0, half = false, lead = q.mode === 'hers' ? 'lend' : 'touch';
+    (M || []).forEach(function (m, j) { if (m.move === lead && j < k) { n = m.link + 1; half = !(j + 1 < k); } });
+    var st = { col: q.col, spreads: n };
+    if (half && n) st.half = true;
+    return st;
   }
   UI.takes = { press: takePress, waits: takeWaits, view: takeView, html: takeHtml, colLine: takeColLine, first: takeFirst,
     reserve: takeReserve, helpStack: takeHelpStack, end: takeEnd, storeLabel: takeStoreLabel, spreadLabel: takeSpreadLabel,
-    minus: takeMinus, words: takeWordsNow, corner: takeCorner, MS: TAKE_MS, ZONES: TAKE_ZONES };
+    minus: takeMinus, words: takeWordsNow, corner: takeCorner, MS: TAKE_MS, ZONES: TAKE_ZONES,
+    press2: takePress2, key: takeKey, tapAct: takeTapAct, prompts: takePrompts, slotLines: takeSlotLines, marksHtml: takeMarksHtml,
+    marksGlow: takeMarksGlow, marksFlow: takeMarksFlow, stageAt: takeStageAt };
 
   /* ---------------------------------------------------------------- chapter 12: Spanish, the voice (pure: tested in Node)
    * docs/chapters/12-a-spark-at-the-hedge.spec.md, section 6. The Spanish voice is picked by locale and by name, never a
@@ -1834,6 +2121,7 @@
     if (n === 'book') return view.opts.from === 'end' ? go('frame', { back: true }) : go('hub', { back: true });
     // (book two: the Hollow and My nest, opened from her book, go back to the volume she left)
     // (the take-aways kit: One Count at a time's page, under the Hollow's shelf, goes back to the shelf)
+    if (n === 'hollow' && hollowSub === 'marks') return go('hollow', { from: view.opts.from, vol: view.opts.vol, back: true, stories: view.opts.stories });
     if (n === 'hollow' && hollowSub === 'counts') return go('hollow', { from: view.opts.from, vol: view.opts.vol, back: true, stories: view.opts.stories });
     if (n === 'hollow' || n === 'nest') return go(view.opts.from === 'book' ? 'book' : 'hub', view.opts.from === 'book' && view.opts.vol ? { back: true, vol: view.opts.vol } : { back: true });
     if (n === 'hub') return go('who', { back: true });
@@ -4180,6 +4468,10 @@
     scr.innerHTML = frameShell('lesson', o.frameId || '');
     var frameEl = scr.querySelector('.frame');
     frameEl.setAttribute('data-mode', 'take');
+    // the kit v0.4 (decision 57): the spread as moves she makes, only under the engine's gate (a `taught` holding a step
+    // from `ones2` on): chapter 12's pages, take:first and PC.debug.spanish never have it, so they draw and play as v25
+    var mv = E.takeMovesOn(st);
+    if (mv) frameEl.classList.add('tmoves');
     inLesson = true;      // the keypad screen: no Case File button, as on a lesson
     fileTeach = null; frameTap = null;
     renderedAt = now();
@@ -4190,6 +4482,10 @@
       '<div class="gotit" id="lessonNext" hidden><button class="btn go big" id="gotIt" type="button">Got it!</button></div></div>' +
       '<button class="sr" id="tspread" type="button" hidden></button></div>';
     var tcol = $('tcol'), pad = $('keypad'), okKey = pad.querySelector('[data-k="ok"]'), gotBtn = $('gotIt'), nextWrap = $('lessonNext'), spreadBtn = $('tspread');
+    var padWrap = box.querySelector('.padwrap');
+    // (the kit v0.4's: the one slot under the column's line and the lines it stands under, the column's quiet time after a
+    // phase change, the green flash, Tallyheart's paw-tap, her own digit's wiggle, a move-help's glow, the last press)
+    var slot = null, slotHelp = false, slotBase = [], slotHeard = [], quietUntil = 0, flash = null, ripple = -1, wig = -1, wigGen = 0, helpGlow = -1, press0 = null;
     // the problem as it stands (E.takes' question), her digit in the outlined box, the boxes and the marks as drawn
     var q = null, typed = '', boxes = [], marks = [], on = -1, glowCol = -1, askText = '';
     // 'line' (a column outlined), 'show', 'tap', 'type' (the keypad awake), 'busy' (a spread landing), 'help', 'end'
@@ -4213,6 +4509,8 @@
         if (l.kind === 'caption' || l.who === 'caption') return '<p class="caption">' + rich(l.text) + '</p>';
         // (the echo's room, for measuring only: Chispapaw's balloon two lines tall)
         if (l.room) return stackBalloon({ who: l.who, html: 'M<br>M' }, 'troom');
+        // (the kit v0.4's slot under the column's line)
+        if (l.slot) return stackBalloon({ who: l.who || teacher, text: l.text, kind: l.kind, name: l.name, variant: l.variant }, 'tslot');
         var cnt = l.counter != null ? '<span class="counter">' + esc(l.counter) + '</span>' : '';
         if (cnt) return stackBalloon({ who: l.who || teacher, html: l.text ? cnt + ' ' + richN(l.text) : cnt });
         return stackBalloon({ who: l.who || teacher, text: l.text, kind: l.kind, name: l.name, variant: l.variant });
@@ -4230,6 +4528,7 @@
 
     function drawCol() {
       if (!q) return;
+      if (mv) return drawColM();
       tcol.style.setProperty('--tn', String(q.plan.n));
       tcol.innerHTML = takeHtml(takeView(q.plan, { marks: marks, boxes: boxes, on: on, glow: glowCol, ask: askText }));
       tcol.setAttribute('aria-label', askText);
@@ -4306,7 +4605,7 @@
       var tall = function () { return Math.ceil(stack.getBoundingClientRect().height - 0.01); };
       var was = stack.innerHTML, max = tall();
       var echoAt = typeof o.echo === 'function' ? function (c) { return echoOf(echoInfo(c)); } : false;
-      takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt }).forEach(function (L) {
+      takeReserve(def, q, { intro: firstAsk ? firstIntro : [], fill: fill, echo: echoAt, taught: st.taught }).forEach(function (L) {
         stack.innerHTML = stackHtml(L);
         max = Math.max(max, tall());
       });
@@ -4352,10 +4651,387 @@
       later(function () { panel.classList.remove('twiggle'); }, 700);
     }
 
+    /* ---------------------------------------------------------------- the kit v0.4 (decision 57): the moves
+     * Only under E.takeMovesOn(st) (`mv`), so chapter 12's pages never reach these. Design sections 1 to 4: at a turn that
+     * spreads she taps the lender (struck, its small box open at once), types its new number, types her column's new number
+     * in her style, then the answer; a slip is helped at its move, in the one slot under the column's line, the keypad dim
+     * for its reading time. PC.ui.takes has the column (takeView's `moves`), the stacks (takeReserve), the keys (takeKey),
+     * the taps (takeTapAct), the marks page (takeMarksHtml, takeMarksFlow) and the store at rest (takeStageAt). */
+    function styleNow() { return o.style === 'one' || o.style === 'above' ? o.style : E.takeStyle(cat); }
+    function curMove() { var M = q && q.moves && q.moves[q.col]; return M ? M[Math.min(q.move || 0, M.length - 1)] : null; }
+    // a decide while the lender glows ('hers', after `ahead` or a pointer): a digit types nothing, the engine points
+    function litDecide() { var m = curMove(); return !!(q && q.mode !== 'tap' && q.glow && m && m.move === 'touch'); }
+    function litZone() { return q && q.glow ? q.glow : null; }
+    function needMarks() {
+      if (!q || q.col !== 0 || (q.move || 0) !== 0 || !q.plan.cols.some(function (c) { return c.spreads.length; })) return false;
+      var it = st.queue[st.pos];
+      if (it && it.moveStyle) return false;
+      return dbg ? !!dbg.marks : !(cat && cat.takes && (cat.takes.style === 'one' || cat.takes.style === 'above'));
+    }
+    // a phase change: the column's taps wait 400 ms (a double tap meant as "go on" never lands as a touch)
+    function toPhase(p) { phase = p; quietUntil = now() + TAKE_MS.ok; }
+    function drawColM() {
+      var bx = phase === 'help' || phase === 'end' || phase === 'busy' ? null : q.box || null, mini = !!bx && (bx.kind === 'lend' || bx.kind === 'get');
+      var foc = doc.activeElement && doc.activeElement.closest ? doc.activeElement.closest('#tcol .ttarget') : null, fc = foc ? foc.getAttribute('data-col') : null;
+      var lit = [];
+      if (q.glow && phase !== 'help') lit.push(TAKE_ZONES.indexOf(q.glow));
+      if (bx && bx.kind === 'lend') lit.push(bx.col);   // the struck lender glows while its box is open
+      if (helpGlow >= 0) lit.push(helpGlow);
+      // the answer box ringed at a decide and the answer (never while a lit lender waits for her touch: her digit stays pale)
+      var ring = !!bx && bx.kind === 'answer' && (phase === 'type' || phase === 'tap' || phase === 'line' || phase === 'show') && !litDecide() ? q.col : -1;
+      tcol.style.setProperty('--tn', String(q.plan.n));
+      tcol.innerHTML = takeHtml(takeView(q.plan, { moves: true, marks: marks, boxes: boxes, on: ring, glow: glowCol, ask: askText, box: bx, typed: mini ? typed : '',
+        miniOn: mini && phase === 'type', flash: flash, targets: phase === 'type' || phase === 'tap' ? q.targets || [] : [], lit: lit, ripple: ripple, wig: wig, col: q.col }));
+      tcol.setAttribute('aria-label', askText);
+      okKey.disabled = phase !== 'type' || litDecide() || (typed === '' && !q.okEmpty);
+      if (fc != null) { var nf = tcol.querySelector('.ttarget[data-col="' + fc + '"]'); if (nf) { try { nf.focus({ preventScroll: true }); } catch (x) {} } }
+    }
+    // the one slot under the column's line (design section 3): a 'tap' or 'show' prompt stands under the lines; a move-help
+    // or a pointer takes the column line's place (`help`: the reserve probe); each replaces the one there
+    function slotSay(b, help, speak) {
+      slot = b; slotHelp = !!help;
+      say((help ? slotBase : base).concat([Object.assign({}, b, { slot: true })]));
+      saying((help ? slotHeard : baseHeard).concat(heard([b])));
+      if (speak) speakItems(heard([b]));
+    }
+    // the store at a move (design section 1): a lend's piece slides out and rests ('out', 600 ms), a get's ten opens (400 ms);
+    // with Reduce Motion, and on a debug picture, at rest at once. Picture only: no key ever waits for it
+    var storeGen = 0;
+    function moveStore(po, glowZ) {
+      if (!po) return;
+      var g = ++storeGen, sp = po.spread;
+      var at = function (stage) { var x = Object.assign({}, po, { spread: stage ? Object.assign({}, sp, { stage: stage }) : null }); if (glowZ) x.glow = glowZ; return x; };
+      var after = function (fn, ms) { root.setTimeout(function () { if (g === storeGen && !frozen && frameEl.isConnected) fn(); }, ms); };
+      if (sp && sp.stage === 'out') {
+        if (reduceMotion || quick) return paintStore(at('out'));
+        paintStore(at('slide'));
+        return after(function () { paintStore(at('out')); }, TAKE_MS.slide);
+      }
+      if (sp && sp.stage === 'open' && !(reduceMotion || quick)) {
+        paintStore(at('open'));
+        return after(function () { paintStore(at(null)); }, TAKE_MS.open);
+      }
+      paintStore(at(null));
+    }
+    // the store at rest at the move she is at (a column outlined, a move picked up, an undo): a lend's piece resting 'out',
+    // never a slide replayed
+    function storeNowM() { var po = E.takePicture(def, qAt(), takeStageAt(q)); if (po && litZone()) po.glow = litZone(); paintStore(po); }
+    /* A column outlined (v0.3's line, then): 'show' (Tallyheart's touches, her numbers), 'tap' (the lender glowing), or her
+     * keys; picked up at a move (a reload, ‹, Camp), the marks so far lettered, the store at rest, the open box empty. */
+    function outlineM(fresh) {
+      advance = null; gotAct = null; glowCol = -1; helpGlow = -1; flash = null; ripple = -1; wig = -1;
+      on = q.col; typed = '';
+      boxes[q.col] = q.pale != null ? { v: String(q.pale), cls: 'pale' } : { v: '', cls: '' };
+      marks = q.marks;
+      storeNowM();
+      var lines, said;
+      if (q.col === 0 && fresh) {
+        var F = takeFirst(def, q, { intro: firstIntro, fill: fill }), F0 = takeFirst(def, q, { intro: firstIntro, fill: fill, line: '' });
+        lines = F.lines; said = F.heard; slotBase = F0.lines; slotHeard = F0.heard;
+      } else {
+        var lt = takeColLine(def, q), L = lt ? [T1(lt)] : [];
+        var pre = fresh ? firstIntro : echoLines;
+        lines = pre.concat(L); said = (fresh ? heard(pre) : []).concat(L);
+        // (a help is about this column: an echo about the one before goes with the line; the page's intro stays)
+        slotBase = fresh ? pre.slice() : []; slotHeard = heard(slotBase);
+      }
+      firstAsk = false;
+      base = lines;
+      baseHeard = q.col === 0 && fresh ? said : heard(lines);
+      slot = null; slotHelp = false;
+      toPhase('line');
+      say(lines); saying(baseHeard);
+      drawCol();
+      var m = curMove(), k = q.move || 0, spreads = q.plan.cols[q.col].spreads.length;
+      // (a later column: the keypad brought back into view, where the first column's bringPad put it: WebKit's scroll
+      // anchoring moved a scrolled page 13px up between two columns, 1080 x 700 with Aa on)
+      if (!fresh) bringPad();
+      if (q.mode === 'show' && spreads) {
+        toPhase('show'); pad.classList.add('away'); drawCol();
+        if (k > 0) { var sp0 = movePrompt(k); if (sp0) slotSay(T1(sp0), false, false); return resumeM(); }
+        advance = function () { hush(); showOpenM(); };
+        return timedWait(save.settings.readAloud || !(q.col === 0 && fresh) ? said : heard(lines), 'step', showOpenM);
+      }
+      if (q.mode === 'tap' && spreads && m && m.move === 'touch' && q.tap) return tapM(said);
+      if (k > 0) { var pr = movePrompt(k); if (pr) slotSay(T1(pr), false, false); }
+      wakeM(said);
+    }
+    // the prompt a 'tap' or 'show' column stands at, move k (the step or the ask at it, else the last before it)
+    function movePrompt(k) {
+      if (q.mode === 'hers' || !q.plan.cols[q.col].spreads.length) return null;
+      var S = E.takeShow(def, q.plan, q.col, { mode: q.mode, style: q.style, picture: q.picture }), M = q.moves[q.col];
+      if (k >= M.length - 1) return S.line;
+      var list = (q.mode === 'show' ? S.steps.slice(1) : S.taps).filter(function (x) { return x.idx <= k && x.say; });
+      return list.length ? list[list.length - 1].say : null;
+    }
+    function wakeM(said) {
+      toPhase('type'); advance = null;
+      pad.classList.remove('away', 'dim', 'locked'); nextWrap.hidden = true; spreadBtn.hidden = true;
+      if (q.box && q.box.kind === 'answer' && typed === '') boxes[q.col] = q.pale != null ? { v: String(q.pale), cls: 'pale' } : { v: '', cls: '' };
+      drawCol();
+      // (each move's clock starts when its box opens or its target is live; the first column's after its line, as v0.3's)
+      if (said && said.length) startClock(said); else t0 = perfNow();
+    }
+    // 'show' (the worked example): the column's opening line, then Tallyheart's touches
+    function showOpenM() {
+      var b = T1(E.takeShow(def, q.plan, q.col, { mode: 'show', style: q.style, picture: q.picture }).steps[0].say);
+      slotSay(b, false, false);
+      advance = function () { hush(); showTouchM(); };
+      if (stop('show0')) return;
+      timedWait([b], 'step', showTouchM);
+    }
+    // 'show': Tallyheart taps the lender (a paw-tap ripple; Reduce Motion, a glow), it is struck, the store moves, she says
+    // its new number and Lissa's box is ringed for it
+    function showTouchM() {
+      advance = null;
+      var m = curMove();
+      if (!m || m.move !== 'touch') return wakeM(null);
+      var r = T.touch(st, def, m.col, now(), 0);
+      if (!r || !r.accepted) return wakeM(null);
+      keepSlot();
+      q = T.question(st); marks = q.marks;
+      ripple = m.col;
+      var rg = ripple;
+      if (!quick) root.setTimeout(function () { if (ripple === rg && frameEl.isConnected && !frozen) { ripple = -1; drawCol(); } }, 650);
+      moveStore(r.picture);
+      if (r.line) slotSay(T1(r.line), false, true);
+      wakeM(null);
+    }
+    // 'tap' (the guided problem): the lender glows in the column and its zone in the store, the keypad dim, the tap prompt said
+    function tapM(said) {
+      var t = E.takeShow(def, q.plan, q.col, { mode: 'tap', style: q.style, picture: q.picture }).taps.filter(function (x) { return x.idx === (q.move || 0); })[0];
+      toPhase('tap'); advance = null;
+      pad.classList.remove('away'); pad.classList.add('dim'); spreadBtn.hidden = true;
+      paintStore(E.takePicture(def, qAt(), Object.assign(takeStageAt(q), { glow: q.glow })));
+      var b = t && t.say ? T1(t.say) : null;
+      if (b) slotSay(b, false, false);
+      speakItems((said || []).concat(b ? heard([b]) : []));
+      drawCol();
+      t0 = perfNow();
+    }
+    // the next move's phase: Tallyheart's touch ('show'), the glowing lender ('tap'), or her keys
+    function resumeM() {
+      var m = curMove(), spreads = q.plan.cols[q.col].spreads.length;
+      if (q.mode === 'show' && spreads && m && m.move === 'touch') return showTouchM();
+      if (q.mode === 'tap' && spreads && m && m.move === 'touch' && q.tap) return tapM(null);
+      wakeM(null);
+    }
+    /* After a move (T.touch, or T.digit at a decide, a lend or a get): the next box opens at once and the store moves beside
+     * it; a slip gets its move-help; a pointer its line in the slot (the lender lit where it says). */
+    function afterMove(r) {
+      quietUntil = now() + TAKE_MS.ok;
+      q = T.question(st); marks = q.marks;
+      if (r.help && r.help.say) return moveHelpM(r);
+      if (r.off) { if (r.say && r.line) slotSay(T1(r.line), true, true); paintStore(E.takePicture(def, qAt(), Object.assign(takeStageAt(q), { glow: q.glow }))); return; }
+      if (r.undone) { storeNowM(); return resumeM(); }
+      if (r.pointer) {
+        if (r.pointer === 'ahead') { typed = ''; boxes[q.col] = { v: String(r.pale), cls: 'pale' }; }
+        if (r.line) slotSay(T1(r.line), true, true);
+        moveStore(r.picture || E.takePicture(def, qAt(), takeStageAt(q)), litZone());
+        return resumeM();
+      }
+      moveStore(r.picture, litZone());
+      if (r.line && !(q.mode === 'tap' && curMove() && curMove().move === 'touch' && q.tap)) slotSay(T1(r.line), false, true);
+      resumeM();
+    }
+    /* A move's help (design section 4): the slip's line in the slot, the move she missed made for her and glowing, the keypad
+     * dim and deaf until the line can be read (or has been said); a tap moves on at once. Then the next move is hers. */
+    function moveHelpM(r) {
+      var H = r.help, b = T1((r.say || H.say || []).filter(Boolean).join(' '));
+      toPhase('mhelp'); typed = '';
+      helpGlow = H.glow ? TAKE_ZONES.indexOf(H.glow) : -1;
+      pad.classList.remove('away'); pad.classList.add('dim');
+      drawCol();
+      moveStore(H.picture || E.takePicture(def, qAt(), takeStageAt(q)));
+      slotSay(b, true, false);
+      var done = function () { advance = null; helpGlow = -1; pad.classList.remove('dim'); resumeM(); };
+      advance = function () { hush(); done(); };
+      if (stop('mhelp')) return;
+      timedWait([b], 'step', done);
+    }
+    // a right number turns its box green for 250 ms, then it is the gold mark
+    function flashBox(bx, v) {
+      if (quick || !bx) return;
+      var f = { col: bx.col, row: bx.row, v: v };
+      flash = f;
+      root.setTimeout(function () { if (flash === f && frameEl.isConnected && !frozen) { flash = null; drawCol(); } }, 250);
+    }
+    function pressM(k) {
+      if (!q) return;
+      var bx = q.box || {}, A = takeKey({ phase: phase, k: k, typed: typed, kind: bx.kind, lit: litDecide(), now: now(), okLock: padLockedUntil });
+      if (A.act === 'wiggle') return wiggle();
+      if (A.act === 'ok') return submitM();
+      if (A.act === 'digit') return digitM(k);
+      if (A.act !== 'type') return;
+      typed = A.typed;
+      if (bx.kind === 'answer') boxes[q.col] = typed === '' && q.pale != null ? { v: String(q.pale), cls: 'pale' } : { v: typed, cls: '' };
+      drawCol();
+    }
+    // a digit while the lender glows: the engine says `tap`'s line once, then makes the touch for her (both nudges)
+    function digitM(k) {
+      var r = T.digit(st, def, k, Math.max(0, perfNow() - t0), now());
+      if (!r || r.ignored) return;
+      keepSlot();
+      afterMove(r);
+    }
+    /* The ringed box's OK (T.digit): a move's number, or the answer as v0.3 (right: the next column; wrong: the sand's help,
+     * her marks kept). The page's 400 ms guard after an OK ignores OK only, never a digit. */
+    function submitM() {
+      var bx = q.box || {};
+      if (typed === '' && !q.okEmpty) return;
+      var res = T.digit(st, def, typed, Math.max(0, perfNow() - t0), now());
+      if (!res) return;
+      if (res.ignored) { if (res.ignored === 'tap') wiggle(); return; }
+      padLockedUntil = now() + TAKE_MS.ok;
+      if (res.pointer === 'onesFirst') {
+        // her first digit typed left to right: not checked, not logged; the box clears, the ones box pulses
+        typed = ''; boxes[0] = { v: '', cls: 'pulse' };
+        var F = takeFirst(def, q, { intro: firstIntro, fill: fill, line: res.line });
+        base = F.lines; baseHeard = F.heard; say(base); saying(F.heard);
+        drawCol(); keepSlot();
+        return startClock([T1(res.line)]);
+      }
+      if (keep) {
+        if (res.entry) E.logTake(cat, res.entry);
+        if (res.done) { o.recorded = E.recordLesson(cat, st); persist(); }
+        else keepSlot();
+      }
+      var was = typed;
+      typed = '';
+      if (res.move === 'answer') return answerM(res);
+      if (res.right && (bx.kind === 'lend' || bx.kind === 'get')) flashBox(bx, was);
+      afterMove(res);
+    }
+    function answerM(res) {
+      phase = 'busy'; on = -1; slot = null; slotHelp = false;
+      var col = res.col;
+      if (res.right) {
+        boxes[col] = res.blank ? { v: '', cls: 'blank' } : { v: String(res.digit), cls: 'right' };
+        marks = res.marks; drawCol();
+        store({ col: col, spreads: 9, taken: true });
+        return afterRight(res, false, false);
+      }
+      boxes[col] = { v: res.given === '' ? '' : String(res.given), cls: 'miss' };
+      drawCol();
+      wait(function () { help(res); }, TAKE_MS.miss);
+    }
+    // a tap on a column (her finger, a target's Space or Enter, the glowing zone): T.touch decides what it was
+    function touchCol(col) {
+      if (!q) return;
+      var r = T.touch(st, def, col, now(), Math.max(0, perfNow() - t0));
+      if (!r) return;
+      if (r.ignored) { if (r.ignored === 'own') wigCol(col); return; }
+      keepSlot();
+      afterMove(r);
+    }
+    // her own top digit wiggles once (180 ms), at every turn, needed or not: no line, no glow
+    function wigCol(col) {
+      var w = ++wigGen;
+      wig = col; drawCol();
+      root.setTimeout(function () { if (w === wigGen && frameEl.isConnected) { wig = -1; drawCol(); } }, 180);
+    }
+    // the 'tap' page's tap off the glow: "The rows: the glowing ones." once, the zone glowing again
+    function offTapM() {
+      if (!q) return;
+      var r = T.tap(st, true, def, now());
+      if (!r) return;
+      if (r.say && r.line) { slotSay(T1(r.line), true, true); keepSlot(); }
+      paintStore(E.takePicture(def, qAt(), Object.assign(takeStageAt(q), { glow: q.glow })));
+    }
+    function pressAt(e) { return press0 ? { slide: Math.max(Math.abs(e.clientX - press0.x), Math.abs(e.clientY - press0.y)), held: perfNow() - press0.t } : { slide: 0, held: 0 }; }
+    // the column under a tap above the rule (its box's width and half of each gap), or null
+    function colAt(e) {
+      var rule = tcol.querySelector('.trule'), rb = rule && rule.getBoundingClientRect();
+      if (rb && e.clientY > rb.top) return null;
+      var bs = tcol.querySelectorAll('.tbox[data-col]'), R = [];
+      for (var i = 0; i < bs.length; i++) R.push(bs[i].getBoundingClientRect());
+      var gap = R.length > 1 ? Math.max(0, R[1].left - R[0].right) : 0;
+      for (var j = 0; j < R.length; j++) if (e.clientX >= R[j].left - gap / 2 && e.clientX <= R[j].right + gap / 2) return +bs[j].getAttribute('data-col');
+      return null;
+    }
+    function doTap(A) {
+      if (A.act === 'advance') { if (advance) advance(); return; }
+      if (A.act === 'touch') return touchCol(A.col);
+      if (A.act === 'wiggle') return wigCol(A.col);
+      if (A.act === 'off') return offTapM();
+    }
+    function colClickM(e) {
+      var P = pressAt(e), cl = function (s) { return e.target && e.target.closest ? e.target.closest(s) : null; };
+      var tg = cl('.ttarget'), top = cl('.ttop'), col = tg ? +tg.getAttribute('data-col') : colAt(e);
+      doTap(takeTapAct({ where: 'col', slide: P.slide, held: P.held, phase: phase, advance: !!advance, now: now(), quiet: quietUntil, col: col, target: tg ? col : null,
+        onTop: !!(top && q && +top.getAttribute('data-col') === q.col), her: q ? q.col : -1, kind: q && q.box ? q.box.kind : null, boxCol: q && q.box ? q.box.col : null, typed: typed }));
+    }
+    function panelClickM(e) {
+      var P = pressAt(e);
+      doTap(takeTapAct({ where: 'panel', slide: P.slide, held: P.held, phase: phase, advance: !!advance, now: now(), quiet: quietUntil, zone: zoneAt(e.clientX), glow: q ? q.glow : null }));
+    }
+    function stackClickM(e) {
+      var P = pressAt(e);
+      doTap(takeTapAct({ where: 'stack', slide: P.slide, held: P.held, phase: phase, advance: !!advance }));
+    }
+    /* The marks page (design section 2), before her first spread when she has not chosen: the interact area holds the two
+     * pictures (marksPage), the keypad hidden, the store at the problem's top; the set's lines (or the kit's) one at a time;
+     * a pick saves her style (and this lesson's); then the problem's prompt, as it would have come. */
+    function marksPhase(then) {
+      var page = E.takeMarksPage(def, cat), fb = function (b) { var x = Object.assign({}, b); x.who = b.who || teacher; x.text = fill(b.text); return x; };
+      var P = { lines: page.lines.map(fb), options: page.options, after: { one: page.after.one.map(fb), above: page.after.above.map(fb) } };
+      var labels = P.options.map(function (op) { return { text: op.label }; });
+      toPhase('marks'); advance = null;
+      stack.style.minHeight = ''; stack.innerHTML = '';
+      paintStore(E.takePicture(def, qAt(0), { col: 0, spreads: 0 }));
+      tcol.hidden = true; padWrap.hidden = true; nextWrap.hidden = true; spreadBtn.hidden = true;
+      var host = doc.createElement('div');
+      host.className = 'tpickwrap';
+      box.querySelector('.counts').insertBefore(host, tcol);
+      var mp = marksPage(host, { page: P });
+      // (the stack held from the start at its tallest, every line and the longer answer line, so the pictures never move as
+      // the lines come one at a time; the keypad's own rule)
+      frameEl.classList.add('tmkpage');
+      var tall = function () { return Math.ceil(stack.getBoundingClientRect().height - 0.01); }, hmax = 0, last = P.lines.slice(0, Math.max(0, P.lines.length - 1));
+      [P.lines, last.concat(P.after.one), last.concat(P.after.above)].forEach(function (L) { say(L); hmax = Math.max(hmax, tall()); });
+      stack.innerHTML = '';
+      if (hmax) stack.style.minHeight = hmax + 'px';
+      // (a phone held upright: the pictures stacked under four balloons run under the screen; the panel shorter first, never
+      // under half its height, as the take page's own fallback; the pictures brought into view once they are live)
+      var vh0 = root.innerHeight || 0;
+      if (vh0 && root.matchMedia && root.matchMedia('(orientation: portrait)').matches) {
+        var over0 = host.getBoundingClientRect().bottom + (root.scrollY || root.pageYOffset || 0) - vh0;
+        if (over0 > 0) { var ph0 = panel.getBoundingClientRect().height; panel.style.height = Math.max(Math.round(ph0 / 2), Math.floor(ph0 - over0)) + 'px'; }
+      }
+      var flow = takeMarksFlow({ page: P }, {
+        show: function (list, g) { say(list); saying(heard(list).concat(labels)); mp.glow(g); },
+        live: function () { mp.live(true); bringIn(host); },
+        press: function (s) { mp.press(s); },
+        // (her pick saved; PC.debug.takes writes nothing to the test cat: the page's own style follows the pick)
+        save: function (s) { st.style = s; if (keep) { E.setTakeStyle(cat, s); persist(); } else { o.style = s; if (dbg) dbg.marks = false; } },
+        wait: function (items, fn) { timedWait(heard(items), 'step', fn); },
+        hush: hush,
+        // Read to me: after the lines, each label said as its button glows
+        labels: function () {
+          if (!(save.settings.readAloud && 'speechSynthesis' in root)) return;
+          var g = waitGen;
+          mp.glow('one');
+          speakItems([labels[0]], function () { if (g !== waitGen || !frameEl.isConnected) return; mp.glow('above'); speakItems([labels[1]], function () { if (g === waitGen && frameEl.isConnected) mp.glow('both'); }); });
+        },
+        goOn: function () { advance = null; mp.remove(); stack.style.minHeight = ''; panel.style.height = ''; frameEl.classList.remove('tmkpage'); tcol.hidden = false; padWrap.hidden = false; then(); }
+      });
+      mp.onPick(function (s) { flow.pick(s); });
+      advance = function () { flow.tap(); };
+      flow.start();
+    }
+
     /* A problem: the next one in the queue, at the column she is on (a lesson picked up comes back at its column). */
     function ask() {
       q = T.question(st);
       if (!q) return finish();
+      if (mv) {
+        // (a problem with no look yet takes her style as it begins: a change on the shelf reaches a lesson waiting in its place;
+        // her first spread with no style chosen opens the marks page first, before the prompt)
+        var it0 = st.queue[st.pos];
+        if (it0 && !it0.moveStyle) { st.style = styleNow(); q = T.question(st); }
+        if (needMarks()) return marksPhase(ask);
+        frameEl.classList.toggle('tsecond', E.takeMoveMarks(q.plan, q.style, q.plan.n, 0).some(function (m) { return !!m.m2; }));
+      }
       typed = ''; echoLines = []; glowCol = -1; marks = q.marks;
       boxes = q.plan.cols.map(function (c, i) { return i < q.col ? (q.got[i] === '' ? { v: '', cls: 'blank' } : { v: String(q.got[i]), cls: 'right' }) : { v: '', cls: '' }; });
       askText = fill(E.takeQuestion(def, q).ask.text);
@@ -4371,6 +5047,7 @@
     }
     /* A column outlined: its line (section 1), then 'show''s steps, 'tap''s taps, or the keypad awake. */
     function outline(fresh) {
+      if (mv) return outlineM(fresh);
       advance = null; gotAct = null; glowCol = -1;
       on = q.col; typed = ''; boxes[q.col] = { v: '', cls: '' };
       marks = q.marks;
@@ -4440,6 +5117,7 @@
       drawCol();
     }
     function tapZone(zone) {
+      if (mv) { var zc = typeof zone === 'number' ? zone : TAKE_ZONES.indexOf(zone); return zc >= 0 ? touchCol(zc) : offTapM(); }
       if (phase !== 'tap') return;
       if (zone !== tapWant) {
         var r0 = T.tap(st, true);
@@ -4471,6 +5149,7 @@
       });
     }
     function press(k) {
+      if (mv) return pressM(k);
       if (phase === 'tap') { if (k !== 'del') wiggle(); return; }   // a digit before the spread types nothing
       if (phase !== 'type' || now() < padLockedUntil) return;
       if (k === 'ok') return submit();
@@ -4641,22 +5320,31 @@
     // the tap target: the glowing zone, the panel's full height (generous), or the lending digit's column in the column, its
     // full height (hit by x against its box, 6 px either side: the lending digit alone is under 44 px, and a near miss said
     // "up here" though she tapped the right column; only one thing can be tapped in this phase)
-    panel.addEventListener('click', function (e) { if (phase === 'tap') return tapZone(zoneAt(e.clientX) || 'off'); if (advance) advance(); });
+    panel.addEventListener('click', function (e) { if (mv) return panelClickM(e); if (phase === 'tap') return tapZone(zoneAt(e.clientX) || 'off'); if (advance) advance(); });
     tcol.addEventListener('click', function (e) {
+      if (mv) return colClickM(e);
       if (phase !== 'tap') { if (advance && phase !== 'help') advance(); return; }
       var w = TAKE_ZONES.indexOf(tapWant), wb = tcol.querySelector('.tbox[data-col="' + w + '"]'), r = wb && wb.getBoundingClientRect();
       tapZone(r && e.clientX >= r.left - 6 && e.clientX <= r.right + 6 ? tapWant : 'off');
     });
-    stack.addEventListener('click', function () { if (phase === 'tap') return tapZone('off'); if (advance && phase !== 'help') advance(); });
+    stack.addEventListener('click', function (e) { if (mv) return stackClickM(e); if (phase === 'tap') return tapZone('off'); if (advance && phase !== 'help') advance(); });
+    // (the kit v0.4: a press that slides more than 10 px or is held more than 0.5 s is not a tap)
+    if (mv) [tcol, panel, stack].forEach(function (el) { el.addEventListener('pointerdown', function (e) { press0 = { x: e.clientX, y: e.clientY, t: perfNow() }; }); });
     keyHandler = function (e) {
       if (isTyping(e)) return;
+      if (mv && (e.key === ' ' || e.key === 'Enter')) {
+        // a tap target focused (VoiceOver, a keyboard): Space or Enter taps it; Space on the 'tap' page taps the glowing lender
+        var tgt = doc.activeElement && doc.activeElement.closest ? doc.activeElement.closest('#tcol .ttarget') : null;
+        if (tgt) { e.preventDefault(); if (phase === 'type' || phase === 'tap') touchCol(+tgt.getAttribute('data-col')); return; }
+        if (e.key === ' ' && phase === 'tap' && q && q.glow) { e.preventDefault(); return touchCol(TAKE_ZONES.indexOf(q.glow)); }
+      }
       if (/^[0-9]$/.test(e.key)) { e.preventDefault(); press(e.key); }
       else if (e.key === 'Backspace') { e.preventDefault(); press('del'); }
       else if (e.key === 'Enter') { e.preventDefault(); if (!nextWrap.hidden) gotBtn.click(); else if (phase === 'type') press('ok'); else if (phase === 'tap') wiggle(); else if (advance) advance(); }
       else if (e.key === ' ') { if (phase === 'tap') { e.preventDefault(); tapZone(tapWant); } else if (advance && phase !== 'type') { e.preventDefault(); advance(); } }
     };
     // (a font that loads late, a turned screen, Aa: the stack's held height measured again)
-    relayoutFn = function () { if (q && phase !== 'end' && phase !== 'help' && phase !== 'done') { reserve(); fit(); } };
+    relayoutFn = function () { if (q && phase !== 'end' && phase !== 'help' && phase !== 'done' && phase !== 'marks') { reserve(); fit(); } };
     updateBar();
     // (chapter 12's review: a take page opened while a Warrior Counts re-sit waits, a chapter's lesson or a store round picked
     // up, says Tallyheart's waiting line on a page of its own, with Next, before the first column: over the column, with the
@@ -4769,6 +5457,16 @@
    *   done    503 − 278 right in every column: two squares, two rows and five loose left, and its line
    *   shelf   the Training Hollow's shelf (Count the store open), through go('hollow') with `opts.stories`
    *   store   a Count the store round's first problem, its introduction over its first column
+   * The kit v0.4 (decision 57): every spread screen above but `first` (q, show, tap, spread, echo, sand, done) plays with
+   * `taught: E.TAKE_STEPS`, so it shows the moves (503 − 278's six moves made before its tens, its answer, its help); and:
+   *   touch       43 − 16 'hers', the 4 tapped through the page: struck, its lend box ringed
+   *   lend        the same picked up at its lend move, before the 3 is typed (the tools type 3, OK: the get box)
+   *   get         43 − 16 'above' after the 3: the 13 box ringed over the struck 3; get:one the same in 'one' (the front box)
+   *   chain       503 − 278 at the zero's lend: 4 over the 5, 10 over the 0, the 10 struck, its box in the heads row's place
+   *   help:move   43 − 16 with 4 typed at the lend (`kept`): the move-help in the slot, the 3 lettered, the keypad dim
+   *   ahead       52 − 27 after a 5: her digit pale, the tens and the rows glowing, "Marks first, then the answer."
+   *   marks       the take page's marks page (chapter 13's four lines inline, or PC.story.ch13's own), its last line shown
+   *   hollow:marks  My marks in the Hollow (the kit's lines, both pictures live), through go('hollow', { marks: true })
    * `opts.step`: the worked spread's step ('show'), or the help's ('sand'), from 0, from the end below 0; `opts.keys`
    * false: nothing typed (a tool that types itself). The shelf and the store need a `teach` set finished: an in-memory
    * stories list, the chapters and a stub chapter 12 with one (never registered in PC.story), passed as `opts.stories`, and
@@ -4776,20 +5474,31 @@
    * Returns true or an error string, as PC.debug.warrior does. */
   var TAKE_DEBUG_PROMPT = 'The store holds two hundred fifty-four. The Clan eats one hundred thirty-one.';
   var TAKE_DEBUG_ECHO = '¡Trece menos ocho son cinco! ¡Muy bien, amiga!';   // eight words: an echo's most
-  var TAKE_DEBUG = { first: 1, q: 1, show: 1, tap: 1, spread: 1, echo: 1, sand: 1, done: 1, shelf: 1, store: 1 };
+  var TAKE_DEBUG = { first: 1, q: 1, show: 1, tap: 1, spread: 1, echo: 1, sand: 1, done: 1, shelf: 1, store: 1,
+    touch: 1, lend: 1, get: 1, 'get:one': 1, chain: 1, 'help:move': 1, ahead: 1, marks: 1, 'hollow:marks': 1 };
+  // chapter 13's marks page, inline (its spec's `ch13-take` marks: design section 2's table), until PC.story.ch13 has its own
+  var TAKE_DEBUG_MARKS = { lines: [{ who: 'chispapaw', text: 'My little Tall One writes it like THIS.' }, { who: 'chispapaw', text: 'A little 1 in front!' },
+    { who: 'tallyheart', text: 'Some write the new number on top instead.' }, { who: 'tallyheart', text: 'Both are right. Which way do YOU like?' }],
+  one: [{ who: 'chispapaw', text: 'Just like my little Tall One!' }], above: [{ who: 'tallyheart', text: 'On top it is.' }] };
+  function takeDebugMarks() {
+    var ch = PC.story && PC.story.ch13, sets = ch && ch.counts ? Object.keys(ch.counts).map(function (k) { return ch.counts[k]; }) : [];
+    var own = sets.filter(function (d) { return d && d.op === '-' && d.marks && typeof d.marks === 'object'; })[0];
+    return E.util.clone(own ? own.marks : TAKE_DEBUG_MARKS);
+  }
   // the shelf's and the store's stub: a chapter 12 whose lesson teaches the first step (`teach: 'none'`)
   var TAKE_DEBUG_CH = { id: 'take-debug-ch12', number: 12, module: 2, title: 'Take-aways (debug)', start: 'f001',
     frames: { f001: { board: 'DEBUG.', end: true } },
     counts: { 'take-debug-none': { op: '-', teach: 'none', teacher: 'tallyheart', picture: { kind: 'store' }, facts: [[58, 23], [76, 42], [475, 132]] } } };
   function takesDebug(what, opts) {
     if (!E || !E.takes || typeof E.takePlan !== 'function') return 'no take-aways kit in this build';
-    if (!TAKE_DEBUG[what]) return 'takes: first, q, show, tap, spread, echo, sand, done, shelf or store';
+    if (!TAKE_DEBUG[what]) return 'takes: first, q, show, tap, spread, echo, sand, done, shelf, store, touch, lend, get, get:one, chain, help:move, ahead, marks or hollow:marks';
     if (!cat) { cat = E.addCat(save, { now: now() }) || save.cats[0]; save.current = cat.id; }
-    if (what === 'shelf' || what === 'store') {
+    if (what === 'shelf' || what === 'store' || what === 'hollow:marks') {
       var list = E.chapters(stories()).concat([TAKE_DEBUG_CH]);
       cat.lessons['take-debug-none'] = { set: 'take-debug-none', mode: 'chapter', op: '-', answers: 3, correct: 3, fast: 0, facts: 3, firstTry: 3, helped: 0, noHelp: true, finished: true };
       if (!E.storeOpen(cat, list)) return 'takes: the store did not open for the test cat';
       if (what === 'shelf') { go('hollow', { from: 'hub', stories: list }); return $('storeBtn') ? true : 'takes: no shelf drawn (a round in the slot?)'; }
+      if (what === 'hollow:marks') { go('hollow', { from: 'hub', marks: true, stories: list }); return $('marksPick') ? true : 'takes: no marks page drawn (a round in the slot?)'; }
       var r = E.takeRoundStart(cat, stories(), now(), { stories: list });
       clearTimers(); stopSpeech();
       if (fileState) closeFile(true);
@@ -4806,17 +5515,37 @@
       praise: ['Yes!', '', 'That’s it.', '', 'Every column.', ''], done: '' };
     var t = now(), o = { mode: 'debug', debug: { quick: true }, frameId: 'take-' + what, onDone: function () {} }, keys = null;
     def.facts = what === 'first' ? [{ a: 254, b: 131, regroup: 'show', prompt: TAKE_DEBUG_PROMPT, right: ['One square, two rows, three loose left.'] }, [58, 23], [76, 42]] :
-      what === 'show' ? [{ a: 503, b: 278, regroup: 'show' }] : what === 'tap' ? [{ a: 43, b: 16, regroup: 'tap' }] : [[503, 278]];
-    var st = E.takes.start(def, { set: def.id, mode: 'chapter', now: t, logged: 5 });
+      what === 'show' ? [{ a: 503, b: 278, regroup: 'show' }] : what === 'tap' ? [{ a: 43, b: 16, regroup: 'tap' }] :
+      what === 'marks' ? [{ a: 43, b: 16, regroup: 'show' }] : what === 'ahead' ? [[52, 27]] : /^(touch|lend|get|get:one|help:move)$/.test(what) ? [[43, 16]] : [[503, 278]];
+    // (the kit v0.4: every screen but `first` with every step taught, so the moves are on; her marks 'above' unless `:one`)
+    var v4 = what !== 'first';
+    o.style = what === 'get:one' ? 'one' : 'above';
+    if (what === 'marks') { def.marks = takeDebugMarks(); o.debug.marks = true; }
+    var st = E.takes.start(def, v4 ? { set: def.id, mode: 'chapter', now: t, logged: 5, taught: E.TAKE_STEPS.slice(), style: o.style } : { set: def.id, mode: 'chapter', now: t, logged: 5 });
+    // (moves made before the page opens: 't2' a touch on the hundreds, a number a lend's or a get's, a digit an answer)
+    var walk = function (list) { list.forEach(function (x, i) { var tt = t - 60000 + i * 1000; if (/^t\d$/.test(x)) E.takes.touch(st, def, +x.slice(1), tt); else E.takes.digit(st, def, x, 2000, tt); }); };
+    var CHAIN = ['t2', '4', '10', 't1', '9', '13'];
     if (what === 'first') { o.intro = [{ who: 'tallyheart', text: E.WARRIOR_WAITING }]; o.waitLine = E.WARRIOR_WAITING; }
     // (`opts.step`: a step of the worked spread or of the help, from 0, from the end below 0)
     var at = opts && typeof opts.step === 'number' && isFinite(opts.step) ? Math.round(opts.step) : null;
-    if (what === 'show') { var ns = E.takeShow(def, E.takePlan(503, 278), 0).steps.length; o.debug.stop = 'show' + Math.max(0, Math.min(ns - 1, at == null ? 1 : at < 0 ? ns + at : at)); }
-    if (what === 'q' || what === 'done') E.takes.digit(st, def, 5, 3000, t - 60000);
-    if (what === 'done') { E.takes.digit(st, def, 2, 3000, t - 50000); keys = ['2', 'ok']; o.debug.stop = 'end'; }
+    if (what === 'show') {
+      // the worked example's steps under the moves: 0 the opening line, then each of Tallyheart's numbers, her box ringed
+      // (1 the square's lend, 2 the zero's ten, 3 the row's lend, 4 the loose, 5 "Thirteen take away eight.")
+      var SV = E.takeShow(def, E.takePlan(503, 278), 0, { mode: 'show', style: o.style }).steps, ns = SV.length, sj = Math.max(0, Math.min(ns - 1, at == null ? 1 : at < 0 ? ns + at : at));
+      walk([[], ['t2'], ['t2', '4'], ['t2', '4', '10', 't1'], ['t2', '4', '10', 't1', '9'], ['t2', '4', '10', 't1', '9', '13']][sj]);
+      if (sj === 0) o.debug.stop = 'show0';
+    }
+    if (what === 'q' || what === 'done' || what === 'spread' || what === 'echo' || what === 'sand') walk(CHAIN);
+    if (what === 'q' || what === 'done') E.takes.digit(st, def, 5, 3000, t - 50000);
+    if (what === 'done') { E.takes.digit(st, def, 2, 3000, t - 40000); keys = ['2', 'ok']; o.debug.stop = 'end'; }
     if (what === 'spread') { keys = ['5', 'ok']; o.debug.stop = 'landed'; }
     if (what === 'echo') { keys = ['5', 'ok']; o.echo = function (x) { return x && !x.problem ? { who: 'chispapaw', text: TAKE_DEBUG_ECHO } : null; }; }
-    if (what === 'sand') { keys = ['0', 'ok']; o.debug.stop = 'help'; o.debug.at = at == null ? -1 : at; }
+    if (what === 'sand') { keys = ['4', 'ok']; o.debug.stop = 'help'; o.debug.at = at == null ? -1 : at; }
+    if (what === 'lend' || what === 'help:move') walk(['t1']);
+    if (what === 'get' || what === 'get:one') walk(['t1', '3']);
+    if (what === 'chain') walk(['t2', '4', '10', 't1']);
+    if (what === 'help:move') { keys = ['4', 'ok']; o.debug.stop = 'mhelp'; }
+    if (what === 'ahead') keys = ['5', 'ok'];
     clearTimers(); stopSpeech();
     if (fileState) closeFile(true);
     relayoutFn = null; keyHandler = null; currentSpeech = [];
@@ -4831,6 +5560,8 @@
     }
     // (`opts.keys === false`: nothing typed, for a tool that types itself)
     if (keys && !(opts && opts.keys === false)) keys.forEach(function (k) { h.press(k); });
+    // (take:touch: the 4 tapped through the page, as her finger would)
+    if (what === 'touch' && !(opts && opts.keys === false)) h.tap(1);
     renderedAt = now(); renderedPerf = perfNow();
     updateBar();
     root.scrollTo(0, 0);
@@ -5173,6 +5904,8 @@
     // the take-aways kit (section 5): once Count the store is open (a take set with `teach` finished), the Hollow opens on its
     // shelf; One Count at a time (`opts.counts`) draws the Counts page below, word for word as it always was. A cat without
     // the store (every cat before chapter 12) gets that page at once, as before. `opts.stories`: PC.debug.takes' stub chapter
+    // (the kit v0.4, decision 57: My marks, under the shelf, the marks page with the kit's lines; its ‹ goes back to the shelf)
+    if (opts && opts.marks) return renderMarks(opts);
     var SH = opts && opts.counts ? null : E.hollowShelf(cat, stories(), { reward: !!(opts && opts.reward), now: now(), stories: opts && opts.stories });
     if (SH) return renderShelf(SH, opts || {});
     // the Counts she can practise and Tallyheart's lines about them (E.hollowLines: each Count's own
@@ -5249,10 +5982,14 @@
     relayoutFn = lay;
     lay();
     var label = function (id) { var b = SH.buttons.filter(function (x) { return x.id === id; })[0]; return b ? b.label : id; };
+    // (the kit v0.4: My marks beside My nest once she has learned to spread a row, or has chosen her marks)
+    var marksOn = E.takeSteps(cat, opts.stories || stories()).indexOf('ones2') >= 0 || !!(cat.takes && (cat.takes.style === 'one' || cat.takes.style === 'above'));
     $('interact').innerHTML = '<div class="counts-pick tshelf" role="group" aria-label="What to practise">' +
       '<button class="btn go big" type="button" id="storeBtn"><i class="storeicon" aria-hidden="true">' + storeIcon() + '</i>' + esc(label('store')) + '</button>' +
       '<button class="btn go big" type="button" id="countsBtn">' + esc(label('counts')) + '</button></div>' +
-      '<div class="row end"><button class="btn" type="button" id="shelfNest">' + esc(label('nest')) + '</button></div>';
+      '<div class="row end">' + (marksOn ? '<button class="btn" type="button" id="marksBtn">' + takeMarksIcon(E.takeStyle(cat)) + 'My marks</button>' : '') +
+      '<button class="btn" type="button" id="shelfNest">' + esc(label('nest')) + '</button></div>';
+    if (marksOn) $('marksBtn').addEventListener('click', function () { go('hollow', { marks: true, from: view.opts.from, vol: view.opts.vol, stories: opts.stories }); });
     $('storeBtn').addEventListener('click', function () {
       var r = E.takeRoundStart(cat, stories(), now(), { stories: opts.stories });
       E.holdLesson(cat);   // a chapter lesson in progress waits in its chapter's place, never lost to the round
@@ -5261,7 +5998,75 @@
     });
     $('countsBtn').addEventListener('click', function () { go('hollow', { counts: true, from: view.opts.from, vol: view.opts.vol, stories: opts.stories }); });
     $('shelfNest').addEventListener('click', function () { go('nest', { from: 'hollow' }); });
-    currentSpeech = (ctx.reading || []).concat([{ text: label('store') + '.' }, { text: label('counts') + '.' }]);
+    currentSpeech = (ctx.reading || []).concat([{ text: label('store') + '.' }, { text: label('counts') + '.' }], marksOn ? [{ text: 'My marks.' }] : []);
+  }
+  /* My marks' icon (the kit v0.4): only her receiver's mark, as the column draws it, its digit 32 px: a little 1 in front of
+   * the 3, or 13 over a struck 3 (before she picks, on top: the default). */
+  function takeMarksIcon(style) {
+    return style === 'one' ? '<i class="tpickicon tpi-one" aria-hidden="true"><span class="tpi-d"><span class="tpi-f">1</span>3</span></i>' :
+      '<i class="tpickicon" aria-hidden="true"><span class="tpi-m">13</span><span class="tpi-d tstruck">3</span></i>';
+  }
+  /* The kit v0.4's marks page (decision 57; design section 2): the two picture buttons (PC.ui.takes.marksHtml) in a .tpick
+   * wrapper drawn into `host`; runTakes' 'marks' phase and the Hollow's { marks: true } branch call it. `o` { page (its
+   * options), live, pressed }. Returns { glow(which), live(on), press(style), onPick(fn), remove() }: a button answers only
+   * while live (a tap made to move the lines on never picks) and never moves the page on. */
+  function marksPage(host, o) {
+    var pickFn = null;
+    host.innerHTML = takeMarksHtml({ options: o.page.options, live: !!o.live, pressed: o.pressed || null, glow: o.glow || null });
+    var wrap = host.querySelector('.tpick'), btns = function () { return Array.prototype.slice.call(host.querySelectorAll('.tpb')); };
+    host.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('.tpb') : null;
+      if (!b) return;
+      if (!wrap.classList.contains('tlive') || !pickFn) return;
+      pickFn(b.getAttribute('data-style'));
+    });
+    return {
+      glow: function (g) { btns().forEach(function (b) { var s = b.getAttribute('data-style'); b.classList.toggle('tglowing', g === 'both' || g === s); }); },
+      live: function (on) { on = on !== false; wrap.classList.toggle('tlive', on); btns().forEach(function (b) { if (on) b.removeAttribute('aria-disabled'); else b.setAttribute('aria-disabled', 'true'); }); },
+      press: function (style) {
+        btns().forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-style') === style ? 'true' : 'false'); });
+        var pb = host.querySelector('.tpb[data-style="' + style + '"]');
+        if (pb) { try { pb.focus({ preventScroll: true }); } catch (x) {} }
+      },
+      onPick: function (fn) { pickFn = fn; },
+      remove: function () { if (host.parentNode) host.parentNode.removeChild(host); }
+    };
+  }
+  /* My marks in the Training Hollow (go('hollow', { marks: true }), a branch of renderHollow: no new view): the wide sand,
+   * Tallyheart with the kit's lines, the two pictures live at once, her style pressed; a tap changes it at once, at no cost,
+   * saved, and Tallyheart says the answer line; ‹ goes back to the shelf (onBack, `hollowSub`). */
+  function renderMarks(opts) {
+    hollowSub = 'marks';
+    var scr = $('screen');
+    scr.innerHTML = frameShell('hollow', 'hollow');
+    // (the shelf's own mode: on a phone held sideways the pictures on the left, the balloons over the panel)
+    scr.querySelector('.frame').setAttribute('data-mode', 'shelf');
+    var panel = $('panel'), page = E.takeMarksPage(E.takeRoundDef(), cat);
+    var fb = function (b) { return { who: b.who || 'tallyheart', text: fill(b.text) }; };
+    var labels = page.options.map(function (op) { return { text: op.label + '.' }; });
+    var draw = function (lines) {
+      var f = { scene: hollowScene('wide', [{ who: 'tallyheart', pose: 'sit', mood: 'kind', at: 'sunpatch', facing: 'left' }, { who: 'player', pose: 'sit', mood: 'happy', at: 'sand-left', facing: 'right' }], ['sunset']),
+        say: lines };
+      var heads = drawArt(panel, shownFrame(f), cat.look);
+      var ctx = { panel: panel, frame: f, heads: heads, caps: captionsOf(f), balloons: balloonsOf(f) };
+      var lay = function () { layoutText(ctx); if ($('stack').innerHTML && root.matchMedia && root.matchMedia(TAKE_PHONE).matches) layoutText(ctx); };
+      relayoutFn = lay;
+      lay();
+      return ctx;
+    };
+    var ctx = draw(page.lines.map(fb));
+    $('interact').innerHTML = '<div class="tpickwrap" id="marksPick"></div>';
+    var mp = marksPage($('marksPick'), { page: page, live: true, pressed: page.current });
+    mp.onPick(function (s) {
+      if (!E.setTakeStyle(cat, s)) return;
+      persist();
+      mp.press(s);
+      var after = page.after[s].map(fb);
+      ctx = draw(page.lines.slice(0, Math.max(0, page.lines.length - 1)).map(fb).concat(after));
+      currentSpeech = (ctx.reading || []).concat(labels);
+      speakItems(after);
+    });
+    currentSpeech = (ctx.reading || []).concat(labels);
   }
   /* The store icon: the quick picture's three marks (a square, a line, a dot) on a sand chip, as the column's heads are. */
   function storeIcon() {
@@ -5788,7 +6593,7 @@
         return 'the ' + k.table + 's ' + r.rounds + ' (' + r.cleanRounds + ' without help' + (r.glow ? ', claw mark glowing' : '') + ')';
       }).join('; ') : '');
       // the take-aways kit (docs/take-aways.md, section 8): only for a cat with `takes` data
-      var TC = c.takes ? takeCorner(c.takes, E.takeTable(c), fmtMs) : null;
+      var TC = c.takes ? takeCorner(c.takes, E.takeTable(c), fmtMs, E.takeSteps(c, stories())) : null;
       if (TC) hollowTxt += '; ' + TC.line;
       if (TC) hollowTxt = 'One Count at a time ' + hollowTxt;
       html += '<h3>' + nameHtml(c) + '</h3>' +

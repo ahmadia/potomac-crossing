@@ -1055,6 +1055,97 @@ html:has(.frame[data-mode="take"]){overflow-anchor:none}
   .frame[data-mode="store-reward"] .reward b{align-self:end}
   .frame[data-mode="store-reward"] .reward span{align-self:start}
 }
+/* the kit v0.4 (decision 57; docs/take-aways.md section 1a; app/ui.js takeCellHtml, runTakes' moves, marksPage): a spread is
+   moves she makes in the column. Every rule hangs on .frame[data-mode="take"].tmoves (set only under the engine's gate, from
+   chapter 13's lesson on) or on .tpick (the marks page's pictures, on the take page and in the Hollow), so chapter 12's
+   column draws exactly as before. The small boxes she types into (.tmini) live inside the reserved rows: border-box, the
+   row's height, digits fitted (.86 of the marks' size), 1.15em of the marks wide for one digit, 1.75em for two; the 'one'
+   front box sits raised just before its digit, nearer it than the neighbour's mark, with no 16px floor (at 844 x 390 a 16px
+   box filled the whole gap). The second marks row ('above') stands in the heads row's place; the chip's words stay in its
+   aria-label. A tap target (.ttarget) is the lender's column above the rule, its full width and half of each gap, at least
+   44px wide (widened into her own column's near half, or outwards for a column not next to hers) */
+.frame[data-mode="take"].tmoves .tmark,.tpick .tmark{position:relative;white-space:nowrap}
+.frame[data-mode="take"].tmoves .tm2,.tpick .tm2{grid-row:1;align-self:end}
+.frame[data-mode="take"].tmoves .thead.tgone,.tpick .thead.tgone{opacity:0}
+.frame[data-mode="take"].tmoves .tmark.tbx{align-self:stretch;display:flex;align-items:stretch;justify-content:center}
+.frame[data-mode="take"].tmoves .tmini{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;font-size:.86em;min-width:1.34em;height:100%;padding:0 .08em;line-height:1;
+  border-radius:6px;border:3px solid var(--ink);background:var(--cream);color:var(--ink);text-shadow:none;box-shadow:3px 3px 0 1px rgba(0,0,0,.5);font-variant-numeric:tabular-nums}
+.frame[data-mode="take"].tmoves .tmini.tw2{min-width:2.04em}
+.frame[data-mode="take"].tmoves .tmini.on{box-shadow:0 0 0 3px var(--gold), 3px 3px 0 1px rgba(0,0,0,.5)}
+.frame[data-mode="take"].tmoves .tmini.right{background:#c9f2c0}
+.frame[data-mode="take"].tmoves .tgrp,.tpick .tgrp{position:relative;display:inline-block}
+.frame[data-mode="take"].tmoves .tmark .tgrp.tstruck::after,.tpick .tmark .tgrp.tstruck::after{width:2.5px;height:1.5em;top:-.25em;transform:rotate(50deg)}
+.frame[data-mode="take"].tmoves .tgrp.tfs.tstruck::after,.tpick .tgrp.tfs.tstruck::after{height:1.3em;top:-.12em;transform:rotate(44deg)}
+.frame[data-mode="take"].tmoves .tfront,.tpick .tfront{position:absolute;right:100%;top:-.04em;margin-right:.02em;font-size:max(.5em,16px);color:var(--gold);text-shadow:2px 2px 0 var(--ink);line-height:1}
+.frame[data-mode="take"].tmoves .tfront.tin,.tpick .tfront.tin{position:static;margin:0 .02em 0 0;font-size:1em}
+.frame[data-mode="take"].tmoves .tfront.tfb{font-size:.5em;top:.02em;height:1.08em;display:flex;align-items:stretch}
+.frame[data-mode="take"].tmoves .tfront.tin.tfb{font-size:1em;height:auto;display:inline-flex;vertical-align:bottom}
+.frame[data-mode="take"].tmoves .tfront.tfb .tmini{min-width:1.22em;height:auto}
+.frame[data-mode="take"].tmoves .tfit{display:inline-block;font-size:.7em;letter-spacing:-.03em}
+.frame[data-mode="take"].tmoves .tbox.pale{color:rgba(27,22,34,.34)}
+.frame[data-mode="take"].tmoves .ttarget{grid-row:1 / 5;align-self:stretch;justify-self:start;margin-left:-.07em;width:max(1.56em, 44px);position:relative;z-index:1;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none}
+.frame[data-mode="take"].tmoves .ttarget.tfar{justify-self:end;margin-left:0;margin-right:-.07em}
+.frame[data-mode="take"].tmoves .ttarget:focus-visible{box-shadow:0 0 0 3px var(--gold)}
+.frame[data-mode="take"].tmoves .ttop.tripple::before{content:"";position:absolute;left:50%;top:50%;width:1.5em;height:1.5em;margin:-.75em 0 0 -.75em;border-radius:50%;border:4px solid var(--gold);box-sizing:border-box;pointer-events:none;animation:tripple .65s ease-out both}
+@keyframes tripple{from{transform:scale(.25);opacity:1}to{transform:scale(1.25);opacity:0}}
+.frame[data-mode="take"].tmoves .ttop.twig{animation:twig .18s ease-in-out}
+@keyframes twig{25%{transform:rotate(-7deg)}75%{transform:rotate(7deg)}}
+/* a problem that marks a column twice keeps the heads row as its second marks row when the fallback drops the chips */
+.frame[data-mode="take"].tmoves.tsecond.tnohead .tcol{--th:.6em}
+@media (prefers-reduced-motion: reduce){
+  .frame[data-mode="take"].tmoves .ttop.tripple::before{display:none}
+  .frame[data-mode="take"].tmoves .ttop.tripple{text-shadow:0 0 .3em var(--gold), 0 0 .12em var(--gold), 3px 3px 0 var(--ink)}
+  .frame[data-mode="take"].tmoves .ttop.twig{animation:none}
+}
+/* the marks page (design section 2): two big picture buttons, each a small column of 43 − 16 done in one style, sized by
+   font-size (never a transform: the marks' 16px floor holds, the digits at least the column's own on a phone), side by side
+   where they fit, stacked on a phone held upright; each lifts and glows with its line; live only after the last line; the
+   pick pressed (a ring, a check, aria-pressed). The keypad is hidden while it stands */
+.tpick{display:flex;flex-wrap:nowrap;gap:14px;justify-content:center;align-items:stretch;width:100%}
+.tpick .tpb{flex:0 1 auto;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;padding:12px 12px 10px;border-radius:18px;border:3px solid var(--ink);
+  background:#2c2350;color:#fff6e4;box-shadow:var(--lift);font:inherit;cursor:default;position:relative;transition:transform .2s ease, box-shadow .2s ease}
+.tpick.tlive .tpb{cursor:pointer}
+.tpick .tpb .tcol{font-size:clamp(29px, min(4.2vw, 4.4vh), 40px)}
+.tpick .tbox{box-shadow:none}
+.tpick .tcol{--th:0px}
+.tpick .thead{display:none}
+.tpick .tlbl{font-family:var(--comic);font-weight:700;font-size:clamp(16px, 2vw, 20px);line-height:1.15;text-align:center;max-width:10em}
+.tpick .tpb.tglowing{transform:translateY(-4px);box-shadow:0 0 0 3px var(--gold), 0 0 22px rgba(255,210,63,.55), 5px 5px 0 2px rgba(0,0,0,.5)}
+.tpick .tpb[aria-pressed="true"]{box-shadow:0 0 0 5px var(--gold), 5px 5px 0 2px rgba(0,0,0,.5)}
+.tpick .tcheck{position:absolute;top:6px;right:6px;width:28px;height:28px;display:none}
+.tpick .tpb[aria-pressed="true"] .tcheck{display:block}
+.tpick .thalo{text-shadow:0 0 .35em var(--gold), 0 0 .14em var(--gold), 2px 2px 0 var(--ink)}
+@media (orientation: portrait) and (max-width: 560px){
+  .tpick{flex-direction:column;align-items:center;gap:8px}
+  .tpick .tpb{width:min(100%, 300px);padding:8px 10px 6px;gap:4px}
+}
+@media (prefers-reduced-motion: reduce){
+  .tpick .tpb{transition:none}
+  .tpick .tpb.tglowing{transform:none}
+}
+/* the marks page on an iPad held sideways: the balloons over the panel (the phone held sideways's own arrangement), the
+   pictures on the left where the column and keypad stand; four balloons over the pictures ran under the screen there */
+@media (orientation: landscape) and (min-height: 501px){
+  .frame[data-mode="take"].tmoves.tmkpage{grid-template-areas:"int stack" "int panel";grid-template-rows:auto minmax(96px, 1fr);align-items:stretch;row-gap:8px;min-height:0;height:calc(100dvh - var(--bar) - var(--st) - 18px)}
+  .frame[data-mode="take"].tmoves.tmkpage .col{display:contents}
+  .frame[data-mode="take"].tmoves.tmkpage .stack{grid-area:stack;min-width:0}
+  .frame[data-mode="take"].tmoves.tmkpage .interact{grid-area:int;align-self:start;min-width:0}
+  .frame[data-mode="take"].tmoves.tmkpage .panel-side{grid-area:panel;position:static;min-height:0;height:100%}
+  .frame[data-mode="take"].tmoves.tmkpage .panel{width:100%;height:100%;aspect-ratio:auto}
+}
+/* My marks on the Hollow's shelf: only her receiver's mark, as the column draws it, its digit 32px */
+.tpickicon{display:inline-grid;justify-items:center;align-content:center;font-style:normal;font-family:var(--digits);font-weight:700;line-height:.9;color:var(--cream);text-shadow:2px 2px 0 var(--ink);flex:none;margin-right:.1em}
+.tpickicon .tpi-m{font-size:16px;color:var(--gold);line-height:.9}
+.tpickicon .tpi-d{font-size:32px;position:relative;line-height:.9}
+.tpickicon .tpi-f{position:absolute;right:100%;top:-2px;font-size:16px;color:var(--gold)}
+.tpickicon.tpi-one{padding-left:10px}
+/* on a phone held sideways the shelf's last row holds My marks beside My nest on one line, both 46px (the shelf's own size
+   there: with Aa its row had no room for a second line) */
+@media (orientation: landscape) and (max-height: 500px){
+  .frame[data-mode="shelf"] .row.end{flex-wrap:nowrap;gap:8px}
+  .frame[data-mode="shelf"] #marksBtn{min-height:46px;padding:0 .45em 0 .3em;gap:.25em}
+  .frame[data-mode="shelf"] #marksBtn ~ #shelfNest{padding-left:.6em;padding-right:.6em}
+}
 /* ---------- book two (docs/take-aways.md v0.3, section 7; app/ui.js renderBook): Read my book's two volumes, the store under a
    chapter's page, the winter sleepers (the dragonets' classes), the badger page and the keepsake. Nothing here is drawn for a
    cat with no module 2 chapter finished: her book is v23's ---------- */

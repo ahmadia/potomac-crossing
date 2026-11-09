@@ -1,8 +1,8 @@
 # Chapter 13: The Hunter’s Crouch
 
-*Draft v0.5 · 2026-11-07 (decision 55: Chispapaw’s whispered «¡Desagrupo!» as the row spreads, one line, on v0.4,
-the editor’s round 3) · about 21½ minutes to play on the plain path (20½ to 22½ across the kit’s maths),
-about 23 with the groundhog*
+*Draft v0.6 · 2026-11-09 (decision 57: the kit’s marks page before the worked example, her spreads made as moves; data
+and notes only, on v0.5) · about 22½ minutes to play on the plain path (21½ to 24 across the kit’s maths, the moves
+and the marks page included), about 24½ with the groundhog*
 
 *How to read this draft: each line (---) is a new screen, about one comic panel. **Choose** marks a choice (one sets a
 flag, the crouch’s `teach`; the others set nothing), **Tap** marks something she taps (one tap: nothing to type,
@@ -248,12 +248,28 @@ Chispapaw stares. “Three, and ten more… It’s like opening a pack of cookie
 
 ---
 
+*The take page opens on the kit’s marks page, once (`ch13-take`’s `marks`; she has no marks yet):*
+
+“My little Tall One writes it like THIS,” says Chispapaw. “A little 1 in front!” *(her picture glows: 43 − 16 done,
+the 4 crossed out with 3 over it, a little 1 in front of the 3, the answer 27)*
+
+“Some write the new number on top instead,” says Tallyheart. *(hers glows: the same, the 3 crossed out with 13 over
+it)* “Both are right. Which way do YOU like?”
+
+**Choose** *(tap a picture once both glow: it sets her marks, never a flag; she can switch while the answer shows, and
+change them any time in the Training Hollow, My marks)*: A little 1 in front / The new number on top
+
+*A little 1:* “Just like my little Tall One!” says Chispapaw. / *On top:* “On top it is,” says Tallyheart.
+
+---
+
 “Pretend the pile holds forty-three, and the Clan eats sixteen.”
 
-**Take away:** 43 − 16, a pretend pile less what the Clan eats *(the set opens on it, worked, `'show'`: the line
-above is its prompt, ten words; Tallyheart says each column, ones first, and spreads the row herself, and she
-types each digit; the kit’s “A row is a ten. A square is a hundred.” comes here, once, before its tens line; its twin,
-if any, is `'tap'` (the kit’s rule): no prompt, no right line)*
+**Take away:** 43 − 16, a pretend pile less what the Clan eats *(the set opens on it, after the marks page, worked,
+`'show'`: the line above is its prompt, ten words; Tallyheart says each column, ones first, taps the 4 and says each
+new number, and she types each one in her marks (3, then 13, or the little 1) and then each digit (decision 57); the
+kit’s “A row is a ten. A square is a hundred.” comes here, once, before its tens line; its twin, if any, is `'tap'`
+(the kit’s rule): no prompt, no right line)*
 
 *Right:* “Two rows, seven loose left,” says Tallyheart.
 
@@ -261,10 +277,12 @@ if any, is `'tap'` (the kit’s rule): no prompt, no right line)*
 
 *The next one’s prompt:* “Your turn,” says Tallyheart.
 
-**Take away:** 70 − 34, 85 − 39, 97 − 52, 486 − 253, Tallyheart’s four, in the same set *(70 − 34 is `'tap'`: no
-loose at all, so she taps the row to spread it; then `'hers'`; no line says which need a spread; a helped one comes
-back as a twin, asked plainly, with only the kit’s “One like it.”; at the hundreds the `extra` help opens “Let’s scratch
-it out.”, never “no square went” (the set’s `lines`: `extra` with both forms, the tens’ the kit’s own,
+**Take away:** 70 − 34, 85 − 39, 97 − 52, 486 − 253, Tallyheart’s four, in the same set *(70 − 34 is `'tap'`: no loose
+at all, so she taps the row to spread it (“No loose. Spread a row: tap it.”) and types its two new numbers as
+Tallyheart asks; then `'hers'`: each spread is hers to make, the tap, the two new numbers, then the answer; no line
+says which need a spread, and a tap on 97 − 52’s 9 is the `extra` slip, caught when she types its new number; a helped
+one comes back as a twin, asked plainly, with only the kit’s “One like it.”; at the hundreds the `extra` help opens
+“Let’s scratch it out.”, never “no square went” (the set’s `lines`: `extra` with both forms, the tens’ the kit’s own,
 the hundreds’ “Let’s scratch it out.”: no spreading a square yet); if play drags, 486 − 253 is the first cut)*
 
 *After 85 − 39, right or helped (never its twin):* *[es]* “¡Cuarenta y seis!” cheers Chispapaw. (Forty-six!)
@@ -290,8 +308,9 @@ Glintstar leaps onto the fountain. “Six hunters went out this morning. Eight p
 
 **Take away:** 52 − 27, the noon pile less what goes to the store *(the fifty-two is a frame balloon of Glintstar’s
 before Let’s count, so a retried or helped 6 × 8 still hears it; her question is its prompt, the kit’s twelve words;
-its set takes `twins: false`, as chapter 12’s store; its ones’ flip lands on the right digit, and the tens catch it,
-as the kit designs)*
+its set takes `twins: false`, as chapter 12’s store; its ones’ flip lands on the right digit: typed before her marks
+it stays, pale, and Tallyheart says “Marks first, then the answer.” (the kit’s `ahead`, never right first time), so
+the spread is still hers to make)*
 
 *Right:* “Twenty-five for the Clan,” says Glintstar.
 
@@ -545,15 +564,17 @@ Who will stay awake?
 
 *For us*
 
-*Words she reads, by chapter 12’s rules (`ch13/editor-r3/measure.py`, the optional scene split out), all 60 plain
-readings; minutes chapter 12’s way (123 a minute, 2 s a screen, 3 a Tap, 6 a choice, 10 the dream), maths 4.6–6.7.*
+*Words she reads, by chapter 12’s rules (`ch13/editor-r3/measure.py`, the optional scene and the kit’s marks page
+split out), all 60 plain readings; minutes chapter 12’s way (123 a minute, 2 s a screen, 3 a Tap, 6 a choice, 10 the
+dream), maths 5.5–8.1 with decision 57’s moves and the marks page (the kit v0.4’s design, section 6).*
 - *Plain: 1,571–1,597 words (`teach`: show 1,571–1,586, try 1,575–1,590, words 1,582–1,597; `specialty`: noticing and
-  climbing lowest, 1,571–1,584, swimming highest, 1,584–1,597; `ch2Stone` none). 20.5–22.8 minutes, 21.5–21.7 at the
-  middle maths; 25.2–27.5 at 90 a minute. Inside 1,450–1,650: nothing in the cut order is needed.*
-- *The groundhog: 165 words, six screens, two Taps, 7 × 8: 1.8–1.9 minutes more (1,736–1,762 words; 22.3–24.7 minutes,
-  23.3–23.6 at the middle maths).*
+  climbing lowest, 1,571–1,584, swimming highest, 1,584–1,597; `ch2Stone` none). 21.4–24.1 minutes, 22.6–22.9 at the
+  middle maths; 26.1–28.9 at 90 a minute. Inside 1,450–1,650: nothing in the cut order is needed.*
+- *The groundhog: 165 words, six screens, two Taps, 7 × 8: 1.8–1.9 minutes more (1,736–1,762 words; 23.2–26.0 minutes,
+  24.5–24.7 at the middle maths).*
 - *53 screens (63 to 73 frames by chapter 12’s ratio, 70 to 82 with the groundhog; cap 125), 13 Taps, 5 choices
-  (`teach` the only flag), 5 Counts, 6 take-aways, the dream; no screen over 40 words, never 4 quiet in a row.*
+  (`teach` the only flag) and the kit’s marks page (a choice, no flag), 5 Counts, 6 take-aways, the dream; no screen
+  over 40 words, never 4 quiet in a row.*
 
 *Spanish (eight words or fewer, the English on the same screen; three answers of eleven echoed):* «la resta»
 *(take-aways)* · ¡No alcanza! *(Not enough!)* · ¡Desagrupo! *(Breaking it into groups!: her word for a spread, decision
@@ -575,6 +596,8 @@ the set’s 9 × 7)* · ¡Cuarenta y seis! *(Forty-six!: after 85 − 39)* · ¡
 12. *“Exactly,” not “Just like that” (chapter 21’s); “Goodnight, MENTOR!” (chapter 12’s slot); Tallyheart’s echo last.*
 13. *“Spread a row” is fixed English, not the brief’s “lettered from the words table”: a frame fills no English word.*
 14. *A Spain-style answer from Aron rewrites the spread and cookie screens (the crossed line, “thirteen loose”).*
+15. *The marks page comes before the worked prompt, so “Ones first.” stays joined to it; Chispapaw’s little 1 first
+(her Tall One’s homework is in Spanish), “Both are right.”*
 
 *Chapter 14 inherits: day 2 ended under the stars, no moon risen; `teach` set; the collar by Chispa’s nest for good
 (`collar: false`), no catch yet; the store 133 + 27 + the afternoon’s, unnumbered (178 in the book); `ones2` learned,

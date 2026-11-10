@@ -225,7 +225,7 @@
 
     f001: {
       // the start frame shows to everyone: the chapter's title over her nest (chapter 8's title panel); {Murmur}chime awake
-      scene: S('den', 'nest', DENW13, [nestChime('sit', 'happy'), nestYou('curl', 'sleepy', { asleep: true })], ['morning', 'zzz']),
+      scene: S('den', 'nest', DENW13, [nestChime('sit', 'kind'), nestYou('curl', 'sleepy', { asleep: true })], ['morning', 'zzz']),
       board: 'CLOSE-UP, THE TITLE PANEL, FIRST LIGHT. Our cat sleeps curled tight in its warrior’s nest in the first pale light of morning, its bark, its glass and the grey mist stone tucked round it, while in the next nest the tortoiseshell warrior already sits up, wide awake. One small zzz rises. The chapter’s title is lettered across the top of the panel like a title page.',
       caption: ['Chapter 13: The Hunter’s Crouch'],
       next: 'f002'
@@ -233,14 +233,14 @@
 
     f002: {
       // Tallyheart's head over the edge of the nest, at the close-up's right edge, touching nobody
-      scene: S('den', 'nest', DENW13, [nestChime('sit', 'happy'), nestYou('loaf', 'sleepy'), tally('peer', 'kind', PEER, 'left')], ['morning']),
+      scene: S('den', 'nest', DENW13, [nestChime('sit', 'kind'), nestYou('loaf', 'sleepy'), tally('peer', 'kind', PEER, 'left')], ['morning']),
       board: 'CLOSE-UP, THE NEW NEST, FIRST LIGHT. Tallyheart’s big ginger head pokes over the edge of the nest from the right with her torn ear cocked, and our cat blinks up at her from the moss, half asleep; the tortoiseshell warrior grins from the next nest. Her balloon brisk and fond.',
       say: [{ who: 'tallyheart', text: 'First light, warrior. Riffle’s waiting.' }],
       next: 'f003'
     },
 
     f003: {
-      scene: S('den', 'nest', DENW13, [nestChime('sit', 'happy'), nestYou('sit', 'sleepy'), tally('peer', 'kind', PEER, 'left')], ['morning']),
+      scene: S('den', 'nest', DENW13, [nestChime('sit', 'wonder'), nestYou('sit', 'sleepy'), tally('peer', 'kind', PEER, 'left')], ['morning']),
       board: 'CLOSE-UP, THE NEW NEST, FIRST LIGHT, THE CHOICE. Our cat sits up in its nest with its fur still rumpled, and the tortoiseshell warrior, already up and bright-eyed, leans across from the next nest bursting with the news; Tallyheart waits at the edge. Caption top left; her balloon thrilled; the choices sit below the panel.',
       caption: ['{Murmur}chime is up already.'],
       say: [{ who: 'murmurchime', text: 'Your first dawn patrol! Just the three of us.' }],
@@ -311,8 +311,8 @@
     f009: {
       // the pebble bounces off the first cast member's head (`bonk`): Riffle listed first
       scene: S('crossing', 'wide', merge(CROSS13, { pebbles: true }),
-        [c('riffle', 'juggle', 'shy', 'rock-right', 'left', { holds: 'pebbles' }), tally('sit', 'kind', 'rock-high', 'right'), chime('sit', 'happy', 'rock-left', 'right'),
-         you('sit', 'happy', 'pebbles', 'right')], ['morning', 'bonk']),
+        [c('riffle', 'juggle', 'shy', 'rock-right', 'left', { holds: 'pebbles' }), tally('sit', 'kind', 'rock-high', 'right'), chime('sit', 'kind', 'rock-left', 'right'),
+         you('sit', 'kind', 'pebbles', 'right')], ['morning', 'bonk']),
       board: 'WIDE, THE CROSSING AT FIRST LIGHT, COMEDY BEAT. One of the juggled pebbles bounces right off the young otter’s nose, and he catches the other two and goes on with tremendous dignity as if nothing happened; the three cats watch with straight faces. Caption top left; his balloon airy.',
       caption: ['One bonks his nose.'],
       say: [{ who: 'riffle', text: 'That one was a spare.' }],
@@ -322,7 +322,7 @@
     f010: {
       // the swimmer's line (her `specialty`); the steam not drawn (said); our cat's raised paw the Tap
       scene: S('crossing', 'low', CROSS13,
-        [c('riffle', 'juggle', 'shout', 'rock-right', 'left', { holds: 'pebbles' }), you('pawup', 'happy', 'rock-left', 'right', { tap: 'paw' })], ['morning']),
+        [c('riffle', 'juggle', 'shout', 'rock-right', 'left', { holds: 'pebbles' }), you('pawup', 'wonder', 'rock-left', 'right', { tap: 'paw' })], ['morning']),
       board: 'LOW ANGLE, ON THE ROCKS AT FIRST LIGHT, THE TAP PICTURE. The young otter flicks a pebble high toward our cat, grinning, and our cat rears up on its back paws with one front paw raised to catch it, the bright cold river behind them. In play its raised paw glows softly; one tap catches the pebble and the page turns. Caption top left for a swimmer; his balloon a shout.',
       caption: [{ when: { specialty: 'swimming' }, text: 'Steam curls off the river. Even the water is breathing little clouds.' }],
       say: [{ who: 'riffle', text: '{name}{ending}! CATCH!', kind: 'shout' }],
@@ -334,7 +334,7 @@
       scene: S('crossing', 'rocks', CROSS13,
         [tally('sit', 'kind', 'rock-high', 'right'), c('otter', 'stand', 'solemn', CROSS_GRANNY, 'left', { variant: 3, holds: 'pole' }), c('riffle', 'stand', 'happy', 'rock-right', 'left'),
          chime('sit', 'wonder', 'rock-left', 'right'), you('sit', 'wonder', 'pebbles', 'right')], ['morning']),
-      board: 'MEDIUM, ON THE ROCKS AT FIRST LIGHT. The young otter waves the cats in with both paws, and beside him the old grey grandmother otter leans on her ferry pole and gives her news in short, grave words; Tallyheart, on the high rock, and the two warriors listen hard. Two balloons, his excited, hers gruff.',
+      board: 'MEDIUM, ON THE ROCKS AT FIRST LIGHT. The young otter waves the cats in with both paws, and beside him the sandy old grandmother otter leans on her ferry pole and gives her news in short, grave words; Tallyheart, on the high rock, and the two warriors listen hard. Two balloons, his excited, hers gruff.',
       say: [
         { who: 'riffle', text: 'You’re a NATURAL! Granny! They came! Tell them!' },
         { who: 'otter', name: 'Granny', text: 'Badger. A FRESH one. GroveClan’s side of the little channel. Saw it from the ferry. Like the island’s print. But NEW.' }
@@ -348,7 +348,7 @@
       scene: S('crossing', 'raft', CROSS13,
         [c('otter', 'stand', 'happy', 'raft-2', 'left', { variant: 2 }), c('otter', 'stand', 'shout', 'raft-3', 'left', { variant: 1 }), c('riffle', 'stand', 'happy', 'raft-1', 'left'),
          you('sit', 'wonder', RAFT_SHORE, 'right')], ['morning']),
-      board: 'MEDIUM, AT THE RAFT AT FIRST LIGHT, COMEDY BEAT. Two ferry otters crowd to the front of their raft, one holding her paws wide apart to show how big, and the old whiskery one throwing his paws even wider; the young otter grins, and our cat and Tallyheart listen from the shore. Caption top left; three balloons, the gossip’s, the old otter’s shout, the gossip’s again.',
+      board: 'MEDIUM, AT THE RAFT AT FIRST LIGHT, COMEDY BEAT. Two ferry otters crowd to the front of their raft, the gossip bursting with it and the old whiskery one shouting louder still; the young otter grins, and our cat listens from the shore. Caption top left; three balloons, the gossip’s, the old otter’s shout, the gossip’s again.',
       caption: ['The ferry otters crowd in.'],
       say: [
         { who: 'otter', text: 'As big as a FOX, we heard!' },
@@ -473,7 +473,7 @@
     f022: {
       // the pounce: the frosty leaf caught at her paws (a word joiner after the ellipsis, chapter 11's)
       scene: S('camp', 'crowd', FROST, crouch(['crouch', 'wonder', { holds: 'leaf', holdAt: 'paws' }], ['sit', 'happy'], 'proud'), ['morning']),
-      board: 'MEDIUM, THE FROSTY FERNS, COMEDY BEAT. The little cream cat has pounced and pinned something under both front paws with a crunch, and now she peers down at her catch: one crumpled, frosty brown leaf. Our cat holds back a grin. The crunch lettered big; caption top left; her balloon triumphant, then flat.',
+      board: 'MEDIUM, THE FROSTY FERNS, COMEDY BEAT. The little cream cat has pounced and pinned something under both front paws with a crunch, and now she stares at her catch, wide-eyed: one crumpled green leaf. Our cat holds back a grin. The crunch lettered big; caption top left; her balloon triumphant, then flat.',
       caption: ['Too late! Chispapaw POUNCES.'],
       say: [{ who: 'chispapaw', text: 'Got it! …' + WJ + 'It’s a leaf.' }],
       sfx: 'Crunch!',
@@ -550,7 +550,7 @@
     f030: {
       // her class word in her English line, a token (the table holds it as lettered); out loud, in the Hollow
       scene: S('hollow', 'lesson', H13, hollow('wonder', 'kind', 'happy'), ['morning']),
-      board: 'MEDIUM, THE TRAINING HOLLOW. The little cream cat’s big ears shoot straight up and she bounces where she sits, because she knows this one, and a small inset shows a child at a kitchen table doing homework, a cream cat watching. Two balloons, Tallyheart’s plain, the little cat’s a happy squeak with a Spanish word in it.',
+      board: 'MEDIUM, THE TRAINING HOLLOW. The little cream cat’s big ears shoot straight up and she bounces where she sits, because she knows this one. Two balloons, Tallyheart’s plain, the little cat’s a happy squeak with a Spanish word in it.',
       say: [
         { who: 'tallyheart', text: 'Now, ' + TAKEAWAYS + '.' },
         { who: 'chispapaw', text: '{Es:resta} THAT’S what ' + TAKEAWAYS + ' are! My little Tall One’s homework this frost-time!' }
@@ -577,7 +577,7 @@
     f033: {
       // her Tall One's words, out loud in the Hollow: a whole Spanish line, its English under it
       scene: S('hollow', 'lesson', merge(H13, { spreadMarks: 'standing' }), hollow('happy', 'kind', 'wonder'), ['morning']),
-      board: 'MEDIUM, THE TRAINING HOLLOW. The little cream cat pops up behind our cat and calls out the answer in her own language, delighted to know it, and a small inset shows a child frowning over homework with her chin in her hands. Two balloons, both the little cat’s: the first with its English under it, the second a confiding chirp.',
+      board: 'MEDIUM, THE TRAINING HOLLOW. The little cream cat pops up behind our cat and calls out the answer in her own language, delighted to know it. Two balloons, both the little cat’s: the first with its English under it, the second a confiding chirp.',
       say: [
         { who: 'chispapaw', lang: 'es', text: '{Es:noAlcanza}' },
         { who: 'chispapaw', text: 'My little Tall One says that every night.' }
@@ -632,7 +632,7 @@
     f038: {
       // her prompt is the Count's page (Glintstar's six hunters)
       scene: S('camp', 'crowd', CAMP_DAY, noon({ glint: 'solemn' }), ['day']),
-      board: 'MEDIUM, THE CAMP AT NOON, THEN THE COUNTS. The whole Clan crowds round the old stone fountain in bright cold sunshine, and Glintstar has leapt onto its top; our cat sits in the front row with the little cream cat pressed close beside it, and Tallyheart and the old tom among the rest. In the Counts picture six piles of prey, eight pieces each. Two captions top left; the keypad sits below the panel.',
+      board: 'MEDIUM, THE CAMP AT NOON, THEN THE COUNTS. The whole Clan crowds round the old stone fountain in bright cold sunshine, and Glintstar has leapt onto its top; our cat sits in the front row with the little cream cat close beside it, and Tallyheart and the old tom among the rest. In the Counts picture six piles of prey, eight pieces each. Two captions top left; the keypad sits below the panel.',
       caption: ['At noon, the whole Clan crowds round the pile. Chispapaw stays close beside you.', 'Glintstar leaps onto the fountain.'],
       counts: { set: 'ch13-noon', intro: false, next: 'f039' }
     },
@@ -674,7 +674,7 @@
     f043: {
       // come down to the fountain's foot; Chispapaw between them, facing our cat, for the whispers
       scene: S('camp', 'reveal', CAMP_DAY, sendoff({ glint: ['sit', 'solemn'] }), ['day']),
-      board: 'WIDE, THE CAMP AT NOON. Glintstar sits at the fountain’s foot and gives our cat its first job as a mentor, and the little cream cat turns to our cat to whisper a question, which our cat whispers back; Tallyheart listens with her ears up. Four balloons: Glintstar’s grave, two whispers, Glintstar’s again.',
+      board: 'WIDE, THE CAMP AT NOON. Glintstar sits at the fountain’s foot and gives our cat its first patrol to lead, and the little cream cat turns to our cat to whisper a question, which our cat whispers back; Tallyheart listens with her ears up. Four balloons: Glintstar’s grave, two whispers, Glintstar’s again.',
       say: [
         { who: 'glintstar', text: '{name}{ending}, take your apprentice and Tallyheart. A courtesy patrol, to GroveClan.' },
         { who: 'chispapaw', text: 'What’s a courtesy patrol?', kind: 'whisper' },
@@ -717,7 +717,7 @@
     },
 
     f047: {
-      scene: S('riverbank', 'path', {}, [tally('walk', 'proud', PATH_BACK, 'right'), chispa0('walk', 'wonder', PATH_CHISPA, 'right'), you('walk', 'happy', 'path-left', 'right')], ['day']),
+      scene: S('riverbank', 'path', {}, [tally('walk', 'kind', PATH_BACK, 'right'), chispa0('walk', 'wonder', PATH_CHISPA, 'right'), you('walk', 'happy', 'path-left', 'right')], ['day']),
       board: 'WIDE, THE RIVERBANK PATH, AFTERNOON. Behind the two cats Tallyheart gives our cat a long sideways look with her chin up and her eyes warm, pleased with what she heard, and our cat walks on a little taller. One caption at the top.',
       caption: ['Tallyheart gives you a look. A pleased one.'],
       next: 'f048'
@@ -752,7 +752,7 @@
 
     f051: {
       // her turn to ask: two ways, each its own reply (f052a, f052b), nothing set
-      scene: S('grove', 'meet', {}, [you('sit', 'wonder', 'meet-1', 'right'), chispa0('sit', 'wonder', 'meet-3', 'right'), elder('kind'), apprentice(), tally('sit', 'kind', 'meet-2', 'right')], ['day']),
+      scene: S('grove', 'meet', {}, [you('sit', 'wonder', 'meet-1', 'right'), chispa0('sit', 'wonder', 'meet-3', 'right'), elder('kind'), apprentice(), tally('sit', 'kind', 'meet-2', 'left')], ['day']),
       board: 'WIDE, AMONG GROVECLAN’S TREES, THE CHOICE. Tallyheart dips her head respectfully to the old elder, then turns and looks at our cat, waiting, and the elder waits too; the little cream cat looks from one to the other. One caption at the top; the choices sit below the panel.',
       caption: ['Tallyheart dips her head to her. Then she looks at you: your turn to ask.'],
       choice: {
@@ -765,7 +765,7 @@
 
     f052a: {
       scene: S('grove', 'meet', {}, [you('sit', 'happy', 'meet-1', 'right'), chispa0('sit', 'happy', 'meet-3', 'right'), elder('kind'), apprentice(), tally('sit', 'proud', 'meet-2', 'right')], ['day']),
-      board: 'WIDE, AMONG GROVECLAN’S TREES, ONLY FOR A CAT WHO ASKS PLEASE. The old elder dips her grey muzzle, pleased with such good manners, and waves the three cats in with her tail; Tallyheart looks quietly proud. Her balloon gracious.',
+      board: 'WIDE, AMONG GROVECLAN’S TREES, ONLY FOR A CAT WHO ASKS PLEASE. The old elder dips her white muzzle, pleased with such good manners, and waves the three cats in with her tail; Tallyheart looks quietly proud. Her balloon gracious.',
       say: [{ who: 'groveclan', text: 'Very nicely asked. Come in.' }],
       next: 'f053'
     },
@@ -812,7 +812,7 @@
     f056: {
       // her two paragraphs, two balloons; then she goes to her den, before the marks are found
       scene: S('grove', 'oak', DIG, [elder('kind'), tally('sit', 'kind', 'root-1', 'right'), chispa0('sit', 'wonder', 'oak-near', 'right'), you('sit', 'wonder', 'root-2', 'right')], ['day']),
-      board: 'WIDE, THE OLD OAK, AFTERNOON. The old elder sits by the oak and remembers out loud, and a small inset shows a big grumpy shape in a winter wood, seen only as a lump of grey fur from behind; then she stretches and yawns. The three cats listen. Two balloons, both the elder’s, the second a yawn.',
+      board: 'WIDE, THE OLD OAK, AFTERNOON. The old elder sits by the oak and remembers out loud, and a small inset shows a winter wood long ago, a little kit peering at a big untidy dug hole between the trees, nobody else in it; then she stretches and yawns. The three cats listen. Two balloons, both the elder’s, the second a yawn.',
       say: [
         { who: 'groveclan', text: 'When I was a kit, a badger wintered in these woods. Grumpy. Never bothered a cat that didn’t bother her.' },
         { who: 'groveclan', text: 'Look all you like. Now, if you’ll excuse me, my den is calling. It says, ‘NAP.’' }
@@ -885,7 +885,7 @@
 
     f062: {
       scene: S('grove', 'dig', LEAVES, door(['sit', 'sniff'], ['sit', 'wonder'], ['crouch', 'wonder']), ['day']),
-      board: 'MEDIUM, THE LITTLE DOORWAY, AFTERNOON. The plump brown creature puts its nose up and sniffs toward the big dig with deep disapproval, and a small inset shows something large and shadowless padding past its bedroom wall in the night, seen only as a pair of big paws. Its balloon grumpy and slow.',
+      board: 'MEDIUM, THE LITTLE DOORWAY, AFTERNOON. The plump brown creature puts its nose up and sniffs toward the big dig with deep disapproval, and a small inset shows its snug round bedroom, soil trickling from one wall and little sniff lines coming through it, nothing seen. Its balloon grumpy and slow.',
       say: [{ who: 'groundhog', name: ROUND, text: 'Not a badger. GROUNDHOG. Something BIGGER dug past my bedroom. Sniffing. All. Night.' }],
       next: 'f063'
     },
@@ -914,7 +914,7 @@
 
     f065: {
       // the leaves over the marks the Tap (the grove's `tap: 'leaves'`); the doorway half under leaves on both paths
-      scene: S('grove', 'dig', merge(LEAVES, { tap: 'leaves' }), [chispa0('sit', 'wonder', 'marks-2', 'right'), you('sit', 'wonder', 'marks-1', 'right')], ['day']),
+      scene: S('grove', 'dig', merge(LEAVES, { tap: 'leaves' }), [chispa0('sit', 'wonder', 'marks-2', 'left'), you('sit', 'wonder', 'marks-1', 'right')], ['day']),
       board: 'MEDIUM, THE BIG DIG, AFTERNOON, THE TAP PICTURE. On the far side of the dig, on a patch of flat bare earth among the fallen leaves, something scratched in the ground peeps out from under a few leaves, and our cat and the little cream cat sit and stare at it. In play the leaves over it glow softly; one tap brushes them away and the page turns. Caption top left.',
       caption: ['On the way out, something catches your eye, on the far side of the dig, half under the leaves.'],
       scratch: { tap: 'leaves', prompt: '**Tap** to brush the leaves away.', label: 'Brush the leaves away.', next: 'f066' }
@@ -922,14 +922,14 @@
 
     f066: {
       // the marks bare: one long line and eight little pokes, the kit's quick picture on earth, apart from the dig
-      scene: S('grove', 'dig', BARE, [chispa0('crouch', 'wonder', 'marks-2', 'right'), you('crouch', 'wonder', 'marks-1', 'right')], ['day']),
+      scene: S('grove', 'dig', BARE, [chispa0('crouch', 'wonder', 'marks-2', 'left'), you('crouch', 'wonder', 'marks-1', 'right')], ['day']),
       board: 'MEDIUM, THE BIG DIG, AFTERNOON. With the leaves brushed aside, the flat earth shows one long straight line scratched in it and, beside it, eight small neat pokes, five and three, all by themselves and nothing like the dig’s big curved scratches; the two cats crouch and stare. Two captions top left.',
       caption: ['Scratched in the earth: one long line. And eight little pokes, small and neat.', 'They’re not like the dig’s big scratches. These lie all by themselves, on the flat earth.'],
       next: 'f067'
     },
 
     f067: {
-      scene: S('grove', 'dig', BARE, [chispa0('sit', 'worried', 'marks-2', 'right'), you('crouch', 'wonder', 'marks-1', 'right')], ['day']),
+      scene: S('grove', 'dig', BARE, [chispa0('sit', 'worried', 'marks-2', 'left'), you('crouch', 'wonder', 'marks-1', 'right')], ['day']),
       board: 'MEDIUM, THE BIG DIG, AFTERNOON. The little cream cat sits back and whispers her guess, not sure of it at all, her big ears turning; our cat keeps staring at the line and the pokes in the earth. Her balloon a doubtful whisper.',
       say: [{ who: 'chispapaw', text: 'Claw marks?', kind: 'whisper' }],
       next: 'f068'
@@ -968,7 +968,7 @@
     f071: {
       // his tale, for laughs; our cat's paw the Tap (the flop)
       scene: S('camp', 'crowd', {}, tale({ old: 'shout', grey: 'wonder', you: 'happy', chispa: 'happy', youExtra: { tap: 'paw' } }), ['sunset']),
-      board: 'MEDIUM, THE CAMP AT SUNSET, THE TAP PICTURE, COMEDY BEAT. The old grizzled tom tells his tale with huge gestures, his paws spread flat to show how flat, and a small inset shows a row of very surprised cats squashed flat as leaves under a big grey shape seen only as a furry rump; the grey apprentice gapes. In play our cat’s paw glows softly; one tap flops it flat too and the page turns. Three balloons, his shout, the apprentice’s question, his answer.',
+      board: 'MEDIUM, THE CAMP AT SUNSET, THE TAP PICTURE, COMEDY BEAT. The old grizzled tom tells his tale with huge gestures, his paws spread flat to show how flat; the grey apprentice gapes. In play our cat’s paw glows softly; one tap flops it flat too and the page turns. Three balloons, his shout, the apprentice’s question, his answer.',
       say: [
         { who: 'grizzled', text: 'There we were, minding our own business. Then… *WHUMP!*', kind: 'shout' },
         { who: 'snorer', text: 'Were you scared?' },
@@ -1030,7 +1030,7 @@
     f077: {
       // the dawn patrol's four, paid (chapter 12's slot)
       scene: S('den', 'nest', DENW13, [nestChime('lie', 'sleepy'), nestYou('loaf', 'happy')], ['night']),
-      board: 'CLOSE-UP, HER WARRIOR’S NEST, NIGHT, COMEDY BEAT. In the next nest the tortoiseshell warrior yawns an enormous yawn and says something very smug with her eyes closed, and our cat rolls its eyes at her from its own nest, smiling. Her balloon a smug yawn.',
+      board: 'CLOSE-UP, HER WARRIOR’S NEST, NIGHT, COMEDY BEAT. In the next nest the tortoiseshell warrior lies with her chin on her paws and says something very smug with her eyes closed, and our cat smiles at her from its own nest. Her balloon a smug, sleepy one.',
       say: [{ who: 'murmurchime', text: 'Three mice this morning. Not that I’m counting.' }],
       next: 'f078'
     },
@@ -1057,7 +1057,7 @@
     f079: {
       // Chispapaw's goodnight from across the camp: off the panel, named, so it shows no face; our cat's raised tail the Tap
       scene: S('den', 'nest', DENW13, [nestChime('lie', 'sleepy'), nestYou('sit', 'happy', { tailUp: true, tap: 'tail' })], ['night']),
-      board: 'CLOSE-UP, HER WARRIOR’S NEST, NIGHT, THE TAP PICTURE. Our cat sits up in its nest with its tail raised high, smiling toward a small voice calling from across the camp, and in the next nest the tortoiseshell warrior opens one sleepy eye. In play the raised tail glows softly; one tap waves it goodnight and the page turns. A far voice’s balloon from off the panel.',
+      board: 'CLOSE-UP, HER WARRIOR’S NEST, NIGHT, THE TAP PICTURE. Our cat sits up in its nest with its tail raised high, smiling toward a small voice calling from across the camp, and in the next nest the tortoiseshell warrior sleeps on. In play the raised tail glows softly; one tap waves it goodnight and the page turns. A far voice’s balloon from off the panel.',
       say: [{ who: 'chispapaw', name: 'Chispapaw', text: 'Goodnight, MENTOR!', kind: 'shout' }],
       scratch: { tap: 'tail', prompt: '**Tap** to wave goodnight.', label: 'Wave goodnight.', next: 'f080' }
     },
@@ -1075,7 +1075,7 @@
     f081: {
       // Tallyheart padding past a step nearer than the two nests, at the close-up's edge (chapter 12's PAST), touching
       // nobody; “Then, softly”: two balloons
-      scene: S('den', 'nest', DENW13, [nestChime('lie', 'sleepy', { asleep: true }), nestYou('loaf', 'happy'), tally('walk', 'kind', PAST, 'left')], ['night']),
+      scene: S('den', 'nest', DENW13, [nestChime('lie', 'sleepy', { asleep: true }), nestYou('loaf', 'kind'), tally('walk', 'kind', PAST, 'left')], ['night']),
       board: 'CLOSE-UP, HER WARRIOR’S NEST, NIGHT. Tallyheart pads quietly past the nest on her way to her own, coming in at the edge of the panel, and looks down at our cat with a soft, proud look; the tortoiseshell warrior sleeps on. Two balloons, her goodnight and a softer word.',
       say: [
         { who: 'tallyheart', text: 'Goodnight.' },
@@ -1105,9 +1105,10 @@
     f084: {
       // the closing frame: across the camp, Chispapaw asleep, her tail straight up out of her curl (the caption carries
       // the twitch: `motion`'s speed lines ran out of the doorway behind her like a dash, looked at in a render); her collar
-      // beside her nest
+      // beside her nest. She faces right, so the tail stands against the den's green wall (facing left it rose in front of
+      // the fourth rose stem, its own colour, and the "Straight up." beat could not be seen: chapter 13's review)
       scene: S('den', 'inside', DEN_COLLAR,
-        [chispa0('curl', 'sleepy', 'nest', 'left', { asleep: true, tailUp: true }), c('snorer', 'curl', 'sleepy', 'sleeper-1', 'right', { asleep: true })], ['night', 'zzz']),
+        [chispa0('curl', 'sleepy', 'nest', 'right', { asleep: true, tailUp: true }), c('snorer', 'curl', 'sleepy', 'sleeper-1', 'right', { asleep: true })], ['night', 'zzz']),
       board: 'WIDE, INSIDE THE APPRENTICES’ DEN, CLOSING SHOT. Starlight falls through the rosebush doorway across the sleeping den: the grey apprentice snores in his nest, and in hers the little cream cat sleeps curled tight, her tail rising straight up out of the curl, her collar quiet beside her; little zzzs rise. Captions at the bottom, with END OF CHAPTER THIRTEEN lettered like a title.',
       caption: ['{name}{ending} sleeps.', 'Across the camp, Chispapaw’s tail twitches in her sleep. Straight up.', 'End of Chapter Thirteen.'],
       end: true
@@ -1157,7 +1158,7 @@
         warmHard: { table: 'all', at: [0, 1], avoid: [[3, 4], [6, 8]],
           alt: [{ a: 7, b: 4, table: 4 }, { a: 9, b: 9, table: 9 }] },
         facts: [{ a: 9, b: 7, table: 9 }, { a: 4, b: 6, table: 6 }, { a: 8, b: 8, table: 8 }],
-        praise: [], fast: [], done: '',
+        praise: [], fast: [], done: '', miss: MISS,
         // chapter 12's Spanish: her first right answer of the lesson, a retry's counted; the fact alone, nothing after it
         echo: { on: 'first', lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:fact}!' }] }
       },
@@ -1226,7 +1227,7 @@
         { text: 'In the Training Hollow, Tallyheart taught them both what to do when there aren’t enough loose ones: spread a row, ten more loose.' },
         { text: 'At noon, twenty-seven pieces went down to the store, and twenty-five stayed for the Clan.' },
         { text: 'On a courtesy patrol to GroveClan, the elder showed them a big dig by the old oak: a badger, digging for worms, she said.' },
-        { when: { foundGroundhog: true }, text: 'Beside the dig, {name}{ending} woke a grumpy groundhog, finished its sleepy seven times eight, and tucked the leaves back over it.' },
+        { when: { foundGroundhog: true }, text: 'Beside the dig, {name}{ending} woke a grumpy groundhog, helped it count seven times eight, and tucked the leaves back over it.' },
         { text: 'And half under the leaves, scratched in the earth, {name}{ending} found one long line and eight little pokes.' }
       ],
       // the badger page opens (module 2's table; rows in the order first heard or seen; row names fixed for chapters 14 to 21)

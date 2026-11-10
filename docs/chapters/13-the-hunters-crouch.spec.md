@@ -1,5 +1,17 @@
 # Chapter 13 spec: The Hunter's Crouch
 
+*v0.3.1 · 2026-11-10, as built (the README's "Chapter 13 as built" has each call with its reason). Where the build departs
+from the lists below: the old tom's first tale line ("A badger SAT on my whole patrol once! Flat as leaves!") is f070's,
+with f071 three balloons and the Tap; `motion` is off on f017, f021 and f084 (its speed lines ran across a cat, or out of
+the den's doorway: the captions carry the bounce, the wiggle and the twitch), so section 5's test of `motion`'s first cast
+member reads f016, f045 and f059; `zzz` is off on f064 (it floated mid-sky in the dig picture); f012 and f013 hold one
+shore cat each (our cat, then Tallyheart); f045 leaves Glintstar out; the crouch is on `crowd` (the sets owner's
+fallback). The review's round: `dig-elder` sits on the dig's far side between its heaps, facing right (950, 650), well clear
+of the marks; on `marks: 'bare'` the brushed-aside leaves lie wholly beyond the marks' box, drawn before them; f065 to
+f067 turn Chispapaw left, to the marks and our cat, and f084 right (her tail clear of the rose stem); f081's loaf is `kind`
+(her tail wrapped); no board's inset draws the badger or the Tall One's child; the warm-up's `miss` is MISS; the recap's
+groundhog line reads "helped it count seven times eight"; the groundhog's voice is lower and slower (section 4).*
+
 *v0.3 · 2026-11-09 (decision 57: the kit v0.4's moves and marks page; `ch13-take` gains `marks`; the run notes redone on
 the design, `~/potomac-crossing-work/regroup/design.md` and `plan.md`)*
 
@@ -476,7 +488,7 @@ The grove has had no options (`opts: {}`); chapter 13 gives it its first. Drawn 
     groundhog's scene), **`door-2`** (beside her, a step back, facing left: Chispapaw), **`doorway`** (in the doorway
     itself: the groundhog, its lower half under the `leaves` cover; no ground shadow), **`dig-front`** (front middle, before
     the dig, facing left toward it: the sniff), **`marks-1`** and **`marks-2`** (front right, by the flat earth, facing
-    right toward the marks: our cat and Chispapaw), **`dig-elder`** (back right, facing left: the elder), **`dig-fern`**
+    right toward the marks: our cat and Chispapaw), **`dig-elder`** (as built: the dig's far side between its heaps, facing right, well clear of the marks: the elder), **`dig-fern`**
     (back left, half hidden by a fern, facing right: the GroveClan apprentice peeking, `z: 'behind'`, as the grove's
     `fern`).
   - **Covers** (scenes.js `S.covers`, keyed by spot, each drawn just after whoever is at that spot, with `data-part` and
@@ -543,7 +555,7 @@ seven sleepers** (module-2's table).
 - **Its label and voice** (`app/ui.js`, the cats owner's): `NAMES.groundhog` **"The groundhog"** (the page's default
   label); its balloons on f060 to f062 carry `name: 'The round brown thing'` ("it never names itself early": the story's
   call 9; it says GROUNDHOG on f062, and the tag changes on f063, as Chispapaw's did on her naming). Voice low, grumpy and
-  slow: `PITCH.groundhog` 0.78, `RATE.groundhog` 0.84.
+  slow: `PITCH.groundhog` 0.66, `RATE.groundhog` 0.78 (as built: lower and slower than the GroveClan elder's 0.78 and 0.86, chapter 13's review).
 - **In `cats.js`'s `CAST_IDS`** (as `mizzle` is) and **`PC.art.vocab.otherPoses.groundhog`** (the five poses): the
   book's `sleeperArt` draws `PC.art.character('groundhog', { pose: 'sleep' })` only for an id in `PC.art.vocab.cast`, and
   the plain curled shape otherwise. **Not scenes.js's cat** (no `CAT_IDS` entry in `scenes.js`).
@@ -1002,7 +1014,7 @@ book: {
     { text: 'In the Training Hollow, Tallyheart taught them both what to do when there aren’t enough loose ones: spread a row, ten more loose.' },
     { text: 'At noon, twenty-seven pieces went down to the store, and twenty-five stayed for the Clan.' },
     { text: 'On a courtesy patrol to GroveClan, the elder showed them a big dig by the old oak: a badger, digging for worms, she said.' },
-    { when: { foundGroundhog: true }, text: 'Beside the dig, {name}{ending} woke a grumpy groundhog, finished its sleepy seven times eight, and tucked the leaves back over it.' },
+    { when: { foundGroundhog: true }, text: 'Beside the dig, {name}{ending} woke a grumpy groundhog, helped it count seven times eight, and tucked the leaves back over it.' },
     { text: 'And half under the leaves, scratched in the earth, {name}{ending} found one long line and eight little pokes.' }
   ],
   // the badger page opens (module-2's table; rows in the order first heard or seen; row names fixed for chapters 14 to 21)

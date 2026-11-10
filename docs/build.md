@@ -2063,6 +2063,14 @@ Every piece is behind one gate, and a chapter codes nothing for it but a take se
   pointer takes the column line's place, and the page's intro and a twin's introduction with it, so the keypad stays
   put at every size), the move-help's dimmed keypad, the 400 ms after a phase change, every move timed from when its box
   opens or its target goes live. The CSS hangs on `.frame[data-mode="take"].tmoves`, `.tpick` and `.tpickicon`.
+  Chapter 13's review (2026-11-10) added, all under the gate: on an iPad held sideways, when bringing the keypad in
+  would squeeze or hide the stack's first balloon under the bar (its 8px margin counted), `fit()` stands the stack over
+  the panel (`.tover`, the marks page's own arrangement there: the column and the keypad alone on the left, the heads
+  row and the keys as they were, the stack's held height measured again where it now stands), set as a problem begins
+  and kept for the page at that size and Aa; `drawColM` keeps the page's scroll across the column's redraw (WebKit moved
+  it 4 to 10px); a column whose flip lands (52 − 27's ones) holds no `flip` line in its reserve (that digit is `ahead`);
+  the marks page on a phone held upright brings its pictures in as soon as its panel is shortened, and again once go() has
+  scrolled to the top.
 - **The tools.** `PC.debug.takes` gains `touch`, `lend`, `get`, `get:one`, `chain`, `help:move`, `ahead`, `marks` and
   `hollow:marks` (and `q`, `show`, `tap`, `spread`, `echo`, `sand`, `done` now show v0.4; `first`, `shelf`, `store` as
   before), so `tools/shots.mjs`' `TAKE_TARGETS` and `dev/webkit/run.mjs`' `TAKE_SCREENS` gain the same `take:` and
@@ -2073,7 +2081,12 @@ Every piece is behind one gate, and a chapter codes nothing for it but a take se
   mark than its own digit) and adds `hit-small` (a live target under 44 × 44) and `marks-small` (the marks page's little 1
   under 16 px); `--takes --compare` checks `TAKE_COMPARED` (`take:first`, `hollow:shelf`, `store:q` and chapter 12's
   eight Spanish screens) byte for byte against the live tree, and `prune(...keep)` keeps the tree it compares from.
-  `tools/storyboard.mjs` prints a set's marks page as "**Then the marks page**" before its first spread.
+  `tools/storyboard.mjs` prints a set's marks page as "**Then the marks page**" before its first spread. Since chapter
+  13's review the sweep's `lessons` job, on a Counts frame that opens on the marks page (its cat has no marks), measures
+  it (`@lesson`), then gives the cat `'above'` and measures the take page as it then opens (`@lesson:column`), each after
+  the page's own zero-delay call (its pictures or keypad brought into view once go() has scrolled to the top; every other
+  row's left to run later, so chapters 1 to 12's rows are as they were); the marks stay on the cat for the chapter's later
+  take frames (the pile is measured on its column, as she meets it) and come off when the chapter changes and at the end.
 - **Tests.** `takes-engine` (v0.3's tests 4, 6, 7, 9 and 12 run both paths; the proofs E1 to E11 and E9b, L2 to L4),
   `takes-exhaustive` (the moves of all 498,465 problems, both styles), `takes-art` (the resting stage, every other
   picture pinned), `takes-ui` (U1 to U5, L5), `takes-tools` and `render-tools`, on `tests/fixtures/takes-stub.js`
@@ -2278,7 +2291,7 @@ spec's `ch13-take` in memory, all passed, so beyond the kit `app/engine.js` is u
 decision 55, Lissa's word for a spread). A later chapter that letters «la resta» mid-sentence adds its own entry.
 
 **The page** (`app/ui.js`): `NAMES.groundhog` 'The groundhog' (appended last; its balloons on f060 to f062 carry `name:
-'The round brown thing'`), `PITCH.groundhog` 0.78 and `RATE.groundhog` 0.84 (low, grumpy and slow), and the grown-ups
+'The round brown thing'`), `PITCH.groundhog` 0.66 and `RATE.groundhog` 0.78 (low, grumpy and slow: lower and slower than the GroveClan elder, who speaks in the same woods), and the grown-ups
 corner's `FLAG_WORDS.teach` (`show`, `try`, `words`: "… (chapter 21 remembers)") and `FLAG_WORDS.foundGroundhog`
 (`'true'`: "found the groundhog asleep beside the big dig in GroveClan’s woods (later chapters remember)").
 
@@ -2345,3 +2358,9 @@ old hashes; chapter 13's own fingerprint; the gallery's section), `tests/spanish
 `E.fill`, `E.esEnglish`, the voices with and without Spanish), `tests/storyboard.test.js` (a fixture chapter's new words;
 the grove's marks never a claw mark or a number; chapter 13's `--check-words` list), `tests/book2-ui.test.js` (the found
 page draws the groundhog, asleep; the silhouettes stay plain), `tests/engine.test.js` (the NAMES pin: `groundhog` last).
+
+**As built, after the review** (2026-11-10; the README's "Chapter 13 as built"): the grove's `dig-elder` is on the dig's far
+side between its heaps, facing right (950, 650); on `marks: 'bare'` the two brushed-aside drifts are drawn before the
+marks and lie wholly beyond their box (`bareDrifts`), so the long line and all eight pokes read; the groundhog's voice is
+`PITCH` 0.66 and `RATE` 0.78; the kit's page fixes are in "The take-aways kit", its v0.4 paragraph. Chapters 1 to 12 draw
+and play as they did: no live frame changed.

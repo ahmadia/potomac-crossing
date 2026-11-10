@@ -45,7 +45,8 @@
  * Problems (pages/summary.json `problems`, each { kind, size, aa, at, detail }):
  *   off-screen          a control not on the screen without scrolling as the page opens
  *   off-screen-tapping  a control below the fold at the worst moment of a Taps page tapped through
- *   off-screen-keypad   a control off the screen on a Counts keypad after the game's own scroll
+ *   off-screen-keypad   a control off the screen on a Counts keypad after the game's own scroll (and on a take page
+ *                       as it opens once the marks page's pick is made, `@lesson:column`: chapter 13's review)
  *   spill               lettering outside its box, or cut by a box that clips it (the panel)
  *   broken-word         a word broken across two lines inside itself
  *   sideways            the page scrolls sideways
@@ -352,7 +353,7 @@ export function summarize(pages, sizes = SIZES) {
     const r = x.row, at = r.t, base = String(at).replace(/@.*$/, '');
     measured++;
     if (r.err) { add('page-error', x.size, x.aa, at, r.err); continue; }
-    const offKind = /@tapped$/.test(at) ? 'off-screen-tapping' : /@lesson$/.test(at) ? 'off-screen-keypad' : 'off-screen';
+    const offKind = /@tapped$/.test(at) ? 'off-screen-tapping' : /@lesson(:column)?$/.test(at) ? 'off-screen-keypad' : 'off-screen';
     if (r.bad && r.bad.length) { if (SCROLLS[base]) scrolls.push({ size: x.size, aa: x.aa, at, why: SCROLLS[base], controls: r.bad.length }); else add(offKind, x.size, x.aa, at, r.bad.join(' ')); }
     if (r.worst && r.worst[0] < 0) add('off-screen-tapping', x.size, x.aa, at, r.worst[1] + ' ' + -r.worst[0] + 'px below the fold at the worst moment');
     for (const s of r.spill || []) add('spill', x.size, x.aa, at, s);

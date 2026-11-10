@@ -866,8 +866,18 @@
     var P = marksLeavesParts(mb);
     return [Math.min(P[0][0], P[1][0]), Math.min(P[0][1], P[1][1]), Math.max(P[0][2], P[1][2]), Math.max(P[0][3], P[1][3])];
   }
+  // the leaves brushed aside (`marks: 'bare'`): two drifts on the patch's two ends, each wholly beyond the marks' box (its
+  // nearest leaf at most 30 world units inside the drift's edge: a leaf 26 long from a centre at 0.95 of the half-width), so
+  // the one long line and all eight pokes lie plain (chapter 13's review: the left drift lay over the line's lower two
+  // thirds, which read as a twig on f066 to f068); [x0, x1, top, base] each
+  function bareDrifts(mb) {
+    var F = DIG.flat;
+    return [[mb[0] - 100, mb[0] - 30, F.cy - F.ry * 0.3, F.cy + F.ry * 0.85], [mb[2] + 30, mb[2] + 100, F.cy - F.ry * 0.4, F.cy + F.ry * 0.8]];
+  }
   function digMarks(S, v) {
     var M = DIG.marks, mb = marksBox(), s = '';
+    // brushed aside: the drifts first, so even a stray leaf lies under the marks, never over them
+    if (v !== 'leaves') bareDrifts(mb).forEach(function (d, i) { s += leafDrift(S, d[0], d[1], d[2], d[3], 1342 + i, 12); });
     s += K.quick(M.x, M.y, M.k, MARKS_O);
     if (v === 'leaves') {
       var r = rng(1341), byCol = {}, under = '';
@@ -883,10 +893,6 @@
       });
       s += path(under, C.litter);
       LEAF_COLS.forEach(function (c) { if (byCol[c]) s += path(byCol[c], C.litterDk, { opacity: 0.7, transform: 'translate(1 1.5)' }) + path(byCol[c], c); });
-    } else {
-      // brushed aside: the leaves at the patch's two ends
-      var F = DIG.flat;
-      s += leafDrift(S, F.cx - F.rx * 1.05, F.cx - F.rx * 0.62, F.cy - F.ry * 0.3, F.cy + F.ry * 0.85, 1342, 12) + leafDrift(S, F.cx + F.rx * 0.66, F.cx + F.rx * 1.05, F.cy - F.ry * 0.4, F.cy + F.ry * 0.8, 1343, 12);
     }
     return g(s, { 'data-art': 'marks', 'data-marks': v, 'data-box': boxAttr(mb) });
   }
@@ -1000,12 +1006,13 @@
       hollow: { nook: A(1090, 936, 420, 'left'), lip: A(368, NOOK.sill, 520, 'right', { elev: true }) },
       // chapter 13, the dig close: door-1 in front of the doorway, a cat crouched facing it; door-2 beside her, a step back;
       // doorway in it (the groundhog, its lower half under the leaves: behind its cover, no ground shadow); dig-front before
-      // the dig, facing it; marks-1 and marks-2 by the marks, facing them; dig-elder at the back right; dig-fern at the back
-      // left, half hidden by a fern (behind everyone)
+      // the dig, facing it; marks-1 and marks-2 by the marks, facing them; dig-elder on the dig's far side, between its two
+      // heaps, facing the cats across it, well clear of the marks (chapter 13's review: at the back right she sat right over
+      // them, and she must never see them, brief call 7); dig-fern at the back left, half hidden by a fern (behind everyone)
       dig: {
         'door-1': A(440, 968, 270, 'left'), 'door-2': A(650, 930, 250, 'left'), doorway: A(200, 920, 250, 'right', { z: 'behind', air: true }),
         'dig-front': A(1290, 968, 270, 'left'), 'marks-1': A(1290, 968, 270, 'right'), 'marks-2': A(1500, 940, 250, 'right'),
-        'dig-elder': A(1500, 650, 200, 'left'), 'dig-fern': A(600, 690, 190, 'right', { z: 'behind' })
+        'dig-elder': A(950, 650, 200, 'right'), 'dig-fern': A(600, 690, 190, 'right', { z: 'behind' })
       }
     },
     // chapter 13, the grove's first options (all off by default): dig, on `oak`, the big dig at the old oak's roots with its

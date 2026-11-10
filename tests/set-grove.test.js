@@ -406,8 +406,8 @@ test('chapter 13: the grove\'s new names: `dig` on `oak`, the close composition 
   assert.equal(info.cams.marks.comp, 'dig', '`marks` is a crop of the same composition');
   const M = info.cams.marks;
   assert.ok(M.x >= 0 && M.y >= 0 && M.x + M.w <= 1600 && M.y + M.h <= 1000 && M.w < 800, '`marks` a close crop inside the world');
-  for (const k of ['door-1', 'door-2', 'dig-front', 'dig-elder']) assert.equal(D[k].face, 'left', k + ' faces left');
-  for (const k of ['marks-1', 'marks-2', 'dig-fern']) assert.equal(D[k].face, 'right', k + ' faces right');
+  for (const k of ['door-1', 'door-2', 'dig-front']) assert.equal(D[k].face, 'left', k + ' faces left');
+  for (const k of ['marks-1', 'marks-2', 'dig-fern', 'dig-elder']) assert.equal(D[k].face, 'right', k + ' faces right');
   assert.ok(D.doorway.z === 'behind' && D.doorway.air === true, 'doorway: behind its cover, no ground shadow');
   assert.equal(D['dig-fern'].z, 'behind', 'dig-fern: behind everyone, as the grove\'s fern');
   assert.ok(D['door-2'].x > D['door-1'].x && D['door-2'].y < D['door-1'].y, 'door-2 beside door-1, a step back');
@@ -515,6 +515,42 @@ test('chapter 13: `marks` on `dig` and `marks`: one long line and eight little p
     }
   }
   assert.ok(G.marksLeaves[2] - G.marksLeaves[0] < (mb[2] - mb[0]) * 0.95, 'the leaves\' box over part of the marks');
+});
+
+// chapter 13's review: on 'bare' the left drift lay over the long line's lower two thirds (f066 to f068 read it as a twig)
+test('chapter 13: `marks: \'bare\'`: the brushed-aside leaves drawn before the marks and wholly beyond their box, every leaf and the litter under them, so the long line and all eight pokes lie plain', () => {
+  if (typeof art.quickMarks !== 'function') return;
+  const G = G13(), mb = G.marks, MO = { tens: 1, ones: 8, ground: 'earth' }, sz = art.quickMarks.size(MO);
+  const kit = art.kit.quick((mb[0] + mb[2]) / 2, (mb[1] + mb[3]) / 2, (mb[2] - mb[0]) / sz.w, MO);
+  for (const cam of CH13.cams) {
+    const grp = group(render(cam, [], ['day'], { marks: 'bare' }).svg, 'data-art="marks"'), at = grp.indexOf(kit);
+    assert.ok(at > 0, cam + ': the drifts drawn first, the kit\'s picture over them');
+    assert.equal(grp.slice(at + kit.length).replace(/<\/g>\s*$/, ''), '', cam + ': nothing drawn over the marks');
+    const paths = [...grp.slice(0, at).matchAll(/<path ([^>]*)>/g)].map((m) => ({ d: (/\bd="([^"]+)"/.exec(m[1]) || [])[1], tr: /translate\(([-\d.]+)[ ,]/.exec(m[1]) }));
+    assert.ok(paths.length >= 4 && paths.every((p) => p.d), cam + ': two drifts drawn (' + paths.length + ' paths)');
+    let left = 0, right = 0;
+    for (const p of paths) {
+      // each path's every point and control point (its curve lies inside their box), shifted by its shadow's translate
+      const n = p.d.match(/-?\d+(?:\.\d+)?/g).map(Number), dx = p.tr ? +p.tr[1] : 0;
+      const xs = n.filter((_, i) => i % 2 === 0).map((x) => x + dx);
+      const x0 = Math.min(...xs), x1 = Math.max(...xs);
+      if (x1 < mb[0]) left++; else if (x0 > mb[2]) right++;
+      else assert.fail(cam + ': a drift\'s leaves ' + x0.toFixed(1) + '-' + x1.toFixed(1) + ' meet the marks\' box ' + mb[0].toFixed(1) + '-' + mb[2].toFixed(1));
+    }
+    assert.ok(left >= 2 && right >= 2, cam + ': one drift at each end of the patch (' + left + ' left, ' + right + ' right)');
+  }
+});
+
+// chapter 13's review: at the back right the elder sat over the marks' pokes (f054, f055), and brief call 7 says she never
+// sees them (recognising them is her turn in chapter 21)
+test('chapter 13: `dig-elder` on the dig\'s far side between its heaps, facing the cats across it, well clear of the marks (at least 250 units from her spot to their box, her body nowhere near it)', { skip: !hasCats && 'no cats.js' }, () => {
+  const D = dspots(), G = G13(), E = D['dig-elder'], mb = G.marks, dig = G.dig.dig;
+  assert.ok(E.x > dig[0] && E.x < dig[2] && E.y < dig[1] + 10, 'behind the dig, on its far side: ' + [E.x, E.y] + ' / ' + dig.map(Math.round));
+  assert.ok(mb[0] - E.x >= 250, 'her spot ' + (mb[0] - E.x).toFixed(0) + ' units left of the marks');
+  for (const pose of ['sit', 'stand']) {
+    const B = boxesAt({ who: 'groveclan', variant: 1, pose, mood: 'kind' }, E);
+    assert.ok(B.body[2] < mb[0] - 120, pose + ': her body ' + B.body.map(Math.round) + ' far from the marks ' + mb.map(Math.round));
+  }
 });
 
 test('chapter 13: `marks`, the close-up: the marks about half the panel, the dig\'s near rim with two of its five rakes at the panel\'s left edge, its rakes curved gouges in the wall, never two more lines', () => {

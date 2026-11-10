@@ -229,8 +229,21 @@
     return m;
   };
   window.__JSWEEP = function (mode, only) {
-    var out = [], realNow = Date.now;
+    var out = [], realNow = Date.now, styled = null;
+    // (the page's zero-delay calls made while `fn` runs, held: run0 runs them now, pass0 hands them to the real timer as
+    // they would have gone; any other timer goes as it would)
+    var held = function (fn) {
+      var list = [], st = window.setTimeout;
+      window.setTimeout = function (f, ms) { if (!ms && typeof f === 'function') { list.push(f); return st.call(window, function () {}, 0); } return st.apply(window, arguments); };
+      try { fn(); } finally { window.setTimeout = st; }
+      return list;
+    };
+    var run0 = function (list) { list.forEach(function (f) { try { f(); } catch (e) {} }); };
+    var pass0 = function (list) { list.forEach(function (f) { window.setTimeout(f, 0); }); };
+    // (the marks the lessons job gave the cat at a chapter's marks page, taken back off it)
+    var unstyle = function () { if (!styled) return; if (styled.takes) styled.cat.takes = styled.takes; else delete styled.cat.takes; styled = null; };
     Object.keys(PC.story).forEach(function (ch) {
+      if (styled && styled.ch !== ch) unstyle();
       Object.keys(PC.story[ch].frames).forEach(function (fid) {
         if (only && only.indexOf(ch + ':' + fid) < 0) return;
         var r = PC.debug.goto(fid, ch);
@@ -262,13 +275,39 @@
           } else if (mode === 'lessons' && k === 'counts') {
             var b = document.getElementById('againBtn') || document.getElementById('nextBtn');
             if (!b) return;
-            b.click();
+            var later0 = held(function () { b.click(); });
+            // (on the kit v0.4's marks page, its pictures brought into view after go()'s scroll to the top, as the page's own
+            // zero-delay call does: run now, so the row is the page as she sees it; every other page's left to run later, as
+            // before, so no row of chapters 1 to 12 moves)
+            if (document.querySelector('#screen .tpick')) run0(later0); else pass0(later0);
             var m2 = window.__JM(ch + ':' + fid + '@lesson');   // at the game's own scroll
             window.scrollTo(0, 0); m2.at0 = window.__JM('').bad; out.push(m2);
+            // the kit v0.4's marks page (a take set with the moves, the cat with no marks yet): her marks then picked, as a
+            // player's are at the chapter's first spread, and the take page as it then opens measured too
+            // (`@lesson:column`); her marks kept for the chapter's later take frames (chapter 13's pile is measured on its
+            // column, as she meets it), and taken back off the cat when the chapter changes and at the end (chapter 13's
+            // review: f039@lesson measured the marks page, which no player sees there, and no sweep reached the columns)
+            if (document.querySelector('#screen .tpick') && PC.engine.setTakeStyle) {
+              var sc = PC.debug.cat();
+              if (sc && !styled) styled = { ch: ch, cat: sc, takes: sc.takes ? JSON.parse(JSON.stringify(sc.takes)) : null };
+              if (sc) PC.engine.setTakeStyle(sc, 'above');
+              // (the lesson she began is in the slot, so the frame comes back as its take page; else its button opens it; the
+              // keypad brought into view after go()'s scroll to the top, the page's own zero-delay call, run before measuring)
+              var col3 = function () { var tc = document.querySelector('#screen #tcol'); return !!tc && !tc.hidden && !document.querySelector('#screen .tpick'); };
+              var back = false, later3 = sc ? held(function () {
+                if (PC.debug.goto(fid, ch) !== fid) return;
+                back = true; window.scrollTo(0, 0);
+                var b3 = col3() ? null : document.getElementById('againBtn') || document.getElementById('nextBtn');
+                if (b3) b3.click();
+              }) : [];
+              if (back && col3()) { run0(later3); var m3 = window.__JM(ch + ':' + fid + '@lesson:column'); window.scrollTo(0, 0); m3.at0 = window.__JM('').bad; out.push(m3); }
+              else pass0(later3);
+            }
           }
         } finally { Date.now = realNow; }
       });
     });
+    unstyle();
     return out;
   };
 })();

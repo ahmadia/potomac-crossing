@@ -569,7 +569,7 @@ split out), all 60 plain readings; minutes chapter 12’s way (123 a minute, 2 s
 dream), maths 5.5–8.1 with decision 57’s moves and the marks page (the kit v0.4’s design, section 6).*
 - *Plain: 1,571–1,597 words (`teach`: show 1,571–1,586, try 1,575–1,590, words 1,582–1,597; `specialty`: noticing and
   climbing lowest, 1,571–1,584, swimming highest, 1,584–1,597; `ch2Stone` none). 21.4–24.1 minutes, 22.6–22.9 at the
-  middle maths; 26.1–28.9 at 90 a minute. Inside 1,450–1,650: nothing in the cut order is needed.*
+  middle maths; 26.1–28.9 at 90 a minute. Past 22½ at the top by about a minute (decision 57’s moves); the kit’s 486 − 253 waits for the first week’s logged move times (decision 56, kit call 58).*
 - *The groundhog: 165 words, six screens, two Taps, 7 × 8: 1.8–1.9 minutes more (1,736–1,762 words; 23.2–26.0 minutes,
   24.5–24.7 at the middle maths).*
 - *53 screens (63 to 73 frames by chapter 12’s ratio, 70 to 82 with the groundhog; cap 125), 13 Taps, 5 choices
@@ -595,13 +595,13 @@ the set’s 9 × 7)* · ¡Cuarenta y seis! *(Forty-six!: after 85 − 39)* · ¡
 11. *The pile’s fifty-two is said on the take’s own screen, so a retried or helped 6 × 8 still hears where it’s from.*
 12. *“Exactly,” not “Just like that” (chapter 21’s); “Goodnight, MENTOR!” (chapter 12’s slot); Tallyheart’s echo last.*
 13. *“Spread a row” is fixed English, not the brief’s “lettered from the words table”: a frame fills no English word.*
-14. *A Spain-style answer from Aron rewrites the spread and cookie screens (the crossed line, “thirteen loose”).*
+14. *Decision 55 answered the brief’s one fact: the kit’s spread stands (“me llevo una” is not hers), so the spread and cookie screens stay as written.*
 15. *The marks page comes before the worked prompt, so “Ones first.” stays joined to it; Chispapaw’s little 1 first
 (her Tall One’s homework is in Spanish), “Both are right.”*
 
 *Chapter 14 inherits: day 2 ended under the stars, no moon risen; `teach` set; the collar by Chispa’s nest for good
 (`collar: false`), no catch yet; the store 133 + 27 + the afternoon’s, unnumbered (178 in the book); `ones2` learned,
-«la resta» and “¡No alcanza!” in the words table (no Count asked in Spanish, no column echoed; Spanish whispered
+«la resta», “¡No alcanza!” and «¡Desagrupo!» in the words table (no Count asked in Spanish, no column echoed; Spanish whispered
 before the Clan, aloud in the Hollow); till chapter 15 a hundreds `extra` help says “Let’s scratch it out.” (chapter
 14’s sets; the store’s rounds: chapter 12’s spec); the badger page open (three They say, one I saw); Glintstar has the
 elder’s “worms”; beyond the dig by GroveClan’s old oak, one long line and eight little pokes, seen only by her and

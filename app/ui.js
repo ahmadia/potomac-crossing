@@ -439,7 +439,7 @@
     thymeleaf: 0.82, mizzle: 1.35,
     mistscale: 0.7,
     chispapaw: 1.42,
-    groundhog: 0.78 };
+    groundhog: 0.66 };
   var VARIANT_PITCH = { otter: { 1: 0.68, 3: 0.92 }, dog: { 1: 0.55, 2: 0.95, 3: 1.75 }, reedclan: { 2: 1.12, 5: 0.8 }, groveclan: { 1: 0.78, 3: 0.88 },
     mistscale: { 2: 0.6 } };
   // Sprinkle is shy: a little slower than everyone else's 0.95. Reynard is slow and smooth; Squall
@@ -453,13 +453,14 @@
   // Chapter 10: Mama low, soft and slow (the eldest lower still, and never speaks); ReedClan's and GroveClan's
   // leaders a little low, at their Clans' rates; Granny, chapter 5's otter variant 3, a little low (no rate:
   // RATE.otter would change chapter 5's otters). Chapter 12: Chispapaw high and quick, in English and in Spanish (the
-  // Spanish voice takes her pitch and 0.9 of her rate: UI.voices.plan). Chapter 13: the groundhog low, grumpy and slow
+  // Spanish voice takes her pitch and 0.9 of her rate: UI.voices.plan). Chapter 13: the groundhog low, grumpy and slow,
+  // lower and slower than GroveClan's elder, who speaks in the same woods three screens before it (chapter 13's review)
   var RATE = { sprinkle: 0.86, reynard: 0.82, squall: 1.02, patience: 0.8, puddle: 1.05, coil: 0.7, sloshbank: 0.88, sleet: 1.04,
     hail: 1.08, snip: 1.12, snatch: 1.0,
     thymeleaf: 0.85, mizzle: 0.82, groveclan: 0.86,
     mistscale: 0.8,
     chispapaw: 1.02,
-    groundhog: 0.84 };
+    groundhog: 0.78 };
   function pitchOf(who, variant) {
     var v = VARIANT_PITCH[who] && VARIANT_PITCH[who][variant || 1];
     return v || PITCH[who] || 1;
@@ -1305,7 +1306,9 @@
     M.forEach(function (m, k) {
       if (m.move === 'touch' && (k === 0 || k === 3)) {
         if (mode === 'hers') {
-          (k === 3 ? ['zeroStop', 'factSpread'] : col.chain ? ['zero', 'factSpread'] : ['flip', 'nospread', 'factSpread']).forEach(function (key) { add(k, { slip: key === 'factSpread' ? 'fact' : key === 'zeroStop' ? 'zero' : key, line: key }); });
+          // (a column whose flip lands, bottom − top her right digit, as 52 − 27's ones: that digit is `ahead`, never the
+          // `flip` slip, so its line is never held for: the pile's stack held 29px taller than it can ever be)
+          (k === 3 ? ['zeroStop', 'factSpread'] : col.chain ? ['zero', 'factSpread'] : form === 'flip' ? ['nospread', 'factSpread'] : ['flip', 'nospread', 'factSpread']).forEach(function (key) { add(k, { slip: key === 'factSpread' ? 'fact' : key === 'zeroStop' ? 'zero' : key, line: key }); });
           add(k, { pointer: 'ahead', form: form, line: 'ahead' });
           add(k, { pointer: 'tap', line: 'tap' });
           if (M[k + 1]) add(k + 1, { pointer: 'askLend', line: 'askLend' });
@@ -4638,11 +4641,25 @@
     /* The fallbacks (section 6), only when this problem's held stack leaves the keypad under the screen: first the heads
      * row; then sideways the keys at 56px, upright the panel shorter (never under half its height); then the keypad is
      * brought into view, as a lesson's is under a long intro. Set before she types, so nothing moves within a problem;
-     * a phone held sideways never needs them (the stack stands over the panel). */
+     * a phone held sideways never needs them (the stack stands over the panel).
+     * The kit v0.4 (chapter 13's review): on an iPad held sideways, when bringing the keypad in would still take the stack's
+     * first balloon under the bar (a worked example's joined prompt and Tallyheart's step, the pile's twelve words, with Aa
+     * on at 1080 x 720), the stack stands over the panel instead (`tover`: the marks page's own arrangement there, the column
+     * and the keypad alone on the left, the panel taking the height that is left), the heads row and the keys as they were;
+     * kept for the rest of the page at that size, so the page never swaps back and forth between problems. Under the gate
+     * only: chapter 12's pages never take it. */
+    var overAt = '';
     function fit() {
-      frameEl.classList.remove('tnohead', 'tkeys');
+      var had = frameEl.classList.contains('tover');
+      frameEl.classList.remove('tnohead', 'tkeys', 'tover');
       panel.style.height = '';
       var vh = root.innerHeight || 0, mm = root.matchMedia;
+      var key = (root.innerWidth || 0) + 'x' + vh + (doc.documentElement.classList.contains('big') ? 'A' : '');
+      var side = mv && !!mm && mm('(orientation: landscape) and (min-height: 501px)').matches;
+      if (side && overAt === key) frameEl.classList.add('tover');
+      // (the stack's held height is measured where it stands: again whenever it has moved between the two places)
+      if (had !== frameEl.classList.contains('tover')) reserve();
+      if (frameEl.classList.contains('tover') && (root.scrollY || root.pageYOffset)) root.scrollTo(0, 0);
       if (!vh || !pad.getBoundingClientRect || (mm && mm(TAKE_PHONE).matches)) return;
       var over = function () { return pad.getBoundingClientRect().bottom + (root.scrollY || root.pageYOffset || 0) - vh; };
       if (over() <= 0) return;
@@ -4652,7 +4669,20 @@
       if (mm && mm('(orientation: portrait)').matches) {
         var ph = panel.getBoundingClientRect().height;
         panel.style.height = Math.max(Math.round(ph / 2), Math.floor(ph - left)) + 'px';
-      } else frameEl.classList.add('tkeys');
+        return;
+      }
+      frameEl.classList.add('tkeys');
+      if (!side || frameEl.classList.contains('tover')) return;
+      // (the room over the stack: bringIn scrolls the keypad in by `over` and its 8px margin; past the room, the first
+      // balloon's top would be squeezed against the bar's bottom or go under it)
+      var bar = $('bar'), room = stack.getBoundingClientRect().top + (root.scrollY || root.pageYOffset || 0) - (bar ? bar.offsetHeight : 0);
+      if (over() + 8 <= room) return;
+      frameEl.classList.remove('tnohead', 'tkeys');
+      frameEl.classList.add('tover');
+      overAt = key;
+      reserve();
+      if (root.scrollY || root.pageYOffset) root.scrollTo(0, 0);
+      if (over() > 0) { frameEl.classList.add('tnohead'); if (over() > 0) frameEl.classList.add('tkeys'); }
     }
     function echoOf(info) {
       if (typeof o.echo !== 'function') return null;
@@ -4701,8 +4731,13 @@
       // the answer box ringed at a decide and the answer (never while a lit lender waits for her touch: her digit stays pale)
       var ring = !!bx && bx.kind === 'answer' && (phase === 'type' || phase === 'tap' || phase === 'line' || phase === 'show') && !litDecide() ? q.col : -1;
       tcol.style.setProperty('--tn', String(q.plan.n));
+      // (the page's scroll kept across the column's redraw: WebKit moved a page scrolled to bring the keypad in 4 to 10px
+      // back up as the column's nodes were replaced, the keypad's bottom row then under the fold and the keypad apart from
+      // where it stood at the decide; chapter 13's review, 1180 x 820 with Aa on, 1080 x 700, 1024 x 768)
+      var y0 = root.scrollY || root.pageYOffset || 0;
       tcol.innerHTML = takeHtml(takeView(q.plan, { moves: true, marks: marks, boxes: boxes, on: ring, glow: glowCol, ask: askText, box: bx, typed: mini ? typed : '',
         miniOn: mini && phase === 'type', flash: flash, targets: phase === 'type' || phase === 'tap' ? q.targets || [] : [], lit: lit, ripple: ripple, wig: wig, col: q.col }));
+      if ((root.scrollY || root.pageYOffset || 0) !== y0) root.scrollTo(0, y0);
       tcol.setAttribute('aria-label', askText);
       okKey.disabled = phase !== 'type' || litDecide() || (typed === '' && !q.okEmpty);
       if (fc != null) { var nf = tcol.querySelector('.ttarget[data-col="' + fc + '"]'); if (nf) { try { nf.focus({ preventScroll: true }); } catch (x) {} } }
@@ -5024,6 +5059,10 @@
       if (vh0 && root.matchMedia && root.matchMedia('(orientation: portrait)').matches) {
         var over0 = host.getBoundingClientRect().bottom + (root.scrollY || root.pageYOffset || 0) - vh0;
         if (over0 > 0) { var ph0 = panel.getBoundingClientRect().height; panel.style.height = Math.max(Math.round(ph0 / 2), Math.floor(ph0 - over0)) + 'px'; }
+        // (and the pictures brought into view now, as `live` does, and again after go()'s scroll to the top, as bringPad: the
+        // stack is held at its tallest from the first line, so nothing moves later; on a phone upright the second picture
+        // was half under the fold while Tallyheart's third line lit it, chapter 13's review at 390 x 844)
+        bringIn(host); later(function () { if (frameEl.isConnected && phase === 'marks') bringIn(host); }, 0);
       }
       var flow = takeMarksFlow({ page: P }, {
         show: function (list, g) { say(list); saying(heard(list).concat(labels)); mp.glow(g); },

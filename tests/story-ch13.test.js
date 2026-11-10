@@ -1196,6 +1196,10 @@ test('no two cats touch: every pair on the same row of every frame a step apart,
     assert.ok(ta.a.y > pl.a.y && cover(pl.head, ta.body) < 0.05, id + ': our cat’s face clear (' + cover(pl.head, ta.body).toFixed(2) + ')');
     assert.ok((ta.head[0] + ta.head[2]) / 2 < 1260, id + ': her face in the close-up');
   });
+  // f081: our cat's tail wrapped (`kind`), so Tallyheart's ear never lies over it (chapter 13's review: `happy` raised the
+  // loaf's tail into her ear, the two cats touching)
+  const b81 = boxesOn('f081'), ta81 = b81.find(x => x && x.m.who === 'tallyheart'), pl81 = b81.find(x => x && x.m.who === 'player');
+  assert.ok(gapOf(pl81.body, ta81.head) > 0, 'f081: our cat (tail and all) clear of Tallyheart: ' + pl81.body.map(Math.round) + ' / ' + ta81.head.map(Math.round));
 });
 
 test('staging, depth: a cast member further back is never drawn over a nearer one’s head; every cast listed back to front (the fountain top, raised, anywhere; the first member an effect moves excepted; the den’s nests as the close-up lays them; the GroveClan apprentice after the elder)', { skip: !A.character && 'no cats.js' }, () => {
@@ -1382,7 +1386,8 @@ const SETS = {
     teacher: 'tallyheart',
     warmHard: { table: 'all', at: [0, 1], avoid: [[3, 4], [6, 8]], alt: [{ a: 7, b: 4, table: 4 }, { a: 9, b: 9, table: 9 }] },
     facts: [{ a: 9, b: 7, table: 9 }, { a: 4, b: 6, table: 6 }, { a: 8, b: 8, table: 8 }],
-    praise: [], fast: [], done: '',
+    // (its miss chapter 10's, with the curly ’, not the engine's default: chapter 13's review)
+    praise: [], fast: [], done: '', miss: MISS,
     echo: { on: 'first', lines: [{ who: 'chispapaw', lang: 'es', text: '¡{Es:fact}!' }] }
   },
   'ch13-take': {
@@ -1777,6 +1782,10 @@ test('Read to me, through the engine and the page’s plan: every frame’s capt
   assert.ok(said('f030', 'es').includes('es ' + W.resta.es));
   // the groundhog's voice is its own, low and slow; the Spanish never in it
   assert.ok(UI.voices && UI.voices.plan);
+  // (lower and slower than GroveClan's elder, who speaks in the same woods three screens before its first line: chapter 13's
+  // review heard the elder's voice come back from the hole)
+  const Sp = UI.speakers;
+  assert.ok(Sp.pitch('groundhog') <= Sp.pitch('groveclan', 1) - 0.1 && Sp.rate('groundhog') <= Sp.rate('groveclan') - 0.06, 'the groundhog: ' + Sp.pitch('groundhog') + '/' + Sp.rate('groundhog') + ', the elder ' + Sp.pitch('groveclan', 1) + '/' + Sp.rate('groveclan'));
 });
 
 /* ------------------------------------------------------------------ the book and the teaser */
@@ -1901,4 +1910,39 @@ test('decision 54’s alternative (the spec’s section 7, item 15): the lines t
   const where = [];
   everyText((id, x) => { if (/\b[Aa]pprentice\b/.test(String(x.text).replace(/apprentices’ den/g, '').replace(/GroveClan apprentice/g, ''))) where.push(id); });
   assert.deepEqual([...new Set(where)], ['f043']);
+});
+
+/* ------------------------------------------------------------------ chapter 13's review (~/potomac-crossing-work/ch13/review.json) */
+
+test('chapter 13’s review: no board’s inset draws the badger (not even a lump of fur, a rump or its paws) or the Tall One’s child (chapter 18’s homework panel, never a face); who faces whom on the clue frames, the closing tail and the polite ask; {Murmur}chime awake at first light; the boards say what is drawn', () => {
+  ids.forEach(id => (frames[id].board.match(/inset (?:shows|floats)[^.;]*/g) || []).forEach(t =>
+    assert.doesNotMatch(t, /badger|\bfur\b|rump|paws|shape|child|Tall One|homework/i, id + ': ' + t)));
+  // the three insets rewritten (f071's dropped: his tale's truth is chapter 18's) and the two homework insets gone
+  assert.match(frames.f056.board, /inset shows a winter wood long ago, a little kit peering at a big untidy dug hole/);
+  assert.match(frames.f062.board, /inset shows its snug round bedroom, soil trickling from one wall/);
+  ['f071', 'f030', 'f033'].forEach(id => assert.doesNotMatch(frames[id].board, /inset/, id));
+  // f065 to f067: Chispapaw at marks-2 faces the marks and our cat (to her left); our cat faces her and them
+  ['f065', 'f066', 'f067'].forEach(id => {
+    assert.equal(castOf(id, 'chispapaw')[0].facing, 'left', id + ': Chispapaw faces the marks');
+    assert.equal(castOf(id, 'player')[0].facing, 'right', id);
+  });
+  // f084: facing right, her raised tail stands against the den's green wall, not in front of the fourth rose stem
+  assert.equal(castOf('f084', 'chispapaw')[0].facing, 'right');
+  // f051: "Then she looks at you": Tallyheart at meet-2 faces our cat at meet-1 (on f052a and f052b, the elder again)
+  assert.deepEqual(['f051', 'f052a', 'f052b'].map(id => castOf(id, 'tallyheart')[0].facing), ['left', 'right', 'right']);
+  // f001 to f003 and f009, f010, f047: open eyes where the story says awake, straight-faced, on the pebble, a warm look
+  ['f001', 'f002', 'f003'].forEach(id => assert.notEqual(castOf(id, 'murmurchime')[0].mood, 'happy', id + ': awake, eyes open'));
+  assert.deepEqual(['murmurchime', 'player'].map(w => castOf('f009', w)[0].mood), ['kind', 'kind'], 'f009: straight faces');
+  assert.equal(castOf('f010', 'player')[0].mood, 'wonder', 'f010: eyes on the pebble');
+  assert.equal(castOf('f047', 'tallyheart')[0].mood, 'kind', 'f047: her look, eyes open');
+  // the boards as drawn and as continuity has them
+  assert.match(frames.f011.board, /sandy old grandmother otter/);
+  assert.doesNotMatch(frames.f012.board, /Tallyheart|her paws/);
+  assert.match(frames.f022.board, /one crumpled green leaf/);
+  assert.doesNotMatch(frames.f038.board, /pressed close/);
+  assert.match(frames.f043.board, /its first patrol to lead/);
+  assert.match(frames.f052a.board, /white muzzle/);
+  assert.doesNotMatch(frames.f077.board + frames.f079.board, /yawns|rolls its eyes|opens one sleepy eye/);
+  // the recap true for a cat helped to the lullaby's last miss
+  assert.match(story.book.recap[6].text, /helped it count seven times eight/);
 });

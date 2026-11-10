@@ -574,7 +574,7 @@ test('17. the take block\'s CSS: the digits\' size, the boxes\' colours, the gol
   // the fallbacks in their order: the heads row, then the keys sideways or the panel upright (ui.js's fit)
   const fit = fnSrc(UI_SRC, 'runTakes');
   assert.ok(fit.includes("      frameEl.classList.add('tnohead');\n      var left = over();"));
-  assert.ok(fit.includes("        panel.style.height = Math.max(Math.round(ph / 2), Math.floor(ph - left)) + 'px';\n      } else frameEl.classList.add('tkeys');"));
+  assert.ok(fit.includes("        panel.style.height = Math.max(Math.round(ph / 2), Math.floor(ph - left)) + 'px';\n        return;\n      }\n      frameEl.classList.add('tkeys');"));
   assert.ok(fit.includes("    var join = !!(root.matchMedia && root.matchMedia(TAKE_PHONE).matches && save.settings.bigText);"), 'the sand\'s named fallback on a phone held sideways with Aa');
 });
 
@@ -1289,3 +1289,60 @@ test('the review\'s page fixes: a help in the slot takes the place of the store 
   assert.ok(HTML.includes('.tpickicon:not(.tpi-one){margin-top:-7px;margin-bottom:-7px}'));
   assert.ok(HTML.includes('@media (orientation: landscape) and (max-height: 500px){.frame[data-mode="take"].tmoves .tm2 .tmini{border-width:2px;font-size:.72em}}'));
 });
+
+// chapter 13's review (~/potomac-crossing-work/ch13/review.json): the take page with the moves at an iPad held sideways, Aa on
+test('chapter 13\'s review: the pile\'s held stack holds no `flip` line at a column whose flip lands (bottom − top is her right digit, so it is `ahead`); a column whose flip does not land still holds it', () => {
+  const S = stub.sets(), def = Object.assign({}, S.ch13.def), taught = S.ch13.taught;
+  const FLIP = (t) => /top take away the bottom/.test(t);
+  // 52 − 27: the ones 2 − 7, flipped 7 − 2 = 5, her right digit: never the slip, always `ahead`
+  const pile = T.question(mst(def, [[52, 27]], 'above', taught));
+  const lines = U.slotLines(def, pile, 0, taught);
+  assert.ok(!lines.some(FLIP), 'no flip line held: ' + JSON.stringify(lines));
+  assert.ok(lines.some((t) => /Marks first/.test(t)), 'the `ahead` line held instead: ' + JSON.stringify(lines));
+  const st = mst(def, [[52, 27]], 'above', taught), r = T.digit(st, def, '5', 2000, 9000);
+  assert.equal(r.pointer, 'ahead', 'a 5 at its decide is `ahead`');
+  assert.ok(!r.slip, 'never the flip slip');
+  // 85 − 39: the ones 5 − 9, flipped 9 − 5 = 4, not her 6: the slip can come, its line held
+  const other = T.question(mst(def, [[85, 39]], 'above', taught));
+  assert.ok(U.slotLines(def, other, 0, taught).some(FLIP), 'the flip line held where it can come');
+  const st2 = mst(def, [[85, 39]], 'above', taught);
+  assert.equal(T.digit(st2, def, '4', 2000, 9000).slip, 'flip');
+  // the held stack is shorter by that line and nothing she sees falls outside it (U4's students include the flip at 52 − 27)
+  const R = U.reserve(def, pile, { taught });
+  assert.ok(!R.some((L) => L.some((b) => FLIP(b.text || ''))));
+});
+
+test('chapter 13\'s review: on an iPad held sideways the take page with the moves stands its stack over the panel (`tover`) when bringing the keypad in would squeeze or hide the stack\'s first balloon under the bar; set as a problem begins, after the heads row and the keys, kept for the page at that size, under the gate only; the column\'s redraw keeps the page\'s scroll; the marks page on a phone held upright brings its pictures in at once', () => {
+  const page = fnSrc(UI_SRC, 'runTakes'), fit = fnSrc(page.replace(/^ {2}/gm, ''), 'fit');
+  // under the gate, an iPad held sideways only (a phone held sideways has its own arrangement)
+  assert.ok(fit.includes("var side = mv && !!mm && mm('(orientation: landscape) and (min-height: 501px)').matches;"));
+  // the order: the heads row, the keys, then (only past the room over the stack, its 8px margin counted) the stack over the panel
+  const i1 = fit.indexOf("frameEl.classList.add('tnohead');"), i2 = fit.indexOf("frameEl.classList.add('tkeys');"), i3 = fit.indexOf('if (over() + 8 <= room) return;'), i4 = fit.indexOf("frameEl.classList.add('tover');\n    overAt = key;");
+  assert.ok(i1 > 0 && i2 > i1 && i3 > i2 && i4 > i3, [i1, i2, i3, i4].join(' '));
+  assert.ok(fit.includes("var bar = $('bar'), room = stack.getBoundingClientRect().top + (root.scrollY || root.pageYOffset || 0) - (bar ? bar.offsetHeight : 0);"), 'the room: the stack\'s top less the sticky bar');
+  // in its place the heads row and the keys as they were, the stack measured again where it now stands, the page at its top
+  assert.ok(fit.includes("    frameEl.classList.remove('tnohead', 'tkeys');\n    frameEl.classList.add('tover');\n    overAt = key;\n    reserve();"));
+  assert.ok(fit.includes("if (had !== frameEl.classList.contains('tover')) reserve();"), 'measured again whenever the stack moves between its two places');
+  // kept for the page at the size (and Aa) it was set at: a later problem, a late font, keep it; a turned screen or Aa looks again
+  assert.ok(fit.includes("var key = (root.innerWidth || 0) + 'x' + vh + (doc.documentElement.classList.contains('big') ? 'A' : '');"));
+  assert.ok(fit.includes("if (side && overAt === key) frameEl.classList.add('tover');"));
+  assert.ok(page.includes("    var overAt = '';\n    function fit() {"), 'one per take page');
+  // the CSS: the marks page's own arrangement there, the column and keypad alone on the left; only on .tmoves
+  ['.frame[data-mode="take"].tmoves.tmkpage,.frame[data-mode="take"].tmoves.tover{grid-template-areas:"int stack" "int panel";',
+    '.frame[data-mode="take"].tmoves.tmkpage .stack,.frame[data-mode="take"].tmoves.tover .stack{grid-area:stack;min-width:0}',
+    '.frame[data-mode="take"].tmoves.tmkpage .interact,.frame[data-mode="take"].tmoves.tover .interact{grid-area:int;align-self:start;min-width:0}',
+    '.frame[data-mode="take"].tmoves.tmkpage .panel,.frame[data-mode="take"].tmoves.tover .panel{width:100%;height:100%;aspect-ratio:auto}'].forEach((c) => assert.ok(HTML.includes(c), c));
+  assert.equal((HTML.match(/\.tover[ ,{.]/g) || []).length, (HTML.match(/\.tmoves\.tover[ ,{.]/g) || []).length, 'tover only after .tmoves');
+  assert.equal((HTML.match(/\.tmoves\.tover[ ,{.]/g) || []).length, 6, 'the six rules of the arrangement');
+  // chapter 12's pages (no gate): nothing of it (fit's other branches as before)
+  assert.ok(!/tover/.test(fnSrc(page.replace(/^ {2}/gm, ''), 'drawCol')));
+  // the column's redraw under the moves keeps the page's scroll (WebKit moved it 4 to 10px back up)
+  const dc = fnSrc(page.replace(/^ {2}/gm, ''), 'drawColM');
+  assert.ok(dc.includes('var y0 = root.scrollY || root.pageYOffset || 0;') && dc.includes('if ((root.scrollY || root.pageYOffset || 0) !== y0) root.scrollTo(0, y0);'));
+  assert.ok(dc.indexOf('var y0') < dc.indexOf('tcol.innerHTML') && dc.indexOf('!== y0') > dc.indexOf('tcol.innerHTML'), 'around the redraw');
+  // the marks page upright: its pictures brought in right after the panel's shrink, before the first line
+  const mp = fnSrc(page.replace(/^ {2}/gm, ''), 'marksPhase');
+  const bi = mp.indexOf("bringIn(host); later(function () { if (frameEl.isConnected && phase === 'marks') bringIn(host); }, 0);");
+  assert.ok(bi > mp.indexOf("panel.style.height = Math.max(Math.round(ph0 / 2)") && bi < mp.indexOf('var flow = takeMarksFlow('), 'now and after go()\'s scroll to the top');
+});
+

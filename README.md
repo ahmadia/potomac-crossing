@@ -1565,6 +1565,176 @@ Each is Aron's to reverse.
   until her log has times. Chapter 13's `ch13-take`, with its `marks`, is coded by chapter 13's frames builder next,
   from its spec (v0.3); until then the moves are reached only through `PC.debug.takes` and the stub, and live stays v25.
   `E.VERSION` 0.13.0 and the ledger's v26 entry are the ship's. The suite: 48 files, 2,082 tests, all pass.
+- **Chapter 13 as built** (2026-11-10, ships with the take-aways kit v0.4 as CACHE v26, `E.VERSION` 0.13.0 at the ship;
+  `app/story/ch13.js`'s header has each call, the spec's v0.3.1 note and sections 5 and 9; the builders' notes in
+  `~/potomac-crossing-work/ch13/` `build-cats/`, `build-sets/` and `story-builder/`). *The Hunter's Crouch*, module 2's
+  day 2, the first frost: 85 frames, 78 a reading and 84 with the groundhog (the cap is 125); thirteen Taps (fifteen with
+  the groundhog), five choices (`teach` the only one that sets a flag), five Counts and six take-aways (the first spreads,
+  made as moves), the kit's marks page, the dream. **Decisions 53 to 57 bind it**: 53 (the maths, a Spanish-speaking
+  friend) is why the lesson is spread a row with Chispapaw new to it too, and why «la resta» and "¡No alcanza!" are in the
+  words table; 54 (her own apprentice) is why the chapter's one real choice, `teach`, is a mentor's; 55 («¡Desagrupo!») is
+  Chispapaw's whisper at the first spread; 56 (the maths about a quarter, never past a third; chapter 13 "stays as
+  written") is why nothing is cut now (below, the minutes); 57 (the borrow as a step she does, her marks hers) is why every
+  spread is moves she types and why the kit's marks page opens at the worked example. **Data and art only**, as the
+  spec's "Engine needs" asked: no engine key of the chapter's own (the kit v0.4 was built before its frames), the save
+  unchanged (version 2; two new flags, `teach` and `foundGroundhog`; her marks the kit's `cat.takes.style`, never a flag).
+  Built on main after the kit: the cats owner (the groundhog, `curl` with `tailUp`, the quick marks' `crossed` and
+  `fresh`, the three words), the sets owner (the camp's frost, the hollow's spread marks, the den's collar, GroveClan's dig
+  and marks), then the story builder; then a review in eleven lenses and its skeptics.
+  - *The brief's fifteen calls* (`docs/chapters/13-the-hunters-crouch.brief.md`, each with its reason): (1) day 2, the
+    first frost, a title panel over her nest, frost as chapter 1's first grass, no moon drawn, the grove's afternoon kept;
+    (2) the dawn patrol a patrol of three, its prints 3 × 4, to the Crossing because Riffle asked; (3) Granny's "Badger. A
+    FRESH one." on GroveClan's side, seen from the ferry, the ferry otters' "As big as a FOX", a roar only an airplane;
+    (4) the crouch, `teach` three ways each paid by chapter 21, Chispa's tail straight up, the leaf caught, the mouse never
+    drawn, "…Mice have ears.", the collar left safe in her nest, no two cats touching; (5) the lesson with Chispa new to
+    spreading, her little Tall One's homework mentioned and never shown; (6) noon, 6 × 8 then 52 − 27, the courtesy patrol
+    ("Ask about their hole. Politely."); (7) GroveClan, best manners passed on, the elder's badger "digging for worms",
+    and the elder gone before the marks (recognising them is her turn in chapter 21); (8) the marks, one long line and
+    eight little pokes, the kit's quick picture, never a dot, a number or a count, nobody reading them; (9) the groundhog,
+    optional, offered to every cat, its lullaby 7 × 8; (10) home at sunset, the old tom's tale for laughs, "Claw marks.
+    Mark my words.", her book's badger page; (11) bedtime, the collar silent, Chispa's crouch by `teach`, the hook never
+    answered; (12) the Spanish data only, three answers of eleven echoed, no Count asked in Spanish, no column echoed;
+    (13) one optional scene and two flags, a line each by `specialty` and `ch2Stone`; (14) her book's page in book two at
+    178, the badger page and the groundhog's sleeper page, the teaser "Chapter 14: The Night Watch"; (15) toms and
+    she-cats alike, no two cats touching, nothing in the woods dark, nobody in GroveClan's woods unasked.
+  - *The story and spec* (2026-11-07 to 09; the story's *For us* and the spec's section 9 have every call with its
+    reason). The story's fifteen calls in short: the why scratches forty-three, so "¡No alcanza!" answers a column;
+    Tallyheart waits at the bridge, so the marks end the woods; the hole's news is the ferry otters'; the dawn patrol's
+    four caught on screen and paid at bedtime; the fox reaches Chispa from her mentor ("Hearing isn't seeing."); `teach`
+    one picture, three first lines; "What's a courtesy patrol?" "A polite one."; the leaf's Tap is the mentor's "Wait for
+    it…"; the groundhog cold, so the ceremony's promise has a need; the worked prompt "Pretend", the Clan eats sixteen;
+    the pile's fifty-two on its own screen; "Exactly," not "Just like that" (chapter 21's); "spread a row" fixed English;
+    decision 55's answer keeps the spread screens as written; the marks page before the worked prompt, Chispapaw's
+    little 1 first. The spec's 35 calls in short: no engine feature; six Counts sets on shipped shapes (the warm-up's
+    `avoid` 3 × 4 and 6 × 8, never the lullaby's 7 × 8); the lullaby is chapter 9's sleeper set again; 6 × 8 as stacks,
+    never rows; `rightAgain` on the story Counts; the frost the camp's option only (`'prints'` for the trails); the mouse
+    never drawn; no pile drawn at noon; the sand's spread a hollow option on the quick marks' `crossed` and `fresh`; the
+    collar a den option; the grove's dig an option on `oak` and a composition `dig` with a close camera `marks`; the
+    marks `{ tens: 1, ones: 8 }` on earth; the close-up on f068's own Tap; the groundhog round, brown, toothless, nothing
+    like a badger, "The round brown thing" until it names itself, held by `SIZE_BAND` against our cat; the apprentice
+    peeking for every cat on f058; bedtime in four frames; `curl` with `tailUp` for the last picture; the badger page's
+    rows `size`, `mice`, `sat`, `marks`; the book in eight lines, English only; corner words for both flags; two owners;
+    486 − 253 the only maths cut; «¡Desagrupo!» a words-table line on f035; `resta` stored as lettered; Granny out of the
+    raft's panels (a third otter would lend her face to the third balloon); `plane: 'none'` at the Crossing.
+  - *The owners' and the story builder's* (their notes): the crouch on the camp's `crowd` camera (on `ferns` three cats
+    could not stand apart), spots `ferns-1` and `ferns-2` placed; the hollow's spread never drawn with `store` or `quick`
+    (their boxes cover the only sand between the cats); the oak's fourth clear spot `oak-near`; the dig's close spots
+    with `dig-front` right of the dig (a cat in front covered it); the groundhog's size ratio 1.07 against our cat sitting;
+    `tailUp` on `curl` drawn (four synthetic sweeps retaken, named; no live frame gives `curl` a raised tail); the quick
+    marks byte for byte for every existing call (57,603 compared). The story builder: f012 and f013 hold one shore cat
+    each (our cat, then Tallyheart, who speaks); Tallyheart's head over the nest at a raw spot beside chapter 12's PAST;
+    `motion` off on f017, f021 and f084 (its speed lines ran across a cat or out of the den's doorway like a dash: the
+    captions carry the bounce, the wiggle and the twitch), `zzz` off on f064 (it floated mid-sky); the old tom's first tale
+    line on f070 (Back ran under the screen on f071 with four balloons and the Tap); f045 without Glintstar (the bounce's
+    lines trailed into her); three standing cats at GroveClan's bridge at spots a step wider than the woods' edge.
+  - *Decision 55's «¡Desagrupo!»*: Chispapaw whispers it on f035, as Tallyheart crosses out the line and scratches ten new
+    dots, a words-table line (`desagrupo`, '¡Desagrupo!', glossed "Breaking it into groups!", Lissa's own words), a frame
+    balloon with its English under it, never the take page's echo hook; said in the Spanish voice only, its English alone
+    with no Spanish voice, never aloud on the mini. The English stays "spread a row" (the kit's).
+  - *The marks page as chapter 13 first shows it*: on the take page after f036, before 43 − 16's prompt, for every player
+    (it waits for a pick): Chispapaw's "My little Tall One writes it like THIS." and "A little 1 in front!", Tallyheart's
+    "Some write the new number on top instead." and "Both are right. Which marks do YOU like?", one line at a time, each
+    lighting its picture; the two pictures, 43 − 16 done each way, live only after the last line; her pick answered by
+    Chispapaw's "Just like my little Tall One!" or Tallyheart's "On top it is. That’s how I write it too!", saved in
+    `cat.takes.style` (no flag; no story line knows it). On an iPad held sideways its balloons stand over the panel; on a
+    phone held upright the pictures come into view with the first line (this review). Then the worked example in her marks,
+    Tallyheart saying each new number while she types it ("I'll say each step. You type it.").
+  - *The review's round* (2026-11-10; `~/potomac-crossing-work/ch13/review.json`, 20 confirmed findings, several the same
+    fault seen by more than one reviewer, each fixed once at its root; notes, probes and pictures in `ch13/integrate-r1/`):
+    1. **The long line reads on 'bare'** (three findings, both highs of the art): the left brushed-aside drift lay over the
+       line's lower two thirds, so on f066 to f068 the clue read as a twig beside eight fat pokes. The two drifts are drawn
+       before the marks now and lie wholly beyond their box (`bareDrifts`: 30 to 100 units either side, so no leaf reaches
+       it), and the line and all eight pokes lie plain (looked at on f066, f067 and f068). The marks stay the kit's quick
+       picture exactly (one finding's re-proportioned line and pokes not taken: the clue must be Tallyheart's own sand
+       picture, so a child who saw it may get there first, module 2's hope, and the line reads once nothing lies on it).
+       Tested: every drift path's box misses the marks' box, on both cameras.
+    2. **No badger in any board** (three findings): f056's inset is a winter wood long ago, a little kit peering at a big dug
+       hole, nobody else in it; f062's its snug bedroom, soil trickling from one wall and sniff lines through it, nothing
+       seen; f071's is gone (the tale's truth is chapter 18's, and nothing may hint at it). With them (one finding) the two
+       insets that drew Chispapaw's little Tall One as a child with a face are gone (f030, f033: the Tall One's rule, and
+       chapter 18's one homework panel). Tested over every board's inset.
+    3. **The take page on an iPad held sideways** (five findings, one root, in the kit): with Aa on at 1080 x 720 the worked
+       example's first balloon went 20px under the bar, its tens' school words 25, and the pile's twelve words 56 with Aa on
+       and 16 with Aa off; the keypad's bottom row (⌫ 0 OK) was 5px under the fold and the keypad moved 5px within a
+       problem. Fixed in `app/ui.js` and `index.html`, chapter 13's words unmoved: (a) a column whose flip lands holds no
+       `flip` line (at 52 − 27's ones a 5 is `ahead`, so its 93-character line could never come: the pile's held stack 29px
+       shorter, and it fits with Aa off); (b) when bringing the keypad in would still squeeze or hide the first balloon
+       under the bar, the stack stands over the panel (`tover`, the marks page's own arrangement on an iPad held sideways:
+       the column and the keypad alone on the left, the heads row and the keys as they were), set as a problem begins and
+       kept for the page at that size, so nothing moves within a problem and the page does not swap between problems;
+       (c) the column's redraw under the moves keeps the page's scroll (WebKit moved it 4 to 10px up as the column's nodes
+       were replaced: the keypad's 5px). One finding's chapter-only fix, the pile's question moved onto f039, is not
+       needed (the kit's covers both pages and any later chapter's, and the story's call 11 keeps the fifty-two on its own
+       screen); another's clamp of the scroll to the room over the stack is not taken (it would cut the keypad's OK row
+       instead). Chapter 12's pages never take any of it (the gate). Measured after, the lesson and the pile played on the
+       real page in WebKit at eight sizes, Aa off and on (the review's `lesson.mjs`: 608 moments, every key a tap on the
+       page's own keypad), no balloon under the bar, no key under the fold and the keypad still within every problem; at
+       1080 x 720 with Aa off the worked example and the pile fit unscrolled (keypad 471 to 719), with Aa on and at 1080 x
+       700 the page takes `tover` (keypad 228 to 514, the stack at the top right); the review's pick-ups (`page.mjs`: a
+       reload, ‹ and Camp at nine stops) at 1180 x 820, 1080 x 700 and 1024 x 768 with Aa on scroll nowhere and show the
+       keypad where unbroken play does (the twin 32 − 15 at 1180 x 820 took `tover`, its keypad 241 to 527 through the
+       touch). Left as they were: the keypad moving between two problems (70 − 34 to 85 − 39) and at a problem's echo once
+       it is done, as v0.3's always has; a phone held sideways scrolling the frames around the lesson to their Next.
+    4. **The sweep measures chapter 13's take pages with the moves** (two findings): its cat had no marks, so f036 and f039
+       were measured on the kit's marks page and no column ever was, which is how 3 passed `pages/summary.md`. The
+       `lessons` job now measures a marks page as it opens (`@lesson`), then gives the cat 'above' and measures the take
+       page as it then opens (`@lesson:column`; the lesson she began is in the slot, so the frame comes back as its take
+       page), each after the page's own zero-delay call that brings its pictures or keypad into view once go() has
+       scrolled to the top (the job is synchronous, and every other row's call is left to run later, as before, so no row
+       of chapters 1 to 12 moves), keeps the marks for the chapter's later take frames (the pile on its column, as she
+       meets it) and takes them off when the chapter changes; `sweep.mjs` names an off-screen key there
+       `off-screen-keypad`. Tested on a stand-in page. A played-through take job of its own (the keypad moved within a
+       problem, at the review's sizes) is left to the kit's next round: `lesson.mjs` was the check here.
+    5. **The marks page on a phone held upright** (one finding and a low): its second picture was half under the fold while
+       Tallyheart's line lit it, and came in only when the buttons went live; it is brought in as soon as the panel is
+       shortened and again once go() has scrolled to the top (as `bringPad` is), so the pictures never move as the lines
+       come (measured: at 390 x 844 the page opens scrolled 95px, 71 with Aa on, and nothing moves at live).
+    6. **The elder clear of the marks** (one finding): at `dig-elder` she sat over the pokes on f054 and f055, facing over
+       them; she sits on the dig's far side between its heaps now (950, 650, facing the cats across it), 260 units from
+       the marks ("from the far side", f055's board). Tested.
+    7. **Who faces whom, and no two cats touch** (three findings): on f065 to f067 Chispapaw faces the marks and our cat (she
+       stared off the panel's edge as she whispered "Claw marks?"); on f084 she faces right, so her raised tail stands
+       against the den's green wall ("Straight up." could not be seen in front of the rose stem of its own colour); on f081
+       our cat's loaf is `kind`, its tail wrapped (`happy` raised it into Tallyheart's ear; chapter 12's f077 has the same
+       overlap, live, and is left). Tested.
+    8. **This entry and the minutes** (one finding): the measured minutes and the call below.
+  - *The review's lows taken*: {Murmur}chime awake at first light (f001 to f003: `happy` drew her eyes shut beside our
+    sleeping cat); straight faces on f009 and our cat's eyes on the pebble on f010; Tallyheart's warm look with open eyes on
+    f047, and facing our cat on f051 ("Then she looks at you"); the boards say what is drawn and what continuity has (f011's
+    sandy Granny, f012's one shore cat and no "her" for the gossip, f022's green leaf, f038 "close beside", f043 "its first
+    patrol to lead", f052a's white muzzle, f077 and f079 as drawn); the warm-up's miss with the curly ’ (`miss: MISS`); the
+    book's groundhog line true for a cat helped to the lullaby's last miss ("helped it count seven times eight"); the
+    groundhog's voice lower and slower than the elder's (`PITCH` 0.66, `RATE` 0.78: the elder speaks three screens before
+    it in the same woods); the story's *For us* (decision 55's answer, «¡Desagrupo!» inherited, the minutes' reason); the
+    spec's v0.3.1 note (the build's departures from its lists, this round's changes).
+  - *Left, with reasons*: f064's `zzz` (the story builder dropped it: it floated mid-sky; the shut eyes and smile carry the
+    sleep); the oak's dig small in the wide shot (the spec asked it so, and f054 shows it big at once); the leaves' box on
+    `'leaves'` showing half of the fifth poke (raising it hides the line's top end, which must show); f082's open eyes for
+    "You close your eyes" (`asleep` is the chapter's rule for curled sleepers and `happy` a grin with its tail up; the
+    dreamy upward look carries the thought); the lullaby's retry snoring before a missed filler comes back (the snore on a
+    retry is the spec's call 7, from the maths critic; a rare path in the optional scene); six stacks of eight laid five
+    and one at noon (a shared art function: a change there needs the Hollow's rounds swept, and the picture reads on a
+    phone); Read to me on a pick-up mid-column saying less than unbroken play (the kit's spoken path, for its next round; no
+    line is said twice); the kit's take pages measured on a stub in the sweep's `takes` job (above, 4).
+  - *The minutes as built* (the review's minutes lens, `ch13/minutes/`; chapter 12's rules over all 360 plain readings:
+    123 words a minute, 2 s a frame, 3 a Tap, 6 a choice, 10 the dream, the kit v0.4's maths 5.53, 6.79 and 8.05
+    minutes): 1,413 to 1,446 words, **20.9 to 23.7 minutes, 22.2 to 22.5 at the middle maths**, the brief's 20½ to 22½
+    (21½ at the middle) passed by 0.4 to 1.2 minutes, all of it decision 57's estimated move time (the story part, 15.4 to
+    15.7 minutes, is inside the brief's 15.9; at the v0.3 maths the brief was set at it would play 20.0 to 22.3). **The
+    maths is 26 to 34% of the plain path, about 30% at the middle**: past decision 56's quarter and inside its third, but for
+    the slowest maths with its help and twin, 34% (call 21: a reading with a help may run a little over). The groundhog adds 146
+    words and 1.7 minutes. The call: **nothing is cut now** (decision 56 keeps chapter 13 as written; the kit's call 21:
+    no chapter is cut for decision 57 until her move times are logged). The kit's first cut, 486 − 253 (about half a
+    minute), waits for her first week of logged move times, and fires if her logged maths in this chapter (five Counts,
+    the marks page and the lesson, the pile) runs past about 6.8 minutes or the chapter past 22½; the warm-up's third Count
+    goes only with a story version (f029's "three").
+  Live frames changed: none (chapters 1 to 12 draw and play as they did; every change is chapter 13's frames, the grove's
+  chapter 13 options, or the kit's moves pages behind their gate). The shared sweep of the final tree (cache 638e11c7e90541fa, `--all --takes --compare` against
+  live): 1,639 pictures, none of chapters 1 to 12 or the Warrior Counts differing (85 chapter 13's only); 15,304 pages with one
+  problem, chapter 12's `es:take` at 1080 x 720 with Aa on (in live too: the kit v0.4's entry, *Left*), the pages whose boxes
+  moved against live the same 88 as the review's tree (the hub, the book and the corner with chapter 13 in them, and the
+  kit's stub take screens of v0.4), no problem new; the take screens at the review's four more sizes clean but for chapter
+  12's `es:take` and `es:skip` (in live too), and `--takes --compare` 88 of 88 byte for byte. The suite: 49 files, 2,131 tests, all pass.
 
 ## Open questions, waiting on Aron
 

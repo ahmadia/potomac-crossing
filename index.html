@@ -1126,14 +1126,16 @@ html:has(.frame[data-mode="take"]){overflow-anchor:none}
   .tpick .tpb.tglowing{transform:none}
 }
 /* the marks page on an iPad held sideways: the balloons over the panel (the phone held sideways's own arrangement), the
-   pictures on the left where the column and keypad stand; four balloons over the pictures ran under the screen there */
+   pictures on the left where the column and keypad stand; four balloons over the pictures ran under the screen there. The
+   take page itself takes the same arrangement (`.tover`, set by ui.js fit() as a problem begins) when bringing the keypad
+   in would take the stack's first balloon under the bar: the column and the keypad alone on the left (chapter 13's review) */
 @media (orientation: landscape) and (min-height: 501px){
-  .frame[data-mode="take"].tmoves.tmkpage{grid-template-areas:"int stack" "int panel";grid-template-rows:auto minmax(96px, 1fr);align-items:stretch;row-gap:8px;min-height:0;height:calc(100dvh - var(--bar) - var(--st) - 18px)}
-  .frame[data-mode="take"].tmoves.tmkpage .col{display:contents}
-  .frame[data-mode="take"].tmoves.tmkpage .stack{grid-area:stack;min-width:0}
-  .frame[data-mode="take"].tmoves.tmkpage .interact{grid-area:int;align-self:start;min-width:0}
-  .frame[data-mode="take"].tmoves.tmkpage .panel-side{grid-area:panel;position:static;min-height:0;height:100%}
-  .frame[data-mode="take"].tmoves.tmkpage .panel{width:100%;height:100%;aspect-ratio:auto}
+  .frame[data-mode="take"].tmoves.tmkpage,.frame[data-mode="take"].tmoves.tover{grid-template-areas:"int stack" "int panel";grid-template-rows:auto minmax(96px, 1fr);align-items:stretch;row-gap:8px;min-height:0;height:calc(100dvh - var(--bar) - var(--st) - 18px)}
+  .frame[data-mode="take"].tmoves.tmkpage .col,.frame[data-mode="take"].tmoves.tover .col{display:contents}
+  .frame[data-mode="take"].tmoves.tmkpage .stack,.frame[data-mode="take"].tmoves.tover .stack{grid-area:stack;min-width:0}
+  .frame[data-mode="take"].tmoves.tmkpage .interact,.frame[data-mode="take"].tmoves.tover .interact{grid-area:int;align-self:start;min-width:0}
+  .frame[data-mode="take"].tmoves.tmkpage .panel-side,.frame[data-mode="take"].tmoves.tover .panel-side{grid-area:panel;position:static;min-height:0;height:100%}
+  .frame[data-mode="take"].tmoves.tmkpage .panel,.frame[data-mode="take"].tmoves.tover .panel{width:100%;height:100%;aspect-ratio:auto}
 }
 /* My marks on the Hollow's shelf: only her receiver's mark, as the column draws it, its digit 32px */
 .tpickicon{display:inline-grid;justify-items:center;align-content:center;font-style:normal;font-family:var(--digits);font-weight:700;line-height:.9;color:var(--cream);text-shadow:2px 2px 0 var(--ink);flex:none;margin-right:.1em}

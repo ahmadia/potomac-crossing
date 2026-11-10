@@ -409,6 +409,42 @@ test('dev/webkit/measure.js: on a take page (its frame’s data-mode, or a colum
   assert.ok(MEASURE.indexOf('m.hx = ') > keys && MEASURE.indexOf('m.hx = ') < fp);
 });
 
+// chapter 13's review: the sweep's cat had no marks, so chapter 13's f036 and f039 were measured on the kit's marks page
+// and no sweep reached the take columns with the moves (the two highs at 1080 x 720 passed pages/summary.md)
+test('dev/webkit/measure.js __JSWEEP lessons: a Counts frame that opens on the marks page (a cat with no marks) is measured as it opens (@lesson), then with her marks picked (@lesson:column); her marks kept for the chapter\'s later take frames, taken back off the cat when the chapter changes and at the end', () => {
+  const at = MEASURE.indexOf('  window.__JSWEEP = function'), src = MEASURE.slice(at, MEASURE.indexOf('\n  };\n', at) + 5);
+  // (as the page does: a take frame's button opens its take page, the marks page first while she has no marks, and puts the
+  // lesson in the slot; the same frame opened again then comes back as the take page itself, with no button)
+  const cat = { name: 'Crystal' }, S = { frame: null, ch: null, open: false, slot: null }, TAKE = { 'c2:f2': 1, 'c2:f3': 1, 'c3:f5': 1 };
+  const here = () => S.ch + ':' + S.frame, styled = () => !!(cat.takes && cat.takes.style);
+  // (each page's own zero-delay call, its keypad or pictures brought into view after go()'s scroll to the top, marks the
+  // page scrolled when it runs; the real timer only queues it)
+  const queued = [], soon = () => window.setTimeout(((at) => () => { S.scrolled = at; })(here()), 0);
+  const PC = { story: { c1: { frames: { f1: {} } }, c2: { frames: { f2: {}, f3: {}, f4: {} } }, c3: { frames: { f5: {} } } },
+    debug: { goto: (f, ch) => { S.frame = f; S.ch = ch; S.open = S.slot === here(); S.scrolled = null; if (S.open) soon(); return f; }, cat: () => cat },
+    engine: { setTakeStyle: (c, st) => { c.takes = Object.assign({}, c.takes, { style: st }); } } };
+  const document = {
+    querySelector: (sel) => (sel === '#screen .frame' ? { getAttribute: (k) => (k === 'data-kind' ? (S.open ? 'lesson' : 'counts') : null) }
+      : sel === '#screen .tpick' ? (S.open && TAKE[here()] && !styled() ? {} : null)
+        : sel === '#screen #tcol' ? (S.open && TAKE[here()] ? { hidden: !styled() } : null) : null),
+    getElementById: (id) => (id === 'nextBtn' && !S.open ? { click: () => { S.open = true; if (TAKE[here()]) S.slot = here(); soon(); } } : null)
+  };
+  const window = { scrollTo: () => {}, setTimeout: (f) => { queued.push(f); return 1; }, __JM: (t) => ({ t, bad: [], style: cat.takes ? cat.takes.style : null, scrolled: S.scrolled === here() }) };
+  const sweep = new Function('window', 'document', 'PC', src + '\nreturn window.__JSWEEP;')(window, document, PC);
+  // the marks page and the column measured as she sees them (their zero-delay call run first); every other row as before,
+  // its call left to the real timer
+  assert.deepEqual(sweep('lessons').map((r) => r.t + ' ' + r.style + (r.scrolled ? ' scrolled' : '')), ['c1:f1@lesson null', 'c2:f2@lesson null scrolled',
+    'c2:f2@lesson:column above scrolled', 'c2:f3@lesson above', 'c2:f4@lesson above', 'c3:f5@lesson null scrolled', 'c3:f5@lesson:column above scrolled']);
+  assert.ok(queued.length >= 3, 'the other rows\' calls handed to the real timer (' + queued.length + ')');
+  assert.ok(!('takes' in cat), 'her marks taken back off the cat');
+  // a cat with take data of her own gets it back as it was
+  cat.takes = { log: [1], style: null };
+  sweep('lessons');
+  assert.deepEqual(cat.takes, { log: [1], style: null });
+  // the sweep names an off-screen control on the column row as it does on a keypad's
+  assert.match(fs.readFileSync(T('tools/sweep.mjs'), 'utf8'), /\/@lesson\(:column\)\?\$\/\.test\(at\) \? 'off-screen-keypad'/);
+});
+
 /* A stand-in page for the measure's kit v0.4 records (no DOM library: the few calls measure.js makes). `spec` is a tree of
  * { tag, cls, id, attrs, text, b (its box), ink (its lettering's box, a Range's), fs, oh (offsetHeight), cs, hidden, kids }. */
 function standIn(spec) {

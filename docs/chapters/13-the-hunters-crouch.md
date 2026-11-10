@@ -1,5 +1,9 @@
 # Chapter 13: The Hunter’s Crouch
 
+*Draft v0.6.1 · 2026-11-10 (the final review, two lines as drawn: “In her den, she wriggles out of her collar.”, the
+collar’s picture in the den after nine in camp; the friends’ doorway in two sentences, “…and points. A smaller doorway,
+right beside the dig!”, so its second caption opens a sentence)*
+
 *Draft v0.6 · 2026-11-09 (decision 57: the kit’s marks page before the worked example, her spreads made as moves; data
 and notes only, on v0.5) · about 22½ minutes to play on the plain path (21½ to 24 across the kit’s maths, the moves
 and the marks page included), about 24½ with the groundhog*
@@ -180,7 +184,7 @@ Chispapaw sits up very straight.
 
 ---
 
-Back in camp, she wriggles out of her collar. “My Tall Ones gave me this. It can stay safe, by my nest.”
+In her den, she wriggles out of her collar. “My Tall Ones gave me this. It can stay safe, by my nest.”
 
 **Tap** to help her tuck it in. *One tap: a little hollow in the moss beside her nest, just collar-sized, and the page
 turns.*
@@ -396,8 +400,8 @@ Tallyheart heads back to wait at the bridge. “Your patrol, warrior.”
 
 *[if specialty: noticing]* You take one last look, and spot it: a smaller doorway, right beside the big dig.
 
-*[if specialty: friends]* The shy GroveClan apprentice peeks out of a fern, and points: a smaller doorway, right
-beside the dig.
+*[if specialty: friends]* The shy GroveClan apprentice peeks out of a fern, and points. A smaller doorway, right
+beside the dig!
 
 *[if specialty: climbing]* From the oak’s low branch, you see it: a smaller doorway, right beside the big dig.
 

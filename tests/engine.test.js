@@ -1167,12 +1167,13 @@ function finishedCat(stories, over) {
   return cat;
 }
 
-test('version 0.12.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 10 add none; the Warrior Counts add one optional field on a cat, `warrior`, absent until her first sitting; chapter 11 one more, `ending`, absent until she is named; the take-aways kit one more, `takes`, absent until her first take-away is logged)', () => {
+test('version 0.13.0 and the save, still version 2 (chapter 4 added one optional field: her Case File’s cards; chapters 5 to 10 add none; the Warrior Counts add one optional field on a cat, `warrior`, absent until her first sitting; chapter 11 one more, `ending`, absent until she is named; the take-aways kit one more, `takes`, absent until her first take-away is logged)', () => {
   // chapter 10 (one minor version past the Warrior Counts' merge, 0.9.1): its card pick stores nothing new, the card she picks is its flag
   // chapter 11: her warrior name stores only its ending, `ending`, optional and never in E.blankCat (spec section 6)
   // the take-aways kit (0.11.1): `takes` is optional and never in E.blankCat (docs/take-aways.md, section 4); book two stores nothing
   // chapter 12 (0.12.0): its Spanish stores nothing; no new field, no new flag (its spec, section 6)
-  assert.equal(E.VERSION, '0.12.0 (chapter 12, 2026-11-08)');
+  // chapter 13 and the kit v0.4 (0.13.0): `takes.style`, optional, never in E.blankCat; no new field on a cat (docs/take-aways.md, section 1a)
+  assert.equal(E.VERSION, '0.13.0 (chapter 13 and the take-aways kit v0.4, 2026-11-10)');
   assert.equal(E.SAVE_VERSION, 2, 'chapter 3 added no field to the save; chapter 4 adds `cards`, optional, and keeps the version; chapters 5 to 9 store nothing new (chapter 7’s ch7Flew, chapter 8’s foundHail and chapter 9’s foundMizzle and ch9Roof are flags); the Warrior Counts’ `warrior` is optional and not in E.blankCat (docs/warrior-counts.md, section 6); chapter 11’s `ending` is optional and not in E.blankCat (its spec, section 6); the take-aways kit’s `takes` is optional and not in E.blankCat (docs/take-aways.md, section 4)');
   assert.ok(!('warrior' in E.blankCat({ now: 1 })), 'a cat who has not sat the Counts is stored exactly as before');
   assert.ok(!('ending' in E.blankCat({ now: 1 })), 'a cat who has not been named is stored exactly as before');

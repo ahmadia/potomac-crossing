@@ -56,7 +56,7 @@
   var PC = root.PC || (root.PC = {});
   var E = {};
 
-  E.VERSION = '0.12.0 (chapter 12, 2026-11-08)';
+  E.VERSION = '0.13.0 (chapter 13 and the take-aways kit v0.4, 2026-11-10)';
   E.STORAGE_KEY = 'potomac-crossing.v1';   // the key stays: renaming it would strand every save
   E.SAVE_VERSION = 2;
   E.MAX_CATS = 4;
@@ -5443,7 +5443,8 @@
   };
   /* The grown-ups' table by kind: [{ kind, problems, firstAsks (her own: ownAsk, E.hardTakes' rule), rightFirst,
    * helped, ms (the median of her right answers she spread herself, as the Counts' table takes right answers
-   * only), slip (her commonest, or null) }] in E.TAKE_KINDS' order; `teen`: the facts her `fact` slips missed at a
+   * only), slip (her commonest, or null) }] in E.TAKE_KINDS' order (a row with moves, the kit v0.4, also `moves`,
+   * `movesRight`, `ahead` and `aheadFlip`); `teen`: the facts her `fact` slips missed at a
    * top of ten or more, [{ top, bottom, n, text: '13 − 8 ×2' }], the most first; `capped` (the log is at
    * E.TAKE_LOG_CAP, so the table is her last `cap`, not her whole record) and `cap`. */
   E.takeTable = function (cat) {
@@ -5457,10 +5458,13 @@
       if (e.helped) r.helped++;
       if (e.regroup === 'hers' && e.correct && okNum(e.ms)) r.times.push(e.ms);
       // the kit v0.4 (decision 57): a row with moves counts her own first asks' new numbers and those right first time
-      // ("Marks right"), and the columns she answered before their moves ("In her head first")
+      // ("Marks right"), and the columns she answered before their moves ("Answered before her marks"), with those where
+      // bottom − top as it stands is her digit too (`aheadFlip`: the smaller from the bigger gives the same digit, so the
+      // corner never counts them as worked in her head; the kit's section 1a.1)
       if (Array.isArray(e.moves)) {
         r.withMoves = true;
         r.ahead = num(r.ahead, 0) + asList(e.ahead).length;
+        r.aheadFlip = num(r.aheadFlip, 0) + asList(e.ahead).filter(function (col) { var c = p.cols[col]; return !!c && (c.bottom || 0) - c.before === c.digit; }).length;
         if (ownAsk(e)) {
           var nums = e.moves.filter(function (x) { return Array.isArray(x) && (x[1] === 'l' || x[1] === 'g'); }).length;
           var bad = asList(e.slips).filter(function (s) { return isObj(s) && (s.move === 'lend' || s.move === 'get' || (s.move === 'touch' && s.slip === 'extra')); }).length;
@@ -5484,7 +5488,7 @@
       E.TAKE_SLIPS.forEach(function (s) { if (r.slips[s] && (best == null || r.slips[s] > r.slips[best])) best = s; });
       var row = { kind: k, problems: r.problems, firstAsks: r.firstAsks, rightFirst: r.rightFirst, helped: r.helped,
         ms: r.times.length ? Math.round(median(r.times)) : null, slip: best };
-      if (r.withMoves) { row.moves = num(r.moves, 0); row.movesRight = num(r.movesRight, 0); row.ahead = num(r.ahead, 0); }
+      if (r.withMoves) { row.moves = num(r.moves, 0); row.movesRight = num(r.movesRight, 0); row.ahead = num(r.ahead, 0); row.aheadFlip = num(r.aheadFlip, 0); }
       return row;
     });
     var tl = order.map(function (k, i) { var t = teen[k]; return { top: t.top, bottom: t.bottom, n: t.n, i: i }; })

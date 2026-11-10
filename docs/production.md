@@ -228,7 +228,8 @@ to ask.
 2. `CACHE` in `sw.js` past the live value; every script in `index.html` in `ASSETS`. The live value is the last entry of
    `tests/fixtures/sw-shipped.json` (not a worktree's own `HEAD`: two trees built side by side both read the same one);
    `tests/sw.test.js` fails until `CACHE` is past it. At ship, append `{ commit, shipped, what, cache, assets }` to the ledger
-   (the test's diagnostic prints the `assets` digest), in the ship's own commit.
+   (the test's diagnostic prints the `assets` digest), in the ship's own commit, with `E.VERSION` in `app/engine.js` and
+   its pin in `tests/engine.test.js` moved to the ship's version and date (the docs' at-ship text names it).
 3. The orchestrator looks at five or six key panels in Safari (`tools/shots.mjs`).
 4. README: status line, docs list, calls made under decision 46. `docs/continuity.md` updated.
 5. `git add -A` (new files are untracked until then), commit, push with the deploy key.

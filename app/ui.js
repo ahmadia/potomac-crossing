@@ -1420,7 +1420,12 @@
   // (what the columns count: E.takeTable's own-ask rule and its typical time, docs/take-aways.md section 4)
   var TAKE_CORNER_NOTE = '<p class="muted">“Right first time” is her own first try at a problem with every column right; worked problems, ones where she was told to regroup, and second goes are left out. “Problems” and “Helped” count them all (“helped”: a column slipped and Tallyheart helped). Typical time is of her right answers to problems she worked herself (not worked examples or ones she was told to regroup).</p>';
   // the kit v0.4 (decision 57): a row with moves names the move slips, and `kept` as a move ("did not take one off")
-  var TAKE_SLIP_MOVES = { lend: 'new number for the one that gave', get: 'new number for her column', kept: 'did not take one off' };
+  var TAKE_SLIP_MOVES = { lend: 'wrong new number for the one that gave', get: 'wrong new number for her column', kept: 'did not take one off' };
+  // the columns she answered before her marks (E.takeTable's `ahead`), and how many of them a flip gives too (`aheadFlip`)
+  function takeAheadNote(heads, flips) {
+    return 'Answered before her marks: ' + heads + (flips ? ' (' + flips + ' where the smaller from the bigger gives the same digit)' : '') +
+      '. Her digit was right; they are never counted right in “Right first time”, nor in its typical time.';
+  }
   var TAKE_CORNER_MARKS = '<p class="muted">Her marks are the new numbers she writes when she spreads: the one that gave, then her column. “Marks right” is how many of them, in her own first tries, were right first time.</p>';
   var TAKE_STYLE_WORDS = { one: 'Her marks: a little 1 in front (¹3), her choice. She can change it in the Training Hollow (My marks).',
     above: 'Her marks: the new number on top (13 over a crossed-out 3), her choice. She can change it in the Training Hollow (My marks).',
@@ -1431,8 +1436,12 @@
     var n = function (v) { return typeof v === 'number' && v >= 0 ? Math.floor(v) : 0; };
     var line = 'Count the store ' + n(takes.rounds) + ' (' + n(takes.cleanRounds) + ' without help)';
     var T0 = table || { rows: [], teen: [] };
-    // (the kit v0.4: "Marks right" and "In her head first" only once a row has moves; a chapter-12-only cat's table as it was)
-    var mv = T0.rows.some(function (r) { return r.moves != null; }), heads = T0.rows.reduce(function (a, r) { return a + n(r.ahead); }, 0);
+    // (the kit v0.4: "Marks right" and "Answered before her marks" only once a row has moves; a chapter-12-only cat's table
+    // as it was. The final review: an answer before her marks is left out of "Right first time" and its typical time, so
+    // the line says so; and where the smaller from the bigger gives the same digit (`aheadFlip`) it says that too, as no
+    // proof of working it in her head)
+    var mv = T0.rows.some(function (r) { return r.moves != null; }), heads = T0.rows.reduce(function (a, r) { return a + n(r.ahead); }, 0),
+      flips = T0.rows.reduce(function (a, r) { return a + n(r.aheadFlip); }, 0);
     var html = '<h4>Take-aways' + (T0.capped ? ' <span class="muted">(her last ' + T0.cap + ')</span>' : '') + '</h4>' + (T0.rows.length ? TAKE_CORNER_NOTE + (mv ? TAKE_CORNER_MARKS : '') +
       '<div class="scroll"><table><thead><tr><th>Kind</th><th>Problems</th><th>Right first time</th>' + (mv ? '<th>Marks right</th>' : '') + '<th>Helped</th><th>Typical time</th><th>Commonest slip</th></tr></thead><tbody>' +
       T0.rows.map(function (r) {
@@ -1442,7 +1451,7 @@
           tEsc(secs(r.ms)) + '</td><td>' + tEsc(sw) + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
       (T0.teen.length ? '<p class="muted">Teen facts missed: ' + tEsc(T0.teen.map(function (t) { return t.text.replace(/ /g, '\u00a0'); }).join(', ')) + '</p>' : '') +
-      (mv && heads ? '<p class="muted">In her head first: ' + heads + '</p>' : '') : '<p class="muted">No take-aways yet.</p>');
+      (mv && heads ? '<p class="muted">' + takeAheadNote(heads, flips) + '</p>' : '') : '<p class="muted">No take-aways yet.</p>');
     // her marks, once she has learned to spread a row (`steps`: E.takeSteps) or has chosen them
     var style = takes.style === 'one' || takes.style === 'above' ? takes.style : null;
     if (style || (steps || []).indexOf('ones2') >= 0) html += '<p class="muted">' + tEsc(TAKE_STYLE_WORDS[style || 'none']) + '</p>';
@@ -4646,15 +4655,18 @@
      * first balloon under the bar (a worked example's joined prompt and Tallyheart's step, the pile's twelve words, with Aa
      * on at 1080 x 720), the stack stands over the panel instead (`tover`: the marks page's own arrangement there, the column
      * and the keypad alone on the left, the panel taking the height that is left), the heads row and the keys as they were;
-     * kept for the rest of the page at that size, so the page never swaps back and forth between problems. Under the gate
-     * only: chapter 12's pages never take it. */
+     * kept for the rest of the page at that width (and Aa), whatever Safari's toolbar does to the height, so the page never
+     * swaps back and forth between problems or within one (the final review: keyed by the height too, a toolbar that hid or
+     * came back mid-problem chose again and jumped the keypad about 243 px; standing over the panel fits any taller
+     * window, so at most one change is left, to `tover` when the window shrinks). Under the gate only: chapter 12's pages
+     * never take it. */
     var overAt = '';
     function fit() {
       var had = frameEl.classList.contains('tover');
       frameEl.classList.remove('tnohead', 'tkeys', 'tover');
       panel.style.height = '';
       var vh = root.innerHeight || 0, mm = root.matchMedia;
-      var key = (root.innerWidth || 0) + 'x' + vh + (doc.documentElement.classList.contains('big') ? 'A' : '');
+      var key = (root.innerWidth || 0) + (doc.documentElement.classList.contains('big') ? 'A' : '');
       var side = mv && !!mm && mm('(orientation: landscape) and (min-height: 501px)').matches;
       if (side && overAt === key) frameEl.classList.add('tover');
       // (the stack's held height is measured where it stands: again whenever it has moved between the two places)
@@ -5051,10 +5063,12 @@
       frameEl.classList.add('tmkpage');
       var tall = function () { return Math.ceil(stack.getBoundingClientRect().height - 0.01); }, hmax = 0, last = P.lines.slice(0, Math.max(0, P.lines.length - 1));
       [P.lines, last.concat(P.after.one), last.concat(P.after.above)].forEach(function (L) { say(L); hmax = Math.max(hmax, tall()); });
-      stack.innerHTML = '';
       if (hmax) stack.style.minHeight = hmax + 'px';
       // (a phone held upright: the pictures stacked under four balloons run under the screen; the panel shorter first, never
-      // under half its height, as the take page's own fallback; the pictures brought into view once they are live)
+      // under half its height, as the take page's own fallback; the pictures brought into view once they are live. Measured
+      // with the stack still lettered at its held height, emptied only after: an empty stack is not drawn (index.html's
+      // `.stack:empty`), so the final review found the overflow measured 300 px short at 390 x 844, the panel never
+      // shortened and the page scrolled 95 px instead, the store picture's top under the bar)
       var vh0 = root.innerHeight || 0;
       if (vh0 && root.matchMedia && root.matchMedia('(orientation: portrait)').matches) {
         var over0 = host.getBoundingClientRect().bottom + (root.scrollY || root.pageYOffset || 0) - vh0;
@@ -5064,6 +5078,7 @@
         // was half under the fold while Tallyheart's third line lit it, chapter 13's review at 390 x 844)
         bringIn(host); later(function () { if (frameEl.isConnected && phase === 'marks') bringIn(host); }, 0);
       }
+      stack.innerHTML = '';
       var flow = takeMarksFlow({ page: P }, {
         show: function (list, g) { say(list); saying(heard(list).concat(labels)); mp.glow(g); },
         live: function () { mp.live(true); bringIn(host); },

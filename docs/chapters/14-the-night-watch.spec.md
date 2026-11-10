@@ -1,5 +1,10 @@
 # Chapter 14 spec: The Night Watch
 
+*v0.3.1 · 2026-11-10 (chapter 13's final review, notes for this chapter's builders: section 6's shelf keeps the kit v0.4's
+row end as built, My marks then My nest, `currentSpeech` ending "My marks.", and its tests a shelf with My marks; the takes-ui
+pins' lines as they stand after chapter 13; the asks dropped by the set's `teach`; `tover` measured before the worked
+example's balloon-A fallback; the spread 352's sizes as built and chapter 13's `'two'` staggered)*
+
 *v0.3 · 2026-11-09 (decision 57: the kit v0.4's moves; the take lines redone on its design,
 `~/potomac-crossing-work/regroup/design.md`; item 15 with v0.4's figures)*
 
@@ -170,7 +175,10 @@ var LAST = 'There. Now you’ve seen it counted.';   // chapter 10's
 - **The worked example, 352 − 127** (`'show'`, run): the prompt's two balloons, the column's line joining the second (both Tallyheart's): "Pretend the
   store holds three hundred fifty-two." / "The Clan eats one hundred twenty-seven. Ones first." (With each show step lettered under them, its first
   column holds three balloons, and `takeReserve` keeps that height for the whole problem: one more than chapter 12's and 13's worked examples.
-  Measured at the page review, section 10, with its fallback named there: balloon A to f012, the take prompt B alone, the words unchanged.) Then
+  Measured at the page review, section 10, with its fallback named there: balloon A to f012, the take prompt B alone, the words unchanged.
+  Since chapter 13's review the kit stands the stack over the panel on an iPad held sideways (`tover`, build.md's take-aways kit, v0.4)
+  where bringing the keypad in would hide its first balloon under the bar, kept for the page at that width and Aa: measure 352 − 127
+  with it before taking the balloon-A fallback, which may not be needed there, while a phone's sizes still decide it.) Then
   Tallyheart works the spread and she types its numbers, in her marks (decision 57): "Two take away seven? Only two loose. Not enough." / "So I
   spread a row. Five rows, one goes: four." (a paw-tap on the 5; she types 4) / "Ten more loose: twelve. Write it on top." (the ten opens; she types
   12; in `'one'`, "Ten more loose: write a little 1 in front.", 1) / "Twelve take away seven." She types 5. "Now the tens. Four take away two." She
@@ -180,8 +188,8 @@ var LAST = 'There. Now you’ve seen it counted.';   // chapter 10's
   `'tap'` (the kit's rule), with no asks (the row's link is chapter 13's), introduced "One like it.", **no prompt and no right line**.
 - **640 − 218** (`'tap'`): "Your turn. Ones first. Zero take away eight." (the prompt joined), "No loose. Spread a row: tap it." (the kit
   v0.4's `tap.onesZero`: item 10 closed; the 4 and the rows zone glow, the keypad dim; a tap off them: "The rows: the glowing ones."); she taps:
-  the row slides out and the box over the struck 4 is ringed, **with no ask** (the kit drops `askLend` and `askGet` for a link she has made on
-  her own, and the row's is chapter 13's); she types 3; the ten opens and the box over the struck 0 (or in front of it) is ringed: 10 (or 1);
+  the row slides out and the box over the struck 4 is ringed, **with no ask** (the kit drops `askLend` and `askGet` for a link of a kind an
+  earlier chapter taught, by the set's `teach`: here `ones`, so a row's link, `ones2`, chapter 13's, is unasked); she types 3; the ten opens and the box over the struck 0 (or in front of it) is ringed: 10 (or 1);
   then "Ten take away eight.", "Now the tens. Three take away one.", "Now the hundreds. Six take away two." A wrong number at a box gets its
   move-help (a `lend` or `get` slip brings no twin unless it repeats). Its twin, if helped, `'hers'`, asked with "One like it." only.
 - **462 − 135, 768 − 315** (`'hers'`, the set's first two of her own, so full lines by rule (b)): with moves (462 − 135: she taps the 6,
@@ -454,12 +462,14 @@ Module 1 never drew the bridge by night; module-2 plans night on `store` for cha
     { dots: 10 }, ground: 'sand' })` (f011).
   - `'two'`: **Tallyheart's spread three hundred fifty-two and yours beside it** (yours nearer our cat), the same marks
     twice, **one above the other**, in **a box of its own** (f012, f013: "your own three squares, five lines and two dots
-    beside hers"). Chispapaw scratches none. **The sizes** (measured with `PC.art.quickMarks.size` on main): a spread 43 is
-    250 × 84, a standing 352 418 × 56, a spread 352 502 × 84 before chapter 13's frame of ten is added; so two spread 352s side
-    by side in chapter 13's `spreadMarks` box come out at about half chapter 13's scale (about 0.18 against 0.35: dot cells
-    about 2.5 px at 390 × 844). Hence the box: about 155 × 70 on `lesson`, the two sets stacked, each at a scale of 0.3 or more
-    (502 × 0.3 ≈ 151 wide, about 25 to 30 tall with the frame), moved wider or higher to stay clear of the cats; the sets owner
-    reports the scale reached for each state.
+    beside hers"). Chispapaw scratches none. **The sizes** (as built, `PC.art.quickMarks.size` after chapter 13, frame of ten and
+    struck line counted, at scale 1): a spread 43 is 264.3 × 115.4, a standing 352 417.8 × 56, a spread 352 516.3 × 115.4.
+    Chapter 13's `'two'` is **staggered**, not side by side (scenes.js `spreadLayout`: hers at the box's top right, ours at
+    its bottom left, a step apart in depth, at k 0.48 against the single set's 0.67 in `HOLLOW_SPREAD`, 194 × 128 less its
+    8 and 4 padding and a 10 gap), so "one above the other" follows it. Hence the box: two spread 352s stacked at 0.3 each
+    are 154.9 × 34.6 apiece, about 80 tall with the gap, so with chapter 13's padding and gap the box is about **172 × 88** on
+    `lesson` (a box of 155 × 70 holds them only at about 0.23), moved wider or higher to stay clear of the cats; the sets
+    owner reports the scale reached for each state.
   Never with `spreadMarks`, `store` or `quick` on one frame. **Acceptance** (as chapter 13's): the standing and spread 352
   countable at 1080 × 720 and 390 × 844 (the crossed line plainly struck, the frame of ten plainly five and five, the two old
   dots apart from it, the three squares whole); the two spreads countable at 1080 × 720, and at 390 × 844 plainly two spread
@@ -1135,7 +1145,11 @@ hashes are pinned in `tests/takes-ui.test.js`):
 - **`renderShelf`**: with `SH.buttons` holding `tricky`, a third big button `#trickyBtn` between `#storeBtn` and `#countsBtn`, its icon
   the Warrior Counts' tricky paw (`<i class="trickypaw" aria-hidden="true">` + `ICON.paw`), its label `E.TRICKY_LABEL`. Its click: `var r =
   E.trickyStart(cat, stories(), now(), { stories: opts.stories }); E.holdLesson(cat); cat.lesson = { mode: 'hollow', state: r.state };
-  persist(); trickyLesson(r.def, r.state, false, null);`. `currentSpeech` names the three buttons. **The paw's CSS**: index.html's
+  persist(); trickyLesson(r.def, r.state, false, null);`. **The row end stays the kit v0.4's as built** (chapter 13, v26): My marks
+  (`#marksBtn`, when `marksOn`: `ones2` learned or a style set, which every cat who reaches chapter 14 has) then My nest, in one
+  `<div class="row end">` under the three big buttons, its click and `takeMarksIcon` untouched. `currentSpeech` names the three big
+  buttons, then "My marks." when `marksOn` (as built it is the reading, `Count the store.`, `One Count at a time.`, then `My marks.`:
+  Tricky Counts goes between the first two). **The paw's CSS**: index.html's
   `.counts-pick .btn .trickypaw{position:absolute;left:.3em;…}` (and its Aa rules, `html.big .counts-pick .btn .trickypaw` and
   `html.big .frame[data-kind="hollow"] .counts-pick .btn.big:has(.trickypaw){padding-left:1.3em}`) already reach the shelf, which is a
   `.counts-pick.tshelf` in the hollow frame; `.tshelf .btn.big` cuts the left padding to .6em (.3em on a phone held sideways), so the
@@ -1185,7 +1199,8 @@ cat with `tricky` (above; call 30): its answers land in each Count's table as be
 store play and draw byte-identical. **The kit's and chapter 12's pins it may move, each with a chapter-14 comment, and only these**:
 `tests/takes-engine.test.js` test 12's shelf deep-equal and `E.STORE_LINES.greet` pin, **only if** its stories carry a `tricky` key (its
 `ALL` is chapters 1 to 11 and the stub list: they do not, so it stands); `tests/takes-ui.test.js`' `renderHollow` and `renderShelf`
-substrings (lines 684 to 697 on main: kept as they are by writing around them) and its take block's selector list (the `.tshelf` paw
+substrings (lines 699 to 715, and the kit v0.4's My marks pins at 1186 to 1189, on main after chapter 13: kept as they are by
+writing around them) and its take block's selector list (the `.tshelf` paw
 rule above); `tests/book2-ui.test.js`' `#countsBtn` line (line 131: kept). **Files it never edits, writing around their pins**:
 `tests/spanish.test.js` (the cats owner's; its `renderShelf` friend substrings, line 556, kept as they are), `tests/takes-tools.test.js`
 and `tests/render-tools.test.js` (nobody's: the tricky targets go in an object of their own, `TAKE_TARGETS` and the existing dispatch
@@ -1201,7 +1216,8 @@ read back by `E.warriorHard` (a pick right and fast leaves the list); **question
 rounds and two along from the store's (a first store round and a first Tricky round give different treasures), module 1's treasures,
 `hollow`, `byTable` and the store's `takes.rounds` untouched; `E.trickyStart` on a `tricky` with no `rounds` (round 1, never NaN);
 `E.recordLesson` and `E.settleLesson` routed; pick-up and give-way through the slot; the fallback def with no key (its words as above);
-the shelf with and without the key (buttons, greeting, the reward line, a waiting sitting); chapter 20's swap as data (a fixture
+the shelf with and without the key (buttons, greeting, the reward line, a waiting sitting), and a shelf with My marks (Tricky
+Counts between the two big ones, My marks and My nest on the row end, `currentSpeech` ending "My marks."); chapter 20's swap as data (a fixture
 chapter 20 with `who: 'chispapaw'`: its asker, and the echo still Chispapaw's, in Spanish, after an English ask); `normCat` and
 `E.migrate` idempotent with and without `tricky`; the guard's errors (a Counts set named `tricky` among them); the corner's clause with
 and without `tricky`; the page's wiring in Node (the button, `trickyLesson` and its `waitLine`, `trickyReward`'s ids, `renderHollow`'s

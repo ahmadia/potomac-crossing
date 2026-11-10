@@ -1196,7 +1196,7 @@ test('U1. the marks page (takeMarksFlow, takeMarksHtml, marksPage): one line at 
   assert.deepEqual(back, [['hollow', { from: 'hub', vol: undefined, back: true, stories: undefined }]]);
 });
 
-test('the grown-ups corner under the moves: "Marks right" between "Right first time" and "Helped" and a note on what a mark is, once a row has moves; "In her head first: N"; the move slips\' words; her marks\' line once she has learned to spread a row or has chosen', () => {
+test('the grown-ups corner under the moves: "Marks right" between "Right first time" and "Helped" and a note on what a mark is, once a row has moves; "Answered before her marks: N"; the move slips\' words; her marks\' line once she has learned to spread a row or has chosen', () => {
   const cat = E.blankCat({ now: 1 }), def = stub.sets().ch13.def, st = mst(def, [[43, 16], [52, 27], [97, 52]], 'one', stub.sets().ch13.taught), clock = { t: 1e6 };
   // 43 − 16 with a `lend` slip, 52 − 27 answered first (`ahead`), 97 − 52 right
   const add = (rs) => rs.forEach((r) => { if (r && r.entry) E.logTake(cat, r.entry); });
@@ -1208,12 +1208,35 @@ test('the grown-ups corner under the moves: "Marks right" between "Right first t
   assert.ok(K.html.includes('<th>Right first time</th><th>Marks right</th><th>Helped</th>'), K.html);
   assert.ok(K.html.includes('“Marks right” is how many of them'), 'what a mark is');
   assert.match(K.html, /<td>Regroup a ten<\/td><td>2<\/td><td>0&nbsp;of&nbsp;2<\/td><td>3&nbsp;of&nbsp;4<\/td><td>1<\/td>/, 'her own first asks\' numbers right first time');
-  assert.ok(K.html.includes('<td>new number for the one that gave</td>'), K.html);
-  assert.ok(K.html.includes('<p class="muted">In her head first: 1</p>'));
+  assert.ok(K.html.includes('<td>wrong new number for the one that gave</td>'), K.html);
+  // (the final review: 52 − 27's 5 typed first is `ahead` in its flip form, 7 − 2 = 5, so the line says so)
+  assert.ok(K.html.includes('<p class="muted">Answered before her marks: 1 (1 where the smaller from the bigger gives the same digit). Her digit was right; they are never counted right in “Right first time”, nor in its typical time.</p>'), K.html);
   assert.ok(K.html.endsWith('<p class="muted">Her marks: a little 1 in front (¹3), her choice. She can change it in the Training Hollow (My marks).</p>'));
   delete cat.takes.style;
   assert.ok(U.corner(cat.takes, E.takeTable(cat), undefined, ['none', 'ones2']).html.endsWith('<p class="muted">Her marks: not chosen yet (on top until she does).</p>'));
   assert.ok(!U.corner(cat.takes, E.takeTable(cat), undefined, ['none']).html.includes('Her marks:'), 'not before she learns to spread a row');
+});
+
+test('the final review: the corner says an answer typed before her marks is left out of "Right first time" and its typical time, and names the ones where the smaller from the bigger gives the same digit (no proof she worked it in her head); a right-form one alone gets no such clause (a chapter-12-only cat\'s corner, with no moves, stays as it was: L5)', () => {
+  const def = stub.sets().ch13.def, taught = stub.sets().ch13.taught;
+  // 43 − 16's 7 typed first: `ahead` in its right form (6 − 3 is 3, not 7), then its moves and OK; 97 − 52 right
+  const one = E.blankCat({ now: 1 }), st = mst(def, [[43, 16], [97, 52]], 'above', taught), clock = { t: 1e6 };
+  const add = (cat, rs) => rs.forEach((r) => { if (r && r.entry) E.logTake(cat, r.entry); });
+  add(one, walk(st, def, ['7', 't1', '3', '13', '7', '2'], clock));
+  add(one, walk(st, def, ['5', '4'], clock));
+  assert.deepEqual(one.takes.log.map((e) => [e.a, e.correct, e.helped, e.ahead]), [[43, false, false, [0]], [97, true, false, undefined]], 'no slip: left out for the ahead alone');
+  const T1 = E.takeTable(one), row = T1.rows.find((r) => r.kind === 'ones');
+  assert.deepEqual([row.ahead, row.aheadFlip, row.firstAsks, row.rightFirst, row.ms], [1, 0, 1, 0, null], 'counted ahead, not right first time, no typical time');
+  const K1 = U.corner(one.takes, T1, undefined, ['none', 'ones2']);
+  assert.ok(K1.html.includes('<p class="muted">Answered before her marks: 1. Her digit was right; they are never counted right in “Right first time”, nor in its typical time.</p>'), K1.html);
+  assert.ok(!/where the smaller from the bigger/.test(K1.html));
+  // and 52 − 27's 5 typed first (7 − 2 = 5: the flip form) beside it: one of the two named
+  const st2 = mst(def, [[52, 27]], 'above', taught);
+  add(one, walk(st2, def, ['5', 't1', '4', '12', '5', '2'], clock));
+  assert.deepEqual(one.takes.log.slice(-1).map((e) => [e.a, e.correct, e.helped, e.ahead]), [[52, false, false, [0]]]);
+  const K2 = U.corner(one.takes, E.takeTable(one), undefined, ['none', 'ones2']);
+  assert.ok(K2.html.includes('<p class="muted">Answered before her marks: 2 (1 where the smaller from the bigger gives the same digit). Her digit was right;'), K2.html);
+  assert.ok(!/In her head/.test(K2.html + UI_SRC), 'the old words are gone');
 });
 
 test('PC.debug.takes\' new screens (the tools\' take:touch … hollow:marks), on definitions of their own (chapter 13\'s marks lines inline, or PC.story.ch13\'s), every step taught; take:first as it was (no taught); its spread screens v0.4; nothing saved', () => {
@@ -1323,8 +1346,10 @@ test('chapter 13\'s review: on an iPad held sideways the take page with the move
   // in its place the heads row and the keys as they were, the stack measured again where it now stands, the page at its top
   assert.ok(fit.includes("    frameEl.classList.remove('tnohead', 'tkeys');\n    frameEl.classList.add('tover');\n    overAt = key;\n    reserve();"));
   assert.ok(fit.includes("if (had !== frameEl.classList.contains('tover')) reserve();"), 'measured again whenever the stack moves between its two places');
-  // kept for the page at the size (and Aa) it was set at: a later problem, a late font, keep it; a turned screen or Aa looks again
-  assert.ok(fit.includes("var key = (root.innerWidth || 0) + 'x' + vh + (doc.documentElement.classList.contains('big') ? 'A' : '');"));
+  // kept for the page at the width (and Aa) it was set at: a later problem, a late font, Safari's toolbar hiding or coming
+  // back (the height: the final review), keep it; a turned screen or Aa looks again
+  assert.ok(fit.includes("var key = (root.innerWidth || 0) + (doc.documentElement.classList.contains('big') ? 'A' : '');"));
+  assert.ok(!/var key = [^;]*(vh|innerHeight)/.test(fit), 'never keyed by the height');
   assert.ok(fit.includes("if (side && overAt === key) frameEl.classList.add('tover');"));
   assert.ok(page.includes("    var overAt = '';\n    function fit() {"), 'one per take page');
   // the CSS: the marks page's own arrangement there, the column and keypad alone on the left; only on .tmoves
@@ -1344,5 +1369,47 @@ test('chapter 13\'s review: on an iPad held sideways the take page with the move
   const mp = fnSrc(page.replace(/^ {2}/gm, ''), 'marksPhase');
   const bi = mp.indexOf("bringIn(host); later(function () { if (frameEl.isConnected && phase === 'marks') bringIn(host); }, 0);");
   assert.ok(bi > mp.indexOf("panel.style.height = Math.max(Math.round(ph0 / 2)") && bi < mp.indexOf('var flow = takeMarksFlow('), 'now and after go()\'s scroll to the top');
+  // (the final review: the overflow measured with the stack still lettered at its held height, emptied only after, just
+  // before the first line: an empty stack is not drawn, so measured empty the panel was never shortened at 390 x 844)
+  const held = mp.indexOf("if (hmax) stack.style.minHeight = hmax + 'px';"), over0 = mp.indexOf('var over0 = host.getBoundingClientRect().bottom'), empty = mp.lastIndexOf("stack.innerHTML = '';");
+  assert.ok(held > 0 && over0 > held && empty > bi && empty < mp.indexOf('var flow = takeMarksFlow('), [held, over0, empty].join(' '));
+  assert.equal(mp.slice(mp.indexOf('hmax = Math.max(hmax, tall()); });'), over0).indexOf("stack.innerHTML = ''"), -1, 'not emptied between the lettering and the measure');
+  assert.ok(HTML.includes('.frame .stack:empty,'), 'why: an empty stack is not drawn');
+});
+
+test('the final review: `tover`, once taken, is kept when Safari\'s toolbar hides or comes back mid-problem (the window\'s height changes, its width and Aa do not), so the keypad never jumps within a problem; a turned screen or Aa looks again', () => {
+  const page = fnSrc(UI_SRC, 'runTakes'), fit = fnSrc(page.replace(/^ {2}/gm, ''), 'fit');
+  const TAKE_PHONE = /var TAKE_PHONE = ('[^']*');/.exec(UI_SRC)[1];
+  // a stand-in page at 1080 wide: laid out normally the keypad ends at 760 (under a 720 window, inside a 770 one); over the
+  // panel it ends at 514; the stack's first balloon 100 from the top, the bar 58 tall, so the keypad brought in would hide it
+  const cls = (init) => { const S = new Set(init || []); return { add: (...a) => a.forEach((x) => S.add(x)), remove: (...a) => a.forEach((x) => S.delete(x)), contains: (x) => S.has(x), S }; };
+  const frameEl = { classList: cls() }, html = { classList: cls() };
+  const root = { innerWidth: 1080, innerHeight: 720, scrollY: 0, scrollTo() { this.scrollY = 0; },
+    matchMedia: (q) => ({ matches: q === '(orientation: landscape) and (min-height: 501px)' }) };
+  const pad = { getBoundingClientRect: () => ({ bottom: frameEl.classList.contains('tover') ? 514 : 760 }) };
+  const stack = { style: {}, getBoundingClientRect: () => ({ top: 100 }) }, panel = { style: {}, getBoundingClientRect: () => ({ height: 400 }) };
+  let measured = 0;
+  const run = new Function('frameEl', 'panel', 'root', 'doc', 'mv', 'pad', 'stack', '$', 'reserve', 'TAKE_PHONE', "var overAt = '';\n" + fit + '\nreturn fit;')(
+    frameEl, panel, root, { documentElement: html }, true, pad, stack, (id) => (id === 'bar' ? { offsetHeight: 58 } : null), () => { measured++; }, TAKE_PHONE);
+  run();
+  assert.ok(frameEl.classList.contains('tover'), 'at 1080 x 720 the stack stands over the panel');
+  const m0 = measured;
+  // the toolbar hides: the window 50 px taller, where the normal layout would fit; tover stays, nothing measured again
+  root.innerHeight = 770; run();
+  assert.ok(frameEl.classList.contains('tover'), 'kept at 1080 x 770');
+  assert.equal(measured, m0, 'the stack not measured again (it has not moved)');
+  root.innerHeight = 720; run();
+  assert.ok(frameEl.classList.contains('tover'), 'and when the toolbar comes back');
+  // Aa: the page looks again (here the normal layout fits a 770 window, so the stack goes back beside the panel)
+  root.innerHeight = 770; html.classList.add('big'); run();
+  assert.ok(!frameEl.classList.contains('tover'), 'Aa on looks again');
+  // a turned screen (another width) looks again too
+  html.classList.remove('big'); root.innerWidth = 1180; run();
+  assert.ok(!frameEl.classList.contains('tover'), 'another width looks again');
+  // chapter 12's pages (no gate) never take it
+  const f12 = { classList: cls() };
+  new Function('frameEl', 'panel', 'root', 'doc', 'mv', 'pad', 'stack', '$', 'reserve', 'TAKE_PHONE', "var overAt = '';\n" + fit + '\nreturn fit;')(
+    f12, panel, Object.assign({}, root, { innerWidth: 1080, innerHeight: 720 }), { documentElement: html }, false, pad, stack, () => ({ offsetHeight: 58 }), () => {}, TAKE_PHONE)();
+  assert.ok(!f12.classList.contains('tover'), 'not without the gate');
 });
 

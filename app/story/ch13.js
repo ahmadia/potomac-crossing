@@ -1,7 +1,7 @@
 /* Chapter 13: The Hunter's Crouch.
  *
- * The story (docs/chapters/13-the-hunters-crouch.md, Draft v0.6, final) cut into graphic-novel panels, per the frame
- * contract in docs/build.md; its spec (docs/chapters/13-the-hunters-crouch.spec.md, v0.3) is the build's contract for
+ * The story (docs/chapters/13-the-hunters-crouch.md, Draft v0.6.1, final) cut into graphic-novel panels, per the frame
+ * contract in docs/build.md; its spec (docs/chapters/13-the-hunters-crouch.spec.md, v0.3.2) is the build's contract for
  * the flags, the Counts sets, the art, the pages she taps, the Spanish and the book. Day 2 of module 2, the first frost:
  * her first dawn patrol as a warrior, the hunter's crouch taught to her own apprentice, the first spreads in the
  * Training Hollow, a courtesy patrol to GroveClan's big dig, and the marks beside it. Each frame is one moment: a drawn
@@ -520,7 +520,7 @@
       // `collar: false`; our cat's paw the Tap
       scene: S('den', 'inside', DEN_COLLAR, [you('sit', 'kind', 'sleeper-2', 'right', { tap: 'paw' }), chispa0('sit', 'proud', 'nest', 'left')], ['morning']),
       board: 'WIDE, INSIDE THE APPRENTICES’ DEN, MORNING, THE TAP PICTURE. The little cream cat sits in her moss nest with her neck bare for the first time, and beside the nest her narrow red collar with its tiny gold bell lies curled in a little hollow pressed in the moss; our cat sits close by. In play our cat’s paw glows softly; one tap helps tuck it in and the page turns. Caption top left; her balloon careful.',
-      caption: ['Back in camp, she wriggles out of her collar.'],
+      caption: ['In her den, she wriggles out of her collar.'],
       say: [{ who: 'chispapaw', text: 'My Tall Ones gave me this. It can stay safe, by my nest.' }],
       scratch: { tap: 'paw', prompt: '**Tap** to help her tuck it in.', label: 'Help her tuck it in.', next: 'f028' }
     },
@@ -836,8 +836,8 @@
       board: 'MEDIUM, THE BIG DIG, AFTERNOON, THE CHOICE. At the foot of the oak, beside the big dig and under an arm of root, a smaller round doorway lies half buried in fallen leaves, and our cat and the little cream cat sit looking at it; a shy apprentice peeks out of a fern behind them. One caption at the top; the choices sit below the panel.',
       caption: [
         { when: { specialty: 'noticing' }, text: 'You take one last look, and spot it: a smaller doorway, right beside the big dig.' },
-        { when: { specialty: 'friends' }, text: 'The shy GroveClan apprentice peeks out of a fern, and points:' },
-        { when: { specialty: 'friends' }, text: 'a smaller doorway, right beside the dig.' },
+        { when: { specialty: 'friends' }, text: 'The shy GroveClan apprentice peeks out of a fern, and points.' },
+        { when: { specialty: 'friends' }, text: 'A smaller doorway, right beside the dig!' },
         { when: { specialty: 'climbing' }, text: 'From the oak’s low branch, you see it: a smaller doorway, right beside the big dig.' },
         { when: { specialty: 'sneaking' }, text: 'You creep up to the dig without a sound. From a smaller doorway beside it comes a tiny snore.' },
         { when: { specialty: 'swimming' }, text: 'Then you hear it. Something is snoring, in a little doorway under the leaves beside the dig.' }
@@ -1240,7 +1240,7 @@
       // the first of the seven sleepers' pages: without foundGroundhog no sleepers page at all; with it, the groundhog's
       // page (its `sleep` pose) and six plain silhouettes
       sleeper: { id: 'groundhog', name: 'The groundhog', when: { foundGroundhog: true },
-        lines: ['Asleep in a little doorway beside the big dig in GroveClan’s woods. It sleeps ALL frost-time. It’s its JOB.',
+        lines: ['Asleep in a little doorway beside the big dig in GroveClan’s woods. It sleeps ALL frost-time. That’s its JOB.',
           '“Not a badger. GROUNDHOG. Something BIGGER dug past my bedroom. Sniffing. All. Night.”'] }
     },
 

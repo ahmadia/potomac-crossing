@@ -1993,8 +1993,9 @@ goldens, the fingerprints and the Warrior Counts' three files pass untouched; th
 
 **v0.4: the borrow as a step she does** (decision 57; [`take-aways.md`](take-aways.md) Design v0.4, its section 1a the
 moves and the marks, section 8 the names as built; designed and planned in `~/potomac-crossing-work/regroup/`, built on
-chapter 13's branch on `e000777` as `5b974cb` plus the review's round, 2026-11-09; it ships with chapter 13 as v26, so
-`E.VERSION` moves to 0.13.0 with chapter 13 at the ship and `CACHE` stays v26, already bumped by chapter 13's stub).
+chapter 13's branch on `e000777` as `5b974cb` plus the review's round, 2026-11-09; it shipped with chapter 13 as v26 on
+2026-11-10, `E.VERSION = '0.13.0 (chapter 13 and the take-aways kit v0.4, 2026-11-10)'`, `CACHE` v26, already bumped by
+chapter 13's stub).
 Every piece is behind one gate, and a chapter codes nothing for it but a take set's `marks`:
 - **The gate.** `E.takeMovesOn(st)`: a take state whose `taught` is a list holding a step from `ones2` on. Chapter 12's
   lesson (`['none']`), a chapter-12-only player's store rounds, `T.start` with no `taught` (`take:first`,
@@ -2043,7 +2044,9 @@ Every piece is behind one gate, and a chapter codes nothing for it but a take se
   **My marks**, on the Hollow's shelf beside My nest once `ones2` is learned or a style is set (`#marksBtn`, its icon her
   receiver's mark), opens the same page with the kit's lines (`go('hollow', { marks: true })`, `renderMarks`); a change
   reaches the next problem. The grown-ups corner names her marks on one line and, once a row has moves, counts "Marks
-  right" and "In her head first".
+  right" and "Answered before her marks" (left out of "Right first time" and its typical time, and the line says so;
+  those where the smaller from the bigger gives the same digit named apart, `E.takeTable`'s `aheadFlip`: chapter 13's
+  final review).
 - **A chapter's key: `marks`.** A take set may carry `marks: { lines, one, above }`, each a list of balloons `{ who,
   text }`, 12 words or fewer, no `lang` (`E.checkTakes`): the marks page's lines and its two answer lines. Chapter 13's
   `ch13-take` carries Chispapaw's and Tallyheart's four (its spec, section 2); a set without it gets the kit's
@@ -2067,10 +2070,12 @@ Every piece is behind one gate, and a chapter codes nothing for it but a take se
   would squeeze or hide the stack's first balloon under the bar (its 8px margin counted), `fit()` stands the stack over
   the panel (`.tover`, the marks page's own arrangement there: the column and the keypad alone on the left, the heads
   row and the keys as they were, the stack's held height measured again where it now stands), set as a problem begins
-  and kept for the page at that size and Aa; `drawColM` keeps the page's scroll across the column's redraw (WebKit moved
+  and kept for the page at that width and Aa, whatever Safari's toolbar does to the height (the final review: keyed by
+  the height too, a toolbar hiding mid-problem chose again and jumped the keypad); `drawColM` keeps the page's scroll across the column's redraw (WebKit moved
   it 4 to 10px); a column whose flip lands (52 − 27's ones) holds no `flip` line in its reserve (that digit is `ahead`);
   the marks page on a phone held upright brings its pictures in as soon as its panel is shortened, and again once go() has
-  scrolled to the top.
+  scrolled to the top (the final review: its overflow measured with the stack lettered at its held height, so the panel is
+  shortened at 390 x 844 and the page no longer scrolls the store picture under the bar).
 - **The tools.** `PC.debug.takes` gains `touch`, `lend`, `get`, `get:one`, `chain`, `help:move`, `ahead`, `marks` and
   `hollow:marks` (and `q`, `show`, `tap`, `spread`, `echo`, `sand`, `done` now show v0.4; `first`, `shelf`, `store` as
   before), so `tools/shots.mjs`' `TAKE_TARGETS` and `dev/webkit/run.mjs`' `TAKE_SCREENS` gain the same `take:` and
@@ -2334,7 +2339,7 @@ corner's `FLAG_WORDS.teach` (`show`, `try`, `words`: "… (chapter 21 remembers)
 **The art, the sets owner's** (`app/art/scenes.js`, `app/art/sets/grove.js`; the spec's section 4 and the sets owner's
 notes for the final spots and boxes): the camp's `frost` (`true`, `'prints'`: the dawn patrol's three trails) and the
 spots `ferns-1`, `ferns-2`; the hollow's `spreadMarks` (`'standing'`, `'spread'`, `'two'`, drawn by `kit.quick` with the
-two keys above, in a keep box of its own); the den's `collar`; the grove's `dig` on `oak` (and `oak-near` only if needed),
+two keys above, in a keep box of its own); the den's `collar`; the grove's `dig` on `oak` and the spot `oak-near` (the oak's fourth clear spot, placed: Chispapaw's on f053, f056 and f057),
 the `dig` composition with cameras `dig` and `marks`, its spots (`door-1`, `door-2`, `doorway`, `dig-front`, `marks-1`,
 `marks-2`, `dig-elder`, `dig-fern`), covers keyed `doorway` (`cover-leaves`) and `dig-fern` (`cover-fern`), options `marks`
 (`'leaves'`, `'bare'`: one long line and eight little pokes, the kit's quick picture on earth) and `tap` (`'leaves'`,
@@ -2363,4 +2368,9 @@ page draws the groundhog, asleep; the silhouettes stay plain), `tests/engine.tes
 side between its heaps, facing right (950, 650); on `marks: 'bare'` the two brushed-aside drifts are drawn before the
 marks and lie wholly beyond their box (`bareDrifts`), so the long line and all eight pokes read; the groundhog's voice is
 `PITCH` 0.66 and `RATE` 0.78; the kit's page fixes are in "The take-aways kit", its v0.4 paragraph. Chapters 1 to 12 draw
-and play as they did: no live frame changed.
+and play as they did: no live frame changed. After the final review (2026-11-10, the README's entry): f027's caption "In her
+den, she wriggles out of her collar.", f058's friends' line in two sentences, the groundhog's sleeper page "That’s its
+JOB."; the take page's `tover` kept at a width whatever the height, the corner's "Answered before her marks", the marks
+page's measure on a phone held upright (the kit's v0.4 paragraph).
+- `E.VERSION = '0.13.0 (chapter 13 and the take-aways kit v0.4, 2026-11-10)'`, CACHE v26; the save stays version 2 (the
+  kit's `cat.takes.style` optional, the two flags `teach` and `foundGroundhog`).

@@ -1,7 +1,7 @@
 /* Story tests for chapter 13: node --test
  *
  * Checks app/story/ch13.js against the frame contract in docs/build.md, against the story
- * (docs/chapters/13-the-hunters-crouch.md, Draft v0.6, final) and against its spec
+ * (docs/chapters/13-the-hunters-crouch.md, Draft v0.6.1, final) and against its spec
  * (docs/chapters/13-the-hunters-crouch.spec.md, v0.3, the build's contract): module 2's second chapter, opened by
  * chapter 12 finished; the frame graph (f001 to f084 with the polite ask's lettered option frames, which meet again, and
  * the groundhog's optional scene, f059 to f064); one interaction per frame; the five choices (only the crouch's sets a
@@ -141,9 +141,9 @@ function badGrammar(text, isSfx) {
   }
   return bad;
 }
-// f058's friends caption: one sentence of 102 characters split at its colon (the spec's section 5), so its second box
-// opens in lower case, as the sentence goes on
-const COLON_ON = 'a smaller doorway, right beside the dig.';
+// f058's friends caption: two sentences since the final review (the story's v0.6.1), so its second box opens a sentence
+// (it was one of 102 characters split at its colon, its second box opening in lower case)
+const FRIENDS_58 = ['The shy GroveClan apprentice peeks out of a fern, and points.', 'A smaller doorway, right beside the dig!'];
 
 /* Every Counts line of the chapter's own sets: prompts, right lines, echo lines, the marks page, done. */
 function countsLines() {
@@ -513,8 +513,7 @@ test('a child who listens hears every sentence finished: the sound effects are t
   const some = [{ flags: { ch2Stone: 'nose', specialty: 'friends', teach: 'show', foundGroundhog: true } }, { flags: { ch2Stone: 'chin', specialty: 'swimming', teach: 'words' } }, { flags: { teach: 'try' } }, { flags: {} }];
   ids.forEach(id => {
     const f = frame(id);
-    (f.caption || []).map(capText).forEach(t => assert.ok(E.endsSentence(t) || (id === 'f001' && t === 'Chapter 13: The Hunter’s Crouch') ||
-      (id === 'f058' && t === 'The shy GroveClan apprentice peeks out of a fern, and points:'), id + ': “' + t + '” runs on'));
+    (f.caption || []).map(capText).forEach(t => assert.ok(E.endsSentence(t) || (id === 'f001' && t === 'Chapter 13: The Hunter’s Crouch'), id + ': “' + t + '” runs on'));
     some.forEach(c => assert.deepEqual(E.captionsRead(f, c), E.captions(f, c), id + ': heard as it is lettered'));
   });
   function frame(id) { return frames[id]; }
@@ -841,7 +840,9 @@ test('a caption the page can letter on the panel is 95 characters at most (the s
   assert.deepEqual(caps('f054'), ['Earth is thrown back in heaps. Five long scratches run down the dig’s sides.', 'No fur. No feathers. Just dirt.']);
   assert.deepEqual(caps('f069'), ['The sun is low when you get home.', 'You tell Glintstar the elder’s guess: a badger, digging for worms.']);
   assert.deepEqual(caps('f070'), ['The afternoon’s hunters bring more down to the store.', 'By the pile, the old tom tells the grey tom a story.']);
-  assert.deepEqual(frames.f058.caption.filter(c => c.when.specialty === 'friends').map(capText), ['The shy GroveClan apprentice peeks out of a fern, and points:', COLON_ON]);
+  assert.deepEqual(frames.f058.caption.filter(c => c.when.specialty === 'friends').map(capText), FRIENDS_58);
+  // f027 is drawn in the apprentices' den, after nine pictures of the crouch in camp (the final review)
+  assert.deepEqual(caps('f027'), ['In her den, she wriggles out of her collar.']);
   assert.deepEqual(caps('f084'), ['{name}{ending} sleeps.', 'Across the camp, Chispapaw’s tail twitches in her sleep. Straight up.', 'End of Chapter Thirteen.']);
 });
 
@@ -880,7 +881,7 @@ test('rendered for a she-cat, a tom and a Murmur, every sentence reads right; a 
     everyText((id, x) => {
       const out = fill(x.text, p, x.extra);
       if (print) { if (id !== last) console.log('\n' + id); last = id; console.log('  ' + x.where + (x.when ? ' ' + JSON.stringify(x.when) : '') + ': ' + out); }
-      const bad = badGrammar(out, x.sfx).filter(e => !(e === 'starts lowercase' && x.text === COLON_ON));
+      const bad = badGrammar(out, x.sfx);
       if (bad.length) problems.push(kind + ' ' + id + ' ' + x.where + ': ' + bad.join(', ') + ' | ' + out);
     });
   });
@@ -1320,7 +1321,7 @@ test('the chapter’s beats are all there, in order, on every path: every reader
     /^Behind you, three cats’ pawprints/, /^Down at the Crossing, Riffle is juggling\./, /^One bonks his nose\./, /CATCH!/, /^You’re a NATURAL!/, /^The ferry otters crowd in\./, /^And it dug a big HOLE/,
     /^Say HI to the badger for me!/, /^On the way home, the patrol hunts\./, /^At the edge of camp, something small is bouncing\./, /^Chispapaw bounces so high/, /^Tallyheart taught you on your first evening\./,
     /Like THIS\?|I’m DOING it!|Then I’d better get it right\./, /^But her tail sticks straight UP/, /^A frosty leaf skitters past\./, /^Too late! Chispapaw POUNCES\./, /^She lets it go, very politely\./,
-    /^Then, deep in the ferns/, /^The ferns twitch\./, /^Chispapaw sits up very straight\./, /^Back in camp, she wriggles out of her collar\./, /^Late in the morning/, /^First, three Counts/,
+    /^Then, deep in the ferns/, /^The ferns twitch\./, /^Chispapaw sits up very straight\./, /^In her den, she wriggles out of her collar\./, /^Late in the morning/, /^First, three Counts/,
     /^Now, take-\u2060aways\./, /^Yesterday, every column had enough loose\./, /^She scratches forty-three in the sand/, /^\{Es:noAlcanza\} My little Tall One says that every night\./, /^Then we spread a row\./,
     /^She crosses out one line/, /^Chispapaw stares\./, /^Not enough\? Spread a row\./, /^At noon, the whole Clan crowds round the pile\./, /^With the dawn patrol’s four/, /^¡\{Es:25\}!$/,
     /^The old tom licks his lips\./, /^Glintstar has heard Tallyheart’s news\./, /A courtesy patrol, to GroveClan\./, /^Glintstar’s whiskers twitch\./, /^Chispapaw bounces\. Silently, for once\./,
@@ -1341,11 +1342,11 @@ test('the chapter’s beats are all there, in order, on every path: every reader
     });
     // her `specialty`: the swimmer's steam at the Crossing; one doorway line each at the dig
     assert.equal(/Steam curls off the river\./.test(joined), c.flags.specialty === 'swimming', name);
-    const spec = { noticing: /You take one last look, and spot it/, friends: /The shy GroveClan apprentice peeks out of a fern, and points: ¶|points: a smaller doorway/, climbing: /From the oak’s low branch/,
+    const spec = { noticing: /You take one last look, and spot it/, friends: /The shy GroveClan apprentice peeks out of a fern, and points\. ¶|points\. A smaller doorway/, climbing: /From the oak’s low branch/,
       sneaking: /You creep up to the dig without a sound\./, swimming: /Then you hear it\. Something is snoring/ };
     Object.keys(spec).forEach(s => assert.equal(spec[s].test(joined), c.flags.specialty === s, name + ': ' + s));
     const r58 = rows.find(r => r.id === 'f058');
-    assert.equal(r58.caps.length, c.flags.specialty === 'friends' ? 2 : c.flags.specialty ? 1 : 0, name + ': at most one specialty line (the friends’ split at its colon)');
+    assert.equal(r58.caps.length, c.flags.specialty === 'friends' ? 2 : c.flags.specialty ? 1 : 0, name + ': at most one specialty line (the friends’ in two sentences)');
     assert.equal(rows.find(r => r.id === 'f010').caps.length, c.flags.specialty === 'swimming' ? 1 : 0, name);
     assert.equal(/Riffle’s stone is by your nose\./.test(joined), c.flags.ch2Stone === 'nose', name);
     assert.equal(/Riffle’s stone is under your chin\./.test(joined), c.flags.ch2Stone === 'chin', name);
@@ -1825,7 +1826,7 @@ test('book: book two’s title, the chapter title, seven entries on every readin
     { row: 'marks', say: { text: 'Those scratches are claw marks.', who: 'the old tom' } }
   ]);
   assert.deepEqual(b.sleeper, { id: 'groundhog', name: 'The groundhog', when: { foundGroundhog: true },
-    lines: ['Asleep in a little doorway beside the big dig in GroveClan’s woods. It sleeps ALL frost-time. It’s its JOB.', '“Not a badger. GROUNDHOG. Something BIGGER dug past my bedroom. Sniffing. All. Night.”'] });
+    lines: ['Asleep in a little doorway beside the big dig in GroveClan’s woods. It sleeps ALL frost-time. That’s its JOB.', '“Not a badger. GROUNDHOG. Something BIGGER dug past my bedroom. Sniffing. All. Night.”'] });
   // its page in book two, as the kit builds it
   const tom = before13({}, { name: 'Storm', ending: 'leap', sex: 'tom' });
   tom.finished.ch13 = 13;

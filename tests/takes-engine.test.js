@@ -2087,6 +2087,13 @@ test('E11. the log: `style`, `moves` (four elements each), `ahead`, `nudges` onl
     moves: [[0, 't', 1, 1], [0, 'l', 4, 1], [0, 'g', 13, 1]], ahead: [0], slips: [{ col: 0, move: 'lend', given: 4, slip: 'kept' }, { col: 0, move: 'decide', given: 8, slip: 'fact' }] });
   const t2 = E.takeTable(c2);
   assert.deepEqual([t2.rows[0].moves, t2.rows[0].movesRight, t2.rows[0].ahead], [2, 1, 1], 'Marks right: one of her two numbers');
+  // the final review: `aheadFlip` counts the ahead columns where bottom − top is her digit too (52 − 27's ones: 7 − 2 = 5),
+  // never 43 − 16's (6 − 3 is 3, not 7)
+  assert.equal(t2.rows[0].aheadFlip, 0, '43 − 16 answered first: the right form');
+  E.logTake(c2, { set: 'x', a: 52, b: 27, answer: 25, given: '25', correct: false, helped: false, style: 'above', ms: 1, cols: [], at: 1, kind: 'ones', digits: 2, regroup: 'hers',
+    moves: [[0, 't', 1, 1], [0, 'l', 4, 1], [0, 'g', 12, 1]], ahead: [0], slips: [] });
+  assert.deepEqual([E.takeTable(c2).rows[0].ahead, E.takeTable(c2).rows[0].aheadFlip], [2, 1], 'the flip form counted apart');
+  assert.ok(!('aheadFlip' in E.takeTable(cat).rows[0]), 'a row with no moves has none');
   assert.deepEqual(t2.teen, [], 'a `fact` at a decide is not a teen fact missed (only at the answer)');
 });
 

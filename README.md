@@ -10,7 +10,7 @@ play around them), James Ponti (the mystery), otters (Lissa's favorite animal), 
 
 **Play:** https://ahmadia.github.io/potomac-crossing/ (on an iPad: Safari, Share, Add to Home Screen)
 
-**Status (2026-11-08):** chapters 1 to 12, the whole of module 1 and its Warrior Ceremony and module 2's first chapter, are built as a static web app (`index.html`, `app/`; the
+**Status (2026-11-10):** chapters 1 to 13, the whole of module 1 and its Warrior Ceremony and module 2's first two chapters, are built as a static web app (`index.html`, `app/`; the
 stack is in [`docs/build.md`](docs/build.md)), storyboarded frame by frame in
 [`docs/storyboard/`](docs/storyboard/), and deployed on GitHub Pages from `main`. It is developed
 on the Mac mini, in `~/potomac-crossing` (since 2026-10-04). Chapter 6, *The Snake in the Stones*,
@@ -20,8 +20,9 @@ chapter 10, *The Gathering*, the finale, 2026-10-31, with the Warrior Counts (de
 which open once chapter 10 is finished; chapter 11, *The Warrior Ceremony*, 2026-11-01, which opens once
 she passes them and gives her warrior name (decision 52), the end of module 1. Module 2, *The Badger Under the Bridge*
 (`docs/module-2.md`, decisions 53 to 56), began with the take-aways kit and book two (2026-11-07) and chapter 12, *A
-Spark at the Hedge*, 2026-11-08: her first day as a warrior, Chispapaw, the store, and Spanish. Chapter 13, *The
-Hunter's Crouch*, is next.
+Spark at the Hedge*, 2026-11-08: her first day as a warrior, Chispapaw, the store, and Spanish; and chapter 13, *The
+Hunter's Crouch*, 2026-11-10, with the take-aways kit v0.4 (decision 57: the borrow as moves she makes, in her own marks).
+Chapter 14, *The Night Watch*, is next.
 
 ## Docs
 
@@ -34,7 +35,7 @@ Hunter's Crouch*, is next.
   drafted as the actual game text.
 - [`docs/chapters/`](docs/chapters/): every later chapter's game text (02 After the Storm, 03 Under
   the Old Bridge, 04 The Glittering Scale, 05 Riffle's River, 06 The Snake in the Stones, 07 The Counts Don’t
-  Lie, 08 The Night Trail, 09 Featherlight, 10 The Gathering, 11 The Warrior Ceremony, 12 A Spark at the Hedge), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
+  Lie, 08 The Night Trail, 09 Featherlight, 10 The Gathering, 11 The Warrior Ceremony, 12 A Spark at the Hedge, 13 The Hunter’s Crouch), chapters 2 to 5 each with its notes, its Case File cards and the questions it raised. From chapter 6 a chapter has three files: its **brief** (the
   steering calls, the budget and the names, written before drafting), its **story** (what she
   reads), and its **spec** (flags, Counts sets, cards, art needs and build notes, written once the
   story is final).
@@ -1434,7 +1435,8 @@ Each is Aron's to reverse.
     every take page's, the kit's live pages among them: the kit owner's call), and a dream typed and not yet put in her
     book lost when the dream page reloads (every chapter's since chapter 1: a change to eleven live chapters, not chapter
     12's). `E.VERSION` 0.12.0 and the ledger's v25 entry are the ship commit's. The suite: 48 files, 2,003 tests, all pass.
-- **The take-aways kit v0.4: the borrow as a step she does** (2026-11-09, decision 57; ships with chapter 13 as v26):
+- **The take-aways kit v0.4: the borrow as a step she does** (2026-11-09, decision 57; shipped with chapter 13 as v26 on
+  2026-11-10, `E.VERSION` 0.13.0):
   decision 57 built as a piece of its own before chapter 13's frames, as the kit was before chapter 12. Designed
   (`~/potomac-crossing-work/regroup/design.md`, after four critics, a teacher, an engineer, a child and a budget, every
   high and medium taken, then an editor's round; the moves of all 498,465 problems run in both styles), planned
@@ -1496,7 +1498,8 @@ Each is Aron's to reverse.
   18. *A keying slip (a wrong new number: `lend`, `get`) is helped but brings no twin unless it repeats*: a typo is not a
       misconception, and a twin is the biggest cost against decision 56.
   19. *A 'tap' problem drops its two asks for a link she has made on her own*: the tap prompt, the glow and the boxes
-      stay, so decision 57's mechanics stay, and about 5 s a link goes.
+      stay, so decision 57's mechanics stay, and about 5 s a link goes. (As built, "her own" is read by the set's `teach`:
+      the asks are said only for a link of a kind no earlier chapter taught, never from her log.)
   The orchestrator's three calls, on the design's questions (`docs/take-aways.md` section 11, calls 57 to 59):
   20. *The kit ships with chapter 13, as v26*, not apart as v27: her first spread is made the decision-57 way, and the
       marks page meets her at chapter 13's worked example with Chispapaw's lines (apart, it would first come at a store
@@ -1564,9 +1567,13 @@ Each is Aron's to reverse.
   proved only by the page not preventing it (no synthetic key activates a button); the rates in call 21 are estimates
   until her log has times. Chapter 13's `ch13-take`, with its `marks`, is coded by chapter 13's frames builder next,
   from its spec (v0.3); until then the moves are reached only through `PC.debug.takes` and the stub, and live stays v25.
-  `E.VERSION` 0.13.0 and the ledger's v26 entry are the ship's. The suite: 48 files, 2,082 tests, all pass.
-- **Chapter 13 as built** (2026-11-10, ships with the take-aways kit v0.4 as CACHE v26, `E.VERSION` 0.13.0 at the ship;
-  `app/story/ch13.js`'s header has each call, the spec's v0.3.1 note and sections 5 and 9; the builders' notes in
+  It shipped with chapter 13 as v26 (2026-11-10, `E.VERSION = '0.13.0 (chapter 13 and the take-aways kit v0.4,
+  2026-11-10)'`, the ledger's v26 entry); chapter 13's final review changed three of its pieces (its entry below: `tover`
+  kept at a width, the corner's "Answered before her marks" and the move slips' words, the marks page's measure on a phone
+  held upright). The suite at this entry: 48 files, 2,082 tests, all pass.
+- **Chapter 13 as built** (2026-11-10, shipped with the take-aways kit v0.4 as CACHE v26, `E.VERSION = '0.13.0 (chapter
+  13 and the take-aways kit v0.4, 2026-11-10)'`; `app/story/ch13.js`'s header has each call, the spec's v0.3.1 and v0.3.2
+  notes and sections 5 and 9; the builders' notes in
   `~/potomac-crossing-work/ch13/` `build-cats/`, `build-sets/` and `story-builder/`). *The Hunter's Crouch*, module 2's
   day 2, the first frost: 85 frames, 78 a reading and 84 with the groundhog (the cap is 125); thirteen Taps (fifteen with
   the groundhog), five choices (`teach` the only one that sets a flag), five Counts and six take-aways (the first spreads,
@@ -1735,6 +1742,41 @@ Each is Aron's to reverse.
   moved against live the same 88 as the review's tree (the hub, the book and the corner with chapter 13 in them, and the
   kit's stub take screens of v0.4), no problem new; the take screens at the review's four more sizes clean but for chapter
   12's `es:take` and `es:skip` (in live too), and `--takes --compare` 88 of 88 byte for byte. The suite: 49 files, 2,131 tests, all pass.
+  - *The final review's round* (2026-11-10; `~/potomac-crossing-work/ch13/final.json`, five confirmed findings and 21
+    lows; the spec's v0.3.2 note, chapter 14's spec v0.3.1; notes in `ch13/integrate-r2/`). (1) **The sideways take page
+    keeps `tover` at a width**: its memory of standing the stack over the panel was keyed by the window's height too, so
+    Safari's toolbar hiding or coming back mid-problem (about 50 px) chose again and jumped the keypad about 243 px, and
+    back on the normal layout the swipe's scroll could leave the first balloon 11 px under the bar; it is keyed by the width
+    and Aa now (standing over the panel fits any taller window, so at most one change is left, to it as the window
+    shrinks), tested on a stand-in page. (2) **The corner says what an early answer leaves out**: "In her head first: 3"
+    is now "Answered before her marks: 3. Her digit was right; they are never counted right in “Right first time”,
+    nor in its typical time." (an `ahead` problem is never `correct`, so a cat who typed every answer before her marks read as failing the
+    step); and (3) the flip form is named apart, "(1 where the smaller from the bigger gives the same digit)", from
+    `E.takeTable`'s new `aheadFlip` (bottom − top is her digit there too, so it is no proof she worked it in her head:
+    the kit's section 1a.1). Both only on a row with moves: a chapter-12-only cat's corner is byte for byte. (4)
+    Continuity's cast rows for Tallyheart, Glintstar, Riffle, {Murmur}chime, the old tom and the grey tom carry chapter 13's
+    lines. (5) Chapter 14's spec keeps the kit v0.4's row end on the shelf as built (My marks then My nest; `currentSpeech`
+    ending "My marks."), a shelf with My marks among its tests, and its takes-ui line references as they stand. Lows taken:
+    f027's caption "In her den, she wriggles out of her collar." (its picture is the den, after nine of the crouch drawn in
+    camp) and f058's friends' line in two sentences ("…and points." / "A smaller doorway, right beside the dig!", so the
+    second box opens a sentence), the story's v0.6.1; the groundhog's sleeper page "That’s its JOB."; the move slips' words
+    "wrong new number for the one that gave" and "wrong new number for her column"; the marks page on a phone held upright
+    measures its overflow with the stack lettered at its held height (measured empty, the stack was not drawn, so the panel
+    was never shortened and the page scrolled the store picture under the bar); chapter 14's spec notes (the asks by the
+    set's `teach`, `tover` before the worked example's balloon-A fallback, the spread 352's sizes as built and chapter
+    13's `'two'` staggered); continuity's `specialty` and `ch2Stone` rows, places (the chapters column, chapter 13's
+    paragraph, the riverbank, the grove's options, no moon), the hollow's `'two'`, the warm-up's `alt`, the log's moves,
+    item 15's figures, "badger" not new; build.md's `oak-near`; call 19 read as built; `docs/production.md`'s step 2 names
+    `E.VERSION` and its pin; `docs/build.md`, `CLAUDE.md` and this entry written for the ship of v26. Left, with reasons:
+    f058's climber's caption (the spec's "built nearly", chapter 12's hedge-top precedent; the root offered instead is not
+    drawn either); f024's creep (her crouch on f019's spot: moving her moves f025 and f026, where she sits back, with her);
+    f084's small tail on the end screen (the wide den, as chapter 12's end); the keypad dropping under a wrapped echo once a
+    store problem is done (item 3's *Left*: locked then, back at the next problem, as v0.3's always has). Live frames
+    changed: none. The shared sweep of this tree (`--pages`, cache f6c214ea192f7e62, against the round-1 tree's 638e11c7e90541fa): 15,304
+    pages, one problem, chapter 12's `es:take` at 1080 x 720 with Aa on (in live too); of the rows that moved, chapter 13's f027
+    (its caption) and the marks page at 390 x 844 (`take:marks`, `ch13:f036@lesson`: the panel 91 px, 115 with Aa on, the
+    pictures ending at the screen's foot, no scroll, where it was scrolled 95 px and 71; looked at in Safari), the Warrior
+    Counts' screens that vary run to run apart; no page of chapters 1 to 12 moved. The suite: 49 files, 2,133 tests, all pass.
 
 ## Open questions, waiting on Aron
 

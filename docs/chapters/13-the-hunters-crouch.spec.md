@@ -1,5 +1,13 @@
 # Chapter 13 spec: The Hunter's Crouch
 
+*v0.3.2 · 2026-11-10, after the final review (the README's "Chapter 13 as built", its last sub-entry): the story's v0.6.1
+lines, f027's caption "In her den, she wriggles out of her collar." (drawn in the den, after nine pictures of the crouch in
+camp) and f058's friends' line in two sentences ("…and points." / "A smaller doorway, right beside the dig!"); the
+groundhog's sleeper page "It sleeps ALL frost-time. That’s its JOB." (the it's/its pair read aloud). The kit's three page
+fixes are build.md's (its v0.4 paragraph). Left as they are: f058's climber's caption (section 7, item 4, already "built
+nearly"), f024's creep (her crouch on the same spot as f019 to f022: moving her would move f025 and f026 with her), f084's
+small tail on the end screen (the wide den, chapter 12's end too).*
+
 *v0.3.1 · 2026-11-10, as built (the README's "Chapter 13 as built" has each call with its reason). Where the build departs
 from the lists below: the old tom's first tale line ("A badger SAT on my whole patrol once! Flat as leaves!") is f070's,
 with f071 three balloons and the Tap; `motion` is off on f017, f021 and f084 (its speed lines ran across a cat, or out of
@@ -816,7 +824,8 @@ is the story's.
 - **f026** the same, Chispapaw `sit` (`proud`): caption "Chispapaw sits up very straight." (split: narration after the
   balloons).
 - **f027** `den`/`inside`, `DEN_COLLAR`, `morning`: Chispapaw `sit` at `nest` with `collar: false`, the collar in its hollow
-  beside her; our cat `sit` at `sleeper-2` facing right. Caption "Back in camp, she wriggles out of her collar."; her "My
+  beside her; our cat `sit` at `sleeper-2` facing right. Caption "In her den, she wriggles out of her collar." (the story's
+  v0.6.1; "Back in camp" said the crouch's nine pictures, drawn in camp, were somewhere else); her "My
   Tall Ones gave me this. It can stay safe, by my nest."; the tuck Tap (from here Chispapaw is `collar: false` on every
   frame).
 
@@ -909,8 +918,9 @@ box, section 4)
 - **f058** `grove`/`dig`, `LEAVES`: our cat `sit` (facing left, toward the doorway) at `door-1`, Chispapaw at `door-2`, the
   apprentice peeking at `dig-fern` (on every path: section 7, item 4). One caption by `specialty` (split from f057:
   narration after her balloon): (`noticing`) "You take one last look, and spot it: a smaller doorway, right beside the big
-  dig."; (`friends`) "The shy GroveClan apprentice peeks out of a fern, and points:" / "a smaller doorway, right beside
-  the dig." (102 characters in one sentence: the one caption split at a colon, the words unchanged); (`climbing`) "From the oak’s low branch, you see it: a smaller doorway, right beside the big dig."; (`sneaking`)
+  dig."; (`friends`) "The shy GroveClan apprentice peeks out of a fern, and points." / "A smaller doorway, right beside
+  the dig!" (the story's v0.6.1: two sentences, the words unchanged, so the second caption opens a sentence; it was
+  one of 102 characters split at its colon, its second box opening in lower case); (`climbing`) "From the oak’s low branch, you see it: a smaller doorway, right beside the big dig."; (`sneaking`)
   "You creep up to the dig without a sound. From a smaller doorway beside it comes a tiny snore."; (`swimming`) "Then you
   hear it. Something is snoring, in a little doorway under the leaves beside the dig."; **Choose** "“Look closer.”" (f059)
   / "“Home before sunset.”" (f065).
@@ -1027,7 +1037,7 @@ book: {
   // the first of the seven sleepers' pages (E.sleepers): without foundGroundhog no sleepers page at all (null); with it,
   // the groundhog's page (its `sleep` pose, by PC.art.vocab.cast) and six plain silhouettes
   sleeper: { id: 'groundhog', name: 'The groundhog', when: { foundGroundhog: true },
-    lines: ['Asleep in a little doorway beside the big dig in GroveClan’s woods. It sleeps ALL frost-time. It’s its JOB.',
+    lines: ['Asleep in a little doorway beside the big dig in GroveClan’s woods. It sleeps ALL frost-time. That’s its JOB.',
             '“Not a badger. GROUNDHOG. Something BIGGER dug past my bedroom. Sniffing. All. Night.”'] }
 }
 ```

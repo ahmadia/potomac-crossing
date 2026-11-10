@@ -1754,10 +1754,13 @@ test('book: book two’s title, the chapter title, seven entries (eight sentence
   assert.match(pg.recap.join(' '), /On Stormleap’s first day as a warrior, he slept till noon/);
 });
 
-test('the teaser is chapter 13’s, “The Hunter’s Crouch”: the story’s own line; chapter 11’s teaser stays as it is and now leads here', () => {
+test('the teaser is chapter 13’s, “The Hunter’s Crouch”: the story’s own line, and with chapter 13 built it leads there; chapter 11’s teaser stays as it is and now leads here', () => {
   assert.deepEqual(story.teaser, { title: 'Chapter 13: The Hunter’s Crouch', lines: ['Granny has news: a fresh badger track. Who made this one?'] });
   const cat = before12({});
-  assert.deepEqual(E.teaser(story, cat, STORIES), { title: story.teaser.title, lines: story.teaser.lines, built: false, next: null }, 'no chapter 13 yet');
+  assert.deepEqual(E.teaser(story, cat, STORIES), { title: story.teaser.title, lines: story.teaser.lines, built: false, next: null }, 'with no chapter 13 among the stories');
+  assert.ok(PC.story.ch13 && PC.story.ch13.title === 'The Hunter’s Crouch', 'chapter 13 is built');
+  assert.deepEqual(E.teaser(story, cat, STORIES.concat([PC.story.ch13])), { title: story.teaser.title, lines: story.teaser.lines, built: true, next: 'ch13' }, 'chapter 13 built: the hub leads there');
+  assert.equal(E.chapterHeading(PC.story.ch13), story.teaser.title, 'the teaser’s title is chapter 13’s own heading');
   assert.deepEqual(ch11.teaser, { title: 'A new adventure', lines: ['Out on Gathering Island, an old badger track lies in the mud. Who made it? Another day.'] });
   assert.deepEqual(E.teaser(ch11, cat, STORIES), { title: 'A new adventure', lines: ch11.teaser.lines, built: true, next: 'ch12' });
   assert.ok(DOC.includes(story.teaser.lines[0]), 'the story’s own line');

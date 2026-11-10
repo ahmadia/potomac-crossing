@@ -56,7 +56,9 @@ function two() {
   s.ch13.book.badger = [{ row: 'sat', say: { text: 'A badger SAT on my whole patrol!', who: 'the old tom' } }, { row: 'size', say: { text: 'As big as a FOX!', who: 'the ferry otters' } }];
   s.ch17.book.badger = [{ row: 'size', saw: { text: 'As big as three cats. And grumpy.' } }];
   s.ch21.book.keepsake = { id: 'stone-tooth', name: 'The stone tooth', lines: ['Older than the river.'] };
-  return E.chapters(PC.story).concat(s.list);
+  // (the real chapters to 12 beside the stand-ins; a real chapter 13 on is left out for its stand-in, whose book these
+  // tests write: chapter 13's own badger rows and sleeper are tests/story-ch13.test.js's)
+  return E.chapters(PC.story).filter((c) => (c.number || 1) < 13).concat(s.list);
 }
 function catAt(n, list, over) {
   const cat = Object.assign({ name: 'Fern', ending: 'heart', look: { sex: 'she', fur: 'calico', marking: 'white-paws', eyes: 'odd' }, flags: {}, finished: {}, dreams: {} }, over || {});

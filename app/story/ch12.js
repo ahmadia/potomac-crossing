@@ -1188,7 +1188,7 @@
       ]
     },
 
-    // chapter 13's hook, on the hub once the chapter is finished
+    // chapter 13's hook, on the hub once the chapter is finished; with chapter 13 built it leads there (E.teaser's `next`)
     teaser: {
       title: 'Chapter 13: The Hunter’s Crouch',
       lines: ['Granny has news: a fresh badger track. Who made this one?']
